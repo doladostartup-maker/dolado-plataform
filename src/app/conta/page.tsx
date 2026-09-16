@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/auth/actions";
@@ -35,8 +36,11 @@ export default async function ContaPage() {
           <dd>{perfil?.role ?? "cliente"}</dd>
         </div>
       </dl>
+      <Link href="/portal/casos" className="rounded bg-black px-4 py-2 text-center text-white">
+        Ver os meus casos
+      </Link>
       <form action={logout}>
-        <button type="submit" className="rounded border px-4 py-2">
+        <button type="submit" className="w-full rounded border px-4 py-2">
           Terminar sessão
         </button>
       </form>
