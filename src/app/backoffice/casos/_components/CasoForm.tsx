@@ -18,6 +18,9 @@ type CasoFormValues = {
 
 const STATUSES = ["Novo", "Em Análise", "Aguardando Decisão", "Resolvido", "Bloqueado"];
 
+const INPUT_CLASS =
+  "w-full rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-hairline-strong)] focus:outline-none";
+
 function Campo({
   label,
   children,
@@ -26,7 +29,7 @@ function Campo({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
+    <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
       {label}
       {children}
     </label>
@@ -46,12 +49,7 @@ export function CasoForm({
     <form action={action} className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-4">
         <Campo label="Nome">
-          <input
-            name="nome"
-            defaultValue={valores.nome ?? ""}
-            required
-            className="w-full rounded border px-3 py-2"
-          />
+          <input name="nome" defaultValue={valores.nome ?? ""} required className={INPUT_CLASS} />
         </Campo>
         <Campo label="Email">
           <input
@@ -59,29 +57,25 @@ export function CasoForm({
             type="email"
             defaultValue={valores.email ?? ""}
             required
-            className="w-full rounded border px-3 py-2"
+            className={INPUT_CLASS}
           />
         </Campo>
         <Campo label="Telefone">
           <input
             name="telefone"
             defaultValue={valores.telefone ?? ""}
-            className="w-full rounded border px-3 py-2"
+            className={INPUT_CLASS}
           />
         </Campo>
         <Campo label="Empresa parceira">
           <input
             name="empresa_parceira"
             defaultValue={valores.empresa_parceira ?? ""}
-            className="w-full rounded border px-3 py-2"
+            className={INPUT_CLASS}
           />
         </Campo>
         <Campo label="Sector">
-          <select
-            name="sector"
-            defaultValue={valores.sector ?? ""}
-            className="w-full rounded border px-3 py-2"
-          >
+          <select name="sector" defaultValue={valores.sector ?? ""} className={INPUT_CLASS}>
             <option value="">—</option>
             <option value="Telecomunicações">Telecomunicações</option>
             <option value="Energia">Energia</option>
@@ -92,14 +86,14 @@ export function CasoForm({
           <input
             name="tipo_problema"
             defaultValue={valores.tipo_problema ?? ""}
-            className="w-full rounded border px-3 py-2"
+            className={INPUT_CLASS}
           />
         </Campo>
         <Campo label="Estado">
           <select
             name="status"
             defaultValue={valores.status ?? "Novo"}
-            className="w-full rounded border px-3 py-2"
+            className={INPUT_CLASS}
           >
             {STATUSES.map((s) => (
               <option key={s} value={s}>
@@ -112,7 +106,7 @@ export function CasoForm({
           <select
             name="tipo_abc"
             defaultValue={valores.tipo_abc ?? ""}
-            className="w-full rounded border px-3 py-2"
+            className={INPUT_CLASS}
           >
             <option value="">—</option>
             <option value="A">A</option>
@@ -125,7 +119,7 @@ export function CasoForm({
             type="date"
             name="data_fim_fidelidade"
             defaultValue={valores.data_fim_fidelidade ?? ""}
-            className="w-full rounded border px-3 py-2"
+            className={INPUT_CLASS}
           />
         </Campo>
         <Campo label="Minutos">
@@ -133,7 +127,7 @@ export function CasoForm({
             type="number"
             name="minutos"
             defaultValue={valores.minutos ?? ""}
-            className="w-full rounded border px-3 py-2"
+            className={INPUT_CLASS}
           />
         </Campo>
         <Campo label="Valor indicado (€)">
@@ -142,10 +136,10 @@ export function CasoForm({
             step="0.01"
             name="valor_indicado"
             defaultValue={valores.valor_indicado ?? ""}
-            className="w-full rounded border px-3 py-2"
+            className={INPUT_CLASS}
           />
         </Campo>
-        <label className="flex items-center gap-2 self-end pb-2 text-sm">
+        <label className="flex items-center gap-2 self-end pb-2 text-sm text-[var(--color-ink)]">
           <input
             type="checkbox"
             name="disposicao_pagar"
@@ -160,7 +154,7 @@ export function CasoForm({
           name="descricao"
           defaultValue={valores.descricao ?? ""}
           rows={4}
-          className="w-full rounded border px-3 py-2"
+          className={INPUT_CLASS}
         />
       </Campo>
       <Campo label="Notas internas">
@@ -168,20 +162,20 @@ export function CasoForm({
           name="notas"
           defaultValue={valores.notas ?? ""}
           rows={4}
-          className="w-full rounded border px-3 py-2"
+          className={INPUT_CLASS}
         />
       </Campo>
       <Campo label="Link do dossiê">
         <input
           name="dossie_url"
           defaultValue={valores.dossie_url ?? ""}
-          className="w-full rounded border px-3 py-2"
+          className={INPUT_CLASS}
         />
       </Campo>
 
       <button
         type="submit"
-        className="self-start rounded bg-black px-4 py-2 text-sm text-white"
+        className="self-start rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
       >
         {submitLabel}
       </button>

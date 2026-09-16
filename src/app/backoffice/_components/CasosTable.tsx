@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { StatusBadge } from "@/components/StatusBadge";
+import { SectorChip } from "@/components/SectorChip";
 
 type Caso = {
   id: string;
@@ -20,47 +22,77 @@ function diasRestantes(data: string | null) {
 
 export function CasosTable({ casos }: { casos: Caso[] }) {
   if (casos.length === 0) {
-    return <p className="text-sm text-neutral-500">Sem casos para mostrar.</p>;
+    return (
+      <p className="text-sm text-[var(--color-ink-muted)]">Sem casos para mostrar.</p>
+    );
   }
 
   return (
-    <div className="overflow-x-auto rounded border">
+    <div className="overflow-x-auto rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] shadow-[var(--shadow-subtle)]">
       <table className="w-full text-left text-sm">
-        <thead className="bg-neutral-50">
+        <thead className="bg-[var(--color-surface-sunken)]">
           <tr>
-            <th className="px-3 py-2 font-medium">Nome</th>
-            <th className="px-3 py-2 font-medium">Empresa</th>
-            <th className="px-3 py-2 font-medium">Sector</th>
-            <th className="px-3 py-2 font-medium">Estado</th>
-            <th className="px-3 py-2 font-medium">Fim fidelidade</th>
-            <th className="px-3 py-2 font-medium">Valor</th>
+            <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
+              Nome
+            </th>
+            <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
+              Empresa
+            </th>
+            <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
+              Sector
+            </th>
+            <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
+              Estado
+            </th>
+            <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
+              Fim fidelidade
+            </th>
+            <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
+              Valor
+            </th>
           </tr>
         </thead>
         <tbody>
           {casos.map((caso) => {
             const dias = diasRestantes(caso.data_fim_fidelidade);
+            const urgente = dias !== null && dias <= 15;
             return (
-              <tr key={caso.id} className="border-t hover:bg-neutral-50">
+              <tr
+                key={caso.id}
+                className="border-t border-[var(--color-hairline)] hover:bg-[var(--color-surface-sunken)]"
+              >
                 <td className="px-3 py-2">
                   <Link
                     href={`/backoffice/casos/${caso.id}`}
-                    className="font-medium underline"
+                    className="font-medium text-[var(--color-brand)] underline"
                   >
                     {caso.nome}
                   </Link>
                 </td>
-                <td className="px-3 py-2">{caso.empresa_parceira ?? "—"}</td>
-                <td className="px-3 py-2">{caso.sector ?? "—"}</td>
-                <td className="px-3 py-2">{caso.status}</td>
+                <td className="px-3 py-2 text-[var(--color-ink)]">
+                  {caso.empresa_parceira ?? "—"}
+                </td>
                 <td className="px-3 py-2">
+                  <SectorChip sector={caso.sector} />
+                </td>
+                <td className="px-3 py-2">
+                  <StatusBadge status={caso.status} />
+                </td>
+                <td className="px-3 py-2 text-[var(--color-ink)]">
                   {caso.data_fim_fidelidade ?? "—"}
-                  {dias !== null && dias <= 15 && (
-                    <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-700">
-                      {dias < 0 ? "expirado" : `${dias}d`}
+                  {urgente && (
+                    <span
+                      className="ml-2 rounded-[var(--radius-pill)] px-[8px] py-[2px] text-[12px] font-medium"
+                      style={{
+                        backgroundColor: "var(--color-status-urgent-wash)",
+                        color: "var(--color-status-urgent)",
+                      }}
+                    >
+                      {dias! < 0 ? "expirado" : `${dias}d`}
                     </span>
                   )}
                 </td>
-                <td className="px-3 py-2">
+                <td className="px-3 py-2 text-[var(--color-ink)]">
                   {caso.valor_indicado != null ? `${caso.valor_indicado} €` : "—"}
                 </td>
               </tr>

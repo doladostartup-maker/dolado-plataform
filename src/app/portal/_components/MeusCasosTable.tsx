@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { StatusBadge } from "@/components/StatusBadge";
+import { SectorChip } from "@/components/SectorChip";
 
 type Caso = {
   id: string;
@@ -12,37 +14,60 @@ type Caso = {
 export function MeusCasosTable({ casos }: { casos: Caso[] }) {
   if (casos.length === 0) {
     return (
-      <p className="text-sm text-neutral-500">Ainda não tens nenhum caso aberto.</p>
+      <p className="text-sm text-[var(--color-ink-muted)]">
+        Ainda não tens nenhum caso aberto.
+      </p>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded border">
+    <div className="overflow-x-auto rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] shadow-[var(--shadow-subtle)]">
       <table className="w-full text-left text-sm">
-        <thead className="bg-neutral-50">
+        <thead className="bg-[var(--color-surface-sunken)]">
           <tr>
-            <th className="px-3 py-2 font-medium">Empresa</th>
-            <th className="px-3 py-2 font-medium">Sector</th>
-            <th className="px-3 py-2 font-medium">Problema</th>
-            <th className="px-3 py-2 font-medium">Estado</th>
-            <th className="px-3 py-2 font-medium">Fim fidelidade</th>
+            <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
+              Empresa
+            </th>
+            <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
+              Sector
+            </th>
+            <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
+              Problema
+            </th>
+            <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
+              Estado
+            </th>
+            <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
+              Fim fidelidade
+            </th>
           </tr>
         </thead>
         <tbody>
           {casos.map((caso) => (
-            <tr key={caso.id} className="border-t hover:bg-neutral-50">
+            <tr
+              key={caso.id}
+              className="border-t border-[var(--color-hairline)] hover:bg-[var(--color-surface-sunken)]"
+            >
               <td className="px-3 py-2">
                 <Link
                   href={`/portal/casos/${caso.id}`}
-                  className="font-medium underline"
+                  className="font-medium text-[var(--color-brand)] underline"
                 >
                   {caso.empresa_parceira ?? "O meu caso"}
                 </Link>
               </td>
-              <td className="px-3 py-2">{caso.sector ?? "—"}</td>
-              <td className="px-3 py-2">{caso.tipo_problema ?? "—"}</td>
-              <td className="px-3 py-2">{caso.status}</td>
-              <td className="px-3 py-2">{caso.data_fim_fidelidade ?? "—"}</td>
+              <td className="px-3 py-2">
+                <SectorChip sector={caso.sector} />
+              </td>
+              <td className="px-3 py-2 text-[var(--color-ink)]">
+                {caso.tipo_problema ?? "—"}
+              </td>
+              <td className="px-3 py-2">
+                <StatusBadge status={caso.status} />
+              </td>
+              <td className="px-3 py-2 text-[var(--color-ink)]">
+                {caso.data_fim_fidelidade ?? "—"}
+              </td>
             </tr>
           ))}
         </tbody>

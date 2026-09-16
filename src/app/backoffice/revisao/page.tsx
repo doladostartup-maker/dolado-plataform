@@ -14,8 +14,10 @@ export default async function RevisaoPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold">Fila de revisão</h1>
-      {error && <p className="text-sm text-red-600">{error.message}</p>}
+      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
+        Fila de revisão
+      </h1>
+      {error && <p className="text-sm text-[var(--color-status-danger)]">{error.message}</p>}
       <CasosTable casos={casos ?? []} />
     </div>
   );

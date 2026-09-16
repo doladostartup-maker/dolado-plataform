@@ -10,8 +10,10 @@ export default async function NovoCasoPage({
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <h1 className="text-xl font-semibold">Novo caso</h1>
-      {params.erro && <p className="text-sm text-red-600">{params.erro}</p>}
+      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
+        Novo caso
+      </h1>
+      {params.erro && <p className="text-sm text-[var(--color-status-danger)]">{params.erro}</p>}
       <CasoForm action={criarCaso} submitLabel="Criar caso" />
     </div>
   );

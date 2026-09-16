@@ -23,8 +23,10 @@ export default async function NovoCasoClientePage({
 
   return (
     <div className="flex max-w-xl flex-col gap-6">
-      <h1 className="text-xl font-semibold">Abrir novo caso</h1>
-      {params.erro && <p className="text-sm text-red-600">{params.erro}</p>}
+      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
+        Abrir novo caso
+      </h1>
+      {params.erro && <p className="text-sm text-[var(--color-status-danger)]">{params.erro}</p>}
       <ClienteCasoForm
         action={criarCasoCliente}
         valoresIniciais={{

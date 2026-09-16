@@ -20,10 +20,18 @@ export default async function UrgentesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold">
-        Casos urgentes — fidelidade a terminar em ≤15 dias
-      </h1>
-      {error && <p className="text-sm text-red-600">{error.message}</p>}
+      <div
+        className="rounded-[var(--radius-card)] px-5 py-4"
+        style={{ backgroundColor: "var(--color-status-urgent-wash)" }}
+      >
+        <h1
+          className="text-[var(--text-heading-sm)] font-semibold"
+          style={{ color: "var(--color-status-urgent)" }}
+        >
+          Casos urgentes — fidelidade a terminar em ≤15 dias
+        </h1>
+      </div>
+      {error && <p className="text-sm text-[var(--color-status-danger)]">{error.message}</p>}
       <CasosTable casos={casos ?? []} />
     </div>
   );

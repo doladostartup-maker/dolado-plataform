@@ -28,10 +28,12 @@ export default async function CasosPage({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Todos os casos</h1>
+        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
+          Todos os casos
+        </h1>
         <Link
           href="/backoffice/casos/novo"
-          className="rounded bg-black px-4 py-2 text-sm text-white"
+          className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
         >
           + Novo caso
         </Link>
@@ -41,7 +43,7 @@ export default async function CasosPage({
         <select
           name="status"
           defaultValue={params.status ?? ""}
-          className="rounded border px-2 py-1"
+          className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-2 py-1 text-[var(--color-ink)]"
         >
           <option value="">Todos os estados</option>
           {STATUSES.map((s) => (
@@ -53,7 +55,7 @@ export default async function CasosPage({
         <select
           name="sector"
           defaultValue={params.sector ?? ""}
-          className="rounded border px-2 py-1"
+          className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-2 py-1 text-[var(--color-ink)]"
         >
           <option value="">Todos os sectores</option>
           <option value="Telecomunicações">Telecomunicações</option>
@@ -64,14 +66,17 @@ export default async function CasosPage({
           name="empresa"
           defaultValue={params.empresa ?? ""}
           placeholder="Empresa parceira"
-          className="rounded border px-2 py-1"
+          className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-2 py-1 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)]"
         />
-        <button type="submit" className="rounded border px-3 py-1">
+        <button
+          type="submit"
+          className="rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-1 text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
+        >
           Filtrar
         </button>
       </form>
 
-      {error && <p className="text-sm text-red-600">{error.message}</p>}
+      {error && <p className="text-sm text-[var(--color-status-danger)]">{error.message}</p>}
       <CasosTable casos={casos ?? []} />
     </div>
   );

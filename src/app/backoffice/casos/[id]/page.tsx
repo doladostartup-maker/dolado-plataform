@@ -30,18 +30,20 @@ export default async function CasoDetalhePage({
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <h1 className="text-xl font-semibold">{caso.nome}</h1>
+      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
+        {caso.nome}
+      </h1>
 
       {query.guardado && (
-        <p className="text-sm text-green-600">Alterações guardadas.</p>
+        <p className="text-sm text-[var(--color-status-success)]">Alterações guardadas.</p>
       )}
-      {query.erro && <p className="text-sm text-red-600">{query.erro}</p>}
+      {query.erro && <p className="text-sm text-[var(--color-status-danger)]">{query.erro}</p>}
 
       <div className="flex gap-3">
         <form action={aceitar}>
           <button
             type="submit"
-            className="rounded bg-green-600 px-4 py-2 text-sm text-white"
+            className="rounded-[var(--radius-button)] border border-[var(--color-status-success)] bg-[var(--color-surface)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-status-success)] hover:bg-[var(--color-status-success-wash)]"
           >
             Cliente aceitou oferta
           </button>
@@ -49,7 +51,7 @@ export default async function CasoDetalhePage({
         <form action={recusar}>
           <button
             type="submit"
-            className="rounded bg-red-600 px-4 py-2 text-sm text-white"
+            className="rounded-[var(--radius-button)] border border-[var(--color-status-danger)] bg-[var(--color-surface)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-status-danger)] hover:bg-[var(--color-status-danger-wash)]"
           >
             Cliente recusou oferta
           </button>

@@ -21,26 +21,34 @@ export default async function ContaPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4">
-      <h1 className="text-2xl font-semibold">A tua conta</h1>
-      <dl className="flex flex-col gap-2 text-sm">
+      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
+        A tua conta
+      </h1>
+      <dl className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 text-sm shadow-[var(--shadow-subtle)]">
         <div>
-          <dt className="text-neutral-500">Email</dt>
-          <dd>{user.email}</dd>
+          <dt className="text-[var(--color-ink-muted)]">Email</dt>
+          <dd className="text-[var(--color-ink)]">{user.email}</dd>
         </div>
         <div>
-          <dt className="text-neutral-500">Nome</dt>
-          <dd>{perfil?.nome ?? "—"}</dd>
+          <dt className="text-[var(--color-ink-muted)]">Nome</dt>
+          <dd className="text-[var(--color-ink)]">{perfil?.nome ?? "—"}</dd>
         </div>
         <div>
-          <dt className="text-neutral-500">Perfil</dt>
-          <dd>{perfil?.role ?? "cliente"}</dd>
+          <dt className="text-[var(--color-ink-muted)]">Perfil</dt>
+          <dd className="text-[var(--color-ink)]">{perfil?.role ?? "cliente"}</dd>
         </div>
       </dl>
-      <Link href="/portal/casos" className="rounded bg-black px-4 py-2 text-center text-white">
+      <Link
+        href="/portal/casos"
+        className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-center text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
+      >
         Ver os meus casos
       </Link>
       <form action={logout}>
-        <button type="submit" className="w-full rounded border px-4 py-2">
+        <button
+          type="submit"
+          className="w-full rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
+        >
           Terminar sessão
         </button>
       </form>
