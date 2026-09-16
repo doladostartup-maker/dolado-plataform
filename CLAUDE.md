@@ -33,7 +33,7 @@ Toda a infraestrutura abaixo já está montada e ligada. O Claude Code deve usar
 
 - **Supabase:** organização `dolado-startup`, projecto `DoLado`, região `eu-west-1 (Paris)`, PostgreSQL activo, Auth com Google OAuth + Email/Password configurado, Storage activo, RLS (Row Level Security) automático em novas tabelas
 - **Clever Cloud:** app `dolado-platform` (Node.js), região `par (Paris)`, ligada por webhook ao GitHub (git push → deploy automático). **Nota importante:** existe um addon PostgreSQL na Clever Cloud ligado a esta app, mas é residual — **não usar**. A única base de dados é a Supabase. Se o addon Postgres da Clever Cloud não for necessário, pode ser removido para simplificar e evitar custo duplicado (confirmar com Thiago antes de remover).
-- **Repositório:** GitHub `dolado-platform` (vazio, pronto para o primeiro commit)
+- **Repositório:** GitHub `doladostartup-maker/dolado-plataform` (primeiro commit da Fase 1 já enviado)
 - **Brevo:** conta e API key prontas para o email transacional
 - **Google Cloud:** projecto `dolado-forms`, OAuth 2.0 Client "Cliente Web 1" já criado e ligado à Supabase (redirect URI `https://eqsmzczjyrcrsbfqioxt.supabase.co/auth/v1/callback` autorizado em 16/09/2026)
 
