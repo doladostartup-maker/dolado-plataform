@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SectorChip } from "@/components/SectorChip";
+import { diasUteisRestantes, formatarDiasRestantes } from "@/lib/diasUteis";
 
 type Caso = {
   id: string;
@@ -10,6 +11,7 @@ type Caso = {
   status: string;
   data_fim_fidelidade: string | null;
   valor_indicado: number | null;
+  data_envio_reclamacao?: string | null;
 };
 
 function diasRestantes(data: string | null) {
@@ -20,7 +22,24 @@ function diasRestantes(data: string | null) {
   return Math.round((alvo.getTime() - hoje.getTime()) / 86400000);
 }
 
-export function CasosTable({ casos }: { casos: Caso[] }) {
+function estiloDiasRestantes(dias: number | null) {
+  if (dias === null) return undefined;
+  if (dias <= 1) {
+    return { backgroundColor: "var(--color-status-danger-wash)", color: "var(--color-status-danger)" };
+  }
+  if (dias <= 5) {
+    return { backgroundColor: "var(--color-status-urgent-wash)", color: "var(--color-status-urgent)" };
+  }
+  return undefined;
+}
+
+export function CasosTable({
+  casos,
+  mostrarDiasRestantes = false,
+}: {
+  casos: Caso[];
+  mostrarDiasRestantes?: boolean;
+}) {
   if (casos.length === 0) {
     return (
       <p className="text-sm text-[var(--color-ink-muted)]">Sem casos para mostrar.</p>
@@ -50,6 +69,11 @@ export function CasosTable({ casos }: { casos: Caso[] }) {
             <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
               Valor
             </th>
+            {mostrarDiasRestantes && (
+              <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
+                Dias restantes
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -95,6 +119,15 @@ export function CasosTable({ casos }: { casos: Caso[] }) {
                 <td className="px-3 py-2 text-[var(--color-ink)]">
                   {caso.valor_indicado != null ? `${caso.valor_indicado} €` : "—"}
                 </td>
+                {mostrarDiasRestantes &&
+                  (() => {
+                    const dias = diasUteisRestantes(caso.data_envio_reclamacao ?? null);
+                    return (
+                      <td className="px-3 py-2 font-medium" style={estiloDiasRestantes(dias)}>
+                        {dias !== null ? formatarDiasRestantes(dias) : ""}
+                      </td>
+                    );
+                  })()}
               </tr>
             );
           })}

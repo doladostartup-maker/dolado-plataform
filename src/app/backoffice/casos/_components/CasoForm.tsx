@@ -9,6 +9,7 @@ type CasoFormValues = {
   status?: string;
   tipo_abc?: string | null;
   data_fim_fidelidade?: string | null;
+  data_envio_reclamacao?: string | null;
   minutos?: number | null;
   disposicao_pagar?: boolean | null;
   valor_indicado?: number | null;
@@ -126,6 +127,14 @@ export function CasoForm({
             type="date"
             name="data_fim_fidelidade"
             defaultValue={valores.data_fim_fidelidade ?? ""}
+            className={INPUT_CLASS}
+          />
+        </Campo>
+        <Campo label="Data de envio da reclamação">
+          <input
+            type="date"
+            name="data_envio_reclamacao"
+            defaultValue={valores.data_envio_reclamacao ?? ""}
             className={INPUT_CLASS}
           />
         </Campo>

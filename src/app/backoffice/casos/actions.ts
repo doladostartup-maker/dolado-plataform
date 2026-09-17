@@ -8,6 +8,7 @@ function parseCasoFormData(formData: FormData) {
   const valorIndicado = formData.get("valor_indicado") as string;
   const minutos = formData.get("minutos") as string;
   const dataFim = formData.get("data_fim_fidelidade") as string;
+  const dataEnvioReclamacao = formData.get("data_envio_reclamacao") as string;
 
   return {
     nome: formData.get("nome") as string,
@@ -20,6 +21,7 @@ function parseCasoFormData(formData: FormData) {
     status: formData.get("status") as string,
     tipo_abc: (formData.get("tipo_abc") as string) || null,
     data_fim_fidelidade: dataFim || null,
+    data_envio_reclamacao: dataEnvioReclamacao || null,
     minutos: minutos ? Number(minutos) : null,
     disposicao_pagar: formData.get("disposicao_pagar") === "on",
     valor_indicado: valorIndicado ? Number(valorIndicado) : null,

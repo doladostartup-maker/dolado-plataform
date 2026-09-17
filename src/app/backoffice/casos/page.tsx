@@ -22,7 +22,7 @@ export default async function CasosPage({
   let query = supabase
     .from("casos")
     .select(
-      "id, nome, empresa_parceira, sector, status, data_fim_fidelidade, valor_indicado",
+      "id, nome, empresa_parceira, sector, status, data_fim_fidelidade, valor_indicado, data_envio_reclamacao",
     )
     .order("data_fim_fidelidade", { ascending: true, nullsFirst: false });
 
@@ -84,7 +84,7 @@ export default async function CasosPage({
       </form>
 
       {error && <p className="text-sm text-[var(--color-status-danger)]">{error.message}</p>}
-      <CasosTable casos={casos ?? []} />
+      <CasosTable casos={casos ?? []} mostrarDiasRestantes />
     </div>
   );
 }
