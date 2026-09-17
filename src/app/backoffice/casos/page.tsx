@@ -2,7 +2,14 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CasosTable } from "../_components/CasosTable";
 
-const STATUSES = ["Novo", "Em Análise", "Aguardando Decisão", "Resolvido", "Bloqueado"];
+const STATUSES = [
+  "Novo",
+  "Em investigação",
+  "Aguardando operador",
+  "Aguardando decisão cliente",
+  "Resolvido",
+  "Bloqueado",
+];
 
 export default async function CasosPage({
   searchParams,

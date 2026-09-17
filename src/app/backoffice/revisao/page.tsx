@@ -9,7 +9,7 @@ export default async function RevisaoPage() {
     .select(
       "id, nome, empresa_parceira, sector, status, data_fim_fidelidade, valor_indicado",
     )
-    .in("status", ["Novo", "Aguardando Decisão"])
+    .in("status", ["Novo", "Aguardando decisão cliente"])
     .order("created_at", { ascending: true });
 
   return (

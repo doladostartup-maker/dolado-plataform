@@ -74,7 +74,7 @@ export async function decidirClienteCaso(
     redirect("/portal/casos");
   }
 
-  if (caso.status !== "Aguardando Decisão") {
+  if (caso.status !== "Aguardando decisão cliente") {
     redirect(
       `/portal/casos/${id}?erro=${encodeURIComponent("Este caso já não está à espera de decisão.")}`,
     );

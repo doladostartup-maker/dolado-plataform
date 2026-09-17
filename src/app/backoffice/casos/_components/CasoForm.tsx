@@ -16,7 +16,14 @@ type CasoFormValues = {
   dossie_url?: string | null;
 };
 
-const STATUSES = ["Novo", "Em Análise", "Aguardando Decisão", "Resolvido", "Bloqueado"];
+const STATUSES = [
+  "Novo",
+  "Em investigação",
+  "Aguardando operador",
+  "Aguardando decisão cliente",
+  "Resolvido",
+  "Bloqueado",
+];
 
 const INPUT_CLASS =
   "w-full rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-hairline-strong)] focus:outline-none";
@@ -167,8 +174,10 @@ export function CasoForm({
       </Campo>
       <Campo label="Link do dossiê">
         <input
+          type="url"
           name="dossie_url"
           defaultValue={valores.dossie_url ?? ""}
+          placeholder="https://…"
           className={INPUT_CLASS}
         />
       </Campo>

@@ -28,11 +28,21 @@ export default async function CasoDetalhePage({
   const aceitar = decidirCaso.bind(null, id, "aceitou");
   const recusar = decidirCaso.bind(null, id, "recusou");
 
+  const criadoEm = new Date(caso.created_at).toLocaleString("pt-PT", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-        {caso.nome}
-      </h1>
+      <div>
+        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
+          {caso.nome}
+        </h1>
+        <p className="text-[var(--text-caption)] text-[var(--color-ink-faint)]">
+          Criado em {criadoEm}
+        </p>
+      </div>
 
       {query.guardado && (
         <p className="text-sm text-[var(--color-status-success)]">Alterações guardadas.</p>

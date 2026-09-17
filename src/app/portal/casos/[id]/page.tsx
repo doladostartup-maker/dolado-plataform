@@ -75,7 +75,7 @@ export default async function CasoClienteDetalhePage({
         )}
       </dl>
 
-      {caso.status === "Aguardando Decisão" && (
+      {caso.status === "Aguardando decisão cliente" && (
         <div
           className="flex flex-col gap-3 rounded-[var(--radius-card)] p-5"
           style={{ backgroundColor: "var(--color-status-urgent-wash)" }}

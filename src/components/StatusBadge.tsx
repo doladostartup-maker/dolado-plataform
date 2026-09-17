@@ -1,10 +1,14 @@
 const STATUS_STYLES: Record<string, { color: string; wash: string }> = {
   Novo: { color: "var(--color-status-pending)", wash: "var(--color-status-pending-wash)" },
-  "Em Análise": {
+  "Em investigação": {
     color: "var(--color-status-pending)",
     wash: "var(--color-status-pending-wash)",
   },
-  "Aguardando Decisão": {
+  "Aguardando operador": {
+    color: "var(--color-status-pending)",
+    wash: "var(--color-status-pending-wash)",
+  },
+  "Aguardando decisão cliente": {
     color: "var(--color-status-urgent)",
     wash: "var(--color-status-urgent-wash)",
   },
