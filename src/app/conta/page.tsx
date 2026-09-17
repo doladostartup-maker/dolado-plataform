@@ -38,9 +38,21 @@ export default async function ContaPage() {
           <dd className="text-[var(--color-ink)]">{perfil?.role ?? "cliente"}</dd>
         </div>
       </dl>
+      {perfil?.role === "admin" && (
+        <Link
+          href="/backoffice/casos"
+          className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-center text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
+        >
+          Ir para o backoffice
+        </Link>
+      )}
       <Link
         href="/portal/casos"
-        className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-center text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
+        className={
+          perfil?.role === "admin"
+            ? "rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-[18px] py-[10px] text-center text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
+            : "rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-center text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
+        }
       >
         Ver os meus casos
       </Link>
