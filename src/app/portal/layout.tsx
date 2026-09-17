@@ -3,9 +3,37 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { logout } from "@/app/auth/actions";
 
+function IconCasos() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
+      <path
+        d="M2 4.5a1 1 0 011-1h3l1.5 1.5H13a1 1 0 011 1V12a1 1 0 01-1 1H3a1 1 0 01-1-1V4.5z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconConta() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
+      <rect x="2" y="3.5" width="12" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="5.5" cy="7.5" r="1.25" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M4 10.5c.3-1 1-1.5 1.5-1.5s1.2.5 1.5 1.5M9 6.5h4M9 9h3"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function IconPerfil() {
   return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden="true">
+    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
       <circle cx="8" cy="5.5" r="2.5" stroke="currentColor" strokeWidth="1.5" />
       <path
         d="M3 13c0-2.2 2.2-4 5-4s5 1.8 5 4"
@@ -19,7 +47,7 @@ function IconPerfil() {
 
 function IconSubscricao() {
   return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden="true">
+    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
       <path
         d="M12.5 4.5H5.5A2.5 2.5 0 003 7v1M3.5 11.5h7A2.5 2.5 0 0013 9V8"
         stroke="currentColor"
@@ -40,7 +68,7 @@ function IconSubscricao() {
 
 function IconFacturacao() {
   return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden="true">
+    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
       <path
         d="M4 2h8v12l-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1L4 14V2z"
         stroke="currentColor"
@@ -61,6 +89,45 @@ function BadgeEmBreve() {
   );
 }
 
+function ItemNav({
+  href,
+  icon,
+  children,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-2.5 rounded-[var(--radius-input)] px-3 py-2 text-sm font-medium text-[var(--color-ink)] hover:bg-[var(--color-surface-sunken)] hover:text-[var(--color-brand)]"
+    >
+      {icon}
+      {children}
+    </Link>
+  );
+}
+
+function ItemDesactivado({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      aria-disabled="true"
+      className="flex cursor-not-allowed items-center gap-2.5 rounded-[var(--radius-input)] px-3 py-2 text-sm font-medium text-[var(--color-ink-faint)]"
+    >
+      {icon}
+      <span className="flex-1">{children}</span>
+      <BadgeEmBreve />
+    </span>
+  );
+}
+
 export default async function PortalLayout({
   children,
 }: {
@@ -69,68 +136,54 @@ export default async function PortalLayout({
   await requireUser();
 
   return (
-    <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b border-[var(--color-hairline)] bg-[var(--color-surface)] px-6 py-4">
-        <div className="flex items-center gap-8">
-          <Link href="/portal/casos" className="flex items-center">
-            <Image
-              src="/brand/dolado-logo-horizontal.svg"
-              alt="DoLado"
-              width={120}
-              height={28}
-              priority
-            />
-          </Link>
-          <nav className="flex items-center gap-6 text-sm font-medium text-[var(--color-ink)]">
-            <Link href="/portal/casos" className="hover:text-[var(--color-brand)]">
-              Os meus casos
-            </Link>
-            <Link href="/conta" className="hover:text-[var(--color-brand)]">
-              A minha conta
-            </Link>
-            <Link
-              href="/portal/perfil"
-              className="flex items-center gap-1.5 hover:text-[var(--color-brand)]"
-            >
-              <IconPerfil />
-              Gestão de Perfil
-            </Link>
-            <span
-              aria-disabled="true"
-              className="flex cursor-not-allowed items-center gap-1.5 text-[var(--color-ink-faint)]"
-            >
-              <IconSubscricao />
-              Gestão de Subscrição
-              <BadgeEmBreve />
-            </span>
-            <span
-              aria-disabled="true"
-              className="flex cursor-not-allowed items-center gap-1.5 text-[var(--color-ink-faint)]"
-            >
-              <IconFacturacao />
-              Facturação
-              <BadgeEmBreve />
-            </span>
-          </nav>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/portal/casos/novo"
-            className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-          >
-            Abrir novo caso
-          </Link>
+    <div className="flex min-h-screen">
+      <aside className="flex w-64 shrink-0 flex-col border-r border-[var(--color-hairline)] bg-[var(--color-surface)] px-4 py-6">
+        <Link href="/portal/casos" className="mb-6 flex items-center px-2">
+          <Image
+            src="/brand/dolado-logo-horizontal.svg"
+            alt="DoLado"
+            width={120}
+            height={28}
+            priority
+          />
+        </Link>
+
+        <Link
+          href="/portal/casos/novo"
+          className="mb-6 rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-center text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
+        >
+          + Abrir novo caso
+        </Link>
+
+        <nav className="flex flex-col gap-1">
+          <ItemNav href="/portal/casos" icon={<IconCasos />}>
+            Os meus casos
+          </ItemNav>
+          <ItemNav href="/conta" icon={<IconConta />}>
+            A minha conta
+          </ItemNav>
+          <ItemNav href="/portal/perfil" icon={<IconPerfil />}>
+            Gestão de Perfil
+          </ItemNav>
+          <ItemDesactivado icon={<IconSubscricao />}>Gestão de Subscrição</ItemDesactivado>
+          <ItemDesactivado icon={<IconFacturacao />}>Facturação</ItemDesactivado>
+        </nav>
+
+        <div className="mt-auto pt-6">
           <form action={logout}>
             <button
               type="submit"
-              className="text-sm text-[var(--color-ink-muted)] underline hover:text-[var(--color-ink)]"
+              className="w-full text-left text-sm text-[var(--color-ink-muted)] underline hover:text-[var(--color-ink)]"
             >
               Terminar sessão
             </button>
           </form>
         </div>
-      </header>
-      <main className="mx-auto max-w-[1120px] px-6 py-8">{children}</main>
+      </aside>
+
+      <main className="flex-1 px-8 py-8">
+        <div className="mx-auto max-w-[1120px]">{children}</div>
+      </main>
     </div>
   );
 }
