@@ -23,3 +23,6 @@ npm-debug.log*
 # Sistema
 .DS_Store
 *.pem
+
+# Clever Cloud CLI (config local, gerado por `clever link`)
+.clever.json
