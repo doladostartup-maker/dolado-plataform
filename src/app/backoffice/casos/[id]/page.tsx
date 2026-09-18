@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { actualizarCaso, decidirCaso } from "../actions";
 import { CasoForm } from "../_components/CasoForm";
+import { EnviarBoasVindas } from "../_components/EnviarBoasVindas";
 
 export default async function CasoDetalhePage({
   params,
@@ -67,6 +68,11 @@ export default async function CasoDetalhePage({
           </button>
         </form>
       </div>
+
+      <EnviarBoasVindas
+        casoId={id}
+        enviadoEmInicial={caso.email_boas_vindas_enviado_em ?? null}
+      />
 
       <CasoForm action={actualizarComId} valores={caso} submitLabel="Guardar alterações" />
     </div>
