@@ -27,14 +27,14 @@ export default async function CasoClienteDetalhePage({
     <div className="flex max-w-xl flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-          {caso.empresa_parceira ?? "O teu caso"}
+          {caso.empresa_parceira ?? "O seu caso"}
         </h1>
         <StatusBadge status={caso.status} />
       </div>
 
       {query.guardado && (
         <p className="text-sm text-[var(--color-status-success)]">
-          A tua decisão foi registada.
+          A sua decisão foi registada.
         </p>
       )}
       {query.erro && <p className="text-sm text-[var(--color-status-danger)]">{query.erro}</p>}
@@ -84,11 +84,11 @@ export default async function CasoClienteDetalhePage({
             className="text-sm font-medium"
             style={{ color: "var(--color-status-urgent)" }}
           >
-            Foi encontrada uma proposta para o teu caso
+            Foi encontrada uma proposta para o seu caso
             {caso.valor_indicado != null
               ? ` no valor de ${caso.valor_indicado} €`
               : ""}
-            . O que decides?
+            . O que decide?
           </p>
           <div className="flex gap-3">
             <form action={aceitar}>

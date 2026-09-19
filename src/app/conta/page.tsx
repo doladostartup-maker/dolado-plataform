@@ -22,7 +22,7 @@ export default async function ContaPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4">
       <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-        A tua conta
+        A sua conta
       </h1>
       <dl className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 text-sm shadow-[var(--shadow-subtle)]">
         <div>

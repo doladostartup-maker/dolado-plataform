@@ -56,9 +56,9 @@ export default async function RegistoPage({
       </form>
 
       <p className="text-sm text-[var(--color-ink-muted)]">
-        Já tens conta?{" "}
+        Já tem conta?{" "}
         <Link href="/login" className="text-[var(--color-brand)] underline">
-          Entra
+          Entre
         </Link>
       </p>
     </main>

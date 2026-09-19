@@ -64,9 +64,9 @@ export default async function LoginPage({
       </form>
 
       <p className="text-sm text-[var(--color-ink-muted)]">
-        Não tens conta?{" "}
+        Não tem conta?{" "}
         <Link href="/registo" className="text-[var(--color-brand)] underline">
-          Regista-te
+          Registe-se
         </Link>
       </p>
     </main>

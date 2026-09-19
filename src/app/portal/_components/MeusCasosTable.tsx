@@ -15,7 +15,7 @@ export function MeusCasosTable({ casos }: { casos: Caso[] }) {
   if (casos.length === 0) {
     return (
       <p className="text-sm text-[var(--color-ink-muted)]">
-        Ainda não tens nenhum caso aberto.
+        Ainda não tem nenhum caso aberto.
       </p>
     );
   }
