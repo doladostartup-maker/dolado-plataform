@@ -1,65 +1,45 @@
-import Image from "next/image";
-import Link from "next/link";
+import type { Metadata } from "next";
+import Script from "next/script";
+import { Landing } from "@/components/landing/Landing";
 
-export default function Home() {
+export const metadata: Metadata = {
+  title: "A sua reclamação, feita bem - DoLado",
+  description:
+    "A DoLado escreve e envia a sua reclamação formal a qualquer empresa de telecomunicações, energia ou água — e acompanha o caso até à resposta.",
+};
+
+const GTM_ID = "GTM-T4HCJBMF";
+const GA4_IDS = ["G-B4PQKLZ2BF", "G-KD6C514Q1Q"];
+const ADS_ID = "AW-18429943837";
+const COOKIEBOT_ID = "dafec895-e2af-4e2e-a904-ea3c9f12380e";
+
+export default function LandingPage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="px-4 py-6">
-        <Link href="/" aria-label="Página inicial DoLado" className="inline-flex">
-          <Image
-            src="/brand/dolado-logo-horizontal.svg"
-            alt="DoLado"
-            width={110}
-            height={26}
-            priority
-          />
-        </Link>
-      </header>
-
-      <main className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center gap-6 px-4 text-center">
-        <Image
-          src="/brand/dolado-logo-horizontal.svg"
-          alt="DoLado"
-          width={160}
-          height={40}
-          priority
-        />
-        <div className="flex flex-col gap-1">
-          <p className="text-[var(--color-ink-muted)]">
-            Plataforma de acompanhamento de reclamações de consumo.
-          </p>
-          <p className="text-sm text-[var(--color-ink-muted)]">
-            Acesso por email e palavra-passe.
-          </p>
-        </div>
-        <div className="flex gap-4">
-          <Link
-            href="/registo"
-            className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-          >
-            Criar conta
-          </Link>
-          <Link
-            href="/login"
-            className="rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
-          >
-            Entrar
-          </Link>
-        </div>
-        <p className="text-xs text-[var(--color-ink-faint)]">
-          Acompanhamos casos reais de reclamação em Portugal.
-        </p>
-      </main>
-
-      <footer className="flex justify-center gap-4 px-4 py-6 text-xs text-[var(--color-ink-faint)]">
-        <Link href="/termos" className="hover:text-[var(--color-ink-muted)]">
-          Termos de Serviço
-        </Link>
-        <span aria-hidden>·</span>
-        <Link href="/privacidade" className="hover:text-[var(--color-ink-muted)]">
-          Política de Privacidade
-        </Link>
-      </footer>
-    </div>
+    <>
+      <Script
+        id="cookiebot"
+        src="https://consent.cookiebot.com/uc.js"
+        data-cbid={COOKIEBOT_ID}
+        data-blockingmode="auto"
+        strategy="beforeInteractive"
+      />
+      <Script id="gtm" strategy="afterInteractive">
+        {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM_ID}');`}
+      </Script>
+      <Script
+        id="gtag-src"
+        src={`https://www.googletagmanager.com/gtag/js?id=${GA4_IDS[0]}`}
+        strategy="afterInteractive"
+      />
+      <Script id="gtag-init" strategy="afterInteractive">
+        {`window.dataLayer = window.dataLayer || [];
+window.gtag = window.gtag || function gtag(){window.dataLayer.push(arguments);};
+gtag('js', new Date());
+gtag('config', '${GA4_IDS[0]}');
+gtag('config', '${GA4_IDS[1]}');
+gtag('config', '${ADS_ID}', { allow_enhanced_conversions: true });`}
+      </Script>
+      <Landing />
+    </>
   );
 }
