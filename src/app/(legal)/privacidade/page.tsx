@@ -117,8 +117,17 @@ export default function PrivacidadePage() {
         </h2>
         <ul className="flex list-disc flex-col gap-2 pl-5 text-base leading-relaxed text-[var(--color-ink)]">
           <li>
-            <strong>HubSpot</strong> (gestão do formulário e dos contactos/casos, na
-            qualidade de subcontratante)
+            <strong>Supabase</strong> (base de dados e alojamento dos dados do
+            formulário e dos casos, na qualidade de subcontratante, com os dados
+            armazenados na União Europeia)
+          </li>
+          <li>
+            <strong>Clever Cloud</strong> (alojamento da aplicação, na União Europeia,
+            na qualidade de subcontratante)
+          </li>
+          <li>
+            <strong>Brevo</strong> (envio de emails transaccionais relacionados com o
+            caso, na qualidade de subcontratante, com sede na União Europeia)
           </li>
           <li>
             <strong>Google Analytics / GA4</strong> (métricas de utilização do site)
