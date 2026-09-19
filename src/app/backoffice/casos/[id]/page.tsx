@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { actualizarCaso, decidirCaso } from "../actions";
+import { carregarAnexo, apagarAnexo } from "../anexos-actions";
 import { CasoForm } from "../_components/CasoForm";
 import { EnviarBoasVindas } from "../_components/EnviarBoasVindas";
+import { AnexosCaso } from "../_components/AnexosCaso";
 
 export default async function CasoDetalhePage({
   params,
@@ -25,9 +27,21 @@ export default async function CasoDetalhePage({
     notFound();
   }
 
+  const { data: anexosData } = await supabase
+    .from("anexos")
+    .select("id, nome_ficheiro, tamanho_bytes, created_at")
+    .eq("caso_id", id)
+    .order("created_at", { ascending: false });
+
+  const anexos = (anexosData ?? []).map((anexo) => ({
+    ...anexo,
+    apagarAction: apagarAnexo.bind(null, anexo.id, id),
+  }));
+
   const actualizarComId = actualizarCaso.bind(null, id);
   const aceitar = decidirCaso.bind(null, id, "aceitou");
   const recusar = decidirCaso.bind(null, id, "recusou");
+  const carregarComId = carregarAnexo.bind(null, id);
 
   const criadoEm = new Date(caso.created_at).toLocaleString("pt-PT", {
     dateStyle: "medium",
@@ -73,6 +87,8 @@ export default async function CasoDetalhePage({
         casoId={id}
         enviadoEmInicial={caso.email_boas_vindas_enviado_em ?? null}
       />
+
+      <AnexosCaso anexos={anexos} carregarAction={carregarComId} />
 
       <CasoForm action={actualizarComId} valores={caso} submitLabel="Guardar alterações" />
     </div>
