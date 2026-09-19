@@ -186,7 +186,7 @@ export function Landing() {
       <section className="mx-auto max-w-[1120px] px-4 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-24">
         <div className="mx-auto mb-8 max-w-[26ch] text-center sm:mb-9">
           <h1 className="text-[32px] font-bold leading-[1.14] tracking-tight text-[var(--color-ink)] sm:text-[48px]">
-            Farta de ligar, esperar e ninguém resolver?
+            Farto de ligar, esperar e ninguém resolver?
           </h1>
         </div>
         <div className="mx-auto mb-10 max-w-[52ch] text-center sm:mb-14">
