@@ -20,6 +20,14 @@ export async function GET(request: Request) {
       searchParams.get("error_description"),
     );
   } else {
+    // Diagnóstico: nomes dos cookies recebidos (nunca os valores), para
+    // perceber se o cookie do code verifier chega ao callback ou não.
+    const nomesCookies = (request.headers.get("cookie") ?? "")
+      .split(";")
+      .map((c) => c.trim().split("=")[0])
+      .filter(Boolean);
+    console.error("[auth/callback] cookies recebidos:", nomesCookies.join(", ") || "(nenhum)");
+
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
