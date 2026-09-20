@@ -6,6 +6,12 @@ import { updateSession } from "@/lib/supabase/middleware";
 // pedido no plano "pico" da Clever Cloud.
 const PAGINAS_PUBLICAS = ["/", "/termos", "/privacidade", "/entrar", "/login", "/registo"];
 
+// /auth/callback tem de fazer a troca do code PKCE de forma atómica, sem
+// outro cliente Supabase a mexer nos cookies antes — deixar o updateSession
+// correr aqui apaga por vezes o cookie do code verifier antes da troca
+// acontecer, fazendo o login falhar na primeira tentativa.
+const ROTAS_SEM_REFRESH_DE_SESSAO = [...PAGINAS_PUBLICAS, "/auth/callback"];
+
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host")?.split(":")[0] ?? "";
   const { pathname, search } = request.nextUrl;
@@ -25,7 +31,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/entrar", request.url));
   }
 
-  if (PAGINAS_PUBLICAS.includes(pathname)) {
+  if (ROTAS_SEM_REFRESH_DE_SESSAO.includes(pathname)) {
     return NextResponse.next();
   }
 
