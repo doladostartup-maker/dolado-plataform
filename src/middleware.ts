@@ -12,6 +12,16 @@ const PAGINAS_PUBLICAS = ["/", "/termos", "/privacidade", "/entrar", "/login", "
 // acontecer, fazendo o login falhar na primeira tentativa.
 const ROTAS_SEM_REFRESH_DE_SESSAO = [...PAGINAS_PUBLICAS, "/auth/callback"];
 
+// Só estas páginas de marketing fazem sentido em dolado.pt (sem "portal.").
+// Tudo o resto (login, registo, entrar, portal, backoffice, auth/…) tem de
+// correr sempre em portal.dolado.pt — os cookies de sessão e do PKCE do
+// login OAuth são "host-only" (sem atributo Domain) e não são partilhados
+// entre dolado.pt e portal.dolado.pt. Um utilizador que chegasse a /login
+// via dolado.pt (ex. link relativo "Área do Utilizador" na landing) ficava
+// com o cookie do code verifier gravado em dolado.pt, mas o callback do
+// Google volta sempre a portal.dolado.pt — o cookie nunca era encontrado.
+const PAGINAS_SO_MARKETING = ["/", "/termos", "/privacidade"];
+
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host")?.split(":")[0] ?? "";
   const { pathname, search } = request.nextUrl;
@@ -19,6 +29,16 @@ export async function middleware(request: NextRequest) {
   // cleverapps.io é só para testes internos (nunca deve ficar exposto em
   // links partilhados, emails, ou redirects para clientes reais).
   if (host.endsWith(".cleverapps.io")) {
+    return NextResponse.redirect(
+      new URL(`${pathname}${search}`, "https://portal.dolado.pt"),
+      308,
+    );
+  }
+
+  if (
+    (host === "dolado.pt" || host === "www.dolado.pt") &&
+    !PAGINAS_SO_MARKETING.includes(pathname)
+  ) {
     return NextResponse.redirect(
       new URL(`${pathname}${search}`, "https://portal.dolado.pt"),
       308,
