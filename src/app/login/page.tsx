@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { login, loginComGoogle } from "./actions";
+import { login } from "./actions";
 
 export default async function LoginPage({
   searchParams,
@@ -54,14 +54,12 @@ export default async function LoginPage({
         <span className="h-px flex-1 bg-[var(--color-hairline)]" />
       </div>
 
-      <form action={loginComGoogle}>
-        <button
-          type="submit"
-          className="w-full rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
-        >
-          Entrar com Google
-        </button>
-      </form>
+      <a
+        href="/auth/login/google"
+        className="block w-full rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-[18px] py-[10px] text-center text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
+      >
+        Entrar com Google
+      </a>
 
       <p className="text-sm text-[var(--color-ink-muted)]">
         Não tem conta?{" "}

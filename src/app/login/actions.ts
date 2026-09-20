@@ -16,21 +16,3 @@ export async function login(formData: FormData) {
 
   redirect("/conta");
 }
-
-export async function loginComGoogle() {
-  const supabase = await createClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: { redirectTo: `${siteUrl}/auth/callback` },
-  });
-
-  if (error || !data.url) {
-    redirect(
-      `/login?erro=${encodeURIComponent(error?.message ?? "Erro ao iniciar sessão com Google.")}`,
-    );
-  }
-
-  redirect(data.url);
-}
