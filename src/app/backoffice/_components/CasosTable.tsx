@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SectorChip } from "@/components/SectorChip";
-import { diasUteisRestantes, formatarDiasRestantes } from "@/lib/diasUteis";
+import { diasUteisRestantes, formatarDiasRestantes, horasUteisDesdeCriacao } from "@/lib/diasUteis";
 
 type Caso = {
   id: string;
@@ -12,6 +12,8 @@ type Caso = {
   data_fim_fidelidade: string | null;
   valor_indicado: number | null;
   data_envio_reclamacao?: string | null;
+  created_at?: string;
+  primeira_resposta_em?: string | null;
 };
 
 function diasRestantes(data: string | null) {
@@ -33,12 +35,24 @@ function estiloDiasRestantes(dias: number | null) {
   return undefined;
 }
 
+function estiloPrimeiraResposta(horas: number) {
+  if (horas >= 24) {
+    return { color: "var(--color-status-danger)" };
+  }
+  if (horas >= 18) {
+    return { color: "var(--color-status-urgent)" };
+  }
+  return undefined;
+}
+
 export function CasosTable({
   casos,
   mostrarDiasRestantes = false,
+  mostrarPrimeiraResposta = false,
 }: {
   casos: Caso[];
   mostrarDiasRestantes?: boolean;
+  mostrarPrimeiraResposta?: boolean;
 }) {
   if (casos.length === 0) {
     return (
@@ -58,7 +72,7 @@ export function CasosTable({
               Empresa
             </th>
             <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
-              Sector
+              Setor
             </th>
             <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
               Estado
@@ -72,6 +86,11 @@ export function CasosTable({
             {mostrarDiasRestantes && (
               <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
                 Dias restantes
+              </th>
+            )}
+            {mostrarPrimeiraResposta && (
+              <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
+                1.ª resposta
               </th>
             )}
           </tr>
@@ -125,6 +144,25 @@ export function CasosTable({
                     return (
                       <td className="px-3 py-2 font-medium" style={estiloDiasRestantes(dias)}>
                         {dias !== null ? formatarDiasRestantes(dias) : ""}
+                      </td>
+                    );
+                  })()}
+                {mostrarPrimeiraResposta &&
+                  (() => {
+                    if (caso.primeira_resposta_em) {
+                      return (
+                        <td className="px-3 py-2 text-[var(--color-status-success)]">
+                          Respondido
+                        </td>
+                      );
+                    }
+                    if (!caso.created_at) {
+                      return <td className="px-3 py-2 text-[var(--color-ink-faint)]">—</td>;
+                    }
+                    const horas = horasUteisDesdeCriacao(caso.created_at);
+                    return (
+                      <td className="px-3 py-2 font-medium" style={estiloPrimeiraResposta(horas)}>
+                        {Math.floor(horas)}h úteis
                       </td>
                     );
                   })()}

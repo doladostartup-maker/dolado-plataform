@@ -33,7 +33,7 @@ export function ClienteCasoForm({
           className={INPUT_CLASS}
         />
       </Campo>
-      <Campo label="Email">
+      <Campo label="E-mail">
         <input
           name="email"
           type="email"
@@ -52,7 +52,7 @@ export function ClienteCasoForm({
           className={INPUT_CLASS}
         />
       </Campo>
-      <Campo label="Sector">
+      <Campo label="Setor">
         <select name="sector" defaultValue="" className={INPUT_CLASS}>
           <option value="">—</option>
           <option value="Telecomunicações">Telecomunicações</option>

@@ -23,7 +23,7 @@ export default async function LoginPage({
 
       <form action={login} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
-          Email
+          E-mail
           <input
             name="email"
             type="email"
@@ -32,7 +32,7 @@ export default async function LoginPage({
           />
         </label>
         <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
-          Senha
+          Palavra-passe
           <input
             name="password"
             type="password"

@@ -166,7 +166,7 @@ export default async function PortalLayout({
             Gestão de Perfil
           </ItemNav>
           <ItemDesactivado icon={<IconSubscricao />}>Gestão de Subscrição</ItemDesactivado>
-          <ItemDesactivado icon={<IconFacturacao />}>Facturação</ItemDesactivado>
+          <ItemDesactivado icon={<IconFacturacao />}>Faturação</ItemDesactivado>
         </nav>
 
         <div className="mt-auto pt-6">

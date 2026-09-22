@@ -17,7 +17,7 @@ export default function PrivacidadePage() {
       </div>
 
       <div className="rounded-lg border-l-[3px] border-[var(--color-brand)] bg-[var(--color-surface-sunken)] p-4 text-sm text-[var(--color-ink-muted)]">
-        Esta Política aplica-se à fase actual de validação (Beta), em que o
+        Esta Política aplica-se à fase atual de validação (Beta), em que o
         processamento de casos é feito manualmente. Será substituída por uma Política
         mais detalhada quando o serviço passar a incluir automação, conta de cliente, e
         planos pagos.
@@ -41,7 +41,7 @@ export default function PrivacidadePage() {
           dolado.pt, nos termos do Regulamento (UE) 2016/679 (RGPD).
         </p>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
-          Não há, nesta fase, Encarregado de Protecção de Dados (DPO) nomeado — o volume
+          Não há, nesta fase, Encarregado de Proteção de Dados (DPO) nomeado — o volume
           e a natureza dos dados tratados (leads e casos individuais, processados
           manualmente) não geram essa obrigação. Esta conclusão será reavaliada se o
           volume de casos crescer significativamente.
@@ -54,12 +54,12 @@ export default function PrivacidadePage() {
         </h2>
         <ul className="flex list-disc flex-col gap-2 pl-5 text-base leading-relaxed text-[var(--color-ink)]">
           <li>
-            <strong>Dados de identificação e contacto</strong>: nome completo, email,
+            <strong>Dados de identificação e contacto</strong>: nome completo, e-mail,
             telefone
           </li>
           <li>
-            <strong>Dados do caso</strong>: sector da empresa visada, descrição do
-            problema (texto livre), documentos anexados (factura, contrato, capturas de
+            <strong>Dados do caso</strong>: setor da empresa visada, descrição do
+            problema (texto livre), documentos anexados (fatura, contrato, capturas de
             ecrã ou outros comprovativos)
           </li>
           <li>
@@ -105,9 +105,9 @@ export default function PrivacidadePage() {
         </h2>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
           Nesta fase, <strong>não existe qualquer decisão automatizada</strong>. Todo o
-          processo — desde a leitura do formulário até à redacção e envio da reclamação
+          processo — desde a leitura do formulário até à redação e envio da reclamação
           — é conduzido por uma pessoa da equipa DoLado. O artigo 22.º do RGPD não é,
-          por isso, aplicável ao funcionamento actual do serviço.
+          por isso, aplicável ao funcionamento atual do serviço.
         </p>
       </section>
 
@@ -126,7 +126,7 @@ export default function PrivacidadePage() {
             na qualidade de subcontratante)
           </li>
           <li>
-            <strong>Brevo</strong> (envio de emails transaccionais relacionados com o
+            <strong>Brevo</strong> (envio de e-mails transacionais relacionados com o
             caso, na qualidade de subcontratante, com sede na União Europeia)
           </li>
           <li>
@@ -163,7 +163,7 @@ export default function PrivacidadePage() {
           7. Direitos do titular
         </h2>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
-          O Utilizador pode, a qualquer momento, pedir acesso, rectificação,
+          O Utilizador pode, a qualquer momento, pedir acesso, retificação,
           apagamento, ou limitação do tratamento dos seus dados, escrevendo para{" "}
           <a
             href="mailto:thiago.pereira@dolado.pt"
@@ -172,7 +172,7 @@ export default function PrivacidadePage() {
             thiago.pereira@dolado.pt
           </a>
           . Tem também o direito de apresentar reclamação junto da Comissão Nacional
-          de Protecção de Dados (CNPD), através de{" "}
+          de Proteção de Dados (CNPD), através de{" "}
           <a
             href="https://www.cnpd.pt"
             target="_blank"
@@ -201,7 +201,7 @@ export default function PrivacidadePage() {
           9. Alterações e contacto
         </h2>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
-          Esta Política pode ser actualizada à medida que o serviço evolui; a versão em
+          Esta Política pode ser atualizada à medida que o serviço evolui; a versão em
           vigor é sempre a publicada em dolado.pt. Para qualquer questão sobre os seus
           dados:{" "}
           <a
@@ -215,7 +215,7 @@ export default function PrivacidadePage() {
       </section>
 
       <p className="mt-6 text-xs text-[var(--color-ink-faint)]">
-        Última actualização: 14 de setembro de 2026
+        Última atualização: 14 de setembro de 2026
       </p>
     </article>
   );

@@ -51,8 +51,20 @@ O piloto Remax é gratuito (sem receita ainda). Prioridade: **ficar nos tiers gr
 
 ## Idioma e tom
 
-- Todo o texto visível na aplicação (UI, mensagens, emails) em **português europeu clássico** (pré-Acordo Ortográfico: "factura", "objectivo", "sector", "actual", "correcção" — não "fatura", "objetivo", "setor", "atual", "correção")
-- Comentários de código podem ser em português ou inglês, à escolha, mas texto orientado ao utilizador é sempre português europeu clássico
+- Todo o texto visível na aplicação (UI, mensagens, emails) em português europeu, segundo o Acordo Ortográfico de 1990 (ex.: "fatura", "direção", "ação" — não "factura", "direcção", "acção")
+- Comentários de código podem ser em português ou inglês, à escolha, mas texto orientado ao utilizador é sempre português europeu
+
+## Regras de escrita (obrigatórias em todo o texto visível ao utilizador)
+
+Aplicam-se a páginas, botões, mensagens de erro, e-mails transacionais, templates da Brevo, textos de consentimento e qualquer outro texto que o cliente leia.
+
+1. Português europeu, segundo o Acordo Ortográfico de 1990 (ex.: "fatura", "direção", "ação"). Nunca português do Brasil. Evitar construções brasileiras como "em até", "a gente", "você", "tela" (usar "ecrã"), "celular" (usar "telemóvel"), "arquivo" (usar "ficheiro"), "cadastro" (usar "registo").
+2. Escrever sempre "e-mail" e "e-mails", com hífen. Nunca "email".
+3. A marca é "a DoLado": feminino e com L maiúsculo. Ex.: "A DoLado trata…", "da DoLado", "na DoLado", "com a DoLado", "Autorizo a DoLado…". Nunca "o DoLado" nem "Dolado".
+4. O cliente é tratado na terceira pessoa ("por si", "consigo", "a sua", "Preencha", "Conte-nos"). Nunca por "tu" ("preenche", "conta-nos", "o teu").
+5. Prazos de resposta escrevem-se "no prazo máximo de 24 horas úteis".
+
+Antes de terminar qualquer tarefa que altere texto visível, rever o texto contra estas regras e corrigir.
 
 ## Regra de ouro: construir por fases, nunca tudo de uma vez
 

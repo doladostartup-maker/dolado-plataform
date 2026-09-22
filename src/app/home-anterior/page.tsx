@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
-import { Homepage } from "@/components/landing/Homepage";
+import { Landing } from "@/components/landing/Landing";
 
 export const metadata: Metadata = {
   title: "A sua reclamação, feita bem - DoLado",
@@ -8,11 +8,11 @@ export const metadata: Metadata = {
     "A DoLado escreve e envia a sua reclamação formal a qualquer empresa de telecomunicações, energia ou água — e acompanha o caso até à resposta.",
 };
 
-export default function LandingPage() {
+export default function HomeAnteriorPage() {
   return (
     <>
       <AnalyticsScripts />
-      <Homepage />
+      <Landing />
     </>
   );
 }

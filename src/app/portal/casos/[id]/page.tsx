@@ -41,7 +41,7 @@ export default async function CasoClienteDetalhePage({
 
       <dl className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 text-sm shadow-[var(--shadow-subtle)]">
         <div>
-          <dt className="text-[var(--color-ink-muted)]">Sector</dt>
+          <dt className="text-[var(--color-ink-muted)]">Setor</dt>
           <dd className="text-[var(--color-ink)]">{caso.sector ?? "—"}</dd>
         </div>
         <div>

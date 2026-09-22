@@ -7,7 +7,7 @@ type Faq = { q: string; a: string; cta?: boolean };
 const FAQS: Faq[] = [
   {
     q: "Isto é um serviço jurídico?",
-    a: "Não. A DoLado não é uma sociedade de advogados nem presta consulta jurídica individualizada. Organizamos, escrevemos e acompanhamos a sua reclamação com base em critérios legais públicos e objectivos.",
+    a: "Não. A DoLado não é uma sociedade de advogados nem presta consulta jurídica individualizada. Organizamos, escrevemos e acompanhamos a sua reclamação com base em critérios legais públicos e objetivos.",
   },
   {
     q: "Quanto custa?",
@@ -23,11 +23,11 @@ const FAQS: Faq[] = [
   },
   {
     q: "Que documentos preciso de ter?",
-    a: "O que tiver à mão: facturas, contrato, emails ou mensagens trocadas com a empresa e registos de contactos com o apoio ao cliente. Se faltar algo, dizemos-lhe exactamente o que pedir.",
+    a: "O que tiver à mão: faturas, contrato, e-mails ou mensagens trocadas com a empresa e registos de contactos com o apoio ao cliente. Se faltar algo, dizemos-lhe exatamente o que pedir.",
   },
   {
     q: "Tratam de qualquer tipo de problema?",
-    a: "Durante a fase Beta tratamos apenas casos de telecomunicações, energia e água/resíduos — são os sectores onde as regras são mais claras e onde queremos validar bem o serviço. Depois abriremos a todos os sectores. Se o seu caso estiver fora destes três ou não tiver base para reclamação, dizemos-lhe isso à partida.",
+    a: "Durante a fase Beta tratamos apenas casos de telecomunicações, energia e água/resíduos — são os setores onde as regras são mais claras e onde queremos validar bem o serviço. Depois abriremos a todos os setores. Se o seu caso estiver fora destes três ou não tiver base para reclamação, dizemos-lhe isso à partida.",
   },
   {
     q: "Prefiro só falar antes de decidir — dá?",

@@ -29,7 +29,7 @@ export default function EntrarPage() {
             Plataforma de acompanhamento de reclamações de consumo.
           </p>
           <p className="text-sm text-[var(--color-ink-muted)]">
-            Acesso por email e palavra-passe.
+            Acesso por e-mail e palavra-passe.
           </p>
         </div>
         <div className="flex gap-4">

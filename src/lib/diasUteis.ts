@@ -50,3 +50,43 @@ export function formatarDiasRestantes(dias: number): string {
   }
   return `${dias} ${dias === 1 ? "dia" : "dias"}`;
 }
+
+const HORA_INICIO_UTIL = 9;
+const HORA_FIM_UTIL = 18;
+
+function limitarAoDia(data: Date, hora: number): Date {
+  const d = new Date(data);
+  d.setHours(hora, 0, 0, 0);
+  return d;
+}
+
+/**
+ * Horas úteis (dias de semana, 9h-18h) entre duas datas. Usado para medir o
+ * cumprimento do prazo de primeira resposta ao cliente.
+ */
+export function horasUteisEntre(inicio: Date, fim: Date): number {
+  if (fim <= inicio) return 0;
+
+  let horas = 0;
+  const cursor = new Date(inicio);
+  cursor.setHours(0, 0, 0, 0);
+
+  while (cursor < fim) {
+    if (isDiaUtil(cursor)) {
+      const janelaInicio = limitarAoDia(cursor, HORA_INICIO_UTIL);
+      const janelaFim = limitarAoDia(cursor, HORA_FIM_UTIL);
+      const overlapInicio = inicio > janelaInicio ? inicio : janelaInicio;
+      const overlapFim = fim < janelaFim ? fim : janelaFim;
+      if (overlapFim > overlapInicio) {
+        horas += (overlapFim.getTime() - overlapInicio.getTime()) / 3_600_000;
+      }
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return horas;
+}
+
+export function horasUteisDesdeCriacao(criadoEm: string): number {
+  return horasUteisEntre(new Date(criadoEm), new Date());
+}

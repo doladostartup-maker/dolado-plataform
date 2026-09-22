@@ -22,7 +22,7 @@ export default async function CasosPage({
   let query = supabase
     .from("casos")
     .select(
-      "id, nome, empresa_parceira, sector, status, data_fim_fidelidade, valor_indicado, data_envio_reclamacao",
+      "id, nome, empresa_parceira, sector, status, data_fim_fidelidade, valor_indicado, data_envio_reclamacao, created_at, primeira_resposta_em",
     )
     .order("data_fim_fidelidade", { ascending: true, nullsFirst: false });
 
@@ -64,7 +64,7 @@ export default async function CasosPage({
           defaultValue={params.sector ?? ""}
           className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-2 py-1 text-[var(--color-ink)]"
         >
-          <option value="">Todos os sectores</option>
+          <option value="">Todos os setores</option>
           <option value="Telecomunicações">Telecomunicações</option>
           <option value="Energia">Energia</option>
           <option value="Água">Água</option>
@@ -84,7 +84,7 @@ export default async function CasosPage({
       </form>
 
       {error && <p className="text-sm text-[var(--color-status-danger)]">{error.message}</p>}
-      <CasosTable casos={casos ?? []} mostrarDiasRestantes />
+      <CasosTable casos={casos ?? []} mostrarDiasRestantes mostrarPrimeiraResposta />
     </div>
   );
 }

@@ -42,10 +42,10 @@ export async function criarLeadPublico(
   const autorizacao = formData.get("autorizacao") === "on";
 
   if (!validNome(nome)) return { ok: false, erro: "Insira um nome válido." };
-  if (!validEmail(email)) return { ok: false, erro: "Email inválido." };
+  if (!validEmail(email)) return { ok: false, erro: "E-mail inválido." };
   if (!validPhone(telefone)) return { ok: false, erro: "Telefone inválido." };
   if (!setorValue || !tipoProblema) {
-    return { ok: false, erro: "Seleccione o sector e o tipo de problema." };
+    return { ok: false, erro: "Selecione o setor e o tipo de problema." };
   }
   if (!autorizacao) {
     return { ok: false, erro: "Deve aceitar a Política de Privacidade para continuar." };

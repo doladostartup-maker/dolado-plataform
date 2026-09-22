@@ -56,6 +56,8 @@ export default async function CasoDetalhePage({
         </h1>
         <p className="text-[var(--text-caption)] text-[var(--color-ink-faint)]">
           Criado em {criadoEm}
+          {caso.origem && ` · origem: ${caso.origem}`}
+          {caso.consentimento_alertas && " · aceitou alertas"}
         </p>
       </div>
 

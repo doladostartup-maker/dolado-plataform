@@ -21,7 +21,7 @@ export async function POST(
 
   if (!caso.email) {
     return NextResponse.json(
-      { erro: "Este caso não tem email associado." },
+      { erro: "Este caso não tem e-mail associado." },
       { status: 400 },
     );
   }
@@ -43,7 +43,7 @@ export async function POST(
   if (!resposta.ok) {
     const corpoErro = await resposta.text();
     return NextResponse.json(
-      { erro: `Falha ao enviar email via Brevo: ${corpoErro}` },
+      { erro: `Falha ao enviar e-mail via Brevo: ${corpoErro}` },
       { status: 502 },
     );
   }

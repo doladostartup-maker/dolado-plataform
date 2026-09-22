@@ -18,7 +18,7 @@ export default function TermosPage() {
       </div>
 
       <div className="rounded-lg border-l-[3px] border-[var(--color-brand)] bg-[var(--color-surface-sunken)] p-4 text-sm text-[var(--color-ink-muted)]">
-        Estes Termos aplicam-se à fase actual de validação (Beta), em que o serviço é
+        Estes Termos aplicam-se à fase atual de validação (Beta), em que o serviço é
         prestado de forma manual por uma pessoa da equipa DoLado, sem automação, sem
         conta de cliente, e sem qualquer cobrança. Serão substituídos por Termos
         completos quando o serviço passar a incluir submissão automatizada e planos
@@ -41,7 +41,7 @@ export default function TermosPage() {
           problemas em contratos de telecomunicações, energia, ou água/resíduos em
           Portugal. Depois de o Utilizador descrever o seu caso, a DoLado identifica o
           direito legal potencialmente aplicável, escreve e envia uma reclamação formal
-          em nome do Utilizador pelo canal correcto da empresa visada, e acompanha o
+          em nome do Utilizador pelo canal correto da empresa visada, e acompanha o
           processo até à resposta.
         </p>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
@@ -117,7 +117,7 @@ export default function TermosPage() {
             <ul className="flex list-disc flex-col gap-2 pl-5 text-base leading-relaxed text-[var(--color-ink)]">
               <li>
                 Que a reclamação é redigida com base legal e enviada pelo canal formal
-                correcto.
+                correto.
               </li>
               <li>
                 Que o prazo legal de resposta é acompanhado e que o Utilizador é
@@ -135,7 +135,7 @@ export default function TermosPage() {
               <li>Consulta jurídica individualizada ou representação em tribunal.</li>
               <li>
                 Prazos de resolução, que dependem sempre da empresa reclamada e de
-                factores fora do controlo da DoLado.
+                fatores fora do controlo da DoLado.
               </li>
             </ul>
           </div>
@@ -144,7 +144,7 @@ export default function TermosPage() {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold text-[var(--color-ink)]">
-          5. Sectores abrangidos
+          5. Setores abrangidos
         </h2>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
           Nesta fase, a DoLado trata exclusivamente casos de telecomunicações, energia,
@@ -157,10 +157,10 @@ export default function TermosPage() {
           6. Responsabilidade
         </h2>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
-          A DoLado compromete-se a agir com diligência na redacção e envio da
+          A DoLado compromete-se a agir com diligência na redação e envio da
           reclamação e no acompanhamento do prazo. A DoLado não é responsável por
           decisões da empresa reclamada, por atrasos ou indisponibilidade de sistemas
-          de terceiros, ou por informação incorrecta ou incompleta fornecida pelo
+          de terceiros, ou por informação incorreta ou incompleta fornecida pelo
           Utilizador. Nada nestes Termos exclui responsabilidade que a lei portuguesa
           não permita excluir, designadamente nas relações de consumo reguladas pela
           Lei n.º 24/96.
@@ -185,7 +185,7 @@ export default function TermosPage() {
           8. Alterações e contacto
         </h2>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
-          Estes Termos podem ser actualizados à medida que o serviço evolui; a versão em
+          Estes Termos podem ser atualizados à medida que o serviço evolui; a versão em
           vigor é sempre a publicada em dolado.pt. Para qualquer questão:{" "}
           <a
             href="mailto:thiago.pereira@dolado.pt"
@@ -198,7 +198,7 @@ export default function TermosPage() {
       </section>
 
       <p className="mt-6 text-xs text-[var(--color-ink-faint)]">
-        Última actualização: 14 de setembro de 2026
+        Última atualização: 14 de setembro de 2026
       </p>
     </article>
   );

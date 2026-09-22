@@ -3,26 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
 import { FaqAccordion } from "./FaqAccordion";
-import { IntakeForm } from "./IntakeForm";
-
-function track(nome: string) {
-  if (typeof window !== "undefined" && typeof window.gtag === "function") {
-    window.gtag("event", nome);
-  }
-}
-
-async function sha256(str: string) {
-  if (typeof window === "undefined" || !window.crypto?.subtle) return null;
-  const buf = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
+import { FormularioGuiado } from "./FormularioGuiado";
 
 const PROBLEMAS = [
   {
-    titulo: "Meses sem facturas e agora uma conta enorme.",
+    titulo: "Meses sem faturas e agora uma conta enorme.",
     texto: "Organizamos os factos e enviamos a sua reclamação por escrito.",
   },
   {
@@ -39,12 +26,12 @@ const OFERTA = [
   {
     numero: 1,
     titulo: "Identificamos o direito aplicável",
-    texto: "Cancelamento sem penalização, acerto de facturação, reembolso por avaria — o que a lei já lhe dá.",
+    texto: "Cancelamento sem penalização, acerto de faturação, reembolso por avaria — o que a lei já lhe dá.",
   },
   {
     numero: 2,
     titulo: "Reclamamos em seu nome",
-    texto: "Reclamação escrita com base legal, factos e datas, enviada pelo canal formal correcto.",
+    texto: "Reclamação escrita com base legal, factos e datas, enviada pelo canal formal correto.",
   },
   {
     numero: 3,
@@ -57,12 +44,12 @@ const PASSOS = [
   {
     label: "Passo 1",
     titulo: "Conte-nos o que aconteceu",
-    texto: "Cinco minutos. Diga-nos o sector, o que aconteceu e como o contactar. Não precisa de anexar nada já.",
+    texto: "Cinco minutos. Diga-nos o setor, o que aconteceu e como o contactar. Não precisa de anexar nada já.",
   },
   {
     label: "Passo 2",
     titulo: "Entramos em contacto",
-    texto: "Escrevemos-lhe por email ou telefone a pedir a factura ou o contrato, se for preciso, e explicamos onde está o seu direito.",
+    texto: "Escrevemos-lhe por e-mail ou telefone a pedir a fatura ou o contrato, se for preciso, e explicamos onde está o seu direito.",
   },
   {
     label: "Passo 3",
@@ -83,14 +70,14 @@ const SETORES = [
     itens: [
       "Penalização de fidelização cobrada fora do prazo ou com valor errado",
       "Portabilidade não executada ou atrasada pelo novo operador",
-      "Avaria superior a 24h sem crédito automático na factura",
+      "Avaria superior a 24h sem crédito automático na fatura",
     ],
   },
   {
     chip: "Energia",
-    titulo: "A factura da Galp disparou sem explicação?",
+    titulo: "A fatura da Galp disparou sem explicação?",
     itens: [
-      "Acerto retroactivo que junta vários meses numa factura só",
+      "Acerto retroativo que junta vários meses numa fatura só",
       "Subida de preço sem aviso prévio",
       "Corte de fornecimento sem os 20 dias de pré-aviso obrigatórios",
     ],
@@ -99,7 +86,7 @@ const SETORES = [
     chip: "Água / Resíduos",
     titulo: "A EPAL cortou-lhe a água sem aviso?",
     itens: [
-      "Facturação irregular por alteração de periodicidade sem o seu consentimento",
+      "Faturação irregular por alteração de periodicidade sem o seu consentimento",
       "Interrupção superior a 24h sem fornecimento alternativo",
       "Herança de dívida de um contrato anterior que não é sua",
     ],
@@ -108,6 +95,7 @@ const SETORES = [
 
 export function Landing() {
   const [formOpen, setFormOpen] = useState(false);
+  const [origem] = useState(detectarOrigem);
 
   const openForm = useCallback(() => {
     track("click_tratar_caso");
@@ -123,22 +111,6 @@ export function Landing() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [formOpen, closeForm]);
-
-  const handleLeadSuccess = useCallback(async ({ email, setor }: { email: string; setor: string }) => {
-    const vals = { form_name: "complaint_form", setor: setor || "not_provided" };
-    try {
-      const hash = email ? await sha256(email.trim().toLowerCase()) : null;
-      if (hash && typeof window.gtag === "function") {
-        window.gtag("set", "user_data", { sha256_email_address: hash });
-      }
-    } catch {
-      /* nunca bloquear a conversão */
-    }
-    if (typeof window.gtag === "function") {
-      window.gtag("event", "submit_complaint", { event_category: "conversion", event_label: "landing_form", ...vals });
-    }
-    (window.dataLayer = window.dataLayer || []).push({ event: "dolado_form_submit", ...vals });
-  }, []);
 
   return (
     <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
@@ -161,7 +133,7 @@ export function Landing() {
               Como funciona
             </a>
             <a href="#sectores" className="whitespace-nowrap text-[15px] font-medium text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]">
-              Sectores
+              Setores
             </a>
           </nav>
           <div className="ml-auto flex items-center gap-3">
@@ -245,7 +217,7 @@ export function Landing() {
         <div className="mx-auto max-w-[1120px] px-4 py-16 sm:px-8 sm:py-22">
           <p className="mb-5 max-w-[62ch] text-[15px] font-semibold leading-relaxed text-[var(--color-brand)]">
             O seu direito está escrito na lei — nós citamo-la, palavra por palavra, na sua
-            reclamação. Não é opinião, é o artigo certo da Lei das Comunicações Electrónicas,
+            reclamação. Não é opinião, é o artigo certo da Lei das Comunicações Eletrónicas,
             do regime da ERSE, ou do Regulamento da ERSAR, conforme o seu caso.
           </p>
           <h2 className="mb-3.5 max-w-[26ch] text-[26px] font-bold tracking-tight text-[var(--color-ink)] sm:text-[34px]">
@@ -282,7 +254,7 @@ export function Landing() {
           />
           <p className="max-w-[56ch] text-[17px] leading-relaxed text-[var(--color-ink-muted)]">
             Sou eu, o Thiago — fundador da DoLado. Nesta fase, sou eu que leio cada caso, falo
-            consigo por email ou telefone, e escrevo a reclamação à mão, com a lei citada. Não é
+            consigo por e-mail ou telefone, e escrevo a reclamação à mão, com a lei citada. Não é
             um robô a responder-lhe.
           </p>
         </div>
@@ -291,7 +263,7 @@ export function Landing() {
       {/* Sectores */}
       <section id="sectores" className="mx-auto max-w-[1120px] px-4 pb-16 sm:px-8 sm:pb-22">
         <h2 className="mb-3.5 text-[26px] font-bold tracking-tight text-[var(--color-ink)] sm:text-[34px]">
-          Sectores que tratamos
+          Setores que tratamos
         </h2>
         <p className="mb-8 max-w-[58ch] text-[17px] leading-relaxed text-[var(--color-ink-muted)] sm:mb-10">
           Trabalhamos onde as reclamações são mais frequentes e as regras mais claras. Estes
@@ -324,7 +296,7 @@ export function Landing() {
             <div>
               <div className="mb-2.5 text-[17px] font-semibold">Garantimos</div>
               <ul className="list-disc space-y-2 pl-5 text-[16px] leading-relaxed text-[var(--color-ink-muted)]">
-                <li>Que a sua reclamação é redigida com base legal e enviada pelo canal formal correcto.</li>
+                <li>Que a sua reclamação é redigida com base legal e enviada pelo canal formal correto.</li>
                 <li>Que o prazo legal de resposta é vigiado e que é avisado em cada passo.</li>
                 <li>Que, no fim, recebe um dossiê completo e organizado do caso.</li>
               </ul>
@@ -409,37 +381,8 @@ export function Landing() {
           onClick={closeForm}
           className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[rgba(23,26,33,0.42)] px-4 py-8 sm:px-8"
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="my-auto w-full max-w-[560px] flex-none rounded-[var(--radius-panel)] border border-[var(--color-hairline)] bg-white p-6 shadow-[var(--shadow-md)] sm:p-8"
-          >
-            <div className="mb-2.5 flex items-start justify-between gap-4">
-              <h2 className="max-w-[22ch] text-[22px] font-bold leading-snug tracking-tight text-[var(--color-ink)] sm:text-[26px]">
-                Conte-nos o que aconteceu
-              </h2>
-              <button
-                type="button"
-                onClick={closeForm}
-                aria-label="Fechar"
-                className="flex h-9 w-9 flex-none items-center justify-center rounded-[var(--radius-input)] border border-[var(--color-hairline)] text-lg text-[var(--color-ink-muted)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
-              >
-                ×
-              </button>
-            </div>
-            <p className="mb-4 text-[15px] leading-relaxed text-[var(--color-ink-muted)]">
-              Preencha o essencial e anexe o que tiver. Lemos o caso, voltamos a falar consigo e
-              explicamos o que é exigível à empresa.
-            </p>
-            <div className="mb-6 flex items-start gap-2.5 rounded-[var(--radius-input)] bg-[var(--color-brand-wash)] p-3.5">
-              <span className="flex-none text-[15px] font-bold leading-relaxed text-[var(--color-brand)]">✓</span>
-              <p className="text-[14px] leading-relaxed text-[var(--color-ink)]">
-                Estamos em fase de validação. O serviço é completamente grátis enquanto testamos
-                com os primeiros casos. Preencha os dados pedidos e entraremos em contacto
-                consigo por email ou telefone, a solicitar a factura e/ou o contrato que reforce
-                o seu pedido.
-              </p>
-            </div>
-            <IntakeForm onSubmitted={closeForm} onSuccess={handleLeadSuccess} />
+          <div onClick={(e) => e.stopPropagation()} className="my-auto w-full max-w-[640px] flex-none">
+            <FormularioGuiado onClose={closeForm} onSuccess={trackFormSuccess} origem={origem} />
           </div>
         </div>
       )}

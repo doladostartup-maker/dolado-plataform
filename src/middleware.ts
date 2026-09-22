@@ -4,7 +4,16 @@ import { updateSession } from "@/lib/supabase/middleware";
 // Páginas públicas sem estado de sessão — poupam a chamada de rede à
 // Supabase feita em updateSession, que é o maior custo de latência por
 // pedido no plano "pico" da Clever Cloud.
-const PAGINAS_PUBLICAS = ["/", "/termos", "/privacidade", "/entrar", "/login", "/registo"];
+const PAGINAS_PUBLICAS = [
+  "/",
+  "/termos",
+  "/privacidade",
+  "/entrar",
+  "/login",
+  "/registo",
+  "/pedido-classico",
+  "/home-anterior",
+];
 
 // /auth/callback tem de fazer a troca do code PKCE de forma atómica, sem
 // outro cliente Supabase a mexer nos cookies antes — deixar o updateSession
@@ -20,7 +29,7 @@ const ROTAS_SEM_REFRESH_DE_SESSAO = [...PAGINAS_PUBLICAS, "/auth/callback"];
 // via dolado.pt (ex. link relativo "Área do Utilizador" na landing) ficava
 // com o cookie do code verifier gravado em dolado.pt, mas o callback do
 // Google volta sempre a portal.dolado.pt — o cookie nunca era encontrado.
-const PAGINAS_SO_MARKETING = ["/", "/termos", "/privacidade"];
+const PAGINAS_SO_MARKETING = ["/", "/termos", "/privacidade", "/pedido-classico", "/home-anterior"];
 
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host")?.split(":")[0] ?? "";

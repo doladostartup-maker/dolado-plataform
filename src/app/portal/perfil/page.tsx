@@ -38,7 +38,7 @@ export default async function PerfilPage({
           <dd className="text-[var(--color-ink)]">{perfil?.nome ?? "—"}</dd>
         </div>
         <div>
-          <dt className="text-[var(--color-ink-muted)]">Email</dt>
+          <dt className="text-[var(--color-ink-muted)]">E-mail</dt>
           <dd className="text-[var(--color-ink)]">{user.email}</dd>
         </div>
       </dl>
@@ -50,7 +50,7 @@ export default async function PerfilPage({
 
         {query.guardado && (
           <p className="text-sm text-[var(--color-status-success)]">
-            Palavra-passe actualizada com sucesso.
+            Palavra-passe atualizada com sucesso.
           </p>
         )}
         {query.erro && <p className="text-sm text-[var(--color-status-danger)]">{query.erro}</p>}

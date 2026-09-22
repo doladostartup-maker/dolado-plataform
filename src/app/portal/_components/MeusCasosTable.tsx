@@ -29,7 +29,7 @@ export function MeusCasosTable({ casos }: { casos: Caso[] }) {
               Empresa
             </th>
             <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
-              Sector
+              Setor
             </th>
             <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
               Problema

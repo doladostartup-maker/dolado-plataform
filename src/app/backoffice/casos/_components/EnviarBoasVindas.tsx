@@ -24,7 +24,7 @@ export function EnviarBoasVindas({
       const dados = await resposta.json();
 
       if (!resposta.ok) {
-        setErro(dados.erro ?? "Não foi possível enviar o email.");
+        setErro(dados.erro ?? "Não foi possível enviar o e-mail.");
         return;
       }
 
@@ -67,7 +67,7 @@ export function EnviarBoasVindas({
             disabled={aEnviar}
             className="rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {aEnviar ? "A enviar…" : "Enviar email de boas-vindas"}
+            {aEnviar ? "A enviar…" : "Enviar e-mail de boas-vindas"}
           </button>
         )}
       </div>

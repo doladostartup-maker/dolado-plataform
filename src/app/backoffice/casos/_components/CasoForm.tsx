@@ -4,18 +4,29 @@ type CasoFormValues = {
   telefone?: string | null;
   empresa_parceira?: string | null;
   sector?: string | null;
+  empresa?: string | null;
   tipo_problema?: string | null;
+  problema_tipo?: string | null;
+  momento_cliente?: string | null;
   descricao?: string | null;
   status?: string;
   tipo_abc?: string | null;
   data_fim_fidelidade?: string | null;
   data_envio_reclamacao?: string | null;
+  primeira_resposta_em?: string | null;
   minutos?: number | null;
   disposicao_pagar?: boolean | null;
   valor_indicado?: number | null;
   notas?: string | null;
   dossie_url?: string | null;
 };
+
+function paraDatetimeLocal(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 const STATUSES = [
   "Novo",
@@ -59,7 +70,7 @@ export function CasoForm({
         <Campo label="Nome">
           <input name="nome" defaultValue={valores.nome ?? ""} required className={INPUT_CLASS} />
         </Campo>
-        <Campo label="Email">
+        <Campo label="E-mail">
           <input
             name="email"
             type="email"
@@ -82,7 +93,7 @@ export function CasoForm({
             className={INPUT_CLASS}
           />
         </Campo>
-        <Campo label="Sector">
+        <Campo label="Setor">
           <select name="sector" defaultValue={valores.sector ?? ""} className={INPUT_CLASS}>
             <option value="">—</option>
             <option value="Telecomunicações">Telecomunicações</option>
@@ -96,6 +107,32 @@ export function CasoForm({
             defaultValue={valores.tipo_problema ?? ""}
             className={INPUT_CLASS}
           />
+        </Campo>
+        <Campo label="Empresa (formulário guiado)">
+          <input
+            name="empresa"
+            defaultValue={valores.empresa ?? ""}
+            className={INPUT_CLASS}
+          />
+        </Campo>
+        <Campo label="O que aconteceu (formulário guiado)">
+          <select name="problema_tipo" defaultValue={valores.problema_tipo ?? ""} className={INPUT_CLASS}>
+            <option value="">—</option>
+            <option value="Aumento de mensalidade">Aumento de mensalidade</option>
+            <option value="Cobrança indevida">Cobrança indevida</option>
+            <option value="Fidelização ou penalização">Fidelização ou penalização</option>
+            <option value="Corte ou falha de serviço">Corte ou falha de serviço</option>
+            <option value="Cancelamento recusado">Cancelamento recusado</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </Campo>
+        <Campo label="Já reclamou junto da empresa?">
+          <select name="momento_cliente" defaultValue={valores.momento_cliente ?? ""} className={INPUT_CLASS}>
+            <option value="">—</option>
+            <option value="Sim, e não me responderam">Sim, e não me responderam</option>
+            <option value="Sim, mas a resposta não resolveu">Sim, mas a resposta não resolveu</option>
+            <option value="Ainda não reclamei">Ainda não reclamei</option>
+          </select>
         </Campo>
         <Campo label="Estado">
           <select
@@ -135,6 +172,14 @@ export function CasoForm({
             type="date"
             name="data_envio_reclamacao"
             defaultValue={valores.data_envio_reclamacao ?? ""}
+            className={INPUT_CLASS}
+          />
+        </Campo>
+        <Campo label="Primeira resposta">
+          <input
+            type="datetime-local"
+            name="primeira_resposta_em"
+            defaultValue={paraDatetimeLocal(valores.primeira_resposta_em)}
             className={INPUT_CLASS}
           />
         </Campo>

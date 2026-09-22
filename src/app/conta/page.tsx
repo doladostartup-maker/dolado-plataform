@@ -26,7 +26,7 @@ export default async function ContaPage() {
       </h1>
       <dl className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 text-sm shadow-[var(--shadow-subtle)]">
         <div>
-          <dt className="text-[var(--color-ink-muted)]">Email</dt>
+          <dt className="text-[var(--color-ink-muted)]">E-mail</dt>
           <dd className="text-[var(--color-ink)]">{user.email}</dd>
         </div>
         <div>

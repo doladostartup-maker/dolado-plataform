@@ -24,6 +24,6 @@ export async function registar(formData: FormData) {
   }
 
   redirect(
-    `/login?info=${encodeURIComponent("Verifique o seu email para confirmar o registo.")}`,
+    `/login?info=${encodeURIComponent("Verifique o seu e-mail para confirmar o registo.")}`,
   );
 }

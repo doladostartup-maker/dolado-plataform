@@ -19,7 +19,7 @@ export function montarHtmlBoasVindas(nome: string) {
           <tr>
             <td style="padding: 24px 32px 8px 32px; font-family:'Inter', Arial, Helvetica, sans-serif; color:#171A21; font-size:16px; line-height:1.6;">
               <p style="margin:0 0 16px 0;">Olá ${nome},</p>
-              <p style="margin:0 0 16px 0;">Obrigado por confiar no DoLado com a sua reclamação.</p>
+              <p style="margin:0 0 16px 0;">Obrigado por confiar na DoLado com a sua reclamação.</p>
               <p style="margin:0 0 16px 0;">Já recebemos a sua submissão e está aqui comigo para ser tratada pessoalmente. Não é um formulário que desaparece numa caixa infinita. Eu vou rever o seu caso, contactar o operador em seu nome e acompanhar até à resolução.</p>
             </td>
           </tr>
@@ -42,14 +42,14 @@ export function montarHtmlBoasVindas(nome: string) {
             <td style="padding: 16px 32px 8px 32px; font-family:'Inter', Arial, Helvetica, sans-serif; color:#171A21; font-size:16px; line-height:1.6;">
               <p style="margin:0 0 8px 0; font-weight:600;">O que preciso de si:</p>
               <p style="margin:0 0 4px 0; color:#5B6270; font-size:15px;">Quando eu contactar, tenha à mão:</p>
-              <p style="margin:0 0 4px 0; color:#5B6270; font-size:15px;">— Factura ou comprovativo do problema</p>
-              <p style="margin:0 0 4px 0; color:#5B6270; font-size:15px;">— Qualquer email/SMS da empresa em questão</p>
+              <p style="margin:0 0 4px 0; color:#5B6270; font-size:15px;">— Fatura ou comprovativo do problema</p>
+              <p style="margin:0 0 4px 0; color:#5B6270; font-size:15px;">— Qualquer e-mail/SMS da empresa em questão</p>
               <p style="margin:0; color:#5B6270; font-size:15px;">— Disponibilidade para uma breve chamada (5-10 minutos), caso ainda falte esclarecer algum ponto para além do que já enviou</p>
             </td>
           </tr>
           <tr>
             <td style="padding: 16px 32px 24px 32px; font-family:'Inter', Arial, Helvetica, sans-serif; color:#171A21; font-size:16px; line-height:1.6;">
-              <p style="margin:0 0 16px 0;">Espere por um contacto meu nos próximos 1-2 dias úteis. Se tiver dúvidas entretanto, responda a este email.</p>
+              <p style="margin:0 0 16px 0;">Espere por um contacto meu nos próximos 1-2 dias úteis. Se tiver dúvidas entretanto, responda a este e-mail.</p>
               <p style="margin:0 0 4px 0;">Estamos juntos nisto.</p>
               <p style="margin:0; font-weight:600;">Thiago<br><span style="font-weight:400; color:#5B6270; font-size:14px;">DoLado</span></p>
             </td>

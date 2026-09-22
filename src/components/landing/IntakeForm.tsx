@@ -18,8 +18,8 @@ const TIPOS_POR_SETOR: Record<string, string[]> = {
     "Avaria ou indisponibilidade >24h",
     "Cobrança de serviços não autorizados",
   ],
-  energia: ["Facturação indevida", "Erro de leitura ou consumo", "Cobrança retroactiva injustificada"],
-  agua: ["Facturação irregular", "Corte indevido de fornecimento", "Erro de leitura"],
+  energia: ["Faturação indevida", "Erro de leitura ou consumo", "Cobrança retroativa injustificada"],
+  agua: ["Faturação irregular", "Corte indevido de fornecimento", "Erro de leitura"],
 };
 
 function validNome(v: string) {
@@ -85,7 +85,7 @@ export function IntakeForm({
           Reclamação registada!
         </h3>
         <p className="mb-6 text-[var(--text-body)] text-[var(--color-ink-muted)]">
-          Vamos acompanhar o seu caso. Em breve entraremos em contacto por email ou telefone.
+          Vamos acompanhar o seu caso. Em breve entraremos em contacto por e-mail ou telefone.
         </p>
         {onSubmitted && (
           <button type="button" onClick={onSubmitted} className={NEXT_BTN} style={{ flex: "none" }}>
@@ -120,7 +120,7 @@ export function IntakeForm({
 
           <div className="mb-5">
             <label className={LABEL_CLASS} htmlFor="setor-select">
-              Sector
+              Setor
             </label>
             <select
               id="setor-select"
@@ -131,7 +131,7 @@ export function IntakeForm({
                 setTipoProblema("");
               }}
             >
-              <option value="">Seleccione o sector...</option>
+              <option value="">Selecione o setor...</option>
               {Object.entries(SETOR_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
@@ -152,7 +152,7 @@ export function IntakeForm({
               disabled={!setor}
             >
               <option value="">
-                {setor ? "Seleccione o tipo..." : "Seleccione primeiro o sector..."}
+                {setor ? "Selecione o tipo..." : "Selecione primeiro o setor..."}
               </option>
               {tipos.map((tipo) => (
                 <option key={tipo} value={tipo}>
@@ -224,7 +224,7 @@ export function IntakeForm({
 
           <div className="mb-5">
             <label className={LABEL_CLASS} htmlFor="email-field">
-              Email
+              E-mail
             </label>
             <input
               id="email-field"
@@ -238,7 +238,7 @@ export function IntakeForm({
             />
             {tocado.email && !validEmail(email) && (
               <p className="mt-1.5 text-[var(--text-caption)] text-[var(--color-status-danger)]">
-                Email inválido.
+                E-mail inválido.
               </p>
             )}
           </div>
@@ -288,7 +288,7 @@ export function IntakeForm({
 
           <div className="mb-6 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-brand-wash)] px-4.5 py-4 text-[var(--text-body-sm)] leading-relaxed text-[var(--color-ink)]">
             <div>
-              <strong>Sector:</strong> {SETOR_LABELS[setor] ?? "-"}
+              <strong>Setor:</strong> {SETOR_LABELS[setor] ?? "-"}
             </div>
             <div>
               <strong>Problema:</strong> {tipoProblema}

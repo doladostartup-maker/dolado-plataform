@@ -26,3 +26,6 @@ npm-debug.log*
 
 # Clever Cloud CLI (config local, gerado por `clever link`)
 .clever.json
+
+# Supabase CLI (config local, gerado por `supabase link`)
+supabase/.temp/
