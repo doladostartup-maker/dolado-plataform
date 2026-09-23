@@ -20,7 +20,7 @@ export function montarHtmlBoasVindas(nome: string) {
             <td style="padding: 24px 32px 8px 32px; font-family:'Inter', Arial, Helvetica, sans-serif; color:#171A21; font-size:16px; line-height:1.6;">
               <p style="margin:0 0 16px 0;">Olá ${nome},</p>
               <p style="margin:0 0 16px 0;">Obrigado por confiar na DoLado com a sua reclamação.</p>
-              <p style="margin:0 0 16px 0;">Já recebemos a sua submissão e está aqui comigo para ser tratada pessoalmente. Não é um formulário que desaparece numa caixa infinita. Eu vou rever o seu caso, contactar o operador em seu nome e acompanhar até à resolução.</p>
+              <p style="margin:0 0 16px 0;">Já recebemos a sua submissão e está aqui comigo para ser tratada pessoalmente. Não é um formulário que desaparece numa caixa infinita. Eu vou rever o seu caso, contactar o operador com a sua autorização e acompanhar até à resolução.</p>
             </td>
           </tr>
           <tr>

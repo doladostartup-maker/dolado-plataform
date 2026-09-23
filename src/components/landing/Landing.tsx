@@ -10,7 +10,7 @@ import { FormularioGuiado } from "./FormularioGuiado";
 const PROBLEMAS = [
   {
     titulo: "Meses sem faturas e agora uma conta enorme.",
-    texto: "Organizamos os factos e enviamos a sua reclamação por escrito.",
+    texto: "Organizamos os factos e preparamos a sua reclamação por escrito, para enviar ou autorizar o envio.",
   },
   {
     titulo: "Quer cancelar e só lhe dão voltas.",
@@ -18,7 +18,7 @@ const PROBLEMAS = [
   },
   {
     titulo: "Está a pagar por algo que não pediu.",
-    texto: "Reunimos os documentos e reclamamos por si.",
+    texto: "Reunimos os documentos e preparamos a reclamação para si.",
   },
 ];
 
@@ -30,8 +30,8 @@ const OFERTA = [
   },
   {
     numero: 2,
-    titulo: "Reclamamos em seu nome",
-    texto: "Reclamação escrita com base legal, factos e datas, enviada pelo canal formal correto.",
+    titulo: "Formalizamos a reclamação",
+    texto: "Reclamação escrita com base legal, factos e datas — envia-a você mesmo ou autoriza a DoLado a submetê-la pelo canal formal correto.",
   },
   {
     numero: 3,
@@ -168,8 +168,9 @@ export function Landing() {
             Sem filas nem chamadas. Acompanhamos o caso por si.
           </p>
           <p className="text-[17px] leading-relaxed text-[var(--color-ink-muted)] sm:text-[20px]">
-            A DoLado escreve e envia a sua reclamação formal a qualquer empresa de
-            telecomunicações ou energia — como MEO, NOS, Vodafone, Galp ou EDP.
+            A DoLado escreve a sua reclamação formal a qualquer empresa de
+            telecomunicações ou energia — como MEO, NOS, Vodafone, Galp ou EDP — e envia-a
+            você mesmo ou autoriza a submissão pela DoLado.
           </p>
         </div>
         <div className="mx-auto mb-14 flex max-w-[520px] flex-col items-center gap-3.5 sm:mb-16">
@@ -296,7 +297,7 @@ export function Landing() {
             <div>
               <div className="mb-2.5 text-[17px] font-semibold">Garantimos</div>
               <ul className="list-disc space-y-2 pl-5 text-[16px] leading-relaxed text-[var(--color-ink-muted)]">
-                <li>Que a sua reclamação é redigida com base legal e enviada pelo canal formal correto.</li>
+                <li>Que a sua reclamação é redigida com base legal, para enviar você mesmo ou autorizar a DoLado a submeter pelo canal formal correto.</li>
                 <li>Que o prazo legal de resposta é vigiado e que é avisado em cada passo.</li>
                 <li>Que, no fim, recebe um dossiê completo e organizado do caso.</li>
               </ul>

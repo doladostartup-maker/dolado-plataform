@@ -39,10 +39,11 @@ export default function TermosPage() {
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
           A DoLado presta um serviço de assistência administrativa a consumidores com
           problemas em contratos de telecomunicações, energia, ou água/resíduos em
-          Portugal. Depois de o Utilizador descrever o seu caso, a DoLado identifica o
-          direito legal potencialmente aplicável, escreve e envia uma reclamação formal
-          em nome do Utilizador pelo canal correto da empresa visada, e acompanha o
-          processo até à resposta.
+          Portugal. Depois de o Utilizador descrever o seu caso, a DoLado identifica a
+          norma legal potencialmente aplicável e prepara uma reclamação formal, que o
+          Utilizador pode enviar por si ou autorizar a DoLado a submeter, com a sua
+          autorização, pelo canal correto da empresa visada, e acompanha o processo até
+          à resposta.
         </p>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
           <strong>
@@ -74,9 +75,10 @@ export default function TermosPage() {
             combinado o preço do serviço (ver secção 3).
           </li>
           <li>
-            Mediante confirmação do Utilizador para avançar, a DoLado escreve e envia a
-            reclamação formal, com base legal, factos e datas, pelo canal oficial da
-            empresa visada.
+            Mediante confirmação do Utilizador para avançar, a DoLado escreve a
+            reclamação formal, com base legal, factos e datas, e o Utilizador escolhe
+            se a envia diretamente ou autoriza a DoLado a submetê-la ao Livro de
+            Reclamações pelo canal oficial da empresa visada.
           </li>
           <li>
             A DoLado acompanha o prazo legal de resposta, mantém o Utilizador informado
@@ -116,7 +118,8 @@ export default function TermosPage() {
             </h3>
             <ul className="flex list-disc flex-col gap-2 pl-5 text-base leading-relaxed text-[var(--color-ink)]">
               <li>
-                Que a reclamação é redigida com base legal e enviada pelo canal formal
+                Que a reclamação é redigida com base legal, para o Utilizador enviar ou
+                para a DoLado submeter, com a sua autorização, pelo canal formal
                 correto.
               </li>
               <li>
@@ -157,8 +160,9 @@ export default function TermosPage() {
           6. Responsabilidade
         </h2>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
-          A DoLado compromete-se a agir com diligência na redação e envio da
-          reclamação e no acompanhamento do prazo. A DoLado não é responsável por
+          A DoLado compromete-se a agir com diligência na redação da reclamação e, quando
+          autorizada, na sua submissão, e no acompanhamento do prazo. A DoLado não é
+          responsável por
           decisões da empresa reclamada, por atrasos ou indisponibilidade de sistemas
           de terceiros, ou por informação incorreta ou incompleta fornecida pelo
           Utilizador. Nada nestes Termos exclui responsabilidade que a lei portuguesa

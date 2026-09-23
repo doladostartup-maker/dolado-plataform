@@ -212,11 +212,13 @@ export function Homepage() {
           ))}
         </div>
         <h1 className="mb-5 text-[clamp(28px,6vw,var(--text-display))] font-semibold leading-[1.15] tracking-tight text-[var(--color-ink)]">
-          Problema com a operadora, a luz ou a água? A DoLado trata da reclamação por si.
+          Problema com a operadora, a luz ou a água? A DoLado trata do processo. A escolha é
+          sua.
         </h1>
         <p className="mx-auto mb-8 max-w-[560px] text-[17px] leading-relaxed text-[var(--color-ink-muted)]">
-          Identificamos a lei que a empresa não cumpriu, enviamos uma reclamação formal em seu
-          nome e acompanhamos os prazos até haver resposta. Nada é enviado sem a sua autorização.
+          Identificamos a norma legal aplicável ao seu caso, preparamos a reclamação e
+          acompanhamos o prazo de resposta. Pode enviá-la você mesmo ou autorizar-nos a
+          submetê-la ao Livro de Reclamações. Nada sai sem a sua aprovação.
         </p>
         <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
           <button type="button" onClick={openForm} className={BOTAO_PRIMARIO} style={{ paddingInline: 24 }}>

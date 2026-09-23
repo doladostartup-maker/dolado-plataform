@@ -105,8 +105,9 @@ export default function PrivacidadePage() {
         </h2>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
           Nesta fase, <strong>não existe qualquer decisão automatizada</strong>. Todo o
-          processo — desde a leitura do formulário até à redação e envio da reclamação
-          — é conduzido por uma pessoa da equipa DoLado. O artigo 22.º do RGPD não é,
+          processo — desde a leitura do formulário até à redação e, quando autorizada,
+          à submissão da reclamação — é conduzido por uma pessoa da equipa DoLado. O
+          artigo 22.º do RGPD não é,
           por isso, aplicável ao funcionamento atual do serviço.
         </p>
       </section>
@@ -134,9 +135,9 @@ export default function PrivacidadePage() {
           </li>
           <li>
             <strong>A empresa visada pela reclamação</strong> — apenas os dados
-            estritamente necessários para formalizar e sustentar a reclamação em nome
-            do Utilizador, e apenas depois de o Utilizador confirmar que pretende
-            avançar
+            estritamente necessários para formalizar e sustentar a reclamação, com a
+            autorização do Utilizador, e apenas depois de o Utilizador confirmar que
+            pretende avançar
           </li>
         </ul>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
