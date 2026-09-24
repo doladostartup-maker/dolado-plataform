@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 const NAV_LINKS = [
   { href: "/como-funciona", label: "Como funciona" },
   { href: "/por-que-assinar", label: "Por quê assinar?" },
-  { href: "/#transparencia", label: "Transparência" },
+  { href: "/transparencia", label: "Transparência" },
   { href: "/#quem-trata", label: "Sobre nós" },
   { href: "/#contacto", label: "Contacto" },
 ];

@@ -15,6 +15,7 @@ const PAGINAS_PUBLICAS = [
   "/home-anterior",
   "/como-funciona",
   "/por-que-assinar",
+  "/transparencia",
 ];
 
 // /auth/callback tem de fazer a troca do code PKCE de forma atómica, sem
@@ -39,6 +40,7 @@ const PAGINAS_SO_MARKETING = [
   "/home-anterior",
   "/como-funciona",
   "/por-que-assinar",
+  "/transparencia",
 ];
 
 export async function middleware(request: NextRequest) {
