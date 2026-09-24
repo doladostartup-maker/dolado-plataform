@@ -59,6 +59,16 @@ function IconAlertas() {
   );
 }
 
+function IconPromocao() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
+      <circle cx="5" cy="5" r="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="11" cy="11" r="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M11 4L4 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function IconSubscricao() {
   return (
     <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
@@ -175,6 +185,9 @@ export default async function PortalLayout({
           </ItemNav>
           <ItemNav href="/portal/alertas" icon={<IconAlertas />}>
             Alertas
+          </ItemNav>
+          <ItemNav href="/portal/promocoes" icon={<IconPromocao />}>
+            Promoções
           </ItemNav>
           <ItemNav href="/conta" icon={<IconConta />}>
             A minha conta

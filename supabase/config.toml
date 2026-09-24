@@ -5,3 +5,6 @@ project_id = "eqsmzczjyrcrsbfqioxt"
 # cabeçalho x-cron-secret verificado dentro da própria função.
 [functions.verificar-alertas-fidelizacao]
 verify_jwt = false
+
+[functions.verificar-alertas-promocao]
+verify_jwt = false
