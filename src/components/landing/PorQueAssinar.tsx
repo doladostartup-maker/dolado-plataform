@@ -8,7 +8,7 @@ import { AlertaFidelizacaoForm } from "./AlertaFidelizacaoForm";
 type Linha = {
   label: string;
   sozinho: string;
-  dolado: string;
+  dolado: React.ReactNode;
   deco: React.ReactNode;
   ultima?: boolean;
 };
@@ -17,7 +17,12 @@ const LINHAS: Linha[] = [
   {
     label: "Custo",
     sozinho: "Grátis (só o seu tempo)",
-    dolado: "Alerta grátis · reclamação avulsa por caso ou assinatura",
+    dolado: (
+      <>
+        Alerta grátis · reclamação avulsa por caso ou assinatura{" "}
+        <span className="font-normal italic">(valores a definir)</span>
+      </>
+    ),
     deco: (
       <>
         Quota anual <span className="italic">(valor a confirmar)</span>
