@@ -8,7 +8,7 @@ import { FormularioGuiado } from "./FormularioGuiado";
 
 const NAV_LINKS = [
   { href: "/como-funciona", label: "Como funciona" },
-  { href: "#precario", label: "Por quê assinar?" },
+  { href: "/por-que-assinar", label: "Por quê assinar?" },
   { href: "#precario", label: "Preçário" },
   { href: "#transparencia", label: "Transparência" },
   { href: "#quem-trata", label: "Sobre nós" },
