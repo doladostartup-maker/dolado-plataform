@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useActionState, useCallback, useEffect, useState } from "react";
+import { enviarContacto, type EstadoContacto } from "@/app/actions/contacto";
 import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
 import { FormularioGuiado } from "./FormularioGuiado";
 import { SiteHeader } from "./SiteHeader";
@@ -9,20 +10,12 @@ const INPUT_CLASS =
   "w-full rounded-[8px] border border-[var(--color-hairline)] bg-white px-3 py-2.5 text-[13.5px] text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-brand)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-wash)]";
 const LABEL_CLASS = "mb-1.5 block text-[12.5px] font-semibold text-[var(--color-ink)]";
 
-type DadosContacto = {
-  nome: string;
-  email: string;
-  assunto: string;
-  mensagem: string;
-};
-
-const DADOS_INICIAIS: DadosContacto = { nome: "", email: "", assunto: "", mensagem: "" };
+const ESTADO_INICIAL: EstadoContacto = { ok: false };
 
 export function Contacto() {
   const [formOpen, setFormOpen] = useState(false);
   const [origem] = useState(detectarOrigem);
-  const [dados, setDados] = useState<DadosContacto>(DADOS_INICIAIS);
-  const [enviado, setEnviado] = useState(false);
+  const [state, formAction, pending] = useActionState(enviarContacto, ESTADO_INICIAL);
 
   const openForm = useCallback(() => {
     track("click_nav_contacto");
@@ -38,14 +31,6 @@ export function Contacto() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [formOpen, closeForm]);
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    // Placeholder — sem envio real ainda. Integração (e-mail/Supabase) fica para uma fase seguinte.
-    console.log("Mensagem de contacto (placeholder, sem envio real):", dados);
-    setEnviado(true);
-    setDados(DADOS_INICIAIS);
-  }
 
   return (
     <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
@@ -78,10 +63,10 @@ export function Contacto() {
 
       {/* ===== Secção 4: Formulário ===== */}
       <section className="mx-auto max-w-[560px] px-4 pt-7 pb-[72px] sm:px-10">
-        {enviado ? (
+        {state.ok ? (
           <div className="rounded-[14px] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-8 text-center shadow-[var(--shadow-subtle)]">
             <p className="text-[15px] font-semibold text-[var(--color-ink)]">
-              Mensagem registada.
+              Mensagem enviada.
             </p>
             <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--color-ink-muted)]">
               Obrigado pelo contacto — responderemos assim que possível.
@@ -89,9 +74,18 @@ export function Contacto() {
           </div>
         ) : (
           <form
-            onSubmit={handleSubmit}
+            action={formAction}
             className="flex flex-col gap-4 rounded-[14px] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-8 shadow-[var(--shadow-subtle)]"
           >
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              style={{ position: "absolute", left: "-9999px" }}
+            />
+
             <div>
               <label className={LABEL_CLASS} htmlFor="contacto-nome">
                 Nome
@@ -102,8 +96,6 @@ export function Contacto() {
                 type="text"
                 placeholder="O seu nome"
                 required
-                value={dados.nome}
-                onChange={(e) => setDados((d) => ({ ...d, nome: e.target.value }))}
                 className={INPUT_CLASS}
               />
             </div>
@@ -118,8 +110,6 @@ export function Contacto() {
                 type="email"
                 placeholder="nome@exemplo.pt"
                 required
-                value={dados.email}
-                onChange={(e) => setDados((d) => ({ ...d, email: e.target.value }))}
                 className={INPUT_CLASS}
               />
             </div>
@@ -134,8 +124,6 @@ export function Contacto() {
                 type="text"
                 placeholder="Sobre o que quer falar?"
                 required
-                value={dados.assunto}
-                onChange={(e) => setDados((d) => ({ ...d, assunto: e.target.value }))}
                 className={INPUT_CLASS}
               />
             </div>
@@ -150,17 +138,22 @@ export function Contacto() {
                 rows={5}
                 placeholder="Escreva aqui — imprensa, parcerias, dúvidas gerais…"
                 required
-                value={dados.mensagem}
-                onChange={(e) => setDados((d) => ({ ...d, mensagem: e.target.value }))}
                 className={INPUT_CLASS}
               />
             </div>
 
+            {state.erro && (
+              <p className="text-[13px]" style={{ color: "var(--color-status-danger)" }}>
+                {state.erro}
+              </p>
+            )}
+
             <button
               type="submit"
-              className="mt-1.5 min-h-11 w-full rounded-[8px] bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)]"
+              disabled={pending}
+              className="mt-1.5 min-h-11 w-full rounded-[8px] bg-[var(--color-brand)] px-5 py-3 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Enviar mensagem
+              {pending ? "A enviar…" : "Enviar mensagem"}
             </button>
           </form>
         )}
