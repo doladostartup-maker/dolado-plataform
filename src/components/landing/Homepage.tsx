@@ -241,10 +241,6 @@ export function Homepage() {
                 <span className="font-bold text-[var(--color-brand)]">✓</span>
                 Escalada ao Livro de Reclamações
               </li>
-              <li className="flex items-start gap-2">
-                <span>🎁</span>
-                1 mês grátis de Assinatura incluído
-              </li>
             </ul>
             <button
               type="button"
@@ -268,7 +264,7 @@ export function Homepage() {
             <ul className="mb-6 flex flex-col gap-2.5 text-[12.5px] text-[var(--color-ink)]">
               <li className="flex items-start gap-2">
                 <span className="font-bold text-[var(--color-brand)]">✓</span>
-                Tudo do avulso, mais
+                1 reclamação por mês incluída, acumulável até 4
               </li>
               {[
                 "Alerta de fim de fidelização",
