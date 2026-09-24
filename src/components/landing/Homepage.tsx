@@ -432,66 +432,6 @@ export function Homepage() {
         </div>
       </section>
 
-      {/* ===== Secção 5: Estudo de Padrões (exploração — manter exactamente) ===== */}
-      <section className="mx-auto max-w-[1120px] px-4 py-16 sm:px-10">
-        <p className="mb-2 text-sm font-bold uppercase tracking-wide text-[var(--color-brand)]">
-          Estudo de padrões — exploração, não versão final
-        </p>
-        <p className="mb-8 text-[13.5px] text-[var(--color-ink-faint)]">
-          Duas formas diferentes de resolver &ldquo;burocracia que ninguém quer fazer&rdquo; — a
-          demonstração (Loom) já está no hero acima.
-        </p>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Card Gusto */}
-          <div className="rounded-[var(--radius-card)] bg-[var(--color-brand-wash)] p-7">
-            <p className="mb-3 text-[10.5px] font-semibold uppercase tracking-wide text-[var(--color-brand)]">
-              Inspiração: Gusto
-            </p>
-            <p className="mb-4 text-[15px] font-semibold leading-[1.3] text-[var(--color-ink)]">
-              Burocracia tratada com humanidade
-            </p>
-            <ul className="flex flex-col gap-2 text-[13px] text-[var(--color-ink-muted)]">
-              <li className="flex items-start gap-2">
-                <span className="text-[var(--color-brand)]">✓</span> Sem jargão jurídico
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-[var(--color-brand)]">✓</span> Sem letras miúdas
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-[var(--color-brand)]">✓</span> Sem precisar de advogado
-              </li>
-            </ul>
-          </div>
-
-          {/* Card Tally */}
-          <div className="rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-7">
-            <p className="mb-3 text-[10.5px] font-semibold uppercase tracking-wide text-[var(--color-ink-faint)]">
-              Inspiração: Tally
-            </p>
-            <div className="mb-4 flex items-center gap-1.5" aria-hidden="true">
-              <span className="h-2 w-2 rounded-full bg-[var(--color-brand)]" />
-              <span className="h-2 w-2 rounded-full border border-[var(--color-hairline-strong)]" />
-              <span className="h-2 w-2 rounded-full border border-[var(--color-hairline-strong)]" />
-            </div>
-            <p className="mb-4 text-[14px] font-semibold text-[var(--color-ink)]">
-              Qual o setor da sua reclamação?
-            </p>
-            <div className="flex flex-col gap-2">
-              <span className="rounded-[var(--radius-button)] border border-[var(--color-brand)] bg-[var(--color-brand-wash)] px-3.5 py-2.5 text-[13px] font-medium text-[var(--color-brand)]">
-                Telecomunicações
-              </span>
-              <span className="rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-3.5 py-2.5 text-[13px] font-medium text-[var(--color-ink-muted)]">
-                Energia
-              </span>
-              <span className="rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-3.5 py-2.5 text-[13px] font-medium text-[var(--color-ink-muted)]">
-                Água &amp; Resíduos
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ===== Secção 6: Faixa de transparência legal ===== */}
       <section id="transparencia" className="mx-auto max-w-[1120px] px-4 pb-16 sm:px-10">
         <div className="rounded-[var(--radius-card)] border-l-[3px] border-[var(--color-brand)] bg-[var(--color-surface-sunken)] px-5 py-4">
