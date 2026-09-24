@@ -22,6 +22,9 @@ export default async function BackofficeLayout({
           <Link href="/backoffice/revisao" className="hover:text-[var(--color-brand)]">
             Revisão
           </Link>
+          <Link href="/backoffice/avisos" className="hover:text-[var(--color-brand)]">
+            Avisos Sectoriais
+          </Link>
         </nav>
         <form action={logout}>
           <button

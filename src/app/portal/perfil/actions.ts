@@ -28,3 +28,41 @@ export async function alterarPassword(formData: FormData) {
 
   redirect("/portal/perfil?guardado=1");
 }
+
+const SETORES_VALIDOS = ["Telecomunicações", "Energia", "Água"];
+
+export async function guardarPreferenciasSetor(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const setores = formData.getAll("setor").filter((s): s is string => typeof s === "string" && SETORES_VALIDOS.includes(s));
+
+  // Guardado sempre como apagar tudo + inserir de novo — mais simples do
+  // que calcular o diff de checkboxes, e o volume é sempre no máximo 3 linhas.
+  const { error: erroApagar } = await supabase
+    .from("preferencias_setor")
+    .delete()
+    .eq("utilizador_id", user.id);
+
+  if (erroApagar) {
+    redirect(`/portal/perfil?erro=${encodeURIComponent(erroApagar.message)}`);
+  }
+
+  if (setores.length > 0) {
+    const { error: erroInserir } = await supabase
+      .from("preferencias_setor")
+      .insert(setores.map((setor) => ({ utilizador_id: user.id, setor })));
+
+    if (erroInserir) {
+      redirect(`/portal/perfil?erro=${encodeURIComponent(erroInserir.message)}`);
+    }
+  }
+
+  redirect("/portal/perfil?preferencias_guardadas=1");
+}
