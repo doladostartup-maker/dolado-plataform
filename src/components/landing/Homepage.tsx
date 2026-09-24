@@ -211,7 +211,7 @@ export function Homepage() {
           Preçário
         </p>
         <p className="mb-6 text-[13.5px] text-[var(--color-ink-faint)]">
-          Valores ainda por definir — esta é a estrutura da oferta, não os preços finais.
+          Preços de lançamento — sujeitos a alteração.
         </p>
         <div className="mb-8 rounded-[10px] bg-[var(--color-brand-wash)] p-3 text-[13.5px] font-medium text-[var(--color-brand)]">
           🎁 Quem paga o Avulso leva 1 mês grátis das funcionalidades da Assinatura.
@@ -225,7 +225,7 @@ export function Homepage() {
               Pague uma vez, resolva um caso.
             </p>
             <p className="mb-5">
-              <span className="font-serif text-[32px] font-medium text-[var(--color-ink)]">a definir</span>
+              <span className="font-serif text-[32px] font-medium text-[var(--color-ink)]">14,99 €</span>
               <span className="text-[12.5px] text-[var(--color-ink-muted)]"> / reclamação</span>
             </p>
             <ul className="mb-6 flex flex-col gap-2.5 text-[12.5px] text-[var(--color-ink)]">
@@ -262,10 +262,14 @@ export function Homepage() {
               Proteção contínua, mesmo sem reclamação ativa.
             </p>
             <p className="mb-5">
-              <span className="font-serif text-[32px] font-medium text-[var(--color-ink)]">a definir</span>
+              <span className="font-serif text-[32px] font-medium text-[var(--color-ink)]">7,99 €</span>
               <span className="text-[12.5px] text-[var(--color-ink-muted)]"> / mês</span>
             </p>
             <ul className="mb-6 flex flex-col gap-2.5 text-[12.5px] text-[var(--color-ink)]">
+              <li className="flex items-start gap-2">
+                <span className="font-bold text-[var(--color-brand)]">✓</span>
+                Tudo do avulso, mais
+              </li>
               {[
                 "Alerta de fim de fidelização",
                 "Alerta de fim de promoção",
