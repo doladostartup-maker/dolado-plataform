@@ -116,11 +116,12 @@ export async function enviarAvisoSectorial(formData: FormData) {
     const destinatario = linha.utilizadores as unknown as { nome: string | null; email: string } | null;
     if (!destinatario?.email) continue;
 
+    const nomeExibido = destinatario.nome || destinatario.email;
     try {
       await enviarEmailBrevo(
-        { email: destinatario.email, nome: destinatario.nome || destinatario.email },
+        { email: destinatario.email, nome: nomeExibido },
         `[Aviso DoLado] Novidade no setor de ${setor}`,
-        htmlAvisoSetorial(destinatario.nome || "Olá", setor, titulo, descricao),
+        htmlAvisoSetorial(nomeExibido, setor, titulo, descricao),
       );
       enviados += 1;
     } catch (erro) {
