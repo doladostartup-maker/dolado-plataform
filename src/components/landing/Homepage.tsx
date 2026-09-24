@@ -7,7 +7,7 @@ import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
 import { FormularioGuiado } from "./FormularioGuiado";
 
 const NAV_LINKS = [
-  { href: "#como-funciona", label: "Como funciona" },
+  { href: "/como-funciona", label: "Como funciona" },
   { href: "#precario", label: "Por quê assinar?" },
   { href: "#precario", label: "Preçário" },
   { href: "#transparencia", label: "Transparência" },
@@ -144,15 +144,25 @@ export function Homepage() {
 
           {/* Navegação — desktop */}
           <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-center gap-x-6 gap-y-1.5 lg:flex">
-            {NAV_LINKS.map((l) => (
-              <a
-                key={l.label}
-                href={l.href}
-                className="whitespace-nowrap text-sm font-medium text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-              >
-                {l.label}
-              </a>
-            ))}
+            {NAV_LINKS.map((l) =>
+              l.href.startsWith("/") ? (
+                <Link
+                  key={l.label}
+                  href={l.href}
+                  className="whitespace-nowrap text-sm font-medium text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                >
+                  {l.label}
+                </Link>
+              ) : (
+                <a
+                  key={l.label}
+                  href={l.href}
+                  className="whitespace-nowrap text-sm font-medium text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                >
+                  {l.label}
+                </a>
+              ),
+            )}
           </nav>
           <div className="hidden items-center gap-3 lg:flex">
             <Link
@@ -193,16 +203,27 @@ export function Homepage() {
             ref={painelRef}
             className="flex flex-col gap-1 border-t border-[var(--color-hairline)] bg-white px-4 py-4 lg:hidden"
           >
-            {NAV_LINKS.map((l) => (
-              <a
-                key={l.label}
-                href={l.href}
-                onClick={closeMenu}
-                className="flex min-h-11 items-center text-base font-medium text-[var(--color-ink)]"
-              >
-                {l.label}
-              </a>
-            ))}
+            {NAV_LINKS.map((l) =>
+              l.href.startsWith("/") ? (
+                <Link
+                  key={l.label}
+                  href={l.href}
+                  onClick={closeMenu}
+                  className="flex min-h-11 items-center text-base font-medium text-[var(--color-ink)]"
+                >
+                  {l.label}
+                </Link>
+              ) : (
+                <a
+                  key={l.label}
+                  href={l.href}
+                  onClick={closeMenu}
+                  className="flex min-h-11 items-center text-base font-medium text-[var(--color-ink)]"
+                >
+                  {l.label}
+                </a>
+              ),
+            )}
             <div className="my-2 border-t border-[var(--color-hairline)]" />
             <Link
               href="/entrar"
@@ -249,9 +270,9 @@ export function Homepage() {
               <button type="button" onClick={() => openForm("click_hero_reclamacao")} className={BOTAO_PRIMARIO}>
                 Escrever a minha reclamação
               </button>
-              <a href="#como-funciona" className={BOTAO_SECUNDARIO}>
+              <Link href="/como-funciona" className={BOTAO_SECUNDARIO}>
                 Ver como funciona
-              </a>
+              </Link>
             </div>
             <p className="flex items-center gap-1.5 text-[12.5px] text-[var(--color-ink-faint)]">
               <span className="text-[var(--color-brand)]">✓</span>
