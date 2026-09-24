@@ -1,0 +1,7 @@
+project_id = "eqsmzczjyrcrsbfqioxt"
+
+# verificar-alertas-fidelizacao é chamada pelo pg_cron via pg_net, não por
+# um pedido autenticado com um JWT da Supabase — a autorização é feita pelo
+# cabeçalho x-cron-secret verificado dentro da própria função.
+[functions.verificar-alertas-fidelizacao]
+verify_jwt = false

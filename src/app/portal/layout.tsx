@@ -45,6 +45,20 @@ function IconPerfil() {
   );
 }
 
+function IconAlertas() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
+      <path
+        d="M8 2.5c-2 0-3.5 1.6-3.5 3.6v2.1L3 10.5h10L11.5 8.2V6.1c0-2-1.5-3.6-3.5-3.6z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M6.5 12.5c.3.7.9 1 1.5 1s1.2-.3 1.5-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function IconSubscricao() {
   return (
     <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
@@ -158,6 +172,9 @@ export default async function PortalLayout({
         <nav className="flex flex-col gap-1">
           <ItemNav href="/portal/casos" icon={<IconCasos />}>
             Os meus casos
+          </ItemNav>
+          <ItemNav href="/portal/alertas" icon={<IconAlertas />}>
+            Alertas de Fidelização
           </ItemNav>
           <ItemNav href="/conta" icon={<IconConta />}>
             A minha conta
