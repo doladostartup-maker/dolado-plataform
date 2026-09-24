@@ -174,7 +174,7 @@ export default async function PortalLayout({
             Os meus casos
           </ItemNav>
           <ItemNav href="/portal/alertas" icon={<IconAlertas />}>
-            Alertas de Fidelização
+            Alertas
           </ItemNav>
           <ItemNav href="/conta" icon={<IconConta />}>
             A minha conta
