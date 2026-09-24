@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { AlertaFidelizacaoForm } from "./AlertaFidelizacaoForm";
+import { SiteHeader } from "./SiteHeader";
 
 type Linha = {
   label: string;
@@ -82,35 +82,8 @@ export function PorQueAssinar() {
 
   return (
     <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
-      {/* ===== Secção 1: Nav simplificada ===== */}
-      <header className="sticky top-0 z-20 border-b border-[var(--color-hairline)] bg-white/85 backdrop-blur-[10px]">
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-4 py-3 sm:px-14">
-          <div className="flex items-center gap-5">
-            <Link href="/" className="inline-flex items-center gap-2.5">
-              <Image src="/brand/dolado-logo-icon.svg" alt="" width={28} height={28} priority />
-              <span className="text-base font-bold tracking-tight">
-                <span className="text-[var(--color-ink)]">Do</span>
-                <span className="text-[var(--color-brand)]">Lado</span>
-              </span>
-            </Link>
-            <Link
-              href="/"
-              className="hidden text-[12.5px] font-medium text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] sm:inline"
-            >
-              ← Voltar ao início
-            </Link>
-          </div>
-          <button type="button" onClick={openForm} className={`${BOTAO_PRIMARIO} text-[13px]`}>
-            Subscrever grátis
-          </button>
-        </div>
-        <Link
-          href="/"
-          className="block border-t border-[var(--color-hairline)] px-4 py-2 text-[12.5px] font-medium text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] sm:hidden"
-        >
-          ← Voltar ao início
-        </Link>
-      </header>
+      {/* ===== Secção 1: Nav ===== */}
+      <SiteHeader ctaLabel="Subscrever grátis" onCtaClick={openForm} />
 
       {/* ===== Secção 2: Hero ===== */}
       <section className="mx-auto max-w-[760px] px-4 pt-16 pb-10 text-center sm:px-10 sm:pt-[72px]">

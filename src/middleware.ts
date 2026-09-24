@@ -13,6 +13,8 @@ const PAGINAS_PUBLICAS = [
   "/registo",
   "/pedido-classico",
   "/home-anterior",
+  "/como-funciona",
+  "/por-que-assinar",
 ];
 
 // /auth/callback tem de fazer a troca do code PKCE de forma atómica, sem
@@ -29,7 +31,15 @@ const ROTAS_SEM_REFRESH_DE_SESSAO = [...PAGINAS_PUBLICAS, "/auth/callback"];
 // via dolado.pt (ex. link relativo "Área do Utilizador" na landing) ficava
 // com o cookie do code verifier gravado em dolado.pt, mas o callback do
 // Google volta sempre a portal.dolado.pt — o cookie nunca era encontrado.
-const PAGINAS_SO_MARKETING = ["/", "/termos", "/privacidade", "/pedido-classico", "/home-anterior"];
+const PAGINAS_SO_MARKETING = [
+  "/",
+  "/termos",
+  "/privacidade",
+  "/pedido-classico",
+  "/home-anterior",
+  "/como-funciona",
+  "/por-que-assinar",
+];
 
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host")?.split(":")[0] ?? "";

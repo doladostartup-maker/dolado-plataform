@@ -1,18 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
 import { FormularioGuiado } from "./FormularioGuiado";
-
-const NAV_LINKS = [
-  { href: "/como-funciona", label: "Como funciona" },
-  { href: "/por-que-assinar", label: "Por quê assinar?" },
-  { href: "#transparencia", label: "Transparência" },
-  { href: "#quem-trata", label: "Sobre nós" },
-  { href: "#contacto", label: "Contacto" },
-];
+import { SiteHeader } from "./SiteHeader";
 
 type Funcionalidade = {
   icone: string;
@@ -84,18 +76,13 @@ const BOTAO_SECUNDARIO =
 
 export function Homepage() {
   const [formOpen, setFormOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [origem] = useState(detectarOrigem);
-  const painelRef = useRef<HTMLDivElement>(null);
-  const hamburguerRef = useRef<HTMLButtonElement>(null);
 
   const openForm = useCallback((origemClique: string) => {
     track(origemClique);
     setFormOpen(true);
-    setMenuOpen(false);
   }, []);
   const closeForm = useCallback(() => setFormOpen(false), []);
-  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   useEffect(() => {
     if (!formOpen) return;
@@ -106,141 +93,13 @@ export function Homepage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [formOpen, closeForm]);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeMenu();
-    };
-    const onClickFora = (e: MouseEvent) => {
-      if (
-        painelRef.current &&
-        !painelRef.current.contains(e.target as Node) &&
-        !hamburguerRef.current?.contains(e.target as Node)
-      ) {
-        closeMenu();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    document.addEventListener("mousedown", onClickFora);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.removeEventListener("mousedown", onClickFora);
-    };
-  }, [menuOpen, closeMenu]);
-
   return (
     <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
       {/* ===== Secção 1: Nav + Hero ===== */}
-      <header className="sticky top-0 z-20 border-b border-[var(--color-hairline)] bg-white/72 backdrop-blur-[10px]">
-        <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 px-4 py-3 sm:px-10">
-          <Link href="/" className="inline-flex items-center gap-2.5">
-            <Image src="/brand/dolado-logo-icon.svg" alt="" width={32} height={32} priority />
-            <span className="text-base font-bold tracking-tight">
-              <span className="text-[var(--color-ink)]">Do</span>
-              <span className="text-[var(--color-brand)]">Lado</span>
-            </span>
-          </Link>
-
-          {/* Navegação — desktop */}
-          <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-center gap-x-6 gap-y-1.5 lg:flex">
-            {NAV_LINKS.map((l) =>
-              l.href.startsWith("/") ? (
-                <Link
-                  key={l.label}
-                  href={l.href}
-                  className="whitespace-nowrap text-sm font-medium text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-                >
-                  {l.label}
-                </Link>
-              ) : (
-                <a
-                  key={l.label}
-                  href={l.href}
-                  className="whitespace-nowrap text-sm font-medium text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-                >
-                  {l.label}
-                </a>
-              ),
-            )}
-          </nav>
-          <div className="hidden items-center gap-3 lg:flex">
-            <Link
-              href="/entrar"
-              className="whitespace-nowrap text-sm font-medium text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-            >
-              Entrar
-            </Link>
-            <button type="button" onClick={() => openForm("click_nav_reclamacao")} className={BOTAO_PRIMARIO}>
-              Escrever a minha reclamação
-            </button>
-          </div>
-
-          {/* Hambúrguer — mobile/tablet */}
-          <button
-            ref={hamburguerRef}
-            type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
-            aria-expanded={menuOpen}
-            className="flex h-11 w-11 flex-none items-center justify-center rounded-[var(--radius-input)] text-[var(--color-ink)] lg:hidden"
-          >
-            {menuOpen ? (
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-                <path d="M4 4L18 18M18 4L4 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            ) : (
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-                <path d="M3 6H19M3 11H19M3 16H19" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            )}
-          </button>
-        </div>
-
-        {/* Painel do menu — mobile/tablet */}
-        {menuOpen && (
-          <div
-            ref={painelRef}
-            className="flex flex-col gap-1 border-t border-[var(--color-hairline)] bg-white px-4 py-4 lg:hidden"
-          >
-            {NAV_LINKS.map((l) =>
-              l.href.startsWith("/") ? (
-                <Link
-                  key={l.label}
-                  href={l.href}
-                  onClick={closeMenu}
-                  className="flex min-h-11 items-center text-base font-medium text-[var(--color-ink)]"
-                >
-                  {l.label}
-                </Link>
-              ) : (
-                <a
-                  key={l.label}
-                  href={l.href}
-                  onClick={closeMenu}
-                  className="flex min-h-11 items-center text-base font-medium text-[var(--color-ink)]"
-                >
-                  {l.label}
-                </a>
-              ),
-            )}
-            <div className="my-2 border-t border-[var(--color-hairline)]" />
-            <Link
-              href="/entrar"
-              onClick={closeMenu}
-              className="flex min-h-11 items-center text-base font-medium text-[var(--color-ink)]"
-            >
-              Entrar
-            </Link>
-            <button
-              type="button"
-              onClick={() => openForm("click_nav_reclamacao")}
-              className={`${BOTAO_PRIMARIO} mt-2 w-full`}
-            >
-              Escrever a minha reclamação
-            </button>
-          </div>
-        )}
-      </header>
+      <SiteHeader
+        ctaLabel="Escrever a minha reclamação"
+        onCtaClick={() => openForm("click_nav_reclamacao")}
+      />
 
       {/* Hero */}
       <section className="relative overflow-hidden">
