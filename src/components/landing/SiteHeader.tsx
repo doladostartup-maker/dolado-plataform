@@ -9,7 +9,7 @@ const NAV_LINKS = [
   { href: "/por-que-assinar", label: "Por quê assinar?" },
   { href: "/transparencia", label: "Transparência" },
   { href: "/#quem-trata", label: "Sobre nós" },
-  { href: "/#contacto", label: "Contacto" },
+  { href: "/contacto", label: "Contacto" },
 ];
 
 const BOTAO_PRIMARIO =
