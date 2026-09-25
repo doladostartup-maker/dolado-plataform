@@ -9,7 +9,7 @@ A DoLado é uma plataforma portuguesa de acompanhamento de reclamações de cons
 1. **B2C directo** — clientes que chegam via Google Ads / formulário público, processo hoje 100% manual (email, Google Sheet)
 2. **Piloto B2B2C** — parceria gratuita com a Remax Duplo Prestígio (75 colaboradores), sem data de lançamento fixa, ~10-20 casos/mês esperados
 
-Este repositório constrói a **v1 da plataforma**, que substitui o processo manual (Google Sheet + email) por um backoffice e um portal do cliente simples. **Não é a especificação completa do produto final** — funcionalidades como autenticação CMD/eIDAS, RPA para o Livro de Reclamações, IA para geração/extracção de texto, e dashboards avançados ficam deliberadamente fora desta v1.
+Este repositório constrói a **v1 da plataforma**, que substitui o processo manual (Google Sheet + email) por um backoffice e um portal do cliente simples. **Não é a especificação completa do produto final** — funcionalidades como autenticação CMD/eIDAS, RPA para o Livro de Reclamações, e dashboards avançados ficam deliberadamente fora desta v1. O uso de IA (Claude API) passou a estar em escopo a partir de 25/09/2026, sob as regras descritas em "Uso de IA" — não é mais uma exclusão geral.
 
 ## Quem constrói e opera
 
@@ -38,6 +38,8 @@ Toda a infraestrutura abaixo já está montada e ligada. O Claude Code deve usar
 - **Google Cloud:** projecto `dolado-forms`, OAuth 2.0 Client "Cliente Web 1" já criado e ligado à Supabase (redirect URI `https://eqsmzczjyrcrsbfqioxt.supabase.co/auth/v1/callback` autorizado em 16/09/2026)
 
 Variáveis de ambiente a configurar no Clever Cloud durante a Fase 1: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `BREVO_API_KEY` (esta última só é necessária a partir da Fase 4, mas pode ser configurada desde já).
+
+`ANTHROPIC_API_KEY` (Claude API) ainda não está contratada — previsto 01/10/2026. As funcionalidades que dependem dela (ver "Uso de IA") já estão construídas e em produção, mas caem em modo manual/revisão até a chave ser configurada em `.env.local` e nos secrets das Supabase Edge Functions relevantes.
 
 ## Gestão de custo — regra durante a fase de piloto
 
@@ -99,25 +101,44 @@ Objectivo: colaborador Remax (ou cliente B2C) vê o próprio caso.
 - Link do dossiê disponível quando preenchido no backoffice
 
 ### FASE 4 — Extras e automação
-Só depois de Fases 1-3 validadas e a funcionar.
+Fases 1-3 confirmadas por Thiago em 24/09/2026 — Fase 4 em curso.
 
+Já construído e em produção:
+- Alerta de fim de fidelização (`/portal/alertas`) — sem IA, com cron diário (`pg_cron` + Edge Function) a 60/30 dias
+- Aviso Sectorial (`/portal/perfil` + `/backoffice/avisos`) — sem IA, admin avisa por e-mail os clientes que subscreveram o setor
+- Alerta de fim de promoção (`/portal/promocoes`) — com extração de data por Claude API (opcional, cliente confirma sempre)
+- Comparador de Faturas (`/portal/faturas`) — com extração e comparação por Claude API, 100% automático com fallback para revisão manual
+- Simulador de Elegibilidade (`/portal/elegibilidade`) — regras determinísticas + sugestão da Claude API, sempre com gate de revisão humana obrigatória (ver "Uso de IA")
+
+Ainda por construir:
 - Templates de texto (CRUD simples, substituição de variáveis `{{}}`, sem IA) — os textos-base já existem, pedir a Thiago o documento `templates-texto-reclamacoes.md`
 - Gerador de carta grátis público (reutiliza os mesmos templates)
 - Geração de dossiê em PDF, guardado no Supabase Storage
 - Email automático em mudança de estado (só email por agora, sem SMS — volume não justifica)
-- Alerta de fim de fidelidade por email, X dias antes
 
 ## Explicitamente fora de escopo — não construir sem decisão nova de Thiago
 
 - Autenticação CMD/eIDAS
 - RPA para o Livro de Reclamações
 - Dashboard Metabase / analytics avançado
-- Simulador de elegibilidade com tabela de regras legais automática
-- Qualquer uso de IA (geração de texto, extracção de documentos, classificação)
 - Pagamentos/Stripe (piloto é gratuito)
 - Apple Sign In
 - Multi-idioma
 - Hosting fora da Clever Cloud
+
+O simulador de elegibilidade e o uso de IA em geral **saíram** desta lista em 25/09/2026 — ver "Uso de IA" abaixo para as regras que passaram a aplicar-se em vez de uma exclusão total.
+
+## Uso de IA (decisão: 25/09/2026)
+
+A exclusão geral de IA da v1 foi revista. A Claude API está agora em escopo, mas só dentro destas regras — não é uma autorização em aberto para qualquer uso de IA sem mais:
+
+1. **Extracção factual (datas, valores) — sem gate de revisão obrigatório.** Ler uma data ou um valor de um documento é uma tarefa factual, não uma decisão de aplicação da lei. Usado em: Alerta de fim de promoção (data no contrato) e Comparador de Faturas (valores na fatura). O cliente confirma sempre antes de gravar (promoção) ou recebe o resultado directo (fatura), mas não há revisão do Thiago por caso.
+2. **Interpretação/classificação de um caso individual — gate de revisão humana sempre obrigatório, sem excepção.** Isto é a linha entre "apoio administrativo" (permitido) e "aconselhamento jurídico individualizado" (proibido sem supervisão), validada com a advogada RGPD: mínimo de revisão humana real por caso antes de qualquer contacto com o cliente. Usado em: Simulador de Elegibilidade — a Claude API só sugere (`ai_suggested_status`/`sugestao_ia_estado`), nunca decide; o campo que determina o que o cliente recebe (`final_status`/`estado_final`) só é preenchido pelo Thiago.
+3. **Fallback manual sempre silencioso.** Chave não configurada, API indisponível, resposta inválida ou confiança baixa nunca podem gerar um erro visível ao cliente nem bloquear o fluxo — caem sempre no caminho manual/revisão que já existia antes de haver IA.
+4. **Nunca gerar texto que conclua responsabilidade jurídica de terceiro** (ex.: "a empresa violou a lei"), mesmo nas sugestões internas da Fase 2 do Simulador — o padrão é sempre: descrever o facto, citar a norma legal objectivamente, formular o pedido concreto.
+5. **Medir custo real** nos primeiros 10-15 casos de cada funcionalidade e anotar em `custos-fixos-e-break-even.md` (ainda por criar) — o piloto está em tier gratuito, um custo por chamada de API é uma excepção a essa regra que vale a pena vigiar.
+
+Qualquer uso de IA fora destas 5 regras (ex.: geração de texto de reclamação, decisão automática sem revisão) continua a exigir decisão nova de Thiago.
 
 ## Antes de qualquer submissão real a um operador
 
