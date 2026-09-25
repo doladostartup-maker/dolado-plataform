@@ -27,7 +27,7 @@ export default async function ReverElegibilidadePage({
   const { data: caso } = await supabase
     .from("casos_elegibilidade_portal")
     .select(
-      "id, nome, email, setor, duracao_contrato, empresa_respondeu_bem, descricao_problema, pontuacao_elegibilidade, sugestao_ia_estado, sugestao_ia_razao, confianca_ia",
+      "id, nome, email, origem, setor, duracao_contrato, empresa_respondeu_bem, descricao_problema, pontuacao_elegibilidade, sugestao_ia_estado, sugestao_ia_razao, confianca_ia",
     )
     .eq("id", id)
     .single();
@@ -42,7 +42,7 @@ export default async function ReverElegibilidadePage({
     <div className="flex max-w-2xl flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-          Rever elegibilidade de {caso.nome}
+          Rever elegibilidade de {caso.nome ?? caso.email}
         </h1>
         <Link href="/backoffice/elegibilidade" className="text-sm text-[var(--color-ink-muted)] underline">
           Voltar
@@ -58,6 +58,10 @@ export default async function ReverElegibilidadePage({
             <div>
               <dt className="text-[var(--color-ink-muted)]">E-mail</dt>
               <dd className="text-[var(--color-ink)]">{caso.email}</dd>
+            </div>
+            <div>
+              <dt className="text-[var(--color-ink-muted)]">Origem</dt>
+              <dd className="text-[var(--color-ink)]">{caso.origem === "publico" ? "Público (sem conta)" : "Dashboard"}</dd>
             </div>
             <div>
               <dt className="text-[var(--color-ink-muted)]">Setor</dt>

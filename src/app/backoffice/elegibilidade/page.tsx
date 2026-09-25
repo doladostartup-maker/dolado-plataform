@@ -24,7 +24,7 @@ export default async function ElegibilidadePendentePage({
 
   const { data: casos } = await supabase
     .from("casos_elegibilidade_portal")
-    .select("id, nome, email, setor, sugestao_ia_estado, confianca_ia, created_at")
+    .select("id, nome, email, origem, setor, sugestao_ia_estado, confianca_ia, created_at")
     .eq("estado_elegibilidade", "em_revisao")
     .order("created_at", { ascending: true });
 
@@ -49,6 +49,8 @@ export default async function ElegibilidadePendentePage({
             <thead className="bg-[var(--color-surface-sunken)]">
               <tr>
                 <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Cliente</th>
+                <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">E-mail</th>
+                <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Origem</th>
                 <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Setor</th>
                 <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Sugestão IA</th>
                 <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]" />
@@ -59,9 +61,18 @@ export default async function ElegibilidadePendentePage({
                 const badge = BADGE_CONFIANCA[c.confianca_ia ?? "unavailable"];
                 return (
                   <tr key={c.id} className="border-t border-[var(--color-hairline)]">
-                    <td className="px-3 py-2 text-[var(--color-ink)]">
-                      {c.nome}
-                      <span className="block text-[12px] text-[var(--color-ink-faint)]">{c.email}</span>
+                    <td className="px-3 py-2 text-[var(--color-ink)]">{c.nome ?? "—"}</td>
+                    <td className="px-3 py-2 text-[var(--color-ink)]">{c.email}</td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`rounded-[var(--radius-pill)] px-2 py-0.5 text-[11.5px] font-medium ${
+                          c.origem === "publico"
+                            ? "bg-[var(--color-status-pending-wash)] text-[var(--color-status-pending)]"
+                            : "bg-[var(--color-surface-sunken)] text-[var(--color-ink-muted)]"
+                        }`}
+                      >
+                        {c.origem === "publico" ? "Público" : "Dashboard"}
+                      </span>
                     </td>
                     <td className="px-3 py-2 text-[var(--color-ink)]">{c.setor}</td>
                     <td className="px-3 py-2">

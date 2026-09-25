@@ -86,10 +86,11 @@ export async function reverElegibilidadeManualmente(id: string, formData: FormDa
     redirect(`/backoffice/elegibilidade/${id}?erro=${encodeURIComponent(error.message)}`);
   }
 
+  const nomeOuEmail = caso.nome || caso.email;
   await enviarEmailBrevo(
-    { email: caso.email, nome: caso.nome },
+    { email: caso.email, nome: nomeOuEmail },
     estadoFinal === "elegivel" ? "O seu caso parece elegível" : "Resultado da verificação de elegibilidade",
-    htmlResultado(caso.nome, estadoFinal === "elegivel", razaoCliente),
+    htmlResultado(nomeOuEmail, estadoFinal === "elegivel", razaoCliente),
   );
 
   revalidatePath("/backoffice/elegibilidade");

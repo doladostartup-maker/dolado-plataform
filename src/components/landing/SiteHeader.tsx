@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 const NAV_LINKS = [
   { href: "/como-funciona", label: "Como funciona" },
+  { href: "/simulador-elegibilidade", label: "Simulador de Elegibilidade" },
   { href: "/por-que-assinar", label: "Por quê assinar?" },
   { href: "/transparencia", label: "Transparência" },
   { href: "/#quem-trata", label: "Sobre nós" },
