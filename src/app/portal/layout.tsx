@@ -69,6 +69,15 @@ function IconPromocao() {
   );
 }
 
+function IconFaturas() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
+      <rect x="3" y="2" width="10" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function IconSubscricao() {
   return (
     <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
@@ -188,6 +197,9 @@ export default async function PortalLayout({
           </ItemNav>
           <ItemNav href="/portal/promocoes" icon={<IconPromocao />}>
             Promoções
+          </ItemNav>
+          <ItemNav href="/portal/faturas" icon={<IconFaturas />}>
+            Comparador de Faturas
           </ItemNav>
           <ItemNav href="/conta" icon={<IconConta />}>
             A minha conta
