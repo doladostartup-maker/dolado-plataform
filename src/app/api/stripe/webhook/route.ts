@@ -60,6 +60,10 @@ export async function POST(request: Request) {
     if (plano && email) {
       const cupao = session.discounts?.[0]?.coupon;
       const codigoDesconto = typeof cupao === "string" ? cupao : (cupao?.id ?? null);
+      // Só vem preenchido no upgrade Avulso→Assinatura (iniciarUpgradeParaAssinatura
+      // grava-o nos metadados) — uma compra de raiz ainda não tem conta,
+      // por isso é sempre /criar-conta a ligar o user_id depois.
+      const userId = session.metadata?.user_id ?? null;
 
       // upsert (não insert) — /criar-conta também pode já ter gravado esta
       // sessão antes do webhook chegar; onConflict evita duplicar e garante
@@ -67,6 +71,7 @@ export async function POST(request: Request) {
       const { error: erroPagamento } = await admin.from("stripe_payments").upsert(
         {
           stripe_session_id: session.id,
+          user_id: userId,
           stripe_customer_id:
             typeof session.customer === "string" ? session.customer : session.customer?.id,
           stripe_subscription_id:
@@ -94,11 +99,16 @@ export async function POST(request: Request) {
         const customerId =
           typeof session.customer === "string" ? session.customer : session.customer?.id;
 
-        if (customerId) {
-          const { error: erroAcesso } = await admin
-            .from("user_access")
-            .update({ nivel_acesso: "assinatura", updated_at: new Date().toISOString() })
-            .eq("stripe_customer_id", customerId);
+        if (userId) {
+          const { error: erroAcesso } = await admin.from("user_access").upsert(
+            {
+              user_id: userId,
+              nivel_acesso: "assinatura",
+              stripe_customer_id: customerId ?? null,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id" },
+          );
           if (erroAcesso) {
             console.error("[stripe webhook] falha ao actualizar user_access (upgrade):", erroAcesso);
           }

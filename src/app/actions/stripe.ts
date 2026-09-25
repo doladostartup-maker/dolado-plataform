@@ -14,6 +14,11 @@ export async function iniciarCheckout(plano: "avulso" | "assinatura") {
 
   const session = await stripe.checkout.sessions.create({
     mode: plano === "avulso" ? "payment" : "subscription",
+    // "always" garante que existe sempre um Customer Stripe associado,
+    // mesmo numa compra Avulso a 0 € por cupão de 100% — sem isto, um
+    // upgrade posterior não tem onde aplicar o crédito nem a quem ligar a
+    // nova assinatura (foi exactamente o que aconteceu no primeiro teste).
+    ...(plano === "avulso" ? { customer_creation: "always" as const } : {}),
     line_items: [{ price: precoId, quantity: 1 }],
     allow_promotion_codes: true,
     success_url: `${SITE_URL}/criar-conta?session_id={CHECKOUT_SESSION_ID}`,
@@ -53,14 +58,18 @@ export async function iniciarUpgradeParaAssinatura() {
     .limit(1)
     .maybeSingle();
 
-  if (!pagamentoAvulso?.stripe_customer_id) {
+  if (!pagamentoAvulso) {
     redirect("/portal?erro=upgrade-sem-pagamento");
   }
 
   const { stripe_customer_id: customerId, valor_total_centimos: valorCentimos } =
     pagamentoAvulso;
 
-  if (valorCentimos && valorCentimos > 0) {
+  // Uma compra Avulso a 0 € (cupão de 100%) pode não ter Customer Stripe
+  // associado — nesse caso não há nada para creditar, e o checkout da
+  // assinatura cria um Customer novo em vez de reutilizar um que não
+  // existe.
+  if (customerId && valorCentimos && valorCentimos > 0) {
     await stripe.customers.createBalanceTransaction(customerId, {
       amount: -valorCentimos,
       currency: "eur",
@@ -70,11 +79,17 @@ export async function iniciarUpgradeParaAssinatura() {
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
-    customer: customerId,
+    ...(customerId ? { customer: customerId } : { customer_email: user.email }),
     line_items: [{ price: getPrecoAssinaturaId(), quantity: 1 }],
-    success_url: `${SITE_URL}/portal?upgraded=true`,
+    // session_id no success_url permite ao /portal confirmar e libertar o
+    // acesso de imediato, sem depender só do timing do webhook (que pode
+    // chegar depois do browser voltar do Stripe).
+    success_url: `${SITE_URL}/portal?upgraded=true&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${SITE_URL}/portal`,
-    metadata: { plano: "assinatura", upgrade: "true" },
+    // user_id vai nos metadados para o webhook conseguir ligar o acesso
+    // de forma fiável, sem depender de o stripe_customer_id já bater
+    // certo com o que ficou gravado no upgrade anterior.
+    metadata: { plano: "assinatura", upgrade: "true", user_id: user.id },
   });
 
   if (!session.url) {
