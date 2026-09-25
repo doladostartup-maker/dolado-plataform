@@ -12,6 +12,7 @@ type Funcionalidade = {
   titulo: string;
   descricao: string;
   tracejado?: boolean;
+  href?: string;
 };
 
 const FUNCIONALIDADES: Funcionalidade[] = [
@@ -41,9 +42,10 @@ const FUNCIONALIDADES: Funcionalidade[] = [
   },
   {
     icone: "🧑‍🤝‍🧑",
-    badge: "EM BREVE",
+    badge: "DISPONÍVEL",
     titulo: "Simulador de Elegibilidade",
-    descricao: "Convide um amigo a verificar se também tem direito a reclamar.",
+    descricao: "Grátis e sem conta — veja em 5 perguntas se o seu caso parece ter fundamento.",
+    href: "/simulador-elegibilidade",
   },
   {
     icone: "➕",
@@ -172,35 +174,53 @@ export function Homepage() {
             Funcionalidades
           </p>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {FUNCIONALIDADES.map((f) => (
-              <div
-                key={f.titulo}
-                className={`rounded-[var(--radius-card)] border bg-[var(--color-surface)] p-[22px] ${
-                  f.badge === "DISPONÍVEL"
-                    ? "border-[var(--color-hairline)] shadow-[var(--shadow-subtle)]"
-                    : f.tracejado
-                      ? "border-dashed border-[var(--color-hairline-strong)] opacity-70"
-                      : "border-[var(--color-hairline-strong)] opacity-85"
-                }`}
-              >
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-brand-wash)] text-base">
-                    {f.icone}
-                  </span>
-                  <span
-                    className={`rounded-[var(--radius-pill)] px-2 py-0.5 text-[10px] font-semibold ${
-                      f.badge === "DISPONÍVEL"
-                        ? "bg-[var(--color-brand-wash)] text-[var(--color-brand)]"
-                        : "bg-[var(--color-surface-sunken)] text-[var(--color-ink-faint)]"
-                    }`}
-                  >
-                    {f.badge}
-                  </span>
+            {FUNCIONALIDADES.map((f) => {
+              const className = `rounded-[var(--radius-card)] border bg-[var(--color-surface)] p-[22px] ${
+                f.href ? "block transition hover:border-[var(--color-brand)] hover:shadow-[var(--shadow-md)]" : ""
+              } ${
+                f.badge === "DISPONÍVEL"
+                  ? "border-[var(--color-hairline)] shadow-[var(--shadow-subtle)]"
+                  : f.tracejado
+                    ? "border-dashed border-[var(--color-hairline-strong)] opacity-70"
+                    : "border-[var(--color-hairline-strong)] opacity-85"
+              }`;
+
+              const conteudo = (
+                <>
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-brand-wash)] text-base">
+                      {f.icone}
+                    </span>
+                    <span
+                      className={`rounded-[var(--radius-pill)] px-2 py-0.5 text-[10px] font-semibold ${
+                        f.badge === "DISPONÍVEL"
+                          ? "bg-[var(--color-brand-wash)] text-[var(--color-brand)]"
+                          : "bg-[var(--color-surface-sunken)] text-[var(--color-ink-faint)]"
+                      }`}
+                    >
+                      {f.badge}
+                    </span>
+                  </div>
+                  <p className="mb-1.5 text-[14.5px] font-semibold text-[var(--color-ink)]">{f.titulo}</p>
+                  <p className="text-[13px] leading-relaxed text-[var(--color-ink-muted)]">{f.descricao}</p>
+                  {f.href && (
+                    <p className="mt-2 text-[12.5px] font-semibold text-[var(--color-brand)]">
+                      Experimentar →
+                    </p>
+                  )}
+                </>
+              );
+
+              return f.href ? (
+                <Link key={f.titulo} href={f.href} className={className}>
+                  {conteudo}
+                </Link>
+              ) : (
+                <div key={f.titulo} className={className}>
+                  {conteudo}
                 </div>
-                <p className="mb-1.5 text-[14.5px] font-semibold text-[var(--color-ink)]">{f.titulo}</p>
-                <p className="text-[13px] leading-relaxed text-[var(--color-ink-muted)]">{f.descricao}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
