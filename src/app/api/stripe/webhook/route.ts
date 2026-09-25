@@ -61,21 +61,30 @@ export async function POST(request: Request) {
       const cupao = session.discounts?.[0]?.coupon;
       const codigoDesconto = typeof cupao === "string" ? cupao : (cupao?.id ?? null);
 
-      await admin.from("stripe_payments").insert({
-        stripe_session_id: session.id,
-        stripe_customer_id:
-          typeof session.customer === "string" ? session.customer : session.customer?.id,
-        stripe_subscription_id:
-          typeof session.subscription === "string"
-            ? session.subscription
-            : session.subscription?.id,
-        email,
-        plano,
-        valor_total_centimos: session.amount_total,
-        moeda: session.currency ?? "eur",
-        codigo_desconto: codigoDesconto,
-        upgrade_de_avulso: ehUpgrade,
-      });
+      // upsert (não insert) — /criar-conta também pode já ter gravado esta
+      // sessão antes do webhook chegar; onConflict evita duplicar e garante
+      // que os dois caminhos convergem para a mesma linha.
+      const { error: erroPagamento } = await admin.from("stripe_payments").upsert(
+        {
+          stripe_session_id: session.id,
+          stripe_customer_id:
+            typeof session.customer === "string" ? session.customer : session.customer?.id,
+          stripe_subscription_id:
+            typeof session.subscription === "string"
+              ? session.subscription
+              : session.subscription?.id,
+          email,
+          plano,
+          valor_total_centimos: session.amount_total,
+          moeda: session.currency ?? "eur",
+          codigo_desconto: codigoDesconto,
+          upgrade_de_avulso: ehUpgrade,
+        },
+        { onConflict: "stripe_session_id" },
+      );
+      if (erroPagamento) {
+        console.error("[stripe webhook] falha ao gravar stripe_payments:", erroPagamento);
+      }
 
       // Upgrade de um cliente já existente — a conta já está ligada, só é
       // preciso subir o nível de acesso. Uma assinatura comprada de raiz
@@ -86,10 +95,13 @@ export async function POST(request: Request) {
           typeof session.customer === "string" ? session.customer : session.customer?.id;
 
         if (customerId) {
-          await admin
+          const { error: erroAcesso } = await admin
             .from("user_access")
             .update({ nivel_acesso: "assinatura", updated_at: new Date().toISOString() })
             .eq("stripe_customer_id", customerId);
+          if (erroAcesso) {
+            console.error("[stripe webhook] falha ao actualizar user_access (upgrade):", erroAcesso);
+          }
         }
       }
 

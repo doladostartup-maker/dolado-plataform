@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { iniciarUpgradeParaAssinatura } from "@/app/actions/stripe";
 import type { NivelAcesso } from "@/lib/auth";
+import { MARKETING_SITE_URL } from "@/lib/site";
+
+// Mantido igual ao preçário da homepage (src/components/landing/Homepage.tsx)
+const PRECO_ASSINATURA = "7,99 €/mês";
 
 type Card = {
   slug: string;
@@ -132,12 +136,27 @@ export function PortalDashboard({
             className="w-full max-w-[420px] rounded-[var(--radius-card)] bg-white p-6 shadow-[var(--shadow-md)]"
           >
             <h2 className="mb-3 text-[17px] font-semibold text-[var(--color-ink)]">
-              Esta funcionalidade é exclusiva de assinantes
+              {nivelAcesso === "avulso"
+                ? "Quer mudar para a Assinatura Mensal?"
+                : "Esta funcionalidade é exclusiva de assinantes"}
             </h2>
             <p className="mb-5 text-[13.5px] leading-relaxed text-[var(--color-ink-muted)]">
-              {nivelAcesso === "avulso" && valorAvulso
-                ? `Já pagou ${valorAvulso} € pela sua reclamação avulsa — esse valor é descontado automaticamente na sua primeira mensalidade.`
-                : "Assine para desbloquear alertas, comparador de faturas e simulador de elegibilidade."}
+              {nivelAcesso === "avulso" ? (
+                <>
+                  A Assinatura Mensal custa <strong>{PRECO_ASSINATURA}</strong> e desbloqueia
+                  esta e todas as outras funcionalidades.
+                  {valorAvulso && (
+                    <>
+                      {" "}
+                      Já pagou <strong>{valorAvulso} €</strong> pela sua reclamação avulsa — esse
+                      valor fica creditado automaticamente e é descontado da primeira
+                      mensalidade.
+                    </>
+                  )}
+                </>
+              ) : (
+                "Assine para desbloquear alertas, comparador de faturas e simulador de elegibilidade."
+              )}
             </p>
             <div className="flex gap-3">
               {nivelAcesso === "avulso" ? (
@@ -147,11 +166,11 @@ export function PortalDashboard({
                   onClick={() => iniciarSubscricao(() => iniciarUpgradeParaAssinatura())}
                   className="flex-1 rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-60"
                 >
-                  {aSubscrever ? "A abrir…" : "Subscrever agora"}
+                  {aSubscrever ? "A abrir…" : `Confirmar e subscrever por ${PRECO_ASSINATURA}`}
                 </button>
               ) : (
                 <Link
-                  href="/#precario"
+                  href={`${MARKETING_SITE_URL}/#precario`}
                   className="flex-1 rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-center text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)]"
                 >
                   Ver planos

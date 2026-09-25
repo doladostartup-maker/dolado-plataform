@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { MARKETING_SITE_URL } from "@/lib/site";
 import { getStripe } from "@/lib/stripe/client";
 import { criarContaComPagamento } from "./actions";
 
@@ -10,14 +11,16 @@ export default async function CriarContaPage({
   const params = await searchParams;
 
   if (!params.session_id) {
-    redirect("/#precario");
+    redirect(`${MARKETING_SITE_URL}/#precario`);
   }
 
   const session = await getStripe().checkout.sessions.retrieve(params.session_id);
   const email = session.customer_details?.email;
 
-  if (!email || session.payment_status !== "paid") {
-    redirect("/#precario");
+  // "no_payment_required" acontece quando um cupão de 100% zera o total —
+  // é um pagamento válido, só sem cobrança real.
+  if (!email || !["paid", "no_payment_required"].includes(session.payment_status)) {
+    redirect(`${MARKETING_SITE_URL}/#precario`);
   }
 
   return (

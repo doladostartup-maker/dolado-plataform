@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { obterNivelAcesso, requireUser } from "@/lib/auth";
+import { MARKETING_SITE_URL } from "@/lib/site";
 import { getPrecoAssinaturaId, getPrecoAvulsoId, getStripe } from "@/lib/stripe/client";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!;
@@ -16,12 +17,12 @@ export async function iniciarCheckout(plano: "avulso" | "assinatura") {
     line_items: [{ price: precoId, quantity: 1 }],
     allow_promotion_codes: true,
     success_url: `${SITE_URL}/criar-conta?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${SITE_URL}/#precario`,
+    cancel_url: `${MARKETING_SITE_URL}/#precario`,
     metadata: { plano },
   });
 
   if (!session.url) {
-    redirect("/#precario");
+    redirect(`${MARKETING_SITE_URL}/#precario`);
   }
 
   redirect(session.url);
