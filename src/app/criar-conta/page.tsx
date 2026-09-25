@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { stripe } from "@/lib/stripe/client";
+import { getStripe } from "@/lib/stripe/client";
 import { criarContaComPagamento } from "./actions";
 
 export default async function CriarContaPage({
@@ -13,7 +13,7 @@ export default async function CriarContaPage({
     redirect("/#precario");
   }
 
-  const session = await stripe.checkout.sessions.retrieve(params.session_id);
+  const session = await getStripe().checkout.sessions.retrieve(params.session_id);
   const email = session.customer_details?.email;
 
   if (!email || session.payment_status !== "paid") {

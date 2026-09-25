@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { stripe } from "@/lib/stripe/client";
+import { getStripe } from "@/lib/stripe/client";
 
 export async function criarContaComPagamento(formData: FormData) {
   const sessionId = formData.get("session_id") as string;
@@ -14,7 +14,7 @@ export async function criarContaComPagamento(formData: FormData) {
     redirect("/#precario");
   }
 
-  const session = await stripe.checkout.sessions.retrieve(sessionId);
+  const session = await getStripe().checkout.sessions.retrieve(sessionId);
   const email = session.customer_details?.email;
   const plano = session.metadata?.plano as "avulso" | "assinatura" | undefined;
 

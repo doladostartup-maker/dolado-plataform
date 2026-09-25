@@ -5,7 +5,7 @@ import {
   montarHtmlBoasVindasPagamento,
   montarHtmlNotificacaoNovoPagamento,
 } from "@/lib/email/pagamento";
-import { stripe } from "@/lib/stripe/client";
+import { getStripe } from "@/lib/stripe/client";
 
 async function enviarEmailBrevo(destinatario: string, assunto: string, html: string) {
   // Falha de e-mail nunca deve derrubar o webhook — o pagamento já está
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       corpoBruto,
       assinatura!,
       process.env.STRIPE_WEBHOOK_SECRET!,

@@ -3,12 +3,13 @@
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { obterNivelAcesso, requireUser } from "@/lib/auth";
-import { PRECO_ASSINATURA_ID, PRECO_AVULSO_ID, stripe } from "@/lib/stripe/client";
+import { getPrecoAssinaturaId, getPrecoAvulsoId, getStripe } from "@/lib/stripe/client";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!;
 
 export async function iniciarCheckout(plano: "avulso" | "assinatura") {
-  const precoId = plano === "avulso" ? PRECO_AVULSO_ID : PRECO_ASSINATURA_ID;
+  const stripe = getStripe();
+  const precoId = plano === "avulso" ? getPrecoAvulsoId() : getPrecoAssinaturaId();
 
   const session = await stripe.checkout.sessions.create({
     mode: plano === "avulso" ? "payment" : "subscription",
@@ -32,6 +33,7 @@ export async function iniciarCheckout(plano: "avulso" | "assinatura") {
  * Stripe aplica o crédito automaticamente, o cliente só confirma.
  */
 export async function iniciarUpgradeParaAssinatura() {
+  const stripe = getStripe();
   const { supabase, user } = await requireUser();
   const nivel = await obterNivelAcesso(supabase, user.id);
 
@@ -68,7 +70,7 @@ export async function iniciarUpgradeParaAssinatura() {
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
-    line_items: [{ price: PRECO_ASSINATURA_ID, quantity: 1 }],
+    line_items: [{ price: getPrecoAssinaturaId(), quantity: 1 }],
     success_url: `${SITE_URL}/portal?upgraded=true`,
     cancel_url: `${SITE_URL}/portal`,
     metadata: { plano: "assinatura", upgrade: "true" },
