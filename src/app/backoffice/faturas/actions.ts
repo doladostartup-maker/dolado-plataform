@@ -77,7 +77,7 @@ export async function rewerFaturaManualmente(id: string, formData: FormData) {
     redirect(`/backoffice/faturas/${id}?erro=${encodeURIComponent("Indique o valor da fatura.")}`);
   }
 
-  const { data: anterior } = await supabase
+  let consultaAnterior = supabase
     .from("comparacoes_fatura_portal")
     .select("valor_mes_atual")
     .eq("utilizador_id", fatura.utilizador_id)
@@ -85,8 +85,13 @@ export async function rewerFaturaManualmente(id: string, formData: FormData) {
     .not("valor_mes_atual", "is", null)
     .neq("id", id)
     .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
+
+  if (operadora) {
+    consultaAnterior = consultaAnterior.eq("operadora", operadora);
+  }
+
+  const { data: anterior } = await consultaAnterior.maybeSingle();
 
   const valorAnterior = anterior?.valor_mes_atual ?? null;
   const diferencaPct = valorAnterior ? ((valorAtual - valorAnterior) / valorAnterior) * 100 : null;

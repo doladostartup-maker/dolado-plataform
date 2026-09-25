@@ -171,15 +171,23 @@ export async function criarComparacaoFaturaPortal(formData: FormData) {
   const { extracao, bruta } = resultado as Extract<typeof resultado, { ok: true }>;
   const valorAtual = extracao.total_value as number;
 
-  const { data: anterior } = await supabase
+  let consultaAnterior = supabase
     .from("comparacoes_fatura_portal")
     .select("valor_mes_atual")
     .eq("utilizador_id", user.id)
     .eq("status", "sent_to_client")
     .not("valor_mes_atual", "is", null)
     .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
+
+  // Só compara com a fatura anterior da mesma operadora — sem isto, uma
+  // fatura de água a seguir a uma de telecom seria (erradamente) comparada
+  // entre si.
+  if (operadora) {
+    consultaAnterior = consultaAnterior.eq("operadora", operadora);
+  }
+
+  const { data: anterior } = await consultaAnterior.maybeSingle();
 
   const valorAnterior = anterior?.valor_mes_atual ?? null;
   const diferencaPct = valorAnterior ? ((valorAtual - valorAnterior) / valorAnterior) * 100 : null;
