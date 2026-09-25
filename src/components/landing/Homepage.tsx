@@ -8,7 +8,7 @@ import { SiteHeader } from "./SiteHeader";
 
 type Funcionalidade = {
   icone: string;
-  badge: "DISPONÍVEL" | "EM BREVE";
+  badge?: "DISPONÍVEL" | "EM BREVE";
   titulo: string;
   descricao: string;
   tracejado?: boolean;
@@ -49,7 +49,6 @@ const FUNCIONALIDADES: Funcionalidade[] = [
   },
   {
     icone: "➕",
-    badge: "EM BREVE",
     titulo: "Outros",
     descricao: "Mais setores e outras funcionalidades ainda em estudo.",
     tracejado: true,
@@ -191,15 +190,17 @@ export function Homepage() {
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-brand-wash)] text-base">
                       {f.icone}
                     </span>
-                    <span
-                      className={`rounded-[var(--radius-pill)] px-2 py-0.5 text-[10px] font-semibold ${
-                        f.badge === "DISPONÍVEL"
-                          ? "bg-[var(--color-brand-wash)] text-[var(--color-brand)]"
-                          : "bg-[var(--color-surface-sunken)] text-[var(--color-ink-faint)]"
-                      }`}
-                    >
-                      {f.badge}
-                    </span>
+                    {f.badge && (
+                      <span
+                        className={`rounded-[var(--radius-pill)] px-2 py-0.5 text-[10px] font-semibold ${
+                          f.badge === "DISPONÍVEL"
+                            ? "bg-[var(--color-brand-wash)] text-[var(--color-brand)]"
+                            : "bg-[var(--color-surface-sunken)] text-[var(--color-ink-faint)]"
+                        }`}
+                      >
+                        {f.badge}
+                      </span>
+                    )}
                   </div>
                   <p className="mb-1.5 text-[14.5px] font-semibold text-[var(--color-ink)]">{f.titulo}</p>
                   <p className="text-[13px] leading-relaxed text-[var(--color-ink-muted)]">{f.descricao}</p>
