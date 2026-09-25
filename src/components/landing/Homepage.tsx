@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { iniciarCheckout } from "@/app/actions/stripe";
 import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
 import { FormularioGuiado } from "./FormularioGuiado";
 import { SiteHeader } from "./SiteHeader";
@@ -78,12 +79,21 @@ const BOTAO_SECUNDARIO =
 export function Homepage() {
   const [formOpen, setFormOpen] = useState(false);
   const [origem] = useState(detectarOrigem);
+  const [aIniciarPagamento, iniciarPagamento] = useTransition();
 
   const openForm = useCallback((origemClique: string) => {
     track(origemClique);
     setFormOpen(true);
   }, []);
   const closeForm = useCallback(() => setFormOpen(false), []);
+
+  const comprarPlano = useCallback(
+    (plano: "avulso" | "assinatura", origemClique: string) => {
+      track(origemClique);
+      iniciarPagamento(() => iniciarCheckout(plano));
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!formOpen) return;
@@ -265,10 +275,11 @@ export function Homepage() {
             </ul>
             <button
               type="button"
-              onClick={() => openForm("click_precario_avulso")}
-              className={`${BOTAO_SECUNDARIO} w-full text-[13.5px]`}
+              disabled={aIniciarPagamento}
+              onClick={() => comprarPlano("avulso", "click_precario_avulso")}
+              className={`${BOTAO_SECUNDARIO} w-full text-[13.5px] disabled:opacity-60`}
             >
-              Escrever a minha reclamação
+              {aIniciarPagamento ? "A abrir pagamento…" : "Pagar e escrever a minha reclamação"}
             </button>
           </div>
 
@@ -303,10 +314,11 @@ export function Homepage() {
             </ul>
             <button
               type="button"
-              onClick={() => openForm("click_precario_assinatura")}
-              className={`${BOTAO_PRIMARIO} w-full text-[13.5px] font-semibold`}
+              disabled={aIniciarPagamento}
+              onClick={() => comprarPlano("assinatura", "click_precario_assinatura")}
+              className={`${BOTAO_PRIMARIO} w-full text-[13.5px] font-semibold disabled:opacity-60`}
             >
-              Subscrever
+              {aIniciarPagamento ? "A abrir pagamento…" : "Subscrever"}
             </button>
           </div>
         </div>

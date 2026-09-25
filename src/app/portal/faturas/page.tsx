@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireAssinatura } from "@/lib/auth";
 import { criarComparacaoFaturaPortal } from "./actions";
 import { ComparadorFaturaForm } from "./_components/ComparadorFaturaForm";
 import { ComparacoesFaturaPortalTable } from "./_components/ComparacoesFaturaPortalTable";
@@ -10,14 +9,7 @@ export default async function ComparadorFaturasPage({
   searchParams: Promise<{ erro?: string; guardado?: string }>;
 }) {
   const params = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase, user } = await requireAssinatura("faturas");
 
   const { data: comparacoes } = await supabase
     .from("comparacoes_fatura_portal")

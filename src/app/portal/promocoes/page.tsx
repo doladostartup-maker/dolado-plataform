@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireAssinatura } from "@/lib/auth";
 import { criarAlertaPromocaoPortal } from "./actions";
 import { AlertaPromocaoPortalForm } from "./_components/AlertaPromocaoPortalForm";
 import { AlertasPromocaoPortalTable } from "./_components/AlertasPromocaoPortalTable";
@@ -10,14 +9,7 @@ export default async function AlertasPromocaoPage({
   searchParams: Promise<{ erro?: string; guardado?: string; apagado?: string }>;
 }) {
   const params = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase, user } = await requireAssinatura("promocoes");
 
   const { data: alertas } = await supabase
     .from("alertas_promocao_portal")

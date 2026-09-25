@@ -11,6 +11,7 @@ const PAGINAS_PUBLICAS = [
   "/entrar",
   "/login",
   "/registo",
+  "/criar-conta",
   "/pedido-classico",
   "/home-anterior",
   "/como-funciona",
@@ -24,7 +25,14 @@ const PAGINAS_PUBLICAS = [
 // outro cliente Supabase a mexer nos cookies antes — deixar o updateSession
 // correr aqui apaga por vezes o cookie do code verifier antes da troca
 // acontecer, fazendo o login falhar na primeira tentativa.
-const ROTAS_SEM_REFRESH_DE_SESSAO = [...PAGINAS_PUBLICAS, "/auth/callback"];
+// O webhook do Stripe é chamado pelo próprio Stripe, sem cookies de sessão
+// — correr o updateSession nele é trabalho desperdiçado e um cliente
+// Supabase a mexer em cookies numa resposta que o Stripe só lê pelo corpo.
+const ROTAS_SEM_REFRESH_DE_SESSAO = [
+  ...PAGINAS_PUBLICAS,
+  "/auth/callback",
+  "/api/stripe/webhook",
+];
 
 // Só estas páginas de marketing fazem sentido em dolado.pt (sem "portal.").
 // Tudo o resto (login, registo, entrar, portal, backoffice, auth/…) tem de

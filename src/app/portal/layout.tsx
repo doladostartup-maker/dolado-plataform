@@ -197,6 +197,9 @@ export default async function PortalLayout({
         </Link>
 
         <nav className="flex flex-col gap-1">
+          <ItemNav href="/portal" icon={<IconCasos />}>
+            Painel
+          </ItemNav>
           <ItemNav href="/portal/casos" icon={<IconCasos />}>
             Os meus casos
           </ItemNav>

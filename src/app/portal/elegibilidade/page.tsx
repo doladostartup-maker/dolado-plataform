@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireAssinatura } from "@/lib/auth";
 import { criarVerificacaoElegibilidade } from "./actions";
 import { VerificarElegibilidadeForm } from "./_components/VerificarElegibilidadeForm";
 import { VerificacoesElegibilidadeTable } from "./_components/VerificacoesElegibilidadeTable";
@@ -10,14 +9,7 @@ export default async function ElegibilidadePage({
   searchParams: Promise<{ erro?: string; guardado?: string }>;
 }) {
   const params = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase, user } = await requireAssinatura("elegibilidade");
 
   // Nunca seleccionar sugestao_ia_* / resposta_bruta_ia aqui — são dados
   // internos, só para o admin ver na revisão.

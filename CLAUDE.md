@@ -9,7 +9,7 @@ A DoLado é uma plataforma portuguesa de acompanhamento de reclamações de cons
 1. **B2C directo** — clientes que chegam via Google Ads / formulário público, processo hoje 100% manual (email, Google Sheet)
 2. **Piloto B2B2C** — parceria gratuita com a Remax Duplo Prestígio (75 colaboradores), sem data de lançamento fixa, ~10-20 casos/mês esperados
 
-Este repositório constrói a **v1 da plataforma**, que substitui o processo manual (Google Sheet + email) por um backoffice e um portal do cliente simples. **Não é a especificação completa do produto final** — funcionalidades como autenticação CMD/eIDAS, RPA para o Livro de Reclamações, e dashboards avançados ficam deliberadamente fora desta v1. O uso de IA (Claude API) passou a estar em escopo a partir de 25/09/2026, sob as regras descritas em "Uso de IA" — não é mais uma exclusão geral.
+Este repositório constrói a **v1 da plataforma**, que substitui o processo manual (Google Sheet + email) por um backoffice e um portal do cliente simples. **Não é a especificação completa do produto final** — funcionalidades como autenticação CMD/eIDAS, RPA para o Livro de Reclamações, e dashboards avançados ficam deliberadamente fora desta v1. O uso de IA (Claude API) passou a estar em escopo a partir de 25/09/2026, sob as regras descritas em "Uso de IA" — não é mais uma exclusão geral. Pagamentos/Stripe passaram a estar em escopo a partir de 25/09/2026, só para o canal B2C directo — ver "Pagamentos (Stripe)" abaixo.
 
 ## Quem constrói e opera
 
@@ -121,12 +121,22 @@ Ainda por construir:
 - Autenticação CMD/eIDAS
 - RPA para o Livro de Reclamações
 - Dashboard Metabase / analytics avançado
-- Pagamentos/Stripe (piloto é gratuito)
 - Apple Sign In
 - Multi-idioma
 - Hosting fora da Clever Cloud
 
-O simulador de elegibilidade e o uso de IA em geral **saíram** desta lista em 25/09/2026 — ver "Uso de IA" abaixo para as regras que passaram a aplicar-se em vez de uma exclusão total.
+O simulador de elegibilidade e o uso de IA em geral **saíram** desta lista em 25/09/2026 — ver "Uso de IA" abaixo para as regras que passaram a aplicar-se em vez de uma exclusão total. Pagamentos/Stripe **saiu** desta lista na mesma data — ver "Pagamentos (Stripe)" abaixo.
+
+## Pagamentos (Stripe) — decisão: 25/09/2026
+
+A exclusão geral de pagamentos da v1 foi revista, só para o canal B2C directo. O piloto B2B2C com a Remax **continua gratuito e fora deste mecanismo** — vai ter página e cupão de desconto 100% próprios, ainda por construir; até isso existir, contas de colaboradores Remax continuam a passar pelo `/registo` livre, sem qualquer gating.
+
+- **Dois planos**, já reflectidos no preçário da homepage: Avulso (pagamento único, 14,99 €/reclamação) e Assinatura Mensal (recorrente, 7,99 €/mês).
+- **Fluxo:** homepage → Stripe Checkout → `/criar-conta` (cria a conta Supabase e liga o pagamento) → `/portal`, com gating por `user_access.nivel_acesso`.
+- **Gating:** conta com plano `avulso` só tem "A sua reclamação" activo no painel — as restantes 5 funcionalidades ficam esbatidas com badge "Somente Assinantes" e abrem um modal de upgrade em vez de navegar. Conta `assinatura` (ou sem linha em `user_access`, herdada do `/registo` livre) tem tudo activo.
+- **Upgrade Avulso → Assinatura:** credita automaticamente o valor já pago como saldo Stripe do cliente antes de abrir o checkout da assinatura.
+- **Chaves de teste primeiro** — só trocar `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` para valores `live` no Clever Cloud com confirmação explícita de Thiago, depois de validar o fluxo ponta a ponta (checkout → webhook → criação de conta → gating → upgrade → cancelamento).
+- **Webhook:** configurar o endpoint no Stripe Dashboard directamente para `https://portal.dolado.pt/api/stripe/webhook` (não `dolado.pt` — o middleware redirecciona esse domínio e o Stripe não segue redirects de forma fiável).
 
 ## Uso de IA (decisão: 25/09/2026)
 
