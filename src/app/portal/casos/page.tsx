@@ -1,17 +1,9 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 import { MeusCasosTable } from "../_components/MeusCasosTable";
 
 export default async function MeusCasosPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase, user } = await requireUser();
 
   const { data: casos } = await supabase
     .from("casos")

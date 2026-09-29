@@ -1,6 +1,6 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 import { actualizarAlertaFidelizacaoPortal, apagarAlertaFidelizacaoPortal } from "../actions";
 import { AlertaFidelizacaoPortalForm } from "../_components/AlertaFidelizacaoPortalForm";
 
@@ -13,14 +13,7 @@ export default async function EditarAlertaFidelizacaoPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase, user } = await requireUser();
 
   const { data: alerta } = await supabase
     .from("alertas_fidelizacao_portal")

@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 import { alterarPassword, guardarPreferenciasSetor } from "./actions";
 
 const INPUT_CLASS =
@@ -13,14 +12,7 @@ export default async function PerfilPage({
   searchParams: Promise<{ erro?: string; guardado?: string; preferencias_guardadas?: string }>;
 }) {
   const query = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase, user } = await requireUser();
 
   const { data: perfil } = await supabase
     .from("utilizadores")

@@ -1,6 +1,6 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 import { actualizarAlertaPromocaoPortal, apagarAlertaPromocaoPortal } from "../actions";
 
 const INPUT_CLASS =
@@ -15,14 +15,7 @@ export default async function EditarAlertaPromocaoPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase } = await requireUser();
 
   const { data: alerta } = await supabase
     .from("alertas_promocao_portal")

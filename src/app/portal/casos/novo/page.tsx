@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 import { criarCasoCliente } from "../actions";
 import { ClienteCasoForm } from "../_components/ClienteCasoForm";
 
@@ -8,10 +8,7 @@ export default async function NovoCasoClientePage({
   searchParams: Promise<{ erro?: string }>;
 }) {
   const params = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser();
 
   const { data: perfil } = user
     ? await supabase

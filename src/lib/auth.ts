@@ -1,11 +1,31 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
+
+// Um único cliente e uma única verificação de sessão por pedido: layout e
+// página partilham o resultado em vez de repetirem a ida à Supabase.
+const clientePorPedido = cache(createClient);
+
+/**
+ * getClaims() valida o JWT localmente (chaves assimétricas, JWKS em cache)
+ * e só vai à rede se o token tiver expirado — o refresh é feito no
+ * middleware. Substitui getUser(), que fazia uma chamada de rede por uso.
+ */
+const utilizadorPorPedido = cache(async () => {
+  const supabase = await clientePorPedido();
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims?.sub) return { supabase, user: null };
+  return {
+    supabase,
+    user: { id: claims.sub, email: claims.email as string | undefined },
+  };
+});
+
 export async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await utilizadorPorPedido();
 
   if (!user) {
     redirect("/login");
@@ -25,10 +45,7 @@ export async function requireAdmin() {
 }
 
 export async function requireUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await utilizadorPorPedido();
 
   if (!user) {
     redirect("/login");
@@ -46,7 +63,7 @@ export type NivelAcesso = "nenhum" | "avulso" | "assinatura";
  * contexto (hoje: só o dashboard do portal usa isto para gating).
  */
 export async function obterNivelAcesso(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: SupabaseServer,
   userId: string,
 ): Promise<NivelAcesso> {
   const { data } = await supabase

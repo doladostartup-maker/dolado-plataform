@@ -26,7 +26,9 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Necessário para refrescar o token de sessão — não remover.
-  await supabase.auth.getUser();
+  // getClaims() valida o JWT localmente e só vai à rede quando o token
+  // expirou (aí faz o refresh); getUser() fazia uma chamada por pedido.
+  await supabase.auth.getClaims();
 
   return supabaseResponse;
 }
