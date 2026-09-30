@@ -88,7 +88,7 @@ export function PorQueAssinar() {
       {/* ===== Secção 2: Hero ===== */}
       <section className="mx-auto max-w-[760px] px-4 pt-16 pb-10 text-center sm:px-10 sm:pt-[72px]">
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-brand)]">
-          Por quê assinar
+          Porquê subscrever
         </p>
         <h1 className="mb-5 text-[clamp(26px,4.6vw,38px)] font-semibold leading-[1.2] tracking-[-0.01em] text-[var(--color-ink)]">
           Saiba antes de a sua fidelização acabar — e tenha a lei do seu lado quando precisar.
