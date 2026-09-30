@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRIVACIDADE_EMAIL } from "@/lib/site";
 import type { Pergunta } from "./AccordionPerguntas";
 
 // Conteúdo das Perguntas Frequentes — partilhado entre a homepage (versão
@@ -188,7 +189,12 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
           <>
             Os seus dados são guardados em sistemas com acesso restrito à equipa DoLado, com a
             base de dados alojada na União Europeia. Documentos e informação do caso só são
-            partilhados no estritamente necessário. Saiba mais na{" "}
+            partilhados no estritamente necessário. Para questões sobre os seus dados ou para
+            exercer os seus direitos, escreva para{" "}
+            <a href={`mailto:${PRIVACIDADE_EMAIL}`} className={LINK}>
+              {PRIVACIDADE_EMAIL}
+            </a>
+            . Saiba mais na{" "}
             <Link href="/privacidade" className={LINK}>
               Política de Privacidade
             </Link>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CONTACTO_EMAIL, PRIVACIDADE_EMAIL } from "@/lib/site";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -181,6 +182,13 @@ export default function TermosPage() {
           <Link href="/privacidade" className="text-[var(--color-brand)] underline">
             Política de Privacidade
           </Link>
+          . Para questões sobre os seus dados pessoais ou para exercer os seus direitos:{" "}
+          <a
+            href={`mailto:${PRIVACIDADE_EMAIL}`}
+            className="text-[var(--color-brand)] underline"
+          >
+            {PRIVACIDADE_EMAIL}
+          </a>
           .
         </p>
       </section>
@@ -193,17 +201,17 @@ export default function TermosPage() {
           Estes Termos podem ser atualizados à medida que o serviço evolui; a versão em
           vigor é sempre a publicada em dolado.pt. Para qualquer questão:{" "}
           <a
-            href="mailto:thiago.pereira@dolado.pt"
+            href={`mailto:${CONTACTO_EMAIL}`}
             className="text-[var(--color-brand)] underline"
           >
-            thiago.pereira@dolado.pt
+            {CONTACTO_EMAIL}
           </a>
           .
         </p>
       </section>
 
       <p className="mt-6 text-xs text-[var(--color-ink-faint)]">
-        Última atualização: 14 de setembro de 2026
+        Última atualização: 30 de setembro de 2026
       </p>
     </article>
   );

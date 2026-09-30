@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { extrairValoresFatura, gerarAnalise } from "@/lib/facturas/extrairFatura";
+import { CONTACTO_EMAIL } from "@/lib/site";
 
 const BUCKET = "faturas-comparador";
 const TAMANHO_MAXIMO = 10 * 1024 * 1024; // 10 MB
@@ -57,6 +58,7 @@ async function enviarEmailBrevo(destino: { email: string; nome: string }, assunt
       },
       body: JSON.stringify({
         sender: { name: "DoLado", email: process.env.BREVO_SENDER_EMAIL },
+        replyTo: { email: CONTACTO_EMAIL, name: "DoLado" },
         to: [{ email: destino.email, name: destino.nome }],
         subject: assunto,
         htmlContent: html,

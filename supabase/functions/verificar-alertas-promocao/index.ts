@@ -30,6 +30,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const BREVO_SENDER_EMAIL = Deno.env.get("BREVO_SENDER_EMAIL");
+// Respostas dos clientes vão para o contacto institucional, não para o remetente.
+const CONTACTO_EMAIL = "contacto@dolado.pt";
 const CRON_SECRET = Deno.env.get("CRON_SECRET_PROMOCAO");
 
 function dataUtcMaisDias(dias: number): string {
@@ -144,6 +146,7 @@ async function enviarEmailBrevo(destino: { email: string; nome: string }, assunt
     },
     body: JSON.stringify({
       sender: { name: "DoLado", email: BREVO_SENDER_EMAIL },
+      replyTo: { email: CONTACTO_EMAIL, name: "DoLado" },
       to: [{ email: destino.email, name: destino.nome }],
       subject: assunto,
       htmlContent: html,

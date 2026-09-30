@@ -6,6 +6,7 @@ import {
   montarHtmlNotificacaoNovoPagamento,
 } from "@/lib/email/pagamento";
 import { getStripe } from "@/lib/stripe/client";
+import { CONTACTO_EMAIL } from "@/lib/site";
 
 async function enviarEmailBrevo(destinatario: string, assunto: string, html: string) {
   // Falha de e-mail nunca deve derrubar o webhook — o pagamento já está
@@ -20,6 +21,7 @@ async function enviarEmailBrevo(destinatario: string, assunto: string, html: str
       },
       body: JSON.stringify({
         sender: { name: "DoLado", email: process.env.BREVO_SENDER_EMAIL },
+        replyTo: { email: CONTACTO_EMAIL, name: "DoLado" },
         to: [{ email: destinatario }],
         subject: assunto,
         htmlContent: html,

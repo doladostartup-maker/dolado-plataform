@@ -3,6 +3,7 @@
 import { useActionState, useCallback, useEffect, useState } from "react";
 import { enviarContacto, type EstadoContacto } from "@/app/actions/contacto";
 import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
+import { CONTACTO_EMAIL } from "@/lib/site";
 import { FormularioGuiado } from "./FormularioGuiado";
 import { SiteHeader } from "./SiteHeader";
 
@@ -45,6 +46,16 @@ export function Contacto() {
         <h1 className="text-[30px] font-semibold leading-[1.2] tracking-[-0.01em] text-[var(--color-ink)]">
           Fale connosco
         </h1>
+        <p className="mt-3 text-[14px] text-[var(--color-ink-muted)]">
+          Use o formulário ou escreva-nos para{" "}
+          <a
+            href={`mailto:${CONTACTO_EMAIL}`}
+            className="font-medium text-[var(--color-brand)] underline underline-offset-4 hover:text-[var(--color-brand-hover)]"
+          >
+            {CONTACTO_EMAIL}
+          </a>
+          .
+        </p>
       </section>
 
       {/* ===== Secção 3: Aviso importante ===== */}

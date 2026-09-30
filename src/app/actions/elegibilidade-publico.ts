@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { excedeuLimiteTaxa } from "@/lib/rateLimit";
 import { calcularElegibilidade, type DuracaoContrato, type Setor } from "@/lib/elegibilidade/regras";
 import { avaliarElegibilidadeComIA } from "@/lib/elegibilidade/avaliarComIA";
+import { CONTACTO_EMAIL } from "@/lib/site";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "thiago.pereira@dolado.pt";
 const SETORES_VALIDOS: Setor[] = ["Telecomunicações", "Energia", "Água"];
@@ -52,6 +53,7 @@ async function enviarEmailBrevo(destino: { email: string; nome: string }, assunt
       },
       body: JSON.stringify({
         sender: { name: "DoLado", email: process.env.BREVO_SENDER_EMAIL },
+        replyTo: { email: CONTACTO_EMAIL, name: "DoLado" },
         to: [{ email: destino.email, name: destino.nome }],
         subject: assunto,
         htmlContent: html,

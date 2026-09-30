@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
+import { CONTACTO_EMAIL } from "@/lib/site";
 
 async function enviarEmailBrevo(destino: { email: string; nome: string }, assunto: string, html: string) {
   try {
@@ -14,6 +15,7 @@ async function enviarEmailBrevo(destino: { email: string; nome: string }, assunt
       },
       body: JSON.stringify({
         sender: { name: "DoLado", email: process.env.BREVO_SENDER_EMAIL },
+        replyTo: { email: CONTACTO_EMAIL, name: "DoLado" },
         to: [{ email: destino.email, name: destino.nome }],
         subject: assunto,
         htmlContent: html,

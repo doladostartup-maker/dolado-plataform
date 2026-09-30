@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { montarHtmlBoasVindas } from "@/lib/email/boas-vindas";
+import { CONTACTO_EMAIL } from "@/lib/site";
 
 export async function POST(
   _request: Request,
@@ -34,6 +35,7 @@ export async function POST(
     },
     body: JSON.stringify({
       sender: { name: "Thiago - DoLado", email: process.env.BREVO_SENDER_EMAIL },
+      replyTo: { email: CONTACTO_EMAIL, name: "DoLado" },
       to: [{ email: caso.email, name: caso.nome }],
       subject: "Recebemos a sua submissão — Vamos tratar pessoalmente ✓",
       htmlContent: montarHtmlBoasVindas(caso.nome),

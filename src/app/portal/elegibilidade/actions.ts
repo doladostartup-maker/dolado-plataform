@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { calcularElegibilidade, type DuracaoContrato, type Setor } from "@/lib/elegibilidade/regras";
 import { avaliarElegibilidadeComIA } from "@/lib/elegibilidade/avaliarComIA";
+import { CONTACTO_EMAIL } from "@/lib/site";
 
 const MAPA_SUGESTAO_IA: Record<string, "elegivel" | "nao_elegivel" | "pouco_claro"> = {
   eligible: "elegivel",
@@ -26,6 +27,7 @@ async function enviarEmailBrevo(destino: { email: string; nome: string }, assunt
       },
       body: JSON.stringify({
         sender: { name: "DoLado", email: process.env.BREVO_SENDER_EMAIL },
+        replyTo: { email: CONTACTO_EMAIL, name: "DoLado" },
         to: [{ email: destino.email, name: destino.nome }],
         subject: assunto,
         htmlContent: html,

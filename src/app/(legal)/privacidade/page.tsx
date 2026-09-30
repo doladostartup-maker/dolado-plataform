@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PRIVACIDADE_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Política de Privacidade — DoLado",
@@ -32,10 +33,10 @@ export default function PrivacidadePage() {
           515609773), com sede na Rua Cidade de Manchester, n.º 35, r/c, 1170-099
           Lisboa, operando sob a marca DoLado, com contacto em{" "}
           <a
-            href="mailto:thiago.pereira@dolado.pt"
+            href={`mailto:${PRIVACIDADE_EMAIL}`}
             className="text-[var(--color-brand)] underline"
           >
-            thiago.pereira@dolado.pt
+            {PRIVACIDADE_EMAIL}
           </a>
           , é responsável pelo tratamento dos dados pessoais recolhidos através do site
           dolado.pt, nos termos do Regulamento (UE) 2016/679 (RGPD).
@@ -167,10 +168,10 @@ export default function PrivacidadePage() {
           O Utilizador pode, a qualquer momento, pedir acesso, retificação,
           apagamento, ou limitação do tratamento dos seus dados, escrevendo para{" "}
           <a
-            href="mailto:thiago.pereira@dolado.pt"
+            href={`mailto:${PRIVACIDADE_EMAIL}`}
             className="text-[var(--color-brand)] underline"
           >
-            thiago.pereira@dolado.pt
+            {PRIVACIDADE_EMAIL}
           </a>
           . Tem também o direito de apresentar reclamação junto da Comissão Nacional
           de Proteção de Dados (CNPD), através de{" "}
@@ -206,17 +207,17 @@ export default function PrivacidadePage() {
           vigor é sempre a publicada em dolado.pt. Para qualquer questão sobre os seus
           dados:{" "}
           <a
-            href="mailto:thiago.pereira@dolado.pt"
+            href={`mailto:${PRIVACIDADE_EMAIL}`}
             className="text-[var(--color-brand)] underline"
           >
-            thiago.pereira@dolado.pt
+            {PRIVACIDADE_EMAIL}
           </a>
           .
         </p>
       </section>
 
       <p className="mt-6 text-xs text-[var(--color-ink-faint)]">
-        Última atualização: 14 de setembro de 2026
+        Última atualização: 30 de setembro de 2026
       </p>
     </article>
   );

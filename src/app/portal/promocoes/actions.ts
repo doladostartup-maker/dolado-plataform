@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CONTACTO_EMAIL } from "@/lib/site";
 
 const BUCKET = "contratos-promocao";
 const TAMANHO_MAXIMO = 10 * 1024 * 1024; // 10 MB
@@ -75,6 +76,7 @@ async function enviarEmailConfirmacao(
       },
       body: JSON.stringify({
         sender: { name: "DoLado", email: process.env.BREVO_SENDER_EMAIL },
+        replyTo: { email: CONTACTO_EMAIL, name: "DoLado" },
         to: [{ email: destino.email, name: destino.nome }],
         subject: "Alerta de fim de promoção criado",
         htmlContent: `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8"></head>

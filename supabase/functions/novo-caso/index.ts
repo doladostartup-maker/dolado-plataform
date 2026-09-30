@@ -28,6 +28,8 @@ interface WebhookPayload {
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const BREVO_SENDER_EMAIL = Deno.env.get("BREVO_SENDER_EMAIL");
+// Respostas dos clientes vão para o contacto institucional, não para o remetente.
+const CONTACTO_EMAIL = "contacto@dolado.pt";
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") ?? "thiago.pereira@dolado.pt";
 const SITE_URL = Deno.env.get("SITE_URL") ?? "https://portal.dolado.pt";
 
@@ -40,6 +42,7 @@ async function enviarEmailBrevo(destino: { email: string; nome?: string }, assun
     },
     body: JSON.stringify({
       sender: { name: "Thiago - DoLado", email: BREVO_SENDER_EMAIL },
+      replyTo: { email: CONTACTO_EMAIL, name: "DoLado" },
       to: [{ email: destino.email, name: destino.nome }],
       subject: assunto,
       htmlContent: html,

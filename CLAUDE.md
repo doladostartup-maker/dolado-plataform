@@ -41,6 +41,14 @@ Variáveis de ambiente a configurar no Clever Cloud durante a Fase 1: `SUPABASE_
 
 `ANTHROPIC_API_KEY` (Claude API) ainda não está contratada — previsto 01/10/2026. As funcionalidades que dependem dela (ver "Uso de IA") já estão construídas e em produção, mas caem em modo manual/revisão até a chave ser configurada em `.env.local` e nos secrets das Supabase Edge Functions relevantes.
 
+## Contactos institucionais (decisão: 30/09/2026)
+
+- **contacto@dolado.pt** — contacto institucional geral: página Contacto, Termos, footer, questões comerciais, reclamações sobre a própria DoLado, e Reply-To dos e-mails transacionais.
+- **privacidade@dolado.pt** — privacidade/RGPD: Política de Privacidade, exercício de direitos (acesso, retificação, apagamento, oposição, limitação, portabilidade), perguntas frequentes sobre dados pessoais. Nunca usar como contacto geral.
+- **thiago.pereira@dolado.pt não é usado como contacto público.** Continua como destino interno de notificações ao admin (`ADMIN_EMAIL`) e é hoje o remetente Brevo (`BREVO_SENDER_EMAIL`).
+- No código, usar sempre as constantes `CONTACTO_EMAIL` / `PRIVACIDADE_EMAIL` de `src/lib/site.ts` (nas Edge Functions, que não importam de `src/`, a constante está repetida no próprio ficheiro).
+- Estado: e-mails criados; publicação no site, documentos legais, perguntas frequentes e Reply-To dos e-mails concluída nesta alteração. **Pendente (fora do código):** verificar `contacto@dolado.pt` como remetente na Brevo e trocar `BREVO_SENDER_EMAIL` no Clever Cloud, nos secrets da Supabase e em `.env.local` — até lá, os clientes continuam a ver o e-mail pessoal como remetente.
+
 ## Gestão de custo — regra durante a fase de piloto
 
 O piloto Remax é gratuito (sem receita ainda). Prioridade: **ficar nos tiers gratuitos o máximo de tempo possível.**

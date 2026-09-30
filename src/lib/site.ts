@@ -5,3 +5,9 @@
 // apontar de volta para este domínio, nunca para o próprio portal (a raiz
 // de portal.dolado.pt redirecciona sempre para /entrar).
 export const MARKETING_SITE_URL = "https://dolado.pt";
+
+// Contactos institucionais (decisão de 30/09/2026 — ver CLAUDE.md):
+// contacto geral/comercial vs. privacidade/RGPD. O e-mail pessoal do
+// Thiago não é usado como contacto público.
+export const CONTACTO_EMAIL = "contacto@dolado.pt";
+export const PRIVACIDADE_EMAIL = "privacidade@dolado.pt";

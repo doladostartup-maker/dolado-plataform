@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
+import { CONTACTO_EMAIL } from "@/lib/site";
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL;
@@ -67,6 +68,7 @@ async function enviarEmailBrevo(destino: { email: string; nome: string }, assunt
     },
     body: JSON.stringify({
       sender: { name: "DoLado", email: BREVO_SENDER_EMAIL },
+      replyTo: { email: CONTACTO_EMAIL, name: "DoLado" },
       to: [{ email: destino.email, name: destino.nome }],
       subject: assunto,
       htmlContent: html,

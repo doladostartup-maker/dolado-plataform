@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
+import { CONTACTO_EMAIL } from "@/lib/site";
 import { FaqAccordion } from "./FaqAccordion";
 import { FormularioGuiado } from "./FormularioGuiado";
 
@@ -364,8 +365,8 @@ export function Landing() {
             </div>
             <div className="flex flex-col gap-2.5">
               <div className="text-[12px] font-bold uppercase tracking-wider text-[var(--color-ink-faint)]">Contacto</div>
-              <a href="mailto:thiago.pereira@dolado.pt" className="text-[15px] text-[var(--color-ink-muted)] hover:text-[var(--color-brand)]">
-                thiago.pereira@dolado.pt
+              <a href={`mailto:${CONTACTO_EMAIL}`} className="text-[15px] text-[var(--color-ink-muted)] hover:text-[var(--color-brand)]">
+                {CONTACTO_EMAIL}
               </a>
               <span className="text-[15px] text-[var(--color-ink-faint)]">Lisboa, Portugal</span>
             </div>

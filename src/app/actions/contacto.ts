@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { excedeuLimiteTaxa } from "@/lib/rateLimit";
+import { CONTACTO_EMAIL } from "@/lib/site";
 
 async function obterIp() {
   const h = await headers();
@@ -64,7 +65,7 @@ export async function enviarContacto(
     },
     body: JSON.stringify({
       sender: { name: "Site DoLado", email: process.env.BREVO_SENDER_EMAIL },
-      to: [{ email: process.env.BREVO_SENDER_EMAIL, name: "DoLado" }],
+      to: [{ email: CONTACTO_EMAIL, name: "DoLado" }],
       replyTo: { email, name: nome },
       subject: `Contacto via site: ${assunto}`,
       htmlContent: `<div style="font-family: Arial, sans-serif; font-size: 15px; color: #171A21; line-height: 1.6;">
