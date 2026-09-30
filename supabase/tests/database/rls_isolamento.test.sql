@@ -113,6 +113,10 @@ insert into public.user_access (user_id, nivel_acesso) values
   ('00000000-0000-4000-a000-00000000000a', 'avulso'),
   ('00000000-0000-4000-a000-00000000000b', 'assinatura');
 
+insert into public.stripe_webhook_events (event_id, tipo) values ('evt_teste', 'invoice.paid');
+insert into public.stripe_subscriptions (stripe_subscription_id, stripe_customer_id, status) values
+  ('sub_teste_b', 'cus_teste_b', 'active');
+
 insert into public.alertas_fidelizacao (id, email, operadora) values
   ('17000000-0000-4000-a000-000000000001', 'lead@teste.invalid', 'Op');
 
@@ -145,6 +149,9 @@ select ok(testes.contar('select * from public.alertas_promocao_portal') <= 0, 'a
 select ok(testes.contar('select * from public.preferencias_setor') <= 0, 'anon: SELECT preferencias_setor → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from public.stripe_payments') <= 0, 'anon: SELECT stripe_payments → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from public.user_access') <= 0, 'anon: SELECT user_access → nada (0 linhas ou sem permissão)');
+select ok(testes.contar('select * from public.stripe_webhook_events') <= 0, 'anon: SELECT stripe_webhook_events → nada (0 linhas ou sem permissão)');
+select ok(testes.contar('select * from public.stripe_subscriptions') <= 0, 'anon: SELECT stripe_subscriptions → nada (0 linhas ou sem permissão)');
+select ok(testes.negado($$insert into public.stripe_webhook_events (event_id, tipo) values ('evt_anon', 'x')$$), 'anon: não reclama eventos do webhook');
 select ok(testes.contar('select * from public.alertas_fidelizacao') <= 0, 'anon: SELECT alertas_fidelizacao (leads) → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from public.avisos_setoriais') <= 0, 'anon: SELECT avisos_setoriais → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from storage.objects') <= 0, 'anon: SELECT storage.objects → nada (0 linhas ou sem permissão)');
@@ -286,6 +293,14 @@ select ok(testes.negado($$update public.user_access set nivel_acesso = 'assinatu
 select ok(testes.negado($$update public.user_access set nivel_acesso = 'nenhum' where user_id = '00000000-0000-4000-a000-00000000000b'$$), 'A: não altera o nível de acesso de B');
 select ok(testes.negado($$delete from public.user_access where user_id = '00000000-0000-4000-a000-00000000000a'$$), 'A: não apaga o próprio nível de acesso');
 
+-- stripe_webhook_events / stripe_subscriptions — só o backend escreve
+select ok(testes.contar('select * from public.stripe_webhook_events') <= 0, 'A: não lê eventos do webhook Stripe');
+select ok(testes.contar('select * from public.stripe_subscriptions') <= 0, 'A: não lê subscrições Stripe');
+select ok(testes.negado($$insert into public.stripe_webhook_events (event_id, tipo) values ('evt_falso', 'invoice.paid')$$), 'A: não marca um evento como já processado');
+select ok(testes.negado($$delete from public.stripe_webhook_events where event_id = 'evt_teste'$$), 'A: não apaga eventos do webhook');
+select ok(testes.negado($$insert into public.stripe_subscriptions (stripe_subscription_id, stripe_customer_id, status) values ('sub_falsa', 'cus_falso', 'active')$$), 'A: não cria uma subscrição ativa falsa');
+select ok(testes.negado($$update public.stripe_subscriptions set status = 'active'$$), 'A: não altera o estado de subscrições');
+
 -- tabelas só de admin
 select is(testes.contar('select * from public.alertas_fidelizacao'), 0::bigint, 'A: não lê leads de alertas de fidelização');
 select is(testes.contar('select * from public.avisos_setoriais'), 0::bigint, 'A: não lê avisos sectoriais');
@@ -338,6 +353,8 @@ select testes.como('00000000-0000-4000-a000-0000000000ad');
 select is(public.is_admin(), true, 'admin: is_admin() → true');
 select ok(testes.contar('select * from public.casos') >= 2, 'admin: vê casos de todos os utilizadores');
 select is(testes.contar('select * from public.anexos'), 2::bigint, 'admin: vê anexos');
+select is(testes.contar('select * from public.stripe_webhook_events'), 1::bigint, 'admin: lê eventos do webhook Stripe');
+select is(testes.contar('select * from public.stripe_subscriptions'), 1::bigint, 'admin: lê subscrições Stripe');
 select is(testes.contar('select * from storage.objects'), 6::bigint, 'admin: vê ficheiros de todos os buckets');
 select ok(testes.permitido($$update public.casos set notas = 'revisto' where id = '10000000-0000-4000-a000-00000000000b'$$), 'admin: altera qualquer caso');
 
@@ -347,6 +364,10 @@ select ok(testes.permitido($$update public.casos set notas = 'revisto' where id 
 reset role;
 select is((select role from public.utilizadores where id = '00000000-0000-4000-a000-00000000000a'), 'cliente', 'integridade: A continua cliente');
 select is((select nivel_acesso from public.user_access where user_id = '00000000-0000-4000-a000-00000000000a'), 'avulso', 'integridade: A continua avulso');
+select is((select status from public.stripe_subscriptions where stripe_subscription_id = 'sub_teste_b'), 'active', 'integridade: subscrição intacta');
+select is((select count(*) from public.stripe_webhook_events), 1::bigint, 'integridade: nenhum evento do webhook criado ou apagado pelo cliente');
+select ok(testes.permitido($$update public.stripe_payments set estado = 'pendente' where id = '16000000-0000-4000-a000-00000000000a'$$), 'stripe_payments.estado aceita pendente');
+select ok(testes.permitido($$update public.stripe_payments set estado = 'falhado' where id = '16000000-0000-4000-a000-00000000000a'$$), 'stripe_payments.estado aceita falhado');
 select is((select utilizador_id from public.casos where id = '10000000-0000-4000-a000-00000000000b'), '00000000-0000-4000-a000-00000000000b'::uuid, 'integridade: caso de B continua de B');
 select is((select descricao from public.casos where id = '10000000-0000-4000-a000-00000000000b'), 'caso de B', 'integridade: descrição do caso de B intacta');
 select is((select count(*) from public.alertas_fidelizacao_portal where id = '14000000-0000-4000-a000-00000000000b'), 1::bigint, 'integridade: alerta de B continua a existir');
