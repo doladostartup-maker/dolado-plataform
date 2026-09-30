@@ -24,7 +24,7 @@ export default async function ComparadorFaturasPage({
       </h1>
       <p className="max-w-[60ch] text-sm text-[var(--color-ink-muted)]">
         Envie a sua fatura e comparamos automaticamente com o mês anterior. Se não conseguirmos
-        ler o valor com confiança, verificamos manualmente e respondemos no prazo máximo de 24
+        ler o valor com confiança, verificamos manualmente e respondemos no prazo máximo de 48
         horas úteis.
       </p>
 

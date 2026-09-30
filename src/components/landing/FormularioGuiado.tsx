@@ -280,7 +280,7 @@ export function FormularioGuiado({
         </h3>
         <p className="mb-5 text-[15px] leading-relaxed" style={{ color: COR.inkMuted }}>
           Enviámos uma confirmação para o seu e-mail. O Thiago lê o seu caso e responde-lhe
-          pessoalmente no prazo máximo de 24 horas úteis, para confirmar os factos antes de
+          pessoalmente no prazo máximo de 48 horas úteis, para confirmar os factos antes de
           qualquer envio.
         </p>
         <div

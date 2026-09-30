@@ -36,10 +36,10 @@ function estiloDiasRestantes(dias: number | null) {
 }
 
 function estiloPrimeiraResposta(horas: number) {
-  if (horas >= 24) {
+  if (horas >= 48) {
     return { color: "var(--color-status-danger)" };
   }
-  if (horas >= 18) {
+  if (horas >= 36) {
     return { color: "var(--color-status-urgent)" };
   }
   return undefined;

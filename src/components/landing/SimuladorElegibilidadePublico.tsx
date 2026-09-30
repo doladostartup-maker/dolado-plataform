@@ -29,7 +29,7 @@ function ResultadoCard({ estado }: { estado: EstadoElegibilidadePublica }) {
           🟠 Recebemos o seu caso — está em análise.
         </p>
         <p className="text-[13.5px] text-[var(--color-ink-muted)]">
-          Vamos responder por e-mail no prazo máximo de 24 horas úteis.
+          Vamos responder por e-mail no prazo máximo de 48 horas úteis.
         </p>
       </div>
     );
@@ -283,7 +283,7 @@ export function SimuladorElegibilidadePublico() {
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-[var(--color-ink-muted)]">
           Responda a 5 perguntas rápidas. Alguns casos têm resposta imediata; outros passam por
-          uma revisão nossa, com resposta no prazo máximo de 24 horas úteis.
+          uma revisão nossa, com resposta no prazo máximo de 48 horas úteis.
         </p>
       </section>
 

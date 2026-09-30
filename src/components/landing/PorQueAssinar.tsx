@@ -42,13 +42,13 @@ const LINHAS: Linha[] = [
     deco: "Aconselhamento geral",
   },
   {
-    label: "Carta formal pronta a enviar",
+    label: "Reclamação formal preparada por si",
     sozinho: "Escreve do zero",
     dolado: "Gerada em minutos",
     deco: "Modelos genéricos",
   },
   {
-    label: "Escala ao Livro de Reclamações",
+    label: "Envio para o Livro de Reclamações",
     sozinho: "Tem de submeter sozinho",
     dolado: "Fazemos por si, com autorização",
     deco: "Aconselha, não submete",

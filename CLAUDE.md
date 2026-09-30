@@ -64,7 +64,7 @@ Aplicam-se a páginas, botões, mensagens de erro, e-mails transacionais, templa
 2. Escrever sempre "e-mail" e "e-mails", com hífen. Nunca "email".
 3. A marca é "a DoLado": feminino e com L maiúsculo. Ex.: "A DoLado trata…", "da DoLado", "na DoLado", "com a DoLado", "Autorizo a DoLado…". Nunca "o DoLado" nem "Dolado".
 4. O cliente é tratado na terceira pessoa ("por si", "consigo", "a sua", "Preencha", "Conte-nos"). Nunca por "tu" ("preenche", "conta-nos", "o teu").
-5. Prazos de resposta escrevem-se "no prazo máximo de 24 horas úteis".
+5. Prazos de resposta escrevem-se "no prazo máximo de 48 horas úteis".
 
 Antes de terminar qualquer tarefa que altere texto visível, rever o texto contra estas regras e corrigir.
 

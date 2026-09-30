@@ -21,7 +21,7 @@ const FUNCIONALIDADES: Funcionalidade[] = [
     icone: "📝",
     badge: "DISPONÍVEL",
     titulo: "Gestão de Casos",
-    descricao: "Abertura guiada, identificação da lei aplicável e carta pronta a enviar.",
+    descricao: "Abertura guiada, identificação da legislação aplicável e reclamação preparada por si.",
   },
   {
     icone: "⏰",
@@ -63,7 +63,7 @@ const FAQS = [
   },
   {
     q: "E se a empresa não responder?",
-    a: "Escalamos para o Livro de Reclamações em seu nome, com a sua autorização prévia.",
+    a: "Acompanhamos o prazo de resposta e, sem resposta útil, indicamos-lhe as vias seguintes possíveis — como a entidade reguladora ou um centro de arbitragem — com o dossiê completo do caso.",
   },
   {
     q: "Vocês assinam ou representam-me legalmente?",
@@ -131,9 +131,9 @@ export function Homepage() {
               A sua reclamação, escrita com a lei do seu lado.
             </h1>
             <p className="mb-8 text-base leading-relaxed text-[var(--color-ink-muted)]">
-              O DoLado identifica a lei aplicável ao seu caso e escreve a carta, citando o
-              artigo certo. Você envia a partir do seu e-mail — nós ficamos em cópia e tratamos
-              da escalada, se for preciso.
+              A DoLado identifica a legislação aplicável ao seu caso e prepara a reclamação por
+              si. Recebe o texto primeiro, revê e confirma. Só com a sua autorização fazemos o
+              envio para o Livro de Reclamações e acompanhamos o que acontece a seguir.
             </p>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <button type="button" onClick={() => openForm("click_hero_reclamacao")} className={BOTAO_PRIMARIO}>
@@ -145,14 +145,14 @@ export function Homepage() {
             </div>
             <p className="flex items-center gap-1.5 text-[12.5px] text-[var(--color-ink-faint)]">
               <span className="text-[var(--color-brand)]">✓</span>
-              Resposta ao primeiro contacto em até 24 horas úteis
+              Resposta ao primeiro contacto no prazo máximo de 48 horas úteis
             </p>
           </div>
 
           {/* Coluna direita — vídeo */}
           <div>
             <p className="mb-3 text-center text-[10.5px] font-semibold uppercase tracking-wide text-[var(--color-ink-faint)] lg:text-left">
-              Veja o DoLado a escrever a sua reclamação
+              Veja a DoLado a preparar a sua reclamação
             </p>
             <div className="relative flex h-[320px] items-center justify-center rounded-[var(--radius-panel)] border border-[var(--color-hairline)] bg-[var(--color-surface-sunken)]">
               <button
@@ -170,7 +170,7 @@ export function Homepage() {
               </span>
             </div>
             <p className="mt-3 text-center text-[12.5px] text-[var(--color-ink-faint)] lg:text-left">
-              Do relato do problema à carta pronta a enviar, sem cortes.
+              Do relato do problema à reclamação pronta para a sua aprovação, sem cortes.
             </p>
           </div>
         </div>
@@ -266,11 +266,11 @@ export function Homepage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="font-bold text-[var(--color-brand)]">✓</span>
-                Carta com lei aplicável
+                Reclamação com a legislação aplicável
               </li>
               <li className="flex items-start gap-2">
                 <span className="font-bold text-[var(--color-brand)]">✓</span>
-                Escalada ao Livro de Reclamações
+                Envio para o Livro de Reclamações
               </li>
             </ul>
             <button

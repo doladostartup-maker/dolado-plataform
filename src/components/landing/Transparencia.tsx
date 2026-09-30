@@ -14,19 +14,19 @@ type Item = {
 const O_QUE_FAZEMOS: Item[] = [
   {
     titulo: "Identificamos a lei aplicável",
-    descricao: "Lemos o seu caso e encontramos o artigo de lei que se aplica — telecom, energia ou água.",
+    descricao: "Lemos o seu caso e identificamos a legislação aplicável — telecom, energia ou água.",
   },
   {
-    titulo: "Escrevemos a carta formal",
-    descricao: "Pronta a enviar, com a lei citada e o pedido claro — você só confirma e envia.",
+    titulo: "Preparamos a reclamação formal",
+    descricao: "Com a lei citada e o pedido claro. Mostramos-lhe o texto antes do envio — só avançamos com a sua confirmação.",
   },
   {
     titulo: "Acompanhamos o prazo",
-    descricao: "Ficamos em cópia no seu e-mail e sabemos exatamente quando o prazo de resposta termina.",
+    descricao: "Sabemos exatamente quando o prazo de resposta termina e mantemo-lo informado em cada passo.",
   },
   {
-    titulo: "Escalamos se for preciso",
-    descricao: "Sem resposta útil, submetemos ao Livro de Reclamações em seu nome, com a sua autorização.",
+    titulo: "Enviamos só com a sua autorização",
+    descricao: "Depois de rever e confirmar o texto, submetemos a reclamação ao Livro de Reclamações em seu nome.",
   },
 ];
 
@@ -53,7 +53,7 @@ const FAQS = [
   },
   {
     q: "E se a empresa não responder?",
-    a: "Escalamos para o Livro de Reclamações em seu nome, com a sua autorização prévia.",
+    a: "Acompanhamos o prazo de resposta e, sem resposta útil, indicamos-lhe as vias seguintes possíveis — como a entidade reguladora ou um centro de arbitragem — com o dossiê completo do caso.",
   },
   {
     q: "Vocês assinam ou representam-me legalmente?",

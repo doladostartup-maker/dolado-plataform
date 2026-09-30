@@ -70,7 +70,7 @@ function htmlConfirmacaoCliente(nome: string): string {
             <td style="padding: 24px 32px 24px 32px; font-family:'Inter', Arial, Helvetica, sans-serif; color:#171A21; font-size:16px; line-height:1.6;">
               <p style="margin:0 0 16px 0;">Olá ${nome},</p>
               <p style="margin:0 0 16px 0;">Recebemos o seu pedido. Já está com o Thiago para ser analisado pessoalmente.</p>
-              <p style="margin:0 0 16px 0;">Respondemos-lhe no prazo máximo de 24 horas úteis, para confirmar os factos consigo antes de qualquer envio à empresa.</p>
+              <p style="margin:0 0 16px 0;">Respondemos-lhe no prazo máximo de 48 horas úteis, para confirmar os factos consigo antes de qualquer envio à empresa.</p>
               <p style="margin:0 0 4px 0;">Obrigado por confiar na DoLado.</p>
               <p style="margin:0; font-weight:600;">Thiago<br><span style="font-weight:400; color:#5B6270; font-size:14px;">DoLado</span></p>
             </td>

@@ -31,7 +31,7 @@ const OFERTA = [
   {
     numero: 2,
     titulo: "Formalizamos a reclamação",
-    texto: "Reclamação escrita com base legal, factos e datas — envia-a você mesmo ou autoriza a DoLado a submetê-la pelo canal formal correto.",
+    texto: "Reclamação escrita com base legal, factos e datas — revê o texto e, só com a sua autorização, a DoLado submete-a ao Livro de Reclamações.",
   },
   {
     numero: 3,
@@ -169,8 +169,8 @@ export function Landing() {
           </p>
           <p className="text-[17px] leading-relaxed text-[var(--color-ink-muted)] sm:text-[20px]">
             A DoLado escreve a sua reclamação formal a qualquer empresa de
-            telecomunicações ou energia — como MEO, NOS, Vodafone, Galp ou EDP — e envia-a
-            você mesmo ou autoriza a submissão pela DoLado.
+            telecomunicações ou energia — como MEO, NOS, Vodafone, Galp ou EDP — e, só com a
+            sua autorização, envia-a para o Livro de Reclamações.
           </p>
         </div>
         <div className="mx-auto mb-14 flex max-w-[520px] flex-col items-center gap-3.5 sm:mb-16">
@@ -218,14 +218,14 @@ export function Landing() {
         <div className="mx-auto max-w-[1120px] px-4 py-16 sm:px-8 sm:py-22">
           <p className="mb-5 max-w-[62ch] text-[15px] font-semibold leading-relaxed text-[var(--color-brand)]">
             O seu direito está escrito na lei — nós citamo-la, palavra por palavra, na sua
-            reclamação. Não é opinião, é o artigo certo da Lei das Comunicações Eletrónicas,
+            reclamação. Não é opinião, é a legislação aplicável: a Lei das Comunicações Eletrónicas,
             do regime da ERSE, ou do Regulamento da ERSAR, conforme o seu caso.
           </p>
           <h2 className="mb-3.5 max-w-[26ch] text-[26px] font-bold tracking-tight text-[var(--color-ink)] sm:text-[34px]">
             Você conta uma vez. O resto é nosso.
           </h2>
           <p className="mb-10 max-w-[58ch] text-[17px] leading-relaxed text-[var(--color-ink-muted)] sm:mb-12">
-            Não tem de estudar a lei, escrever cartas nem perseguir a empresa ao telefone.
+            Não tem de estudar a lei, escrever reclamações nem perseguir a empresa ao telefone.
             Depois de nos contar o caso, tratamos do processo do princípio ao fim.
           </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-7">
@@ -297,7 +297,7 @@ export function Landing() {
             <div>
               <div className="mb-2.5 text-[17px] font-semibold">Garantimos</div>
               <ul className="list-disc space-y-2 pl-5 text-[16px] leading-relaxed text-[var(--color-ink-muted)]">
-                <li>Que a sua reclamação é redigida com base legal, para enviar você mesmo ou autorizar a DoLado a submeter pelo canal formal correto.</li>
+                <li>Que a sua reclamação é redigida com base legal e que só é enviada para o Livro de Reclamações depois de a rever e autorizar.</li>
                 <li>Que o prazo legal de resposta é vigiado e que é avisado em cada passo.</li>
                 <li>Que, no fim, recebe um dossiê completo e organizado do caso.</li>
               </ul>

@@ -76,9 +76,10 @@ export default function TermosPage() {
           </li>
           <li>
             Mediante confirmação do Utilizador para avançar, a DoLado escreve a
-            reclamação formal, com base legal, factos e datas, e o Utilizador escolhe
-            se a envia diretamente ou autoriza a DoLado a submetê-la ao Livro de
-            Reclamações pelo canal oficial da empresa visada.
+            reclamação formal, com base legal, factos e datas, e apresenta ao
+            Utilizador o texto que pretende enviar. O Utilizador revê esse texto e
+            confirma explicitamente se autoriza o envio; só depois dessa autorização a
+            DoLado submete a reclamação ao Livro de Reclamações, em nome do Utilizador.
           </li>
           <li>
             A DoLado acompanha o prazo legal de resposta, mantém o Utilizador informado
@@ -118,9 +119,9 @@ export default function TermosPage() {
             </h3>
             <ul className="flex list-disc flex-col gap-2 pl-5 text-base leading-relaxed text-[var(--color-ink)]">
               <li>
-                Que a reclamação é redigida com base legal, para o Utilizador enviar ou
-                para a DoLado submeter, com a sua autorização, pelo canal formal
-                correto.
+                Que a reclamação é redigida com base legal e só é submetida pela DoLado
+                ao Livro de Reclamações depois de o Utilizador rever o texto e autorizar
+                expressamente o envio.
               </li>
               <li>
                 Que o prazo legal de resposta é acompanhado e que o Utilizador é

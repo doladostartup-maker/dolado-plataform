@@ -92,7 +92,7 @@ function htmlEmAnalise(nomeOuEmail: string) {
 <tr><td style="padding:32px 32px 0 32px;"><span style="font-size:20px;font-weight:600;color:#0E6B5C;">DoLado</span></td></tr>
 <tr><td style="padding:24px 32px 24px 32px;color:#171A21;font-size:16px;line-height:1.6;">
 <p style="margin:0 0 16px 0;">Olá ${nomeOuEmail},</p>
-<p style="margin:0;">Recebemos o seu caso — está em análise. Vamos responder no prazo máximo de 24 horas úteis.</p>
+<p style="margin:0;">Recebemos o seu caso — está em análise. Vamos responder no prazo máximo de 48 horas úteis.</p>
 </td></tr>
 <tr><td style="padding:20px 32px;background-color:#EFEDE7;font-size:13px;color:#5B6270;"><a href="https://www.dolado.pt" style="color:#0E6B5C;text-decoration:none;">www.dolado.pt</a></td></tr>
 </table></td></tr></table></body></html>`;

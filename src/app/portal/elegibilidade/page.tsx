@@ -27,7 +27,7 @@ export default async function ElegibilidadePage({
       <p className="max-w-[60ch] text-sm text-[var(--color-ink-muted)]">
         Responda a 4 perguntas rápidas para saber se o seu caso parece ter fundamento para
         reclamação. Alguns casos têm resposta imediata; outros passam por uma revisão nossa,
-        com resposta no prazo máximo de 24 horas úteis.
+        com resposta no prazo máximo de 48 horas úteis.
       </p>
 
       {params.guardado && (
