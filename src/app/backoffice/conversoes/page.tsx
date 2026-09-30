@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { estadoReembolsoPt, formatarEuros, NOME_PLANO, type PlanoDestino } from "@/lib/stripe/conversao";
 
 // Conversões Avulso → assinatura cujo reembolso parcial falhou ou foi
-// recusado pelo Stripe. A assinatura do cliente continua ativa; o reembolso
+// recusado pelo Stripe. A subscrição do cliente continua ativa; o reembolso
 // é resolvido à mão no Stripe e a resolução registada aqui.
 
 type Linha = {
@@ -96,8 +96,8 @@ export default async function ConversoesPage({
         Conversões com intervenção
       </h1>
       <p className="text-sm text-[var(--color-ink-muted)]">
-        Conversões de um Avulso em assinatura cujo reembolso parcial falhou ou foi recusado pelo
-        Stripe. A assinatura do cliente continua ativa e nenhum reembolso é repetido
+        Conversões de um Avulso numa subscrição cujo reembolso parcial falhou ou foi recusado pelo
+        Stripe. A subscrição do cliente continua ativa e nenhum reembolso é repetido
         automaticamente: resolva no Stripe e registe aqui o que foi feito.
       </p>
 

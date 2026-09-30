@@ -31,7 +31,7 @@ export async function criarUploadAssinadoFatura(
     return { ok: false, erro: "Sessão expirada — inicie sessão de novo." };
   }
   if (!(await temProtecao(supabase, user.id))) {
-    return { ok: false, erro: "Esta funcionalidade é exclusiva de assinantes." };
+    return { ok: false, erro: "Esta funcionalidade faz parte dos planos Proteção e Caso + Proteção." };
   }
   if (!TIPOS_PERMITIDOS.includes(tipoMime)) {
     return { ok: false, erro: "Tipo de ficheiro não suportado. Envie um PDF ou uma imagem." };

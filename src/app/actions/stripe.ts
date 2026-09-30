@@ -13,13 +13,25 @@ import {
   type PagamentoAvulso,
   type PlanoDestino,
 } from "@/lib/stripe/conversao";
-import { PRECO_AVULSO_ID, PRECO_CASO_PROTECAO_ID, PRECO_PROTECAO_ID } from "@/lib/stripe/planos";
+import { ehPlanoId, type PlanoId } from "@/lib/planos";
+import { PRECO_AVULSO_ID, precoDoPlano } from "@/lib/stripe/planos";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!;
 
-export async function iniciarCheckout(plano: "avulso" | "assinatura") {
+/**
+ * Checkout público (preçário). Recebe só o identificador interno do plano —
+ * o Price ID é escolhido aqui, e o acesso só é dado pelo webhook depois de
+ * o Stripe confirmar o pagamento. metadata.plano continua a ser o tipo de
+ * compra ("avulso" | "assinatura") que o webhook e /criar-conta esperam; o
+ * plano da subscrição é lido do price.
+ */
+export async function iniciarCheckout(planoEscolhido: PlanoId) {
+  if (!ehPlanoId(planoEscolhido)) {
+    redirect(`${MARKETING_SITE_URL}/#precario`);
+  }
   const stripe = getStripe();
-  const precoId = plano === "avulso" ? PRECO_AVULSO_ID : PRECO_CASO_PROTECAO_ID;
+  const precoId = precoDoPlano(planoEscolhido);
+  const plano = planoEscolhido === "avulso" ? "avulso" : "assinatura";
 
   const session = await stripe.checkout.sessions.create({
     mode: plano === "avulso" ? "payment" : "subscription",
@@ -124,7 +136,7 @@ async function iniciarAdesao(plano: PlanoDestino) {
   }
 
   const admin = createAdminClient();
-  const precoId = plano === "protecao" ? PRECO_PROTECAO_ID : PRECO_CASO_PROTECAO_ID;
+  const precoId = precoDoPlano(plano);
   const customerId = await customerDaConta(user.id);
   const cliente = customerId ? { customer: customerId } : { customer_email: user.email };
 

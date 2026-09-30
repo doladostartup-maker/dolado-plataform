@@ -138,7 +138,7 @@ export default async function ConversaoDetalhePage({
                 <strong>{formatarEuros(c.refund_montante_centimos)}</strong> nesse pagamento.
               </li>
               <li>Se o método de pagamento original não aceitar o reembolso, contacte o cliente.</li>
-              <li>Registe abaixo o que foi feito. A assinatura não é alterada por esta página.</li>
+              <li>Registe abaixo o que foi feito. A subscrição não é alterada por esta página.</li>
             </ol>
           </div>
           {erro && <p className="text-sm text-[var(--color-status-danger)]">{erro}</p>}

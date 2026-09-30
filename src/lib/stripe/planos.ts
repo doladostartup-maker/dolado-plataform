@@ -1,15 +1,22 @@
 import type { PlanoSubscricao } from "@/lib/acesso";
+import { PLANOS, type PlanoId } from "@/lib/planos";
 
 // Os três preços oficiais Stripe. As variáveis de ambiente mantêm-se como
-// fonte principal (permitem trocar para os preços live sem mudar código);
-// os valores fixos são os preços oficiais atuais, usados quando a variável
-// não está definida (é o caso de STRIPE_PRICE_PROTECAO_ID hoje).
+// fonte principal (permitem trocar de preço sem mudar código); sem elas,
+// valem os Price IDs oficiais de src/lib/planos.ts.
 export const PRECO_PROTECAO_ID =
-  process.env.STRIPE_PRICE_PROTECAO_ID || "price_1ULUUeBtJL9VeDPfWuDk5XCo";
+  process.env.STRIPE_PRICE_PROTECAO_ID || PLANOS.protecao.stripePriceId;
 export const PRECO_CASO_PROTECAO_ID =
-  process.env.STRIPE_PRICE_ASSINATURA_ID || "price_1UJYnPBtJL9VeDPfnQTlVwsq";
+  process.env.STRIPE_PRICE_ASSINATURA_ID || PLANOS.caso_protecao.stripePriceId;
 export const PRECO_AVULSO_ID =
-  process.env.STRIPE_PRICE_AVULSO_ID || "price_1UJYwzBtJL9VeDPfrAiguI1Z";
+  process.env.STRIPE_PRICE_AVULSO_ID || PLANOS.avulso.stripePriceId;
+
+/** Price ID do plano — só no servidor; o browser envia apenas o PlanoId. */
+export function precoDoPlano(plano: PlanoId): string {
+  if (plano === "protecao") return PRECO_PROTECAO_ID;
+  if (plano === "caso_protecao") return PRECO_CASO_PROTECAO_ID;
+  return PRECO_AVULSO_ID;
+}
 
 /** Plano de subscrição correspondente a um price. null = price desconhecido. */
 export function planoDoPreco(priceId: string | null | undefined): Exclude<PlanoSubscricao, "none"> | null {

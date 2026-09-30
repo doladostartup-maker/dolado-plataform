@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LIMITE_CASOS_ACUMULADOS, PLANOS, formatarPreco, precoComUnidade } from "@/lib/planos";
 import { PRIVACIDADE_EMAIL } from "@/lib/site";
 import type { Pergunta } from "./AccordionPerguntas";
 
@@ -23,11 +24,19 @@ const SEM_AUTORIZACAO: Pergunta = {
     "Não. Recebe sempre o conteúdo da reclamação primeiro para poder rever. O envio só é feito depois da sua confirmação explícita.",
 };
 
+// Preços e o que cada plano inclui: src/lib/planos.ts. As respostas usam os
+// mesmos valores para não divergirem do preçário.
+const QUANTO_CUSTA: Pergunta = {
+  id: "quanto-custa",
+  pergunta: "Quanto custa a DoLado?",
+  resposta: `A DoLado tem três opções: Proteção por ${precoComUnidade("protecao")}, Caso + Proteção por ${precoComUnidade("caso_protecao")} e o serviço Avulso por ${formatarPreco(PLANOS.avulso.precoCentimos)} por caso. Todos os preços incluem IVA.`,
+};
+
 const DIFERENCA_PLANOS: Pergunta = {
   id: "diferenca-planos",
-  pergunta: "Qual é a diferença entre o Avulso e a Assinatura Mensal?",
+  pergunta: "Qual é a diferença entre Proteção, Caso + Proteção e Avulso?",
   resposta:
-    "O Avulso é para quem tem um problema agora e quer tratar apenas desse caso. A Assinatura Mensal inclui uma reclamação por mês (acumulável até 4) e dá-lhe acesso contínuo às funcionalidades de proteção — alertas de fim de fidelização e de fim de promoção, aviso sectorial e comparador de faturas —, mesmo sem reclamação ativa.",
+    "A Proteção dá acesso às funcionalidades de prevenção e acompanhamento de contratos, sem tratamento de casos. O Caso + Proteção junta essas funcionalidades a 1 novo caso por mês. O Avulso é um pagamento único para tratar um caso, sem subscrição.",
 };
 
 // O prazo documentado (FormularioGuiado, e-mail "novo-caso", indicador do
@@ -56,6 +65,7 @@ export const PERGUNTAS_HOMEPAGE: Pergunta[] = [
       "Conte-nos o que aconteceu e analisamos o seu caso. A DoLado prepara a reclamação e apresenta-lhe o texto antes de qualquer envio. Depois de rever e autorizar, tratamos do envio e acompanhamos o que acontece a seguir.",
   },
   SEM_AUTORIZACAO,
+  QUANTO_CUSTA,
   DIFERENCA_PLANOS,
   PRAZO,
   {
@@ -133,24 +143,29 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
     id: "planos",
     titulo: "Planos e proteção",
     perguntas: [
+      QUANTO_CUSTA,
       DIFERENCA_PLANOS,
       {
-        id: "problema-agora",
-        pergunta: "Tenho um problema agora. Que opção posso escolher?",
+        id: "o-que-inclui-protecao",
+        pergunta: "O que inclui o plano Proteção?",
         resposta:
-          "Se pretende tratar apenas do problema atual, pode escolher o Avulso. Se também quer contar com proteção para situações futuras, a Assinatura Mensal inclui uma reclamação por mês e as restantes funcionalidades de proteção.",
+          "O plano Proteção dá acesso às funcionalidades de prevenção e acompanhamento de contratos disponíveis na DoLado — alertas de fim de fidelização e de fim de promoção, aviso sectorial, comparador de faturas e simulador de elegibilidade. Não inclui o tratamento de reclamações.",
       },
       {
-        id: "sem-reclamacao",
-        pergunta: "Posso subscrever a proteção sem ter uma reclamação agora?",
-        resposta:
-          "Sim. A Assinatura Mensal dá acesso às funcionalidades de proteção mesmo sem reclamação ativa, e inclui uma reclamação por mês para quando precisar.",
+        id: "o-que-inclui-caso-protecao",
+        pergunta: "O que inclui o plano Caso + Proteção?",
+        resposta: `Inclui as funcionalidades do plano Proteção e 1 novo caso por mês. Os casos não utilizados acumulam até ao limite de ${LIMITE_CASOS_ACUMULADOS}.`,
       },
       {
-        id: "avulso-depois-assinatura",
-        pergunta: "Se escolher o Avulso, posso mudar para a Assinatura Mensal mais tarde?",
+        id: "sem-subscricao",
+        pergunta: "Preciso de uma subscrição para tratar um caso?",
+        resposta: `Não. Pode utilizar o serviço Avulso por ${formatarPreco(PLANOS.avulso.precoCentimos)} para tratar um caso sem aderir a uma subscrição.`,
+      },
+      {
+        id: "avulso-depois-subscricao",
+        pergunta: "Já comprei um Avulso. Posso aderir depois a uma subscrição?",
         resposta:
-          "Sim. Pode mudar a partir da sua área de cliente. O valor que já pagou pela reclamação avulsa fica creditado automaticamente e é descontado da primeira mensalidade.",
+          "Sim, a partir da sua área de cliente. Quando um Avulso elegível é convertido numa subscrição, parte do valor já pago cobre o primeiro mês e o restante é reembolsado para o método de pagamento original.",
       },
     ],
   },

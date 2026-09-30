@@ -19,7 +19,9 @@ export function montarHtmlBoasVindasPagamento(
   const nomePlano = NOME_PLANO[plano];
   const passo = contaExiste
     ? "Já pode iniciar sessão no portal: o seu acesso já está ativo."
-    : "Falta só um passo: crie a sua palavra-passe para aceder ao portal e abrir o seu caso.";
+    : plano === "protecao"
+      ? "Falta só um passo: crie a sua palavra-passe para aceder ao portal."
+      : "Falta só um passo: crie a sua palavra-passe para aceder ao portal e abrir o seu caso.";
   const botao = contaExiste ? "Iniciar sessão" : "Criar a minha conta";
 
   return `<!DOCTYPE html>

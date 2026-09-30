@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState, useTransition } from "react";
-import { iniciarCheckout } from "@/app/actions/stripe";
+import { useCallback, useEffect, useState } from "react";
 import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
 import { AccordionPerguntas } from "./AccordionPerguntas";
 import { PERGUNTAS_HOMEPAGE } from "./conteudoPerguntasFrequentes";
 import { FormularioGuiado } from "./FormularioGuiado";
+import { Precario } from "./Precario";
 import { SiteHeader } from "./SiteHeader";
 
 type Funcionalidade = {
@@ -66,21 +66,12 @@ const BOTAO_SECUNDARIO =
 export function Homepage() {
   const [formOpen, setFormOpen] = useState(false);
   const [origem] = useState(detectarOrigem);
-  const [aIniciarPagamento, iniciarPagamento] = useTransition();
 
   const openForm = useCallback((origemClique: string) => {
     track(origemClique);
     setFormOpen(true);
   }, []);
   const closeForm = useCallback(() => setFormOpen(false), []);
-
-  const comprarPlano = useCallback(
-    (plano: "avulso" | "assinatura", origemClique: string) => {
-      track(origemClique);
-      iniciarPagamento(() => iniciarCheckout(plano));
-    },
-    [],
-  );
 
   useEffect(() => {
     if (!formOpen) return;
@@ -224,89 +215,7 @@ export function Homepage() {
       </section>
 
       {/* ===== Secção 3: Preçário ===== */}
-      <section id="precario" className="mx-auto max-w-[1120px] px-4 py-16 sm:px-10">
-        <p className="mb-2 text-sm font-bold uppercase tracking-wide text-[var(--color-brand)]">
-          Preçário
-        </p>
-        <p className="mb-8 text-[13.5px] text-[var(--color-ink-faint)]">
-          Preços de lançamento — sujeitos a alteração.
-        </p>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Avulso */}
-          <div className="rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-7 shadow-[var(--shadow-subtle)]">
-            <p className="text-[15px] font-semibold text-[var(--color-ink)]">Avulso</p>
-            <p className="mb-4 text-[12.5px] text-[var(--color-ink-muted)]">
-              Pague uma vez, resolva um caso.
-            </p>
-            <p className="mb-5">
-              <span className="font-serif text-[32px] font-medium text-[var(--color-ink)]">14,99 €</span>
-              <span className="text-[12.5px] text-[var(--color-ink-muted)]"> / reclamação</span>
-            </p>
-            <ul className="mb-6 flex flex-col gap-2.5 text-[12.5px] text-[var(--color-ink)]">
-              <li className="flex items-start gap-2">
-                <span className="font-bold text-[var(--color-brand)]">✓</span>
-                Abertura de caso guiada
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold text-[var(--color-brand)]">✓</span>
-                Reclamação com a legislação aplicável
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold text-[var(--color-brand)]">✓</span>
-                Envio para o Livro de Reclamações
-              </li>
-            </ul>
-            <button
-              type="button"
-              disabled={aIniciarPagamento}
-              onClick={() => comprarPlano("avulso", "click_precario_avulso")}
-              className={`${BOTAO_SECUNDARIO} w-full text-[13.5px] disabled:opacity-60`}
-            >
-              {aIniciarPagamento ? "A abrir pagamento…" : "Pagar e escrever a minha reclamação"}
-            </button>
-          </div>
-
-          {/* Assinatura Mensal */}
-          <div className="rounded-[var(--radius-card)] border-2 border-[var(--color-brand)] bg-[var(--color-surface)] p-7 shadow-[var(--shadow-md)]">
-            <p className="text-[15px] font-semibold text-[var(--color-ink)]">Assinatura Mensal</p>
-            <p className="mb-4 text-[12.5px] text-[var(--color-ink-muted)]">
-              Proteção contínua, mesmo sem reclamação ativa.
-            </p>
-            <p className="mb-5">
-              <span className="font-serif text-[32px] font-medium text-[var(--color-ink)]">7,99 €</span>
-              <span className="text-[12.5px] text-[var(--color-ink-muted)]"> / mês</span>
-            </p>
-            <ul className="mb-6 flex flex-col gap-2.5 text-[12.5px] text-[var(--color-ink)]">
-              <li className="flex items-start gap-2">
-                <span className="font-bold text-[var(--color-brand)]">✓</span>
-                1 reclamação por mês incluída, acumulável até 4
-              </li>
-              {[
-                "Alerta de fim de fidelização",
-                "Alerta de fim de promoção",
-                "Aviso sectorial de aumento anual",
-                "Comparador de faturas mês a mês",
-                "Simulador de elegibilidade",
-                "Mais setores a partir do 2.º mês",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2">
-                  <span className="font-bold text-[var(--color-brand)]">✓</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              disabled={aIniciarPagamento}
-              onClick={() => comprarPlano("assinatura", "click_precario_assinatura")}
-              className={`${BOTAO_PRIMARIO} w-full text-[13.5px] font-semibold disabled:opacity-60`}
-            >
-              {aIniciarPagamento ? "A abrir pagamento…" : "Subscrever"}
-            </button>
-          </div>
-        </div>
-      </section>
+      <Precario />
 
       {/* ===== Secção 4: Perguntas frequentes ===== */}
       <section className="border-y border-[var(--color-hairline)] bg-white">

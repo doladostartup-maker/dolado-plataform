@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
+import { IVA_INCLUIDO, precoComUnidade } from "@/lib/planos";
 import { AlertaFidelizacaoForm } from "./AlertaFidelizacaoForm";
 import { SiteHeader } from "./SiteHeader";
 
@@ -19,8 +20,9 @@ const LINHAS: Linha[] = [
     sozinho: "Grátis (só o seu tempo)",
     dolado: (
       <>
-        Alerta grátis · reclamação avulsa por caso ou assinatura{" "}
-        <span className="font-normal italic">(valores a definir)</span>
+        Alerta de fidelização grátis · Proteção {precoComUnidade("protecao")} · Caso + Proteção{" "}
+        {precoComUnidade("caso_protecao")} · Avulso {precoComUnidade("avulso")}{" "}
+        <span className="font-normal">({IVA_INCLUIDO})</span>
       </>
     ),
     deco: (

@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 const NAV_LINKS = [
   { href: "/como-funciona", label: "Como funciona" },
   { href: "/simulador-elegibilidade", label: "Simulador" },
-  { href: "/por-que-assinar", label: "Planos" },
+  { href: "/#precario", label: "Planos" },
   { href: "/perguntas-frequentes", label: "Perguntas Frequentes" },
 ];
 

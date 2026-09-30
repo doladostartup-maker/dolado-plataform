@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { iniciarCompraAvulsoComConta, iniciarUpgradeParaAssinatura } from "@/app/actions/stripe";
 import { obterAcesso, requireUser } from "@/lib/auth";
+import { PLANOS, precoComUnidade } from "@/lib/planos";
 import { criarCasoCliente } from "../actions";
 import { ClienteCasoForm } from "../_components/ClienteCasoForm";
 
@@ -39,9 +40,9 @@ export default async function NovoCasoClientePage({
           <div className="rounded-[var(--radius-card)] border-l-[3px] border-[var(--color-brand)] bg-[var(--color-brand-wash)] px-5 py-4 text-[13.5px] text-[var(--color-ink)]">
             <p className="mb-1 font-semibold">Pagamento em confirmação</p>
             <p className="leading-relaxed text-[var(--color-ink-muted)]">
-              Alguns métodos de pagamento, como o débito direto SEPA, podem demorar alguns dias
-              úteis a ser confirmados. Não precisa de voltar a pagar: assim que o pagamento for
-              confirmado, pode abrir o seu caso aqui.
+              O pagamento ainda está a ser confirmado. Não precisa de voltar a pagar. Alguns
+              métodos, como o débito direto SEPA, podem demorar alguns dias úteis; assim que o
+              pagamento for confirmado, pode abrir o seu caso aqui.
             </p>
           </div>
         ) : (
@@ -52,19 +53,22 @@ export default async function NovoCasoClientePage({
               </p>
               <p className="text-[13.5px] leading-relaxed text-[var(--color-ink-muted)]">
                 {temCasoProtecao
-                  ? "Já usou os casos incluídos na sua assinatura. Recebe um novo caso na próxima renovação mensal; se precisar de abrir um caso agora, pode comprar uma reclamação avulsa."
-                  : "Para abrir um novo caso, escolha uma das opções abaixo. Os seus casos anteriores continuam disponíveis em “A sua reclamação”."}
+                  ? "Já usou os casos incluídos no seu plano Caso + Proteção. Recebe um novo caso na próxima renovação mensal; se precisar de abrir um caso agora, pode comprar um caso Avulso."
+                  : acesso.temProtecao
+                    ? "O plano Proteção não inclui casos. Para abrir um caso agora, pode comprar um caso Avulso. Os seus casos anteriores continuam disponíveis em “A sua reclamação”."
+                    : "Para abrir um novo caso, escolha uma das opções abaixo. Os seus casos anteriores continuam disponíveis em “A sua reclamação”."}
               </p>
             </div>
             <form action={iniciarCompraAvulsoComConta}>
-              <button type="submit" className={temCasoProtecao ? BOTAO_PRIMARIO : BOTAO_SECUNDARIO}>
-                Comprar uma reclamação avulsa — 14,99 €
+              <button type="submit" className={acesso.temProtecao ? BOTAO_PRIMARIO : BOTAO_SECUNDARIO}>
+                Comprar um caso {PLANOS.avulso.nome} — {precoComUnidade("avulso")} (IVA incluído)
               </button>
             </form>
-            {!temCasoProtecao && (
+            {/* Já com subscrição ativa não se abre outra (iniciarAdesao recusa). */}
+            {!acesso.temProtecao && (
               <form action={iniciarUpgradeParaAssinatura}>
                 <button type="submit" className={BOTAO_PRIMARIO}>
-                  Subscrever Caso + Proteção — 7,99 €/mês
+                  Escolher {PLANOS.caso_protecao.nome} — {precoComUnidade("caso_protecao")} (IVA incluído)
                 </button>
               </form>
             )}
