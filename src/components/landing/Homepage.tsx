@@ -228,12 +228,9 @@ export function Homepage() {
         <p className="mb-2 text-sm font-bold uppercase tracking-wide text-[var(--color-brand)]">
           Preçário
         </p>
-        <p className="mb-6 text-[13.5px] text-[var(--color-ink-faint)]">
+        <p className="mb-8 text-[13.5px] text-[var(--color-ink-faint)]">
           Preços de lançamento — sujeitos a alteração.
         </p>
-        <div className="mb-8 rounded-[10px] bg-[var(--color-brand-wash)] p-3 text-[13.5px] font-medium text-[var(--color-brand)]">
-          🎁 Quem paga o Avulso leva 1 mês grátis das funcionalidades da Assinatura.
-        </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Avulso */}
