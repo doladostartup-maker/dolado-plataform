@@ -135,6 +135,20 @@ export function parametrosCheckoutConversao({
   };
 }
 
+const ESTADO_REEMBOLSO: Record<string, string> = {
+  pending: "pendente",
+  requires_action: "requer ação",
+  succeeded: "concluído",
+  failed: "falhado",
+  canceled: "cancelado",
+};
+
+/** Estado de um Refund do Stripe em português (o valor original se for desconhecido). */
+export function estadoReembolsoPt(estado: string | null) {
+  if (!estado) return null;
+  return ESTADO_REEMBOLSO[estado] ?? estado;
+}
+
 export function formatarEuros(centimos: number) {
   return `${(centimos / 100).toFixed(2).replace(".", ",")} €`;
 }

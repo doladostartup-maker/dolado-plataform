@@ -375,7 +375,7 @@ async function converterAvulso(
   }
   // Erro definitivo do Stripe (ex.: pagamento já reembolsado): não tenta
   // outra vez nem cancela a assinatura — fica para intervenção manual.
-  await deps.marcarIntervencaoConversao(conversao.id, reembolso.motivo);
+  await deps.marcarIntervencaoConversao(conversao.id, `o Stripe recusou o reembolso (${reembolso.motivo})`);
   await deps.notificarAdmin(
     "Reembolso de conversão falhou — DoLado",
     `O reembolso da conversão ${conversao.id} não foi criado (${reembolso.motivo}). A assinatura continua ativa. Resolver manualmente no Stripe.`,
@@ -587,7 +587,10 @@ async function tratarReembolso(event: Stripe.Event, deps: DependenciasWebhook): 
   if (atualizado.passouAFalhado && ESTADOS_REEMBOLSO_FALHADO.has(refund.status ?? "")) {
     // Nunca cria um segundo reembolso automaticamente nem cancela a
     // assinatura: marca para intervenção e avisa o admin.
-    await deps.marcarIntervencaoConversao(atualizado.conversaoId, `reembolso ${refund.status}`);
+    await deps.marcarIntervencaoConversao(
+      atualizado.conversaoId,
+      refund.status === "canceled" ? "reembolso cancelado no Stripe" : "reembolso falhado no Stripe",
+    );
     await deps.notificarAdmin(
       "Reembolso de conversão falhou — DoLado",
       `O reembolso ${refund.id} (conversão ${atualizado.conversaoId}) ficou "${refund.status}". A assinatura continua ativa. Resolver manualmente no Stripe.`,

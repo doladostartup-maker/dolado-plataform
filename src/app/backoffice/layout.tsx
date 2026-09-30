@@ -7,7 +7,11 @@ export default async function BackofficeLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireAdmin();
+  const { supabase } = await requireAdmin();
+  const { count: conversoesPorResolver } = await supabase
+    .from("conversoes_avulso")
+    .select("id", { count: "exact", head: true })
+    .eq("requer_intervencao", true);
 
   return (
     <div className="min-h-screen">
@@ -30,6 +34,17 @@ export default async function BackofficeLayout({
           </Link>
           <Link href="/backoffice/elegibilidade" className="hover:text-[var(--color-brand)]">
             Elegibilidade
+          </Link>
+          <Link href="/backoffice/conversoes" className="inline-flex items-center gap-1.5 hover:text-[var(--color-brand)]">
+            Conversões
+            {!!conversoesPorResolver && (
+              <span
+                aria-label={`${conversoesPorResolver} por resolver`}
+                className="rounded-[var(--radius-pill)] bg-[var(--color-status-danger)] px-1.5 text-[11px] font-semibold text-white"
+              >
+                {conversoesPorResolver}
+              </span>
+            )}
           </Link>
         </nav>
         <form action={logout}>

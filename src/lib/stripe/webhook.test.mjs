@@ -657,7 +657,7 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
     const r = await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
     assert.equal(r.status, 200);
     assert.equal(conv().requer_intervencao, true);
-    assert.equal(conv().intervencao_motivo, "charge_already_refunded");
+    assert.equal(conv().intervencao_motivo, "o Stripe recusou o reembolso (charge_already_refunded)");
     assert.equal(estado.avisosAdmin.length, 1);
     assert.equal(conta().subscription_plan, "protecao");
     // Um reenvio não tenta criar outro reembolso.
@@ -686,6 +686,7 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
     assert.equal(r.status, 200);
     assert.equal(conv().refund_estado, "failed");
     assert.equal(conv().requer_intervencao, true);
+    assert.equal(conv().intervencao_motivo, "reembolso falhado no Stripe");
     assert.equal(estado.avisosAdmin.length, 1);
     assert.equal(estado.refundsStripe.length, 0);
     assert.equal(conta().subscription_plan, "protecao");

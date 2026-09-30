@@ -120,3 +120,14 @@ describe("mensagem ao cliente (PT-PT, sem saldo nem crédito futuro)", () => {
     assert.equal(/saldo|crédito/.test(texto), false);
   });
 });
+
+describe("estado do reembolso em português", async () => {
+  const { estadoReembolsoPt } = await import("./conversao.ts");
+  test("traduz os estados do Stripe", () => {
+    assert.equal(estadoReembolsoPt("pending"), "pendente");
+    assert.equal(estadoReembolsoPt("succeeded"), "concluído");
+    assert.equal(estadoReembolsoPt("failed"), "falhado");
+    assert.equal(estadoReembolsoPt("canceled"), "cancelado");
+    assert.equal(estadoReembolsoPt(null), null);
+  });
+});

@@ -426,6 +426,18 @@ select ok(testes.tenta($$insert into public.conversoes_avulso (stripe_payment_id
 select is(testes.tenta($$update public.conversoes_avulso set estado = 'convertido', checkout_session_id = 'cs_x' where id = '1a000000-0000-4000-a000-00000000000a' and estado = 'checkout_aberto'$$), 'ok:1', 'conversão: 1.ª confirmação converte');
 select is(testes.tenta($$update public.conversoes_avulso set estado = 'convertido' where id = '1a000000-0000-4000-a000-00000000000a' and estado = 'checkout_aberto'$$), 'ok:0', 'conversão: segunda confirmação não converte outra vez');
 
+-- Resolução de intervenções no backoffice: só o admin, só as colunas de resolução.
+update public.conversoes_avulso set requer_intervencao = true where id = '1a000000-0000-4000-a000-00000000000a';
+select testes.como('00000000-0000-4000-a000-00000000000a');
+select ok(testes.negado($$update public.conversoes_avulso set requer_intervencao = false, intervencao_nota = 'x' where id = '1a000000-0000-4000-a000-00000000000a'$$), 'A: não resolve a própria intervenção');
+reset role;
+select testes.como('00000000-0000-4000-a000-0000000000ad');
+select ok(testes.tenta($$update public.conversoes_avulso set refund_montante_centimos = 0 where id = '1a000000-0000-4000-a000-00000000000a'$$) like 'erro:42501%', 'admin: não altera montantes da conversão');
+select ok(testes.tenta($$update public.conversoes_avulso set refund_id = 're_falso', estado = 'checkout_aberto' where id = '1a000000-0000-4000-a000-00000000000a'$$) like 'erro:42501%', 'admin: não altera dados do Stripe nem o estado da conversão');
+select is(testes.tenta($$update public.conversoes_avulso set requer_intervencao = false, intervencao_nota = 'Reembolso criado à mão', intervencao_resolvida_em = now(), intervencao_resolvida_por = '00000000-0000-4000-a000-0000000000ad' where id = '1a000000-0000-4000-a000-00000000000a' and requer_intervencao$$), 'ok:1', 'admin: resolve a intervenção');
+reset role;
+select is((select refund_montante_centimos from public.conversoes_avulso where id = '1a000000-0000-4000-a000-00000000000a'), 1000, 'integridade: montante do reembolso intacto');
+
 -- ===========================================================================
 -- 5. Webhook novo-caso (trigger + Vault) — nenhum pedido sai daqui: a fila do
 --    pg_net só é processada depois de COMMIT e esta transação é revertida.
