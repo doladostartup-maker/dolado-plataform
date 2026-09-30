@@ -84,7 +84,7 @@ const SETORES = [
     ],
   },
   {
-    chip: "Água / Resíduos",
+    chip: "Água",
     titulo: "A EPAL cortou-lhe a água sem aviso?",
     itens: [
       "Faturação irregular por alteração de periodicidade sem o seu consentimento",

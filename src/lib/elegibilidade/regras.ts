@@ -6,15 +6,6 @@
 // admin).
 
 export type Setor = "Telecomunicações" | "Energia" | "Água";
-// Texto mostrado ao cliente. O valor de Setor fica igual (regras e dados
-// gravados dependem dele); "Energia" inclui eletricidade e gás e "Água"
-// inclui resíduos.
-export const SETOR_LABEL: Record<Setor, string> = {
-  Telecomunicações: "Telecomunicações",
-  Energia: "Eletricidade e gás",
-  Água: "Água e resíduos",
-};
-
 export type DuracaoContrato = "menos_6m" | "6_12m" | "1_2anos" | "mais_2anos";
 export type EstadoElegibilidade = "elegivel" | "nao_elegivel" | "em_revisao";
 

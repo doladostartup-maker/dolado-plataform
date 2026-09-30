@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState, useCallback, useEffect, useState } from "react";
 import { criarVerificacaoElegibilidadePublica, type EstadoElegibilidadePublica } from "@/app/actions/elegibilidade-publico";
-import { DURACAO_LABEL, SETOR_LABEL, type DuracaoContrato, type Setor } from "@/lib/elegibilidade/regras";
+import { DURACAO_LABEL, type DuracaoContrato, type Setor } from "@/lib/elegibilidade/regras";
 import { FormularioGuiado } from "./FormularioGuiado";
 import { SiteHeader } from "./SiteHeader";
 import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
@@ -131,7 +131,7 @@ function FormularioPassos({ erro }: { erro?: string }) {
                 onClick={() => setSetor(s)}
                 className={`${OPCAO_CLASS} ${setor === s ? "border-[var(--color-brand)] bg-[var(--color-brand-wash)] text-[var(--color-brand)]" : "border-[var(--color-hairline)] text-[var(--color-ink-muted)]"}`}
               >
-                {SETOR_LABEL[s]}
+                {s}
               </button>
             ))}
           </div>

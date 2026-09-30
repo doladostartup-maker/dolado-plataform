@@ -39,7 +39,7 @@ export default function TermosPage() {
         </h2>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
           A DoLado presta um serviço de assistência administrativa a consumidores com
-          problemas em contratos de telecomunicações, energia, gás, água ou resíduos em
+          problemas em contratos de telecomunicações, energia ou água em
           Portugal. Depois de o Utilizador descrever o seu caso, a DoLado identifica a
           norma legal potencialmente aplicável e prepara uma reclamação formal, que o
           Utilizador pode enviar por si ou autorizar a DoLado a submeter, com a sua
@@ -152,8 +152,8 @@ export default function TermosPage() {
           5. Setores abrangidos
         </h2>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
-          Nesta fase, a DoLado trata exclusivamente casos de telecomunicações, energia, gás,
-          água e resíduos.
+          Nesta fase, a DoLado trata exclusivamente casos de telecomunicações, energia
+          e água.
         </p>
       </section>
 

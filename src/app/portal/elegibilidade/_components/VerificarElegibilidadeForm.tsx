@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DURACAO_LABEL, SETOR_LABEL, type DuracaoContrato, type Setor } from "@/lib/elegibilidade/regras";
+import { DURACAO_LABEL, type DuracaoContrato, type Setor } from "@/lib/elegibilidade/regras";
 
 const SETORES: Setor[] = ["Telecomunicações", "Energia", "Água"];
 const DURACOES: DuracaoContrato[] = ["menos_6m", "6_12m", "1_2anos", "mais_2anos"];
@@ -43,7 +43,7 @@ export function VerificarElegibilidadeForm({ action }: { action: (formData: Form
                 onClick={() => setSetor(s)}
                 className={`${OPCAO_CLASS} ${setor === s ? "border-[var(--color-brand)] bg-[var(--color-brand-wash)] text-[var(--color-brand)]" : "border-[var(--color-hairline)] text-[var(--color-ink-muted)]"}`}
               >
-                {SETOR_LABEL[s]}
+                {s}
               </button>
             ))}
           </div>

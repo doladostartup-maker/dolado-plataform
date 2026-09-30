@@ -27,7 +27,7 @@ const FAQS: Faq[] = [
   },
   {
     q: "Tratam de qualquer tipo de problema?",
-    a: "Durante a fase Beta tratamos apenas casos de telecomunicações, energia e água/resíduos — são os setores onde as regras são mais claras e onde queremos validar bem o serviço. Depois abriremos a todos os setores. Se o seu caso estiver fora destes três ou não tiver base para reclamação, dizemos-lhe isso à partida.",
+    a: "Durante a fase Beta tratamos apenas casos de telecomunicações, energia e água — são os setores onde as regras são mais claras e onde queremos validar bem o serviço. Depois abriremos a todos os setores. Se o seu caso estiver fora destes três ou não tiver base para reclamação, dizemos-lhe isso à partida.",
   },
   {
     q: "Prefiro só falar antes de decidir — dá?",

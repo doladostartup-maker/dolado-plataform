@@ -113,7 +113,7 @@ export default async function PerfilPage({
                 defaultChecked={setoresSubscritos.has(setor)}
                 className="h-4 w-4 accent-[var(--color-brand)]"
               />
-              {setor === "Água" ? "Água & Resíduos" : setor}
+              {setor}
             </label>
           ))}
           <button

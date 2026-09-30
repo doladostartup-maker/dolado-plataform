@@ -112,7 +112,7 @@ export function Homepage() {
           {/* Coluna esquerda */}
           <div>
             <p className="mb-4 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-brand)]">
-              Telecom · Energia e gás · Água e resíduos
+              Telecom · Energia · Água
             </p>
             <h1 className="mb-5 text-[clamp(30px,4.6vw,46px)] font-semibold leading-[1.08] tracking-[-0.02em] text-[var(--color-ink)]">
               A sua reclamação, escrita com a lei do seu lado.

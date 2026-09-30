@@ -19,7 +19,7 @@ const SECOES: Secao[] = [
     paragrafos: [
       "O nosso nome diz exatamente aquilo em que acreditamos.",
       "DoLado é estar do lado do consumidor.",
-      "Quando surge um problema com um operador de telecomunicações ou com um fornecedor de energia, gás, água ou serviços de resíduos, nem sempre é fácil perceber quem contactar, como apresentar a situação, quais são os direitos aplicáveis ou quais os prazos de resposta.",
+      "Quando surge um problema com um operador de telecomunicações ou com um fornecedor de energia ou água, nem sempre é fácil perceber quem contactar, como apresentar a situação, quais são os direitos aplicáveis ou quais os prazos de resposta.",
       "Na DoLado, o consumidor não tem de descobrir tudo sozinho.",
       "Ajudamos a compreender a situação, a preparar a reclamação e a acompanhar todo o processo, desde o primeiro passo até à sua resolução. Mantemos cada pessoa informada sobre o estado do processo, os passos seguintes e os prazos a ter em conta.",
       "Porque apresentar uma reclamação não deve significar passar horas à procura de legislação, contactos ou procedimentos.",

@@ -36,7 +36,7 @@ export function AvisoSetorialForm({
         >
           {SETORES.map((s) => (
             <option key={s} value={s}>
-              {s === "Água" ? "Água & Resíduos" : s}
+              {s}
             </option>
           ))}
         </select>

@@ -15,7 +15,7 @@ const sourceSerif = Source_Serif_4({
 export const metadata: Metadata = {
   title: "DoLado",
   description:
-    "A DoLado é uma plataforma criada para ajudar os consumidores a resolver problemas e a evitar prejuízos relacionados com serviços essenciais, como telecomunicações, energia, gás, água e resíduos.",
+    "A DoLado é uma plataforma criada para ajudar os consumidores a resolver problemas e a evitar prejuízos relacionados com serviços essenciais, como telecomunicações, energia e água.",
   icons: {
     icon: "/brand/dolado-logo-icon.svg",
   },
