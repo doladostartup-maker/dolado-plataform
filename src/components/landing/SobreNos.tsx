@@ -30,18 +30,18 @@ const SECOES: Secao[] = [
     paragrafos: [
       "Muitos dos problemas enfrentados pelos consumidores poderiam ser evitados se a informação certa chegasse no momento certo.",
       "Por isso, a DoLado não existe apenas para ajudar quando algo corre mal.",
-      "A plataforma permite acompanhar informações importantes sobre os seus contratos e receber alertas com antecedência, ajudando a evitar situações como renovações indesejadas, o fim de períodos promocionais, o termo de períodos de fidelização ou alterações significativas no valor das faturas.",
+      "A plataforma permite acompanhar informação importante sobre os seus contratos e receber alertas com antecedência, ajudando a evitar situações como renovações indesejadas, o fim de períodos promocionais, o termo de períodos de fidelização ou alterações significativas no valor das faturas.",
       "Queremos que cada consumidor tenha mais controlo e menos surpresas.",
     ],
   },
   {
-    titulo: "Simples para quem utiliza. Rigoroso nos bastidores.",
+    titulo: "Simples para quem utiliza. Rigoroso em cada etapa.",
     paragrafos: [
       "Não esperamos que os nossos clientes conheçam legislação, procedimentos ou entidades reguladoras.",
-      "Essa é uma preocupação que queremos retirar-lhes.",
+      "Queremos que os nossos clientes não tenham de se preocupar com isso.",
       "O nosso objetivo é transformar processos que podem parecer complexos numa experiência simples e clara, sem abdicar daquilo que consideramos essencial: transparência, rapidez e um preço acessível.",
       "Cada pessoa deve saber em que ponto se encontra o seu processo, o que está a ser feito e quais são os próximos passos.",
-      "Sem linguagem desnecessariamente complicada. Sem ter de procurar todas as respostas sozinho.",
+      "Sem linguagem desnecessariamente complicada. Sem ter de procurar sozinho todas as respostas.",
     ],
   },
 ];
@@ -75,7 +75,7 @@ export function SobreNos() {
   return (
     <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
       {/* ===== Secção 1: Nav ===== */}
-      <SiteHeader ctaLabel="Começar reclamação" onCtaClick={openForm} />
+      <SiteHeader ctaLabel="Apresentar reclamação" onCtaClick={openForm} />
 
       {/* ===== Secção 2: Hero (brand-wash) ===== */}
       <section className="flex flex-col items-center gap-4 bg-[var(--color-brand-wash)] px-4 py-16 text-center sm:px-10">
@@ -92,7 +92,7 @@ export function SobreNos() {
             resolver um problema.
           </p>
           <p>
-            Todos os dias, há pessoas que pagam mais do que deveriam, mantêm contratos que poderiam
+            Todos os dias, há pessoas que pagam mais do que deviam, mantêm contratos que poderiam
             terminar, deixam passar prazos importantes ou acabam por desistir de reclamar porque não
             sabem por onde começar.
           </p>
@@ -149,7 +149,7 @@ export function SobreNos() {
             DoLado. <span className="text-[var(--color-brand)]">Do lado do consumidor.</span>
           </p>
           <button type="button" onClick={openForm} className={BOTAO_PRIMARIO}>
-            Começar reclamação
+            Apresentar reclamação
           </button>
         </div>
       </section>
