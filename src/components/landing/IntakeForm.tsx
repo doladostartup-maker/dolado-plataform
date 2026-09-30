@@ -6,8 +6,8 @@ import { criarLeadPublico, type EstadoLead } from "@/app/actions/leads";
 
 const SETOR_LABELS: Record<string, string> = {
   telecom: "Telecomunicações",
-  energia: "Energia",
-  agua: "Água/Resíduos",
+  energia: "Eletricidade e gás",
+  agua: "Água e resíduos",
 };
 
 const TIPOS_POR_SETOR: Record<string, string[]> = {

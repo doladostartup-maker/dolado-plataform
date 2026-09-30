@@ -30,7 +30,7 @@ const PASSOS: Passo[] = [
     ator: "DOLADO",
     titulo: "Analisamos o mérito do caso",
     descricao:
-      "Verificamos se há fundamento legal e identificamos a legislação aplicável ao seu setor — Telecom, Energia ou Água & Resíduos.",
+      "Verificamos se há fundamento legal e identificamos a legislação aplicável ao seu setor — telecomunicações, energia, gás, água ou resíduos.",
   },
   {
     numero: 3,
@@ -62,7 +62,7 @@ const PASSOS: Passo[] = [
     ator: "DOLADO",
     titulo: "Acompanhamos o prazo de resposta",
     descricao:
-      "Telecom: 10 dias úteis sem resposta substantiva. Energia e Água & Resíduos seguem os prazos regulatórios próprios do setor.",
+      "Telecom: 10 dias úteis sem resposta substantiva. Energia, gás, água e resíduos seguem os prazos regulatórios próprios de cada setor.",
   },
   {
     numero: "check",

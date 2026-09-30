@@ -8,9 +8,10 @@ import {
   criarUploadAssinado,
   type EstadoLeadGuiado,
 } from "@/app/actions/formulario-guiado";
+import { SETOR_LABEL, type Setor } from "@/lib/elegibilidade/regras";
 import { createClient } from "@/lib/supabase/client";
 
-const SETORES = ["Telecomunicações", "Energia", "Água"];
+const SETORES: Setor[] = ["Telecomunicações", "Energia", "Água"];
 
 const PROBLEMAS = [
   "Aumento de mensalidade",
@@ -364,7 +365,7 @@ export function FormularioGuiado({
             </h3>
             <div className="mb-5 flex flex-col gap-2.5">
               {SETORES.map((s) => (
-                <BotaoEscolha key={s} label={s} selecionado={sector === s} onClick={() => setSector(s)} />
+                <BotaoEscolha key={s} label={SETOR_LABEL[s]} selecionado={sector === s} onClick={() => setSector(s)} />
               ))}
             </div>
             {erros.sector && (

@@ -4,7 +4,7 @@ import { SimuladorElegibilidadePublico } from "@/components/landing/SimuladorEle
 export const metadata: Metadata = {
   title: "Simulador de Elegibilidade - DoLado",
   description:
-    "Verifique grátis, sem criar conta, se o seu caso de telecomunicações, energia ou água parece ter fundamento para reclamação.",
+    "Verifique grátis, sem criar conta, se o seu caso de telecomunicações, energia, gás, água ou resíduos parece ter fundamento para reclamação.",
 };
 
 export default function SimuladorElegibilidadePage() {

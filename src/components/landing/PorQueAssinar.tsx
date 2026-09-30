@@ -54,9 +54,9 @@ const LINHAS: Linha[] = [
     deco: "Aconselha, não submete",
   },
   {
-    label: "Foco em Telecom / Energia / Água",
+    label: "Foco em serviços essenciais",
     sozinho: "Nenhum",
-    dolado: "Especialização total nestes 3 setores",
+    dolado: "Telecom, energia, gás, água e resíduos",
     deco: "Cobertura generalista",
     ultima: true,
   },
@@ -95,7 +95,7 @@ export function PorQueAssinar() {
         </h1>
         <p className="mx-auto max-w-[560px] text-base leading-relaxed text-[var(--color-ink-muted)]">
           Subscrever é grátis: avisamos-lhe quando o período de fidelização do seu contrato de
-          telecom, energia ou água terminar, para poder negociar ou mudar sem penalização. E se
+          telecomunicações, energia, gás ou água terminar, para poder negociar ou mudar sem penalização. E se
           surgir um problema entretanto, já nos conhece.
         </p>
       </section>
