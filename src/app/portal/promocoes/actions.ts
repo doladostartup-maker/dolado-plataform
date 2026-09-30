@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { temAssinatura } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CONTACTO_EMAIL } from "@/lib/site";
 
@@ -27,6 +28,9 @@ export async function criarUploadAssinadoContrato(
 
   if (!user) {
     return { ok: false, erro: "Sessão expirada — inicie sessão de novo." };
+  }
+  if (!(await temAssinatura(supabase, user.id))) {
+    return { ok: false, erro: "Esta funcionalidade é exclusiva de assinantes." };
   }
   if (!TIPOS_PERMITIDOS.includes(tipoMime)) {
     return { ok: false, erro: "Tipo de ficheiro não suportado. Envie um PDF ou uma imagem." };
@@ -110,6 +114,9 @@ export async function criarAlertaPromocaoPortal(formData: FormData) {
   if (!user) {
     redirect("/login");
   }
+  if (!(await temAssinatura(supabase, user.id))) {
+    redirect("/portal?bloqueado=promocoes");
+  }
 
   const { data: perfil } = await supabase
     .from("utilizadores")
@@ -189,6 +196,9 @@ export async function actualizarAlertaPromocaoPortal(id: string, formData: FormD
 
   if (!user) {
     redirect("/login");
+  }
+  if (!(await temAssinatura(supabase, user.id))) {
+    redirect("/portal?bloqueado=promocoes");
   }
 
   const operadora = ((formData.get("operadora") as string) || "").trim();

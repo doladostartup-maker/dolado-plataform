@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { temAssinatura } from "@/lib/auth";
 
 function validarDatas(dataInicio: string | null, dataFim: string) {
   const hoje = new Date().toISOString().slice(0, 10);
@@ -27,6 +28,9 @@ export async function criarAlertaFidelizacaoPortal(formData: FormData) {
 
   if (!user) {
     redirect("/login");
+  }
+  if (!(await temAssinatura(supabase, user.id))) {
+    redirect("/portal?bloqueado=alertas");
   }
 
   const { data: perfil } = await supabase
@@ -81,6 +85,9 @@ export async function actualizarAlertaFidelizacaoPortal(id: string, formData: Fo
 
   if (!user) {
     redirect("/login");
+  }
+  if (!(await temAssinatura(supabase, user.id))) {
+    redirect("/portal?bloqueado=alertas");
   }
 
   const operadora = ((formData.get("operadora") as string) || "").trim();

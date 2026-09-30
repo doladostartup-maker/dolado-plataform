@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { montarHtmlBoasVindas } from "@/lib/email/boas-vindas";
 import { CONTACTO_EMAIL } from "@/lib/site";
 
@@ -7,6 +8,24 @@ export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  // Rota do backoffice: usa a service role (ignora RLS), por isso a
+  // autorização tem de ser feita aqui — só o admin pode disparar o e-mail.
+  const sessao = await createClient();
+  const {
+    data: { user },
+  } = await sessao.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ erro: "Sessão necessária." }, { status: 401 });
+  }
+  const { data: perfil } = await sessao
+    .from("utilizadores")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (perfil?.role !== "admin") {
+    return NextResponse.json({ erro: "Sem permissão." }, { status: 403 });
+  }
+
   const { id } = await params;
   const supabase = createAdminClient();
 

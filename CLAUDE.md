@@ -49,6 +49,24 @@ Variáveis de ambiente a configurar no Clever Cloud durante a Fase 1: `SUPABASE_
 - No código, usar sempre as constantes `CONTACTO_EMAIL` / `PRIVACIDADE_EMAIL` de `src/lib/site.ts` (nas Edge Functions, que não importam de `src/`, a constante está repetida no próprio ficheiro).
 - Estado: e-mails criados; publicação no site, documentos legais, perguntas frequentes e Reply-To dos e-mails concluída nesta alteração. **Pendente (fora do código):** verificar `contacto@dolado.pt` como remetente na Brevo e trocar `BREVO_SENDER_EMAIL` no Clever Cloud, nos secrets da Supabase e em `.env.local` — até lá, os clientes continuam a ver o e-mail pessoal como remetente.
 
+## Segurança da base de dados (auditoria RLS: 30/09/2026)
+
+Estado implementado:
+
+- **RLS ativo em todas as tabelas de `public`**, com posse explícita (`utilizador_id`/`user_id = auth.uid()`) e acesso total do admin via `is_admin()` (lê `utilizadores.role`, que o cliente não consegue alterar). Não há views nem RPCs próprias além de `is_admin()`.
+- **Storage:** os 3 buckets (`anexos-casos`, `faturas-comparador`, `contratos-promocao`) são privados e só o admin lê/escreve pelo RLS. O cliente faz upload só por URL assinada gerada no servidor, com o caminho decidido pelo servidor (`<user.id>/<uuid>-…` ou `pendentes/<uuid>-…`).
+- **Privilégios mínimos** (`20260930130000_seguranca_privilegios_minimos.sql`): anon só tem SELECT; anon e authenticated sem TRUNCATE/TRIGGER/REFERENCES; `handle_new_user()` não é chamável pela API.
+- **Criação de casos pelo cliente** (`20260930130100_…`): só em nome próprio, com `status = 'Novo'` e sem campos internos.
+- **Elegibilidade e faturas** (`20260930140000_…`): o cliente só lê as próprias linhas; quem grava são as Server Actions, com service role e dono tirado da sessão — `estado_final`, sugestão da IA e resultado da fatura não são forjáveis pelo cliente.
+- **Plano verificado no servidor e na base de dados** (`20260930160000_…`): as Server Actions e as rotas `/api/internal/*` das funcionalidades de assinante usam `temAssinatura()` (`src/lib/auth.ts`), e as policies de criar/editar alertas exigem `public.tem_assinatura()`. O gating das páginas sozinho não protege uma ação chamada diretamente.
+- **Webhook `novo-caso`** (`20260930150000_…`): trigger `notificar_novo_caso` em migration, com segredo no Vault (`novo_caso_webhook_secret`) igual à secret `NOVO_CASO_WEBHOOK_SECRET` da Edge Function (`verify_jwt = false`, valida `x-webhook-secret`). Substitui o webhook do Dashboard, que tinha a chave service_role embutida.
+- **Service role** (`createAdminClient`) ignora RLS: só em código de servidor, e cada Server Action/Route Handler que a usa tem de validar a sessão e a posse (ou o papel admin) **antes** de a usar.
+- **Testes:** `supabase/tests/database/rls_isolamento.test.sql` (pgTAP). Correr com `supabase start` + `supabase test db` — sempre na stack local, nunca em produção. Obrigatório voltar a correr depois de cada migration que crie ou altere tabelas, policies, grants ou funções, e acrescentar testes para qualquer tabela nova.
+
+Regras para tabelas novas: RLS com policies por operação (USING para ler/alterar, WITH CHECK para criar/alterar), posse validada por `auth.uid()` e nunca só por `auth.role()`; campos internos nunca preenchíveis pelo cliente; `SECURITY DEFINER` só com justificação e `search_path` fixo.
+
+Pendente: campo `email` dos alertas editável pelo cliente (decisão de negócio); rotação da chave service_role legada depois de o novo webhook estar em produção.
+
 ## Gestão de custo — regra durante a fase de piloto
 
 O piloto Remax é gratuito (sem receita ainda). Prioridade: **ficar nos tiers gratuitos o máximo de tempo possível.**

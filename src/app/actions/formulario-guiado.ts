@@ -144,7 +144,10 @@ export async function criarLeadGuiado(
     return { ok: false, erro: "Erro ao enviar. Por favor tente novamente." };
   }
 
-  if (anexoCaminho) {
+  // O caminho vem do browser: só aceitar os gerados por
+  // criarUploadAssinado (pasta "pendentes/"), nunca o de um ficheiro de
+  // outro caso.
+  if (anexoCaminho && anexoCaminho.startsWith("pendentes/") && !anexoCaminho.includes("..")) {
     await admin.from("anexos").insert({
       caso_id: caso.id,
       nome_ficheiro: anexoNome || anexoCaminho,

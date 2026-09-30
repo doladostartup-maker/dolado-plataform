@@ -76,6 +76,15 @@ export async function obterNivelAcesso(
 }
 
 /**
+ * Para Server Actions e Route Handlers: o gating das páginas
+ * (requireAssinatura) não protege uma ação chamada diretamente. Mesma regra:
+ * só o plano "assinatura" tem acesso.
+ */
+export async function temAssinatura(supabase: SupabaseServer, userId: string) {
+  return (await obterNivelAcesso(supabase, userId)) === "assinatura";
+}
+
+/**
  * Bloqueia o acesso a funcionalidades exclusivas de assinantes. Quem tem
  * plano "avulso" ou "nenhum" é reencaminhado para o dashboard do portal,
  * onde o modal de upgrade explica a oferta.

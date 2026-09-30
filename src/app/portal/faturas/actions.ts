@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { temAssinatura } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { extrairValoresFatura, gerarAnalise } from "@/lib/facturas/extrairFatura";
 import { CONTACTO_EMAIL } from "@/lib/site";
@@ -28,6 +29,9 @@ export async function criarUploadAssinadoFatura(
 
   if (!user) {
     return { ok: false, erro: "Sessão expirada — inicie sessão de novo." };
+  }
+  if (!(await temAssinatura(supabase, user.id))) {
+    return { ok: false, erro: "Esta funcionalidade é exclusiva de assinantes." };
   }
   if (!TIPOS_PERMITIDOS.includes(tipoMime)) {
     return { ok: false, erro: "Tipo de ficheiro não suportado. Envie um PDF ou uma imagem." };
@@ -110,6 +114,9 @@ export async function criarComparacaoFaturaPortal(formData: FormData) {
   if (!user) {
     redirect("/login");
   }
+  if (!(await temAssinatura(supabase, user.id))) {
+    redirect("/portal?bloqueado=faturas");
+  }
 
   const { data: perfil } = await supabase
     .from("utilizadores")
@@ -125,11 +132,19 @@ export async function criarComparacaoFaturaPortal(formData: FormData) {
   if (!ficheiroCaminho) {
     redirect(`/portal/faturas?erro=${encodeURIComponent("Envie a fatura antes de submeter.")}`);
   }
+  // O caminho vem do formulário e o ficheiro é lido com a service role:
+  // só aceitar ficheiros na pasta do próprio utilizador.
+  if (!ficheiroCaminho.startsWith(`${user.id}/`) || ficheiroCaminho.includes("..")) {
+    redirect(`/portal/faturas?erro=${encodeURIComponent("Ficheiro inválido. Envie a fatura novamente.")}`);
+  }
 
+  // O cliente não tem permissão para criar comparações diretamente (RLS):
+  // o resultado só pode vir da extração feita aqui. Gravação com a service
+  // role, com o dono tirado da sessão validada acima.
   const admin = createAdminClient();
 
   async function marcarParaRevisaoManual() {
-    const { error } = await supabase.from("comparacoes_fatura_portal").insert({
+    const { error } = await admin.from("comparacoes_fatura_portal").insert({
       utilizador_id: user!.id,
       nome,
       email: user!.email,
@@ -195,7 +210,7 @@ export async function criarComparacaoFaturaPortal(formData: FormData) {
   const diferencaPct = valorAnterior ? ((valorAtual - valorAnterior) / valorAnterior) * 100 : null;
   const analise = gerarAnalise(valorAtual, valorAnterior);
 
-  const { error: erroInsert } = await supabase.from("comparacoes_fatura_portal").insert({
+  const { error: erroInsert } = await admin.from("comparacoes_fatura_portal").insert({
     utilizador_id: user.id,
     nome,
     email: user.email,

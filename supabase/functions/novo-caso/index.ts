@@ -1,9 +1,15 @@
 // DoLado — Edge Function "novo-caso"
 //
-// Disparada por um Database Webhook em INSERT na tabela `casos`. Envia dois
-// e-mails via Brevo: confirmação ao cliente e notificação ao Thiago.
+// Disparada pelo trigger `notificar_novo_caso` (migração
+// 20260930150000_webhook_novo_caso_com_vault.sql) em INSERT na tabela
+// `casos`. Envia dois e-mails via Brevo: confirmação ao cliente e
+// notificação ao Thiago.
+//
+// Autorização: verify_jwt = false (config.toml) — o trigger não envia JWT;
+// envia o cabeçalho x-webhook-secret, comparado com NOVO_CASO_WEBHOOK_SECRET.
 //
 // Secrets necessários (configurar com `supabase secrets set`):
+//   NOVO_CASO_WEBHOOK_SECRET — segredo partilhado com o Vault (ver a migração)
 //   BREVO_API_KEY       — API key da Brevo
 //   BREVO_SENDER_EMAIL  — remetente autorizado na Brevo (ex.: thiago.pereira@dolado.pt)
 //   ADMIN_EMAIL         — opcional, por omissão thiago.pereira@dolado.pt
@@ -31,6 +37,7 @@ const BREVO_SENDER_EMAIL = Deno.env.get("BREVO_SENDER_EMAIL");
 // Respostas dos clientes vão para o contacto institucional, não para o remetente.
 const CONTACTO_EMAIL = "contacto@dolado.pt";
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") ?? "thiago.pereira@dolado.pt";
+const WEBHOOK_SECRET = Deno.env.get("NOVO_CASO_WEBHOOK_SECRET");
 const SITE_URL = Deno.env.get("SITE_URL") ?? "https://portal.dolado.pt";
 
 async function enviarEmailBrevo(destino: { email: string; nome?: string }, assunto: string, html: string) {
@@ -115,6 +122,11 @@ function htmlNotificacaoAdmin(caso: CasoRecord): string {
 }
 
 Deno.serve(async (req: Request) => {
+  // Sem segredo configurado, recusa sempre — nunca fica aberta por omissão.
+  if (!WEBHOOK_SECRET || req.headers.get("x-webhook-secret") !== WEBHOOK_SECRET) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  }
+
   try {
     const payload: WebhookPayload = await req.json();
 

@@ -8,3 +8,8 @@ verify_jwt = false
 
 [functions.verificar-alertas-promocao]
 verify_jwt = false
+
+# novo-caso é chamada pelo trigger notificar_novo_caso (pg_net), sem JWT —
+# a autorização é o cabeçalho x-webhook-secret, verificado na própria função.
+[functions.novo-caso]
+verify_jwt = false

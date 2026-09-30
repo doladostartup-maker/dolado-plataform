@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { temAssinatura } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { calcularElegibilidade, type DuracaoContrato, type Setor } from "@/lib/elegibilidade/regras";
 import { avaliarElegibilidadeComIA } from "@/lib/elegibilidade/avaliarComIA";
 import { CONTACTO_EMAIL } from "@/lib/site";
@@ -88,6 +90,9 @@ export async function criarVerificacaoElegibilidade(formData: FormData) {
   if (!user) {
     redirect("/login");
   }
+  if (!(await temAssinatura(supabase, user.id))) {
+    redirect("/portal?bloqueado=elegibilidade");
+  }
 
   const { data: perfil } = await supabase
     .from("utilizadores")
@@ -123,9 +128,15 @@ export async function criarVerificacaoElegibilidade(formData: FormData) {
     empresaRespondeuBem,
   );
 
+  // O cliente não tem permissão para criar estas linhas diretamente (RLS):
+  // estado_final e a sugestão da IA só podem vir da regra do servidor ou do
+  // admin. A gravação é feita com a service role, com o dono tirado da
+  // sessão validada acima — nunca do formulário.
+  const admin = createAdminClient();
+
   // ===== Fase 1: regra clara — vai directo ao cliente, sem IA =====
   if (estado !== "em_revisao") {
-    const { error } = await supabase.from("casos_elegibilidade_portal").insert({
+    const { error } = await admin.from("casos_elegibilidade_portal").insert({
       utilizador_id: user.id,
       nome,
       email: user.email,
@@ -161,7 +172,7 @@ export async function criarVerificacaoElegibilidade(formData: FormData) {
     descricao,
   );
 
-  const { error: erroInsert } = await supabase.from("casos_elegibilidade_portal").insert({
+  const { error: erroInsert } = await admin.from("casos_elegibilidade_portal").insert({
     utilizador_id: user.id,
     nome,
     email: user.email,
