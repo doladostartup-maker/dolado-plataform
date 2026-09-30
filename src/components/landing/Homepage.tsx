@@ -360,6 +360,11 @@ export function Homepage() {
       {/* Rodapé */}
       <footer id="contacto" className="border-t border-[var(--color-hairline)] bg-[var(--color-surface-sunken)]">
         <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3 px-4 py-6 text-[13px] text-[var(--color-ink-muted)] sm:px-10">
+          <p className="w-full max-w-[640px] leading-relaxed">
+            A DoLado está do lado do consumidor. Ajudamos a apresentar e acompanhar reclamações e
+            a evitar prejuízos causados pela falta de informação, com transparência, proximidade e
+            simplicidade.
+          </p>
           <span>
             © 2026 DoLado · Competent Domain – Consultoria em Informática Unipessoal Lda · NIPC
             515609773 · Lisboa

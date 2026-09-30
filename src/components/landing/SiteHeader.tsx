@@ -14,7 +14,7 @@ const NAV_LINKS = [
 // Links institucionais agrupados no dropdown "A DoLado"
 const INSTITUCIONAL_LINKS = [
   { href: "/transparencia", label: "Transparência" },
-  { href: "/#quem-trata", label: "Sobre nós" },
+  { href: "/sobre-nos", label: "Sobre nós" },
   { href: "/contacto", label: "Contacto" },
 ];
 
