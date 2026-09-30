@@ -83,7 +83,7 @@ export function Transparencia() {
   return (
     <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
       {/* ===== Secção 1: Nav ===== */}
-      <SiteHeader ctaLabel="Escrever a minha reclamação" onCtaClick={openForm} />
+      <SiteHeader ctaLabel="Começar reclamação" onCtaClick={openForm} />
 
       {/* ===== Secção 2: Hero (brand-wash) ===== */}
       <section className="flex flex-col items-center gap-4 bg-[var(--color-brand-wash)] px-4 py-16 text-center sm:px-10">

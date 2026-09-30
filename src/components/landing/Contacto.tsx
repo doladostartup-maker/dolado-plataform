@@ -35,7 +35,7 @@ export function Contacto() {
   return (
     <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
       {/* ===== Secção 1: Nav ===== */}
-      <SiteHeader ctaLabel="Escrever a minha reclamação" onCtaClick={openForm} />
+      <SiteHeader ctaLabel="Começar reclamação" onCtaClick={openForm} />
 
       {/* ===== Secção 2: Hero simples ===== */}
       <section className="mx-auto max-w-[600px] px-4 pt-14 pb-2 text-center sm:px-10">
@@ -56,7 +56,7 @@ export function Contacto() {
           <p className="text-[13.5px] leading-relaxed text-[var(--color-ink)]">
             <span className="font-bold">Este formulário não abre casos.</span> Reclamações
             enviadas por e-mail ou por este formulário são ignoradas. Para abrir um caso, use
-            sempre o fluxo guiado em &ldquo;Escrever a minha reclamação&rdquo;.
+            sempre o fluxo guiado em &ldquo;Começar reclamação&rdquo;.
           </p>
         </div>
       </section>

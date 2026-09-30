@@ -6,12 +6,31 @@ import { useEffect, useRef, useState } from "react";
 
 const NAV_LINKS = [
   { href: "/como-funciona", label: "Como funciona" },
-  { href: "/simulador-elegibilidade", label: "Simulador de Elegibilidade" },
-  { href: "/por-que-assinar", label: "Por quê assinar?" },
+  { href: "/simulador-elegibilidade", label: "Simulador" },
+  { href: "/por-que-assinar", label: "Planos" },
+];
+
+// Links institucionais agrupados no dropdown "A DoLado"
+const INSTITUCIONAL_LINKS = [
   { href: "/transparencia", label: "Transparência" },
   { href: "/#quem-trata", label: "Sobre nós" },
   { href: "/contacto", label: "Contacto" },
 ];
+
+function Chevron({ aberto }: { aberto: boolean }) {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      aria-hidden="true"
+      className={`flex-none transition-transform ${aberto ? "rotate-180" : ""}`}
+    >
+      <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 const BOTAO_PRIMARIO =
   "inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)]";
@@ -24,10 +43,17 @@ export function SiteHeader({
   onCtaClick: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [doladoOpen, setDoladoOpen] = useState(false);
+  const [doladoMobileOpen, setDoladoMobileOpen] = useState(false);
   const painelRef = useRef<HTMLDivElement>(null);
   const hamburguerRef = useRef<HTMLButtonElement>(null);
+  const doladoRef = useRef<HTMLDivElement>(null);
+  const doladoBotaoRef = useRef<HTMLButtonElement>(null);
 
-  const closeMenu = () => setMenuOpen(false);
+  const closeMenu = () => {
+    setMenuOpen(false);
+    setDoladoMobileOpen(false);
+  };
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -51,6 +77,28 @@ export function SiteHeader({
     };
   }, [menuOpen]);
 
+  // Dropdown "A DoLado" (desktop): fecha com Escape ou clique fora, como o menu mobile
+  useEffect(() => {
+    if (!doladoOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setDoladoOpen(false);
+        doladoBotaoRef.current?.focus();
+      }
+    };
+    const onClickFora = (e: MouseEvent) => {
+      if (doladoRef.current && !doladoRef.current.contains(e.target as Node)) {
+        setDoladoOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onClickFora);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onClickFora);
+    };
+  }, [doladoOpen]);
+
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--color-hairline)] bg-white/72 backdrop-blur-[10px]">
       <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 px-4 py-3 sm:px-10">
@@ -63,7 +111,7 @@ export function SiteHeader({
         </Link>
 
         {/* Navegação — desktop */}
-        <nav className="hidden min-w-0 flex-1 flex-wrap items-center justify-center gap-x-6 gap-y-1.5 lg:flex">
+        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-x-6 lg:flex">
           {NAV_LINKS.map((l) => (
             <Link
               key={l.label}
@@ -73,6 +121,45 @@ export function SiteHeader({
               {l.label}
             </Link>
           ))}
+          <div
+            ref={doladoRef}
+            className="relative"
+            onBlur={(e) => {
+              // Fecha quando o foco (Tab) sai do dropdown
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDoladoOpen(false);
+            }}
+          >
+            <button
+              ref={doladoBotaoRef}
+              type="button"
+              onClick={() => setDoladoOpen((v) => !v)}
+              aria-expanded={doladoOpen}
+              aria-controls="menu-a-dolado"
+              className={`inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium hover:text-[var(--color-ink)] ${
+                doladoOpen ? "text-[var(--color-ink)]" : "text-[var(--color-ink-muted)]"
+              }`}
+            >
+              A DoLado
+              <Chevron aberto={doladoOpen} />
+            </button>
+            {doladoOpen && (
+              <div
+                id="menu-a-dolado"
+                className="absolute left-1/2 top-full mt-3 flex min-w-[180px] -translate-x-1/2 flex-col rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-white py-1.5 shadow-[var(--shadow-md)]"
+              >
+                {INSTITUCIONAL_LINKS.map((l) => (
+                  <Link
+                    key={l.label}
+                    href={l.href}
+                    onClick={() => setDoladoOpen(false)}
+                    className="whitespace-nowrap px-4 py-2 text-sm font-medium text-[var(--color-ink-muted)] hover:bg-[var(--color-canvas)] hover:text-[var(--color-ink)] focus-visible:bg-[var(--color-canvas)] focus-visible:text-[var(--color-ink)]"
+                  >
+                    {l.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
         <div className="hidden items-center gap-3 lg:flex">
           <Link
@@ -123,6 +210,30 @@ export function SiteHeader({
               {l.label}
             </Link>
           ))}
+          <button
+            type="button"
+            onClick={() => setDoladoMobileOpen((v) => !v)}
+            aria-expanded={doladoMobileOpen}
+            aria-controls="menu-a-dolado-mobile"
+            className="flex min-h-11 items-center justify-between text-left text-base font-medium text-[var(--color-ink)]"
+          >
+            A DoLado
+            <Chevron aberto={doladoMobileOpen} />
+          </button>
+          {doladoMobileOpen && (
+            <div id="menu-a-dolado-mobile" className="flex flex-col gap-1 pl-4">
+              {INSTITUCIONAL_LINKS.map((l) => (
+                <Link
+                  key={l.label}
+                  href={l.href}
+                  onClick={closeMenu}
+                  className="flex min-h-11 items-center text-base font-medium text-[var(--color-ink-muted)]"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+          )}
           <div className="my-2 border-t border-[var(--color-hairline)]" />
           <Link
             href="/entrar"

@@ -272,7 +272,7 @@ export function SimuladorElegibilidadePublico() {
 
   return (
     <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
-      <SiteHeader ctaLabel="Escrever a minha reclamação" onCtaClick={openForm} />
+      <SiteHeader ctaLabel="Começar reclamação" onCtaClick={openForm} />
 
       <section className="mx-auto max-w-[600px] px-4 pt-14 pb-2 text-center sm:px-10">
         <p className="mb-2 text-sm font-bold uppercase tracking-[0.06em] text-[var(--color-brand)]">

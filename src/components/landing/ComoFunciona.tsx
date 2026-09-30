@@ -115,7 +115,7 @@ export function ComoFunciona() {
     <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
       {/* ===== Secção 1: Nav ===== */}
       <SiteHeader
-        ctaLabel="Escrever a minha reclamação"
+        ctaLabel="Começar reclamação"
         onCtaClick={() => openForm("click_nav_como_funciona")}
       />
 
@@ -196,7 +196,7 @@ export function ComoFunciona() {
           onClick={() => openForm("click_cta_como_funciona")}
           className={`${BOTAO_PRIMARIO} text-[14px] font-semibold`}
         >
-          Escrever a minha reclamação
+          Começar reclamação
         </button>
       </section>
 

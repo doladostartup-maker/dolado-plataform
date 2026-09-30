@@ -108,7 +108,7 @@ export function Homepage() {
     <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
       {/* ===== Secção 1: Nav + Hero ===== */}
       <SiteHeader
-        ctaLabel="Escrever a minha reclamação"
+        ctaLabel="Começar reclamação"
         onCtaClick={() => openForm("click_nav_reclamacao")}
       />
 
@@ -137,7 +137,7 @@ export function Homepage() {
             </p>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <button type="button" onClick={() => openForm("click_hero_reclamacao")} className={BOTAO_PRIMARIO}>
-                Escrever a minha reclamação
+                Começar reclamação
               </button>
               <Link href="/como-funciona" className={BOTAO_SECUNDARIO}>
                 Ver como funciona
@@ -365,7 +365,7 @@ export function Homepage() {
           onClick={() => openForm("click_cta_final")}
           className={`${BOTAO_PRIMARIO} text-[14px] font-semibold`}
         >
-          Escrever a minha reclamação
+          Começar reclamação
         </button>
       </section>
 
