@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "/como-funciona", label: "Como funciona" },
   { href: "/simulador-elegibilidade", label: "Simulador" },
   { href: "/por-que-assinar", label: "Planos" },
+  { href: "/perguntas-frequentes", label: "Perguntas Frequentes" },
 ];
 
 // Links institucionais agrupados no dropdown "A DoLado"

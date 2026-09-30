@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { iniciarCheckout } from "@/app/actions/stripe";
 import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
+import { AccordionPerguntas } from "./AccordionPerguntas";
+import { PERGUNTAS_HOMEPAGE } from "./conteudoPerguntasFrequentes";
 import { FormularioGuiado } from "./FormularioGuiado";
 import { SiteHeader } from "./SiteHeader";
 
@@ -53,21 +55,6 @@ const FUNCIONALIDADES: Funcionalidade[] = [
     titulo: "Outros",
     descricao: "Mais setores e outras funcionalidades ainda em estudo.",
     tracejado: true,
-  },
-];
-
-const FAQS = [
-  {
-    q: "Isto substitui um advogado?",
-    a: "Não. Prestamos apoio administrativo — organização e citação da lei. Para estratégia jurídica ou representação formal, precisa de um advogado.",
-  },
-  {
-    q: "E se a empresa não responder?",
-    a: "Acompanhamos o prazo de resposta e, sem resposta útil, indicamos-lhe as vias seguintes possíveis — como a entidade reguladora ou um centro de arbitragem — com o dossiê completo do caso.",
-  },
-  {
-    q: "Vocês assinam ou representam-me legalmente?",
-    a: "Não. Identificamo-nos sempre como a agir em seu nome numa reclamação administrativa — nunca como seus representantes legais.",
   },
 ];
 
@@ -324,23 +311,24 @@ export function Homepage() {
         </div>
       </section>
 
-      {/* ===== Secção 4: FAQ ===== */}
+      {/* ===== Secção 4: Perguntas frequentes ===== */}
       <section className="border-y border-[var(--color-hairline)] bg-white">
         <div className="mx-auto max-w-[820px] px-4 py-12 sm:px-10">
-          <p className="mb-8 text-sm font-bold uppercase tracking-wide text-[var(--color-brand)]">
+          <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-[var(--color-brand)]">
             Perguntas frequentes
+          </h2>
+          <p className="mb-6 text-[13.5px] text-[var(--color-ink-muted)]">
+            Tudo o que precisa de saber antes de começar.
           </p>
-          <div className="flex flex-col border-t border-[var(--color-hairline)]">
-            {FAQS.map((f, i) => (
-              <div
-                key={f.q}
-                className={`py-6 ${i < FAQS.length - 1 ? "border-b border-[var(--color-hairline)]" : ""}`}
-              >
-                <p className="mb-2 text-[14px] font-semibold text-[var(--color-ink)]">{f.q}</p>
-                <p className="text-[13px] leading-relaxed text-[var(--color-ink-muted)]">{f.a}</p>
-              </div>
-            ))}
-          </div>
+          <AccordionPerguntas perguntas={PERGUNTAS_HOMEPAGE} />
+          <p className="mt-6">
+            <Link
+              href="/perguntas-frequentes"
+              className="text-[13.5px] font-medium text-[var(--color-brand)] underline-offset-4 hover:text-[var(--color-brand-hover)] hover:underline"
+            >
+              Ver todas as perguntas frequentes →
+            </Link>
+          </p>
         </div>
       </section>
 

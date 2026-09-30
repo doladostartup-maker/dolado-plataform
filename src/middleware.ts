@@ -19,6 +19,7 @@ const PAGINAS_PUBLICAS = [
   "/transparencia",
   "/contacto",
   "/simulador-elegibilidade",
+  "/perguntas-frequentes",
 ];
 
 // /auth/callback tem de fazer a troca do code PKCE de forma atómica, sem
@@ -53,6 +54,7 @@ const PAGINAS_SO_MARKETING = [
   "/transparencia",
   "/contacto",
   "/simulador-elegibilidade",
+  "/perguntas-frequentes",
 ];
 
 export async function middleware(request: NextRequest) {
