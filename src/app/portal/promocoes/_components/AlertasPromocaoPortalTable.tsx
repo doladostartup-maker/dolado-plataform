@@ -56,7 +56,7 @@ export function AlertasPromocaoPortalTable({ alertas }: { alertas: Alerta[] }) {
       <table className="w-full text-left text-sm">
         <thead className="bg-[var(--color-surface-sunken)]">
           <tr>
-            <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Operadora</th>
+            <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Operador</th>
             <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Promoção</th>
             <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Data</th>
             <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Origem</th>

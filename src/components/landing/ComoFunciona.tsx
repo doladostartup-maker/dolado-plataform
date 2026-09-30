@@ -5,7 +5,7 @@ import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
 import { FormularioGuiado } from "./FormularioGuiado";
 import { SiteHeader } from "./SiteHeader";
 
-type Ator = "VOCÊ" | "DOLADO";
+type Ator = "CLIENTE" | "DOLADO";
 
 type Passo = {
   numero: number | "check";
@@ -19,10 +19,10 @@ const PASSOS: Passo[] = [
   {
     numero: 1,
     cor: "brand",
-    ator: "VOCÊ",
-    titulo: "Conta o que aconteceu",
+    ator: "CLIENTE",
+    titulo: "Conte o que aconteceu",
     descricao:
-      "Descreve o problema e anexa a fatura ou o contrato. Sem formulários intermináveis — perguntas guiadas, uma de cada vez.",
+      "Descreva o problema e anexe a fatura ou o contrato. Sem formulários intermináveis — perguntas guiadas, uma de cada vez.",
   },
   {
     numero: 2,
@@ -43,10 +43,10 @@ const PASSOS: Passo[] = [
   {
     numero: 4,
     cor: "brand",
-    ator: "VOCÊ",
-    titulo: "Revê e autoriza o envio",
+    ator: "CLIENTE",
+    titulo: "Reveja e autorize o envio",
     descricao:
-      "Lê o texto com calma e confirma explicitamente se autoriza o envio. Sem a sua confirmação, nada é enviado.",
+      "Leia o texto com calma e confirme explicitamente se autoriza o envio. Sem a sua confirmação, nada é enviado.",
   },
   {
     numero: 5,
@@ -80,8 +80,13 @@ const CIRCULO_COR: Record<Passo["cor"], string> = {
   success: "var(--color-status-success)",
 };
 
+const ATOR_ROTULO: Record<Ator, string> = {
+  CLIENTE: "O SEU PASSO",
+  DOLADO: "A DOLADO",
+};
+
 const BADGE_ESTILO: Record<Ator, string> = {
-  VOCÊ: "bg-[var(--color-brand-wash)] text-[var(--color-brand)]",
+  CLIENTE: "bg-[var(--color-brand-wash)] text-[var(--color-brand)]",
   DOLADO: "bg-[var(--color-surface-sunken)] text-[var(--color-ink-muted)]",
 };
 
@@ -158,7 +163,7 @@ export function ComoFunciona() {
                   <span
                     className={`inline-flex items-center rounded-[var(--radius-pill)] px-2 py-0.5 text-[10.5px] font-semibold ${BADGE_ESTILO[p.ator]}`}
                   >
-                    {p.ator}
+                    {ATOR_ROTULO[p.ator]}
                   </span>
                 </div>
                 <p className="mb-1 text-[15px] font-semibold text-[var(--color-ink)]">{p.titulo}</p>

@@ -45,7 +45,7 @@ export default async function EditarAlertaPromocaoPage({
 
       <form action={actualizar} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
-          Operadora / prestador
+          Operador / prestador
           <input
             name="operadora"
             defaultValue={alerta.operadora}

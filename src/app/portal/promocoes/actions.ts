@@ -135,7 +135,7 @@ export async function criarAlertaPromocaoPortal(formData: FormData) {
   const consentimento = formData.get("consentimento") === "on";
 
   if (!operadora) {
-    redirect(`/portal/promocoes?erro=${encodeURIComponent("Indique a operadora ou prestador.")}`);
+    redirect(`/portal/promocoes?erro=${encodeURIComponent("Indique o operador ou prestador.")}`);
   }
   if (!descricao) {
     redirect(`/portal/promocoes?erro=${encodeURIComponent("Descreva a promoção.")}`);
@@ -207,7 +207,7 @@ export async function actualizarAlertaPromocaoPortal(id: string, formData: FormD
 
   if (!operadora || !descricao) {
     redirect(
-      `/portal/promocoes/${id}?erro=${encodeURIComponent("Indique a operadora e a descrição da promoção.")}`,
+      `/portal/promocoes/${id}?erro=${encodeURIComponent("Indique o operador e a descrição da promoção.")}`,
     );
   }
   const erroData = validarDataPromocao(dataFim);

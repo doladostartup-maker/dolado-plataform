@@ -134,7 +134,7 @@ export function AlertaPromocaoPortalForm({
       />
 
       <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
-        Operadora / prestador
+        Operador / prestador
         <input
           name="operadora"
           value={operadora}

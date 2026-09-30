@@ -33,7 +33,7 @@ export function AlertaFidelizacaoPortalForm({
         <input value={email} readOnly disabled className={`${INPUT_CLASS} opacity-70`} />
       </Campo>
 
-      <Campo label="Operadora / prestador">
+      <Campo label="Operador / prestador">
         <input
           name="operadora"
           placeholder="ex.: MEO, NOS, Vodafone, EDP, Galp, EPAL…"

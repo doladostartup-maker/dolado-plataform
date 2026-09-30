@@ -46,7 +46,7 @@ export async function criarAlertaFidelizacaoPortal(formData: FormData) {
 
   if (!operadora) {
     redirect(
-      `/portal/alertas?erro=${encodeURIComponent("Indique a operadora ou prestador.")}`,
+      `/portal/alertas?erro=${encodeURIComponent("Indique o operador ou prestador.")}`,
     );
   }
   if (!consentimento) {
@@ -96,7 +96,7 @@ export async function actualizarAlertaFidelizacaoPortal(id: string, formData: Fo
 
   if (!operadora) {
     redirect(
-      `/portal/alertas/${id}?erro=${encodeURIComponent("Indique a operadora ou prestador.")}`,
+      `/portal/alertas/${id}?erro=${encodeURIComponent("Indique o operador ou prestador.")}`,
     );
   }
 

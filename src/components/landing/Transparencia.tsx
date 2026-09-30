@@ -56,7 +56,7 @@ const FAQS = [
     a: "Acompanhamos o prazo de resposta e, sem resposta útil, indicamos-lhe as vias seguintes possíveis — como a entidade reguladora ou um centro de arbitragem — com o dossiê completo do caso.",
   },
   {
-    q: "Vocês assinam ou representam-me legalmente?",
+    q: "A DoLado assina ou representa-me legalmente?",
     a: "Não. Identificamo-nos sempre como a agir em seu nome numa reclamação administrativa — nunca como seus representantes legais.",
   },
 ];

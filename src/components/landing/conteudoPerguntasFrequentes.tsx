@@ -105,7 +105,7 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
       },
       {
         id: "enviam-por-mim",
-        pergunta: "Vocês enviam a reclamação por mim?",
+        pergunta: "A DoLado envia a reclamação por mim?",
         resposta:
           "Sim. Antes do envio, recebe o conteúdo preparado pela DoLado para rever. Só depois da sua autorização explícita submetemos a reclamação ao Livro de Reclamações em seu nome.",
       },

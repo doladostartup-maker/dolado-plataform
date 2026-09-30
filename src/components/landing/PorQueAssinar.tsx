@@ -31,7 +31,7 @@ const LINHAS: Linha[] = [
   },
   {
     label: "Aviso de fim de fidelização",
-    sozinho: "Tem de guardar a data você mesmo",
+    sozinho: "Tem de guardar a data por conta própria",
     dolado: "Avisamos automaticamente",
     deco: <span className="italic text-[var(--color-ink-faint)]">Não é o foco</span>,
   },

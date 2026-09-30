@@ -72,7 +72,7 @@ export function ComparadorFaturaForm({ action }: { action: (formData: FormData) 
       <input type="hidden" name="ficheiro_nome" value={ficheiroNome} />
 
       <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
-        Operadora / prestador{" "}
+        Operador / prestador{" "}
         <span className="font-normal normal-case text-[var(--color-ink-faint)]">(opcional)</span>
         <input
           name="operadora"

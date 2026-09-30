@@ -78,7 +78,7 @@ export default async function ReverFaturaPage({
 
       <form action={rever} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
-          Operadora / prestador
+          Operador / prestador
           <input name="operadora" defaultValue={fatura.operadora ?? ""} className={INPUT_CLASS} />
         </label>
         <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">

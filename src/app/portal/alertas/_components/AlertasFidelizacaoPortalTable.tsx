@@ -50,10 +50,10 @@ export function AlertasFidelizacaoPortalTable({ alertas }: { alertas: Alerta[] }
         <thead className="bg-[var(--color-surface-sunken)]">
           <tr>
             <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
-              Operadora
+              Operador
             </th>
             <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
-              Data fim
+              Data de fim
             </th>
             <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
               Avisos enviados

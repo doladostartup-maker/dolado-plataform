@@ -7,7 +7,7 @@ import {
   type EstadoAlertaFidelizacao,
 } from "@/app/actions/alertas-fidelizacao";
 
-const OPERADORAS = ["MEO", "NOS", "Vodafone", "EDP", "Galp", "EPAL", "Outra"];
+const OPERADORAS = ["MEO", "NOS", "Vodafone", "EDP", "Galp", "EPAL", "Outro"];
 
 const INPUT_CLASS =
   "w-full rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-white px-3.5 py-3 text-[var(--text-body)] text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-brand)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-wash)]";
@@ -66,7 +66,7 @@ export function AlertaFidelizacaoForm() {
 
       <div className="mb-4">
         <label className={LABEL_CLASS} htmlFor="alerta-operadora">
-          Operadora / prestador
+          Operador / prestador
         </label>
         <select
           id="alerta-operadora"
@@ -81,7 +81,7 @@ export function AlertaFidelizacaoForm() {
             </option>
           ))}
         </select>
-        {operadora === "Outra" && (
+        {operadora === "Outro" && (
           <input
             type="text"
             value={outraOperadora}
@@ -90,7 +90,7 @@ export function AlertaFidelizacaoForm() {
             className={`${INPUT_CLASS} mt-2`}
           />
         )}
-        <input type="hidden" name="operadora" value={operadora === "Outra" ? outraOperadora : operadora} />
+        <input type="hidden" name="operadora" value={operadora === "Outro" ? outraOperadora : operadora} />
       </div>
 
       <div className="mb-4 grid gap-4 sm:grid-cols-2">

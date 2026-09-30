@@ -36,7 +36,7 @@ export default async function FaturasParaReverPage({
             <thead className="bg-[var(--color-surface-sunken)]">
               <tr>
                 <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Cliente</th>
-                <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Operadora</th>
+                <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Operador</th>
                 <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Recebida em</th>
                 <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]" />
               </tr>

@@ -52,7 +52,7 @@ export async function criarAlertaFidelizacao(
     return { ok: false, erro: "Insira um e-mail válido." };
   }
   if (!operadora) {
-    return { ok: false, erro: "Indique a operadora ou prestador." };
+    return { ok: false, erro: "Indique o operador ou prestador." };
   }
   if (!consentimento) {
     return { ok: false, erro: "Tem de autorizar o tratamento dos dados para continuar." };
