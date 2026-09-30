@@ -378,6 +378,40 @@ describe("SEPA (pagamento assíncrono)", () => {
   });
 });
 
+// Piloto Remax: os colaboradores subscrevem Caso + Proteção com o cupão
+// duploprestigio26 (100%, "forever", limitado ao Caso + Proteção no Stripe).
+// Faturas a 0 € têm de dar o mesmo acesso e os mesmos casos que uma paga.
+describe("piloto Remax: Caso + Proteção com cupão de 100%", () => {
+  const sessaoPiloto = () =>
+    sessaoSubscricao({
+      payment_status: "no_payment_required",
+      amount_total: 0,
+      discounts: [{ coupon: "duploprestigio26", promotion_code: "promo_teste" }],
+    });
+
+  test("checkout a 0 €: ativa Caso + Proteção e dá o caso do primeiro ciclo", async () => {
+    comConta();
+    estado.stripeSubscricao = snapshot("active");
+    const r = await processarEventoStripe(evento("checkout.session.completed", sessaoPiloto()), deps);
+    assert.equal(r.status, 200);
+    assert.equal(conta().subscription_plan, "caso_protecao");
+    assert.equal(conta().subscription_status, "active");
+    assert.equal(conta().case_credits, 1);
+    assert.equal(estado.pagamentos.get("cs_sub").estado, "concluido");
+  });
+
+  test("faturas mensais a 0 €: 1 caso por ciclo, até ao máximo de 4", async () => {
+    comConta();
+    estado.stripeSubscricao = snapshot("active");
+    await processarEventoStripe(evento("checkout.session.completed", sessaoPiloto()), deps);
+    for (let i = 2; i <= 6; i++) {
+      await processarEventoStripe(evento("invoice.paid", fatura(`in_${i}`, "subscription_cycle", { amount_paid: 0 })), deps);
+    }
+    assert.equal(conta().case_credits, 4);
+    assert.equal(conta().subscription_plan, "caso_protecao");
+  });
+});
+
 describe("Caso + Proteção: créditos mensais", () => {
   test("1 crédito por ciclo pago, até ao máximo de 4", async () => {
     comConta();
