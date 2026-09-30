@@ -23,6 +23,11 @@ import type Stripe from "stripe";
 //   histórico ficam. Nunca se apaga nada.
 // - Uma compra de raiz (sem conta ainda) fica registada; /criar-conta aplica
 //   o acesso quando liga o pagamento à conta nova.
+// - Conversão Avulso → assinatura (metadata.conversao_id): só depois de a
+//   subscrição estar confirmada e ativa é que se reembolsa a diferença, uma
+//   única vez; refund.* atualiza o estado e um reembolso falhado fica para
+//   intervenção manual (nunca um segundo reembolso automático nem
+//   cancelamento da assinatura).
 
 export type Plano = "avulso" | "protecao" | "caso_protecao";
 export type EstadoPagamento =
@@ -77,6 +82,20 @@ export type AtualizacaoSubscricaoNaConta = {
   current_period_end?: string | null;
 };
 
+export type ConversaoParaReembolso = {
+  id: string;
+  plano_destino: "protecao" | "caso_protecao";
+  /** Checkout Session da compra Avulso original (para chegar ao PaymentIntent). */
+  avulso_session_id: string;
+  refund_montante_centimos: number;
+  refund_id: string | null;
+  requer_intervencao: boolean;
+};
+
+export type ResultadoReembolso =
+  | { ok: true; id: string; status: string | null; payment_intent_id: string }
+  | { ok: false; motivo: string };
+
 export type LinhaLog = {
   evento: string;
   event_id: string;
@@ -119,6 +138,35 @@ export interface DependenciasWebhook {
   garantirConta(userId: string, customerId: string | null): Promise<void>;
   /** +1 crédito uma única vez por origem; maximo limita o saldo. true se creditou. */
   concederCreditoCaso(userId: string, origem: string, maximo: number | null): Promise<boolean>;
+
+  /**
+   * Marca a conversão como feita para ESTE checkout (atómico: só a 1.ª
+   * chamada converte). Devolve a conversão se ficou — ou já estava —
+   * convertida por este checkout; null se não pertence a este checkout.
+   */
+  reclamarConversao(
+    conversaoId: string,
+    checkoutSessionId: string,
+    subscriptionId: string,
+  ): Promise<ConversaoParaReembolso | null>;
+  /**
+   * Cria o reembolso parcial no PaymentIntent do Avulso — ou devolve o que
+   * já existir para esta conversão (nunca cria um segundo). Erros
+   * definitivos → { ok: false }; erros transitórios lançam.
+   */
+  criarReembolsoConversao(conversao: ConversaoParaReembolso): Promise<ResultadoReembolso>;
+  gravarReembolsoConversao(
+    conversaoId: string,
+    reembolso: { id: string; status: string | null; payment_intent_id: string },
+  ): Promise<void>;
+  marcarIntervencaoConversao(conversaoId: string, motivo: string): Promise<void>;
+  /** Atualiza o estado de um reembolso de conversão; null se o refund não for de uma conversão. */
+  atualizarReembolso(
+    refundId: string,
+    status: string | null,
+    conversaoId: string | null,
+  ): Promise<{ conversaoId: string; passouAFalhado: boolean } | null>;
+  notificarAdmin(assunto: string, texto: string): Promise<void>;
 
   enviarEmailPagamentoConfirmado(dados: {
     email: string;
@@ -293,6 +341,48 @@ async function contasDaCompra(session: Stripe.Checkout.Session, s: DadosSessao, 
 }
 
 /**
+ * Reembolso parcial do Avulso convertido. Idempotente em três camadas:
+ * reclamarConversao só converte uma vez por checkout; um refund_id já
+ * gravado encerra o passo; e criarReembolsoConversao procura primeiro um
+ * refund desta conversão no Stripe (e usa uma idempotency key) antes de
+ * criar — um webhook repetido nunca gera um segundo reembolso.
+ */
+async function converterAvulso(
+  session: Stripe.Checkout.Session,
+  conversaoId: string,
+  subscriptionId: string,
+  planoAplicado: Plano | null,
+  deps: DependenciasWebhook,
+) {
+  const conversao = await deps.reclamarConversao(conversaoId, session.id, subscriptionId);
+  if (!conversao || conversao.refund_id || conversao.requer_intervencao) return;
+
+  if (planoAplicado !== conversao.plano_destino) {
+    // O plano pago não é o que foi oferecido na conversão — não reembolsa
+    // às cegas; fica para decisão manual (a subscrição mantém-se).
+    await deps.marcarIntervencaoConversao(conversao.id, "plano da subscrição diferente do plano de destino");
+    await deps.notificarAdmin(
+      "Conversão Avulso por rever — DoLado",
+      `A conversão ${conversao.id} não foi reembolsada: o plano da subscrição ${subscriptionId} não corresponde ao plano de destino.`,
+    );
+    return;
+  }
+
+  const reembolso = await deps.criarReembolsoConversao(conversao);
+  if (reembolso.ok) {
+    await deps.gravarReembolsoConversao(conversao.id, reembolso);
+    return;
+  }
+  // Erro definitivo do Stripe (ex.: pagamento já reembolsado): não tenta
+  // outra vez nem cancela a assinatura — fica para intervenção manual.
+  await deps.marcarIntervencaoConversao(conversao.id, reembolso.motivo);
+  await deps.notificarAdmin(
+    "Reembolso de conversão falhou — DoLado",
+    `O reembolso da conversão ${conversao.id} não foi criado (${reembolso.motivo}). A assinatura continua ativa. Resolver manualmente no Stripe.`,
+  );
+}
+
+/**
  * Pagamento confirmado. Ordem pensada para um reenvio depois de uma falha:
  * primeiro o acesso e os créditos (idempotentes), depois o pagamento como
  * "concluido" e só no fim o e-mail — se algo falhar antes, o pagamento ainda
@@ -306,13 +396,25 @@ async function confirmarCompra(
   deps: DependenciasWebhook,
 ) {
   const contas = await contasDaCompra(session, s, deps);
-  let plano: Plano | null = s.tipo === "avulso" ? "avulso" : null;
+  // Plano efetivamente aplicado a uma conta (subscrição confirmada e ativa).
+  let planoAplicado: Plano | null = null;
   for (const userId of contas) {
-    plano = (await aplicarCompraConfirmadaNaConta(session, userId, deps)) ?? plano;
+    planoAplicado = (await aplicarCompraConfirmadaNaConta(session, userId, deps)) ?? planoAplicado;
   }
+  // Nome do plano para o e-mail — pode vir só do price.
+  let plano: Plano | null = planoAplicado ?? (s.tipo === "avulso" ? "avulso" : null);
   if (!plano && s.subscriptionId) {
     // Compra de raiz: ainda sem conta, mas o e-mail precisa do nome do plano.
     plano = deps.planoDoPreco((await deps.obterSubscricaoStripe(s.subscriptionId)).price_id);
+  }
+
+  // Conversão de um Avulso: só depois de a subscrição estar confirmada e
+  // ativa na conta (plano aplicado acima). Antes do "concluido", para um
+  // reenvio depois de uma falha voltar a tentar o reembolso.
+  const conversaoId = session.metadata?.conversao_id;
+  if (conversaoId && s.subscriptionId && contas.length > 0) {
+    // Só com a subscrição ativa na conta — nunca com base apenas no price.
+    if (planoAplicado) await converterAvulso(session, conversaoId, s.subscriptionId, planoAplicado, deps);
   }
 
   await deps.gravarPagamento(dadosPagamento(session, s, "concluido"));
@@ -475,7 +577,30 @@ async function tratarSubscricaoEliminada(event: Stripe.Event, deps: Dependencias
   return { resultado: afetadas > 0 ? "cancelada_acesso_retirado" : "cancelada", ...ids };
 }
 
+const ESTADOS_REEMBOLSO_FALHADO: ReadonlySet<string> = new Set(["failed", "canceled"]);
+
+async function tratarReembolso(event: Stripe.Event, deps: DependenciasWebhook): Promise<Tratamento> {
+  const refund = event.data.object as Stripe.Refund;
+  const atualizado = await deps.atualizarReembolso(refund.id, refund.status ?? null, refund.metadata?.conversao_id ?? null);
+  if (!atualizado) return { resultado: "ignorado_sem_conversao" };
+
+  if (atualizado.passouAFalhado && ESTADOS_REEMBOLSO_FALHADO.has(refund.status ?? "")) {
+    // Nunca cria um segundo reembolso automaticamente nem cancela a
+    // assinatura: marca para intervenção e avisa o admin.
+    await deps.marcarIntervencaoConversao(atualizado.conversaoId, `reembolso ${refund.status}`);
+    await deps.notificarAdmin(
+      "Reembolso de conversão falhou — DoLado",
+      `O reembolso ${refund.id} (conversão ${atualizado.conversaoId}) ficou "${refund.status}". A assinatura continua ativa. Resolver manualmente no Stripe.`,
+    );
+    return { resultado: "reembolso_falhado_intervencao" };
+  }
+  return { resultado: `reembolso_${refund.status ?? "sem_estado"}` };
+}
+
 const TRATAMENTOS: Record<string, (event: Stripe.Event, deps: DependenciasWebhook) => Promise<Tratamento>> = {
+  "refund.created": tratarReembolso,
+  "refund.updated": tratarReembolso,
+  "refund.failed": tratarReembolso,
   "checkout.session.completed": tratarCheckoutConcluido,
   "checkout.session.async_payment_succeeded": tratarPagamentoAssincronoConfirmado,
   "checkout.session.async_payment_failed": tratarPagamentoAssincronoFalhado,

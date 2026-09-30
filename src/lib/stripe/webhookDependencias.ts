@@ -7,10 +7,19 @@ import { CONTACTO_EMAIL } from "@/lib/site";
 import { getStripe } from "@/lib/stripe/client";
 import { planoDoPreco } from "@/lib/stripe/planos";
 import {
+  idDe,
   snapshotDeSubscricao,
+  type ConversaoParaReembolso,
   type DependenciasWebhook,
   type EstadoPagamento,
 } from "@/lib/stripe/webhook";
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "thiago.pereira@dolado.pt";
+const ESTADOS_REEMBOLSO_FALHADO = new Set(["failed", "canceled"]);
+
+function escaparHtml(texto: string) {
+  return texto.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
 // Implementação real das dependências do webhook (e de /criar-conta):
 // Supabase com service_role (só servidor — a autenticidade vem da assinatura
@@ -229,6 +238,152 @@ export function criarDependenciasWebhook(): DependenciasWebhook {
       });
       falhar("conceder_credito_caso", error);
       return data === true;
+    },
+
+    async reclamarConversao(conversaoId, checkoutSessionId, subscriptionId) {
+      const colunas =
+        "id, plano_destino, estado, checkout_session_id, refund_montante_centimos, refund_id, requer_intervencao, stripe_payments(stripe_session_id)";
+      type Linha = {
+        id: string;
+        plano_destino: "protecao" | "caso_protecao";
+        estado: string;
+        checkout_session_id: string | null;
+        refund_montante_centimos: number;
+        refund_id: string | null;
+        requer_intervencao: boolean;
+        stripe_payments: { stripe_session_id: string } | { stripe_session_id: string }[] | null;
+      };
+      const paraConversao = (l: Linha): ConversaoParaReembolso => {
+        const avulso = Array.isArray(l.stripe_payments) ? l.stripe_payments[0] : l.stripe_payments;
+        return {
+          id: l.id,
+          plano_destino: l.plano_destino,
+          avulso_session_id: avulso?.stripe_session_id ?? "",
+          refund_montante_centimos: l.refund_montante_centimos,
+          refund_id: l.refund_id,
+          requer_intervencao: l.requer_intervencao,
+        };
+      };
+
+      // Atómico: só converte se ainda estiver em checkout_aberto E for este
+      // o checkout em curso (um checkout antigo, substituído, não converte).
+      const { data: convertida, error } = await admin
+        .from("conversoes_avulso")
+        .update({
+          estado: "convertido",
+          stripe_subscription_id: subscriptionId,
+          convertido_em: agora(),
+          updated_at: agora(),
+        })
+        .eq("id", conversaoId)
+        .eq("estado", "checkout_aberto")
+        .eq("checkout_session_id", checkoutSessionId)
+        .select(colunas)
+        .maybeSingle();
+      falhar("conversoes_avulso.update", error);
+      if (convertida) return paraConversao(convertida as unknown as Linha);
+
+      // Reenvio: já convertida por este mesmo checkout → continua o passo do
+      // reembolso (que é idempotente).
+      const { data: atual, error: erroLeitura } = await admin
+        .from("conversoes_avulso")
+        .select(colunas)
+        .eq("id", conversaoId)
+        .maybeSingle();
+      falhar("conversoes_avulso.select", erroLeitura);
+      const linha = atual as unknown as Linha | null;
+      if (linha && linha.estado === "convertido" && linha.checkout_session_id === checkoutSessionId) {
+        return paraConversao(linha);
+      }
+      return null;
+    },
+
+    async criarReembolsoConversao(conversao) {
+      const stripe = getStripe();
+      const avulso = await stripe.checkout.sessions.retrieve(conversao.avulso_session_id);
+      const paymentIntentId = idDe(avulso.payment_intent);
+      if (!paymentIntentId) return { ok: false, motivo: "pagamento Avulso sem PaymentIntent" };
+
+      // Validar antes de criar: se já existe um reembolso desta conversão
+      // (ex.: criado numa tentativa anterior cuja resposta se perdeu), usa-o.
+      const existentes = await stripe.refunds.list({ payment_intent: paymentIntentId, limit: 100 });
+      const existente = existentes.data.find((r) => r.metadata?.conversao_id === conversao.id);
+      if (existente) {
+        return { ok: true, id: existente.id, status: existente.status, payment_intent_id: paymentIntentId };
+      }
+
+      try {
+        // Sem "refund_application_fee"/destino: volta ao método de pagamento
+        // original do Avulso.
+        const refund = await stripe.refunds.create(
+          {
+            payment_intent: paymentIntentId,
+            amount: conversao.refund_montante_centimos,
+            reason: "requested_by_customer",
+            metadata: { conversao_id: conversao.id, plano_destino: conversao.plano_destino },
+          },
+          { idempotencyKey: `conversao-reembolso-${conversao.id}` },
+        );
+        return { ok: true, id: refund.id, status: refund.status, payment_intent_id: paymentIntentId };
+      } catch (erro) {
+        const tipo = (erro as { type?: string }).type;
+        if (tipo === "StripeInvalidRequestError" || tipo === "StripeCardError") {
+          // Definitivo (ex.: já totalmente reembolsado, montante inválido).
+          return { ok: false, motivo: (erro as { code?: string }).code ?? "pedido recusado pelo Stripe" };
+        }
+        throw erro; // transitório: o webhook devolve 500 e o Stripe reenvia
+      }
+    },
+
+    async gravarReembolsoConversao(conversaoId, reembolso) {
+      const { error } = await admin
+        .from("conversoes_avulso")
+        .update({
+          refund_id: reembolso.id,
+          refund_estado: reembolso.status,
+          payment_intent_id: reembolso.payment_intent_id,
+          refund_atualizado_em: agora(),
+          updated_at: agora(),
+        })
+        .eq("id", conversaoId);
+      falhar("conversoes_avulso.update", error);
+    },
+
+    async marcarIntervencaoConversao(conversaoId, motivo) {
+      const { error } = await admin
+        .from("conversoes_avulso")
+        .update({ requer_intervencao: true, intervencao_motivo: motivo, updated_at: agora() })
+        .eq("id", conversaoId);
+      falhar("conversoes_avulso.update", error);
+    },
+
+    async atualizarReembolso(refundId, status, conversaoId) {
+      // Pelo refund_id; ou pela conversão nos metadados (refund.created pode
+      // chegar antes de o refund_id ter sido gravado).
+      // Os dois valores entram num filtro PostgREST: só formatos esperados.
+      if (!/^re_[A-Za-z0-9]+$/.test(refundId)) return null;
+      const conversaoValida = conversaoId && /^[0-9a-f-]{36}$/i.test(conversaoId) ? conversaoId : null;
+      let consulta = admin.from("conversoes_avulso").select("id, refund_id, refund_estado");
+      consulta = conversaoValida
+        ? consulta.or(`refund_id.eq.${refundId},id.eq.${conversaoValida}`)
+        : consulta.eq("refund_id", refundId);
+      const { data, error } = await consulta.limit(1).maybeSingle();
+      falhar("conversoes_avulso.select", error);
+      if (!data) return null;
+      if (data.refund_id && data.refund_id !== refundId) return null; // outro refund, não o desta conversão
+
+      const passouAFalhado =
+        ESTADOS_REEMBOLSO_FALHADO.has(status ?? "") && !ESTADOS_REEMBOLSO_FALHADO.has(data.refund_estado ?? "");
+      const { error: erroUpdate } = await admin
+        .from("conversoes_avulso")
+        .update({ refund_id: refundId, refund_estado: status, refund_atualizado_em: agora(), updated_at: agora() })
+        .eq("id", data.id);
+      falhar("conversoes_avulso.update", erroUpdate);
+      return { conversaoId: data.id as string, passouAFalhado };
+    },
+
+    async notificarAdmin(assunto, texto) {
+      await enviarEmailBrevo(ADMIN_EMAIL, assunto, `<p>${escaparHtml(texto)}</p>`);
     },
 
     async enviarEmailPagamentoConfirmado({ email, plano, contaExiste, sessionId }) {

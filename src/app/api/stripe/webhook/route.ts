@@ -8,8 +8,9 @@ import { criarDependenciasWebhook } from "@/lib/stripe/webhookDependencias";
 // checkout.session.completed, checkout.session.async_payment_succeeded,
 // checkout.session.async_payment_failed, invoice.paid,
 // invoice.payment_failed, invoice.payment_action_required,
-// customer.subscription.updated, customer.subscription.deleted.
-// Qualquer outro evento é aceite (200) e ignorado.
+// customer.subscription.updated, customer.subscription.deleted,
+// refund.created, refund.updated, refund.failed (reembolsos de conversão
+// Avulso → assinatura). Qualquer outro evento é aceite (200) e ignorado.
 
 export async function POST(request: Request) {
   const assinatura = request.headers.get("stripe-signature");

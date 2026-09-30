@@ -5,8 +5,15 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { obterAcesso, requireUser } from "@/lib/auth";
 import { MARKETING_SITE_URL } from "@/lib/site";
 import { getStripe } from "@/lib/stripe/client";
-import { PRECO_AVULSO_ID, PRECO_CASO_PROTECAO_ID } from "@/lib/stripe/planos";
-import { escolherPagamentoParaCreditoUpgrade, type PagamentoParaUpgrade } from "@/lib/stripe/upgrade";
+import {
+  CUPAO_CONVERSAO,
+  escolherAvulsoParaConversao,
+  parametrosCheckoutConversao,
+  type ConversaoExistente,
+  type PagamentoAvulso,
+  type PlanoDestino,
+} from "@/lib/stripe/conversao";
+import { PRECO_AVULSO_ID, PRECO_CASO_PROTECAO_ID, PRECO_PROTECAO_ID } from "@/lib/stripe/planos";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!;
 
@@ -81,12 +88,32 @@ export async function iniciarCompraAvulsoComConta() {
   redirect(session.url ?? "/portal");
 }
 
+async function garantirCupaoConversao(stripe: ReturnType<typeof getStripe>) {
+  try {
+    const cupao = await stripe.coupons.retrieve(CUPAO_CONVERSAO.id);
+    // Nunca aplicar um cupão com outra configuração (ex.: editado à mão).
+    if (cupao.percent_off !== 100 || cupao.duration !== "once" || !cupao.valid) {
+      throw new Error("cupão de conversão com configuração inesperada");
+    }
+  } catch (erro) {
+    if ((erro as { code?: string }).code !== "resource_missing") throw erro;
+    await stripe.coupons.create({
+      id: CUPAO_CONVERSAO.id,
+      percent_off: CUPAO_CONVERSAO.percent_off,
+      duration: CUPAO_CONVERSAO.duration,
+      name: CUPAO_CONVERSAO.name,
+    });
+  }
+}
+
 /**
- * Subscrição Caso + Proteção por quem já tem conta. Se a conta tiver uma
- * compra Avulso elegível (ver src/lib/stripe/upgrade.ts), o valor é
- * creditado como saldo Stripe antes do checkout — uma única vez por compra.
+ * Adesão a uma assinatura por quem já tem conta. Se a conta tiver uma
+ * compra Avulso elegível, a 1.ª mensalidade fica coberta por ela (cupão de
+ * 100% só na 1.ª fatura) e a diferença é reembolsada — mas só depois de o
+ * webhook confirmar a subscrição. Abrir o Checkout não consome nada: se o
+ * cliente desistir, o Avulso continua elegível.
  */
-export async function iniciarUpgradeParaAssinatura() {
+async function iniciarAdesao(plano: PlanoDestino) {
   const stripe = getStripe();
   const { supabase, user } = await requireUser();
   const acesso = await obterAcesso(supabase, user.id);
@@ -97,61 +124,100 @@ export async function iniciarUpgradeParaAssinatura() {
   }
 
   const admin = createAdminClient();
-  const { data: pagamentos } = await admin
-    .from("stripe_payments")
-    .select("id, user_id, plano, estado, valor_total_centimos, stripe_customer_id, credito_upgrade_em, created_at")
-    .eq("user_id", user.id)
-    .eq("plano", "avulso");
+  const precoId = plano === "protecao" ? PRECO_PROTECAO_ID : PRECO_CASO_PROTECAO_ID;
+  const customerId = await customerDaConta(user.id);
+  const cliente = customerId ? { customer: customerId } : { customer_email: user.email };
 
-  const elegivel = escolherPagamentoParaCreditoUpgrade((pagamentos ?? []) as PagamentoParaUpgrade[], user.id);
-  const customerId = elegivel?.stripe_customer_id ?? (await customerDaConta(user.id));
-
-  let creditado = false;
-  if (elegivel && customerId) {
-    // Reserva atómica: só um pedido consegue marcar esta compra como usada.
-    // Dois cliques (ou dois separadores) não geram dois créditos.
-    const { data: reservado } = await admin
+  const [{ data: pagamentos }, { data: conversoes }] = await Promise.all([
+    admin
       .from("stripe_payments")
-      .update({ credito_upgrade_em: new Date().toISOString() })
-      .eq("id", elegivel.id)
-      .eq("estado", "concluido")
-      .is("credito_upgrade_em", null)
-      .select("id")
-      .maybeSingle();
+      .select("id, stripe_session_id, user_id, plano, estado, valor_total_centimos, created_at")
+      .eq("user_id", user.id)
+      .eq("plano", "avulso"),
+    admin
+      .from("conversoes_avulso")
+      .select("id, stripe_payment_id, estado, checkout_session_id")
+      .eq("user_id", user.id),
+  ]);
+  const escolha = escolherAvulsoParaConversao(
+    (pagamentos ?? []) as PagamentoAvulso[],
+    (conversoes ?? []) as ConversaoExistente[],
+    user.id,
+    plano,
+  );
 
-    if (reservado) {
-      try {
-        await stripe.customers.createBalanceTransaction(
-          customerId,
-          {
-            amount: -elegivel.valor_total_centimos!,
-            currency: "eur",
-            description: "Crédito por reclamação avulsa já paga",
-          },
-          // Mesmo que o pedido seja repetido, o Stripe só cria um crédito.
-          { idempotencyKey: `credito-upgrade-${elegivel.id}` },
-        );
-        creditado = true;
-      } catch {
-        // Sem crédito no Stripe: liberta a reserva para poder tentar de novo.
-        await admin.from("stripe_payments").update({ credito_upgrade_em: null }).eq("id", elegivel.id);
-        redirect("/portal?erro=upgrade-falhou");
-      }
-    }
+  if (!escolha) {
+    // Sem Avulso por converter: adesão normal, cobrada desde o 1.º mês.
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      ...cliente,
+      line_items: [{ price: precoId, quantity: 1 }],
+      allow_promotion_codes: true,
+      success_url: `${SITE_URL}/portal?upgraded=true`,
+      cancel_url: `${SITE_URL}/portal`,
+      metadata: { plano: "assinatura", upgrade: "false", user_id: user.id },
+    });
+    redirect(session.url ?? "/portal");
   }
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    ...(customerId ? { customer: customerId } : { customer_email: user.email }),
-    line_items: [{ price: PRECO_CASO_PROTECAO_ID, quantity: 1 }],
-    // O regresso só mostra uma mensagem — o acesso é dado pelo webhook
-    // quando o pagamento for confirmado.
-    success_url: `${SITE_URL}/portal?upgraded=true`,
-    cancel_url: `${SITE_URL}/portal`,
-    // user_id nos metadados (definidos aqui, no servidor) para o webhook
-    // ligar a subscrição à conta certa.
-    metadata: { plano: "assinatura", upgrade: creditado ? "true" : "false", user_id: user.id },
-  });
+  // Um checkout de conversão de cada vez: um anterior ainda aberto é
+  // expirado, para só o novo poder converter este Avulso.
+  const anteriorId = escolha.conversao?.checkout_session_id;
+  if (anteriorId) {
+    const anterior = await stripe.checkout.sessions.retrieve(anteriorId).catch(() => null);
+    if (anterior?.status === "complete") redirect("/portal?upgraded=true"); // já concluído, o webhook trata
+    if (anterior?.status === "open") await stripe.checkout.sessions.expire(anteriorId).catch(() => undefined);
+  }
+
+  await garantirCupaoConversao(stripe);
+
+  const valores = {
+    plano_destino: plano,
+    valor_avulso_centimos: escolha.calculo.valorAvulso,
+    valor_primeira_mensalidade_centimos: escolha.calculo.mensalidade,
+    refund_montante_centimos: escolha.calculo.reembolso,
+    checkout_session_id: null,
+    updated_at: new Date().toISOString(),
+  };
+  let conversaoId: string | undefined;
+  if (escolha.conversao) {
+    // Só reabre se ainda não foi convertida (entretanto, noutro separador).
+    const { data } = await admin
+      .from("conversoes_avulso")
+      .update(valores)
+      .eq("id", escolha.conversao.id)
+      .eq("estado", "checkout_aberto")
+      .select("id")
+      .maybeSingle();
+    conversaoId = data?.id;
+  } else {
+    const { data } = await admin
+      .from("conversoes_avulso")
+      .insert({ ...valores, stripe_payment_id: escolha.pagamento.id, user_id: user.id })
+      .select("id")
+      .maybeSingle();
+    conversaoId = data?.id;
+  }
+  if (!conversaoId) redirect("/portal?erro=conversao-indisponivel");
+
+  const session = await stripe.checkout.sessions.create(
+    parametrosCheckoutConversao({ precoId, cliente, conversaoId, userId: user.id, plano, siteUrl: SITE_URL }),
+  );
+  await admin
+    .from("conversoes_avulso")
+    .update({ checkout_session_id: session.id, updated_at: new Date().toISOString() })
+    .eq("id", conversaoId)
+    .eq("estado", "checkout_aberto");
 
   redirect(session.url ?? "/portal");
+}
+
+/** Adesão a Caso + Proteção (com conversão do Avulso, se houver). */
+export async function iniciarUpgradeParaAssinatura() {
+  await iniciarAdesao("caso_protecao");
+}
+
+/** Adesão a Proteção (com conversão do Avulso, se houver). */
+export async function iniciarUpgradeParaProtecao() {
+  await iniciarAdesao("protecao");
 }

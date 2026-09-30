@@ -24,6 +24,11 @@ function criarEstado() {
     logs: [],
     stripeSubscricao: null, // o que a "API Stripe" devolve
     falharCreditoUmaVez: false,
+    conversoes: new Map(), // id → linha de conversoes_avulso
+    refundsStripe: [], // reembolsos que existem no "Stripe"
+    refundFalhaDefinitiva: false,
+    refundFalhaTransitoriaUmaVez: false,
+    avisosAdmin: [],
   };
 }
 
@@ -119,6 +124,44 @@ function criarDependencias(estado) {
       const c = estado.contas.get(userId);
       c.case_credits = maximo == null ? c.case_credits + 1 : Math.max(c.case_credits, Math.min(c.case_credits + 1, maximo));
       return true;
+    },
+    async reclamarConversao(id, checkoutSessionId, subscriptionId) {
+      const c = estado.conversoes.get(id);
+      if (!c || c.checkout_session_id !== checkoutSessionId) return null;
+      if (c.estado === "checkout_aberto") {
+        c.estado = "convertido";
+        c.stripe_subscription_id = subscriptionId;
+      }
+      return c.estado === "convertido" ? { ...c } : null;
+    },
+    async criarReembolsoConversao(conv) {
+      const existente = estado.refundsStripe.find((r) => r.conversao_id === conv.id);
+      if (existente) return { ok: true, id: existente.id, status: existente.status, payment_intent_id: "pi_avulso" };
+      if (estado.refundFalhaTransitoriaUmaVez) {
+        estado.refundFalhaTransitoriaUmaVez = false;
+        throw Object.assign(new Error("Stripe indisponível"), { code: "api_connection_error" });
+      }
+      if (estado.refundFalhaDefinitiva) return { ok: false, motivo: "charge_already_refunded" };
+      const refund = { id: `re_${estado.refundsStripe.length + 1}`, amount: conv.refund_montante_centimos, conversao_id: conv.id, status: "pending" };
+      estado.refundsStripe.push(refund);
+      return { ok: true, id: refund.id, status: refund.status, payment_intent_id: "pi_avulso" };
+    },
+    async gravarReembolsoConversao(id, r) {
+      Object.assign(estado.conversoes.get(id), { refund_id: r.id, refund_estado: r.status, payment_intent_id: r.payment_intent_id });
+    },
+    async marcarIntervencaoConversao(id, motivo) {
+      Object.assign(estado.conversoes.get(id), { requer_intervencao: true, intervencao_motivo: motivo });
+    },
+    async atualizarReembolso(refundId, status, conversaoId) {
+      const c = [...estado.conversoes.values()].find((x) => x.refund_id === refundId || x.id === conversaoId);
+      if (!c || (c.refund_id && c.refund_id !== refundId)) return null;
+      const falhados = ["failed", "canceled"];
+      const passouAFalhado = falhados.includes(status) && !falhados.includes(c.refund_estado);
+      Object.assign(c, { refund_id: refundId, refund_estado: status });
+      return { conversaoId: c.id, passouAFalhado };
+    },
+    async notificarAdmin(assunto, texto) {
+      estado.avisosAdmin.push({ assunto, texto });
     },
     async enviarEmailPagamentoConfirmado(dados) {
       estado.emails.push(dados);
@@ -488,5 +531,172 @@ describe("idempotência, eventos desconhecidos e erros", () => {
     comConta();
     await processarEventoStripe(evento("checkout.session.completed", sessaoAvulso()), deps);
     assert.equal(estado.pagamentos.get("cs_avulso").user_id, USER);
+  });
+});
+
+describe("conversão Avulso → assinatura com reembolso parcial", () => {
+  function conversao(plano_destino, reembolso, extra = {}) {
+    estado.conversoes.set("conv_1", {
+      id: "conv_1",
+      plano_destino,
+      estado: "checkout_aberto",
+      checkout_session_id: "cs_upgrade",
+      avulso_session_id: "cs_avulso",
+      refund_montante_centimos: reembolso,
+      refund_id: null,
+      refund_estado: null,
+      requer_intervencao: false,
+      ...extra,
+    });
+  }
+  // 1.ª fatura a 0 € (cupão 100% "once"): o Checkout fica "no_payment_required".
+  const sessaoUpgrade = (extra = {}) =>
+    sessaoSubscricao({
+      id: "cs_upgrade",
+      payment_status: "no_payment_required",
+      amount_total: 0,
+      metadata: { plano: "assinatura", upgrade: "true", user_id: USER, conversao_id: "conv_1" },
+      ...extra,
+    });
+  const conv = () => estado.conversoes.get("conv_1");
+
+  test("Avulso → Proteção: subscrição confirmada, reembolso de 10,00 €, sem créditos de caso", async () => {
+    comConta({ case_credits: 0 });
+    conversao("protecao", 1000);
+    estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
+    await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+    assert.equal(conta().subscription_plan, "protecao");
+    assert.equal(conv().estado, "convertido");
+    assert.equal(estado.refundsStripe.length, 1);
+    assert.equal(estado.refundsStripe[0].amount, 1000);
+    assert.equal(conv().refund_id, "re_1");
+    assert.equal(conv().refund_estado, "pending", "pedido aceite ≠ dinheiro devolvido");
+    assert.equal(conta().case_credits, 0);
+  });
+
+  test("Avulso → Caso + Proteção: reembolso de 7,00 €; o caso do ciclo é gerido à parte", async () => {
+    comConta({ case_credits: 0 });
+    conversao("caso_protecao", 700);
+    estado.stripeSubscricao = snapshot("active", PRECO_CASO_PROTECAO);
+    await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+    assert.equal(estado.refundsStripe[0].amount, 700);
+    assert.equal(conta().subscription_plan, "caso_protecao");
+    assert.equal(conta().case_credits, 1, "crédito de caso do 1.º ciclo, independente do reembolso");
+  });
+
+  test("webhook repetido (novo event.id, mesma sessão): o segundo reembolso não é criado", async () => {
+    comConta();
+    conversao("protecao", 1000);
+    estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
+    await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+    await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+    await processarEventoStripe(evento("checkout.session.async_payment_succeeded", sessaoUpgrade({ payment_status: "paid" })), deps);
+    assert.equal(estado.refundsStripe.length, 1);
+  });
+
+  test("Checkout abandonado: sem evento de conclusão não há reembolso e o Avulso fica por converter", async () => {
+    comConta();
+    conversao("protecao", 1000);
+    assert.equal(estado.refundsStripe.length, 0);
+    assert.equal(conv().estado, "checkout_aberto");
+  });
+
+  test("checkout antigo (substituído por um novo) não converte nem reembolsa", async () => {
+    comConta();
+    conversao("protecao", 1000, { checkout_session_id: "cs_novo" });
+    estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
+    await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+    assert.equal(conv().estado, "checkout_aberto");
+    assert.equal(estado.refundsStripe.length, 0);
+  });
+
+  test("o mesmo Avulso já convertido noutro checkout: recusado", async () => {
+    comConta();
+    conversao("protecao", 1000, { estado: "convertido", checkout_session_id: "cs_outro", refund_id: "re_antigo" });
+    estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
+    await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+    assert.equal(estado.refundsStripe.length, 0);
+  });
+
+  test("subscrição ainda não ativa: não converte (reembolso só depois da adesão confirmada)", async () => {
+    comConta();
+    conversao("protecao", 1000);
+    estado.stripeSubscricao = snapshot("incomplete", PRECO_PROTECAO);
+    await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+    assert.equal(conv().estado, "checkout_aberto");
+    assert.equal(estado.refundsStripe.length, 0);
+  });
+
+  test("plano pago diferente do oferecido: sem reembolso, fica para intervenção", async () => {
+    comConta();
+    conversao("protecao", 1000);
+    estado.stripeSubscricao = snapshot("active", PRECO_CASO_PROTECAO);
+    await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+    assert.equal(estado.refundsStripe.length, 0);
+    assert.equal(conv().requer_intervencao, true);
+    assert.equal(estado.avisosAdmin.length, 1);
+  });
+
+  test("falha transitória do Stripe: 500 e o reenvio cria o reembolso uma única vez", async () => {
+    comConta();
+    conversao("protecao", 1000);
+    estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
+    estado.refundFalhaTransitoriaUmaVez = true;
+    const e = evento("checkout.session.completed", sessaoUpgrade());
+    assert.equal((await processarEventoStripe(e, deps)).status, 500);
+    assert.equal((await processarEventoStripe(e, deps)).status, 200);
+    assert.equal(estado.refundsStripe.length, 1);
+    assert.equal(conv().refund_id, "re_1");
+  });
+
+  test("reembolso recusado pelo Stripe: regista, marca intervenção, avisa o admin e não cancela a assinatura", async () => {
+    comConta();
+    conversao("protecao", 1000);
+    estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
+    estado.refundFalhaDefinitiva = true;
+    const r = await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+    assert.equal(r.status, 200);
+    assert.equal(conv().requer_intervencao, true);
+    assert.equal(conv().intervencao_motivo, "charge_already_refunded");
+    assert.equal(estado.avisosAdmin.length, 1);
+    assert.equal(conta().subscription_plan, "protecao");
+    // Um reenvio não tenta criar outro reembolso.
+    estado.refundFalhaDefinitiva = false;
+    await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+    assert.equal(estado.refundsStripe.length, 0);
+  });
+
+  test("refund.updated: o estado real do reembolso fica registado", async () => {
+    conversao("protecao", 1000, { estado: "convertido", refund_id: "re_1", refund_estado: "pending" });
+    await processarEventoStripe(evento("refund.updated", { id: "re_1", object: "refund", status: "succeeded", metadata: { conversao_id: "conv_1" } }), deps);
+    assert.equal(conv().refund_estado, "succeeded");
+    assert.equal(conv().requer_intervencao, false);
+  });
+
+  test("refund.created antes de o refund_id estar gravado: liga pela conversão nos metadados", async () => {
+    conversao("protecao", 1000, { estado: "convertido" });
+    await processarEventoStripe(evento("refund.created", { id: "re_9", object: "refund", status: "pending", metadata: { conversao_id: "conv_1" } }), deps);
+    assert.equal(conv().refund_id, "re_9");
+  });
+
+  test("refund.failed: estado registado, intervenção possível, sem novo reembolso nem cancelamento", async () => {
+    comConta({ subscription_plan: "protecao", subscription_status: "active", stripe_subscription_id: SUB });
+    conversao("protecao", 1000, { estado: "convertido", refund_id: "re_1", refund_estado: "pending" });
+    const r = await processarEventoStripe(evento("refund.failed", { id: "re_1", object: "refund", status: "failed", metadata: { conversao_id: "conv_1" } }), deps);
+    assert.equal(r.status, 200);
+    assert.equal(conv().refund_estado, "failed");
+    assert.equal(conv().requer_intervencao, true);
+    assert.equal(estado.avisosAdmin.length, 1);
+    assert.equal(estado.refundsStripe.length, 0);
+    assert.equal(conta().subscription_plan, "protecao");
+    // refund.updated repetido com o mesmo estado não volta a avisar.
+    await processarEventoStripe(evento("refund.updated", { id: "re_1", object: "refund", status: "failed", metadata: { conversao_id: "conv_1" } }), deps);
+    assert.equal(estado.avisosAdmin.length, 1);
+  });
+
+  test("reembolso que não é de uma conversão (ex.: feito à mão no Stripe): ignorado", async () => {
+    const r = await processarEventoStripe(evento("refund.created", { id: "re_manual", object: "refund", status: "succeeded", metadata: {} }), deps);
+    assert.equal(r.status, 200);
+    assert.equal(ultimoLog().resultado, "ignorado_sem_conversao");
   });
 });

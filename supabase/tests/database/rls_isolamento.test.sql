@@ -114,6 +114,8 @@ insert into public.user_access (user_id, nivel_acesso, subscription_plan, subscr
   ('00000000-0000-4000-a000-00000000000b', 'assinatura', 'caso_protecao', 'active', 0);
 
 insert into public.stripe_webhook_events (event_id, tipo) values ('evt_teste', 'invoice.paid');
+insert into public.conversoes_avulso (id, stripe_payment_id, user_id, plano_destino, valor_avulso_centimos, valor_primeira_mensalidade_centimos, refund_montante_centimos) values
+  ('1a000000-0000-4000-a000-00000000000a', '16000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'protecao', 1499, 499, 1000);
 insert into public.case_credit_grants (origem, user_id, quantidade) values
   ('checkout:cs_teste_a', '00000000-0000-4000-a000-00000000000a', 1),
   ('invoice:in_teste_b', '00000000-0000-4000-a000-00000000000b', 1);
@@ -303,6 +305,10 @@ select ok(testes.tenta($$select public.consumir_credito_caso('00000000-0000-4000
 select is(testes.contar('select * from public.case_credit_grants'), 1::bigint, 'A: vê só os próprios créditos concedidos');
 select ok(testes.negado($$insert into public.case_credit_grants (origem, user_id, quantidade) values ('forjada', '00000000-0000-4000-a000-00000000000a', 1)$$), 'A: não regista créditos');
 select ok(testes.negado($$update public.stripe_payments set credito_upgrade_em = null where id = '16000000-0000-4000-a000-00000000000a'$$), 'A: não reabre o crédito de upgrade da própria compra');
+select is(testes.contar('select * from public.conversoes_avulso'), 1::bigint, 'A: vê a própria conversão');
+select ok(testes.negado($$update public.conversoes_avulso set estado = 'checkout_aberto', refund_montante_centimos = 1499$$), 'A: não altera a conversão (estado/montante do reembolso)');
+select ok(testes.negado($$insert into public.conversoes_avulso (stripe_payment_id, user_id, plano_destino, valor_avulso_centimos, valor_primeira_mensalidade_centimos, refund_montante_centimos) values ('16000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'protecao', 1499, 499, 1000)$$), 'A: não cria conversões');
+select ok(testes.negado($$delete from public.conversoes_avulso$$), 'A: não apaga conversões');
 
 -- stripe_webhook_events / stripe_subscriptions — só o backend escreve
 select ok(testes.contar('select * from public.stripe_webhook_events') <= 0, 'A: não lê eventos do webhook Stripe');
@@ -392,6 +398,7 @@ select ok(testes.contar('select * from public.casos') >= 2, 'admin: vê casos de
 select is(testes.contar('select * from public.anexos'), 2::bigint, 'admin: vê anexos');
 select is(testes.contar('select * from public.stripe_webhook_events'), 1::bigint, 'admin: lê eventos do webhook Stripe');
 select is(testes.contar('select * from public.stripe_subscriptions'), 1::bigint, 'admin: lê subscrições Stripe');
+select is(testes.contar('select * from public.conversoes_avulso'), 1::bigint, 'admin: lê conversões Avulso');
 select is(testes.contar('select * from storage.objects'), 6::bigint, 'admin: vê ficheiros de todos os buckets');
 select ok(testes.permitido($$update public.casos set notas = 'revisto' where id = '10000000-0000-4000-a000-00000000000b'$$), 'admin: altera qualquer caso');
 
@@ -409,6 +416,15 @@ select is((select utilizador_id from public.casos where id = '10000000-0000-4000
 select is((select descricao from public.casos where id = '10000000-0000-4000-a000-00000000000b'), 'caso de B', 'integridade: descrição do caso de B intacta');
 select is((select count(*) from public.alertas_fidelizacao_portal where id = '14000000-0000-4000-a000-00000000000b'), 1::bigint, 'integridade: alerta de B continua a existir');
 select is((select count(*) from storage.objects where name = 'casoB/b.pdf'), 1::bigint, 'integridade: ficheiro de B continua no storage');
+
+-- ===========================================================================
+-- 4b. Conversões Avulso: uma por compra e montante coerente (como superutilizador)
+-- ===========================================================================
+reset role;
+select ok(testes.tenta($$insert into public.conversoes_avulso (stripe_payment_id, user_id, plano_destino, valor_avulso_centimos, valor_primeira_mensalidade_centimos, refund_montante_centimos) values ('16000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'caso_protecao', 1499, 799, 700)$$) like 'erro:23505%', 'conversão: o mesmo Avulso não tem uma segunda conversão');
+select ok(testes.tenta($$insert into public.conversoes_avulso (stripe_payment_id, user_id, plano_destino, valor_avulso_centimos, valor_primeira_mensalidade_centimos, refund_montante_centimos) values ('16000000-0000-4000-a000-00000000000b', '00000000-0000-4000-a000-00000000000b', 'protecao', 1499, 499, 1499)$$) like 'erro:23514%', 'conversão: reembolso tem de ser Avulso − 1.ª mensalidade');
+select is(testes.tenta($$update public.conversoes_avulso set estado = 'convertido', checkout_session_id = 'cs_x' where id = '1a000000-0000-4000-a000-00000000000a' and estado = 'checkout_aberto'$$), 'ok:1', 'conversão: 1.ª confirmação converte');
+select is(testes.tenta($$update public.conversoes_avulso set estado = 'convertido' where id = '1a000000-0000-4000-a000-00000000000a' and estado = 'checkout_aberto'$$), 'ok:0', 'conversão: segunda confirmação não converte outra vez');
 
 -- ===========================================================================
 -- 5. Webhook novo-caso (trigger + Vault) — nenhum pedido sai daqui: a fila do

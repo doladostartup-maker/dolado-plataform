@@ -2,11 +2,28 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { iniciarUpgradeParaAssinatura } from "@/app/actions/stripe";
+import { iniciarUpgradeParaAssinatura, iniciarUpgradeParaProtecao } from "@/app/actions/stripe";
 import { MARKETING_SITE_URL } from "@/lib/site";
+import { formatarEuros } from "@/lib/stripe/conversao";
 
-// Mantido igual ao preçário da homepage (src/components/landing/Homepage.tsx)
-const PRECO_ASSINATURA = "7,99 €/mês";
+type OfertaConversao = { mensalidade: number; reembolso: number } | null;
+
+const OPCOES = [
+  {
+    plano: "protecao",
+    nome: "Proteção",
+    preco: "4,99 €/mês",
+    descricao: "Alertas, aviso sectorial, comparador de faturas e simulador de elegibilidade.",
+    acao: iniciarUpgradeParaProtecao,
+  },
+  {
+    plano: "caso_protecao",
+    nome: "Caso + Proteção",
+    preco: "7,99 €/mês",
+    descricao: "Tudo o que a Proteção inclui, mais 1 caso por mês (acumulável até 4).",
+    acao: iniciarUpgradeParaAssinatura,
+  },
+] as const;
 
 type Card = {
   slug: string;
@@ -60,27 +77,26 @@ export function PortalDashboard({
   temProtecao,
   temPlanoStripe,
   pagamentoPendente,
-  valorCreditoUpgradeCentimos,
+  conversaoProtecao,
+  conversaoCasoProtecao,
   bloqueadoInicial,
 }: {
   /** Calculado no servidor (src/lib/acesso.ts) — aqui só decide o que mostrar. */
   temProtecao: boolean;
   temPlanoStripe: boolean;
   pagamentoPendente: boolean;
-  valorCreditoUpgradeCentimos: number | null;
+  /** O que um Avulso pago cobre em cada plano (null = sem conversão). */
+  conversaoProtecao: OfertaConversao;
+  conversaoCasoProtecao: OfertaConversao;
   bloqueadoInicial?: string;
 }) {
   const [modalAberto, setModalAberto] = useState(Boolean(bloqueadoInicial));
   const [aSubscrever, iniciarSubscricao] = useTransition();
 
   const assinante = temProtecao;
-  // Conta com plano Stripe pode subscrever daqui (com crédito, se tiver uma
-  // compra Avulso elegível); sem plano (Remax / registo livre) vê os planos.
+  // Conta com plano Stripe pode aderir daqui (com conversão do Avulso, se
+  // tiver um elegível); sem plano (Remax / registo livre) vê os planos.
   const podeSubscreverAqui = temPlanoStripe && !pagamentoPendente;
-  const valorAvulso =
-    valorCreditoUpgradeCentimos != null
-      ? (valorCreditoUpgradeCentimos / 100).toFixed(2).replace(".", ",")
-      : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -142,46 +158,69 @@ export function PortalDashboard({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[420px] rounded-[var(--radius-card)] bg-white p-6 shadow-[var(--shadow-md)]"
+            className="w-full max-w-[460px] rounded-[var(--radius-card)] bg-white p-6 shadow-[var(--shadow-md)]"
           >
             <h2 className="mb-3 text-[17px] font-semibold text-[var(--color-ink)]">
               {pagamentoPendente
                 ? "O seu pagamento está em confirmação"
                 : podeSubscreverAqui
-                  ? "Quer mudar para a Assinatura Mensal?"
+                  ? "Escolha uma assinatura"
                   : "Esta funcionalidade é exclusiva de assinantes"}
             </h2>
-            <p className="mb-5 text-[13.5px] leading-relaxed text-[var(--color-ink-muted)]">
-              {pagamentoPendente ? (
-                "Assim que o pagamento for confirmado, o acesso é ativado automaticamente. Não precisa de voltar a pagar."
-              ) : podeSubscreverAqui ? (
-                <>
-                  A Assinatura Mensal custa <strong>{PRECO_ASSINATURA}</strong> e desbloqueia
-                  esta e todas as outras funcionalidades.
-                  {valorAvulso && (
-                    <>
-                      {" "}
-                      Já pagou <strong>{valorAvulso} €</strong> pela sua reclamação avulsa — esse
-                      valor fica creditado automaticamente e é descontado da primeira
-                      mensalidade.
-                    </>
-                  )}
-                </>
-              ) : (
-                "Assine para desbloquear alertas, comparador de faturas e simulador de elegibilidade."
-              )}
-            </p>
+
+            {pagamentoPendente ? (
+              <p className="mb-5 text-[13.5px] leading-relaxed text-[var(--color-ink-muted)]">
+                Assim que o pagamento for confirmado, o acesso é ativado automaticamente. Não precisa
+                de voltar a pagar.
+              </p>
+            ) : podeSubscreverAqui ? (
+              <div className="mb-5 flex flex-col gap-3">
+                {OPCOES.map((opcao) => {
+                  const conversao = opcao.plano === "protecao" ? conversaoProtecao : conversaoCasoProtecao;
+                  return (
+                    <div
+                      key={opcao.plano}
+                      className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] p-4"
+                    >
+                      <p className="text-[14px] font-semibold text-[var(--color-ink)]">
+                        {opcao.nome} — {opcao.preco}
+                      </p>
+                      <p className="mb-3 text-[13px] leading-relaxed text-[var(--color-ink-muted)]">
+                        {opcao.descricao}
+                        {conversao && (
+                          <>
+                            {" "}
+                            O primeiro mês fica coberto pelo seu pagamento Avulso
+                            {conversao.reembolso > 0 && (
+                              <>
+                                {" "}e reembolsamos <strong>{formatarEuros(conversao.reembolso)}</strong> para o
+                                método de pagamento original
+                              </>
+                            )}
+                            . A mensalidade normal começa no mês seguinte.
+                          </>
+                        )}
+                      </p>
+                      <button
+                        type="button"
+                        disabled={aSubscrever}
+                        onClick={() => iniciarSubscricao(() => opcao.acao())}
+                        className="w-full rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-60"
+                      >
+                        {aSubscrever ? "A abrir…" : `Aderir ao plano ${opcao.nome}`}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="mb-5 text-[13.5px] leading-relaxed text-[var(--color-ink-muted)]">
+                Assine para desbloquear alertas, comparador de faturas e simulador de elegibilidade.
+              </p>
+            )}
+
             <div className="flex gap-3">
-              {pagamentoPendente ? null : podeSubscreverAqui ? (
-                <button
-                  type="button"
-                  disabled={aSubscrever}
-                  onClick={() => iniciarSubscricao(() => iniciarUpgradeParaAssinatura())}
-                  className="flex-1 rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-60"
-                >
-                  {aSubscrever ? "A abrir…" : `Confirmar e subscrever por ${PRECO_ASSINATURA}`}
-                </button>
-              ) : (
+              {!pagamentoPendente && !podeSubscreverAqui && (
                 <Link
                   href={`${MARKETING_SITE_URL}/#precario`}
                   className="flex-1 rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-center text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)]"
@@ -192,9 +231,9 @@ export function PortalDashboard({
               <button
                 type="button"
                 onClick={() => setModalAberto(false)}
-                className="rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
+                className="flex-1 rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
               >
-                {pagamentoPendente ? "Fechar" : "Cancelar"}
+                {pagamentoPendente || podeSubscreverAqui ? "Fechar" : "Cancelar"}
               </button>
             </div>
           </div>
