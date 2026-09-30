@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { obterAcesso } from "@/lib/auth";
 
 export async function criarCasoCliente(formData: FormData) {
   const supabase = await createClient();
@@ -34,14 +35,41 @@ export async function criarCasoCliente(formData: FormData) {
     autorizacao,
   };
 
-  const { data, error } = await supabase
+  const acesso = await obterAcesso(supabase, user.id);
+
+  if (!acesso.casoConsomeCredito) {
+    // Conta sem plano Stripe (piloto Remax / registo livre): como antes,
+    // pelo cliente Supabase do utilizador, sujeito a RLS.
+    const { data, error } = await supabase.from("casos").insert(dados).select("id").single();
+    if (error) {
+      redirect(`/portal/casos/novo?erro=${encodeURIComponent(error.message)}`);
+    }
+    redirect(`/portal/casos/${data.id}`);
+  }
+
+  // Conta com plano: gasta 1 crédito de forma atómica (dois pedidos em
+  // paralelo não gastam o mesmo crédito) e só depois cria o caso. O RLS não
+  // deixa estas contas criar casos diretamente, por isso o insert é feito
+  // aqui com service_role — os dados vêm deste formulário e o dono é o
+  // utilizador da sessão.
+  const admin = createAdminClient();
+  const { data: consumido, error: erroCredito } = await admin.rpc("consumir_credito_caso", {
+    p_user_id: user.id,
+  });
+  if (erroCredito || consumido !== true) {
+    redirect("/portal/casos/novo");
+  }
+
+  const { data, error } = await admin
     .from("casos")
-    .insert(dados)
+    .insert({ ...dados, status: "Novo" })
     .select("id")
     .single();
 
-  if (error) {
-    redirect(`/portal/casos/novo?erro=${encodeURIComponent(error.message)}`);
+  if (error || !data) {
+    // O caso não foi criado: o crédito volta para a conta.
+    await admin.rpc("devolver_credito_caso", { p_user_id: user.id });
+    redirect(`/portal/casos/novo?erro=${encodeURIComponent("Não foi possível criar o caso. Tente novamente.")}`);
   }
 
   redirect(`/portal/casos/${data.id}`);

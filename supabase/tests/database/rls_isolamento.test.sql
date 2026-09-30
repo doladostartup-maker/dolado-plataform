@@ -109,11 +109,14 @@ insert into public.stripe_payments (id, user_id, stripe_session_id, email, plano
   ('16000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'cs_teste_a', 'a@teste.invalid', 'avulso'),
   ('16000000-0000-4000-a000-00000000000b', '00000000-0000-4000-a000-00000000000b', 'cs_teste_b', 'b@teste.invalid', 'assinatura');
 
-insert into public.user_access (user_id, nivel_acesso) values
-  ('00000000-0000-4000-a000-00000000000a', 'avulso'),
-  ('00000000-0000-4000-a000-00000000000b', 'assinatura');
+insert into public.user_access (user_id, nivel_acesso, subscription_plan, subscription_status, case_credits) values
+  ('00000000-0000-4000-a000-00000000000a', 'avulso', 'none', null, 1),
+  ('00000000-0000-4000-a000-00000000000b', 'assinatura', 'caso_protecao', 'active', 0);
 
 insert into public.stripe_webhook_events (event_id, tipo) values ('evt_teste', 'invoice.paid');
+insert into public.case_credit_grants (origem, user_id, quantidade) values
+  ('checkout:cs_teste_a', '00000000-0000-4000-a000-00000000000a', 1),
+  ('invoice:in_teste_b', '00000000-0000-4000-a000-00000000000b', 1);
 insert into public.stripe_subscriptions (stripe_subscription_id, stripe_customer_id, status) values
   ('sub_teste_b', 'cus_teste_b', 'active');
 
@@ -219,7 +222,7 @@ select is(public.is_admin(), false, 'A: is_admin() → false');
 -- casos
 select is(testes.contar('select * from public.casos'), 1::bigint, 'A: lista só o próprio caso');
 select is(testes.contar($$select * from public.casos where id = '10000000-0000-4000-a000-00000000000b'$$), 0::bigint, 'A: não lê o caso de B mesmo conhecendo o UUID');
-select ok(testes.permitido($$insert into public.casos (utilizador_id, nome, email, descricao, autorizacao) values ('00000000-0000-4000-a000-00000000000a', 'A', 'a@teste.invalid', 'novo', true)$$), 'A: cria um caso próprio');
+select ok(testes.negado($$insert into public.casos (utilizador_id, nome, email, descricao, autorizacao) values ('00000000-0000-4000-a000-00000000000a', 'A', 'a@teste.invalid', 'novo', true)$$), 'A (com plano): não cria caso direto pela API — tem de gastar crédito no servidor');
 select ok(testes.negado($$insert into public.casos (utilizador_id, nome, email) values ('00000000-0000-4000-a000-00000000000b', 'A', 'a@teste.invalid')$$), 'A: não cria caso em nome de B');
 select ok(testes.negado($$insert into public.casos (nome, email) values ('A', 'a@teste.invalid')$$), 'A: não cria caso sem utilizador_id (órfão)');
 select ok(testes.negado($$update public.casos set descricao = 'x' where id = '10000000-0000-4000-a000-00000000000b'$$), 'A: não altera o caso de B');
@@ -292,6 +295,14 @@ select is(testes.contar('select * from public.user_access'), 1::bigint, 'A: vê 
 select ok(testes.negado($$update public.user_access set nivel_acesso = 'assinatura' where user_id = '00000000-0000-4000-a000-00000000000a'$$), 'A: não se promove de avulso a assinatura');
 select ok(testes.negado($$update public.user_access set nivel_acesso = 'nenhum' where user_id = '00000000-0000-4000-a000-00000000000b'$$), 'A: não altera o nível de acesso de B');
 select ok(testes.negado($$delete from public.user_access where user_id = '00000000-0000-4000-a000-00000000000a'$$), 'A: não apaga o próprio nível de acesso');
+select ok(testes.negado($$update public.user_access set case_credits = 99 where user_id = '00000000-0000-4000-a000-00000000000a'$$), 'A: não aumenta os próprios créditos de caso');
+select ok(testes.negado($$update public.user_access set subscription_plan = 'caso_protecao', subscription_status = 'active' where user_id = '00000000-0000-4000-a000-00000000000a'$$), 'A: não se ativa um plano');
+select ok(testes.tenta($$select public.conceder_credito_caso('00000000-0000-4000-a000-00000000000a', 'origem-falsa', null)$$) like 'erro:%', 'A: não chama conceder_credito_caso');
+select ok(testes.tenta($$select public.devolver_credito_caso('00000000-0000-4000-a000-00000000000a')$$) like 'erro:%', 'A: não chama devolver_credito_caso');
+select ok(testes.tenta($$select public.consumir_credito_caso('00000000-0000-4000-a000-00000000000b')$$) like 'erro:%', 'A: não chama consumir_credito_caso');
+select is(testes.contar('select * from public.case_credit_grants'), 1::bigint, 'A: vê só os próprios créditos concedidos');
+select ok(testes.negado($$insert into public.case_credit_grants (origem, user_id, quantidade) values ('forjada', '00000000-0000-4000-a000-00000000000a', 1)$$), 'A: não regista créditos');
+select ok(testes.negado($$update public.stripe_payments set credito_upgrade_em = null where id = '16000000-0000-4000-a000-00000000000a'$$), 'A: não reabre o crédito de upgrade da própria compra');
 
 -- stripe_webhook_events / stripe_subscriptions — só o backend escreve
 select ok(testes.contar('select * from public.stripe_webhook_events') <= 0, 'A: não lê eventos do webhook Stripe');
@@ -338,12 +349,38 @@ select ok(testes.permitido($$insert into public.alertas_promocao_portal (utiliza
 select ok(testes.permitido($$update public.alertas_promocao_portal set operadora = 'Nova' where id = '15000000-0000-4000-a000-00000000000b'$$), 'B (assinatura): edita o próprio alerta de promoção');
 select ok(testes.negado($$update public.alertas_fidelizacao_portal set operadora = 'x' where id = '14000000-0000-4000-a000-00000000000a'$$), 'B (assinatura): continua sem editar o alerta de A');
 select ok(testes.negado($$insert into public.alertas_fidelizacao_portal (utilizador_id, nome, email, operadora, data_fim_fidelizacao) values ('00000000-0000-4000-a000-00000000000a', 'x', 'x@teste.invalid', 'Op', '2027-01-01')$$), 'B (assinatura): não cria alerta em nome de A');
-select is(public.tem_assinatura(), true, 'B: tem_assinatura() → true');
+select is(public.tem_protecao(), true, 'B: tem_protecao() → true');
 reset role;
 select testes.como('00000000-0000-4000-a000-00000000000c');
 select ok(testes.negado($$insert into public.alertas_fidelizacao_portal (utilizador_id, nome, email, operadora, data_fim_fidelizacao) values ('00000000-0000-4000-a000-00000000000c', 'C', 'c@teste.invalid', 'Op', '2027-01-01')$$), 'C (sem plano): não cria alertas');
-select is(public.tem_assinatura(), false, 'C: tem_assinatura() → false');
+select is(public.tem_protecao(), false, 'C: tem_protecao() → false');
+select ok(testes.permitido($$insert into public.casos (utilizador_id, nome, email, descricao, autorizacao) values ('00000000-0000-4000-a000-00000000000c', 'C', 'c@teste.invalid', 'novo', true)$$), 'C (sem plano, ex.: Remax): continua a criar caso próprio como antes');
 reset role;
+select testes.como('00000000-0000-4000-a000-00000000000a');
+select is(public.tem_protecao(), false, 'A (Avulso): tem_protecao() → false');
+select ok(testes.negado($$insert into public.alertas_fidelizacao_portal (utilizador_id, nome, email, operadora, data_fim_fidelizacao) values ('00000000-0000-4000-a000-00000000000a', 'A', 'a@teste.invalid', 'Op', '2027-01-01')$$), 'A (Avulso): não cria alertas de proteção');
+reset role;
+
+-- ===========================================================================
+-- 2c. Créditos de caso (funções do backend, como service_role)
+-- ===========================================================================
+reset role;
+set local role service_role;
+select is(public.conceder_credito_caso('00000000-0000-4000-a000-00000000000b', 'invoice:in_1', 4), true, 'créditos: 1.ª fatura credita');
+select is(public.conceder_credito_caso('00000000-0000-4000-a000-00000000000b', 'invoice:in_1', 4), false, 'créditos: a mesma fatura não credita duas vezes');
+select public.conceder_credito_caso('00000000-0000-4000-a000-00000000000b', 'invoice:in_' || i, 4) from generate_series(2, 6) i;
+select is((select case_credits from public.user_access where user_id = '00000000-0000-4000-a000-00000000000b'), 4, 'créditos: mensais acumulam até 4');
+select is(public.conceder_credito_caso('00000000-0000-4000-a000-00000000000b', 'checkout:cs_avulso_b', null), true, 'créditos: Avulso credita');
+select is((select case_credits from public.user_access where user_id = '00000000-0000-4000-a000-00000000000b'), 5, 'créditos: Avulso soma-se sem limite de 4');
+select is(public.consumir_credito_caso('00000000-0000-4000-a000-00000000000b'), true, 'créditos: consome com saldo');
+select is((select case_credits from public.user_access where user_id = '00000000-0000-4000-a000-00000000000b'), 4, 'créditos: saldo desce 1');
+update public.user_access set case_credits = 0 where user_id = '00000000-0000-4000-a000-00000000000b';
+select is(public.consumir_credito_caso('00000000-0000-4000-a000-00000000000b'), false, 'créditos: sem saldo não consome');
+select is((select case_credits from public.user_access where user_id = '00000000-0000-4000-a000-00000000000b'), 0, 'créditos: nunca abaixo de zero');
+-- Reserva do crédito de upgrade: só um pedido a consegue fazer.
+reset role;
+select is(testes.tenta($$update public.stripe_payments set credito_upgrade_em = now() where id = '16000000-0000-4000-a000-00000000000a' and estado = 'concluido' and credito_upgrade_em is null$$), 'ok:1', 'upgrade: 1.ª reserva da compra Avulso');
+select is(testes.tenta($$update public.stripe_payments set credito_upgrade_em = now() where id = '16000000-0000-4000-a000-00000000000a' and estado = 'concluido' and credito_upgrade_em is null$$), 'ok:0', 'upgrade: a mesma compra não é reservada duas vezes');
 
 -- ===========================================================================
 -- 3. ADMIN — acesso total pelo RLS (via is_admin())
@@ -392,7 +429,8 @@ select is((select count(*) from net.http_request_queue), 0::bigint,
 
 select vault.create_secret('segredo-de-teste-local', 'novo_caso_webhook_secret');
 select testes.como('00000000-0000-4000-a000-00000000000a');
-select ok(testes.permitido($$insert into public.casos (utilizador_id, nome, email, descricao, autorizacao) values ('00000000-0000-4000-a000-00000000000a', 'A webhook', 'a@teste.invalid', 'teste webhook', true)$$),
+select testes.como('00000000-0000-4000-a000-00000000000c');
+select ok(testes.permitido($$insert into public.casos (utilizador_id, nome, email, descricao, autorizacao) values ('00000000-0000-4000-a000-00000000000c', 'A webhook', 'c@teste.invalid', 'teste webhook', true)$$),
   'webhook: cliente cria caso com o trigger ativo (sem acesso ao Vault)');
 reset role;
 select is((select count(*) from net.http_request_queue), 1::bigint, 'webhook: exatamente um pedido agendado');

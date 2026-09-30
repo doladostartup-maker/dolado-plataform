@@ -1,10 +1,26 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { MARKETING_SITE_URL } from "@/lib/site";
 import { getStripe } from "@/lib/stripe/client";
+import { avaliarSessaoParaCriarConta } from "@/lib/stripe/criarConta";
+import { aplicarCompraConfirmadaNaConta, idDe } from "@/lib/stripe/webhook";
+import { criarDependenciasWebhook } from "@/lib/stripe/webhookDependencias";
+
+async function lerSessao(sessionId: string) {
+  try {
+    return await getStripe().checkout.sessions.retrieve(sessionId);
+  } catch {
+    return null;
+  }
+}
+
+function voltar(sessionId: string, erro: string): never {
+  redirect(`/criar-conta?session_id=${encodeURIComponent(sessionId)}&erro=${encodeURIComponent(erro)}`);
+}
 
 export async function criarContaComPagamento(formData: FormData) {
   const sessionId = formData.get("session_id") as string;
@@ -15,78 +31,88 @@ export async function criarContaComPagamento(formData: FormData) {
     redirect(`${MARKETING_SITE_URL}/#precario`);
   }
 
-  const session = await getStripe().checkout.sessions.retrieve(sessionId);
-  const email = session.customer_details?.email;
-  const plano = session.metadata?.plano as "avulso" | "assinatura" | undefined;
+  // A sessão é sempre lida ao Stripe — o session_id do formulário só diz
+  // qual procurar, nunca o que foi pago.
+  const session = await lerSessao(sessionId);
+  if (!session) redirect(`${MARKETING_SITE_URL}/#precario`);
 
-  // "no_payment_required" acontece quando um cupão de 100% zera o total —
-  // é um pagamento válido, só sem cobrança real.
-  if (
-    !email ||
-    !plano ||
-    !["paid", "no_payment_required"].includes(session.payment_status)
-  ) {
-    redirect(`/criar-conta?session_id=${sessionId}&erro=${encodeURIComponent("Pagamento não confirmado.")}`);
+  const admin = createAdminClient();
+  const { data: pagamento } = await admin
+    .from("stripe_payments")
+    .select("user_id")
+    .eq("stripe_session_id", sessionId)
+    .maybeSingle();
+
+  const avaliacao = avaliarSessaoParaCriarConta(session, pagamento?.user_id ?? null);
+  if (!avaliacao.ok) {
+    if (avaliacao.motivo === "sessao_invalida") redirect(`${MARKETING_SITE_URL}/#precario`);
+    redirect(`/login?info=${encodeURIComponent("Esta compra já tem uma conta associada. Inicie sessão.")}`);
   }
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
-    email,
+    email: avaliacao.email,
     password,
     options: { data: { nome } },
   });
 
-  if (error) {
-    redirect(
-      `/criar-conta?session_id=${sessionId}&erro=${encodeURIComponent(error.message)}`,
+  if (error) voltar(sessionId, error.message);
+  if (!data.user) voltar(sessionId, "Não foi possível criar a conta.");
+  const userId = data.user.id;
+
+  // Liga a compra à conta nova — só se ainda não estiver ligada a outra.
+  // O webhook pode já ter gravado a linha (com o estado real do pagamento):
+  // nesse caso só se acrescenta o user_id.
+  const customerId = idDe(session.customer);
+  if (pagamento) {
+    const { error: erroLigar } = await admin
+      .from("stripe_payments")
+      .update({ user_id: userId })
+      .eq("stripe_session_id", sessionId)
+      .is("user_id", null);
+    if (erroLigar) console.error("[criar-conta] falha ao ligar stripe_payments:", erroLigar.code);
+  } else {
+    const { error: erroPagamento } = await admin.from("stripe_payments").upsert(
+      {
+        stripe_session_id: sessionId,
+        user_id: userId,
+        stripe_customer_id: customerId,
+        stripe_subscription_id: idDe(session.subscription),
+        email: avaliacao.email,
+        plano: session.mode === "payment" ? "avulso" : "assinatura",
+        valor_total_centimos: session.amount_total,
+        moeda: session.currency ?? "eur",
+        estado: avaliacao.pagamentoConfirmado ? "concluido" : "pendente",
+      },
+      { onConflict: "stripe_session_id", ignoreDuplicates: true },
     );
+    if (erroPagamento) console.error("[criar-conta] falha ao gravar stripe_payments:", erroPagamento.code);
+    // Se o webhook gravou a linha entretanto, o insert foi ignorado — liga.
+    await admin
+      .from("stripe_payments")
+      .update({ user_id: userId })
+      .eq("stripe_session_id", sessionId)
+      .is("user_id", null);
   }
 
-  if (!data.user) {
-    redirect(
-      `/criar-conta?session_id=${sessionId}&erro=${encodeURIComponent("Não foi possível criar a conta.")}`,
-    );
-  }
+  // A conta existe sempre, mesmo com o pagamento pendente — sem plano nem
+  // créditos até o pagamento ser confirmado.
+  const deps = criarDependenciasWebhook();
+  try {
+    await deps.garantirConta(userId, customerId);
 
-  // Não depender do webhook já ter inserido a linha em stripe_payments —
-  // a entrega do webhook pode demorar mais do que o browser a chegar aqui
-  // vindo do success_url. Fazemos upsert com os dados que já temos da
-  // própria sessão Stripe; se o webhook inserir depois, o conflito em
-  // stripe_session_id é inofensivo (a linha já está correcta).
-  const admin = createAdminClient();
-  const customerId =
-    typeof session.customer === "string" ? session.customer : session.customer?.id;
-  const subscriptionId =
-    typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
-
-  const { error: erroPagamento } = await admin.from("stripe_payments").upsert(
-    {
-      stripe_session_id: sessionId,
-      user_id: data.user.id,
-      stripe_customer_id: customerId ?? null,
-      stripe_subscription_id: subscriptionId ?? null,
-      email,
-      plano,
-      valor_total_centimos: session.amount_total,
-      moeda: session.currency ?? "eur",
-    },
-    { onConflict: "stripe_session_id" },
-  );
-  if (erroPagamento) {
-    console.error("[criar-conta] falha ao gravar stripe_payments:", erroPagamento);
-  }
-
-  const { error: erroAcesso } = await admin.from("user_access").upsert(
-    {
-      user_id: data.user.id,
-      nivel_acesso: plano,
-      stripe_customer_id: customerId ?? null,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id" },
-  );
-  if (erroAcesso) {
-    console.error("[criar-conta] falha ao gravar user_access:", erroAcesso);
+    // Relê a sessão DEPOIS de ligar a compra: se o pagamento assíncrono foi
+    // confirmado enquanto a conta era criada, o webhook pode não ter visto a
+    // ligação — aqui já se vê o estado final. Os créditos e o plano são
+    // idempotentes, por isso aplicar nos dois lados é seguro.
+    const atual: Stripe.Checkout.Session = (await lerSessao(sessionId)) ?? session;
+    if (atual.payment_status === "paid" || atual.payment_status === "no_payment_required") {
+      await aplicarCompraConfirmadaNaConta(atual, userId, deps);
+    }
+  } catch (erro) {
+    // A conta já foi criada; o acesso volta a ser aplicado pelo webhook
+    // (invoice.paid / reenvio). Não bloqueia o cliente.
+    console.error("[criar-conta] falha ao aplicar a compra:", (erro as { code?: string }).code ?? "erro");
   }
 
   if (data.session) {

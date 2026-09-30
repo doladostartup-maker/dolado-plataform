@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { temAssinatura } from "@/lib/auth";
+import { temProtecao } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { excedeuLimiteTaxa } from "@/lib/rateLimit";
 
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     }
     // Chamada à IA com custo: só para assinantes, mesmo que a rota seja
     // chamada diretamente (o gating da página não a protege).
-    if (!(await temAssinatura(supabase, user.id))) {
+    if (!(await temProtecao(supabase, user.id))) {
       return NextResponse.json({ ok: false, motivo: "sem_assinatura" }, { status: 403 });
     }
 

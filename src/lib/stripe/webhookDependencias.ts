@@ -5,19 +5,18 @@ import {
 } from "@/lib/email/pagamento";
 import { CONTACTO_EMAIL } from "@/lib/site";
 import { getStripe } from "@/lib/stripe/client";
+import { planoDoPreco } from "@/lib/stripe/planos";
 import {
   snapshotDeSubscricao,
-  subscricaoEstaAtiva,
-  type AlvoAcesso,
   type DependenciasWebhook,
   type EstadoPagamento,
 } from "@/lib/stripe/webhook";
 
-// Implementação real das dependências do webhook: Supabase com service_role
-// (só servidor — o webhook não tem sessão de utilizador; a autenticidade
-// vem da assinatura Stripe, validada antes de chegar aqui), API Stripe e
-// Brevo. Qualquer erro de escrita lança: o webhook liberta o evento e
-// devolve 500 para o Stripe voltar a tentar.
+// Implementação real das dependências do webhook (e de /criar-conta):
+// Supabase com service_role (só servidor — a autenticidade vem da assinatura
+// Stripe ou da sessão validada junto do Stripe, antes de chegar aqui), API
+// Stripe e Brevo. Qualquer erro de escrita lança: o webhook liberta o evento
+// e devolve 500 para o Stripe voltar a tentar.
 
 async function enviarEmailBrevo(destinatario: string, assunto: string, html: string) {
   // Falha de e-mail nunca deve derrubar o webhook — o pagamento já está
@@ -52,22 +51,7 @@ function falhar(contexto: string, erro: { code?: string } | null) {
 export function criarDependenciasWebhook(): DependenciasWebhook {
   const admin = createAdminClient();
   const agora = () => new Date().toISOString();
-
-  // Contas a que um alvo se refere: por user_id (upgrade, vem dos metadados
-  // gravados pelo servidor) e/ou por stripe_customer_id.
-  async function contasDoAlvo(alvo: AlvoAcesso) {
-    const ids = new Set<string>();
-    if (alvo.userId) ids.add(alvo.userId);
-    if (alvo.customerId) {
-      const { data, error } = await admin
-        .from("user_access")
-        .select("user_id")
-        .eq("stripe_customer_id", alvo.customerId);
-      falhar("user_access.select", error);
-      for (const linha of data ?? []) ids.add(linha.user_id as string);
-    }
-    return [...ids];
-  }
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://portal.dolado.pt";
 
   return {
     async reclamarEvento(eventId, tipo) {
@@ -105,6 +89,16 @@ export function criarDependenciasWebhook(): DependenciasWebhook {
         .maybeSingle();
       falhar("stripe_payments.select", error);
       return (data?.estado as EstadoPagamento | undefined) ?? null;
+    },
+
+    async utilizadorDoPagamento(sessionId) {
+      const { data, error } = await admin
+        .from("stripe_payments")
+        .select("user_id")
+        .eq("stripe_session_id", sessionId)
+        .maybeSingle();
+      falhar("stripe_payments.select", error);
+      return (data?.user_id as string | null | undefined) ?? null;
     },
 
     async gravarPagamento(dados) {
@@ -155,73 +149,98 @@ export function criarDependenciasWebhook(): DependenciasWebhook {
       }
 
       const { error } = await admin.from("stripe_subscriptions").upsert(
-        {
-          ...snapshot,
-          ...dadosCobranca,
-          estado_em: estadoEm,
-          updated_at: agora(),
-        },
+        { ...snapshot, ...dadosCobranca, estado_em: estadoEm, updated_at: agora() },
         { onConflict: "stripe_subscription_id" },
       );
       falhar("stripe_subscriptions.upsert", error);
       return true;
     },
 
-    async temOutraSubscricaoAtiva(customerId, excluirSubscriptionId) {
-      let consulta = admin
-        .from("stripe_subscriptions")
-        .select("stripe_subscription_id, status")
+    planoDoPreco,
+
+    async contasDoCustomer(customerId) {
+      const { data, error } = await admin
+        .from("user_access")
+        .select("user_id")
         .eq("stripe_customer_id", customerId);
-      if (excluirSubscriptionId) {
-        consulta = consulta.neq("stripe_subscription_id", excluirSubscriptionId);
-      }
-      const { data, error } = await consulta;
-      falhar("stripe_subscriptions.select", error);
-      return (data ?? []).some((s) => subscricaoEstaAtiva(s.status as string));
+      falhar("user_access.select", error);
+      return (data ?? []).map((l) => l.user_id as string);
     },
 
-    async concederAssinatura(alvo) {
-      if (alvo.userId) {
-        const { error } = await admin.from("user_access").upsert(
-          {
-            user_id: alvo.userId,
-            nivel_acesso: "assinatura",
-            ...(alvo.customerId ? { stripe_customer_id: alvo.customerId } : {}),
-            updated_at: agora(),
-          },
-          { onConflict: "user_id" },
+    async aplicarSubscricaoNaConta(userId, sub) {
+      const { error } = await admin.from("user_access").upsert(
+        {
+          user_id: userId,
+          subscription_plan: sub.plano,
+          subscription_status: sub.status,
+          stripe_subscription_id: sub.stripe_subscription_id,
+          stripe_customer_id: sub.stripe_customer_id,
+          stripe_price_id: sub.stripe_price_id,
+          current_period_start: sub.current_period_start,
+          current_period_end: sub.current_period_end,
+          updated_at: agora(),
+        },
+        { onConflict: "user_id" },
+      );
+      falhar("user_access.upsert", error);
+    },
+
+    async atualizarSubscricaoNasContas(subscriptionId, dados) {
+      const { plano, status, ...resto } = dados;
+      const { data, error } = await admin
+        .from("user_access")
+        .update({
+          ...(plano ? { subscription_plan: plano } : {}),
+          ...(status ? { subscription_status: status } : {}),
+          ...resto,
+          updated_at: agora(),
+        })
+        .eq("stripe_subscription_id", subscriptionId)
+        .select("user_id");
+      falhar("user_access.update", error);
+      return data?.length ?? 0;
+    },
+
+    async garantirConta(userId, customerId) {
+      // Cria a linha se não existir (sem plano nem créditos); se existir,
+      // só liga o customer quando ainda não tinha nenhum.
+      const { error: erroInsert } = await admin
+        .from("user_access")
+        .upsert(
+          { user_id: userId, stripe_customer_id: customerId, updated_at: agora() },
+          { onConflict: "user_id", ignoreDuplicates: true },
         );
-        falhar("user_access.upsert", error);
-        return 1;
+      falhar("user_access.insert", erroInsert);
+      if (customerId) {
+        const { error } = await admin
+          .from("user_access")
+          .update({ stripe_customer_id: customerId })
+          .eq("user_id", userId)
+          .is("stripe_customer_id", null);
+        falhar("user_access.update", error);
       }
-      if (!alvo.customerId) return 0;
-      const { data, error } = await admin
-        .from("user_access")
-        .update({ nivel_acesso: "assinatura", updated_at: agora() })
-        .eq("stripe_customer_id", alvo.customerId)
-        .select("user_id");
-      falhar("user_access.update", error);
-      return data?.length ?? 0;
     },
 
-    async degradarAssinatura(alvo) {
-      const contas = await contasDoAlvo(alvo);
-      if (contas.length === 0) return 0;
-      const { data, error } = await admin
-        .from("user_access")
-        .update({ nivel_acesso: "avulso", updated_at: agora() })
-        .in("user_id", contas)
-        .eq("nivel_acesso", "assinatura")
-        .select("user_id");
-      falhar("user_access.update", error);
-      return data?.length ?? 0;
+    async concederCreditoCaso(userId, origem, maximo) {
+      const { data, error } = await admin.rpc("conceder_credito_caso", {
+        p_user_id: userId,
+        p_origem: origem,
+        p_maximo: maximo,
+      });
+      falhar("conceder_credito_caso", error);
+      return data === true;
     },
 
-    async enviarEmailsPagamentoConfirmado(email, plano) {
+    async enviarEmailPagamentoConfirmado({ email, plano, contaExiste, sessionId }) {
+      const ligacao = contaExiste
+        ? `${siteUrl}/entrar`
+        : `${siteUrl}/criar-conta?session_id=${encodeURIComponent(sessionId)}`;
       await enviarEmailBrevo(
         email,
-        "Pagamento confirmado — Falta criar a sua palavra-passe ✓",
-        montarHtmlBoasVindasPagamento(plano),
+        contaExiste
+          ? "Pagamento confirmado — o seu acesso está ativo ✓"
+          : "Pagamento confirmado — Falta criar a sua palavra-passe ✓",
+        montarHtmlBoasVindasPagamento(plano, { contaExiste, ligacao }),
       );
       if (process.env.BREVO_SENDER_EMAIL) {
         await enviarEmailBrevo(

@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { MARKETING_SITE_URL } from "@/lib/site";
 import { getStripe } from "@/lib/stripe/client";
+import { avaliarSessaoParaCriarConta } from "@/lib/stripe/criarConta";
 import { criarContaComPagamento } from "./actions";
 
 export default async function CriarContaPage({
@@ -14,25 +16,43 @@ export default async function CriarContaPage({
     redirect(`${MARKETING_SITE_URL}/#precario`);
   }
 
-  const session = await getStripe().checkout.sessions.retrieve(params.session_id);
-  const email = session.customer_details?.email;
+  // A sessão é lida ao Stripe; o session_id do endereço só diz qual procurar.
+  const session = await getStripe()
+    .checkout.sessions.retrieve(params.session_id)
+    .catch(() => null);
+  if (!session) redirect(`${MARKETING_SITE_URL}/#precario`);
 
-  // "no_payment_required" acontece quando um cupão de 100% zera o total —
-  // é um pagamento válido, só sem cobrança real.
-  if (!email || !["paid", "no_payment_required"].includes(session.payment_status)) {
-    redirect(`${MARKETING_SITE_URL}/#precario`);
+  const { data: pagamento } = await createAdminClient()
+    .from("stripe_payments")
+    .select("user_id")
+    .eq("stripe_session_id", params.session_id)
+    .maybeSingle();
+
+  const avaliacao = avaliarSessaoParaCriarConta(session, pagamento?.user_id ?? null);
+  if (!avaliacao.ok) {
+    if (avaliacao.motivo === "sessao_invalida") redirect(`${MARKETING_SITE_URL}/#precario`);
+    redirect(`/login?info=${encodeURIComponent("Esta compra já tem uma conta associada. Inicie sessão.")}`);
   }
+  const { email, pagamentoConfirmado } = avaliacao;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
       <div>
         <p className="mb-1 text-sm font-semibold text-[var(--color-brand)]">
-          Pagamento confirmado
+          {pagamentoConfirmado ? "Pagamento confirmado" : "Pagamento em confirmação"}
         </p>
         <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
           Criar a sua conta
         </h1>
       </div>
+
+      {!pagamentoConfirmado && (
+        <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
+          Alguns métodos de pagamento, como o débito direto SEPA, podem demorar alguns dias úteis a
+          ser confirmados. Pode criar já a sua conta e não precisa de voltar a pagar: assim que o
+          pagamento for confirmado, o acesso é ativado automaticamente e avisamos por e-mail.
+        </p>
+      )}
 
       {params.erro && (
         <p className="text-sm text-[var(--color-status-danger)]">{params.erro}</p>

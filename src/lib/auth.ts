@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
+import { calcularAcesso, type Acesso } from "@/lib/acesso";
 import { createClient } from "@/lib/supabase/server";
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
@@ -54,46 +55,37 @@ export async function requireUser() {
   return { supabase, user };
 }
 
-export type NivelAcesso = "nenhum" | "avulso" | "assinatura";
-
 /**
- * Nível de acesso do canal B2C (Stripe). Contas antigas / criadas por
- * outras vias (ex. futura porta da Remax) não têm linha em `user_access`
- * e caem em "nenhum" — o chamador decide o que isso significa no seu
- * contexto (hoje: só o dashboard do portal usa isto para gating).
+ * Acesso da conta por plano (ver src/lib/acesso.ts para as regras). Contas
+ * sem linha em `user_access` (piloto Remax / registo livre) não têm plano
+ * Stripe: sem proteção e casos no portal sem crédito, como antes.
  */
-export async function obterNivelAcesso(
-  supabase: SupabaseServer,
-  userId: string,
-): Promise<NivelAcesso> {
+export async function obterAcesso(supabase: SupabaseServer, userId: string): Promise<Acesso> {
   const { data } = await supabase
     .from("user_access")
-    .select("nivel_acesso")
+    .select("subscription_plan, subscription_status, case_credits")
     .eq("user_id", userId)
     .maybeSingle();
 
-  return (data?.nivel_acesso as NivelAcesso | undefined) ?? "nenhum";
+  return calcularAcesso(data);
 }
 
 /**
  * Para Server Actions e Route Handlers: o gating das páginas
- * (requireAssinatura) não protege uma ação chamada diretamente. Mesma regra:
- * só o plano "assinatura" tem acesso.
+ * (requireProtecao) não protege uma ação chamada diretamente.
  */
-export async function temAssinatura(supabase: SupabaseServer, userId: string) {
-  return (await obterNivelAcesso(supabase, userId)) === "assinatura";
+export async function temProtecao(supabase: SupabaseServer, userId: string) {
+  return (await obterAcesso(supabase, userId)).temProtecao;
 }
 
 /**
- * Bloqueia o acesso a funcionalidades exclusivas de assinantes. Quem tem
- * plano "avulso" ou "nenhum" é reencaminhado para o dashboard do portal,
- * onde o modal de upgrade explica a oferta.
+ * Bloqueia o acesso a funcionalidades de proteção. Sem Proteção ativa, o
+ * cliente é reencaminhado para o painel, onde o modal explica os planos.
  */
-export async function requireAssinatura(origem: string) {
+export async function requireProtecao(origem: string) {
   const { supabase, user } = await requireUser();
-  const nivel = await obterNivelAcesso(supabase, user.id);
 
-  if (nivel !== "assinatura") {
+  if (!(await temProtecao(supabase, user.id))) {
     redirect(`/portal?bloqueado=${encodeURIComponent(origem)}`);
   }
 

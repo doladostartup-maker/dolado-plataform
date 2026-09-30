@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { iniciarUpgradeParaAssinatura } from "@/app/actions/stripe";
-import type { NivelAcesso } from "@/lib/auth";
 import { MARKETING_SITE_URL } from "@/lib/site";
 
 // Mantido igual ao preçário da homepage (src/components/landing/Homepage.tsx)
@@ -58,20 +57,30 @@ const CARDS: Card[] = [
 ];
 
 export function PortalDashboard({
-  nivelAcesso,
-  valorAvulsoCentimos,
+  temProtecao,
+  temPlanoStripe,
+  pagamentoPendente,
+  valorCreditoUpgradeCentimos,
   bloqueadoInicial,
 }: {
-  nivelAcesso: NivelAcesso;
-  valorAvulsoCentimos: number | null;
+  /** Calculado no servidor (src/lib/acesso.ts) — aqui só decide o que mostrar. */
+  temProtecao: boolean;
+  temPlanoStripe: boolean;
+  pagamentoPendente: boolean;
+  valorCreditoUpgradeCentimos: number | null;
   bloqueadoInicial?: string;
 }) {
   const [modalAberto, setModalAberto] = useState(Boolean(bloqueadoInicial));
   const [aSubscrever, iniciarSubscricao] = useTransition();
 
-  const assinante = nivelAcesso === "assinatura";
+  const assinante = temProtecao;
+  // Conta com plano Stripe pode subscrever daqui (com crédito, se tiver uma
+  // compra Avulso elegível); sem plano (Remax / registo livre) vê os planos.
+  const podeSubscreverAqui = temPlanoStripe && !pagamentoPendente;
   const valorAvulso =
-    valorAvulsoCentimos != null ? (valorAvulsoCentimos / 100).toFixed(2).replace(".", ",") : null;
+    valorCreditoUpgradeCentimos != null
+      ? (valorCreditoUpgradeCentimos / 100).toFixed(2).replace(".", ",")
+      : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -136,12 +145,16 @@ export function PortalDashboard({
             className="w-full max-w-[420px] rounded-[var(--radius-card)] bg-white p-6 shadow-[var(--shadow-md)]"
           >
             <h2 className="mb-3 text-[17px] font-semibold text-[var(--color-ink)]">
-              {nivelAcesso === "avulso"
-                ? "Quer mudar para a Assinatura Mensal?"
-                : "Esta funcionalidade é exclusiva de assinantes"}
+              {pagamentoPendente
+                ? "O seu pagamento está em confirmação"
+                : podeSubscreverAqui
+                  ? "Quer mudar para a Assinatura Mensal?"
+                  : "Esta funcionalidade é exclusiva de assinantes"}
             </h2>
             <p className="mb-5 text-[13.5px] leading-relaxed text-[var(--color-ink-muted)]">
-              {nivelAcesso === "avulso" ? (
+              {pagamentoPendente ? (
+                "Assim que o pagamento for confirmado, o acesso é ativado automaticamente. Não precisa de voltar a pagar."
+              ) : podeSubscreverAqui ? (
                 <>
                   A Assinatura Mensal custa <strong>{PRECO_ASSINATURA}</strong> e desbloqueia
                   esta e todas as outras funcionalidades.
@@ -159,7 +172,7 @@ export function PortalDashboard({
               )}
             </p>
             <div className="flex gap-3">
-              {nivelAcesso === "avulso" ? (
+              {pagamentoPendente ? null : podeSubscreverAqui ? (
                 <button
                   type="button"
                   disabled={aSubscrever}
@@ -181,7 +194,7 @@ export function PortalDashboard({
                 onClick={() => setModalAberto(false)}
                 className="rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
               >
-                Cancelar
+                {pagamentoPendente ? "Fechar" : "Cancelar"}
               </button>
             </div>
           </div>

@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { temAssinatura } from "@/lib/auth";
+import { temProtecao } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { extrairValoresFatura, gerarAnalise } from "@/lib/facturas/extrairFatura";
 import { CONTACTO_EMAIL } from "@/lib/site";
@@ -30,7 +30,7 @@ export async function criarUploadAssinadoFatura(
   if (!user) {
     return { ok: false, erro: "Sessão expirada — inicie sessão de novo." };
   }
-  if (!(await temAssinatura(supabase, user.id))) {
+  if (!(await temProtecao(supabase, user.id))) {
     return { ok: false, erro: "Esta funcionalidade é exclusiva de assinantes." };
   }
   if (!TIPOS_PERMITIDOS.includes(tipoMime)) {
@@ -114,7 +114,7 @@ export async function criarComparacaoFaturaPortal(formData: FormData) {
   if (!user) {
     redirect("/login");
   }
-  if (!(await temAssinatura(supabase, user.id))) {
+  if (!(await temProtecao(supabase, user.id))) {
     redirect("/portal?bloqueado=faturas");
   }
 

@@ -14,10 +14,4 @@ export function getStripe(): Stripe {
   return stripeClient;
 }
 
-export function getPrecoAvulsoId(): string {
-  return process.env.STRIPE_PRICE_AVULSO_ID!;
-}
-
-export function getPrecoAssinaturaId(): string {
-  return process.env.STRIPE_PRICE_ASSINATURA_ID!;
-}
+// Os price IDs estão em src/lib/stripe/planos.ts.

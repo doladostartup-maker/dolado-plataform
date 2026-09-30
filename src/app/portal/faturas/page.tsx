@@ -1,4 +1,4 @@
-import { requireAssinatura } from "@/lib/auth";
+import { requireProtecao } from "@/lib/auth";
 import { criarComparacaoFaturaPortal } from "./actions";
 import { ComparadorFaturaForm } from "./_components/ComparadorFaturaForm";
 import { ComparacoesFaturaPortalTable } from "./_components/ComparacoesFaturaPortalTable";
@@ -9,7 +9,7 @@ export default async function ComparadorFaturasPage({
   searchParams: Promise<{ erro?: string; guardado?: string }>;
 }) {
   const params = await searchParams;
-  const { supabase, user } = await requireAssinatura("faturas");
+  const { supabase, user } = await requireProtecao("faturas");
 
   const { data: comparacoes } = await supabase
     .from("comparacoes_fatura_portal")

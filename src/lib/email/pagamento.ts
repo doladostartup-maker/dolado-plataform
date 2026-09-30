@@ -1,10 +1,26 @@
-const NOME_PLANO: Record<"avulso" | "assinatura", string> = {
+export type PlanoEmail = "avulso" | "protecao" | "caso_protecao";
+
+const NOME_PLANO: Record<PlanoEmail, string> = {
   avulso: "Avulso",
-  assinatura: "Assinatura Mensal",
+  protecao: "Proteção",
+  caso_protecao: "Caso + Proteção",
 };
 
-export function montarHtmlBoasVindasPagamento(plano: "avulso" | "assinatura") {
+/**
+ * ligacao: /criar-conta?session_id=… quando a conta ainda não existe (o
+ * mesmo endereço de regresso do Checkout — o servidor valida a sessão junto
+ * do Stripe e só deixa criar uma conta por compra) ou /entrar quando já
+ * existe.
+ */
+export function montarHtmlBoasVindasPagamento(
+  plano: PlanoEmail,
+  { contaExiste, ligacao }: { contaExiste: boolean; ligacao: string },
+) {
   const nomePlano = NOME_PLANO[plano];
+  const passo = contaExiste
+    ? "Já pode iniciar sessão no portal: o seu acesso já está ativo."
+    : "Falta só um passo: crie a sua palavra-passe para aceder ao portal e abrir o seu caso.";
+  const botao = contaExiste ? "Iniciar sessão" : "Criar a minha conta";
 
   return `<!DOCTYPE html>
 <html lang="pt-PT">
@@ -27,7 +43,8 @@ export function montarHtmlBoasVindasPagamento(plano: "avulso" | "assinatura") {
             <td style="padding: 24px 32px 8px 32px; font-family:'Inter', Arial, Helvetica, sans-serif; color:#171A21; font-size:16px; line-height:1.6;">
               <p style="margin:0 0 16px 0;">Olá,</p>
               <p style="margin:0 0 16px 0;">O seu pagamento do plano <strong>${nomePlano}</strong> foi confirmado. Obrigado por confiar na DoLado.</p>
-              <p style="margin:0 0 16px 0;">Falta só um passo: crie a sua palavra-passe para aceder ao portal e abrir o seu caso.</p>
+              <p style="margin:0 0 16px 0;">${passo}</p>
+              <p style="margin:0 0 16px 0;"><a href="${ligacao}" style="display:inline-block; background-color:#0E6B5C; color:#FFFFFF; text-decoration:none; font-weight:600; padding:10px 18px; border-radius:8px;">${botao}</a></p>
             </td>
           </tr>
           <tr>
@@ -49,7 +66,7 @@ export function montarHtmlBoasVindasPagamento(plano: "avulso" | "assinatura") {
 </html>`;
 }
 
-export function montarHtmlNotificacaoNovoPagamento(email: string, plano: "avulso" | "assinatura") {
+export function montarHtmlNotificacaoNovoPagamento(email: string, plano: PlanoEmail) {
   const nomePlano = NOME_PLANO[plano];
 
   return `<!DOCTYPE html>

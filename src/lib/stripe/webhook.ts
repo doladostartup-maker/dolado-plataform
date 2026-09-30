@@ -5,22 +5,26 @@ import type Stripe from "stripe";
 // Brevo, logs) entra por `DependenciasWebhook`. Só imports de tipos — os
 // testes correm com `node --test` sem o bundler do Next.js.
 //
-// Regra de acesso:
-// - Concede "assinatura" só com pagamento confirmado: checkout pago (ou
+// Planos (pelo price da subscrição, nunca pelos metadados):
+// - Proteção: funcionalidades de proteção, sem créditos de caso.
+// - Caso + Proteção: proteção + 1 crédito por ciclo pago (máx. 4).
+// - Avulso (pagamento único): +1 crédito de caso, sem proteção.
+//
+// Regras:
+// - Só pagamento confirmado dá acesso ou créditos: checkout pago (ou
 //   no_payment_required, cupão de 100%), checkout.session.async_payment_succeeded
-//   (SEPA e outros métodos assíncronos) ou invoice.paid.
-// - customer.subscription.updated nunca concede — só sincroniza o estado e
-//   degrada quando a subscrição termina (canceled, unpaid, incomplete_expired).
-// - Falhas de cobrança (invoice.payment_failed / payment_action_required) não
-//   mexem no acesso: o Stripe ainda está a tentar recuperar o pagamento; se
-//   desistir, a subscrição passa a unpaid/canceled e é aí que se degrada.
-// - Degradar é sempre "assinatura" → "avulso", nunca "nenhum", e só se o
-//   cliente não tiver outra subscrição ativa. Nunca se apaga nada.
-// - Uma compra de raiz (sem conta ainda) não tem user_access para atualizar:
-//   é /criar-conta que liga o pagamento à conta nova, depois de confirmar ele
-//   próprio o payment_status junto do Stripe.
+//   ou invoice.paid. Um SEPA pendente fica registado, sem nada.
+// - Créditos idempotentes por origem: checkout:<session> (Avulso) e
+//   invoice:<id> (Caso + Proteção) — a base de dados recusa a mesma origem
+//   duas vezes (case_credit_grants).
+// - customer.subscription.updated só atualiza contas que já tinham esta
+//   subscrição ativada por um pagamento confirmado — nunca ativa uma nova.
+// - Terminar/cancelar retira só o plano da subscrição; créditos, casos e
+//   histórico ficam. Nunca se apaga nada.
+// - Uma compra de raiz (sem conta ainda) fica registada; /criar-conta aplica
+//   o acesso quando liga o pagamento à conta nova.
 
-export type Plano = "avulso" | "assinatura";
+export type Plano = "avulso" | "protecao" | "caso_protecao";
 export type EstadoPagamento =
   | "concluido"
   | "pendente"
@@ -31,13 +35,13 @@ export type EstadoCobranca = "pago" | "falhado" | "acao_necessaria";
 
 export type DadosPagamento = {
   stripe_session_id: string;
-  // Só presente quando é conhecido (upgrade). Omitido, nunca null — um
-  // upsert com null apagava a ligação já gravada por /criar-conta.
+  // Só presente quando é conhecido (compra com conta). Omitido, nunca null —
+  // um upsert com null apagava a ligação já gravada por /criar-conta.
   user_id?: string;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   email: string;
-  plano: Plano;
+  plano: "avulso" | "assinatura";
   valor_total_centimos: number | null;
   moeda: string;
   codigo_desconto: string | null;
@@ -55,7 +59,23 @@ export type SnapshotSubscricao = {
   current_period_end: string | null;
 };
 
-export type AlvoAcesso = { userId?: string | null; customerId?: string | null };
+export type SubscricaoNaConta = {
+  plano: "protecao" | "caso_protecao";
+  status: string;
+  stripe_subscription_id: string;
+  stripe_customer_id: string;
+  stripe_price_id: string | null;
+  current_period_start: string | null;
+  current_period_end: string | null;
+};
+
+export type AtualizacaoSubscricaoNaConta = {
+  plano?: "none" | "protecao" | "caso_protecao";
+  status?: string;
+  stripe_price_id?: string | null;
+  current_period_start?: string | null;
+  current_period_end?: string | null;
+};
 
 export type LinhaLog = {
   evento: string;
@@ -75,6 +95,8 @@ export interface DependenciasWebhook {
   libertarEvento(eventId: string): Promise<void>;
 
   obterEstadoPagamento(sessionId: string): Promise<EstadoPagamento | null>;
+  /** user_id já ligado a esta compra (por /criar-conta), se houver. */
+  utilizadorDoPagamento(sessionId: string): Promise<string | null>;
   gravarPagamento(dados: DadosPagamento): Promise<void>;
   marcarPagamentosDaSubscricao(subscriptionId: string, estado: EstadoPagamento): Promise<void>;
 
@@ -85,27 +107,46 @@ export interface DependenciasWebhook {
     estadoEm: number,
     cobranca?: { estado: EstadoCobranca; em: string },
   ): Promise<boolean>;
-  temOutraSubscricaoAtiva(customerId: string, excluirSubscriptionId: string | null): Promise<boolean>;
+  planoDoPreco(priceId: string | null): "protecao" | "caso_protecao" | null;
 
-  /** Por userId: cria/atualiza a linha. Só por customerId: atualiza a linha existente. Devolve o nº de contas afetadas. */
-  concederAssinatura(alvo: AlvoAcesso): Promise<number>;
-  /** "assinatura" → "avulso" nas contas do alvo. Devolve o nº de contas afetadas. */
-  degradarAssinatura(alvo: AlvoAcesso): Promise<number>;
+  /** Contas ligadas a este customer Stripe (user_access.stripe_customer_id). */
+  contasDoCustomer(customerId: string): Promise<string[]>;
+  /** Ativa/atualiza a subscrição na conta (cria a linha se não existir). */
+  aplicarSubscricaoNaConta(userId: string, sub: SubscricaoNaConta): Promise<void>;
+  /** Atualiza só as contas que têm esta subscrição; devolve quantas. */
+  atualizarSubscricaoNasContas(subscriptionId: string, dados: AtualizacaoSubscricaoNaConta): Promise<number>;
+  /** Garante a linha em user_access (sem plano) e liga o customer. */
+  garantirConta(userId: string, customerId: string | null): Promise<void>;
+  /** +1 crédito uma única vez por origem; maximo limita o saldo. true se creditou. */
+  concederCreditoCaso(userId: string, origem: string, maximo: number | null): Promise<boolean>;
 
-  enviarEmailsPagamentoConfirmado(email: string, plano: Plano): Promise<void>;
+  enviarEmailPagamentoConfirmado(dados: {
+    email: string;
+    plano: Plano;
+    contaExiste: boolean;
+    sessionId: string;
+  }): Promise<void>;
   registar(linha: LinhaLog): void;
 }
 
 export type ResultadoWebhook = { status: 200 | 500; corpo: Record<string, unknown> };
 
-// Estados em que o cliente mantém o acesso. past_due fica de fora de
-// ESTADOS_TERMINADOS de propósito: o Stripe ainda está a tentar cobrar.
+export const MAXIMO_CREDITOS_MENSAIS = 4;
+
+// past_due mantém o acesso: o Stripe ainda está a tentar cobrar.
 const ESTADOS_ATIVOS: ReadonlySet<string> = new Set(["active", "trialing", "past_due"]);
 const ESTADOS_TERMINADOS: ReadonlySet<string> = new Set(["canceled", "unpaid", "incomplete_expired"]);
+// Só estas faturas correspondem a um ciclo (a primeira e as renovações). Uma
+// fatura de prorrateio (mudança de plano a meio do ciclo) não dá crédito.
+const FATURAS_DE_CICLO: ReadonlySet<string> = new Set(["subscription_create", "subscription_cycle"]);
 
-export function idDe(valor: string | { id: string } | null | undefined): string | null {
+export function idDe(valor: string | { id?: string } | null | undefined): string | null {
   if (!valor) return null;
-  return typeof valor === "string" ? valor : valor.id;
+  return typeof valor === "string" ? valor : (valor.id ?? null);
+}
+
+export function subscricaoEstaAtiva(status: string) {
+  return ESTADOS_ATIVOS.has(status);
 }
 
 function codigoDeErro(erro: unknown) {
@@ -114,11 +155,7 @@ function codigoDeErro(erro: unknown) {
   return erro instanceof Error ? erro.name : "desconhecido";
 }
 
-export function subscricaoEstaAtiva(status: string) {
-  return ESTADOS_ATIVOS.has(status);
-}
-
-function pagamentoDaSessaoConfirmado(session: Stripe.Checkout.Session) {
+export function pagamentoDaSessaoConfirmado(session: Pick<Stripe.Checkout.Session, "payment_status">) {
   // no_payment_required: cupão de 100% — válido, só sem cobrança.
   return session.payment_status === "paid" || session.payment_status === "no_payment_required";
 }
@@ -146,9 +183,25 @@ function subscricaoDaFatura(invoice: Stripe.Invoice) {
   return idDe(invoice.parent?.subscription_details?.subscription);
 }
 
+function dadosNaConta(
+  snapshot: SnapshotSubscricao,
+  plano: "protecao" | "caso_protecao",
+): SubscricaoNaConta {
+  return {
+    plano,
+    status: snapshot.status,
+    stripe_subscription_id: snapshot.stripe_subscription_id,
+    stripe_customer_id: snapshot.stripe_customer_id,
+    stripe_price_id: snapshot.price_id,
+    current_period_start: snapshot.current_period_start,
+    current_period_end: snapshot.current_period_end,
+  };
+}
+
 type DadosSessao = {
-  plano: Plano;
+  tipo: "avulso" | "subscricao";
   email: string;
+  /** Conta indicada pelo servidor ao criar o checkout (compra com sessão iniciada). */
   userId: string | null;
   ehUpgrade: boolean;
   customerId: string | null;
@@ -159,15 +212,16 @@ type DadosSessao = {
 function lerSessao(session: Stripe.Checkout.Session): DadosSessao | null | "incoerente" {
   const plano = session.metadata?.plano;
   const email = session.customer_details?.email;
-  if ((plano !== "avulso" && plano !== "assinatura") || !email) return null;
+  if (!plano || !email) return null;
 
-  // O modo da sessão tem de bater com o plano — um metadata "assinatura"
-  // numa sessão de pagamento único não pode dar acesso de assinante.
-  const modoEsperado = plano === "avulso" ? "payment" : "subscription";
-  if (session.mode !== modoEsperado) return "incoerente";
+  // O tipo vem do modo da sessão, não dos metadados — e têm de bater certo:
+  // um metadata de subscrição numa sessão de pagamento único não dá acesso.
+  const tipo =
+    session.mode === "payment" ? "avulso" : session.mode === "subscription" ? "subscricao" : null;
+  if (!tipo || (tipo === "avulso") !== (plano === "avulso")) return "incoerente";
 
   return {
-    plano,
+    tipo,
     email,
     userId: session.metadata?.user_id ?? null,
     ehUpgrade: session.metadata?.upgrade === "true",
@@ -188,7 +242,7 @@ function dadosPagamento(
     stripe_customer_id: s.customerId,
     stripe_subscription_id: s.subscriptionId,
     email: s.email,
-    plano: s.plano,
+    plano: s.tipo === "avulso" ? "avulso" : "assinatura",
     valor_total_centimos: session.amount_total,
     moeda: session.currency ?? "eur",
     codigo_desconto: idDe(cupao),
@@ -198,10 +252,52 @@ function dadosPagamento(
 }
 
 /**
+ * Aplica uma compra JÁ CONFIRMADA a uma conta: crédito Avulso, ou
+ * subscrição (+ crédito do primeiro ciclo no Caso + Proteção). Idempotente
+ * — usado pelo webhook e por /criar-conta, que podem correr por qualquer
+ * ordem. Quem chama tem de ter confirmado o pagamento. Devolve o plano
+ * aplicado (null se o price for desconhecido ou a subscrição não estiver
+ * ativa).
+ */
+export async function aplicarCompraConfirmadaNaConta(
+  session: Stripe.Checkout.Session,
+  userId: string,
+  deps: DependenciasWebhook,
+): Promise<Plano | null> {
+  await deps.garantirConta(userId, idDe(session.customer));
+
+  if (session.mode === "payment") {
+    await deps.concederCreditoCaso(userId, `checkout:${session.id}`, null);
+    return "avulso";
+  }
+
+  const subscriptionId = idDe(session.subscription);
+  if (!subscriptionId) return null;
+  const snapshot = await deps.obterSubscricaoStripe(subscriptionId);
+  const plano = deps.planoDoPreco(snapshot.price_id);
+  if (!plano || !subscricaoEstaAtiva(snapshot.status)) return null;
+
+  await deps.aplicarSubscricaoNaConta(userId, dadosNaConta(snapshot, plano));
+  const invoiceId = idDe(session.invoice);
+  if (plano === "caso_protecao" && invoiceId) {
+    // Mesma origem que invoice.paid usa para esta fatura — só credita uma vez.
+    await deps.concederCreditoCaso(userId, `invoice:${invoiceId}`, MAXIMO_CREDITOS_MENSAIS);
+  }
+  return plano;
+}
+
+async function contasDaCompra(session: Stripe.Checkout.Session, s: DadosSessao, deps: DependenciasWebhook) {
+  if (s.userId) return [s.userId];
+  const ligado = await deps.utilizadorDoPagamento(session.id);
+  return ligado ? [ligado] : [];
+}
+
+/**
  * Pagamento confirmado. Ordem pensada para um reenvio depois de uma falha:
- * primeiro o acesso (idempotente), depois o pagamento como "concluido" e só
- * no fim os e-mails — se algo falhar antes, o pagamento ainda não está
- * concluído e o reenvio repete tudo; se já estava, não repete os e-mails.
+ * primeiro o acesso e os créditos (idempotentes), depois o pagamento como
+ * "concluido" e só no fim o e-mail — se algo falhar antes, o pagamento ainda
+ * não está concluído e o reenvio repete tudo; se já estava, não repete o
+ * e-mail.
  */
 async function confirmarCompra(
   session: Stripe.Checkout.Session,
@@ -209,16 +305,28 @@ async function confirmarCompra(
   estadoAnterior: EstadoPagamento | null,
   deps: DependenciasWebhook,
 ) {
-  // Upgrade de um cliente com conta: sobe já o nível. Uma compra de raiz
-  // ainda não tem conta — /criar-conta liga o acesso quando for criada.
-  if (s.plano === "assinatura" && s.ehUpgrade && s.userId) {
-    await deps.concederAssinatura({ userId: s.userId, customerId: s.customerId });
+  const contas = await contasDaCompra(session, s, deps);
+  let plano: Plano | null = s.tipo === "avulso" ? "avulso" : null;
+  for (const userId of contas) {
+    plano = (await aplicarCompraConfirmadaNaConta(session, userId, deps)) ?? plano;
   }
+  if (!plano && s.subscriptionId) {
+    // Compra de raiz: ainda sem conta, mas o e-mail precisa do nome do plano.
+    plano = deps.planoDoPreco((await deps.obterSubscricaoStripe(s.subscriptionId)).price_id);
+  }
+
   await deps.gravarPagamento(dadosPagamento(session, s, "concluido"));
-  if (estadoAnterior !== "concluido") {
-    await deps.enviarEmailsPagamentoConfirmado(s.email, s.plano);
+  if (estadoAnterior !== "concluido" && plano) {
+    await deps.enviarEmailPagamentoConfirmado({
+      email: s.email,
+      plano,
+      contaExiste: contas.length > 0,
+      sessionId: session.id,
+    });
   }
-  return estadoAnterior === "concluido" ? "ja_confirmado" : "pagamento_confirmado";
+  if (!plano) return "confirmado_preco_desconhecido";
+  if (estadoAnterior === "concluido") return "ja_confirmado";
+  return contas.length > 0 ? "pagamento_confirmado" : "pagamento_confirmado_sem_conta";
 }
 
 type Tratamento = { resultado: string; customer_id?: string | null; subscription_id?: string | null };
@@ -234,8 +342,8 @@ async function tratarCheckoutConcluido(event: Stripe.Event, deps: DependenciasWe
 
   if (!pagamentoDaSessaoConfirmado(session)) {
     // Pagamento assíncrono (ex.: SEPA) ainda por confirmar: regista, sem
-    // acesso nem e-mail de confirmação. Não recua um estado final que já
-    // tenha chegado por outro evento entregue fora de ordem.
+    // acesso, créditos nem e-mail. Não recua um estado final que já tenha
+    // chegado por outro evento entregue fora de ordem.
     await deps.gravarPagamento(dadosPagamento(session, s, estadoAtual ?? "pendente"));
     return { resultado: "pagamento_pendente", ...ids };
   }
@@ -271,18 +379,17 @@ async function tratarPagamentoAssincronoFalhado(
   if (s === "incoerente") return { resultado: "ignorado_modo_incoerente", customer_id: idDe(session.customer) };
   const ids = { customer_id: s.customerId, subscription_id: s.subscriptionId };
 
+  // Nunca dá acesso nem créditos. A conta (se existir) fica intacta e o
+  // portal mostra o pagamento como falhado, com opção de pagar de novo.
   await deps.gravarPagamento(dadosPagamento(session, s, "falhado"));
 
-  // Se algum caminho deu acesso provisório (ex.: a página de regresso do
-  // upgrade), retira-o — a não ser que haja outra subscrição ativa.
-  if (s.plano === "assinatura" && (s.userId || s.customerId)) {
-    const outraAtiva = s.customerId
-      ? await deps.temOutraSubscricaoAtiva(s.customerId, s.subscriptionId)
-      : false;
-    if (!outraAtiva) {
-      const afetadas = await deps.degradarAssinatura({ userId: s.userId, customerId: s.customerId });
-      if (afetadas > 0) return { resultado: "pagamento_falhado_acesso_retirado", ...ids };
-    }
+  // Se esta subscrição chegou a ficar ativa numa conta, deixa de estar.
+  if (s.subscriptionId) {
+    const afetadas = await deps.atualizarSubscricaoNasContas(s.subscriptionId, {
+      plano: "none",
+      status: "incomplete_expired",
+    });
+    if (afetadas > 0) return { resultado: "pagamento_falhado_acesso_retirado", ...ids };
   }
   return { resultado: "pagamento_falhado", ...ids };
 }
@@ -306,23 +413,26 @@ async function tratarFatura(
 
   if (cobranca !== "pago") {
     // Sem mexer no acesso — o Stripe continua a tentar cobrar; se desistir,
-    // customer.subscription.updated/deleted trata da degradação.
+    // customer.subscription.updated/deleted trata do resto.
     return { resultado: cobranca === "falhado" ? "cobranca_falhada" : "acao_necessaria", ...ids };
   }
 
-  if (!subscricaoEstaAtiva(snapshot.status)) {
-    return { resultado: "pago_subscricao_inativa", ...ids };
-  }
-  const contas = customerId ? await deps.concederAssinatura({ customerId }) : 0;
-  return { resultado: contas > 0 ? "acesso_garantido" : "pago_sem_conta_ligada", ...ids };
-}
+  const plano = deps.planoDoPreco(snapshot.price_id);
+  if (!plano) return { resultado: "pago_preco_desconhecido", ...ids };
+  if (!subscricaoEstaAtiva(snapshot.status)) return { resultado: "pago_subscricao_inativa", ...ids };
 
-async function degradarSeTerminada(snapshot: SnapshotSubscricao, deps: DependenciasWebhook) {
-  if (!ESTADOS_TERMINADOS.has(snapshot.status)) return 0;
-  if (await deps.temOutraSubscricaoAtiva(snapshot.stripe_customer_id, snapshot.stripe_subscription_id)) {
-    return 0;
+  const contas = customerId ? await deps.contasDoCustomer(customerId) : [];
+  if (contas.length === 0) return { resultado: "pago_sem_conta_ligada", ...ids };
+
+  let creditou = false;
+  for (const userId of contas) {
+    await deps.aplicarSubscricaoNaConta(userId, dadosNaConta(snapshot, plano));
+    if (plano === "caso_protecao" && FATURAS_DE_CICLO.has(invoice.billing_reason ?? "")) {
+      const novo = await deps.concederCreditoCaso(userId, `invoice:${invoice.id}`, MAXIMO_CREDITOS_MENSAIS);
+      creditou = novo || creditou;
+    }
   }
-  return deps.degradarAssinatura({ customerId: snapshot.stripe_customer_id });
+  return { resultado: creditou ? "acesso_e_credito" : "acesso_garantido", ...ids };
 }
 
 async function tratarSubscricaoAtualizada(event: Stripe.Event, deps: DependenciasWebhook): Promise<Tratamento> {
@@ -332,8 +442,19 @@ async function tratarSubscricaoAtualizada(event: Stripe.Event, deps: Dependencia
   const aplicado = await deps.gravarSubscricao(snapshot, event.created);
   if (!aplicado) return { resultado: "ignorado_evento_antigo", ...ids };
 
-  const afetadas = await degradarSeTerminada(snapshot, deps);
-  return { resultado: afetadas > 0 ? "sincronizado_acesso_retirado" : "sincronizado", ...ids };
+  // Só contas que já têm esta subscrição (ativada por um pagamento
+  // confirmado) — este evento sincroniza, nunca ativa uma conta nova.
+  const terminada = ESTADOS_TERMINADOS.has(snapshot.status);
+  const plano = terminada ? "none" : deps.planoDoPreco(snapshot.price_id);
+  const afetadas = await deps.atualizarSubscricaoNasContas(snapshot.stripe_subscription_id, {
+    ...(plano ? { plano } : {}),
+    status: snapshot.status,
+    stripe_price_id: snapshot.price_id,
+    current_period_start: snapshot.current_period_start,
+    current_period_end: snapshot.current_period_end,
+  });
+  if (afetadas === 0) return { resultado: "sincronizado_sem_conta", ...ids };
+  return { resultado: terminada ? "sincronizado_acesso_retirado" : "sincronizado", ...ids };
 }
 
 async function tratarSubscricaoEliminada(event: Stripe.Event, deps: DependenciasWebhook): Promise<Tratamento> {
@@ -341,13 +462,16 @@ async function tratarSubscricaoEliminada(event: Stripe.Event, deps: Dependencias
   const ids = { customer_id: snapshot.stripe_customer_id, subscription_id: snapshot.stripe_subscription_id };
 
   // "deleted" é final: grava sempre, mesmo que um "updated" mais recente
-  // tenha chegado antes (o estado final ganha).
+  // tenha chegado antes.
   await deps.gravarSubscricao({ ...snapshot, status: "canceled" }, Number.MAX_SAFE_INTEGER);
   await deps.marcarPagamentosDaSubscricao(snapshot.stripe_subscription_id, "assinatura_cancelada");
 
-  // Ao cancelar volta a "avulso" — já pagou pelo menos uma vez — nunca a
-  // "nenhum". Não apaga conta, casos nem alertas.
-  const afetadas = await degradarSeTerminada({ ...snapshot, status: "canceled" }, deps);
+  // Retira só o plano desta subscrição. Créditos por usar, casos, histórico
+  // e alertas ficam.
+  const afetadas = await deps.atualizarSubscricaoNasContas(snapshot.stripe_subscription_id, {
+    plano: "none",
+    status: "canceled",
+  });
   return { resultado: afetadas > 0 ? "cancelada_acesso_retirado" : "cancelada", ...ids };
 }
 
@@ -387,8 +511,7 @@ export async function processarEventoStripe(
     return { status: 200, corpo: { recebido: true } };
   } catch (erro) {
     // Liberta o evento e devolve 500: o Stripe volta a tentar mais tarde.
-    // Tudo o que já foi gravado é idempotente (upserts), por isso repetir é
-    // seguro.
+    // Tudo o que já foi gravado é idempotente, por isso repetir é seguro.
     await deps.libertarEvento(event.id).catch(() => undefined);
     deps.registar({
       evento: event.type,

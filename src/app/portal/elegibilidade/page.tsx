@@ -1,4 +1,4 @@
-import { requireAssinatura } from "@/lib/auth";
+import { requireProtecao } from "@/lib/auth";
 import { criarVerificacaoElegibilidade } from "./actions";
 import { VerificarElegibilidadeForm } from "./_components/VerificarElegibilidadeForm";
 import { VerificacoesElegibilidadeTable } from "./_components/VerificacoesElegibilidadeTable";
@@ -9,7 +9,7 @@ export default async function ElegibilidadePage({
   searchParams: Promise<{ erro?: string; guardado?: string }>;
 }) {
   const params = await searchParams;
-  const { supabase, user } = await requireAssinatura("elegibilidade");
+  const { supabase, user } = await requireProtecao("elegibilidade");
 
   // Nunca seleccionar sugestao_ia_* / resposta_bruta_ia aqui — são dados
   // internos, só para o admin ver na revisão.

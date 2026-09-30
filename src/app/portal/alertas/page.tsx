@@ -1,4 +1,4 @@
-import { requireAssinatura } from "@/lib/auth";
+import { requireProtecao } from "@/lib/auth";
 import { criarAlertaFidelizacaoPortal } from "./actions";
 import { AlertaFidelizacaoPortalForm } from "./_components/AlertaFidelizacaoPortalForm";
 import { AlertasFidelizacaoPortalTable } from "./_components/AlertasFidelizacaoPortalTable";
@@ -9,7 +9,7 @@ export default async function AlertasFidelizacaoPage({
   searchParams: Promise<{ erro?: string; guardado?: string; apagado?: string }>;
 }) {
   const params = await searchParams;
-  const { supabase, user } = await requireAssinatura("alertas");
+  const { supabase, user } = await requireProtecao("alertas");
 
   const { data: alertas } = await supabase
     .from("alertas_fidelizacao_portal")
