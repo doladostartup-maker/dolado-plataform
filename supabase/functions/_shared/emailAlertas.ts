@@ -7,20 +7,9 @@
 // destinatário NUNCA vem do alerta: as funções usam o e-mail atual da conta
 // devolvido por alertas_*_pendentes().
 
-export function escaparHtml(texto: string): string {
-  return String(texto)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+import { escaparHtml, textoParaAssunto } from "./textoSeguro.ts";
 
-/** Texto seguro para o assunto: sem quebras de linha/controlo, comprimento limitado. */
-export function textoParaAssunto(texto: string, max = 80): string {
-  const limpo = String(texto).replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim();
-  return limpo.length > max ? `${limpo.slice(0, max - 1)}…` : limpo;
-}
+export { escaparHtml, textoParaAssunto };
 
 function dataPt(dataIso: string): string {
   return new Date(`${dataIso}T00:00:00Z`).toLocaleDateString("pt-PT", {
