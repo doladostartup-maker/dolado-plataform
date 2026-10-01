@@ -80,16 +80,3 @@ export function parametrosPrePreenchimento(r: RespostasSimulador): Record<string
   if (MOMENTOS.includes(r.momento)) p.momento = r.momento;
   return p;
 }
-
-// ===== Histórico =====
-// Versão anterior do simulador (até 01/10/2026): pedia e-mail, duração do
-// contrato e descrição livre, e gravava em casos_elegibilidade_portal. Só o
-// backoffice ainda mostra esses registos antigos.
-export type DuracaoContrato = "menos_6m" | "6_12m" | "1_2anos" | "mais_2anos";
-
-export const DURACAO_LABEL: Record<DuracaoContrato, string> = {
-  menos_6m: "Menos de 6 meses",
-  "6_12m": "6 a 12 meses",
-  "1_2anos": "1 a 2 anos",
-  mais_2anos: "Mais de 2 anos",
-};

@@ -52,8 +52,8 @@ const TEXTO_RESULTADO: Record<ResultadoSimulador, { titulo: string; texto?: stri
   },
   incerto: {
     titulo: "Pelas suas respostas, não conseguimos determinar com segurança se este caso se enquadra no serviço da DoLado.",
-    texto: "Se quiser avançar, pode explicar a situação no formulário do caso. Só escolhe a modalidade e paga no fim.",
-    cta: "Explicar o meu caso",
+    texto: "Se quiser avançar, conte-nos o que aconteceu no formulário do caso. No fim, escolhe a modalidade antes de pagar.",
+    cta: "Tratar o meu caso",
   },
   negativo: {
     titulo: "Pelas suas respostas, este caso pode não se enquadrar no serviço atual da DoLado.",

@@ -24,7 +24,7 @@ import { CONTACTO_EMAIL, ENTIDADE_LEGAL, MORADA_SEDE } from "./site.ts";
 export const TERMOS_VERSAO = "2026-10-01b";
 
 /** Versão da Política de Privacidade em vigor. Cada versão fica acessível em /privacidade/<versão>. */
-export const PRIVACIDADE_VERSAO = "2026-10-01b";
+export const PRIVACIDADE_VERSAO = "2026-10-01c";
 
 /** Versão do texto de pedido expresso de início imediato. */
 export const CONSENTIMENTO_INICIO_IMEDIATO_VERSAO = "2026-10-01";
@@ -176,7 +176,7 @@ export const REVISAO_JURIDICA_PENDENTE = [
   "Tratamento jurídico definitivo do Caso + Proteção (serviço continuado + caso)",
   "Resumo e forma de exercício da livre resolução (RESUMO_LIVRE_RESOLUCAO, COMO_EXERCER_LIVRE_RESOLUCAO, /livre-resolucao)",
   "Termos e Condições versão 2026-10-01b — em especial: cancelamento, início da prestação e livre resolução; limitações de responsabilidade; RAL e lei aplicável",
-  "Política de Privacidade versão 2026-10-01b — prazos de conservação (secção 6) e bases jurídicas",
+  "Política de Privacidade versão 2026-10-01c — prazos de conservação (secção 6), bases jurídicas e descrição do Simulador de Elegibilidade público",
   "Lista de entidades RAL (ENTIDADES_RAL) e respetiva competência territorial",
   "Função online de livre resolução (/livre-resolucao) e modelo de formulário",
 ] as const;

@@ -120,6 +120,12 @@ describe("simulador público, sem conta e sem gravação", () => {
     assert.equal(existsSync(new URL("../../app/actions/elegibilidade-publico.ts", import.meta.url)), false);
   });
 
+  test("positivo e incerto usam o mesmo CTA, sem prometer análise gratuita", () => {
+    assert.doesNotMatch(componente, /Explicar o meu caso/);
+    assert.equal(componente.match(/cta: "Tratar o meu caso"/g)?.length, 2);
+    assert.doesNotMatch(componente, /\banalis|análise|\brevis|equipa|48 horas|responderemos|entraremos em contacto/i);
+  });
+
   test("resultado com nota indicativa e CTA para Tratar o meu caso", () => {
     assert.match(componente, /Este resultado é apenas indicativo e baseia-se nas respostas fornecidas\./);
     assert.match(componente, /Tratar o meu caso/);
@@ -149,5 +155,28 @@ describe("fora do portal", () => {
   test("não é apresentado como funcionalidade dos planos", () => {
     assert.doesNotMatch(ler("src/lib/planos.ts"), /elegibilidade/i);
     assert.doesNotMatch(ler("src/components/landing/Precario.tsx"), /elegibilidade/i);
+  });
+});
+
+describe("legado e privacidade", () => {
+  test("sem área no backoffice nem código que use a tabela antiga", () => {
+    assert.equal(existsSync(new URL("../../app/backoffice/elegibilidade", import.meta.url)), false);
+    assert.doesNotMatch(ler("src/app/backoffice/layout.tsx"), /elegibilidade/i);
+  });
+
+  test("migration de retenção: 30 dias, em revisão mantém-se, sem novas escritas", () => {
+    const m = ler("supabase/migrations/20261001230000_elegibilidade_retencao.sql");
+    assert.match(m, /interval '30 days'/);
+    assert.match(m, /estado_elegibilidade <> 'em_revisao'/);
+    assert.match(m, /revoke insert, update on public\.casos_elegibilidade_portal from anon, authenticated, service_role/);
+    assert.match(m, /cron\.schedule/);
+  });
+
+  test("Política de Privacidade em vigor descreve o simulador sem recolha", async () => {
+    const { PRIVACIDADE_VERSAO } = await import("../legal.ts");
+    const politica = ler(`src/app/(legal)/privacidade/_versoes/v${PRIVACIDADE_VERSAO}.tsx`);
+    assert.match(politica, /Simulador de Elegibilidade<\/strong> é gratuito e funciona sem conta/);
+    assert.match(politica, /não as\s+guarda/);
+    assert.doesNotMatch(politica, /respostas ao Simulador|Comparador de Faturas e o Simulador|no Simulador de\s+Elegibilidade, a análise/);
   });
 });
