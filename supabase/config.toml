@@ -13,3 +13,14 @@ verify_jwt = false
 # a autorização é o cabeçalho x-webhook-secret, verificado na própria função.
 [functions.novo-caso]
 verify_jwt = false
+
+# E-mail "Confirm sign up" (confirmação do e-mail de uma conta nova).
+# Fonte única do texto: supabase/templates/confirmacao.html. Tem o código
+# ({{ .Token }}, usado em "Tratar o meu caso" sem sair da página) e a
+# ligação ({{ .ConfirmationURL }}, para /registo e /criar-conta).
+# Este ficheiro só configura a stack local: em produção o mesmo assunto e
+# HTML têm de ser colados no Dashboard (Authentication → Emails →
+# Templates → Confirm sign up) sempre que o template mudar.
+[auth.email.template.confirmation]
+subject = "Confirme o seu e-mail na DoLado"
+content_path = "./supabase/templates/confirmacao.html"
