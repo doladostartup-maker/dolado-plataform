@@ -249,10 +249,10 @@ select ok(testes.negado($$insert into public.anexos (caso_id, nome_ficheiro, cam
 select ok(testes.negado($$insert into public.anexos (caso_id, nome_ficheiro, caminho_storage) values ('10000000-0000-4000-a000-00000000000a', 'x', 'casoA/x')$$), 'A: não insere anexo diretamente (só pelo servidor)');
 select ok(testes.negado($$delete from public.anexos where id = '11000000-0000-4000-a000-00000000000b'$$), 'A: não apaga anexo de B');
 
--- casos_elegibilidade_portal
-select is(testes.contar('select * from public.casos_elegibilidade_portal'), 1::bigint, 'A: vê só a própria elegibilidade');
+-- casos_elegibilidade_portal (legado desde 01/10/2026: o cliente já não lê)
+select ok(testes.contar('select * from public.casos_elegibilidade_portal') <= 0, 'A: não lê a elegibilidade antiga (nem a própria)');
 select is(testes.contar($$select * from public.casos_elegibilidade_portal where id = '12000000-0000-4000-a000-00000000000b'$$), 0::bigint, 'A: não lê a elegibilidade de B pelo UUID');
-select ok(testes.negado($$insert into public.casos_elegibilidade_portal (utilizador_id, email, setor, duracao_contrato, empresa_respondeu_bem, descricao_problema) values ('00000000-0000-4000-a000-00000000000a', 'a@teste.invalid', 'Energia', '6_12m', false, 'x')$$), 'A: não cria elegibilidade diretamente (só pelo servidor)');
+select ok(testes.negado($$insert into public.casos_elegibilidade_portal (utilizador_id, email, setor, duracao_contrato, empresa_respondeu_bem, descricao_problema) values ('00000000-0000-4000-a000-00000000000a', 'a@teste.invalid', 'Energia', '6_12m', false, 'x')$$), 'A: não cria elegibilidade');
 select ok(testes.negado($$insert into public.casos_elegibilidade_portal (utilizador_id, email, setor, duracao_contrato, empresa_respondeu_bem, descricao_problema) values ('00000000-0000-4000-a000-00000000000b', 'a@teste.invalid', 'Energia', '6_12m', false, 'x')$$), 'A: não cria elegibilidade em nome de B');
 select ok(testes.negado($$update public.casos_elegibilidade_portal set estado_final = 'elegivel' where id = '12000000-0000-4000-a000-00000000000a'$$), 'A: não altera estado_final da própria elegibilidade');
 select ok(testes.negado($$update public.casos_elegibilidade_portal set descricao_problema = 'x' where id = '12000000-0000-4000-a000-00000000000b'$$), 'A: não altera a elegibilidade de B');

@@ -32,9 +32,6 @@ export default async function BackofficeLayout({
           <Link href="/backoffice/faturas" className="hover:text-[var(--color-brand)]">
             Faturas para rever
           </Link>
-          <Link href="/backoffice/elegibilidade" className="hover:text-[var(--color-brand)]">
-            Elegibilidade
-          </Link>
           <Link href="/backoffice/conversoes" className="inline-flex items-center gap-1.5 hover:text-[var(--color-brand)]">
             Conversões
             {!!conversoesPorResolver && (
