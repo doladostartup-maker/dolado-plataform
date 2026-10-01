@@ -20,8 +20,8 @@ import { CONTACTO_EMAIL } from "./site.ts";
 /** Versão dos Termos e Condições em vigor (data AAAA-MM-DD). Cada versão fica acessível em /termos/<versão>. */
 export const TERMOS_VERSAO = "2026-10-01";
 
-/** Versão da Política de Privacidade em vigor (data da última atualização publicada). */
-export const PRIVACIDADE_VERSAO = "2026-09-30";
+/** Versão da Política de Privacidade em vigor (data AAAA-MM-DD). Cada versão fica acessível em /privacidade/<versão>. */
+export const PRIVACIDADE_VERSAO = "2026-10-01";
 
 /** Versão do texto de pedido expresso de início imediato. */
 export const CONSENTIMENTO_INICIO_IMEDIATO_VERSAO = "2026-10-01";

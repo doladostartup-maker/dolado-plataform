@@ -61,9 +61,10 @@ const PAGINAS_SO_MARKETING = [
   "/perguntas-frequentes",
 ];
 
-// Versões anteriores dos Termos (/termos/<versão>) — mesmas regras que /termos.
+// Versões dos Termos e da Política de Privacidade (/termos/<versão>,
+// /privacidade/<versão>) — mesmas regras que /termos e /privacidade.
 function ehVersaoDosTermos(pathname: string) {
-  return pathname.startsWith("/termos/");
+  return pathname.startsWith("/termos/") || pathname.startsWith("/privacidade/");
 }
 
 // Páginas públicas de revisão do texto (link do e-mail, sem login): não
