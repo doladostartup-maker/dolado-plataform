@@ -17,7 +17,8 @@
 //
 // "Funcionalidades de proteção" são as que hoje estão marcadas "Somente
 // Assinantes" (alertas de fidelização e de promoção, aviso sectorial,
-// comparador de faturas, simulador de elegibilidade). Funcionalidades
+// comparador de faturas). O Simulador de Elegibilidade é público e gratuito
+// desde 01/10/2026 — não depende do plano. Funcionalidades
 // futuras de proteção usam a mesma verificação (temProtecao).
 
 export type PlanoSubscricao = "none" | "protecao" | "caso_protecao";

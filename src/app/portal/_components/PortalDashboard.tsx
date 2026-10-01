@@ -22,7 +22,7 @@ type OfertaConversao = { mensalidade: number; reembolso: number } | null;
 const OPCOES = [
   {
     plano: "protecao",
-    descricao: "Alertas, aviso sectorial, comparador de faturas e simulador de elegibilidade. Não inclui casos.",
+    descricao: "Alertas, aviso sectorial e comparador de faturas. Não inclui casos.",
     cta: "Aderir à Proteção",
   },
   {
@@ -151,12 +151,6 @@ const CARDS: Card[] = [
     titulo: "📊 Faturas",
     descricao: "Compare a fatura com o mês anterior e detete cobranças fora do padrão.",
     href: "/portal/faturas",
-  },
-  {
-    slug: "elegibilidade",
-    titulo: "🧑‍🤝‍🧑 Elegibilidade",
-    descricao: "Veja em poucas perguntas se o seu caso parece ter fundamento.",
-    href: "/portal/elegibilidade",
   },
 ];
 
@@ -317,8 +311,8 @@ export function PortalDashboard({
               </div>
             ) : (
               <p className="mb-5 text-[13.5px] leading-relaxed text-[var(--color-ink-muted)]">
-                Os planos Proteção e Caso + Proteção desbloqueiam os alertas, o aviso sectorial, o
-                comparador de faturas e o simulador de elegibilidade.
+                Os planos Proteção e Caso + Proteção desbloqueiam os alertas, o aviso sectorial e o
+                comparador de faturas.
               </p>
             )}
 

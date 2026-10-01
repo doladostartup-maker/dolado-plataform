@@ -136,7 +136,7 @@ Já construído e em produção:
 - Aviso Sectorial (`/portal/perfil` + `/backoffice/avisos`) — sem IA, admin avisa por e-mail os clientes que subscreveram o setor
 - Alerta de fim de promoção (`/portal/promocoes`) — com extração de data por Claude API (opcional, cliente confirma sempre)
 - Comparador de Faturas (`/portal/faturas`) — com extração e comparação por Claude API, 100% automático com fallback para revisão manual
-- Simulador de Elegibilidade (`/portal/elegibilidade`) — regras determinísticas + sugestão da Claude API, sempre com gate de revisão humana obrigatória (ver "Uso de IA")
+- Simulador de Elegibilidade — **público e gratuito desde 01/10/2026** (`/simulador-elegibilidade`, ver "Simulador de Elegibilidade público" abaixo); já não é funcionalidade do portal nem da Proteção
 
 Ainda por construir:
 - Templates de texto (CRUD simples, substituição de variáveis `{{}}`, sem IA) — os textos-base já existem, pedir a Thiago o documento `templates-texto-reclamacoes.md`
@@ -179,7 +179,7 @@ A exclusão geral de pagamentos da v1 foi revista, só para o canal B2C directo.
 
 - Em vigor: Termos e Política de Privacidade `2026-10-01b`; `/livre-resolucao` (regime legal, função online, modelo de formulário do DL 24/2014); `/resolucao-de-litigios` (contacto, Livro de Reclamações Eletrónico, entidades RAL). Rodapés (homepage, páginas legais, `/entrar`, homepage antiga) com Termos, Privacidade, Livre resolução, Resolução de litígios e Livro de Reclamações.
 - Identificação da entidade (nome, NIPC, morada) só em `src/lib/site.ts` (`ENTIDADE_LEGAL`, `NIPC`, `MORADA_SEDE`). Livro de Reclamações, entidades RAL, prazo e modelo de livre resolução só em `src/lib/legal.ts`. Não referir a plataforma europeia RLL/ODR (encerrada a 20/07/2025).
-- As caixas de confirmação dos formulários (abrir caso, alertas, simulador) registam o pedido do cliente — não são "consentimento" RGPD. Consentimento só para cookies/medição e comunicações opcionais.
+- As caixas de confirmação dos formulários (abrir caso, alertas) registam o pedido do cliente — não são "consentimento" RGPD. Consentimento só para cookies/medição e comunicações opcionais.
 - **Pendência da nova sede** — a sede está em processo de alteração; manter a morada atual até a nova estar oficialmente registada. Quando estiver: (1) `MORADA_SEDE` em `src/lib/site.ts` (alimenta Termos, Privacidade e o modelo de livre resolução) e criar novas versões dos Termos e da Política (as publicadas não se editam); (2) "Lisboa" no rodapé de `src/components/landing/Homepage.tsx` e "Lisboa, Portugal" em `src/components/landing/Landing.tsx`; (3) rever `ENTIDADES_RAL` em `src/lib/legal.ts` (a entidade RAL de referência depende da localização); (4) fora do código: morada da conta Stripe (recibos/faturas), registo na plataforma do Livro de Reclamações Eletrónico, remetente/rodapé da Brevo, Google (Ads/Analytics) e DPAs que identifiquem a morada.
 
 ## Texto para envio: revisão e autorização do cliente (01/10/2026)
@@ -188,14 +188,25 @@ DoLado prepara o texto → e-mail ao cliente com dois links (rever e autorizar /
 
 **Pós-envio** (`20261001190000_comprovativos_pos_envio.sql`): o texto enviado é a versão apontada por `casos_textos_envios` (nunca a mais recente) — secção "Reclamação enviada" no portal e no backoffice. Comprovativo de submissão em `casos_comprovativos` (ficheiro e/ou identificador; corrigir = novo registo, o anterior fica substituído), ficheiros no bucket privado `comprovativos-casos` (admin só lê; upload pelo servidor), servidos só por `/api/comprovativos/[id]` (sessão → RLS → URL assinada de 60 s). O cliente não lê `storage_path` nem `nota` (permissões por coluna). `dossie_url` continua separado. Na copy, nunca "acesso permanente" — usar "fica disponível no seu caso no portal".
 
+## Simulador de Elegibilidade público (01/10/2026)
+
+Ferramenta gratuita de aquisição/qualificação, antes da compra — responde a "a DoLado pode ajudar-me com este caso?". Não é funcionalidade do portal nem de nenhum plano.
+
+- `/simulador-elegibilidade` (página de marketing, indexável, sem sessão). Entradas: link "Simulador" no `SiteHeader`, link secundário no hero da homepage ("Ver se a DoLado pode ajudar") e cartão em Funcionalidades. CTA principal da homepage continua "Tratar o meu caso". `/portal/elegibilidade` redireciona (em `next.config.ts`) para a página pública.
+- 4 perguntas de escolha (setor, contrato pessoal, o que aconteceu, já reclamou) → resultado **positivo / incerto / negativo**, sempre indicativo e só sobre o âmbito do serviço. Regras em `src/lib/elegibilidade/regras.ts` (testes em `regras.test.mjs`); as opções são as de `src/lib/pedidoCaso.ts`.
+- Corre só no browser: sem login, sem e-mail/nome/telefone, sem gravação na base de dados, sem e-mails, sem Claude API. Não cria conta, caso, pedido nem acesso.
+- Positivo ("Tratar o meu caso") e incerto ("Explicar o meu caso") levam a `/tratar-caso?origem=/simulador-elegibilidade&setor=…&problema=…&momento=…`; a página só aceita valores das listas fechadas para pré-preencher. Negativo não tem CTA comercial.
+- Medição (gtag, só com consentimento): `simulador_iniciado`, `simulador_concluido` (`resultado`), `simulador_resultado_{positivo|incerto|negativo}`, `simulador_clique_tratar_caso` (`resultado`), `click_hero_simulador`. Só a categoria do resultado, nunca as respostas. A conversão relaciona-se por `pedidos_caso.origem = '/simulador-elegibilidade'`.
+- Nunca usar no simulador: "tem direito", "não tem direito", "a empresa está errada", "a lei garante", "vai ganhar", "não pode reclamar", "descubra se tem direito".
+
 ## Uso de IA (decisão: 25/09/2026)
 
 A exclusão geral de IA da v1 foi revista. A Claude API está agora em escopo, mas só dentro destas regras — não é uma autorização em aberto para qualquer uso de IA sem mais:
 
 1. **Extracção factual (datas, valores) — sem gate de revisão obrigatório.** Ler uma data ou um valor de um documento é uma tarefa factual, não uma decisão de aplicação da lei. Usado em: Alerta de fim de promoção (data no contrato) e Comparador de Faturas (valores na fatura). O cliente confirma sempre antes de gravar (promoção) ou recebe o resultado directo (fatura), mas não há revisão do Thiago por caso.
-2. **Interpretação/classificação de um caso individual — gate de revisão humana sempre obrigatório, sem excepção.** Isto é a linha entre "apoio administrativo" (permitido) e "aconselhamento jurídico individualizado" (proibido sem supervisão), validada com a advogada RGPD: mínimo de revisão humana real por caso antes de qualquer contacto com o cliente. Usado em: Simulador de Elegibilidade — a Claude API só sugere (`ai_suggested_status`/`sugestao_ia_estado`), nunca decide; o campo que determina o que o cliente recebe (`final_status`/`estado_final`) só é preenchido pelo Thiago.
+2. **Interpretação/classificação de um caso individual — gate de revisão humana sempre obrigatório, sem excepção.** Isto é a linha entre "apoio administrativo" (permitido) e "aconselhamento jurídico individualizado" (proibido sem supervisão), validada com a advogada RGPD: mínimo de revisão humana real por caso antes de qualquer contacto com o cliente. Nenhuma funcionalidade em produção usa IA para isto desde 01/10/2026: o Simulador de Elegibilidade passou a ser só regras, no browser. Os registos antigos em `casos_elegibilidade_portal` (`sugestao_ia_estado` sugere, `estado_final` só pelo Thiago) continuam revistos em `/backoffice/elegibilidade`.
 3. **Fallback manual sempre silencioso.** Chave não configurada, API indisponível, resposta inválida ou confiança baixa nunca podem gerar um erro visível ao cliente nem bloquear o fluxo — caem sempre no caminho manual/revisão que já existia antes de haver IA.
-4. **Nunca gerar texto que conclua responsabilidade jurídica de terceiro** (ex.: "a empresa violou a lei"), mesmo nas sugestões internas da Fase 2 do Simulador — o padrão é sempre: descrever o facto, citar a norma legal objectivamente, formular o pedido concreto.
+4. **Nunca gerar texto que conclua responsabilidade jurídica de terceiro** (ex.: "a empresa violou a lei"), mesmo em sugestões internas — o padrão é sempre: descrever o facto, citar a norma legal objectivamente, formular o pedido concreto.
 5. **Medir custo real** nos primeiros 10-15 casos de cada funcionalidade e anotar em `custos-fixos-e-break-even.md` (ainda por criar) — o piloto está em tier gratuito, um custo por chamada de API é uma excepção a essa regra que vale a pena vigiar.
 
 Qualquer uso de IA fora destas 5 regras (ex.: geração de texto de reclamação, decisão automática sem revisão) continua a exigir decisão nova de Thiago.
@@ -229,7 +240,7 @@ DPA "Obtido" = confirmado por Thiago (01/10/2026); a cópia não está no reposi
 | Supabase | Base de dados, Auth e Storage (casos, contas, documentos) | Subcontratante | UE (projeto em região europeia); empresa dos EUA | Obtido | Anotar o previsto no DPA | 01/10/2026 | DPA obtido |
 | Clever Cloud | Alojamento da aplicação | Subcontratante | UE (Paris) | Obtido | Anotar o previsto no DPA | 01/10/2026 | DPA obtido |
 | Brevo | E-mail transacional | Subcontratante | UE (sede em França) | Obtido | Anotar o previsto no DPA | 01/10/2026 | DPA obtido |
-| Anthropic | Claude API — Alerta de fim de promoção, Comparador de Faturas, Simulador de Elegibilidade | Subcontratante | Pode haver tratamento fora do EEE — região não definida no repositório | Obtido | Anotar o previsto no DPA (SCCs, se aplicável) | 01/10/2026 | DPA obtido |
+| Anthropic | Claude API — Alerta de fim de promoção, Comparador de Faturas (o Simulador de Elegibilidade deixou de usar IA a 01/10/2026) | Subcontratante | Pode haver tratamento fora do EEE — região não definida no repositório | Obtido | Anotar o previsto no DPA (SCCs, se aplicável) | 01/10/2026 | DPA obtido |
 | Stripe | Pagamentos, subscrições e faturação (Checkout, webhooks) | Subcontratante e, para finalidades próprias (ex.: fraude, obrigações legais), responsável autónomo | Pode haver transferências internacionais | Obtido | Anotar o previsto no DPA (SCCs, se aplicável) | 01/10/2026 | DPA obtido |
 | Google | Analytics / GA4, Tag Manager e Google Ads (conversões otimizadas com e-mail em hash), só com consentimento; início de sessão com conta Google | Subcontratante na medição por conta da DoLado; responsável autónomo para finalidades próprias e no início de sessão com Google | Pode haver transferências internacionais | Obtido | Anotar o previsto no DPA (SCCs / DPF) | 01/10/2026 | DPA obtido |
 | Cookiebot (Usercentrics) | Gestão do consentimento de cookies e registo das escolhas | Subcontratante | Por confirmar | Por confirmar | Por confirmar | — | Pendente |

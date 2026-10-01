@@ -48,7 +48,7 @@ const FUNCIONALIDADES: Funcionalidade[] = [
     icone: "🧑‍🤝‍🧑",
     badge: "DISPONÍVEL",
     titulo: "Simulador de Elegibilidade",
-    descricao: "Grátis e sem conta — veja em 5 perguntas se o seu caso parece ter fundamento.",
+    descricao: "Grátis e sem conta — 4 perguntas para ver se a DoLado pode ajudar com o seu caso.",
     href: "/simulador-elegibilidade",
   },
   {
@@ -111,6 +111,16 @@ export function Homepage() {
                 Ver como funciona
               </Link>
             </div>
+            <p className="mb-4 text-[14px] text-[var(--color-ink-muted)]">
+              Ainda não sabe se deve avançar?{" "}
+              <Link
+                href="/simulador-elegibilidade"
+                onClick={() => track("click_hero_simulador")}
+                className="font-semibold text-[var(--color-brand)] underline-offset-2 hover:underline"
+              >
+                Ver se a DoLado pode ajudar →
+              </Link>
+            </p>
             <p className="flex items-center gap-1.5 text-[12.5px] text-[var(--color-ink-faint)]">
               <span className="text-[var(--color-brand)]">✓</span>
               Resposta ao primeiro contacto no prazo máximo de 48 horas úteis

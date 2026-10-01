@@ -25,7 +25,6 @@ const FUNCIONALIDADES_PROTECAO = [
   "Alerta de fim de promoção",
   "Aviso sectorial de aumento de preços",
   "Comparador de faturas mês a mês",
-  "Simulador de elegibilidade na área de cliente",
 ];
 
 type Cartao = {

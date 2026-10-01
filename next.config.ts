@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
     return [
       { source: "/pedido-classico", destination: "/tratar-caso", permanent: true },
       { source: "/home-anterior", destination: "/", permanent: true },
+      // O Simulador de Elegibilidade saiu do portal (01/10/2026): é público,
+      // sem conta. Redirect aqui, antes do middleware e do login do portal.
+      { source: "/portal/elegibilidade", destination: "/simulador-elegibilidade", permanent: true },
     ];
   },
 };

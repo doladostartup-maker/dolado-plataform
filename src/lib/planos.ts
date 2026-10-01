@@ -41,7 +41,7 @@ export const PLANOS: Record<PlanoId, Plano> = {
     casosPorMes: 0,
     casosPorCompra: 0,
     descricaoCurta:
-      "Alertas de fim de fidelização e de fim de promoção, aviso sectorial, comparador de faturas e simulador de elegibilidade. Não inclui o tratamento de casos.",
+      "Alertas de fim de fidelização e de fim de promoção, aviso sectorial e comparador de faturas. Não inclui o tratamento de casos.",
     stripePriceId: "price_1ULUUeBtJL9VeDPfWuDk5XCo",
   },
   caso_protecao: {

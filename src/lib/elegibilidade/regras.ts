@@ -1,13 +1,91 @@
-// DoLado — Fase 1 do Simulador de Elegibilidade: regras determinísticas,
-// sem IA. Cobre a maioria dos casos com uma regra fixa e sem
-// interpretação — por isso é seguro enviar o resultado directo ao
-// cliente, sem gate de revisão humana. Só os casos "em_revisao" avançam
-// para a Fase 2 (sugestão da Claude API + confirmação obrigatória do
-// admin).
+// DoLado — Simulador de Elegibilidade público (revisto a 01/10/2026).
+//
+// Ferramenta gratuita de qualificação, antes da compra: responde a "a DoLado
+// pode ajudar-me com este caso?" com 4 perguntas de escolha e um resultado
+// INDICATIVO sobre o âmbito do serviço — nunca sobre direitos do cliente nem
+// sobre a conduta da empresa. Corre só no browser: não grava respostas, não
+// pede dados pessoais, não envia e-mails nem chama a Claude API.
+//
+// As opções de setor, problema e momento são as do formulário "Tratar o meu
+// caso" (src/lib/pedidoCaso.ts), para o resultado positivo poder pré-preencher
+// esse formulário sem repetir perguntas.
 
-export type Setor = "Telecomunicações" | "Energia" | "Água";
+import { MOMENTOS, PROBLEMAS, SETORES } from "../pedidoCaso.ts";
+
+export const SETOR_FORA_DO_AMBITO = "Outro tipo de empresa";
+export const OPCOES_SETOR = [...SETORES, SETOR_FORA_DO_AMBITO];
+
+export const TITULAR_PARTICULAR = "Sim, é um contrato pessoal ou da minha casa";
+export const TITULAR_EMPRESA = "Não, é de uma empresa ou atividade profissional";
+export const TITULAR_NAO_SEI = "Não tenho a certeza";
+export const OPCOES_TITULAR = [TITULAR_PARTICULAR, TITULAR_EMPRESA, TITULAR_NAO_SEI];
+
+export const OPCOES_PROBLEMA = PROBLEMAS;
+
+export const MOMENTO_RESOLVIDO = "Sim, e o problema ficou resolvido";
+export const OPCOES_MOMENTO = [...MOMENTOS, MOMENTO_RESOLVIDO];
+
+export type RespostasSimulador = {
+  setor: string;
+  titular: string;
+  problema: string;
+  momento: string;
+};
+
+export type ResultadoSimulador = "positivo" | "incerto" | "negativo";
+
+export type AvaliacaoSimulador = {
+  resultado: ResultadoSimulador;
+  /** Motivo curto, sem afirmações jurídicas — só sobre o âmbito do serviço. */
+  motivo: string | null;
+};
+
+export const MOTIVOS = {
+  setor: "Neste momento, a DoLado trata apenas situações com empresas de telecomunicações, energia e água.",
+  empresa: "O serviço atual da DoLado é dirigido a consumidores particulares, não a contratos de empresas ou atividades profissionais.",
+  resolvido: "Pelas suas respostas, a situação parece já ter sido resolvida com a empresa.",
+  titular: "Não é claro se o contrato é pessoal ou de uma empresa ou atividade profissional.",
+  problema: "O tipo de situação não está entre os que a DoLado trata com mais frequência.",
+} as const;
+
+/**
+ * Avalia as respostas. Ordem: o que está claramente fora do âmbito primeiro
+ * (negativo), depois o que fica por esclarecer (incerto), senão positivo.
+ */
+export function avaliarSimulador(r: RespostasSimulador): AvaliacaoSimulador {
+  if (r.setor === SETOR_FORA_DO_AMBITO) return { resultado: "negativo", motivo: MOTIVOS.setor };
+  if (r.titular === TITULAR_EMPRESA) return { resultado: "negativo", motivo: MOTIVOS.empresa };
+  if (r.momento === MOMENTO_RESOLVIDO) return { resultado: "negativo", motivo: MOTIVOS.resolvido };
+
+  if (r.titular === TITULAR_NAO_SEI) return { resultado: "incerto", motivo: MOTIVOS.titular };
+  if (r.problema === "Outro") return { resultado: "incerto", motivo: MOTIVOS.problema };
+
+  const valido =
+    SETORES.includes(r.setor) &&
+    r.titular === TITULAR_PARTICULAR &&
+    PROBLEMAS.includes(r.problema) &&
+    MOMENTOS.includes(r.momento);
+  return valido ? { resultado: "positivo", motivo: null } : { resultado: "incerto", motivo: null };
+}
+
+/**
+ * Parâmetros para pré-preencher "Tratar o meu caso". Só categorias fechadas
+ * (nada escrito pelo utilizador, nada identificável) e só valores que o
+ * formulário aceita.
+ */
+export function parametrosPrePreenchimento(r: RespostasSimulador): Record<string, string> {
+  const p: Record<string, string> = {};
+  if (SETORES.includes(r.setor)) p.setor = r.setor;
+  if (PROBLEMAS.includes(r.problema)) p.problema = r.problema;
+  if (MOMENTOS.includes(r.momento)) p.momento = r.momento;
+  return p;
+}
+
+// ===== Histórico =====
+// Versão anterior do simulador (até 01/10/2026): pedia e-mail, duração do
+// contrato e descrição livre, e gravava em casos_elegibilidade_portal. Só o
+// backoffice ainda mostra esses registos antigos.
 export type DuracaoContrato = "menos_6m" | "6_12m" | "1_2anos" | "mais_2anos";
-export type EstadoElegibilidade = "elegivel" | "nao_elegivel" | "em_revisao";
 
 export const DURACAO_LABEL: Record<DuracaoContrato, string> = {
   menos_6m: "Menos de 6 meses",
@@ -15,31 +93,3 @@ export const DURACAO_LABEL: Record<DuracaoContrato, string> = {
   "1_2anos": "1 a 2 anos",
   mais_2anos: "Mais de 2 anos",
 };
-
-export function calcularElegibilidade(
-  setor: Setor,
-  duracao: DuracaoContrato,
-  empresaRespondeuBem: boolean,
-): { pontuacao: number; estado: EstadoElegibilidade } {
-  if (empresaRespondeuBem) {
-    return { pontuacao: 0, estado: "nao_elegivel" };
-  }
-
-  if (setor === "Telecomunicações") {
-    if (duracao === "menos_6m") return { pontuacao: 90, estado: "elegivel" };
-    if (duracao === "6_12m") return { pontuacao: 70, estado: "elegivel" };
-    if (duracao === "1_2anos") return { pontuacao: 60, estado: "elegivel" };
-    if (duracao === "mais_2anos") return { pontuacao: 75, estado: "elegivel" };
-  }
-
-  if (setor === "Energia") {
-    if (duracao === "mais_2anos") return { pontuacao: 75, estado: "elegivel" };
-    return { pontuacao: 60, estado: "em_revisao" };
-  }
-
-  if (setor === "Água") {
-    return { pontuacao: 80, estado: "elegivel" };
-  }
-
-  return { pontuacao: 50, estado: "em_revisao" };
-}
