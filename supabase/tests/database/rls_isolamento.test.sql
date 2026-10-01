@@ -453,6 +453,45 @@ update public.user_access
  where user_id = '00000000-0000-4000-a000-00000000000b';
 
 -- ===========================================================================
+-- 2e. Consentimentos da compra (prova antes do Checkout)
+-- ===========================================================================
+reset role;
+insert into public.consentimentos_compra (id, user_id, email, plano, tipo_compra, origem, termos_versao, privacidade_versao,
+  consentimento_inicio_imediato_versao, texto_aceitacao_termos, texto_consentimento_inicio_imediato, aceitou_termos_em, pediu_inicio_imediato_em) values
+  ('1c000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'a@teste.invalid', 'avulso', 'avulso', 'novo_caso',
+   '2026-10-01', '2026-09-30', '2026-10-01', 'Li e aceito…', 'Peço expressamente…', now(), now()),
+  ('1c000000-0000-4000-a000-00000000000b', '00000000-0000-4000-a000-00000000000b', 'b@teste.invalid', 'caso_protecao', 'subscricao', 'portal',
+   '2026-10-01', '2026-09-30', '2026-10-01', 'Li e aceito…', 'Peço expressamente…', now(), now()),
+  ('1c000000-0000-4000-a000-0000000000c0', null, null, 'protecao', 'subscricao', 'landing',
+   '2026-10-01', '2026-09-30', '2026-10-01', 'Li e aceito…', 'Peço expressamente…', now(), now());
+
+select testes.como(null);
+select ok(testes.contar('select * from public.consentimentos_compra') <= 0, 'anon: não lê consentimentos de compra');
+select ok(testes.negado($$insert into public.consentimentos_compra (plano, tipo_compra, origem, termos_versao, privacidade_versao, consentimento_inicio_imediato_versao, texto_aceitacao_termos, texto_consentimento_inicio_imediato, aceitou_termos_em, pediu_inicio_imediato_em) values ('avulso','avulso','landing','x','x','x','x','x',now(),now())$$), 'anon: não cria consentimentos');
+reset role;
+select testes.como('00000000-0000-4000-a000-00000000000a');
+select is(testes.contar('select * from public.consentimentos_compra'), 1::bigint, 'A: vê só o próprio consentimento de compra');
+select ok(testes.negado($$insert into public.consentimentos_compra (user_id, plano, tipo_compra, origem, termos_versao, privacidade_versao, consentimento_inicio_imediato_versao, texto_aceitacao_termos, texto_consentimento_inicio_imediato, aceitou_termos_em, pediu_inicio_imediato_em) values ('00000000-0000-4000-a000-00000000000a','avulso','avulso','portal','x','x','x','x','x',now(),now())$$), 'A: não forja consentimentos');
+select ok(testes.negado($$update public.consentimentos_compra set termos_versao = 'outra' where id = '1c000000-0000-4000-a000-00000000000a'$$), 'A: não altera o próprio consentimento');
+select ok(testes.negado($$delete from public.consentimentos_compra where id = '1c000000-0000-4000-a000-00000000000a'$$), 'A: não apaga o próprio consentimento');
+select ok(testes.negado($$update public.consentimentos_compra set checkout_session_id = 'cs_forjada' where id = '1c000000-0000-4000-a000-00000000000c0'$$), 'A: não liga sessões a consentimentos');
+reset role;
+
+grant usage on schema testes to service_role;
+grant execute on all functions in schema testes to service_role;
+set local role service_role;
+select is(testes.tenta($$update public.consentimentos_compra set checkout_session_id = 'cs_c', email = 'c@teste.invalid', stripe_subscription_id = 'sub_c' where id = '1c000000-0000-4000-a000-0000000000c0'$$), 'ok:1', 'servidor: completa as ligações vazias');
+select is(testes.tenta($$update public.consentimentos_compra set checkout_session_id = 'cs_c', email = 'c@teste.invalid' where id = '1c000000-0000-4000-a000-0000000000c0'$$), 'ok:1', 'servidor: webhook repetido com os mesmos valores não falha');
+select is(testes.tenta($$update public.consentimentos_compra set checkout_session_id = 'cs_outra' where id = '1c000000-0000-4000-a000-0000000000c0'$$), 'erro:42501', 'servidor: não troca a sessão já ligada');
+select is(testes.tenta($$update public.consentimentos_compra set texto_consentimento_inicio_imediato = 'outro texto' where id = '1c000000-0000-4000-a000-0000000000c0'$$), 'erro:42501', 'imutável: texto aceite não muda');
+select is(testes.tenta($$update public.consentimentos_compra set termos_versao = '2099-01-01' where id = '1c000000-0000-4000-a000-0000000000c0'$$), 'erro:42501', 'imutável: versão dos Termos não muda');
+select is(testes.tenta($$update public.consentimentos_compra set aceitou_termos_em = now() - interval '1 day' where id = '1c000000-0000-4000-a000-0000000000c0'$$), 'erro:42501', 'imutável: hora da aceitação não muda');
+select is(testes.tenta($$update public.consentimentos_compra set user_id = '00000000-0000-4000-a000-00000000000b' where id = '1c000000-0000-4000-a000-00000000000a'$$), 'erro:42501', 'imutável: não passa para outra conta');
+select is(testes.tenta($$update public.consentimentos_compra set user_id = '00000000-0000-4000-a000-00000000000c' where id = '1c000000-0000-4000-a000-0000000000c0'$$), 'ok:1', 'servidor: liga a conta criada depois da compra');
+select is(testes.tenta($$insert into public.consentimentos_compra (plano, tipo_compra, origem, termos_versao, privacidade_versao, consentimento_inicio_imediato_versao, texto_aceitacao_termos, texto_consentimento_inicio_imediato, aceitou_termos_em, pediu_inicio_imediato_em, checkout_session_id) values ('avulso','avulso','landing','x','x','x','x','x',now(),now(),'cs_c')$$), 'erro:23505', 'uma sessão só pode estar ligada a um consentimento');
+reset role;
+
+-- ===========================================================================
 -- 3. ADMIN — acesso total pelo RLS (via is_admin())
 -- ===========================================================================
 reset role;
@@ -464,6 +503,7 @@ select is(testes.contar('select * from public.stripe_webhook_events'), 1::bigint
 select is(testes.contar('select * from public.stripe_subscriptions'), 1::bigint, 'admin: lê subscrições Stripe');
 select is(testes.contar('select * from public.conversoes_avulso'), 1::bigint, 'admin: lê conversões Avulso');
 select is(testes.contar('select * from public.subscricao_cancelamentos'), 1::bigint, 'admin: lê cancelamentos de subscrição');
+select is(testes.contar('select * from public.consentimentos_compra'), 3::bigint, 'admin: lê consentimentos de compra de todos');
 select ok(testes.contar('select * from public.case_credit_freezes') >= 2, 'admin: lê casos congelados de todos');
 select is(testes.contar('select * from storage.objects'), 6::bigint, 'admin: vê ficheiros de todos os buckets');
 select ok(testes.permitido($$update public.casos set notas = 'revisto' where id = '10000000-0000-4000-a000-00000000000b'$$), 'admin: altera qualquer caso');

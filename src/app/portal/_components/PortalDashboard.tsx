@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
-import { iniciarUpgradeParaAssinatura, iniciarUpgradeParaProtecao } from "@/app/actions/stripe";
+import { useState } from "react";
+import { ConfirmarCompra } from "@/components/compra/ConfirmarCompra";
 import type { ResumoPlano } from "@/lib/acesso";
 import {
   IVA_INCLUIDO,
@@ -16,20 +16,19 @@ import { MARKETING_SITE_URL } from "@/lib/site";
 
 type OfertaConversao = { mensalidade: number; reembolso: number } | null;
 
-// Só o identificador interno do plano chega à Server Action; o Price ID e o
-// acesso são decididos no servidor.
+// Escolher uma opção abre a confirmação da compra (ConfirmarCompra); só essa
+// envia o identificador do plano à Server Action. O Price ID e o acesso são
+// decididos no servidor.
 const OPCOES = [
   {
     plano: "protecao",
     descricao: "Alertas, aviso sectorial, comparador de faturas e simulador de elegibilidade. Não inclui casos.",
     cta: "Aderir à Proteção",
-    acao: iniciarUpgradeParaProtecao,
   },
   {
     plano: "caso_protecao",
     descricao: `Tudo o que a Proteção inclui, mais 1 caso por mês (acumulável até ${LIMITE_CASOS_ACUMULADOS}).`,
     cta: "Escolher Caso + Proteção",
-    acao: iniciarUpgradeParaAssinatura,
   },
 ] as const;
 
@@ -181,7 +180,7 @@ export function PortalDashboard({
   bloqueadoInicial?: string;
 }) {
   const [modalAberto, setModalAberto] = useState(Boolean(bloqueadoInicial));
-  const [aSubscrever, iniciarSubscricao] = useTransition();
+  const [aConfirmar, setAConfirmar] = useState<"protecao" | "caso_protecao" | null>(null);
 
   const assinante = temProtecao;
   // Conta com plano Stripe pode aderir daqui (com conversão do Avulso, se
@@ -304,11 +303,13 @@ export function PortalDashboard({
                       </p>
                       <button
                         type="button"
-                        disabled={aSubscrever}
-                        onClick={() => iniciarSubscricao(() => opcao.acao())}
+                        onClick={() => {
+                          setModalAberto(false);
+                          setAConfirmar(opcao.plano);
+                        }}
                         className="w-full rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-60"
                       >
-                        {aSubscrever ? "A abrir…" : opcao.cta}
+                        {opcao.cta}
                       </button>
                     </div>
                   );
@@ -340,6 +341,15 @@ export function PortalDashboard({
             </div>
           </div>
         </div>
+      )}
+      {aConfirmar && (
+        <ConfirmarCompra
+          plano={aConfirmar}
+          fluxo="adesao"
+          origem="portal"
+          conversao={aConfirmar === "protecao" ? conversaoProtecao : conversaoCasoProtecao}
+          onFechar={() => setAConfirmar(null)}
+        />
       )}
     </div>
   );

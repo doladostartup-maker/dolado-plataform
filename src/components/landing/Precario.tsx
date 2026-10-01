@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { iniciarCheckout } from "@/app/actions/stripe";
+import { useState } from "react";
+import { ConfirmarCompra } from "@/components/compra/ConfirmarCompra";
 import { track } from "@/lib/analytics";
 import {
   IVA_INCLUIDO,
@@ -12,8 +12,9 @@ import {
   type PlanoId,
 } from "@/lib/planos";
 
-// Preçário público. Nomes, preços e Price IDs vêm de src/lib/planos.ts; o
-// botão envia só o PlanoId à Server Action, que escolhe o Price ID.
+// Preçário público. Nomes, preços e Price IDs vêm de src/lib/planos.ts. O
+// botão abre a confirmação da compra (Termos, início imediato, livre
+// resolução); só esta envia o PlanoId à Server Action, que escolhe o Price ID.
 // Só se listam funcionalidades de proteção já disponíveis na plataforma.
 
 const FUNCIONALIDADES_PROTECAO = [
@@ -87,13 +88,11 @@ const BOTAO_SECUNDARIO =
   "inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-2.5 text-[13.5px] font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-canvas)] disabled:opacity-60";
 
 export function Precario() {
-  const [aIniciarPagamento, iniciarPagamento] = useTransition();
-  const [emCurso, setEmCurso] = useState<PlanoId | null>(null);
+  const [aConfirmar, setAConfirmar] = useState<PlanoId | null>(null);
 
   const escolher = (plano: PlanoId) => {
     track(`click_precario_${plano}`);
-    setEmCurso(plano);
-    iniciarPagamento(() => iniciarCheckout(plano));
+    setAConfirmar(plano);
   };
 
   return (
@@ -145,11 +144,10 @@ export function Precario() {
               )}
               <button
                 type="button"
-                disabled={aIniciarPagamento}
                 onClick={() => escolher(id)}
                 className={`mt-auto ${cartao.destaque ? BOTAO_PRIMARIO : BOTAO_SECUNDARIO}`}
               >
-                {aIniciarPagamento && emCurso === id ? "A abrir pagamento…" : cartao.cta}
+                {cartao.cta}
               </button>
             </div>
           );
@@ -192,6 +190,14 @@ export function Precario() {
           </tbody>
         </table>
       </div>
+      {aConfirmar && (
+        <ConfirmarCompra
+          plano={aConfirmar}
+          fluxo="publico"
+          origem="landing"
+          onFechar={() => setAConfirmar(null)}
+        />
+      )}
     </section>
   );
 }

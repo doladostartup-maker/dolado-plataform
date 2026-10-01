@@ -92,18 +92,20 @@ describe("checkout: o browser só escolhe o plano, o servidor escolhe o preço",
     assert.match(stripePlanos, /PLANOS\.avulso\.stripePriceId/);
   });
 
-  test("iniciarCheckout valida o PlanoId e escolhe o preço no servidor", () => {
-    const corpo = acoes.slice(acoes.indexOf("export async function iniciarCheckout"));
-    assert.match(corpo, /ehPlanoId\(planoEscolhido\)/);
-    assert.match(corpo, /precoDoPlano\(planoEscolhido\)/);
+  test("o checkout público valida o PlanoId (lerPedidoCompra) e escolhe o preço no servidor", () => {
+    const corpo = acoes.slice(acoes.indexOf("async function checkoutPublico"));
+    assert.match(fonte("./consentimentoCompra.ts"), /ehPlanoId\(plano\)/);
+    assert.match(corpo, /precoDoPlano\(pedido\.plano\)/);
     // O tipo de compra que o webhook e /criar-conta esperam mantém-se.
-    assert.match(corpo, /planoEscolhido === "avulso" \? "avulso" : "assinatura"/);
+    assert.match(corpo, /plano: avulso \? "avulso" : "assinatura"/);
   });
 
-  test("o preçário envia só o PlanoId, sem Price IDs nem chaves", () => {
+  test("o preçário envia só o PlanoId (pela confirmação), sem Price IDs nem chaves", () => {
     const precario = fonte("../components/landing/Precario.tsx");
-    assert.match(precario, /iniciarCheckout\(plano\)/);
-    assert.equal(/price_|sk_(live|test)_|whsec_/.test(precario), false);
+    assert.match(precario, /<ConfirmarCompra/);
+    const modal = fonte("../components/compra/ConfirmarCompra.tsx");
+    assert.match(modal, /name="plano" value=\{plano\}/);
+    for (const f of [precario, modal]) assert.equal(/price_|sk_(live|test)_|whsec_/.test(f), false);
   });
 });
 

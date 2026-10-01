@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { consentimentoDaMetadata } from "../consentimentoCompra.ts";
 
 // Lógica do webhook Stripe, separada do route handler para ser testável sem
 // rede nem base de dados: tudo o que tem efeitos (Supabase, API Stripe,
@@ -35,6 +36,11 @@ import type Stripe from "stripe";
 //   única vez; refund.* atualiza o estado e um reembolso falhado fica para
 //   intervenção manual (nunca um segundo reembolso automático nem
 //   cancelamento da assinatura).
+// - Consentimentos da compra (metadata.consentimento_compra_id, gravado pelo
+//   servidor ANTES de criar a sessão): o webhook só completa as ligações em
+//   falta (sessão, pagamento, subscrição, e-mail, conta). Nunca cria nem
+//   altera o que foi aceite, e uma compra sem registo (sessões antigas) não
+//   perde o acesso por isso.
 
 export type Plano = "avulso" | "protecao" | "caso_protecao";
 export type EstadoPagamento =
@@ -114,6 +120,12 @@ export type ConversaoParaReembolso = {
 export type ResultadoReembolso =
   | { ok: true; id: string; status: string | null; payment_intent_id: string }
   | { ok: false; motivo: string };
+
+export type ConsentimentoLigado = {
+  termos_versao: string;
+  /** Pedido expresso de início imediato registado antes do pagamento. */
+  pediu_inicio_imediato: boolean;
+};
 
 export type LinhaLog = {
   evento: string;
@@ -205,11 +217,25 @@ export interface DependenciasWebhook {
   ): Promise<{ conversaoId: string; passouAFalhado: boolean } | null>;
   notificarAdmin(assunto: string, texto: string): Promise<void>;
 
+  /**
+   * Completa as ligações do registo de consentimento (só campos vazios;
+   * idempotente). null se o registo não existir ou pertencer a outra sessão.
+   */
+  ligarConsentimento(
+    consentimentoId: string,
+    dados: { sessionId: string; subscriptionId: string | null; email: string; userId: string | null },
+  ): Promise<ConsentimentoLigado | null>;
+
   enviarEmailPagamentoConfirmado(dados: {
     email: string;
     plano: Plano;
     contaExiste: boolean;
     sessionId: string;
+    /** Valor efetivamente pago agora (com descontos), em cêntimos. */
+    valorPagoCentimos: number | null;
+    /** Próxima renovação (ISO), nas subscrições, se conhecida. */
+    renovacao: string | null;
+    consentimento: ConsentimentoLigado | null;
   }): Promise<void>;
   registar(linha: LinhaLog): void;
 }
@@ -434,6 +460,23 @@ async function converterAvulso(
   );
 }
 
+/** Liga o registo de consentimento desta sessão (se houver). Idempotente. */
+async function ligarConsentimentoDaSessao(
+  session: Stripe.Checkout.Session,
+  s: DadosSessao,
+  contas: string[],
+  deps: DependenciasWebhook,
+) {
+  const consentimentoId = consentimentoDaMetadata(session.metadata);
+  if (!consentimentoId) return null;
+  return deps.ligarConsentimento(consentimentoId, {
+    sessionId: session.id,
+    subscriptionId: s.subscriptionId,
+    email: s.email,
+    userId: contas[0] ?? null,
+  });
+}
+
 /**
  * Pagamento confirmado. Ordem pensada para um reenvio depois de uma falha:
  * primeiro o acesso e os créditos (idempotentes), depois o pagamento como
@@ -471,12 +514,20 @@ async function confirmarCompra(
   }
 
   await deps.gravarPagamento(dadosPagamento(session, s, "concluido"));
+  const consentimento = await ligarConsentimentoDaSessao(session, s, contas, deps);
   if (estadoAnterior !== "concluido" && plano) {
+    const renovacao =
+      plano !== "avulso" && s.subscriptionId
+        ? (await deps.obterSubscricaoStripe(s.subscriptionId)).current_period_end
+        : null;
     await deps.enviarEmailPagamentoConfirmado({
       email: s.email,
       plano,
       contaExiste: contas.length > 0,
       sessionId: session.id,
+      valorPagoCentimos: session.amount_total,
+      renovacao,
+      consentimento,
     });
   }
   if (!plano) return "confirmado_preco_desconhecido";
@@ -500,6 +551,7 @@ async function tratarCheckoutConcluido(event: Stripe.Event, deps: DependenciasWe
     // acesso, créditos nem e-mail. Não recua um estado final que já tenha
     // chegado por outro evento entregue fora de ordem.
     await deps.gravarPagamento(dadosPagamento(session, s, estadoAtual ?? "pendente"));
+    await ligarConsentimentoDaSessao(session, s, s.userId ? [s.userId] : [], deps);
     return { resultado: "pagamento_pendente", ...ids };
   }
 

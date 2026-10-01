@@ -8,6 +8,7 @@ const PAGINAS_PUBLICAS = [
   "/",
   "/termos",
   "/privacidade",
+  "/livre-resolucao",
   "/entrar",
   "/login",
   "/registo",
@@ -48,6 +49,7 @@ const PAGINAS_SO_MARKETING = [
   "/",
   "/termos",
   "/privacidade",
+  "/livre-resolucao",
   "/pedido-classico",
   "/home-anterior",
   "/como-funciona",
@@ -58,6 +60,11 @@ const PAGINAS_SO_MARKETING = [
   "/simulador-elegibilidade",
   "/perguntas-frequentes",
 ];
+
+// Versões anteriores dos Termos (/termos/<versão>) — mesmas regras que /termos.
+function ehVersaoDosTermos(pathname: string) {
+  return pathname.startsWith("/termos/");
+}
 
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host")?.split(":")[0] ?? "";
@@ -74,7 +81,8 @@ export async function middleware(request: NextRequest) {
 
   if (
     (host === "dolado.pt" || host === "www.dolado.pt") &&
-    !PAGINAS_SO_MARKETING.includes(pathname)
+    !PAGINAS_SO_MARKETING.includes(pathname) &&
+    !ehVersaoDosTermos(pathname)
   ) {
     return NextResponse.redirect(
       new URL(`${pathname}${search}`, "https://portal.dolado.pt"),
@@ -88,7 +96,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/entrar", request.url));
   }
 
-  if (ROTAS_SEM_REFRESH_DE_SESSAO.includes(pathname)) {
+  if (ROTAS_SEM_REFRESH_DE_SESSAO.includes(pathname) || ehVersaoDosTermos(pathname)) {
     return NextResponse.next();
   }
 

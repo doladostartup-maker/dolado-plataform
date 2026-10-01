@@ -23,6 +23,8 @@ export type Plano = {
   casosPorMes: number;
   /** Casos incluídos na compra (pagamento único). */
   casosPorCompra: number;
+  /** Resumo do que inclui (confirmação de compra). */
+  descricaoCurta: string;
   stripePriceId: string;
 };
 
@@ -38,6 +40,8 @@ export const PLANOS: Record<PlanoId, Plano> = {
     protecao: true,
     casosPorMes: 0,
     casosPorCompra: 0,
+    descricaoCurta:
+      "Alertas de fim de fidelização e de fim de promoção, aviso sectorial, comparador de faturas e simulador de elegibilidade. Não inclui o tratamento de casos.",
     stripePriceId: "price_1ULUUeBtJL9VeDPfWuDk5XCo",
   },
   caso_protecao: {
@@ -48,6 +52,7 @@ export const PLANOS: Record<PlanoId, Plano> = {
     protecao: true,
     casosPorMes: 1,
     casosPorCompra: 0,
+    descricaoCurta: `Tudo o que a Proteção inclui, mais 1 caso por mês. Os casos não utilizados acumulam até ao limite de ${LIMITE_CASOS_ACUMULADOS}.`,
     stripePriceId: "price_1UJYnPBtJL9VeDPfnQTlVwsq",
   },
   avulso: {
@@ -58,6 +63,7 @@ export const PLANOS: Record<PlanoId, Plano> = {
     protecao: false,
     casosPorMes: 0,
     casosPorCompra: 1,
+    descricaoCurta: "Tratamento de 1 caso, sem subscrição. Não inclui as funcionalidades de proteção.",
     stripePriceId: "price_1UJYwzBtJL9VeDPfrAiguI1Z",
   },
 };

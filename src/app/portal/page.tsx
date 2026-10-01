@@ -1,8 +1,4 @@
-import {
-  iniciarCompraAvulsoComConta,
-  iniciarUpgradeParaAssinatura,
-  iniciarUpgradeParaProtecao,
-} from "@/app/actions/stripe";
+import { BotaoComprar } from "@/components/compra/BotaoComprar";
 import { avisoDoPortal, estadoReembolsoCliente, resumoPlanoPortal } from "@/lib/acesso";
 import { obterAcesso, requireUser } from "@/lib/auth";
 import {
@@ -142,26 +138,33 @@ export default async function PortalIndex({
             conta e os seus dados continuam guardados. Pode tentar pagar de novo, com o mesmo ou
             com outro método de pagamento.
           </p>
+          {/* Cada tentativa passa de novo pela confirmação da compra. */}
           {ultimo.plano === "avulso" ? (
-            <form action={iniciarCompraAvulsoComConta}>
-              <button type="submit" className={BOTAO}>
-                Tentar pagar novamente
-              </button>
-            </form>
+            <BotaoComprar plano="avulso" fluxo="avulso_conta" origem="repetir_pagamento" className={BOTAO}>
+              Tentar pagar novamente
+            </BotaoComprar>
           ) : (
             // O registo do pagamento não guarda qual das subscrições era:
             // o cliente escolhe de novo.
             <div className="flex flex-wrap gap-3">
-              <form action={iniciarUpgradeParaProtecao}>
-                <button type="submit" className={BOTAO}>
-                  Tentar novamente — {PLANOS.protecao.nome}
-                </button>
-              </form>
-              <form action={iniciarUpgradeParaAssinatura}>
-                <button type="submit" className={BOTAO}>
-                  Tentar novamente — {PLANOS.caso_protecao.nome}
-                </button>
-              </form>
+              <BotaoComprar
+                plano="protecao"
+                fluxo="adesao"
+                origem="repetir_pagamento"
+                conversao={ofertaConversao("protecao")}
+                className={BOTAO}
+              >
+                Tentar novamente — {PLANOS.protecao.nome}
+              </BotaoComprar>
+              <BotaoComprar
+                plano="caso_protecao"
+                fluxo="adesao"
+                origem="repetir_pagamento"
+                conversao={ofertaConversao("caso_protecao")}
+                className={BOTAO}
+              >
+                Tentar novamente — {PLANOS.caso_protecao.nome}
+              </BotaoComprar>
             </div>
           )}
         </div>

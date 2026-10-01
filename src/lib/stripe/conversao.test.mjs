@@ -131,3 +131,23 @@ describe("estado do reembolso em português", async () => {
     assert.equal(estadoReembolsoPt(null), null);
   });
 });
+
+describe("conversão com consentimento da compra", () => {
+  test("metadata extra (consentimento) vai para a sessão e para a subscrição, sem apagar a da conversão", () => {
+    const p = parametrosCheckoutConversao({
+      precoId: "price_1ULUUeBtJL9VeDPfWuDk5XCo",
+      cliente: { customer: "cus_1" },
+      conversaoId: "conv_1",
+      userId: USER,
+      plano: "protecao",
+      siteUrl: "https://portal.dolado.pt",
+      metadataExtra: { consentimento_compra_id: "c1", produto: "protecao", tipo_compra: "conversao_avulso" },
+    });
+    for (const m of [p.metadata, p.subscription_data.metadata]) {
+      assert.equal(m.consentimento_compra_id, "c1");
+      assert.equal(m.conversao_id, "conv_1");
+      assert.equal(m.plano, "assinatura");
+      assert.equal(m.user_id, USER);
+    }
+  });
+});

@@ -24,6 +24,7 @@ function criarEstado() {
     creditosPorConta: new Map(), // origem → user_id (para congelar_creditos_caso)
     congelamentos: [], // case_credit_freezes
     cancelamentos: [], // subscricao_cancelamentos
+    consentimentos: new Map(), // id → linha de consentimentos_compra
     emails: [],
     logs: [],
     stripeSubscricao: null, // o que a "API Stripe" devolve
@@ -221,6 +222,19 @@ function criarDependencias(estado) {
     },
     async notificarAdmin(assunto, texto) {
       estado.avisosAdmin.push({ assunto, texto });
+    },
+    // Mesmas regras que webhookDependencias: só preenche ligações vazias.
+    async ligarConsentimento(id, { sessionId, subscriptionId, email, userId }) {
+      const c = estado.consentimentos.get(id);
+      if (!c) return null;
+      if (c.checkout_session_id && c.checkout_session_id !== sessionId) return null;
+      c.atualizacoes = (c.atualizacoes ?? 0) + 1;
+      c.checkout_session_id ??= sessionId;
+      if (!c.stripe_payment_id && estado.pagamentos.has(sessionId)) c.stripe_payment_id = `pay_${sessionId}`;
+      if (!c.stripe_subscription_id && subscriptionId) c.stripe_subscription_id = subscriptionId;
+      c.email ??= email;
+      c.user_id ??= userId;
+      return { termos_versao: c.termos_versao, pediu_inicio_imediato: true };
     },
     async enviarEmailPagamentoConfirmado(dados) {
       estado.emails.push(dados);
@@ -997,5 +1011,117 @@ describe("gestão de subscrição (webhook)", () => {
     assert.equal(conta().case_credits, 1);
     assert.equal(conta().subscription_plan, "none");
     assert.equal(estado.congelamentos.length, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Consentimentos da compra (gravados antes do Checkout; o webhook completa
+// as ligações).
+// ---------------------------------------------------------------------------
+describe("consentimentos da compra (webhook)", () => {
+  const CONS = "11111111-1111-4111-a111-111111111111";
+  const comConsentimento = (extra = {}) =>
+    estado.consentimentos.set(CONS, {
+      id: CONS,
+      termos_versao: "2026-10-01",
+      checkout_session_id: null,
+      stripe_payment_id: null,
+      stripe_subscription_id: null,
+      email: null,
+      user_id: null,
+      ...extra,
+    });
+  const meta = (m) => ({ ...m, consentimento_compra_id: CONS, produto: "caso_protecao", tipo_compra: "subscricao" });
+
+  test("13. checkout concluído: liga sessão, pagamento, subscrição, e-mail e conta ao consentimento", async () => {
+    comConta();
+    comConsentimento();
+    estado.stripeSubscricao = snapshot("active");
+    await processarEventoStripe(evento("checkout.session.completed", sessaoSubscricao({ metadata: meta({ plano: "assinatura", user_id: USER }) })), deps);
+    const c = estado.consentimentos.get(CONS);
+    assert.equal(c.checkout_session_id, "cs_sub");
+    assert.equal(c.stripe_payment_id, "pay_cs_sub");
+    assert.equal(c.stripe_subscription_id, SUB);
+    assert.equal(c.email, "cliente@teste.invalid");
+    assert.equal(c.user_id, USER);
+    // 15. e-mail com os dados da compra e do consentimento
+    const [email] = estado.emails;
+    assert.equal(email.valorPagoCentimos, 799);
+    assert.equal(email.renovacao, "2023-12-14T22:13:20.000Z");
+    assert.deepEqual(email.consentimento, { termos_versao: "2026-10-01", pediu_inicio_imediato: true });
+  });
+
+  test("14. webhook repetido: não duplica nem altera o registo; um só e-mail", async () => {
+    comConta();
+    comConsentimento();
+    estado.stripeSubscricao = snapshot("active");
+    const s = sessaoSubscricao({ metadata: meta({ plano: "assinatura", user_id: USER }) });
+    await processarEventoStripe(evento("checkout.session.completed", s), deps);
+    const antes = { ...estado.consentimentos.get(CONS) };
+    await processarEventoStripe(evento("checkout.session.completed", s), deps); // novo event.id
+    const depois = estado.consentimentos.get(CONS);
+    assert.equal(estado.consentimentos.size, 1);
+    for (const k of ["checkout_session_id", "stripe_payment_id", "stripe_subscription_id", "email", "user_id"]) {
+      assert.equal(depois[k], antes[k], k);
+    }
+    assert.equal(estado.emails.length, 1);
+  });
+
+  test("pagamento pendente (SEPA): o consentimento fica já ligado à sessão", async () => {
+    comConta();
+    comConsentimento();
+    await processarEventoStripe(
+      evento("checkout.session.completed", sessaoAvulso({ payment_status: "unpaid", metadata: meta({ plano: "avulso", user_id: USER }) })),
+      deps,
+    );
+    assert.equal(estado.consentimentos.get(CONS).checkout_session_id, "cs_avulso");
+    assert.equal(conta().case_credits, 0);
+  });
+
+  test("consentimento de outra sessão: não é ligado nem usado no e-mail", async () => {
+    comConta();
+    comConsentimento({ checkout_session_id: "cs_outra" });
+    estado.stripeSubscricao = snapshot("active");
+    await processarEventoStripe(evento("checkout.session.completed", sessaoSubscricao({ metadata: meta({ plano: "assinatura", user_id: USER }) })), deps);
+    assert.equal(estado.consentimentos.get(CONS).checkout_session_id, "cs_outra");
+    assert.equal(estado.emails[0].consentimento, null);
+  });
+
+  test("sessão antiga sem consentimento: o acesso é dado na mesma (sem bloquear clientes)", async () => {
+    comConta();
+    estado.stripeSubscricao = snapshot("active");
+    await processarEventoStripe(evento("checkout.session.completed", sessaoSubscricao()), deps);
+    assert.equal(conta().subscription_plan, "caso_protecao");
+    assert.equal(estado.emails[0].consentimento, null);
+  });
+
+  test("16. cupão de 100% (0 €): ativa o plano, liga o consentimento e o e-mail mostra 0 €", async () => {
+    comConta();
+    comConsentimento();
+    estado.stripeSubscricao = snapshot("active");
+    await processarEventoStripe(
+      evento(
+        "checkout.session.completed",
+        sessaoSubscricao({
+          payment_status: "no_payment_required",
+          amount_total: 0,
+          discounts: [{ coupon: "duploprestigio26" }],
+          metadata: meta({ plano: "assinatura", user_id: USER }),
+        }),
+      ),
+      deps,
+    );
+    assert.equal(conta().subscription_plan, "caso_protecao");
+    assert.equal(estado.consentimentos.get(CONS).checkout_session_id, "cs_sub");
+    assert.equal(estado.emails[0].valorPagoCentimos, 0);
+  });
+
+  test("Avulso: e-mail sem renovação", async () => {
+    comConta();
+    comConsentimento();
+    await processarEventoStripe(evento("checkout.session.completed", sessaoAvulso({ metadata: meta({ plano: "avulso", user_id: USER }) })), deps);
+    assert.equal(estado.emails[0].plano, "avulso");
+    assert.equal(estado.emails[0].renovacao, null);
+    assert.equal(conta().case_credits, 1);
   });
 });

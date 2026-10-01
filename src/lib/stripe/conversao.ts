@@ -111,6 +111,7 @@ export function parametrosCheckoutConversao({
   userId,
   plano,
   siteUrl,
+  metadataExtra = {},
 }: {
   precoId: string;
   cliente: { customer: string } | { customer_email: string | undefined };
@@ -118,8 +119,17 @@ export function parametrosCheckoutConversao({
   userId: string;
   plano: PlanoDestino;
   siteUrl: string;
+  /** Ex.: consentimento_compra_id — vai para a sessão e para a subscrição. */
+  metadataExtra?: Record<string, string>;
 }): Stripe.Checkout.SessionCreateParams {
-  const metadata = { plano: "assinatura", upgrade: "true", user_id: userId, conversao_id: conversaoId, plano_destino: plano };
+  const metadata = {
+    ...metadataExtra,
+    plano: "assinatura",
+    upgrade: "true",
+    user_id: userId,
+    conversao_id: conversaoId,
+    plano_destino: plano,
+  };
   return {
     mode: "subscription",
     ...cliente,

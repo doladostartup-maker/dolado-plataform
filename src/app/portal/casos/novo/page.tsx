@@ -1,6 +1,11 @@
 import Link from "next/link";
-import { iniciarCompraAvulsoComConta, iniciarUpgradeParaAssinatura } from "@/app/actions/stripe";
+import { BotaoComprar } from "@/components/compra/BotaoComprar";
 import { obterAcesso, requireUser } from "@/lib/auth";
+import {
+  escolherAvulsoParaConversao,
+  type ConversaoExistente,
+  type PagamentoAvulso,
+} from "@/lib/stripe/conversao";
 import { PLANOS, precoComUnidade } from "@/lib/planos";
 import { criarCasoCliente } from "../actions";
 import { ClienteCasoForm } from "../_components/ClienteCasoForm";
@@ -29,6 +34,30 @@ export default async function NovoCasoClientePage({
       .maybeSingle();
     const pendente = ultimo?.estado === "pendente" || params.pagamento === "1";
     const temCasoProtecao = acesso.temProtecao && acesso.plano === "caso_protecao";
+
+    // O que um Avulso pago cobre no Caso + Proteção (mostrado na confirmação).
+    // Só leitura, da própria conta (cliente Supabase do utilizador, com RLS).
+    let conversaoCasoProtecao: { mensalidade: number; reembolso: number } | null = null;
+    if (!acesso.temProtecao) {
+      const [{ data: pagamentos }, { data: conversoes }] = await Promise.all([
+        supabase
+          .from("stripe_payments")
+          .select("id, stripe_session_id, user_id, plano, estado, valor_total_centimos, created_at")
+          .eq("user_id", user.id)
+          .eq("plano", "avulso"),
+        supabase
+          .from("conversoes_avulso")
+          .select("id, stripe_payment_id, estado, checkout_session_id")
+          .eq("user_id", user.id),
+      ]);
+      const escolha = escolherAvulsoParaConversao(
+        (pagamentos ?? []) as PagamentoAvulso[],
+        (conversoes ?? []) as ConversaoExistente[],
+        user.id,
+        "caso_protecao",
+      );
+      if (escolha) conversaoCasoProtecao = { mensalidade: escolha.calculo.mensalidade, reembolso: escolha.calculo.reembolso };
+    }
 
     return (
       <div className="flex max-w-xl flex-col gap-6">
@@ -59,18 +88,25 @@ export default async function NovoCasoClientePage({
                     : "Para abrir um novo caso, escolha uma das opções abaixo. Os seus casos anteriores continuam disponíveis em “A sua reclamação”."}
               </p>
             </div>
-            <form action={iniciarCompraAvulsoComConta}>
-              <button type="submit" className={acesso.temProtecao ? BOTAO_PRIMARIO : BOTAO_SECUNDARIO}>
-                Comprar um caso {PLANOS.avulso.nome} — {precoComUnidade("avulso")} (IVA incluído)
-              </button>
-            </form>
-            {/* Já com subscrição ativa não se abre outra (iniciarAdesao recusa). */}
+            <BotaoComprar
+              plano="avulso"
+              fluxo="avulso_conta"
+              origem="novo_caso"
+              className={acesso.temProtecao ? BOTAO_PRIMARIO : BOTAO_SECUNDARIO}
+            >
+              Comprar um caso {PLANOS.avulso.nome} — {precoComUnidade("avulso")} (IVA incluído)
+            </BotaoComprar>
+            {/* Já com subscrição ativa não se abre outra (a adesão recusa). */}
             {!acesso.temProtecao && (
-              <form action={iniciarUpgradeParaAssinatura}>
-                <button type="submit" className={BOTAO_PRIMARIO}>
-                  Escolher {PLANOS.caso_protecao.nome} — {precoComUnidade("caso_protecao")} (IVA incluído)
-                </button>
-              </form>
+              <BotaoComprar
+                plano="caso_protecao"
+                fluxo="adesao"
+                origem="novo_caso"
+                conversao={conversaoCasoProtecao}
+                className={BOTAO_PRIMARIO}
+              >
+                Escolher {PLANOS.caso_protecao.nome} — {precoComUnidade("caso_protecao")} (IVA incluído)
+              </BotaoComprar>
             )}
           </div>
         )}

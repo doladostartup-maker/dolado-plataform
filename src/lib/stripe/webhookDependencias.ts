@@ -495,7 +495,46 @@ export function criarDependenciasWebhook(): DependenciasWebhook {
       await enviarEmailBrevo(ADMIN_EMAIL, assunto, `<p>${escaparHtml(texto)}</p>`);
     },
 
-    async enviarEmailPagamentoConfirmado({ email, plano, contaExiste, sessionId }) {
+    async ligarConsentimento(consentimentoId, { sessionId, subscriptionId, email, userId }) {
+      const { data: atual, error } = await admin
+        .from("consentimentos_compra")
+        .select("id, checkout_session_id, stripe_payment_id, stripe_subscription_id, email, user_id, termos_versao, pediu_inicio_imediato_em")
+        .eq("id", consentimentoId)
+        .maybeSingle();
+      falhar("consentimentos_compra.select", error);
+      if (!atual) return null;
+      // Registo de outra sessão: não se mexe (nem se usa para o e-mail).
+      if (atual.checkout_session_id && atual.checkout_session_id !== sessionId) return null;
+
+      const { data: pagamento, error: erroPagamento } = await admin
+        .from("stripe_payments")
+        .select("id")
+        .eq("stripe_session_id", sessionId)
+        .maybeSingle();
+      falhar("stripe_payments.select", erroPagamento);
+
+      // Só preenche o que está vazio — os campos de prova são imutáveis
+      // (trigger) e um webhook repetido não muda nada.
+      const ligacoes: Record<string, string> = {};
+      if (!atual.checkout_session_id) ligacoes.checkout_session_id = sessionId;
+      if (!atual.stripe_payment_id && pagamento?.id) ligacoes.stripe_payment_id = pagamento.id as string;
+      if (!atual.stripe_subscription_id && subscriptionId) ligacoes.stripe_subscription_id = subscriptionId;
+      if (!atual.email && email) ligacoes.email = email;
+      if (!atual.user_id && userId) ligacoes.user_id = userId;
+      if (Object.keys(ligacoes).length > 0) {
+        const { error: erroUpdate } = await admin
+          .from("consentimentos_compra")
+          .update(ligacoes)
+          .eq("id", consentimentoId);
+        falhar("consentimentos_compra.update", erroUpdate);
+      }
+      return {
+        termos_versao: atual.termos_versao as string,
+        pediu_inicio_imediato: !!atual.pediu_inicio_imediato_em,
+      };
+    },
+
+    async enviarEmailPagamentoConfirmado({ email, plano, contaExiste, sessionId, valorPagoCentimos, renovacao, consentimento }) {
       const ligacao = contaExiste
         ? `${siteUrl}/entrar`
         : `${siteUrl}/criar-conta?session_id=${encodeURIComponent(sessionId)}`;
@@ -504,7 +543,14 @@ export function criarDependenciasWebhook(): DependenciasWebhook {
         contaExiste
           ? "Pagamento confirmado — o seu acesso está ativo ✓"
           : "Pagamento confirmado — Falta criar a sua palavra-passe ✓",
-        montarHtmlBoasVindasPagamento(plano, { contaExiste, ligacao }),
+        montarHtmlBoasVindasPagamento(plano, {
+          contaExiste,
+          ligacao,
+          valorPagoCentimos,
+          renovacao,
+          consentimento,
+          portalUrl: siteUrl,
+        }),
       );
       if (process.env.BREVO_SENDER_EMAIL) {
         await enviarEmailBrevo(

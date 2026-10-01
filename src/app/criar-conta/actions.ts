@@ -95,6 +95,15 @@ export async function criarContaComPagamento(formData: FormData) {
       .is("user_id", null);
   }
 
+  // O registo de consentimento da compra (gravado antes do Checkout, sem
+  // conta) passa a apontar para a conta nova. Só preenche se estiver vazio.
+  const { error: erroConsentimento } = await admin
+    .from("consentimentos_compra")
+    .update({ user_id: userId })
+    .eq("checkout_session_id", sessionId)
+    .is("user_id", null);
+  if (erroConsentimento) console.error("[criar-conta] falha ao ligar consentimentos_compra:", erroConsentimento.code);
+
   // A conta existe sempre, mesmo com o pagamento pendente — sem plano nem
   // créditos até o pagamento ser confirmado.
   const deps = criarDependenciasWebhook();

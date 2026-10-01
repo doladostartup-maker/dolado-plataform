@@ -20,7 +20,11 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
 
       <footer className="flex justify-center gap-4 px-4 py-6 text-xs text-[var(--color-ink-faint)]">
         <Link href="/termos" className="hover:text-[var(--color-ink-muted)]">
-          Termos de Serviço
+          Termos e Condições
+        </Link>
+        <span aria-hidden>·</span>
+        <Link href="/livre-resolucao" className="hover:text-[var(--color-ink-muted)]">
+          Livre resolução
         </Link>
         <span aria-hidden>·</span>
         <Link href="/privacidade" className="hover:text-[var(--color-ink-muted)]">
