@@ -199,7 +199,8 @@ select is(
   'sem views em public (se surgir uma, auditar security_invoker e acrescentar testes)');
 select is(
   (select count(*) from pg_proc p where p.pronamespace = 'public'::regnamespace and p.prosecdef
-     and p.proname not in ('handle_new_user', 'is_admin', 'rls_auto_enable', 'notificar_novo_caso', 'casos_evento_dossie')), 0::bigint,
+     and p.proname not in ('handle_new_user', 'is_admin', 'rls_auto_enable', 'notificar_novo_caso', 'casos_evento_dossie',
+                           'alertas_portal_contacto_da_conta', 'alertas_fidelizacao_pendentes', 'alertas_promocao_pendentes')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- casos_evento_dossie (trigger): só insere o evento "dossiê disponível"; search_path fixo; fora da API.
 select ok(not has_function_privilege('authenticated', 'public.casos_evento_dossie()', 'EXECUTE') and not has_function_privilege('anon', 'public.casos_evento_dossie()', 'EXECUTE'), 'privilégios: casos_evento_dossie() não executável pela API');
@@ -341,11 +342,65 @@ select ok(testes.negado($$delete from storage.objects where name = 'casoB/b.pdf'
 select ok(testes.negado($$insert into public.casos_elegibilidade_portal (utilizador_id, email, setor, duracao_contrato, empresa_respondeu_bem, descricao_problema, estado_final) values ('00000000-0000-4000-a000-00000000000a', 'a@teste.invalid', 'Energia', '6_12m', false, 'x', 'elegivel')$$), 'A: não cria elegibilidade já com estado_final (decisão humana)');
 select ok(testes.negado($$insert into public.casos_elegibilidade_portal (utilizador_id, email, setor, duracao_contrato, empresa_respondeu_bem, descricao_problema, sugestao_ia_estado) values ('00000000-0000-4000-a000-00000000000a', 'a@teste.invalid', 'Energia', '6_12m', false, 'x', 'elegivel')$$), 'A: não forja a sugestão da IA');
 select ok(testes.negado($$insert into public.comparacoes_fatura_portal (utilizador_id, nome, email, ficheiro_caminho, status, analise) values ('00000000-0000-4000-a000-00000000000a', 'A', 'a@teste.invalid', 'x', 'sent_to_client', 'forjada')$$), 'A: não cria comparação de fatura já concluída');
--- Decisão de negócio pendente (ver relatório da auditoria de 30/09/2026).
-select todo('Pendente: e-mail dos alertas preso ao e-mail da conta', 1);
+-- E-mail dos alertas preso ao e-mail da conta (corrigido a 01/10/2026,
+-- migração 20261001200000). O UPDATE/INSERT é aceite, mas o trigger repõe
+-- sempre o e-mail e o nome da conta — o valor enviado pelo cliente é
+-- ignorado. Por isso verifica-se o valor gravado, não um erro.
 reset role;
 select testes.como('00000000-0000-4000-a000-00000000000b');
-select ok(testes.negado($$update public.alertas_promocao_portal set email = 'terceiro@exemplo.invalid' where id = '15000000-0000-4000-a000-00000000000b'$$), 'B: não redireciona os e-mails de alerta para um terceiro');
+select ok(testes.tenta($$update public.alertas_promocao_portal set email = 'terceiro@exemplo.invalid', nome = '<a href="https://phishing.invalid">x</a>' where id = '15000000-0000-4000-a000-00000000000b'$$) like 'ok:%', 'B: UPDATE do alerta de promoção aceite (o trigger ignora e-mail e nome)');
+select ok(testes.tenta($$update public.alertas_fidelizacao_portal set email = 'terceiro@exemplo.invalid' where id = '14000000-0000-4000-a000-00000000000b'$$) like 'ok:%', 'B: UPDATE do alerta de fidelização aceite');
+select ok(testes.tenta($$insert into public.alertas_promocao_portal (id, utilizador_id, nome, email, operadora, descricao_promocao, data_fim_promocao) values ('15000000-0000-4000-a000-0000000000b2', '00000000-0000-4000-a000-00000000000b', 'Falso', 'terceiro@exemplo.invalid', 'Op', 'x', '2027-01-05')$$) like 'ok:%', 'B: INSERT de alerta de promoção aceite');
+select ok(testes.tenta($$insert into public.alertas_fidelizacao_portal (id, utilizador_id, nome, email, operadora, data_fim_fidelizacao) values ('14000000-0000-4000-a000-0000000000b2', '00000000-0000-4000-a000-00000000000b', 'Falso', 'terceiro@exemplo.invalid', 'Op', '2027-01-05')$$) like 'ok:%', 'B: INSERT de alerta de fidelização aceite');
+reset role;
+select is((select email from public.alertas_promocao_portal where id = '15000000-0000-4000-a000-00000000000b'), 'b@teste.invalid', 'B: UPDATE do e-mail do alerta de promoção não redireciona para um terceiro');
+select is((select nome from public.alertas_promocao_portal where id = '15000000-0000-4000-a000-00000000000b'), 'Utilizador B', 'B: o nome do alerta vem do perfil (HTML do cliente ignorado)');
+select is((select email from public.alertas_fidelizacao_portal where id = '14000000-0000-4000-a000-00000000000b'), 'b@teste.invalid', 'B: UPDATE do e-mail do alerta de fidelização não redireciona');
+select is((select email from public.alertas_promocao_portal where id = '15000000-0000-4000-a000-0000000000b2'), 'b@teste.invalid', 'B: INSERT com e-mail de terceiro grava o e-mail da conta (promoção)');
+select is((select email from public.alertas_fidelizacao_portal where id = '14000000-0000-4000-a000-0000000000b2'), 'b@teste.invalid', 'B: INSERT com e-mail de terceiro grava o e-mail da conta (fidelização)');
+select is(testes.tenta($$update public.alertas_promocao_portal set email = 'x@y.invalid' where id = '15000000-0000-4000-a000-00000000000b'$$), 'ok:1', 'superutilizador: UPDATE aceite…');
+select is((select email from public.alertas_promocao_portal where id = '15000000-0000-4000-a000-00000000000b'), 'b@teste.invalid', '…mas o e-mail continua o da conta (vale para qualquer escritor)');
+select ok(testes.tenta($$insert into public.alertas_promocao_portal (utilizador_id, nome, email, operadora, descricao_promocao, data_fim_promocao) values ('00000000-0000-4000-a000-00000000000b', 'B', 'b@teste.invalid', repeat('x', 121), 'x', '2027-01-05')$$) like 'erro:%', 'operadora com mais de 120 caracteres → recusada');
+select ok(testes.tenta($$insert into public.alertas_promocao_portal (utilizador_id, nome, email, operadora, descricao_promocao, data_fim_promocao) values ('00000000-0000-4000-a000-00000000000b', 'B', 'b@teste.invalid', 'Op', repeat('x', 501), '2027-01-05')$$) like 'erro:%', 'descrição da promoção com mais de 500 caracteres → recusada');
+
+-- Pendentes para as Edge Functions: destinatário = e-mail atual e
+-- confirmado da conta, só com Proteção ativa.
+update auth.users set email_confirmed_at = now() where id in ('00000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000b');
+grant usage on schema testes to service_role;
+grant execute on all functions in schema testes to service_role;
+set local role service_role;
+select is((select email from public.alertas_promocao_pendentes('alerta_7d_enviado_em', '2027-01-01', '2027-01-08') where id = '15000000-0000-4000-a000-0000000000b2'),
+  'b@teste.invalid', 'pendentes (promoção): devolve o e-mail da conta');
+select is((select count(*) from public.alertas_fidelizacao_pendentes('alerta_30d_enviado_em', '2027-01-01', '2027-01-08') where id = '14000000-0000-4000-a000-0000000000b2'),
+  1::bigint, 'pendentes (fidelização): inclui o alerta de B (com Proteção)');
+select is((select count(*) from public.alertas_promocao_pendentes('alerta_30d_enviado_em', '2026-12-01', '2027-02-01') where id = '15000000-0000-4000-a000-00000000000a'),
+  0::bigint, 'pendentes: A (sem Proteção) não recebe alertas');
+select is((select count(*) from public.alertas_promocao_pendentes('campo_invalido', '2026-12-01', '2027-02-01')), 0::bigint, 'pendentes: campo inválido → nada');
+reset role;
+-- Mudança do e-mail da conta: o envio segue o e-mail atual, sem tocar no alerta.
+update auth.users set email = 'b-novo@teste.invalid' where id = '00000000-0000-4000-a000-00000000000b';
+set local role service_role;
+select is((select email from public.alertas_promocao_pendentes('alerta_7d_enviado_em', '2027-01-01', '2027-01-08') where id = '15000000-0000-4000-a000-0000000000b2'),
+  'b-novo@teste.invalid', 'pendentes: segue o e-mail atual da conta (mudança de e-mail)');
+reset role;
+update auth.users set email_confirmed_at = null where id = '00000000-0000-4000-a000-00000000000b';
+set local role service_role;
+select is((select count(*) from public.alertas_promocao_pendentes('alerta_7d_enviado_em', '2027-01-01', '2027-01-08')), 0::bigint, 'pendentes: conta sem e-mail confirmado não recebe');
+reset role;
+update auth.users set email = 'b@teste.invalid', email_confirmed_at = now() where id = '00000000-0000-4000-a000-00000000000b';
+select ok(not has_function_privilege('authenticated', 'public.alertas_promocao_pendentes(text, date, date)', 'EXECUTE')
+      and not has_function_privilege('anon', 'public.alertas_promocao_pendentes(text, date, date)', 'EXECUTE')
+      and not has_function_privilege('authenticated', 'public.alertas_fidelizacao_pendentes(text, date, date)', 'EXECUTE')
+      and not has_function_privilege('anon', 'public.alertas_fidelizacao_pendentes(text, date, date)', 'EXECUTE'),
+  'privilégios: funções de pendentes (lêem auth.users) fora da API pública');
+select ok(not has_function_privilege('authenticated', 'public.alertas_portal_contacto_da_conta()', 'EXECUTE')
+      and not has_function_privilege('anon', 'public.alertas_portal_contacto_da_conta()', 'EXECUTE'),
+  'privilégios: trigger do contacto da conta não executável pela API');
+select ok((select bool_and('search_path=""' = any (proconfig)) from pg_proc
+            where proname in ('alertas_portal_contacto_da_conta', 'alertas_fidelizacao_pendentes', 'alertas_promocao_pendentes')),
+  'funções SECURITY DEFINER dos alertas: search_path fixo');
+reset role;
+select testes.como('00000000-0000-4000-a000-00000000000b');
 
 -- ===========================================================================
 -- 2b. Plano: USER_B (assinatura) usa os alertas; USER_C (sem plano) não

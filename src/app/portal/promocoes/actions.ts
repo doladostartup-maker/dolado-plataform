@@ -1,5 +1,6 @@
 "use server";
 
+import { escaparHtml } from "@/lib/email/textoRevisao";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -90,8 +91,8 @@ async function enviarEmailConfirmacao(
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#FFFFFF;border-radius:12px;border:1px solid #E4E2DB;overflow:hidden;">
 <tr><td style="padding:32px 32px 0 32px;"><span style="font-size:20px;font-weight:600;color:#0E6B5C;">DoLado</span></td></tr>
 <tr><td style="padding:24px 32px 24px 32px;color:#171A21;font-size:16px;line-height:1.6;">
-<p style="margin:0 0 16px 0;">Olá ${destino.nome},</p>
-<p style="margin:0 0 16px 0;">Criámos um alerta para a promoção com <strong>${operadora}</strong> (${descricao}), que termina a ${dataFormatada}.</p>
+<p style="margin:0 0 16px 0;">Olá ${escaparHtml(destino.nome)},</p>
+<p style="margin:0 0 16px 0;">Criámos um alerta para a promoção com <strong>${escaparHtml(operadora)}</strong> (${escaparHtml(descricao)}), que termina a ${dataFormatada}.</p>
 <p style="margin:0 0 16px 0;">Receberá avisos: 30 dias antes, 7 dias antes, 1 dia antes.</p>
 <p style="margin:0;">Sem mais,<br><span style="font-weight:600;">DoLado</span></p>
 </td></tr>

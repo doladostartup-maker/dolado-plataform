@@ -65,7 +65,9 @@ Estado implementado:
 
 Regras para tabelas novas: RLS com policies por operação (USING para ler/alterar, WITH CHECK para criar/alterar), posse validada por `auth.uid()` e nunca só por `auth.role()`; campos internos nunca preenchíveis pelo cliente; `SECURITY DEFINER` só com justificação e `search_path` fixo.
 
-Pendente: campo `email` dos alertas editável pelo cliente (decisão de negócio); rotação da chave service_role legada depois de o novo webhook estar em produção.
+- **Alertas do portal** (`20261001200000_alertas_email_da_conta.sql`, 01/10/2026): o destinatário é sempre o e-mail atual e confirmado da conta. Um trigger força `email`/`nome` a partir da conta em qualquer escrita, e as Edge Functions `verificar-alertas-*` usam `alertas_*_pendentes()` (só `service_role`; só contas com Proteção ativa) — nunca a coluna `email`. O conteúdo dos e-mails é montado em `supabase/functions/_shared/emailAlertas.ts`, com escape de HTML e assunto saneado; qualquer novo e-mail com texto do cliente tem de fazer escape.
+
+Pendente: rotação da chave service_role legada depois de o novo webhook estar em produção.
 
 ## Gestão de custo — regra durante a fase de piloto
 
@@ -198,9 +200,29 @@ Os templates de texto de reclamação são **rascunhos** pendentes de revisão p
 
 Estes itens não são tarefas de desenvolvimento, mas devem ser lembrados a Thiago se o tema surgir:
 
-- [ ] DPA (Data Processing Agreement) assinado com a Supabase
-- [ ] DPA assinado com a Clever Cloud
-- [ ] DPA assinado com a Brevo
-- [ ] Matriz de Subcontratantes actualizada com os três (nome, região de processamento, finalidade)
-- [ ] Política de Privacidade actualizada com os subcontratantes
+- [x] DPA (Data Processing Agreement) assinado com a Supabase — confirmado por Thiago a 01/10/2026
+- [x] DPA assinado com a Clever Cloud — confirmado por Thiago a 01/10/2026
+- [x] DPA assinado com a Brevo — confirmado por Thiago a 01/10/2026
+- [x] DPA com a Anthropic (Claude API) — confirmado por Thiago a 01/10/2026
+- [x] DPA com a Stripe (pagamentos/subscrições) — confirmado por Thiago a 01/10/2026
+- [x] DPA com a Google (Analytics / Tag Manager / Ads) — confirmado por Thiago a 01/10/2026
+- [ ] DPA com a Cookiebot (Usercentrics) — por confirmar (não estava na lista anterior)
+- [ ] Anotar na matriz o mecanismo de transferência previsto em cada DPA (SCCs, Data Privacy Framework…) e onde está arquivada a cópia
+- [ ] Política de Privacidade versão 2026-10-01 (sem "Fase Beta"; secções 1 a 5 atualizadas) — falta validação final da advogada antes de a considerar definitiva
 - [ ] DPIA (Data Protection Impact Assessment) formal completo
+
+### Matriz de Subcontratantes e prestadores
+
+DPA "Obtido" = confirmado por Thiago (01/10/2026); a cópia não está no repositório — anotar onde está arquivada. "Por confirmar" = sem confirmação.
+
+| Fornecedor | Finalidade | Papel | Região / transferências | DPA | Mecanismo de transferência | Última revisão | Estado |
+|---|---|---|---|---|---|---|---|
+| Supabase | Base de dados, Auth e Storage (casos, contas, documentos) | Subcontratante | UE (projeto em região europeia); empresa dos EUA | Obtido | Anotar o previsto no DPA | 01/10/2026 | DPA obtido |
+| Clever Cloud | Alojamento da aplicação | Subcontratante | UE (Paris) | Obtido | Anotar o previsto no DPA | 01/10/2026 | DPA obtido |
+| Brevo | E-mail transacional | Subcontratante | UE (sede em França) | Obtido | Anotar o previsto no DPA | 01/10/2026 | DPA obtido |
+| Anthropic | Claude API — Alerta de fim de promoção, Comparador de Faturas, Simulador de Elegibilidade | Subcontratante | Pode haver tratamento fora do EEE — região não definida no repositório | Obtido | Anotar o previsto no DPA (SCCs, se aplicável) | 01/10/2026 | DPA obtido |
+| Stripe | Pagamentos, subscrições e faturação (Checkout, webhooks) | Subcontratante e, para finalidades próprias (ex.: fraude, obrigações legais), responsável autónomo | Pode haver transferências internacionais | Obtido | Anotar o previsto no DPA (SCCs, se aplicável) | 01/10/2026 | DPA obtido |
+| Google | Analytics / GA4, Tag Manager e Google Ads (conversões otimizadas com e-mail em hash), só com consentimento; início de sessão com conta Google | Subcontratante na medição por conta da DoLado; responsável autónomo para finalidades próprias e no início de sessão com Google | Pode haver transferências internacionais | Obtido | Anotar o previsto no DPA (SCCs / DPF) | 01/10/2026 | DPA obtido |
+| Cookiebot (Usercentrics) | Gestão do consentimento de cookies e registo das escolhas | Subcontratante | Por confirmar | Por confirmar | Por confirmar | — | Pendente |
+
+Documentação a controlar por fornecedor: DPA; mecanismo de transferências internacionais (SCCs ou outro); termos comerciais/de serviço aplicáveis; revisão periódica das condições de tratamento (anotar a data em "Última revisão"). Destinatários da reclamação (empresa visada, Livro de Reclamações Eletrónico, reguladores) **não** são subcontratantes e não entram nesta matriz.
