@@ -14,22 +14,23 @@
 //   BREVO_SENDER_EMAIL  — remetente autorizado na Brevo (ex.: thiago.pereira@dolado.pt)
 //   ADMIN_EMAIL         — opcional, por omissão thiago.pereira@dolado.pt
 //   SITE_URL            — opcional, por omissão https://portal.dolado.pt
+//
+// Os campos do caso são texto do cliente: o HTML e o assunto são montados
+// em ../_shared/emailNovoCaso.ts, com escape de HTML e assunto saneado.
 
-interface CasoRecord {
-  id: string;
-  nome: string;
-  email: string;
-  sector: string | null;
-  tipo_problema: string | null;
-  descricao: string | null;
-  telefone: string | null;
-  empresa_parceira: string | null;
-}
+import {
+  ASSUNTO_CONFIRMACAO_CLIENTE,
+  assuntoNotificacaoAdmin,
+  type CasoNovo,
+  htmlConfirmacaoCliente,
+  htmlNotificacaoAdmin,
+} from "../_shared/emailNovoCaso.ts";
+import { textoParaAssunto } from "../_shared/textoSeguro.ts";
 
 interface WebhookPayload {
   type: string;
   table: string;
-  record: CasoRecord;
+  record: CasoNovo;
 }
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
@@ -62,65 +63,6 @@ async function enviarEmailBrevo(destino: { email: string; nome?: string }, assun
   }
 }
 
-function htmlConfirmacaoCliente(nome: string): string {
-  return `<!DOCTYPE html>
-<html lang="pt-PT">
-<head><meta charset="UTF-8"></head>
-<body style="margin:0; padding:0; background-color:#F7F6F2; font-family: 'Inter', Arial, Helvetica, sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7F6F2; padding: 32px 16px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; background-color:#FFFFFF; border-radius:12px; border:1px solid #E4E2DB; overflow:hidden;">
-          <tr>
-            <td style="padding: 32px 32px 0 32px;">
-              <span style="font-family:'Inter', Arial, Helvetica, sans-serif; font-size:20px; font-weight:600; color:#0E6B5C;">DoLado</span>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 24px 32px 24px 32px; font-family:'Inter', Arial, Helvetica, sans-serif; color:#171A21; font-size:16px; line-height:1.6;">
-              <p style="margin:0 0 16px 0;">Olá ${nome},</p>
-              <p style="margin:0 0 16px 0;">Recebemos o seu pedido. Já está com o Thiago para ser analisado pessoalmente.</p>
-              <p style="margin:0 0 16px 0;">Respondemos-lhe no prazo máximo de 48 horas úteis, para confirmar os factos consigo antes de qualquer envio à empresa.</p>
-              <p style="margin:0 0 4px 0;">Obrigado por confiar na DoLado.</p>
-              <p style="margin:0; font-weight:600;">Thiago<br><span style="font-weight:400; color:#5B6270; font-size:14px;">DoLado</span></p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 20px 32px; background-color:#EFEDE7; font-family:'Inter', Arial, Helvetica, sans-serif; font-size:13px; color:#5B6270;">
-              <a href="https://www.dolado.pt" style="color:#0E6B5C; text-decoration:none;">www.dolado.pt</a>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
-function htmlNotificacaoAdmin(caso: CasoRecord): string {
-  const linha = (label: string, valor: string | null) =>
-    `<p style="margin:0 0 4px 0;"><strong>${label}:</strong> ${valor ?? "—"}</p>`;
-
-  return `<!DOCTYPE html>
-<html lang="pt-PT">
-<head><meta charset="UTF-8"></head>
-<body style="margin:0; padding:0; font-family: 'Inter', Arial, Helvetica, sans-serif; color:#171A21; font-size:15px; line-height:1.6;">
-  <p style="margin:0 0 16px 0; font-weight:600;">Novo caso recebido.</p>
-  ${linha("Nome", caso.nome)}
-  ${linha("E-mail", caso.email)}
-  ${linha("Telefone", caso.telefone)}
-  ${linha("Setor", caso.sector)}
-  ${linha("Tipo de problema", caso.tipo_problema)}
-  ${linha("Empresa parceira", caso.empresa_parceira)}
-  <p style="margin:16px 0 0 0;"><strong>Descrição:</strong><br>${caso.descricao ?? "—"}</p>
-  <p style="margin:20px 0 0 0;">
-    <a href="${SITE_URL}/backoffice/casos/${caso.id}" style="color:#0E6B5C;">Ver caso no backoffice</a>
-  </p>
-</body>
-</html>`;
-}
-
 Deno.serve(async (req: Request) => {
   // Sem segredo configurado, recusa sempre — nunca fica aberta por omissão.
   if (!WEBHOOK_SECRET || req.headers.get("x-webhook-secret") !== WEBHOOK_SECRET) {
@@ -137,15 +79,15 @@ Deno.serve(async (req: Request) => {
     const caso = payload.record;
 
     await enviarEmailBrevo(
-      { email: caso.email, nome: caso.nome },
-      "Recebemos o seu pedido",
+      { email: caso.email, nome: textoParaAssunto(caso.nome ?? "", 70) },
+      ASSUNTO_CONFIRMACAO_CLIENTE,
       htmlConfirmacaoCliente(caso.nome),
     );
 
     await enviarEmailBrevo(
       { email: ADMIN_EMAIL },
-      `[NOVO CASO] ${caso.sector ?? "Sem setor"} – ${caso.nome}`,
-      htmlNotificacaoAdmin(caso),
+      assuntoNotificacaoAdmin(caso),
+      htmlNotificacaoAdmin(caso, SITE_URL),
     );
 
     return new Response("ok", { status: 200 });
