@@ -167,6 +167,13 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
         resposta:
           "Sim, a partir da sua área de cliente. Quando um Avulso elegível é convertido numa subscrição, parte do valor já pago cobre o primeiro mês e o restante é reembolsado para o método de pagamento original.",
       },
+      {
+        // RASCUNHO — substituir pelo texto final da FAQ fornecido à parte.
+        id: "cancelar-protecao",
+        pergunta: "Posso cancelar a Proteção?",
+        resposta:
+          "Sim. Pode cancelar a qualquer momento na sua área de cliente, em Gestão de Subscrição. O cancelamento impede a renovação seguinte: a Proteção continua ativa até ao fim do período já pago e, depois dessa data, não há novas cobranças. Até lá, pode retirar o cancelamento e manter a subscrição. Os casos que já abriu e os respetivos documentos não são apagados. No plano Caso + Proteção, os casos disponíveis ficam guardados durante 90 dias depois do fim da subscrição e são recuperados se voltar a subscrever o Caso + Proteção nesse período.",
+      },
     ],
   },
   {

@@ -389,6 +389,70 @@ select is(testes.tenta($$update public.stripe_payments set credito_upgrade_em = 
 select is(testes.tenta($$update public.stripe_payments set credito_upgrade_em = now() where id = '16000000-0000-4000-a000-00000000000a' and estado = 'concluido' and credito_upgrade_em is null$$), 'ok:0', 'upgrade: a mesma compra não é reservada duas vezes');
 
 -- ===========================================================================
+-- 2d. Gestão de Subscrição: auditoria de cancelamentos e casos congelados
+-- ===========================================================================
+reset role;
+insert into public.subscricao_cancelamentos (user_id, stripe_subscription_id, plano, origem, motivo_codigo, pedido_em, fim_previsto_em) values
+  ('00000000-0000-4000-a000-00000000000b', 'sub_teste_b', 'caso_protecao', 'cliente', 'preco', now(), now() + interval '20 days');
+insert into public.case_credit_freezes (user_id, stripe_subscription_id, quantidade, congelado_em, expira_em) values
+  ('00000000-0000-4000-a000-00000000000a', 'sub_antiga_a', 2, now(), now() + interval '90 days');
+
+select testes.como('00000000-0000-4000-a000-00000000000a');
+select is(testes.contar('select * from public.subscricao_cancelamentos'), 0::bigint, 'A: não lê cancelamentos (nem os de B)');
+select ok(testes.negado($$insert into public.subscricao_cancelamentos (user_id, stripe_subscription_id, origem) values ('00000000-0000-4000-a000-00000000000a', 'sub_x', 'cliente')$$), 'A: não regista cancelamentos');
+select ok(testes.negado($$update public.subscricao_cancelamentos set revertido_em = now()$$), 'A: não reverte cancelamentos');
+select is(testes.contar('select * from public.case_credit_freezes'), 1::bigint, 'A: vê só os próprios casos congelados');
+select ok(testes.negado($$insert into public.case_credit_freezes (user_id, stripe_subscription_id, quantidade, congelado_em, expira_em) values ('00000000-0000-4000-a000-00000000000a', 'forjado', 4, now(), now() + interval '1 day')$$), 'A: não cria casos congelados');
+select ok(testes.negado($$update public.case_credit_freezes set expira_em = now() + interval '10 years'$$), 'A: não prolonga o prazo dos casos congelados');
+select ok(testes.negado($$update public.user_access set cancel_at_period_end = true where user_id = '00000000-0000-4000-a000-00000000000a'$$), 'A: não agenda cancelamentos diretamente');
+select ok(testes.tenta($$select public.congelar_creditos_caso('sub_teste_b', now(), 90)$$) like 'erro:%', 'A: não executa congelar_creditos_caso');
+select ok(testes.tenta($$select public.restaurar_creditos_caso('sub_teste_b', now(), 4)$$) like 'erro:%', 'A: não executa restaurar_creditos_caso');
+reset role;
+
+-- Funções, como service_role. B: Caso + Proteção com 3 casos, 1 dos quais
+-- Avulso (checkout:cs_avulso_b, concedido em 2c).
+update public.user_access
+   set stripe_subscription_id = 'sub_teste_b', subscription_plan = 'caso_protecao', subscription_status = 'active', case_credits = 3
+ where user_id = '00000000-0000-4000-a000-00000000000b';
+set local role service_role;
+select is(public.congelar_creditos_caso('sub_teste_b', now(), 90), 2, 'congelar: só os casos da subscrição (o Avulso fica)');
+select is((select case_credits from public.user_access where user_id = '00000000-0000-4000-a000-00000000000b'), 1, 'congelar: o caso Avulso continua utilizável');
+select is(public.congelar_creditos_caso('sub_teste_b', now(), 90), 0, 'congelar: repetido não congela outra vez');
+select is((select count(*) from public.case_credit_freezes where stripe_subscription_id = 'sub_teste_b'), 1::bigint, 'congelar: um registo por fim de subscrição');
+select ok((select expira_em - congelado_em = interval '90 days' from public.case_credit_freezes where stripe_subscription_id = 'sub_teste_b'), 'congelar: prazo de 90 dias');
+reset role;
+update public.user_access set subscription_plan = 'none', subscription_status = 'canceled'
+ where user_id = '00000000-0000-4000-a000-00000000000b';
+set local role service_role;
+select is(public.restaurar_creditos_caso('sub_teste_b', now(), 4), 0, 'restaurar: sem Caso + Proteção ativo não restaura');
+reset role;
+update public.user_access
+   set stripe_subscription_id = 'sub_nova_b', subscription_plan = 'protecao', subscription_status = 'active'
+ where user_id = '00000000-0000-4000-a000-00000000000b';
+set local role service_role;
+select is(public.restaurar_creditos_caso('sub_nova_b', now(), 4), 0, 'restaurar: nova subscrição só Proteção não restaura');
+reset role;
+update public.user_access set subscription_plan = 'caso_protecao' where user_id = '00000000-0000-4000-a000-00000000000b';
+set local role service_role;
+select is(public.restaurar_creditos_caso('sub_nova_b', now() + interval '89 days', 4), 2, 'restaurar: Caso + Proteção dentro dos 90 dias recupera os casos');
+select is((select case_credits from public.user_access where user_id = '00000000-0000-4000-a000-00000000000b'), 3, 'restaurar: casos de volta à conta');
+select is(public.restaurar_creditos_caso('sub_nova_b', now() + interval '89 days', 4), 0, 'restaurar: repetido não duplica');
+-- Fim da nova subscrição e regresso depois dos 90 dias: expirados.
+select is(public.congelar_creditos_caso('sub_nova_b', now(), 90), 2, 'congelar: fim da nova subscrição');
+select is(public.restaurar_creditos_caso('sub_nova_b', now() + interval '91 days', 4), 0, 'restaurar: depois dos 90 dias os casos não voltam');
+-- Limite de 4.
+reset role;
+update public.user_access set case_credits = 3 where user_id = '00000000-0000-4000-a000-00000000000b';
+set local role service_role;
+select is(public.restaurar_creditos_caso('sub_nova_b', now(), 4), 1, 'restaurar: respeita o limite de 4');
+select is((select case_credits from public.user_access where user_id = '00000000-0000-4000-a000-00000000000b'), 4, 'restaurar: saldo final 4');
+reset role;
+-- Repõe B como em 2c para as verificações seguintes.
+update public.user_access
+   set stripe_subscription_id = null, subscription_plan = 'caso_protecao', subscription_status = 'active', case_credits = 0
+ where user_id = '00000000-0000-4000-a000-00000000000b';
+
+-- ===========================================================================
 -- 3. ADMIN — acesso total pelo RLS (via is_admin())
 -- ===========================================================================
 reset role;
@@ -399,6 +463,8 @@ select is(testes.contar('select * from public.anexos'), 2::bigint, 'admin: vê a
 select is(testes.contar('select * from public.stripe_webhook_events'), 1::bigint, 'admin: lê eventos do webhook Stripe');
 select is(testes.contar('select * from public.stripe_subscriptions'), 1::bigint, 'admin: lê subscrições Stripe');
 select is(testes.contar('select * from public.conversoes_avulso'), 1::bigint, 'admin: lê conversões Avulso');
+select is(testes.contar('select * from public.subscricao_cancelamentos'), 1::bigint, 'admin: lê cancelamentos de subscrição');
+select ok(testes.contar('select * from public.case_credit_freezes') >= 2, 'admin: lê casos congelados de todos');
 select is(testes.contar('select * from storage.objects'), 6::bigint, 'admin: vê ficheiros de todos os buckets');
 select ok(testes.permitido($$update public.casos set notas = 'revisto' where id = '10000000-0000-4000-a000-00000000000b'$$), 'admin: altera qualquer caso');
 

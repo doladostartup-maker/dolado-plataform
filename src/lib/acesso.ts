@@ -5,7 +5,12 @@
 // Proteção: funcionalidades de proteção; não inclui casos.
 // Caso + Proteção: proteção + 1 crédito de caso por ciclo pago (acumula
 //   até 4). Na interface, "créditos" chamam-se sempre "casos disponíveis".
-// Avulso: +1 crédito de caso por compra; não dá proteção.
+// Avulso: +1 crédito de caso por compra; não dá proteção. Avulso é uma
+//   compra, não um estado da conta: uma conta sem subscrição está "sem
+//   subscrição", mesmo que tenha comprado Avulsos.
+// Cancelamento normal: a subscrição fica com cancelamento agendado e tudo
+//   continua a funcionar até current_period_end; só depois a conta fica sem
+//   subscrição (o webhook trata disso).
 // Sem linha em user_access (piloto Remax / registo livre): continua como
 //   antes — sem proteção, casos no portal sem crédito.
 //
@@ -21,6 +26,7 @@ export type LinhaAcesso = {
   subscription_status: string | null;
   case_credits: number | null;
   current_period_end?: string | null;
+  cancel_at_period_end?: boolean | null;
 };
 
 export type Acesso = {
@@ -37,6 +43,8 @@ export type Acesso = {
   casoConsomeCredito: boolean;
   /** Fim do período pago da subscrição (ISO), se houver. */
   fimPeriodo: string | null;
+  /** Cancelamento agendado para o fim do período (a proteção mantém-se até lá). */
+  cancelamentoAgendado: boolean;
 };
 
 export const LIMITE_CREDITOS_MENSAIS = 4;
@@ -63,6 +71,7 @@ export function calcularAcesso(linha: LinhaAcesso | null): Acesso {
       podeCriarCaso: true,
       casoConsomeCredito: false,
       fimPeriodo: null,
+      cancelamentoAgendado: false,
     };
   }
 
@@ -77,6 +86,7 @@ export function calcularAcesso(linha: LinhaAcesso | null): Acesso {
     podeCriarCaso: creditos > 0,
     casoConsomeCredito: true,
     fimPeriodo: linha.current_period_end ?? null,
+    cancelamentoAgendado: plano !== "none" && !!linha.cancel_at_period_end,
   };
 }
 
@@ -106,14 +116,18 @@ export function avisoDoPortal({
 // Plano apresentado no portal. Só lê estado real (user_access e pagamentos
 // da própria conta, gravados pelo webhook) — nunca parâmetros do URL.
 
-export type PlanoPortal = "protecao" | "caso_protecao" | "avulso" | "sem_plano";
+// "sem_plano" = sem subscrição (estado da conta). Avulso é um produto, não
+// aparece aqui: os casos comprados contam em casosDisponiveis.
+export type PlanoPortal = "protecao" | "caso_protecao" | "sem_plano";
 
 export type ResumoPlano = {
   plano: PlanoPortal;
   /** Estado da subscrição em português (só Proteção / Caso + Proteção). */
   estado: string | null;
-  /** Próxima renovação (ISO), só com a subscrição em vigor. */
+  /** Próxima renovação (ISO), só com a subscrição em vigor e sem cancelamento agendado. */
   renovacao: string | null;
+  /** Data em que a Proteção termina (ISO), quando há cancelamento agendado. */
+  fimAgendado: string | null;
   /** null = não se aplica (ex.: conta sem plano Stripe, que abre casos livremente). */
   casosDisponiveis: number | null;
 };
@@ -135,25 +149,58 @@ export function estadoSubscricaoPt(status: string | null | undefined) {
   return ESTADO_SUBSCRICAO_PT[status] ?? null;
 }
 
-export function resumoPlanoPortal(acesso: Acesso, temAvulsoPago: boolean): ResumoPlano {
+export function resumoPlanoPortal(acesso: Acesso): ResumoPlano {
   const subscricaoEmVigor =
     acesso.plano !== "none" && !!acesso.estadoSubscricao && !ESTADOS_TERMINADOS.has(acesso.estadoSubscricao);
 
   if (subscricaoEmVigor) {
+    const comAcesso = estadoComAcesso(acesso.estadoSubscricao);
+    const agendado = comAcesso && acesso.cancelamentoAgendado;
     return {
       plano: acesso.plano as "protecao" | "caso_protecao",
-      estado: estadoSubscricaoPt(acesso.estadoSubscricao),
-      renovacao: estadoComAcesso(acesso.estadoSubscricao) ? acesso.fimPeriodo : null,
+      estado: agendado ? "Cancelamento agendado" : estadoSubscricaoPt(acesso.estadoSubscricao),
+      renovacao: comAcesso && !agendado ? acesso.fimPeriodo : null,
+      fimAgendado: agendado ? acesso.fimPeriodo : null,
       // Proteção não inclui casos; só mostra se tiver comprado um Avulso à parte.
       casosDisponiveis: acesso.plano === "protecao" && acesso.creditos === 0 ? null : acesso.creditos,
     };
   }
 
-  if (acesso.temPlanoStripe && (temAvulsoPago || acesso.creditos > 0)) {
-    return { plano: "avulso", estado: null, renovacao: null, casosDisponiveis: acesso.creditos };
-  }
+  // Sem subscrição. Quem já comprou (linha em user_access) vê os casos
+  // disponíveis — Avulso por usar, por exemplo.
+  return {
+    plano: "sem_plano",
+    estado: null,
+    renovacao: null,
+    fimAgendado: null,
+    casosDisponiveis: acesso.temPlanoStripe ? acesso.creditos : null,
+  };
+}
 
-  return { plano: "sem_plano", estado: null, renovacao: null, casosDisponiveis: null };
+// ---------------------------------------------------------------------------
+// Casos disponíveis congelados no fim de um Caso + Proteção (90 dias).
+
+export const DIAS_CASOS_GUARDADOS = 90;
+
+export type CongelamentoCasos = {
+  quantidade: number;
+  expira_em: string;
+  restaurado_em: string | null;
+};
+
+/** Casos guardados que ainda podem ser recuperados (null se não houver). */
+export function casosGuardados(
+  congelamentos: CongelamentoCasos[],
+  agora: Date = new Date(),
+): { quantidade: number; ate: string } | null {
+  const validos = congelamentos.filter(
+    (c) => !c.restaurado_em && c.quantidade > 0 && new Date(c.expira_em).getTime() > agora.getTime(),
+  );
+  if (validos.length === 0) return null;
+  const quantidade = validos.reduce((soma, c) => soma + c.quantidade, 0);
+  // A data mais próxima: depois dela, pelo menos parte deixa de ser recuperável.
+  const ate = validos.map((c) => c.expira_em).sort()[0];
+  return { quantidade, ate };
 }
 
 // ---------------------------------------------------------------------------

@@ -4,7 +4,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { avisoDoPortal, calcularAcesso, estadoReembolsoCliente, resumoPlanoPortal } from "./acesso.ts";
+import { avisoDoPortal, calcularAcesso, casosGuardados, estadoReembolsoCliente, resumoPlanoPortal } from "./acesso.ts";
 import {
   IVA_INCLUIDO,
   LIMITE_CASOS_ACUMULADOS,
@@ -197,49 +197,67 @@ describe("sem textos nem preços antigos no código ativo", () => {
   });
 });
 
-const linha = (subscription_plan, subscription_status, case_credits = 0, current_period_end = null) => ({
+const linha = (subscription_plan, subscription_status, case_credits = 0, current_period_end = null, cancel_at_period_end = false) => ({
   subscription_plan,
   subscription_status,
   case_credits,
   current_period_end,
+  cancel_at_period_end,
 });
 
 describe("plano apresentado no portal", () => {
   const FIM = "2026-10-30T10:00:00.000Z";
 
   test("identifica Proteção (ativa, com renovação, sem casos incluídos)", () => {
-    const r = resumoPlanoPortal(calcularAcesso(linha("protecao", "active", 0, FIM)), false);
-    assert.deepEqual(r, { plano: "protecao", estado: "Ativa", renovacao: FIM, casosDisponiveis: null });
+    const r = resumoPlanoPortal(calcularAcesso(linha("protecao", "active", 0, FIM)));
+    assert.deepEqual(r, { plano: "protecao", estado: "Ativa", renovacao: FIM, fimAgendado: null, casosDisponiveis: null });
   });
 
   test("identifica Caso + Proteção com casos disponíveis", () => {
-    const r = resumoPlanoPortal(calcularAcesso(linha("caso_protecao", "active", 2, FIM)), false);
-    assert.deepEqual(r, { plano: "caso_protecao", estado: "Ativa", renovacao: FIM, casosDisponiveis: 2 });
+    const r = resumoPlanoPortal(calcularAcesso(linha("caso_protecao", "active", 2, FIM)));
+    assert.deepEqual(r, { plano: "caso_protecao", estado: "Ativa", renovacao: FIM, fimAgendado: null, casosDisponiveis: 2 });
   });
 
-  test("identifica Avulso (sem subscrição, com o caso comprado)", () => {
-    const r = resumoPlanoPortal(calcularAcesso(linha("none", null, 1)), true);
-    assert.deepEqual(r, { plano: "avulso", estado: null, renovacao: null, casosDisponiveis: 1 });
+  test("Avulso comprado, sem subscrição: 'sem subscrição' com os casos disponíveis — nunca 'Avulso'", () => {
+    const r = resumoPlanoPortal(calcularAcesso(linha("none", null, 1)));
+    assert.deepEqual(r, { plano: "sem_plano", estado: null, renovacao: null, fimAgendado: null, casosDisponiveis: 1 });
   });
 
-  test("Avulso já usado continua identificado, com 0 casos disponíveis", () => {
-    const r = resumoPlanoPortal(calcularAcesso(linha("none", null, 0)), true);
-    assert.equal(r.plano, "avulso");
+  test("Avulso já usado: sem subscrição, 0 casos disponíveis", () => {
+    const r = resumoPlanoPortal(calcularAcesso(linha("none", null, 0)));
+    assert.equal(r.plano, "sem_plano");
     assert.equal(r.casosDisponiveis, 0);
   });
 
-  test("subscrição terminada: sem plano ativo", () => {
-    const r = resumoPlanoPortal(calcularAcesso(linha("none", "canceled", 0, FIM)), false);
+  test("subscrição terminada: sem subscrição (não volta a 'Avulso')", () => {
+    const r = resumoPlanoPortal(calcularAcesso(linha("none", "canceled", 0, FIM)));
     assert.equal(r.plano, "sem_plano");
     assert.equal(r.renovacao, null);
+    assert.equal(r.fimAgendado, null);
   });
 
-  test("conta sem plano Stripe (piloto / registo livre): sem plano", () => {
-    assert.equal(resumoPlanoPortal(calcularAcesso(null), false).plano, "sem_plano");
+  test("conta sem plano Stripe (piloto / registo livre): sem plano, sem contagem de casos", () => {
+    const r = resumoPlanoPortal(calcularAcesso(null));
+    assert.equal(r.plano, "sem_plano");
+    assert.equal(r.casosDisponiveis, null);
+  });
+
+  test("cancelamento agendado: mantém o plano e a proteção, sem renovação, com a data de fim", () => {
+    const acesso = calcularAcesso(linha("caso_protecao", "active", 2, FIM, true));
+    assert.equal(acesso.temProtecao, true);
+    assert.equal(acesso.podeCriarCaso, true);
+    const r = resumoPlanoPortal(acesso);
+    assert.deepEqual(r, {
+      plano: "caso_protecao",
+      estado: "Cancelamento agendado",
+      renovacao: null,
+      fimAgendado: FIM,
+      casosDisponiveis: 2,
+    });
   });
 
   test("pagamento em atraso mostra o estado, mantendo o plano", () => {
-    const r = resumoPlanoPortal(calcularAcesso(linha("caso_protecao", "past_due", 1, FIM)), false);
+    const r = resumoPlanoPortal(calcularAcesso(linha("caso_protecao", "past_due", 1, FIM)));
     assert.equal(r.estado, "Pagamento em atraso");
   });
 });
@@ -248,7 +266,7 @@ describe("pagamento pendente não concede acesso", () => {
   test("subscrição incompleta: sem proteção, sem renovação", () => {
     const acesso = calcularAcesso(linha("protecao", "incomplete", 0, "2026-10-30T10:00:00.000Z"));
     assert.equal(acesso.temProtecao, false);
-    const r = resumoPlanoPortal(acesso, false);
+    const r = resumoPlanoPortal(acesso);
     assert.equal(r.estado, "Pagamento em confirmação");
     assert.equal(r.renovacao, null);
   });
@@ -300,5 +318,25 @@ describe("estado do reembolso da conversão", () => {
   test("sem montante a reembolsar ou já resolvido pelo admin: nada a mostrar", () => {
     assert.equal(estadoReembolsoCliente({ ...base, montanteCentimos: 0, refundEstado: null }), null);
     assert.equal(estadoReembolsoCliente({ ...base, intervencaoResolvida: true, refundEstado: "failed" }), null);
+  });
+});
+
+describe("casos guardados depois do fim do Caso + Proteção", () => {
+  const AGORA = new Date("2026-10-01T10:00:00.000Z");
+  test("só conta congelamentos por restaurar e dentro do prazo", () => {
+    const r = casosGuardados(
+      [
+        { quantidade: 3, expira_em: "2026-12-30T10:00:00.000Z", restaurado_em: null },
+        { quantidade: 2, expira_em: "2026-09-01T10:00:00.000Z", restaurado_em: null }, // expirado
+        { quantidade: 1, expira_em: "2026-12-30T10:00:00.000Z", restaurado_em: "2026-09-20T10:00:00.000Z" }, // restaurado
+        { quantidade: 0, expira_em: "2026-12-30T10:00:00.000Z", restaurado_em: null }, // nada a guardar
+      ],
+      AGORA,
+    );
+    assert.deepEqual(r, { quantidade: 3, ate: "2026-12-30T10:00:00.000Z" });
+  });
+
+  test("depois dos 90 dias: nada para recuperar", () => {
+    assert.equal(casosGuardados([{ quantidade: 3, expira_em: "2026-09-30T10:00:00.000Z", restaurado_em: null }], AGORA), null);
   });
 });

@@ -43,7 +43,7 @@ function formatarData(iso: string) {
 }
 
 function nomeDoPlano(resumo: ResumoPlano) {
-  return resumo.plano === "sem_plano" ? "Sem plano ativo" : PLANOS[resumo.plano].nome;
+  return resumo.plano === "sem_plano" ? "Sem subscrição ativa" : PLANOS[resumo.plano].nome;
 }
 
 function OSeuPlano({
@@ -55,14 +55,13 @@ function OSeuPlano({
   pagamentoPendente: boolean;
   onEscolherSubscricao: () => void;
 }) {
-  const semSubscricao = resumo.plano === "avulso" || resumo.plano === "sem_plano";
+  const semSubscricao = resumo.plano === "sem_plano";
   const linhas: { label: string; valor: string }[] = [];
   if (!semSubscricao) {
     linhas.push({ label: "Preço", valor: `${precoComUnidade(resumo.plano as "protecao" | "caso_protecao")} (${IVA_INCLUIDO})` });
     if (resumo.estado) linhas.push({ label: "Estado da subscrição", valor: resumo.estado });
     if (resumo.renovacao) linhas.push({ label: "Próxima renovação", valor: formatarData(resumo.renovacao) });
-  } else {
-    linhas.push({ label: "Subscrição", valor: "Sem subscrição ativa" });
+    if (resumo.fimAgendado) linhas.push({ label: "Proteção ativa até", valor: formatarData(resumo.fimAgendado) });
   }
   if (resumo.casosDisponiveis !== null) {
     linhas.push({ label: "Casos disponíveis", valor: textoCasosDisponiveis(resumo.casosDisponiveis) });
@@ -92,6 +91,14 @@ function OSeuPlano({
         <p className="mt-3 text-[13px] text-[var(--color-ink-muted)]">
           Tem um pagamento em confirmação. Não precisa de voltar a pagar.
         </p>
+      )}
+      {!semSubscricao && (
+        <Link
+          href="/portal/subscricao"
+          className="mt-4 inline-flex min-h-11 items-center rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
+        >
+          Gerir subscrição
+        </Link>
       )}
       {semSubscricao && !pagamentoPendente && (
         <button

@@ -73,8 +73,7 @@ export default async function PortalIndex({
   const ultimo = lista[0] ?? null;
 
   // Plano apresentado: só estado real gravado pelo webhook.
-  const temAvulsoPago = lista.some((p) => p.plano === "avulso" && p.estado === "concluido");
-  const resumo = resumoPlanoPortal(acesso, temAvulsoPago);
+  const resumo = resumoPlanoPortal(acesso);
 
   const aviso = avisoDoPortal({
     regressoDoCheckout: params.upgraded === "true",

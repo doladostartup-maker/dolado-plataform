@@ -62,6 +62,17 @@ export function criarDependenciasWebhook(): DependenciasWebhook {
   const agora = () => new Date().toISOString();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://portal.dolado.pt";
 
+  async function contaDaSubscricao(subscriptionId: string) {
+    const { data, error } = await admin
+      .from("user_access")
+      .select("user_id")
+      .eq("stripe_subscription_id", subscriptionId)
+      .limit(1)
+      .maybeSingle();
+    falhar("user_access.select", error);
+    return (data?.user_id as string | undefined) ?? null;
+  }
+
   return {
     async reclamarEvento(eventId, tipo) {
       const { error } = await admin
@@ -187,6 +198,7 @@ export function criarDependenciasWebhook(): DependenciasWebhook {
           stripe_price_id: sub.stripe_price_id,
           current_period_start: sub.current_period_start,
           current_period_end: sub.current_period_end,
+          cancel_at_period_end: sub.cancel_at_period_end,
           updated_at: agora(),
         },
         { onConflict: "user_id" },
@@ -238,6 +250,103 @@ export function criarDependenciasWebhook(): DependenciasWebhook {
       });
       falhar("conceder_credito_caso", error);
       return data === true;
+    },
+
+    async congelarCreditosCaso(subscriptionId, em) {
+      const { data, error } = await admin.rpc("congelar_creditos_caso", {
+        p_subscription_id: subscriptionId,
+        p_em: em,
+      });
+      falhar("congelar_creditos_caso", error);
+      return Number(data ?? 0);
+    },
+
+    async restaurarCreditosCaso(subscriptionId, em, maximo) {
+      const { data, error } = await admin.rpc("restaurar_creditos_caso", {
+        p_subscription_id: subscriptionId,
+        p_em: em,
+        p_maximo: maximo,
+      });
+      falhar("restaurar_creditos_caso", error);
+      return Number(data ?? 0);
+    },
+
+    async sincronizarCancelamento(subscriptionId, { agendado, fimPrevisto, plano, em }) {
+      if (!agendado) {
+        // Reversão: fecha o cancelamento em aberto, se houver.
+        const { error } = await admin
+          .from("subscricao_cancelamentos")
+          .update({ revertido_em: em })
+          .eq("stripe_subscription_id", subscriptionId)
+          .is("revertido_em", null)
+          .is("terminado_em", null);
+        falhar("subscricao_cancelamentos.update", error);
+        return;
+      }
+      const { data: aberto, error: erroLeitura } = await admin
+        .from("subscricao_cancelamentos")
+        .select("id")
+        .eq("stripe_subscription_id", subscriptionId)
+        .is("revertido_em", null)
+        .is("terminado_em", null)
+        .maybeSingle();
+      falhar("subscricao_cancelamentos.select", erroLeitura);
+      if (aberto) {
+        const { error } = await admin
+          .from("subscricao_cancelamentos")
+          .update({ fim_previsto_em: fimPrevisto })
+          .eq("id", aberto.id);
+        falhar("subscricao_cancelamentos.update", error);
+        return;
+      }
+      // Agendado fora do portal (ex.: no Stripe Dashboard): regista sem motivo.
+      const userId = await contaDaSubscricao(subscriptionId);
+      if (!userId) return;
+      const { error } = await admin.from("subscricao_cancelamentos").insert({
+        user_id: userId,
+        stripe_subscription_id: subscriptionId,
+        plano,
+        origem: "stripe",
+        pedido_em: em,
+        fim_previsto_em: fimPrevisto,
+      });
+      // 23505: o portal registou o pedido entretanto — fica o do portal.
+      if (error && error.code !== "23505") falhar("subscricao_cancelamentos.insert", error);
+    },
+
+    async registarFimSubscricao(subscriptionId, { plano, em }) {
+      const { data: fechados, error } = await admin
+        .from("subscricao_cancelamentos")
+        .update({ terminado_em: em })
+        .eq("stripe_subscription_id", subscriptionId)
+        .is("revertido_em", null)
+        .is("terminado_em", null)
+        .select("id");
+      falhar("subscricao_cancelamentos.update", error);
+      if (fechados?.length) return;
+
+      // Sem pedido em aberto: ou já está registado (evento repetido), ou
+      // terminou sem pedido no portal (cancelamento imediato no Stripe,
+      // falta de pagamento).
+      const { data: jaTerminado, error: erroLeitura } = await admin
+        .from("subscricao_cancelamentos")
+        .select("id")
+        .eq("stripe_subscription_id", subscriptionId)
+        .not("terminado_em", "is", null)
+        .limit(1)
+        .maybeSingle();
+      falhar("subscricao_cancelamentos.select", erroLeitura);
+      if (jaTerminado) return;
+      const userId = await contaDaSubscricao(subscriptionId);
+      if (!userId) return;
+      const { error: erroInsert } = await admin.from("subscricao_cancelamentos").insert({
+        user_id: userId,
+        stripe_subscription_id: subscriptionId,
+        plano,
+        origem: "stripe",
+        terminado_em: em,
+      });
+      falhar("subscricao_cancelamentos.insert", erroInsert);
     },
 
     async reclamarConversao(conversaoId, checkoutSessionId, subscriptionId) {

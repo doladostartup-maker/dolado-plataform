@@ -19,8 +19,15 @@ import type Stripe from "stripe";
 //   duas vezes (case_credit_grants).
 // - customer.subscription.updated só atualiza contas que já tinham esta
 //   subscrição ativada por um pagamento confirmado — nunca ativa uma nova.
-// - Terminar/cancelar retira só o plano da subscrição; créditos, casos e
-//   histórico ficam. Nunca se apaga nada.
+// - Cancelamento normal = cancel_at_period_end no Stripe: a subscrição
+//   continua ativa até ao fim do período pago; customer.subscription.updated
+//   sincroniza o agendamento (e a reversão) e regista-o na auditoria.
+// - Fim efetivo (deleted, ou updated para canceled/incomplete_expired/unpaid)
+//   retira só o plano da subscrição: a conta fica SEM subscrição (plano
+//   "none") — nunca "Avulso". Casos, documentos e histórico ficam; nunca se
+//   apaga nada. No Caso + Proteção, os casos disponíveis da subscrição ficam
+//   congelados 90 dias (congelarCreditosCaso) e voltam se a conta tiver de
+//   novo Caso + Proteção ativo nesse prazo (restaurarCreditosCaso).
 // - Uma compra de raiz (sem conta ainda) fica registada; /criar-conta aplica
 //   o acesso quando liga o pagamento à conta nova.
 // - Conversão Avulso → assinatura (metadata.conversao_id): só depois de a
@@ -60,6 +67,8 @@ export type SnapshotSubscricao = {
   price_id: string | null;
   status: Stripe.Subscription.Status;
   cancel_at_period_end: boolean;
+  /** Data marcada para o cancelamento (o Stripe também a preenche com cancel_at_period_end). */
+  cancel_at: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
 };
@@ -72,6 +81,7 @@ export type SubscricaoNaConta = {
   stripe_price_id: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
+  cancel_at_period_end: boolean;
 };
 
 export type AtualizacaoSubscricaoNaConta = {
@@ -80,6 +90,15 @@ export type AtualizacaoSubscricaoNaConta = {
   stripe_price_id?: string | null;
   current_period_start?: string | null;
   current_period_end?: string | null;
+  cancel_at_period_end?: boolean;
+};
+
+export type CancelamentoNaAuditoria = {
+  /** true = cancelamento agendado no Stripe; false = sem cancelamento (revertido, se havia). */
+  agendado: boolean;
+  fimPrevisto: string | null;
+  plano: "protecao" | "caso_protecao" | null;
+  em: string;
 };
 
 export type ConversaoParaReembolso = {
@@ -138,6 +157,24 @@ export interface DependenciasWebhook {
   garantirConta(userId: string, customerId: string | null): Promise<void>;
   /** +1 crédito uma única vez por origem; maximo limita o saldo. true se creditou. */
   concederCreditoCaso(userId: string, origem: string, maximo: number | null): Promise<boolean>;
+  /**
+   * Fim do Caso + Proteção: congela os casos da subscrição nas contas que a
+   * têm (90 dias). Idempotente por subscrição. Devolve quantos congelou.
+   */
+  congelarCreditosCaso(subscriptionId: string, em: string): Promise<number>;
+  /**
+   * Caso + Proteção ativo: restaura os casos congelados ainda no prazo nas
+   * contas com esta subscrição, até ao máximo. Idempotente. Devolve quantos.
+   */
+  restaurarCreditosCaso(subscriptionId: string, em: string, maximo: number): Promise<number>;
+
+  /** Auditoria: cancelamento agendado (cria se não houver) ou revertido. Idempotente. */
+  sincronizarCancelamento(subscriptionId: string, dados: CancelamentoNaAuditoria): Promise<void>;
+  /** Auditoria: fim efetivo da subscrição. Idempotente. */
+  registarFimSubscricao(
+    subscriptionId: string,
+    dados: { plano: "protecao" | "caso_protecao" | null; em: string },
+  ): Promise<void>;
 
   /**
    * Marca a conversão como feita para ESTE checkout (atómico: só a 1.ª
@@ -184,6 +221,8 @@ export const MAXIMO_CREDITOS_MENSAIS = 4;
 // past_due mantém o acesso: o Stripe ainda está a tentar cobrar.
 const ESTADOS_ATIVOS: ReadonlySet<string> = new Set(["active", "trialing", "past_due"]);
 const ESTADOS_TERMINADOS: ReadonlySet<string> = new Set(["canceled", "unpaid", "incomplete_expired"]);
+// Fim definitivo (unpaid ainda pode voltar a ativa se a dívida for paga).
+const ESTADOS_FINAIS: ReadonlySet<string> = new Set(["canceled", "incomplete_expired"]);
 // Só estas faturas correspondem a um ciclo (a primeira e as renovações). Uma
 // fatura de prorrateio (mudança de plano a meio do ciclo) não dá crédito.
 const FATURAS_DE_CICLO: ReadonlySet<string> = new Set(["subscription_create", "subscription_cycle"]);
@@ -212,6 +251,12 @@ function paraIso(segundos: number | null | undefined) {
   return segundos ? new Date(segundos * 1000).toISOString() : null;
 }
 
+/** Cancelamento agendado (pelo portal ou no Stripe Dashboard), ainda por acontecer. */
+export function cancelamentoAgendado(snapshot: Pick<SnapshotSubscricao, "status" | "cancel_at_period_end" | "cancel_at">) {
+  if (ESTADOS_TERMINADOS.has(snapshot.status)) return false;
+  return snapshot.cancel_at_period_end || !!snapshot.cancel_at;
+}
+
 export function snapshotDeSubscricao(sub: Stripe.Subscription): SnapshotSubscricao {
   // Desde a API 2025-03-31 o período está nos itens, não na subscrição.
   const item = sub.items?.data?.[0];
@@ -221,6 +266,7 @@ export function snapshotDeSubscricao(sub: Stripe.Subscription): SnapshotSubscric
     price_id: item?.price?.id ?? null,
     status: sub.status,
     cancel_at_period_end: sub.cancel_at_period_end,
+    cancel_at: paraIso(sub.cancel_at),
     current_period_start: paraIso(item?.current_period_start),
     current_period_end: paraIso(item?.current_period_end),
   };
@@ -243,6 +289,7 @@ function dadosNaConta(
     stripe_price_id: snapshot.price_id,
     current_period_start: snapshot.current_period_start,
     current_period_end: snapshot.current_period_end,
+    cancel_at_period_end: cancelamentoAgendado(snapshot),
   };
 }
 
@@ -311,6 +358,7 @@ export async function aplicarCompraConfirmadaNaConta(
   session: Stripe.Checkout.Session,
   userId: string,
   deps: DependenciasWebhook,
+  em: string = new Date().toISOString(),
 ): Promise<Plano | null> {
   await deps.garantirConta(userId, idDe(session.customer));
 
@@ -326,6 +374,10 @@ export async function aplicarCompraConfirmadaNaConta(
   if (!plano || !subscricaoEstaAtiva(snapshot.status)) return null;
 
   await deps.aplicarSubscricaoNaConta(userId, dadosNaConta(snapshot, plano));
+  if (plano === "caso_protecao") {
+    // Nova subscrição dentro dos 90 dias: os casos congelados voltam.
+    await deps.restaurarCreditosCaso(subscriptionId, em, MAXIMO_CREDITOS_MENSAIS);
+  }
   const invoiceId = idDe(session.invoice);
   if (plano === "caso_protecao" && invoiceId) {
     // Mesma origem que invoice.paid usa para esta fatura — só credita uma vez.
@@ -394,12 +446,13 @@ async function confirmarCompra(
   s: DadosSessao,
   estadoAnterior: EstadoPagamento | null,
   deps: DependenciasWebhook,
+  em: string,
 ) {
   const contas = await contasDaCompra(session, s, deps);
   // Plano efetivamente aplicado a uma conta (subscrição confirmada e ativa).
   let planoAplicado: Plano | null = null;
   for (const userId of contas) {
-    planoAplicado = (await aplicarCompraConfirmadaNaConta(session, userId, deps)) ?? planoAplicado;
+    planoAplicado = (await aplicarCompraConfirmadaNaConta(session, userId, deps, em)) ?? planoAplicado;
   }
   // Nome do plano para o e-mail — pode vir só do price.
   let plano: Plano | null = planoAplicado ?? (s.tipo === "avulso" ? "avulso" : null);
@@ -450,7 +503,7 @@ async function tratarCheckoutConcluido(event: Stripe.Event, deps: DependenciasWe
     return { resultado: "pagamento_pendente", ...ids };
   }
 
-  return { resultado: await confirmarCompra(session, s, estadoAtual, deps), ...ids };
+  return { resultado: await confirmarCompra(session, s, estadoAtual, deps, paraIso(event.created)!), ...ids };
 }
 
 async function tratarPagamentoAssincronoConfirmado(
@@ -468,7 +521,7 @@ async function tratarPagamentoAssincronoConfirmado(
   }
 
   const estadoAtual = await deps.obterEstadoPagamento(session.id);
-  return { resultado: await confirmarCompra(session, s, estadoAtual, deps), ...ids };
+  return { resultado: await confirmarCompra(session, s, estadoAtual, deps, paraIso(event.created)!), ...ids };
 }
 
 async function tratarPagamentoAssincronoFalhado(
@@ -526,9 +579,15 @@ async function tratarFatura(
   const contas = customerId ? await deps.contasDoCustomer(customerId) : [];
   if (contas.length === 0) return { resultado: "pago_sem_conta_ligada", ...ids };
 
-  let creditou = false;
   for (const userId of contas) {
     await deps.aplicarSubscricaoNaConta(userId, dadosNaConta(snapshot, plano));
+  }
+  if (plano === "caso_protecao") {
+    await deps.restaurarCreditosCaso(subscriptionId, paraIso(event.created)!, MAXIMO_CREDITOS_MENSAIS);
+  }
+
+  let creditou = false;
+  for (const userId of contas) {
     if (plano === "caso_protecao" && FATURAS_DE_CICLO.has(invoice.billing_reason ?? "")) {
       const novo = await deps.concederCreditoCaso(userId, `invoice:${invoice.id}`, MAXIMO_CREDITOS_MENSAIS);
       creditou = novo || creditou;
@@ -547,16 +606,44 @@ async function tratarSubscricaoAtualizada(event: Stripe.Event, deps: Dependencia
   // Só contas que já têm esta subscrição (ativada por um pagamento
   // confirmado) — este evento sincroniza, nunca ativa uma conta nova.
   const terminada = ESTADOS_TERMINADOS.has(snapshot.status);
-  const plano = terminada ? "none" : deps.planoDoPreco(snapshot.price_id);
-  const afetadas = await deps.atualizarSubscricaoNasContas(snapshot.stripe_subscription_id, {
+  const planoDoPreco = deps.planoDoPreco(snapshot.price_id);
+  const plano = terminada ? "none" : planoDoPreco;
+  const agendado = cancelamentoAgendado(snapshot);
+  const em = paraIso(event.created)!;
+  const sub = snapshot.stripe_subscription_id;
+
+  if (terminada && planoDoPreco === "caso_protecao") {
+    // Antes de mexer na conta: congela pelas contas que ainda têm esta subscrição.
+    await deps.congelarCreditosCaso(sub, em);
+  }
+  const afetadas = await deps.atualizarSubscricaoNasContas(sub, {
     ...(plano ? { plano } : {}),
     status: snapshot.status,
     stripe_price_id: snapshot.price_id,
     current_period_start: snapshot.current_period_start,
     current_period_end: snapshot.current_period_end,
+    cancel_at_period_end: agendado,
   });
   if (afetadas === 0) return { resultado: "sincronizado_sem_conta", ...ids };
-  return { resultado: terminada ? "sincronizado_acesso_retirado" : "sincronizado", ...ids };
+
+  if (terminada) {
+    if (ESTADOS_FINAIS.has(snapshot.status)) {
+      await deps.registarFimSubscricao(sub, { plano: planoDoPreco, em });
+    }
+    return { resultado: "sincronizado_acesso_retirado", ...ids };
+  }
+
+  await deps.sincronizarCancelamento(sub, {
+    agendado,
+    fimPrevisto: snapshot.cancel_at ?? snapshot.current_period_end,
+    plano: planoDoPreco,
+    em,
+  });
+  if (planoDoPreco === "caso_protecao" && subscricaoEstaAtiva(snapshot.status)) {
+    // Ex.: Proteção → Caso + Proteção dentro dos 90 dias, ou unpaid → active.
+    await deps.restaurarCreditosCaso(sub, em, MAXIMO_CREDITOS_MENSAIS);
+  }
+  return { resultado: agendado ? "sincronizado_cancelamento_agendado" : "sincronizado", ...ids };
 }
 
 async function tratarSubscricaoEliminada(event: Stripe.Event, deps: DependenciasWebhook): Promise<Tratamento> {
@@ -568,12 +655,22 @@ async function tratarSubscricaoEliminada(event: Stripe.Event, deps: Dependencias
   await deps.gravarSubscricao({ ...snapshot, status: "canceled" }, Number.MAX_SAFE_INTEGER);
   await deps.marcarPagamentosDaSubscricao(snapshot.stripe_subscription_id, "assinatura_cancelada");
 
-  // Retira só o plano desta subscrição. Créditos por usar, casos, histórico
-  // e alertas ficam.
+  const plano = deps.planoDoPreco(snapshot.price_id);
+  const em = paraIso(event.created)!;
+  // Casos do Caso + Proteção: congelados 90 dias (só nas contas que ainda
+  // têm esta subscrição; idempotente).
+  if (plano === "caso_protecao") {
+    await deps.congelarCreditosCaso(snapshot.stripe_subscription_id, em);
+  }
+
+  // Retira só o plano desta subscrição: a conta fica sem subscrição (não
+  // "Avulso"). Casos, documentos, histórico e alertas ficam.
   const afetadas = await deps.atualizarSubscricaoNasContas(snapshot.stripe_subscription_id, {
     plano: "none",
     status: "canceled",
+    cancel_at_period_end: false,
   });
+  if (afetadas > 0) await deps.registarFimSubscricao(snapshot.stripe_subscription_id, { plano, em });
   return { resultado: afetadas > 0 ? "cancelada_acesso_retirado" : "cancelada", ...ids };
 }
 

@@ -221,7 +221,9 @@ export default async function PortalLayout({
           <ItemNav href="/portal/perfil" icon={<IconPerfil />}>
             Gestão de Perfil
           </ItemNav>
-          <ItemDesactivado icon={<IconSubscricao />}>Gestão de Subscrição</ItemDesactivado>
+          <ItemNav href="/portal/subscricao" icon={<IconSubscricao />}>
+            Gestão de Subscrição
+          </ItemNav>
           <ItemDesactivado icon={<IconFacturacao />}>Faturação</ItemDesactivado>
         </nav>
 

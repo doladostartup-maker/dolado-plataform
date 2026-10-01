@@ -4,6 +4,7 @@
 // função SQL conceder_credito_caso), para verificar o efeito real de cada
 // evento no acesso e nos créditos.
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { beforeEach, describe, test } from "node:test";
 import { aplicarCompraConfirmadaNaConta, processarEventoStripe } from "./webhook.ts";
 
@@ -20,6 +21,9 @@ function criarEstado() {
     subscricoes: new Map(), // subscription_id → linha
     contas: new Map(), // user_id → linha de user_access
     creditosConcedidos: new Set(), // origens (case_credit_grants)
+    creditosPorConta: new Map(), // origem → user_id (para congelar_creditos_caso)
+    congelamentos: [], // case_credit_freezes
+    cancelamentos: [], // subscricao_cancelamentos
     emails: [],
     logs: [],
     stripeSubscricao: null, // o que a "API Stripe" devolve
@@ -97,6 +101,7 @@ function criarDependencias(estado) {
         stripe_subscription_id: sub.stripe_subscription_id,
         stripe_customer_id: sub.stripe_customer_id,
         stripe_price_id: sub.stripe_price_id,
+        cancel_at_period_end: sub.cancel_at_period_end,
       });
     },
     async atualizarSubscricaoNasContas(subId, dados) {
@@ -105,6 +110,8 @@ function criarDependencias(estado) {
         if (c.stripe_subscription_id !== subId) continue;
         if (dados.plano) c.subscription_plan = dados.plano;
         if (dados.status) c.subscription_status = dados.status;
+        if (dados.cancel_at_period_end !== undefined) c.cancel_at_period_end = dados.cancel_at_period_end;
+        if (dados.current_period_end !== undefined) c.current_period_end = dados.current_period_end;
         n++;
       }
       return n;
@@ -121,9 +128,61 @@ function criarDependencias(estado) {
       }
       if (estado.creditosConcedidos.has(origem)) return false;
       estado.creditosConcedidos.add(origem);
+      estado.creditosPorConta.set(origem, userId);
       const c = estado.contas.get(userId);
       c.case_credits = maximo == null ? c.case_credits + 1 : Math.max(c.case_credits, Math.min(c.case_credits + 1, maximo));
       return true;
+    },
+    // Mesmas regras que as funções SQL congelar_/restaurar_creditos_caso.
+    async congelarCreditosCaso(subId, em) {
+      let total = 0;
+      for (const [userId, c] of estado.contas) {
+        if (c.stripe_subscription_id !== subId) continue;
+        if (estado.congelamentos.some((f) => f.sub === subId && f.user_id === userId && !f.restaurado_em)) continue;
+        const avulso = [...estado.creditosPorConta].filter(([o, u]) => u === userId && o.startsWith("checkout:")).length;
+        const quantidade = Math.max(c.case_credits - avulso, 0);
+        const expira = new Date(new Date(em).getTime() + 90 * DIA_MS).toISOString();
+        estado.congelamentos.push({ user_id: userId, sub: subId, quantidade, congelado_em: em, expira_em: expira, restaurado_em: null });
+        c.case_credits -= quantidade;
+        total += quantidade;
+      }
+      return total;
+    },
+    async restaurarCreditosCaso(subId, em, maximo) {
+      let total = 0;
+      for (const [userId, c] of estado.contas) {
+        if (c.stripe_subscription_id !== subId || c.subscription_plan !== "caso_protecao") continue;
+        if (!["active", "trialing", "past_due"].includes(c.subscription_status)) continue;
+        const validos = estado.congelamentos.filter((f) => f.user_id === userId && !f.restaurado_em && f.expira_em > em);
+        if (validos.length === 0) continue;
+        const soma = validos.reduce((a, f) => a + f.quantidade, 0);
+        for (const f of validos) f.restaurado_em = em;
+        const novo = Math.max(c.case_credits, Math.min(c.case_credits + soma, maximo));
+        total += novo - c.case_credits;
+        c.case_credits = novo;
+      }
+      return total;
+    },
+    async sincronizarCancelamento(subId, { agendado, fimPrevisto, plano, em }) {
+      const aberto = estado.cancelamentos.find((x) => x.sub === subId && !x.revertido_em && !x.terminado_em);
+      if (!agendado) {
+        if (aberto) aberto.revertido_em = em;
+        return;
+      }
+      if (aberto) {
+        aberto.fim_previsto_em = fimPrevisto;
+        return;
+      }
+      estado.cancelamentos.push({ sub: subId, plano, origem: "stripe", pedido_em: em, fim_previsto_em: fimPrevisto, revertido_em: null, terminado_em: null });
+    },
+    async registarFimSubscricao(subId, { plano, em }) {
+      const abertos = estado.cancelamentos.filter((x) => x.sub === subId && !x.revertido_em && !x.terminado_em);
+      if (abertos.length) {
+        for (const x of abertos) x.terminado_em = em;
+        return;
+      }
+      if (estado.cancelamentos.some((x) => x.sub === subId && x.terminado_em)) return;
+      estado.cancelamentos.push({ sub: subId, plano, origem: "stripe", pedido_em: null, revertido_em: null, terminado_em: em });
     },
     async reclamarConversao(id, checkoutSessionId, subscriptionId) {
       const c = estado.conversoes.get(id);
@@ -172,6 +231,7 @@ function criarDependencias(estado) {
   };
 }
 
+const DIA_MS = 24 * 3600 * 1000;
 let n = 0;
 function evento(type, object, created = 1_700_000_000 + n) {
   n++;
@@ -217,6 +277,7 @@ function snapshot(status, price = PRECO_CASO_PROTECAO) {
     price_id: price,
     status,
     cancel_at_period_end: false,
+    cancel_at: null,
     current_period_start: "2023-11-14T22:13:20.000Z",
     current_period_end: "2023-12-14T22:13:20.000Z",
   };
@@ -498,11 +559,13 @@ describe("customer.subscription.*", () => {
     assert.equal(estado.pagamentos.get("cs_sub").estado, "assinatura_cancelada");
   });
 
-  test("cancelamento de Caso + Proteção mantém os créditos por usar e a conta", async () => {
+  test("fim do Caso + Proteção: conta sem subscrição, casos da subscrição congelados (não perdidos)", async () => {
     comConta({ subscription_plan: "caso_protecao", subscription_status: "active", stripe_subscription_id: SUB, case_credits: 3 });
     await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled")), deps);
     assert.equal(conta().subscription_plan, "none");
-    assert.equal(conta().case_credits, 3);
+    assert.equal(conta().case_credits, 0);
+    assert.equal(estado.congelamentos.length, 1);
+    assert.equal(estado.congelamentos[0].quantidade, 3);
   });
 
   test("cancelar uma subscrição antiga não mexe na conta que já tem outra", async () => {
@@ -733,5 +796,206 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
     const r = await processarEventoStripe(evento("refund.created", { id: "re_manual", object: "refund", status: "succeeded", metadata: {} }), deps);
     assert.equal(r.status, 200);
     assert.equal(ultimoLog().resultado, "ignorado_sem_conversao");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Gestão de Subscrição: cancelamento no fim do período, reversão, fim
+// efetivo e casos congelados 90 dias.
+// ---------------------------------------------------------------------------
+describe("gestão de subscrição (webhook)", () => {
+  const T0 = 1_780_000_000; // segundos Unix
+  const SUB_NOVA = "sub_nova";
+  const ativa = (extra = {}) => ({
+    subscription_plan: "caso_protecao",
+    subscription_status: "active",
+    stripe_subscription_id: SUB,
+    case_credits: 3,
+    cancel_at_period_end: false,
+    ...extra,
+  });
+  const agendada = () =>
+    subscricao("active", PRECO_CASO_PROTECAO, { cancel_at_period_end: true, cancel_at: 1_702_592_000 });
+  const aberto = () => estado.cancelamentos.filter((x) => x.sub === SUB && !x.revertido_em && !x.terminado_em);
+
+  test("1. subscrição ativa: sem cancelamento agendado", async () => {
+    comConta(ativa());
+    await processarEventoStripe(evento("customer.subscription.updated", subscricao("active"), T0), deps);
+    assert.equal(conta().cancel_at_period_end, false);
+    assert.equal(ultimoLog().resultado, "sincronizado");
+    assert.equal(estado.cancelamentos.length, 0);
+  });
+
+  test("2/3. cancelamento agendado: plano, proteção e casos intactos até ao fim do período", async () => {
+    comConta(ativa());
+    await processarEventoStripe(evento("customer.subscription.updated", agendada(), T0), deps);
+    assert.equal(ultimoLog().resultado, "sincronizado_cancelamento_agendado");
+    assert.equal(conta().subscription_plan, "caso_protecao");
+    assert.equal(conta().subscription_status, "active");
+    assert.equal(conta().cancel_at_period_end, true);
+    assert.equal(conta().case_credits, 3);
+    assert.equal(estado.congelamentos.length, 0);
+    assert.equal(aberto().length, 1);
+    assert.equal(aberto()[0].fim_previsto_em, "2023-12-14T22:13:20.000Z");
+  });
+
+  test("pedido feito no portal: o webhook não duplica o registo (fica o do cliente)", async () => {
+    comConta(ativa());
+    estado.cancelamentos.push({ sub: SUB, origem: "cliente", motivo_codigo: "preco", revertido_em: null, terminado_em: null });
+    await processarEventoStripe(evento("customer.subscription.updated", agendada(), T0), deps);
+    assert.equal(estado.cancelamentos.length, 1);
+    assert.equal(estado.cancelamentos[0].origem, "cliente");
+  });
+
+  test("4. reversão: o cancelamento deixa de estar agendado e fica registada a reversão", async () => {
+    comConta(ativa());
+    await processarEventoStripe(evento("customer.subscription.updated", agendada(), T0), deps);
+    await processarEventoStripe(evento("customer.subscription.updated", subscricao("active"), T0 + 60), deps);
+    assert.equal(conta().cancel_at_period_end, false);
+    assert.equal(conta().subscription_plan, "caso_protecao");
+    assert.equal(aberto().length, 0);
+    assert.ok(estado.cancelamentos[0].revertido_em);
+  });
+
+  test("5. fim efetivo: sem subscrição (não 'Avulso'), fim registado, casos congelados 90 dias", async () => {
+    comConta(ativa());
+    await processarEventoStripe(evento("customer.subscription.updated", agendada(), T0), deps);
+    await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled"), T0 + 86_400), deps);
+    assert.equal(conta().subscription_plan, "none");
+    assert.equal(conta().subscription_status, "canceled");
+    assert.equal(conta().cancel_at_period_end, false);
+    assert.equal(conta().case_credits, 0);
+    const [f] = estado.congelamentos;
+    assert.equal(f.quantidade, 3);
+    assert.equal(new Date(f.expira_em) - new Date(f.congelado_em), 90 * DIA_MS);
+    assert.equal(estado.cancelamentos.length, 1);
+    assert.ok(estado.cancelamentos[0].terminado_em);
+  });
+
+  test("Proteção (sem casos): fim efetivo sem congelamento", async () => {
+    comConta(ativa({ subscription_plan: "protecao", case_credits: 0 }));
+    await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled", PRECO_PROTECAO), T0), deps);
+    assert.equal(conta().subscription_plan, "none");
+    assert.equal(estado.congelamentos.length, 0);
+  });
+
+  test("6. depois do fim: nada reativa a subscrição terminada (sem renovação)", async () => {
+    comConta(ativa());
+    await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled"), T0), deps);
+    estado.stripeSubscricao = snapshot("canceled");
+    await processarEventoStripe(evento("invoice.paid", fatura("in_depois"), T0 + 10), deps);
+    assert.equal(ultimoLog().resultado, "pago_subscricao_inativa");
+    assert.equal(conta().subscription_plan, "none");
+    assert.equal(conta().case_credits, 0);
+  });
+
+  test("7. o fim da subscrição não apaga a conta, os pagamentos nem o histórico", async () => {
+    comConta(ativa());
+    estado.pagamentos.set("cs_sub", { stripe_session_id: "cs_sub", stripe_subscription_id: SUB, estado: "concluido" });
+    await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled"), T0), deps);
+    assert.ok(estado.contas.has(USER));
+    assert.ok(estado.pagamentos.has("cs_sub"));
+    // A única remoção que o webhook faz é libertar um evento depois de uma falha.
+    const fonte = readFileSync(new URL("./webhookDependencias.ts", import.meta.url), "utf8");
+    assert.equal((fonte.match(/\.delete\(\)/g) ?? []).length, 1);
+    assert.match(fonte, /from\("stripe_webhook_events"\)\s*\.delete\(\)/);
+    assert.equal(fonte.includes('from("casos")'), false);
+  });
+
+  test("8. congelamento: casos Avulso comprados ficam utilizáveis; só os da subscrição congelam", async () => {
+    comConta(ativa({ case_credits: 0 }));
+    await deps.concederCreditoCaso(USER, "checkout:cs_avulso", null); // Avulso
+    await deps.concederCreditoCaso(USER, "invoice:in_1", 4);
+    await deps.concederCreditoCaso(USER, "invoice:in_2", 4);
+    assert.equal(conta().case_credits, 3);
+    await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled"), T0), deps);
+    assert.equal(conta().case_credits, 1);
+    assert.equal(estado.congelamentos[0].quantidade, 2);
+  });
+
+  async function terminarERessubscrever(segundosDepois, price = PRECO_CASO_PROTECAO) {
+    comConta(ativa());
+    await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled"), T0), deps);
+    estado.stripeSubscricao = { ...snapshot("active", price), stripe_subscription_id: SUB_NOVA };
+    await processarEventoStripe(
+      evento("checkout.session.completed", sessaoSubscricao({ id: "cs_nova", subscription: SUB_NOVA, invoice: "in_nova" }), T0 + segundosDepois),
+      deps,
+    );
+  }
+
+  test("9. nova subscrição Caso + Proteção dentro dos 90 dias: recupera os casos (até 4) na mesma conta", async () => {
+    await terminarERessubscrever(30 * 86_400);
+    assert.equal(conta().subscription_plan, "caso_protecao");
+    assert.equal(conta().stripe_subscription_id, SUB_NOVA);
+    assert.equal(conta().case_credits, 4); // 3 recuperados + 1 do novo ciclo, limite 4
+    assert.ok(estado.congelamentos[0].restaurado_em);
+    // Reenvio da fatura: nada muda.
+    await processarEventoStripe(evento("invoice.paid", { ...fatura("in_nova", "subscription_create"), parent: { subscription_details: { subscription: SUB_NOVA } } }, T0 + 30 * 86_400 + 5), deps);
+    assert.equal(conta().case_credits, 4);
+  });
+
+  test("10. nova subscrição depois dos 90 dias: começa sem os casos antigos", async () => {
+    await terminarERessubscrever(91 * 86_400);
+    assert.equal(conta().subscription_plan, "caso_protecao");
+    assert.equal(conta().case_credits, 1); // só o do novo ciclo
+    assert.equal(estado.congelamentos[0].restaurado_em, null);
+  });
+
+  test("regressar com Proteção não recupera os casos; mudar depois para Caso + Proteção no prazo recupera", async () => {
+    await terminarERessubscrever(10 * 86_400, PRECO_PROTECAO);
+    assert.equal(conta().subscription_plan, "protecao");
+    assert.equal(conta().case_credits, 0);
+    await processarEventoStripe(
+      evento("customer.subscription.updated", { ...subscricao("active", PRECO_CASO_PROTECAO), id: SUB_NOVA }, T0 + 20 * 86_400),
+      deps,
+    );
+    assert.equal(conta().subscription_plan, "caso_protecao");
+    assert.equal(conta().case_credits, 3);
+  });
+
+  test("11. fim recebido várias vezes (updated canceled + deleted + reenvio): congela e regista uma vez", async () => {
+    comConta(ativa());
+    await processarEventoStripe(evento("customer.subscription.updated", subscricao("canceled"), T0), deps);
+    await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled"), T0 + 1), deps);
+    await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled"), T0 + 2), deps);
+    assert.equal(estado.congelamentos.length, 1);
+    assert.equal(estado.congelamentos[0].quantidade, 3);
+    assert.equal(conta().case_credits, 0);
+    assert.equal(estado.cancelamentos.filter((x) => x.terminado_em).length, 1);
+  });
+
+  test("12. fora de ordem: um 'updated' antigo depois do fim não reativa nem desfaz nada", async () => {
+    comConta(ativa());
+    await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled"), T0 + 100), deps);
+    await processarEventoStripe(evento("customer.subscription.updated", agendada(), T0), deps);
+    assert.equal(ultimoLog().resultado, "ignorado_evento_antigo");
+    assert.equal(conta().subscription_plan, "none");
+    assert.equal(conta().case_credits, 0);
+  });
+
+  test("12b. fim de uma subscrição antiga depois de a conta já ter aderido a outra: não congela nada", async () => {
+    comConta(ativa({ stripe_subscription_id: SUB_NOVA }));
+    await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled"), T0), deps);
+    assert.equal(estado.congelamentos.length, 0);
+    assert.equal(conta().case_credits, 3);
+    assert.equal(conta().subscription_plan, "caso_protecao");
+  });
+
+  test("unpaid congela; se a dívida for paga e voltar a ativa, os casos voltam", async () => {
+    comConta(ativa());
+    await processarEventoStripe(evento("customer.subscription.updated", subscricao("unpaid"), T0), deps);
+    assert.equal(conta().case_credits, 0);
+    await processarEventoStripe(evento("customer.subscription.updated", subscricao("active"), T0 + 10), deps);
+    assert.equal(conta().subscription_plan, "caso_protecao");
+    assert.equal(conta().case_credits, 3);
+  });
+
+  test("13. Avulso sem subscrição: o fim de subscrições não lhe mexe nos casos", async () => {
+    comConta();
+    await aplicarCompraConfirmadaNaConta(sessaoAvulso(), USER, deps);
+    await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled"), T0), deps);
+    assert.equal(conta().case_credits, 1);
+    assert.equal(conta().subscription_plan, "none");
+    assert.equal(estado.congelamentos.length, 0);
   });
 });
