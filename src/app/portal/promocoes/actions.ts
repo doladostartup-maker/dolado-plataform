@@ -143,7 +143,7 @@ export async function criarAlertaPromocaoPortal(formData: FormData) {
   }
   if (!consentimento) {
     redirect(
-      `/portal/promocoes?erro=${encodeURIComponent("Tem de autorizar o tratamento dos dados para continuar.")}`,
+      `/portal/promocoes?erro=${encodeURIComponent("Confirme o pedido para continuar.")}`,
     );
   }
   const erroData = validarDataPromocao(dataFim);

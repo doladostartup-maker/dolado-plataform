@@ -19,7 +19,7 @@ export async function criarCasoCliente(formData: FormData) {
   const autorizacao = formData.get("autorizacao") === "on";
   if (!autorizacao) {
     redirect(
-      `/portal/casos/novo?erro=${encodeURIComponent("Tem de autorizar o tratamento dos dados para avançar.")}`,
+      `/portal/casos/novo?erro=${encodeURIComponent("Confirme o pedido para avançar.")}`,
     );
   }
 

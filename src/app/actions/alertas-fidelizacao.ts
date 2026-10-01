@@ -55,7 +55,7 @@ export async function criarAlertaFidelizacao(
     return { ok: false, erro: "Indique o operador ou prestador." };
   }
   if (!consentimento) {
-    return { ok: false, erro: "Tem de autorizar o tratamento dos dados para continuar." };
+    return { ok: false, erro: "Confirme o pedido para continuar." };
   }
 
   let dataFimFidelizacao: string | null = dataFimIndicada || null;

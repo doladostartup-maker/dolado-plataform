@@ -550,6 +550,44 @@ select is(testes.tenta($$insert into public.consentimentos_compra (plano, tipo_c
 reset role;
 
 -- ===========================================================================
+-- 2f. Pedidos de livre resolução (função online — grava só o servidor)
+-- ===========================================================================
+reset role;
+set local role service_role;
+select is(testes.tenta($$insert into public.pedidos_livre_resolucao (id, user_id, nome, email, plano, versao_formulario) values
+  ('1d000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'Utilizador A', 'a@teste.invalid', 'avulso', '2026-10-01'),
+  ('1d000000-0000-4000-a000-00000000000b', '00000000-0000-4000-a000-00000000000b', 'Utilizador B', 'b@teste.invalid', 'caso_protecao', '2026-10-01')$$),
+  'ok:2', 'servidor: regista pedidos de livre resolução');
+select is(testes.tenta($$insert into public.pedidos_livre_resolucao (nome, email, plano, versao_formulario) values ('X', 'x@teste.invalid', 'premium', '2026-10-01')$$),
+  'erro:23514', 'plano tem de ser um dos produtos');
+reset role;
+
+select testes.como(null);
+select ok(testes.contar('select * from public.pedidos_livre_resolucao') <= 0, 'anon: não lê pedidos de livre resolução');
+select ok(testes.negado($$insert into public.pedidos_livre_resolucao (nome, email, plano, versao_formulario) values ('Anon', 'anon@teste.invalid', 'avulso', 'x')$$), 'anon: não cria pedidos pela API');
+reset role;
+select testes.como('00000000-0000-4000-a000-00000000000a');
+select is(testes.contar('select * from public.pedidos_livre_resolucao'), 1::bigint, 'A: vê só o próprio pedido de livre resolução');
+select ok(testes.negado($$insert into public.pedidos_livre_resolucao (user_id, nome, email, plano, versao_formulario) values ('00000000-0000-4000-a000-00000000000b', 'Forjado', 'b@teste.invalid', 'avulso', 'x')$$), 'A: não cria pedidos em nome de outra conta');
+select ok(testes.negado($$update public.pedidos_livre_resolucao set estado = 'concluido' where id = '1d000000-0000-4000-a000-00000000000a'$$), 'A: não altera o estado do próprio pedido');
+select ok(testes.negado($$delete from public.pedidos_livre_resolucao where id = '1d000000-0000-4000-a000-00000000000a'$$), 'A: não apaga o próprio pedido');
+reset role;
+select testes.como('00000000-0000-4000-a000-0000000000ad');
+select is(testes.contar($$select * from public.pedidos_livre_resolucao where id::text like '1d000000-%'$$), 2::bigint, 'admin: lê pedidos de livre resolução de todos');
+select is(testes.tenta($$update public.pedidos_livre_resolucao set estado = 'em_analise', nota = 'a ver', tratado_em = now() where id = '1d000000-0000-4000-a000-00000000000b'$$), 'ok:1', 'admin: acompanha o pedido (estado e nota)');
+select ok(testes.negado($$update public.pedidos_livre_resolucao set plano = 'avulso' where id = '1d000000-0000-4000-a000-00000000000b'$$), 'admin: não altera o que foi declarado');
+select ok(testes.negado($$delete from public.pedidos_livre_resolucao where id = '1d000000-0000-4000-a000-00000000000b'$$), 'admin: não apaga pedidos');
+reset role;
+set local role service_role;
+select is(testes.tenta($$update public.pedidos_livre_resolucao set nome = 'Outro' where id = '1d000000-0000-4000-a000-00000000000a'$$), 'erro:23514', 'imutável: nome declarado não muda');
+select is(testes.tenta($$update public.pedidos_livre_resolucao set pedido_em = now() - interval '1 day' where id = '1d000000-0000-4000-a000-00000000000a'$$), 'erro:23514', 'imutável: data do pedido não muda');
+select is(testes.tenta($$update public.pedidos_livre_resolucao set user_id = '00000000-0000-4000-a000-00000000000b' where id = '1d000000-0000-4000-a000-00000000000a'$$), 'erro:23514', 'imutável: não passa para outra conta');
+select is(testes.tenta($$update public.pedidos_livre_resolucao set confirmacao_enviada_em = now() where id = '1d000000-0000-4000-a000-00000000000a'$$), 'ok:1', 'servidor: regista a confirmação enviada');
+select is(testes.tenta($$update public.pedidos_livre_resolucao set confirmacao_enviada_em = now() + interval '1 hour' where id = '1d000000-0000-4000-a000-00000000000a'$$), 'erro:23514', 'imutável: confirmação enviada não muda');
+select is(testes.tenta($$update public.pedidos_livre_resolucao set user_id = null where id = '1d000000-0000-4000-a000-00000000000a'$$), 'ok:1', 'conta apagada: o pedido fica (user_id a null)');
+reset role;
+
+-- ===========================================================================
 -- 3. ADMIN — acesso total pelo RLS (via is_admin())
 -- ===========================================================================
 reset role;

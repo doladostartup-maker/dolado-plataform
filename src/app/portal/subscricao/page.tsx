@@ -2,7 +2,8 @@ import Link from "next/link";
 import { casosGuardados, resumoPlanoPortal, type CongelamentoCasos } from "@/lib/acesso";
 import { obterAcesso, requireUser } from "@/lib/auth";
 import { IVA_INCLUIDO, PLANOS, formatarPreco, textoCasosDisponiveis } from "@/lib/planos";
-import { CONTACTO_EMAIL } from "@/lib/site";
+import { PRAZO_LIVRE_RESOLUCAO_DIAS, ROTAS_LEGAIS } from "@/lib/legal";
+import { CONTACTO_EMAIL, MARKETING_SITE_URL } from "@/lib/site";
 import { manterSubscricao } from "./actions";
 import { BotaoManter } from "./_components/BotaoManter";
 import { CancelarSubscricao } from "./_components/CancelarSubscricao";
@@ -150,6 +151,14 @@ export default async function GestaoSubscricaoPage({
         contacte-nos através de{" "}
         <a href={`mailto:${CONTACTO_EMAIL}`} className="underline">
           {CONTACTO_EMAIL}
+        </a>
+        .
+      </p>
+      <p className="text-[13px] leading-relaxed text-[var(--color-ink-muted)]">
+        O cancelamento é diferente do direito de livre resolução, que pode ser exercido nos{" "}
+        {PRAZO_LIVRE_RESOLUCAO_DIAS} dias seguintes à compra, nas condições previstas na lei.{" "}
+        <a href={`${MARKETING_SITE_URL}${ROTAS_LEGAIS.livreResolucao}`} className="underline">
+          Saber mais sobre a livre resolução
         </a>
         .
       </p>

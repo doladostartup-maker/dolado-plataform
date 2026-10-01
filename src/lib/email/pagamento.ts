@@ -116,7 +116,7 @@ export function montarHtmlBoasVindasPagamento(plano: PlanoEmail, dados: DadosEma
               ${blocoSubscricao}
               ${blocoInicio}
               <p ${P}><strong>Direito de livre resolução.</strong> ${RESUMO_LIVRE_RESOLUCAO} ${COMO_EXERCER_LIVRE_RESOLUCAO} <a href="${livreResolucaoUrl}" ${LINK}>Saiba mais</a>.</p>
-              <p ${P}>Documentos: <a href="${termosUrl}" ${LINK}>Termos e Condições${consentimento ? ` (versão de ${formatarData(consentimento.termos_versao)})` : ""}</a> · <a href="${privacidadeUrl}" ${LINK}>Política de Privacidade</a>.</p>
+              <p ${P}>Documentos: <a href="${termosUrl}" ${LINK}>Termos e Condições${consentimento ? ` (versão ${consentimento.termos_versao})` : ""}</a> · <a href="${privacidadeUrl}" ${LINK}>Política de Privacidade</a>.</p>
               <p ${P}>Para qualquer questão: <a href="mailto:${CONTACTO_EMAIL}" ${LINK}>${CONTACTO_EMAIL}</a>.</p>
             </td>
           </tr>

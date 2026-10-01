@@ -232,7 +232,7 @@ export function AlertaPromocaoPortalForm({
 
       <label className="flex items-start gap-2 rounded-[var(--radius-input)] border-l-[3px] border-[var(--color-brand)] bg-[var(--color-surface-sunken)] p-4 text-sm text-[var(--color-ink-muted)]">
         <input type="checkbox" name="consentimento" required className="mt-1" />
-        Autorizo a DoLado a guardar estes dados para me avisar antes do fim da promoção.
+        Peço à DoLado que guarde estes dados para me avisar antes do fim da promoção.
       </label>
 
       <button

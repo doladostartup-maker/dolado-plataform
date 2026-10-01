@@ -258,7 +258,7 @@ export function FormularioGuiado({
     if (!validNome(nome)) e.nome = "Insira um nome válido.";
     if (!validEmail(email)) e.email = "Insira um e-mail válido.";
     if (telefone.trim() && !validPhone(telefone)) e.telefone = "Telemóvel inválido.";
-    if (!rgpd) e.autorizacao = "Tem de autorizar o tratamento dos dados para continuar.";
+    if (!rgpd) e.autorizacao = "Confirme o pedido para continuar.";
     if (Object.keys(e).length) {
       setErros(e);
       return;
@@ -569,12 +569,12 @@ export function FormularioGuiado({
                   style={{ accentColor: COR.brand }}
                 />
                 <span>
-                  Autorizo a DoLado a tratar os meus dados para analisar esta reclamação, nos
-                  termos da{" "}
+                  Peço à DoLado que analise esta reclamação e confirmo que a informação é verdadeira.
+                  Li a{" "}
                   <Link href="/privacidade" target="_blank" rel="noopener" style={{ color: COR.brand }} className="underline">
                     Política de Privacidade
                   </Link>
-                  . Nada é enviado à empresa sem a minha autorização por escrito.
+                  . Nada é enviado à empresa sem a minha autorização expressa.
                 </span>
               </label>
               {erros.autorizacao && (

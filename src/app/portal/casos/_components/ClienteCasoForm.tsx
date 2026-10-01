@@ -71,8 +71,9 @@ export function ClienteCasoForm({
         className="flex items-start gap-2 rounded-[var(--radius-input)] border-l-[3px] border-[var(--color-brand)] bg-[var(--color-surface-sunken)] p-4 text-sm text-[var(--color-ink-muted)]"
       >
         <input type="checkbox" name="autorizacao" required className="mt-1" />
-        Autorizo a DoLado a tratar os meus dados pessoais para efeitos de
-        acompanhamento desta reclamação.
+        Peço à DoLado que analise e acompanhe esta reclamação e confirmo que a
+        informação é verdadeira. Os meus dados são tratados nos termos da Política de
+        Privacidade.
       </label>
 
       <button

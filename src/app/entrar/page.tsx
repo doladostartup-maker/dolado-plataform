@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { LIVRO_RECLAMACOES_URL, ROTAS_LEGAIS } from "@/lib/legal";
+import { MARKETING_SITE_URL } from "@/lib/site";
 
 export default function EntrarPage() {
   return (
@@ -51,14 +53,18 @@ export default function EntrarPage() {
         </p>
       </main>
 
-      <footer className="flex justify-center gap-4 px-4 py-6 text-xs text-[var(--color-ink-faint)]">
-        <Link href="/termos" className="hover:text-[var(--color-ink-muted)]">
-          Termos de Serviço
+      <footer className="flex flex-wrap justify-center gap-x-4 gap-y-2 px-4 py-6 text-xs text-[var(--color-ink-faint)]">
+        <Link href={`${MARKETING_SITE_URL}${ROTAS_LEGAIS.termos}`} className="hover:text-[var(--color-ink-muted)]">
+          Termos e Condições
         </Link>
         <span aria-hidden>·</span>
-        <Link href="/privacidade" className="hover:text-[var(--color-ink-muted)]">
+        <Link href={`${MARKETING_SITE_URL}${ROTAS_LEGAIS.privacidade}`} className="hover:text-[var(--color-ink-muted)]">
           Política de Privacidade
         </Link>
+        <span aria-hidden>·</span>
+        <a href={LIVRO_RECLAMACOES_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--color-ink-muted)]">
+          Livro de Reclamações
+        </a>
       </footer>
     </div>
   );

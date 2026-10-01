@@ -118,7 +118,7 @@ export async function criarVerificacaoElegibilidade(formData: FormData) {
   }
   if (!consentimento) {
     redirect(
-      `/portal/elegibilidade?erro=${encodeURIComponent("Tem de autorizar o tratamento dos dados para continuar.")}`,
+      `/portal/elegibilidade?erro=${encodeURIComponent("Confirme o pedido para continuar.")}`,
     );
   }
 

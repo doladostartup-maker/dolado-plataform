@@ -123,7 +123,7 @@ export function AlertaFidelizacaoForm() {
             className="mt-0.5 h-4.5 w-4.5 flex-none accent-[var(--color-brand)]"
           />
           <span>
-            Autorizo a DoLado a guardar estes dados para me avisar antes do fim da fidelização.
+            Peço à DoLado que guarde estes dados para me avisar antes do fim da fidelização.
             Posso cancelar a qualquer momento. Ver{" "}
             <Link href="/privacidade" target="_blank" rel="noopener" className="text-[var(--color-brand)] underline">
               Política de Privacidade

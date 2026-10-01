@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
+import { LIVRO_RECLAMACOES_URL, ROTAS_LEGAIS } from "@/lib/legal";
+import { ENTIDADE_LEGAL, NIPC } from "@/lib/site";
 import { AccordionPerguntas } from "./AccordionPerguntas";
 import { PERGUNTAS_HOMEPAGE } from "./conteudoPerguntasFrequentes";
 import { FormularioGuiado } from "./FormularioGuiado";
@@ -272,16 +274,29 @@ export function Homepage() {
             simplicidade.
           </p>
           <span>
-            © 2026 DoLado · Competent Domain – Consultoria em Informática Unipessoal Lda · NIPC
-            515609773 · Lisboa
+            © 2026 DoLado · {ENTIDADE_LEGAL} · NIPC {NIPC} · Lisboa
           </span>
-          <span className="flex gap-4">
-            <Link href="/termos" className="hover:text-[var(--color-brand)]">
+          <span className="flex flex-wrap gap-x-4 gap-y-2">
+            <Link href={ROTAS_LEGAIS.termos} className="hover:text-[var(--color-brand)]">
               Termos
             </Link>
-            <Link href="/privacidade" className="hover:text-[var(--color-brand)]">
+            <Link href={ROTAS_LEGAIS.privacidade} className="hover:text-[var(--color-brand)]">
               Privacidade
             </Link>
+            <Link href={ROTAS_LEGAIS.livreResolucao} className="hover:text-[var(--color-brand)]">
+              Livre resolução
+            </Link>
+            <Link href={ROTAS_LEGAIS.resolucaoLitigios} className="hover:text-[var(--color-brand)]">
+              Resolução de litígios
+            </Link>
+            <a
+              href={LIVRO_RECLAMACOES_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold hover:text-[var(--color-brand)]"
+            >
+              Livro de Reclamações
+            </a>
           </span>
         </div>
       </footer>

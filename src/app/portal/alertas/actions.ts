@@ -51,7 +51,7 @@ export async function criarAlertaFidelizacaoPortal(formData: FormData) {
   }
   if (!consentimento) {
     redirect(
-      `/portal/alertas?erro=${encodeURIComponent("Tem de autorizar o tratamento dos dados para continuar.")}`,
+      `/portal/alertas?erro=${encodeURIComponent("Confirme o pedido para continuar.")}`,
     );
   }
 

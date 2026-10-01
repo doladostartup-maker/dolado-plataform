@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PLANOS, formatarPreco, precoComUnidade } from "@/lib/planos";
 
 type Faq = { q: string; a: string; cta?: boolean };
 
@@ -11,7 +12,7 @@ const FAQS: Faq[] = [
   },
   {
     q: "Quanto custa?",
-    a: "Nada durante a fase Beta. Estamos em validação e o serviço é completamente grátis enquanto testamos com os primeiros casos — trata-se do caso inteiro, sem pagar. Quando a Beta terminar, conversamos sobre pricing antes de qualquer cobrança; nunca lhe cobramos nada sem o combinar consigo primeiro.",
+    a: `A DoLado tem três opções: Proteção por ${precoComUnidade("protecao")}, Caso + Proteção por ${precoComUnidade("caso_protecao")} e o serviço Avulso por ${formatarPreco(PLANOS.avulso.precoCentimos)} por caso. Todos os preços incluem IVA. Veja o preçário em dolado.pt.`,
   },
   {
     q: "O que tenho de fazer depois de enviar o formulário?",
@@ -27,7 +28,7 @@ const FAQS: Faq[] = [
   },
   {
     q: "Tratam de qualquer tipo de problema?",
-    a: "Durante a fase Beta tratamos apenas casos de telecomunicações, energia e água — são os setores onde as regras são mais claras e onde queremos validar bem o serviço. Depois abriremos a todos os setores. Se o seu caso estiver fora destes três ou não tiver base para reclamação, dizemos-lhe isso à partida.",
+    a: "A DoLado trata casos de telecomunicações, energia e água — são os setores onde as regras são mais claras. Se o seu caso estiver fora destes três ou não tiver base para reclamação, dizemos-lhe isso à partida.",
   },
   {
     q: "Prefiro só falar antes de decidir — dá?",

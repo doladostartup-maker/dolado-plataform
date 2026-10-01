@@ -113,7 +113,7 @@ export async function criarLeadGuiado(
     return { ok: false, erro: "Telefone inválido." };
   }
   if (!autorizacao) {
-    return { ok: false, erro: "Tem de autorizar o tratamento dos dados para avançar." };
+    return { ok: false, erro: "Confirme o pedido para avançar." };
   }
 
   const admin = createAdminClient();

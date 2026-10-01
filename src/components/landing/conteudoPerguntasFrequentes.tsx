@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LIMITE_CASOS_ACUMULADOS, PLANOS, formatarPreco, precoComUnidade } from "@/lib/planos";
+import { ROTAS_LEGAIS } from "@/lib/legal";
 import { PRIVACIDADE_EMAIL } from "@/lib/site";
 import type { Pergunta } from "./AccordionPerguntas";
 
@@ -117,7 +118,7 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
         id: "enviam-por-mim",
         pergunta: "A DoLado envia a reclamação por mim?",
         resposta:
-          "Sim. Antes do envio, recebe o conteúdo preparado pela DoLado para rever. Só depois da sua autorização explícita submetemos a reclamação ao Livro de Reclamações em seu nome.",
+          "Sim. Antes do envio, recebe o conteúdo preparado pela DoLado para rever. Só depois da sua autorização explícita submetemos a reclamação em seu nome, pelo canal adequado ao caso — por exemplo, o Livro de Reclamações Eletrónico ou o canal de reclamações da empresa.",
       },
       {
         ...SEM_AUTORIZACAO,
@@ -187,6 +188,26 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
               no plano Caso + Proteção, estes ficam guardados durante 90 dias após o fim da
               subscrição. Se voltar a subscrever o Caso + Proteção dentro desse período, recupera
               os casos disponíveis que tinha.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "livre-resolucao",
+        pergunta: "Qual é a diferença entre cancelar e o direito de livre resolução?",
+        resposta: (
+          <>
+            <p>
+              Cancelar a subscrição impede as renovações seguintes e mantém o serviço até ao fim do período já
+              pago. O direito de livre resolução é um direito legal de resolver o contrato nos 14 dias seguintes à
+              compra, nas condições previstas na lei — incluindo quando pediu que o serviço começasse de imediato.
+            </p>
+            <p className="mt-3">
+              Pode exercê-lo online, na página{" "}
+              <Link href={ROTAS_LEGAIS.livreResolucao} className={LINK}>
+                Livre resolução
+              </Link>
+              , onde encontra também o modelo de formulário e a explicação completa.
             </p>
           </>
         ),

@@ -141,7 +141,7 @@ export function VerificarElegibilidadeForm({ action }: { action: (formData: Form
           </label>
           <label className="flex items-start gap-2 rounded-[var(--radius-input)] border-l-[3px] border-[var(--color-brand)] bg-[var(--color-surface-sunken)] p-4 text-sm text-[var(--color-ink-muted)]">
             <input type="checkbox" name="consentimento" required className="mt-1" />
-            Autorizo a DoLado a tratar estes dados para efeitos desta verificação.
+            Peço à DoLado que use estes dados para fazer esta verificação.
           </label>
           <div className="flex gap-2">
             <button type="button" onClick={() => setPasso(3)} className="text-sm text-[var(--color-ink-muted)] underline">

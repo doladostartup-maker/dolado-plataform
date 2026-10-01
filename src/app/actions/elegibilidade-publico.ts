@@ -151,7 +151,7 @@ export async function criarVerificacaoElegibilidadePublica(
     return { fase: "formulario", erro: "Descreva o problema." };
   }
   if (!consentimento) {
-    return { fase: "formulario", erro: "Tem de autorizar o tratamento dos dados para continuar." };
+    return { fase: "formulario", erro: "Confirme o pedido para continuar." };
   }
 
   const admin = createAdminClient();

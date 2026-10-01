@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
 import { CONTACTO_EMAIL } from "@/lib/site";
 import { FaqAccordion } from "./FaqAccordion";
+import { LIVRO_RECLAMACOES_URL } from "@/lib/legal";
 import { FormularioGuiado } from "./FormularioGuiado";
 
 const PROBLEMAS = [
@@ -182,9 +183,12 @@ export function Landing() {
           >
             Conte-nos o que aconteceu
           </button>
-          <span className="inline-flex items-center rounded-[var(--radius-pill)] bg-[var(--color-brand-wash)] px-3 py-1 text-[13px] font-semibold text-[var(--color-brand)]">
-            Gratuito durante o Beta
-          </span>
+          <Link
+            href="/#precario"
+            className="inline-flex items-center rounded-[var(--radius-pill)] bg-[var(--color-brand-wash)] px-3 py-1 text-[13px] font-semibold text-[var(--color-brand)]"
+          >
+            Ver planos e preços
+          </Link>
         </div>
 
         <div className="mx-auto mb-16 grid max-w-[1000px] gap-5 sm:mb-20 sm:grid-cols-3">
@@ -330,9 +334,9 @@ export function Landing() {
             >
               Conte-nos o que aconteceu
             </button>
-            <p className="max-w-[46ch] text-[14px] italic text-[var(--color-ink-faint)]">
-              Grátis durante a fase de Beta
-            </p>
+            <Link href="/#precario" className="max-w-[46ch] text-[14px] italic text-[var(--color-ink-faint)] underline">
+              Ver planos e preços
+            </Link>
           </div>
         </div>
       </section>
@@ -362,6 +366,20 @@ export function Landing() {
               <Link href="/privacidade" className="text-[15px] text-[var(--color-ink-muted)] hover:text-[var(--color-brand)]">
                 Política de Privacidade
               </Link>
+              <Link href="/livre-resolucao" className="text-[15px] text-[var(--color-ink-muted)] hover:text-[var(--color-brand)]">
+                Livre resolução
+              </Link>
+              <Link href="/resolucao-de-litigios" className="text-[15px] text-[var(--color-ink-muted)] hover:text-[var(--color-brand)]">
+                Resolução de litígios
+              </Link>
+              <a
+                href={LIVRO_RECLAMACOES_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[15px] font-semibold text-[var(--color-ink-muted)] hover:text-[var(--color-brand)]"
+              >
+                Livro de Reclamações
+              </a>
             </div>
             <div className="flex flex-col gap-2.5">
               <div className="text-[12px] font-bold uppercase tracking-wider text-[var(--color-ink-faint)]">Contacto</div>

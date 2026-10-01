@@ -314,7 +314,7 @@ export function IntakeForm({
                 className="mt-0.5 h-4.5 w-4.5 flex-none accent-[var(--color-brand)]"
               />
               <span>
-                Li e aceito a{" "}
+                Li a{" "}
                 <Link href="/privacidade" target="_blank" rel="noopener" className="text-[var(--color-brand)] underline">
                   Política de Privacidade
                 </Link>
