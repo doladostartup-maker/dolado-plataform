@@ -166,7 +166,7 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
         id: "avulso-depois-subscricao",
         pergunta: "Já comprei um Avulso. Posso aderir depois a uma subscrição?",
         resposta:
-          "Sim, a partir da sua área de cliente. Quando um Avulso elegível é convertido numa subscrição, parte do valor já pago cobre o primeiro mês e o restante é reembolsado para o método de pagamento original.",
+          "Sim, a partir da sua área de cliente. Se ainda não tiver usado o caso do Avulso, parte do valor já pago cobre o primeiro mês da subscrição e o restante é reembolsado para o método de pagamento original. Se já o tiver usado, a adesão é feita como uma nova compra.",
       },
       {
         id: "cancelar-protecao",

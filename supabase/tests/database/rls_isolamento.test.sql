@@ -109,16 +109,16 @@ insert into public.stripe_payments (id, user_id, stripe_session_id, email, plano
   ('16000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'cs_teste_a', 'a@teste.invalid', 'avulso'),
   ('16000000-0000-4000-a000-00000000000b', '00000000-0000-4000-a000-00000000000b', 'cs_teste_b', 'b@teste.invalid', 'assinatura');
 
-insert into public.user_access (user_id, nivel_acesso, subscription_plan, subscription_status, case_credits) values
-  ('00000000-0000-4000-a000-00000000000a', 'avulso', 'none', null, 1),
-  ('00000000-0000-4000-a000-00000000000b', 'assinatura', 'caso_protecao', 'active', 0);
+insert into public.user_access (user_id, nivel_acesso, subscription_plan, subscription_status, case_credits, avulso_credits) values
+  ('00000000-0000-4000-a000-00000000000a', 'avulso', 'none', null, 1, 1),
+  ('00000000-0000-4000-a000-00000000000b', 'assinatura', 'caso_protecao', 'active', 0, 0);
 
 insert into public.stripe_webhook_events (event_id, tipo) values ('evt_teste', 'invoice.paid');
 insert into public.conversoes_avulso (id, stripe_payment_id, user_id, plano_destino, valor_avulso_centimos, valor_primeira_mensalidade_centimos, refund_montante_centimos) values
   ('1a000000-0000-4000-a000-00000000000a', '16000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'protecao', 1499, 499, 1000);
-insert into public.case_credit_grants (origem, user_id, quantidade) values
-  ('checkout:cs_teste_a', '00000000-0000-4000-a000-00000000000a', 1),
-  ('invoice:in_teste_b', '00000000-0000-4000-a000-00000000000b', 1);
+insert into public.case_credit_grants (origem, user_id, quantidade, estado) values
+  ('checkout:cs_teste_a', '00000000-0000-4000-a000-00000000000a', 1, 'disponivel'),
+  ('invoice:in_teste_b', '00000000-0000-4000-a000-00000000000b', 1, null);
 insert into public.stripe_subscriptions (stripe_subscription_id, stripe_customer_id, status) values
   ('sub_teste_b', 'cus_teste_b', 'active');
 
@@ -302,9 +302,12 @@ select ok(testes.negado($$update public.user_access set nivel_acesso = 'assinatu
 select ok(testes.negado($$update public.user_access set nivel_acesso = 'nenhum' where user_id = '00000000-0000-4000-a000-00000000000b'$$), 'A: não altera o nível de acesso de B');
 select ok(testes.negado($$delete from public.user_access where user_id = '00000000-0000-4000-a000-00000000000a'$$), 'A: não apaga o próprio nível de acesso');
 select ok(testes.negado($$update public.user_access set case_credits = 99 where user_id = '00000000-0000-4000-a000-00000000000a'$$), 'A: não aumenta os próprios créditos de caso');
+select ok(testes.negado($$update public.user_access set avulso_credits = 1 where user_id = '00000000-0000-4000-a000-00000000000a'$$), 'A: não altera os próprios casos Avulso');
+select ok(testes.negado($$update public.case_credit_grants set estado = 'disponivel'$$), 'A: não reativa compras Avulso');
+select ok(testes.tenta($$select public.retirar_credito_avulso('checkout:cs_teste_a', 'convertido')$$) like 'erro:%', 'A: não chama retirar_credito_avulso');
 select ok(testes.negado($$update public.user_access set subscription_plan = 'caso_protecao', subscription_status = 'active' where user_id = '00000000-0000-4000-a000-00000000000a'$$), 'A: não se ativa um plano');
 select ok(testes.tenta($$select public.conceder_credito_caso('00000000-0000-4000-a000-00000000000a', 'origem-falsa', null)$$) like 'erro:%', 'A: não chama conceder_credito_caso');
-select ok(testes.tenta($$select public.devolver_credito_caso('00000000-0000-4000-a000-00000000000a')$$) like 'erro:%', 'A: não chama devolver_credito_caso');
+select ok(testes.tenta($$select public.devolver_credito_caso('00000000-0000-4000-a000-00000000000a', 'subscricao')$$) like 'erro:%', 'A: não chama devolver_credito_caso');
 select ok(testes.tenta($$select public.consumir_credito_caso('00000000-0000-4000-a000-00000000000b')$$) like 'erro:%', 'A: não chama consumir_credito_caso');
 select is(testes.contar('select * from public.case_credit_grants'), 1::bigint, 'A: vê só os próprios créditos concedidos');
 select ok(testes.negado($$insert into public.case_credit_grants (origem, user_id, quantidade) values ('forjada', '00000000-0000-4000-a000-00000000000a', 1)$$), 'A: não regista créditos');
@@ -436,10 +439,10 @@ select public.conceder_credito_caso('00000000-0000-4000-a000-00000000000b', 'inv
 select is((select case_credits from public.user_access where user_id = '00000000-0000-4000-a000-00000000000b'), 4, 'créditos: mensais acumulam até 4');
 select is(public.conceder_credito_caso('00000000-0000-4000-a000-00000000000b', 'checkout:cs_avulso_b', null), true, 'créditos: Avulso credita');
 select is((select case_credits from public.user_access where user_id = '00000000-0000-4000-a000-00000000000b'), 5, 'créditos: Avulso soma-se sem limite de 4');
-select is(public.consumir_credito_caso('00000000-0000-4000-a000-00000000000b'), true, 'créditos: consome com saldo');
+select is(public.consumir_credito_caso('00000000-0000-4000-a000-00000000000b'), 'subscricao', 'créditos: consome com saldo (subscrição primeiro)');
 select is((select case_credits from public.user_access where user_id = '00000000-0000-4000-a000-00000000000b'), 4, 'créditos: saldo desce 1');
-update public.user_access set case_credits = 0 where user_id = '00000000-0000-4000-a000-00000000000b';
-select is(public.consumir_credito_caso('00000000-0000-4000-a000-00000000000b'), false, 'créditos: sem saldo não consome');
+update public.user_access set case_credits = 0, avulso_credits = 0 where user_id = '00000000-0000-4000-a000-00000000000b';
+select is(public.consumir_credito_caso('00000000-0000-4000-a000-00000000000b'), null::text, 'créditos: sem saldo não consome');
 select is((select case_credits from public.user_access where user_id = '00000000-0000-4000-a000-00000000000b'), 0, 'créditos: nunca abaixo de zero');
 -- Reserva do crédito de upgrade: só um pedido a consegue fazer.
 reset role;
@@ -470,7 +473,7 @@ reset role;
 -- Funções, como service_role. B: Caso + Proteção com 3 casos, 1 dos quais
 -- Avulso (checkout:cs_avulso_b, concedido em 2c).
 update public.user_access
-   set stripe_subscription_id = 'sub_teste_b', subscription_plan = 'caso_protecao', subscription_status = 'active', case_credits = 3
+   set stripe_subscription_id = 'sub_teste_b', subscription_plan = 'caso_protecao', subscription_status = 'active', case_credits = 3, avulso_credits = 1
  where user_id = '00000000-0000-4000-a000-00000000000b';
 set local role service_role;
 select is(public.congelar_creditos_caso('sub_teste_b', now(), 90), 2, 'congelar: só os casos da subscrição (o Avulso fica)');
@@ -507,7 +510,7 @@ select is((select case_credits from public.user_access where user_id = '00000000
 reset role;
 -- Repõe B como em 2c para as verificações seguintes.
 update public.user_access
-   set stripe_subscription_id = null, subscription_plan = 'caso_protecao', subscription_status = 'active', case_credits = 0
+   set stripe_subscription_id = null, subscription_plan = 'caso_protecao', subscription_status = 'active', case_credits = 0, avulso_credits = 0
  where user_id = '00000000-0000-4000-a000-00000000000b';
 
 -- ===========================================================================

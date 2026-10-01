@@ -10,7 +10,9 @@ import {
   CUPAO_CONVERSAO,
   escolherAvulsoParaConversao,
   parametrosCheckoutConversao,
+  sessoesAvulsoDisponiveis,
   type ConversaoExistente,
+  type CreditoConcedido,
   type PagamentoAvulso,
 } from "@/lib/stripe/conversao";
 import {
@@ -222,7 +224,7 @@ async function adesao(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Desti
   const customerId = await customerDaConta(user.id);
   const cliente = customerId ? { customer: customerId } : { customer_email: user.email };
 
-  const [{ data: pagamentos }, { data: conversoes }] = await Promise.all([
+  const [{ data: pagamentos }, { data: conversoes }, { data: creditos }] = await Promise.all([
     admin
       .from("stripe_payments")
       .select("id, stripe_session_id, user_id, plano, estado, valor_total_centimos, created_at")
@@ -232,12 +234,15 @@ async function adesao(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Desti
       .from("conversoes_avulso")
       .select("id, stripe_payment_id, estado, checkout_session_id")
       .eq("user_id", user.id),
+    // Só Avulsos com o caso ainda por usar podem ser convertidos.
+    admin.from("case_credit_grants").select("origem, estado").eq("user_id", user.id).eq("estado", "disponivel"),
   ]);
   const escolha = escolherAvulsoParaConversao(
     (pagamentos ?? []) as PagamentoAvulso[],
     (conversoes ?? []) as ConversaoExistente[],
     user.id,
     plano,
+    sessoesAvulsoDisponiveis((creditos ?? []) as CreditoConcedido[]),
   );
 
   if (!escolha) {

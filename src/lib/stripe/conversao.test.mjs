@@ -7,6 +7,7 @@ import {
   escolherAvulsoParaConversao,
   mensagemConversao,
   parametrosCheckoutConversao,
+  sessoesAvulsoDisponiveis,
 } from "./conversao.ts";
 
 const USER = "00000000-0000-4000-a000-00000000000a";
@@ -20,6 +21,9 @@ const avulso = (extra = {}) => ({
   created_at: "2026-09-30T10:00:00Z",
   ...extra,
 });
+
+// O caso do Avulso "cs_avulso" ainda está por usar (case_credit_grants).
+const DISPONIVEL = new Set(["cs_avulso"]);
 
 describe("montantes (sempre em cêntimos)", () => {
   test("Avulso → Proteção: 1.ª mensalidade 4,99 € coberta, reembolso 10,00 €", () => {
@@ -39,29 +43,51 @@ describe("montantes (sempre em cêntimos)", () => {
 
 describe("elegibilidade do Avulso", () => {
   test("Avulso concluído é elegível", () => {
-    assert.equal(escolherAvulsoParaConversao([avulso()], [], USER, "protecao")?.pagamento.id, "pay_1");
+    assert.equal(escolherAvulsoParaConversao([avulso()], [], USER, "protecao", DISPONIVEL)?.pagamento.id, "pay_1");
   });
 
   for (const estado of ["pendente", "falhado", "reembolsado"]) {
     test(`Avulso ${estado} não é elegível`, () => {
-      assert.equal(escolherAvulsoParaConversao([avulso({ estado })], [], USER, "protecao"), null);
+      assert.equal(escolherAvulsoParaConversao([avulso({ estado })], [], USER, "protecao", DISPONIVEL), null);
     });
   }
 
   test("Checkout abandonado (checkout_aberto): o Avulso continua elegível", () => {
     const aberta = { id: "conv_1", stripe_payment_id: "pay_1", estado: "checkout_aberto", checkout_session_id: "cs_antigo" };
-    const r = escolherAvulsoParaConversao([avulso()], [aberta], USER, "caso_protecao");
+    const r = escolherAvulsoParaConversao([avulso()], [aberta], USER, "caso_protecao", DISPONIVEL);
     assert.equal(r?.pagamento.id, "pay_1");
     assert.equal(r?.conversao?.id, "conv_1", "reutiliza a mesma conversão (não cria outra)");
   });
 
   test("o mesmo Avulso já convertido é recusado", () => {
     const convertida = { id: "conv_1", stripe_payment_id: "pay_1", estado: "convertido", checkout_session_id: "cs_1" };
-    assert.equal(escolherAvulsoParaConversao([avulso()], [convertida], USER, "protecao"), null);
+    assert.equal(escolherAvulsoParaConversao([avulso()], [convertida], USER, "protecao", DISPONIVEL), null);
+  });
+
+  test("Avulso cujo caso já foi usado não é elegível (nem para o reembolso parcial)", () => {
+    assert.equal(escolherAvulsoParaConversao([avulso()], [], USER, "protecao", new Set()), null);
+    assert.equal(escolherAvulsoParaConversao([avulso()], [], USER, "caso_protecao", new Set(["cs_outro"])), null);
+  });
+
+  test("com um Avulso usado e outro por usar, só o por usar é escolhido", () => {
+    const usado = avulso({ id: "pay_usado", stripe_session_id: "cs_usado", created_at: "2026-09-30T12:00:00Z" });
+    const r = escolherAvulsoParaConversao([usado, avulso()], [], USER, "protecao", DISPONIVEL);
+    assert.equal(r?.pagamento.id, "pay_1");
+  });
+
+  test("sessoesAvulsoDisponiveis: só Avulsos com o caso disponível", () => {
+    const s = sessoesAvulsoDisponiveis([
+      { origem: "checkout:cs_a", estado: "disponivel" },
+      { origem: "checkout:cs_b", estado: "consumido" },
+      { origem: "checkout:cs_c", estado: "convertido" },
+      { origem: "checkout:cs_d", estado: "reembolsado" },
+      { origem: "invoice:in_1", estado: null },
+    ]);
+    assert.deepEqual([...s], ["cs_a"]);
   });
 
   test("só compras da própria conta", () => {
-    assert.equal(escolherAvulsoParaConversao([avulso({ user_id: "outro" })], [], USER, "protecao"), null);
+    assert.equal(escolherAvulsoParaConversao([avulso({ user_id: "outro" })], [], USER, "protecao", DISPONIVEL), null);
   });
 });
 

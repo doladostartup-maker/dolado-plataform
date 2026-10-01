@@ -67,9 +67,27 @@ export type ConversaoExistente = {
   checkout_session_id: string | null;
 };
 
+/** Linha de case_credit_grants (só o que interessa à conversão). */
+export type CreditoConcedido = { origem: string; estado: string | null };
+
+/**
+ * Sessões de checkout dos Avulsos cujo caso ainda está por usar
+ * (case_credit_grants.estado = "disponivel"). Um Avulso usado, convertido
+ * ou reembolsado não está aqui.
+ */
+export function sessoesAvulsoDisponiveis(creditos: CreditoConcedido[]): Set<string> {
+  return new Set(
+    creditos
+      .filter((c) => c.estado === "disponivel" && c.origem.startsWith("checkout:"))
+      .map((c) => c.origem.slice("checkout:".length)),
+  );
+}
+
 /**
  * Compra Avulso elegível para conversão: da própria conta, paga
- * (concluido), não reembolsada e ainda não convertida. Uma conversão em
+ * (concluido), não reembolsada, ainda não convertida e com o caso ainda
+ * por usar (decisão de 01/10/2026: um Avulso já usado não é convertido nem
+ * dá reembolso parcial — a adesão é uma compra normal). Uma conversão em
  * "checkout_aberto" (Checkout abandonado) não conta — continua elegível.
  */
 export function escolherAvulsoParaConversao(
@@ -77,6 +95,7 @@ export function escolherAvulsoParaConversao(
   conversoes: ConversaoExistente[],
   userId: string,
   plano: PlanoDestino,
+  avulsosDisponiveis: ReadonlySet<string>,
 ): { pagamento: PagamentoAvulso; calculo: CalculoConversao; conversao: ConversaoExistente | null } | null {
   const convertidos = new Set(conversoes.filter((c) => c.estado === "convertido").map((c) => c.stripe_payment_id));
   const elegiveis = pagamentos
@@ -86,6 +105,7 @@ export function escolherAvulsoParaConversao(
         p.plano === "avulso" &&
         p.estado === "concluido" &&
         !convertidos.has(p.id) &&
+        avulsosDisponiveis.has(p.stripe_session_id) &&
         calcularConversao(p.valor_total_centimos, plano) !== null,
     )
     .sort((a, b) => b.created_at.localeCompare(a.created_at));

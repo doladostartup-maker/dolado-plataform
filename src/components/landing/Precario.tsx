@@ -163,8 +163,8 @@ export function Precario() {
       </div>
 
       <p className="mt-6 max-w-[70ch] text-[13px] leading-relaxed text-[var(--color-ink-muted)]">
-        Já comprou um caso Avulso? Se aderir depois a uma subscrição, parte do valor já pago cobre o
-        primeiro mês e o restante é reembolsado para o método de pagamento original.
+        Comprou um caso Avulso e ainda não o usou? Se aderir depois a uma subscrição, parte do valor já pago
+        cobre o primeiro mês e o restante é reembolsado para o método de pagamento original.
       </p>
 
       <div className="mt-10 overflow-x-auto rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)]">
