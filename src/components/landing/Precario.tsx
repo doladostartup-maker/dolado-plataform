@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ConfirmarCompra } from "@/components/compra/ConfirmarCompra";
 import { track } from "@/lib/analytics";
+import { urlTratarCaso } from "@/lib/site";
 import {
   IVA_INCLUIDO,
   LIMITE_CASOS_ACUMULADOS,
@@ -12,9 +13,11 @@ import {
   type PlanoId,
 } from "@/lib/planos";
 
-// Preçário público. Nomes, preços e Price IDs vêm de src/lib/planos.ts. O
-// botão abre a confirmação da compra (Termos, início imediato, livre
-// resolução); só esta envia o PlanoId à Server Action, que escolhe o Price ID.
+// Preçário público. Nomes, preços e Price IDs vêm de src/lib/planos.ts. Nas
+// subscrições, o botão abre a confirmação da compra (Termos, início imediato,
+// livre resolução); só esta envia o PlanoId à Server Action, que escolhe o
+// Price ID. O Avulso leva a "Tratar o meu caso" (caso primeiro, pagamento
+// no fim).
 // Só se listam funcionalidades de proteção já disponíveis na plataforma.
 
 const FUNCIONALIDADES_PROTECAO = [
@@ -59,7 +62,7 @@ const CARTOES: Record<PlanoId, Cartao> = {
       "Acesso ao histórico do caso na área de cliente",
     ],
     naoInclui: "Não inclui as funcionalidades de proteção.",
-    cta: "Tratar um caso",
+    cta: "Tratar o meu caso",
   },
 };
 
@@ -92,6 +95,12 @@ export function Precario() {
 
   const escolher = (plano: PlanoId) => {
     track(`click_precario_${plano}`);
+    // Avulso é o tratamento de um caso: começa pela descrição do caso e só
+    // no fim se escolhe e paga a modalidade ("Tratar o meu caso").
+    if (plano === "avulso") {
+      window.location.assign(urlTratarCaso("precario"));
+      return;
+    }
     setAConfirmar(plano);
   };
 

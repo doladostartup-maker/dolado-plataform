@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { destinoSeguro } from "@/lib/pedidoCaso";
+import { haPedidoPorPagarNoBrowser } from "@/lib/pedidoCasoServidor";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/conta";
+  const nextPedido = searchParams.get("next");
   // Usa sempre o site URL configurado, nunca o origin derivado do pedido:
   // atrás do proxy da Clever Cloud, request.url resolve para o endereço
   // interno (localhost:8080), não para o domínio público.
@@ -31,6 +33,14 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // Sem destino explícito: se este browser tem um pedido de caso por
+      // pagar ("Tratar o meu caso" → Google, ou ligação de confirmação do
+      // e-mail), continua na escolha da modalidade.
+      const next = nextPedido
+        ? destinoSeguro(nextPedido)
+        : (await haPedidoPorPagarNoBrowser())
+          ? "/tratar-caso/modalidade"
+          : "/conta";
       return NextResponse.redirect(`${siteUrl}${next}`);
     }
     console.error("[auth/callback] exchangeCodeForSession falhou:", error.message);

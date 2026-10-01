@@ -1,10 +1,9 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useState } from "react";
+import { useActionState, useCallback, useState } from "react";
 import { enviarContacto, type EstadoContacto } from "@/app/actions/contacto";
-import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
-import { CONTACTO_EMAIL } from "@/lib/site";
-import { FormularioGuiado } from "./FormularioGuiado";
+import { detectarOrigem, track } from "@/lib/analytics";
+import { CONTACTO_EMAIL, urlTratarCaso } from "@/lib/site";
 import { SiteHeader } from "./SiteHeader";
 
 const INPUT_CLASS =
@@ -14,29 +13,18 @@ const LABEL_CLASS = "mb-1.5 block text-[12.5px] font-semibold text-[var(--color-
 const ESTADO_INICIAL: EstadoContacto = { ok: false };
 
 export function Contacto() {
-  const [formOpen, setFormOpen] = useState(false);
   const [origem] = useState(detectarOrigem);
   const [state, formAction, pending] = useActionState(enviarContacto, ESTADO_INICIAL);
 
   const openForm = useCallback(() => {
     track("click_nav_contacto");
-    setFormOpen(true);
-  }, []);
-  const closeForm = useCallback(() => setFormOpen(false), []);
-
-  useEffect(() => {
-    if (!formOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeForm();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [formOpen, closeForm]);
+    window.location.assign(urlTratarCaso(origem));
+  }, [origem]);
 
   return (
     <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
       {/* ===== Secção 1: Nav ===== */}
-      <SiteHeader ctaLabel="Começar reclamação" onCtaClick={openForm} />
+      <SiteHeader ctaLabel="Tratar o meu caso" onCtaClick={openForm} />
 
       {/* ===== Secção 2: Hero simples ===== */}
       <section className="mx-auto max-w-[600px] px-4 pt-14 pb-2 text-center sm:px-10">
@@ -67,7 +55,7 @@ export function Contacto() {
           <p className="text-[13.5px] leading-relaxed text-[var(--color-ink)]">
             <span className="font-bold">Este formulário não abre casos.</span> Reclamações
             enviadas por e-mail ou por este formulário são ignoradas. Para abrir um caso, use
-            sempre o fluxo guiado em &ldquo;Começar reclamação&rdquo;.
+            sempre o fluxo guiado em &ldquo;Tratar o meu caso&rdquo;.
           </p>
         </div>
       </section>
@@ -169,18 +157,6 @@ export function Contacto() {
           </form>
         )}
       </section>
-
-      {/* Modal do formulário de reclamação */}
-      {formOpen && (
-        <div
-          onClick={closeForm}
-          className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[rgba(23,26,33,0.42)] px-4 py-8 sm:px-8"
-        >
-          <div onClick={(e) => e.stopPropagation()} className="my-auto w-full max-w-[640px] flex-none">
-            <FormularioGuiado onClose={closeForm} onSuccess={trackFormSuccess} origem={origem} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

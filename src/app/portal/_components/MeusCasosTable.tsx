@@ -5,6 +5,9 @@ import { SectorChip } from "@/components/SectorChip";
 type Caso = {
   id: string;
   empresa_parceira: string | null;
+  /** Empresa visada e tipo de problema do formulário "Tratar o meu caso". */
+  empresa?: string | null;
+  problema_tipo?: string | null;
   sector: string | null;
   tipo_problema: string | null;
   status: string;
@@ -53,14 +56,14 @@ export function MeusCasosTable({ casos }: { casos: Caso[] }) {
                   href={`/portal/casos/${caso.id}`}
                   className="font-medium text-[var(--color-brand)] underline"
                 >
-                  {caso.empresa_parceira ?? "O meu caso"}
+                  {caso.empresa ?? caso.empresa_parceira ?? "O meu caso"}
                 </Link>
               </td>
               <td className="px-3 py-2">
                 <SectorChip sector={caso.sector} />
               </td>
               <td className="px-3 py-2 text-[var(--color-ink)]">
-                {caso.tipo_problema ?? "—"}
+                {caso.tipo_problema ?? caso.problema_tipo ?? "—"}
               </td>
               <td className="px-3 py-2">
                 <StatusBadge status={caso.status} />

@@ -22,3 +22,14 @@ export const PRIVACIDADE_EMAIL = "privacidade@dolado.pt";
 export const ENTIDADE_LEGAL = "Competent Domain - Consultoria em Informática Unipessoal Lda";
 export const NIPC = "515609773";
 export const MORADA_SEDE = "Rua Cidade de Manchester, n.º 35, r/c, 1170-099 Lisboa";
+
+// Início do fluxo "Tratar o meu caso" (formulário → conta → modalidade →
+// pagamento). Corre sempre em portal.dolado.pt: a conta é criada antes do
+// pagamento e os cookies de sessão são do domínio do portal, para o regresso
+// do Stripe já chegar autenticado. Absoluto, para os CTAs de dolado.pt.
+export const URL_TRATAR_CASO = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/tratar-caso`;
+
+/** Link para "Tratar o meu caso", com a origem do clique (para medição). */
+export function urlTratarCaso(origem?: string) {
+  return origem ? `${URL_TRATAR_CASO}?origem=${encodeURIComponent(origem)}` : URL_TRATAR_CASO;
+}

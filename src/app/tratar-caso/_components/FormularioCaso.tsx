@@ -1,33 +1,20 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { useActionState, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  criarLeadGuiado,
-  criarUploadAssinado,
-  type EstadoLeadGuiado,
-} from "@/app/actions/formulario-guiado";
+import { criarUploadAssinado } from "@/app/actions/formulario-guiado";
+import { track } from "@/lib/analytics";
+import { MOMENTOS, PROBLEMAS, SETORES, validNome, validTelemovel } from "@/lib/pedidoCaso";
+import { IVA_INCLUIDO, PLANOS, precoComUnidade } from "@/lib/planos";
+import { MARKETING_SITE_URL } from "@/lib/site";
 import { createClient } from "@/lib/supabase/client";
+import { guardarPedido, type EstadoPedidoForm } from "../actions";
 
-const SETORES = ["Telecomunicações", "Energia", "Água"];
+// Formulário "Tratar o meu caso". Guarda um PEDIDO (pedidos_caso), nunca um
+// caso: o caso só existe depois de escolhida a modalidade e confirmado o
+// pagamento. O e-mail vem da conta (passo seguinte).
 
-const PROBLEMAS = [
-  "Aumento de mensalidade",
-  "Cobrança indevida",
-  "Fidelização ou penalização",
-  "Corte ou falha de serviço",
-  "Cancelamento recusado",
-  "Outro",
-];
-
-const MOMENTOS = [
-  "Sim, e não me responderam",
-  "Sim, mas a resposta não resolveu",
-  "Ainda não reclamei",
-];
-
-const NOMES_PASSO = ["Empresa", "Problema", "Contexto", "Documentos", "Contacto"];
+const NOMES_PASSO = ["Empresa", "Problema", "Contexto", "Documentos", "Os seus dados"];
 
 const TIPOS_ANEXO_ACEITOS = "application/pdf,image/jpeg,image/png,image/heic,image/heif";
 const TAMANHO_MAXIMO_ANEXO = 10 * 1024 * 1024;
@@ -134,21 +121,13 @@ const BOTAO_SECUNDARIO_STYLE: React.CSSProperties = {
 };
 
 type ErrosPasso = Partial<
-  Record<"sector" | "empresa" | "problemaTipo" | "momentoCliente" | "nome" | "email" | "telefone" | "autorizacao", string>
+  Record<"sector" | "empresa" | "problemaTipo" | "momentoCliente" | "nome" | "telefone" | "autorizacao", string>
 >;
 
-const ESTADO_INICIAL: EstadoLeadGuiado = { ok: false };
+const ESTADO_INICIAL: EstadoPedidoForm = { erro: null };
 
-export function FormularioGuiado({
-  onClose,
-  onSuccess,
-  origem,
-}: {
-  onClose?: () => void;
-  onSuccess?: (dados: { email: string; setor: string }) => void;
-  origem: string;
-}) {
-  const [state, formAction, pending] = useActionState(criarLeadGuiado, ESTADO_INICIAL);
+export function FormularioCaso({ origem, comSessao }: { origem: string; comSessao: boolean }) {
+  const [state, formAction, pending] = useActionState(guardarPedido, ESTADO_INICIAL);
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [erros, setErros] = useState<ErrosPasso>({});
 
@@ -169,19 +148,10 @@ export function FormularioGuiado({
   const inputFicheiroRef = useRef<HTMLInputElement>(null);
 
   const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
   const [rgpd, setRgpd] = useState(false);
   const [alertas, setAlertas] = useState(false);
-  const notificado = useRef(false);
-
-  useEffect(() => {
-    if (state.ok && !notificado.current) {
-      notificado.current = true;
-      onSuccess?.({ email, setor: sector });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- só deve disparar quando state.ok muda para true
-  }, [state.ok]);
+  const iniciado = useRef(false);
 
   async function escolherFicheiro(ficheiro: File) {
     setErroAnexo(null);
@@ -236,6 +206,10 @@ export function FormularioGuiado({
     if (!sector) e.sector = "Selecione um tipo de empresa.";
     if (empresa.trim().length < 2) e.empresa = "Indique o nome da empresa.";
     if (Object.keys(e).length) return setErros(e);
+    if (!iniciado.current) {
+      iniciado.current = true;
+      track("formulario_iniciado", { setor: sector });
+    }
     irPara(2);
   }
 
@@ -256,79 +230,43 @@ export function FormularioGuiado({
   function continuarPasso5(formData: FormData) {
     const e: ErrosPasso = {};
     if (!validNome(nome)) e.nome = "Insira um nome válido.";
-    if (!validEmail(email)) e.email = "Insira um e-mail válido.";
-    if (telefone.trim() && !validPhone(telefone)) e.telefone = "Telemóvel inválido.";
+    if (telefone.trim() && !validTelemovel(telefone)) e.telefone = "Telemóvel inválido.";
     if (!rgpd) e.autorizacao = "Confirme o pedido para continuar.";
     if (Object.keys(e).length) {
       setErros(e);
       return;
     }
+    track("formulario_concluido", { setor: sector });
     formAction(formData);
-  }
-
-  if (state.ok) {
-    return (
-      <div className="rounded-[16px] bg-white p-6 text-center shadow-[0_1px_2px_rgba(23,26,33,0.06),0_1px_1px_rgba(23,26,33,0.04)] sm:p-8">
-        <span
-          className="mb-4 inline-flex items-center gap-1.5 rounded-[999px] px-3 py-1 text-[13px] font-semibold"
-          style={{ backgroundColor: COR.sucessoWash, color: COR.sucesso }}
-        >
-          ✓ Pedido recebido
-        </span>
-        <h3 className="mb-2 text-[20px] font-bold" style={{ color: COR.ink }}>
-          Obrigado. O seu caso já está connosco.
-        </h3>
-        <p className="mb-5 text-[15px] leading-relaxed" style={{ color: COR.inkMuted }}>
-          Enviámos uma confirmação para o seu e-mail. O Thiago lê o seu caso e responde-lhe
-          pessoalmente no prazo máximo de 48 horas úteis, para confirmar os factos antes de
-          qualquer envio.
-        </p>
-        <div
-          className="mb-6 rounded-[8px] border-l-[3px] px-4 py-3 text-left text-[14px] leading-relaxed"
-          style={{ backgroundColor: COR.surfaceSunken, borderLeftColor: COR.brand, color: COR.inkMuted }}
-        >
-          Enquanto espera: guarde as faturas e os e-mails da empresa relacionados com o
-          problema. Podem ser precisos.
-        </div>
-        {onClose && (
-          <button type="button" onClick={onClose} style={BOTAO_PRIMARIO_STYLE}>
-            Fechar
-          </button>
-        )}
-      </div>
-    );
   }
 
   return (
     <div className="rounded-[16px] bg-white p-6 shadow-[0_1px_2px_rgba(23,26,33,0.06),0_1px_1px_rgba(23,26,33,0.04)] sm:p-8">
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Image src="/brand/dolado-logo-icon.svg" alt="" width={28} height={28} />
-          <span className="text-[15px] font-bold tracking-tight">
-            <span style={{ color: COR.ink }}>Do</span>
-            <span style={{ color: COR.brand }}>Lado</span>
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden text-[13px] sm:inline" style={{ color: COR.inkMuted }}>
-            Cerca de 5 minutos · Sem custo durante a fase piloto
-          </span>
-          {onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Fechar"
-              className="flex h-8 w-8 flex-none items-center justify-center rounded-[6px] text-[18px]"
-              style={{ color: COR.inkMuted }}
-            >
-              ×
-            </button>
-          )}
-        </div>
+      <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h1 className="text-[22px] font-bold" style={{ color: COR.ink }}>
+          Tratar o meu caso
+        </h1>
+        <span className="text-[13px]" style={{ color: COR.inkMuted }}>
+          Cerca de 5 minutos
+        </span>
       </div>
-      <p className="mb-5 -mt-3 text-[13px] sm:hidden" style={{ color: COR.inkMuted }}>
-        Cerca de 5 minutos · Sem custo durante a fase piloto
-      </p>
+
+      {/* Transparência: o pagamento é no fim, mas os preços estão à vista desde o início. */}
+      <div
+        className="mb-6 rounded-[8px] border-l-[3px] px-4 py-3 text-[14px] leading-relaxed"
+        style={{ backgroundColor: COR.surfaceSunken, borderLeftColor: COR.brand, color: COR.inkMuted }}
+      >
+        <p style={{ color: COR.ink }} className="font-medium">
+          No final, escolhe como quer que a DoLado trate o seu caso.
+        </p>
+        <p>
+          {PLANOS.avulso.nome}: {precoComUnidade("avulso")} · {PLANOS.caso_protecao.nome}: {precoComUnidade("caso_protecao")}{" "}
+          ({IVA_INCLUIDO}). Só paga depois de rever a modalidade escolhida.{" "}
+          <Link href={`${MARKETING_SITE_URL}/#precario`} target="_blank" rel="noopener" style={{ color: COR.brand }} className="underline">
+            Ver preçário
+          </Link>
+        </p>
+      </div>
 
       <div className="mb-6 h-1.5 overflow-hidden rounded-[999px]" style={{ backgroundColor: COR.hairline }}>
         <div
@@ -522,9 +460,14 @@ export function FormularioGuiado({
 
         {step === 5 && (
           <section>
-            <h3 className="mb-4 text-[19px] font-bold" style={{ color: COR.ink }}>
+            <h3 className="mb-1 text-[19px] font-bold" style={{ color: COR.ink }}>
               Como falamos consigo?
             </h3>
+            <p className="mb-4 text-[14px]" style={{ color: COR.inkMuted }}>
+              {comSessao
+                ? "Usamos o e-mail da sua conta para o contactar sobre este caso."
+                : "A seguir, cria a sua conta com o seu e-mail: é por lá que acompanha o caso."}
+            </p>
 
             <Campo label="Nome" htmlFor="nome-field" erro={erros.nome}>
               <input
@@ -533,17 +476,6 @@ export function FormularioGuiado({
                 style={INPUT_BASE}
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-              />
-            </Campo>
-
-            <Campo label="E-mail" htmlFor="email-field-guiado" erro={erros.email}>
-              <input
-                id="email-field-guiado"
-                type="email"
-                name="email"
-                style={INPUT_BASE}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
               />
             </Campo>
 
@@ -611,7 +543,7 @@ export function FormularioGuiado({
                 ← Voltar
               </button>
               <button type="submit" disabled={pending} style={BOTAO_PRIMARIO_STYLE}>
-                {pending ? "A enviar..." : "Enviar pedido"}
+                {pending ? "A guardar…" : "Continuar"}
               </button>
             </div>
           </section>
@@ -619,18 +551,4 @@ export function FormularioGuiado({
       </form>
     </div>
   );
-}
-
-function validNome(v: string) {
-  return v.trim().length >= 3 && !/\d/.test(v);
-}
-function validEmail(v: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-}
-function validPhone(v: string) {
-  if (v.trim() === "") return true;
-  let n = v.replace(/[^\d+]/g, "");
-  if (n.indexOf("+351") === 0) n = n.slice(4);
-  else if (n.indexOf("351") === 0 && n.length > 9) n = n.slice(3);
-  return /^9\d{8}$/.test(n);
 }

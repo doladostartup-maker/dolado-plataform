@@ -4,7 +4,7 @@ import { login } from "./actions";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string; info?: string }>;
+  searchParams: Promise<{ erro?: string; info?: string; next?: string }>;
 }) {
   const params = await searchParams;
 
@@ -22,6 +22,7 @@ export default async function LoginPage({
       )}
 
       <form action={login} className="flex flex-col gap-4">
+        {params.next && <input type="hidden" name="next" value={params.next} />}
         <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
           E-mail
           <input
@@ -65,6 +66,10 @@ export default async function LoginPage({
         Não tem conta?{" "}
         <Link href="/registo" className="text-[var(--color-brand)] underline">
           Registe-se
+        </Link>
+        {" "}· Para tratar um caso,{" "}
+        <Link href="/tratar-caso" className="text-[var(--color-brand)] underline">
+          comece aqui
         </Link>
       </p>
     </main>

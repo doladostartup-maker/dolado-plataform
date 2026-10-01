@@ -57,8 +57,8 @@ export async function requireUser() {
 
 /**
  * Acesso da conta por plano (ver src/lib/acesso.ts para as regras). Contas
- * sem linha em `user_access` (piloto Remax / registo livre) não têm plano
- * Stripe: sem proteção e casos no portal sem crédito, como antes.
+ * sem linha em `user_access` (sem nenhuma compra) não têm proteção nem casos
+ * disponíveis.
  */
 export async function obterAcesso(supabase: SupabaseServer, userId: string): Promise<Acesso> {
   const { data } = await supabase

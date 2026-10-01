@@ -418,7 +418,7 @@ reset role;
 select testes.como('00000000-0000-4000-a000-00000000000c');
 select ok(testes.negado($$insert into public.alertas_fidelizacao_portal (utilizador_id, nome, email, operadora, data_fim_fidelizacao) values ('00000000-0000-4000-a000-00000000000c', 'C', 'c@teste.invalid', 'Op', '2027-01-01')$$), 'C (sem plano): não cria alertas');
 select is(public.tem_protecao(), false, 'C: tem_protecao() → false');
-select ok(testes.permitido($$insert into public.casos (utilizador_id, nome, email, descricao, autorizacao) values ('00000000-0000-4000-a000-00000000000c', 'C', 'c@teste.invalid', 'novo', true)$$), 'C (sem plano, ex.: Remax): continua a criar caso próprio como antes');
+select ok(testes.negado($$insert into public.casos (utilizador_id, nome, email, descricao, autorizacao) values ('00000000-0000-4000-a000-00000000000c', 'C', 'c@teste.invalid', 'novo', true)$$), 'C (conta sem compra): não cria caso pela API — criar conta não dá direito a um caso');
 reset role;
 select testes.como('00000000-0000-4000-a000-00000000000a');
 select is(public.tem_protecao(), false, 'A (Avulso): tem_protecao() → false');
@@ -658,10 +658,11 @@ select is((select count(*) from net.http_request_queue), 0::bigint,
   'webhook: sem segredo no Vault não agenda nenhum pedido (e o caso é criado)');
 
 select vault.create_secret('segredo-de-teste-local', 'novo_caso_webhook_secret');
-select testes.como('00000000-0000-4000-a000-00000000000a');
-select testes.como('00000000-0000-4000-a000-00000000000c');
+-- Os casos são criados pelo servidor (service_role), que também não tem
+-- acesso ao Vault: o trigger (SECURITY DEFINER) lê o segredo por ele.
+set local role service_role;
 select ok(testes.permitido($$insert into public.casos (utilizador_id, nome, email, descricao, autorizacao) values ('00000000-0000-4000-a000-00000000000c', 'A webhook', 'c@teste.invalid', 'teste webhook', true)$$),
-  'webhook: cliente cria caso com o trigger ativo (sem acesso ao Vault)');
+  'webhook: servidor cria caso com o trigger ativo (sem acesso ao Vault)');
 reset role;
 select is((select count(*) from net.http_request_queue), 1::bigint, 'webhook: exatamente um pedido agendado');
 select is((select headers->>'x-webhook-secret' from net.http_request_queue limit 1), 'segredo-de-teste-local',

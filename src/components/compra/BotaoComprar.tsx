@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { FluxoCompra, OrigemCompra } from "@/lib/consentimentoCompra";
+import { track } from "@/lib/analytics";
 import type { PlanoId } from "@/lib/planos";
 import { ConfirmarCompra, type OfertaConversao } from "./ConfirmarCompra";
 
@@ -11,6 +12,7 @@ export function BotaoComprar({
   fluxo,
   origem,
   conversao = null,
+  pedidoId,
   className,
   children,
 }: {
@@ -18,13 +20,21 @@ export function BotaoComprar({
   fluxo: FluxoCompra;
   origem: OrigemCompra;
   conversao?: OfertaConversao;
+  pedidoId?: string;
   className?: string;
   children: React.ReactNode;
 }) {
   const [aberto, setAberto] = useState(false);
   return (
     <>
-      <button type="button" onClick={() => setAberto(true)} className={className}>
+      <button
+        type="button"
+        onClick={() => {
+          if (pedidoId) track("modalidade_escolhida", { plano });
+          setAberto(true);
+        }}
+        className={className}
+      >
         {children}
       </button>
       {aberto && (
@@ -33,6 +43,7 @@ export function BotaoComprar({
           fluxo={fluxo}
           origem={origem}
           conversao={conversao}
+          pedidoId={pedidoId}
           onFechar={() => setAberto(false)}
         />
       )}

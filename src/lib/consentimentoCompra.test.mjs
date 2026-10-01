@@ -198,7 +198,7 @@ describe("nenhum fluxo abre o Checkout sem consentimento (código das ações)",
   test("metadata do consentimento também vai para a subscrição e para o pagamento", () => {
     assert.match(acoes, /subscription_data: \{ metadata \}/);
     assert.match(acoes, /payment_intent_data: \{ metadata \}/);
-    assert.match(acoes, /metadataExtra: metadata/);
+    assert.match(acoes, /metadataExtra: \{ \.\.\.metadata/);
   });
 
   test("o servidor continua a escolher o preço (o browser só envia o PlanoId)", () => {
@@ -212,7 +212,10 @@ describe("pontos de entrada usam a confirmação", () => {
   const pontos = {
     "5. landing (preçário)": ["../components/landing/Precario.tsx", /<ConfirmarCompra[\s\S]*fluxo="publico"[\s\S]*origem="landing"/],
     "6. portal (painel)": ["../app/portal/_components/PortalDashboard.tsx", /<ConfirmarCompra[\s\S]*fluxo="adesao"[\s\S]*origem="portal"/],
-    "7. novo caso": ["../app/portal/casos/novo/page.tsx", /origem="novo_caso"/],
+    "7. pedido de caso (modalidade)": [
+      "../app/tratar-caso/modalidade/page.tsx",
+      /<BotaoComprar[\s\S]*fluxo="pedido_caso"[\s\S]*origem="tratar_caso"[\s\S]*pedidoId=\{pedido\.id\}/,
+    ],
     "tentar pagar novamente": ["../app/portal/page.tsx", /origem="repetir_pagamento"/],
   };
   for (const [nome, [ficheiro, padrao]] of Object.entries(pontos)) {
@@ -232,5 +235,63 @@ describe("pontos de entrada usam a confirmação", () => {
     assert.match(modal, /ROTAS_LEGAIS\.privacidade/);
     assert.match(modal, /ROTAS_LEGAIS\.livreResolucao/);
     assert.match(modal, /RESUMO_LIVRE_RESOLUCAO/);
+  });
+});
+
+describe("checkout de um pedido de caso (fluxo pedido_caso)", () => {
+  const PEDIDO = "20000000-0000-4000-a000-000000000001";
+  const pedido = (extra = {}) =>
+    formulario({ plano: "avulso", fluxo: "pedido_caso", origem: "tratar_caso", pedido_id: PEDIDO, ...extra });
+
+  test("Avulso e Caso + Proteção com o pedido → válido, com o id do pedido", () => {
+    assert.deepEqual(lerPedidoCompra(pedido()), {
+      ok: true,
+      pedido: { plano: "avulso", fluxo: "pedido_caso", origem: "tratar_caso", pedidoId: PEDIDO },
+    });
+    assert.equal(lerPedidoCompra(pedido({ plano: "caso_protecao" })).ok, true);
+  });
+
+  test("Proteção sozinha não trata casos → recusado", () => {
+    assert.deepEqual(lerPedidoCompra(pedido({ plano: "protecao" })), { ok: false, erro: "dados_invalidos" });
+  });
+
+  test("sem pedido ou com id malformado → recusado (antes de gravar ou abrir o Checkout)", () => {
+    assert.equal(lerPedidoCompra(pedido({ pedido_id: null })).ok, false);
+    assert.equal(lerPedidoCompra(pedido({ pedido_id: "1; drop table casos" })).ok, false);
+  });
+
+  test("a origem tratar_caso só serve este fluxo, e este fluxo só esta origem", () => {
+    assert.equal(lerPedidoCompra(pedido({ origem: "portal" })).ok, false);
+    assert.equal(lerPedidoCompra(formulario({ origem: "tratar_caso" })).ok, false);
+  });
+
+  test("continua a exigir as duas checkboxes", () => {
+    assert.deepEqual(lerPedidoCompra(pedido({ [CAMPO_ACEITA_TERMOS]: null })), { ok: false, erro: "termos" });
+    assert.deepEqual(lerPedidoCompra(pedido({ [CAMPO_INICIO_IMEDIATO]: null })), { ok: false, erro: "inicio_imediato" });
+  });
+
+  test("outros fluxos ignoram um pedido_id enviado pelo browser", () => {
+    const r = lerPedidoCompra(formulario({ pedido_id: PEDIDO }));
+    assert.equal(r.ok, true);
+    assert.equal(r.pedido.pedidoId, undefined);
+  });
+});
+
+describe("checkout do pedido (código da Server Action)", () => {
+  const acoes = readFileSync(new URL("../app/actions/stripe.ts", import.meta.url), "utf8");
+
+  test("valida a posse do pedido no servidor antes de abrir o Checkout", () => {
+    assert.match(acoes, /async function checkoutPedidoCaso[\s\S]*requireUser\(\)[\s\S]*pedidoDaConta\(/);
+  });
+
+  test("um pedido já pago ou em confirmação não abre segundo pagamento; um checkout aberto é expirado", () => {
+    assert.match(acoes, /anterior\?\.status === "complete"[\s\S]*estado !== "falhado"\) return \{ destino: recebido \}/);
+    assert.match(acoes, /anterior\?\.status === "open"[\s\S]*sessions\.expire/);
+  });
+
+  test("o id do pedido vai na metadata e o regresso é para as páginas do pedido", () => {
+    assert.match(acoes, /pedido_id: ctx\.pedidoId/);
+    assert.match(acoes, /\/tratar-caso\/recebido\?pedido=/);
+    assert.match(acoes, /\/tratar-caso\/modalidade\?pedido=\$\{id\}&cancelado=1/);
   });
 });

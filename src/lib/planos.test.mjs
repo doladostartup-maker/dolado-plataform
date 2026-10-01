@@ -121,7 +121,7 @@ describe("preçário público", () => {
   });
 
   test("CTAs oficiais", () => {
-    for (const cta of ["Aderir à Proteção", "Escolher Caso + Proteção", "Tratar um caso"]) {
+    for (const cta of ["Aderir à Proteção", "Escolher Caso + Proteção", "Tratar o meu caso"]) {
       assert.ok(precario.includes(cta), cta);
     }
   });
@@ -148,13 +148,12 @@ describe("preçário público", () => {
   });
 });
 
-// Todo o código ativo (exclui testes e a homepage arquivada em /home-anterior).
+// Todo o código ativo (exclui testes).
 function ficheirosAtivos(dir) {
   const saida = [];
   for (const nome of readdirSync(dir)) {
     const caminho = join(dir, nome);
     if (statSync(caminho).isDirectory()) {
-      if (nome === "home-anterior") continue;
       saida.push(...ficheirosAtivos(caminho));
     } else if (/\.(tsx?|mjs)$/.test(nome) && !nome.endsWith(".test.mjs")) {
       saida.push(caminho);

@@ -184,7 +184,7 @@ export function PortalDashboard({
 
   const assinante = temProtecao;
   // Conta com plano Stripe pode aderir daqui (com conversão do Avulso, se
-  // tiver um elegível); sem plano (Remax / registo livre) vê os planos.
+  // tiver um elegível); sem nenhuma compra vê os planos.
   const podeSubscreverAqui = temPlanoStripe && !pagamentoPendente;
 
   return (
@@ -193,7 +193,7 @@ export function PortalDashboard({
         O seu painel
       </h1>
 
-      {/* Contas sem plano Stripe (piloto / registo livre) não veem este bloco. */}
+      {/* Contas sem nenhuma compra não veem este bloco. */}
       {temPlanoStripe && (
         <OSeuPlano
           resumo={resumo}
