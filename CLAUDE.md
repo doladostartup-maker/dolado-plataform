@@ -65,7 +65,7 @@ Estado implementado:
 
 Regras para tabelas novas: RLS com policies por operação (USING para ler/alterar, WITH CHECK para criar/alterar), posse validada por `auth.uid()` e nunca só por `auth.role()`; campos internos nunca preenchíveis pelo cliente; `SECURITY DEFINER` só com justificação e `search_path` fixo.
 
-- **Alertas do portal** (`20261001200000_alertas_email_da_conta.sql`, 01/10/2026): o destinatário é sempre o e-mail atual e confirmado da conta. Um trigger força `email`/`nome` a partir da conta em qualquer escrita, e as Edge Functions `verificar-alertas-*` usam `alertas_*_pendentes()` (só `service_role`; só contas com Proteção ativa) — nunca a coluna `email`. O conteúdo dos e-mails é montado em `supabase/functions/_shared/emailAlertas.ts`, com escape de HTML e assunto saneado; qualquer novo e-mail com texto do cliente tem de fazer escape.
+- **Alertas do portal** (`20261001200000_alertas_email_da_conta.sql`, 01/10/2026): o destinatário é sempre o e-mail atual e confirmado da conta. Um trigger força `email`/`nome` a partir da conta em qualquer escrita, e as Edge Functions `verificar-alertas-*` usam `alertas_*_pendentes()` (só `service_role`; só contas com Proteção ativa) — nunca a coluna `email`. O conteúdo dos e-mails é montado em `supabase/functions/_shared/emailAlertas.ts`, com escape de HTML e assunto saneado; qualquer novo e-mail com texto do cliente tem de fazer escape. A regra "só e-mail confirmado" depende da confirmação de e-mail estar ativa na Supabase (Authentication → Providers → Email) — confirmada ativa por Thiago a 01/10/2026; não a desativar.
 
 Pendente: rotação da chave service_role legada depois de o novo webhook estar em produção.
 
