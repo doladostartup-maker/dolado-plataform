@@ -40,7 +40,9 @@ export default async function RecebidoPage({ searchParams }: { searchParams: Pro
           </span>
           <h1 className="mb-2 text-[24px] font-bold text-[var(--color-ink)]">Recebemos o seu caso.</h1>
           <p className="mx-auto mb-6 max-w-[46ch] text-[15px] leading-relaxed text-[var(--color-ink-muted)]">
-            Enviámos uma confirmação para o seu e-mail. Pode acompanhar o tratamento do seu caso no portal.
+            Enviámos uma confirmação para o seu e-mail. A DoLado irá analisar as informações enviadas e, antes de
+            qualquer envio, poderá entrar em contacto consigo para confirmar os factos ou solicitar informações
+            adicionais.
           </p>
           <Link href={`/portal/casos/${pedido.caso_id}`} className={BOTAO}>
             Acompanhar o meu caso
