@@ -87,3 +87,11 @@ test("a Edge Function novo-caso usa o módulo partilhado e não monta HTML próp
   assert.equal(/function html[A-Z]/.test(codigo), false);
   assert.equal(/\$\{caso\.(nome|sector)/.test(codigo), false);
 });
+
+test("confirmação ao cliente: texto atual, sem prazo nem promessa de resposta pessoal", () => {
+  const html = htmlConfirmacaoCliente("Ana");
+  assert.ok(html.includes("Recebemos o seu caso."));
+  assert.ok(html.includes("A DoLado irá analisar as informações enviadas e, antes de qualquer envio, poderá entrar em contacto consigo"));
+  assert.equal(html.includes("48 horas"), false);
+  assert.equal(html.includes("Já está com o Thiago"), false);
+});
