@@ -78,14 +78,6 @@ function IconFaturas() {
   );
 }
 
-function IconElegibilidade() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
-      <path d="M3 8.5l3 3 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function IconSubscricao() {
   return (
     <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
@@ -211,9 +203,6 @@ export default async function PortalLayout({
           </ItemNav>
           <ItemNav href="/portal/faturas" icon={<IconFaturas />}>
             Comparador de Faturas
-          </ItemNav>
-          <ItemNav href="/portal/elegibilidade" icon={<IconElegibilidade />}>
-            Simulador de Elegibilidade
           </ItemNav>
           <ItemNav href="/conta" icon={<IconConta />}>
             A minha conta

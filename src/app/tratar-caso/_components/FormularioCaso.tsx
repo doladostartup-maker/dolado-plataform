@@ -126,16 +126,27 @@ type ErrosPasso = Partial<
 
 const ESTADO_INICIAL: EstadoPedidoForm = { erro: null };
 
-export function FormularioCaso({ origem, comSessao }: { origem: string; comSessao: boolean }) {
+type ValoresIniciais = { sector: string; problemaTipo: string; momentoCliente: string };
+
+export function FormularioCaso({
+  origem,
+  comSessao,
+  inicial,
+}: {
+  origem: string;
+  comSessao: boolean;
+  /** Pré-preenchimento vindo do Simulador de Elegibilidade (já validado na página). */
+  inicial?: ValoresIniciais;
+}) {
   const [state, formAction, pending] = useActionState(guardarPedido, ESTADO_INICIAL);
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [erros, setErros] = useState<ErrosPasso>({});
 
-  const [sector, setSector] = useState("");
+  const [sector, setSector] = useState(inicial?.sector ?? "");
   const [empresa, setEmpresa] = useState("");
-  const [problemaTipo, setProblemaTipo] = useState("");
+  const [problemaTipo, setProblemaTipo] = useState(inicial?.problemaTipo ?? "");
   const [descricao, setDescricao] = useState("");
-  const [momentoCliente, setMomentoCliente] = useState("");
+  const [momentoCliente, setMomentoCliente] = useState(inicial?.momentoCliente ?? "");
 
   const [anexo, setAnexo] = useState<{
     caminho: string;
