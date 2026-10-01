@@ -1,8 +1,11 @@
 "use client";
 
-export function track(nome: string) {
+// Sem gtag (página sem AnalyticsScripts, ou bloqueado pelo Cookiebot por
+// falta de consentimento), não faz nada.
+export function track(nome: string, parametros?: Record<string, string | number>) {
   if (typeof window !== "undefined" && typeof window.gtag === "function") {
-    window.gtag("event", nome);
+    if (parametros) window.gtag("event", nome, parametros);
+    else window.gtag("event", nome);
   }
 }
 

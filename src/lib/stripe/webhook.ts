@@ -1,5 +1,6 @@
 import type Stripe from "stripe";
 import { consentimentoDaMetadata } from "../consentimentoCompra.ts";
+import { pedidoDaMetadata } from "../pedidoCaso.ts";
 
 // Lógica do webhook Stripe, separada do route handler para ser testável sem
 // rede nem base de dados: tudo o que tem efeitos (Supabase, API Stripe,
@@ -225,6 +226,14 @@ export interface DependenciasWebhook {
     consentimentoId: string,
     dados: { sessionId: string; subscriptionId: string | null; email: string; userId: string | null },
   ): Promise<ConsentimentoLigado | null>;
+
+  /**
+   * Pedido → caso (função SQL atómica e idempotente: gasta 1 caso
+   * disponível e cria o caso). Devolve o id do caso (o existente, se já
+   * tinha sido convertido) ou null se não converteu (pedido de outra conta,
+   * cancelado, ou conta sem caso disponível).
+   */
+  converterPedidoEmCaso(pedidoId: string, userId: string): Promise<string | null>;
 
   enviarEmailPagamentoConfirmado(dados: {
     email: string;
@@ -513,6 +522,21 @@ async function confirmarCompra(
     if (planoAplicado) await converterAvulso(session, conversaoId, s.subscriptionId, planoAplicado, deps);
   }
 
+  // Pedido de caso pago: passa a caso só agora, com o acesso já aplicado.
+  // Antes do "concluido", para um reenvio depois de uma falha voltar a
+  // tentar (a conversão é idempotente).
+  const pedidoId = pedidoDaMetadata(session.metadata);
+  let casoDoPedido: string | null = null;
+  if (pedidoId && contas.length > 0) {
+    casoDoPedido = planoAplicado ? await deps.converterPedidoEmCaso(pedidoId, contas[0]) : null;
+    if (!casoDoPedido && estadoAnterior !== "concluido") {
+      await deps.notificarAdmin(
+        "Pedido de caso pago por converter — DoLado",
+        `O pagamento da sessão ${session.id} foi confirmado, mas o pedido ${pedidoId} não passou a caso automaticamente. O cliente pode usar o caso disponível no portal; verificar no backoffice.`,
+      );
+    }
+  }
+
   await deps.gravarPagamento(dadosPagamento(session, s, "concluido"));
   const consentimento = await ligarConsentimentoDaSessao(session, s, contas, deps);
   if (estadoAnterior !== "concluido" && plano) {
@@ -532,6 +556,7 @@ async function confirmarCompra(
   }
   if (!plano) return "confirmado_preco_desconhecido";
   if (estadoAnterior === "concluido") return "ja_confirmado";
+  if (pedidoId) return casoDoPedido ? "pagamento_confirmado_caso_criado" : "pagamento_confirmado_pedido_por_converter";
   return contas.length > 0 ? "pagamento_confirmado" : "pagamento_confirmado_sem_conta";
 }
 

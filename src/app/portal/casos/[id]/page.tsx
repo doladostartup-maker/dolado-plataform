@@ -79,7 +79,7 @@ export default async function CasoClienteDetalhePage({
     <div className="flex max-w-xl flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-          {caso.empresa_parceira ?? "O seu caso"}
+          {caso.empresa ?? caso.empresa_parceira ?? "O seu caso"}
         </h1>
         <StatusBadge status={caso.status} />
       </div>
@@ -98,7 +98,7 @@ export default async function CasoClienteDetalhePage({
         </div>
         <div>
           <dt className="text-[var(--color-ink-muted)]">Tipo de problema</dt>
-          <dd className="text-[var(--color-ink)]">{caso.tipo_problema ?? "—"}</dd>
+          <dd className="text-[var(--color-ink)]">{caso.tipo_problema ?? caso.problema_tipo ?? "—"}</dd>
         </div>
         <div>
           <dt className="text-[var(--color-ink-muted)]">Descrição</dt>

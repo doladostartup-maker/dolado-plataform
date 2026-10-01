@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
+import { useCallback, useState } from "react";
+import { detectarOrigem, track } from "@/lib/analytics";
 import { LIVRO_RECLAMACOES_URL, ROTAS_LEGAIS } from "@/lib/legal";
-import { ENTIDADE_LEGAL, NIPC } from "@/lib/site";
+import { ENTIDADE_LEGAL, NIPC, urlTratarCaso } from "@/lib/site";
 import { AccordionPerguntas } from "./AccordionPerguntas";
 import { PERGUNTAS_HOMEPAGE } from "./conteudoPerguntasFrequentes";
-import { FormularioGuiado } from "./FormularioGuiado";
 import { Precario } from "./Precario";
 import { SiteHeader } from "./SiteHeader";
 
@@ -66,29 +65,18 @@ const BOTAO_SECUNDARIO =
   "inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-canvas)]";
 
 export function Homepage() {
-  const [formOpen, setFormOpen] = useState(false);
   const [origem] = useState(detectarOrigem);
 
   const openForm = useCallback((origemClique: string) => {
     track(origemClique);
-    setFormOpen(true);
-  }, []);
-  const closeForm = useCallback(() => setFormOpen(false), []);
-
-  useEffect(() => {
-    if (!formOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeForm();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [formOpen, closeForm]);
+    window.location.assign(urlTratarCaso(origem));
+  }, [origem]);
 
   return (
     <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
       {/* ===== Secção 1: Nav + Hero ===== */}
       <SiteHeader
-        ctaLabel="Começar reclamação"
+        ctaLabel="Tratar o meu caso"
         onCtaClick={() => openForm("click_nav_reclamacao")}
       />
 
@@ -117,7 +105,7 @@ export function Homepage() {
             </p>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <button type="button" onClick={() => openForm("click_hero_reclamacao")} className={BOTAO_PRIMARIO}>
-                Começar reclamação
+                Tratar o meu caso
               </button>
               <Link href="/como-funciona" className={BOTAO_SECUNDARIO}>
                 Ver como funciona
@@ -261,7 +249,7 @@ export function Homepage() {
           onClick={() => openForm("click_cta_final")}
           className={`${BOTAO_PRIMARIO} text-[14px] font-semibold`}
         >
-          Começar reclamação
+          Tratar o meu caso
         </button>
       </section>
 
@@ -300,18 +288,6 @@ export function Homepage() {
           </span>
         </div>
       </footer>
-
-      {/* Modal do formulário */}
-      {formOpen && (
-        <div
-          onClick={closeForm}
-          className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[rgba(23,26,33,0.42)] px-4 py-8 sm:px-8"
-        >
-          <div onClick={(e) => e.stopPropagation()} className="my-auto w-full max-w-[640px] flex-none">
-            <FormularioGuiado onClose={closeForm} onSuccess={trackFormSuccess} origem={origem} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

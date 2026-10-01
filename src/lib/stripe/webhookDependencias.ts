@@ -534,6 +534,15 @@ export function criarDependenciasWebhook(): DependenciasWebhook {
       };
     },
 
+    async converterPedidoEmCaso(pedidoId, userId) {
+      const { data, error } = await admin.rpc("converter_pedido_em_caso", {
+        p_pedido_id: pedidoId,
+        p_user_id: userId,
+      });
+      falhar("converter_pedido_em_caso", error);
+      return (data as string | null) ?? null;
+    },
+
     async enviarEmailPagamentoConfirmado({ email, plano, contaExiste, sessionId, valorPagoCentimos, renovacao, consentimento }) {
       const ligacao = contaExiste
         ? `${siteUrl}/entrar`

@@ -11,8 +11,9 @@
 // Cancelamento normal: a subscrição fica com cancelamento agendado e tudo
 //   continua a funcionar até current_period_end; só depois a conta fica sem
 //   subscrição (o webhook trata disso).
-// Sem linha em user_access (piloto Remax / registo livre): continua como
-//   antes — sem proteção, casos no portal sem crédito.
+// Sem linha em user_access (conta criada sem compra): sem proteção e sem
+//   casos disponíveis. Criar conta não dá direito ao tratamento de um caso —
+//   o caso é pago no fluxo "Tratar o meu caso" (src/lib/pedidoCaso.ts).
 //
 // "Funcionalidades de proteção" são as que hoje estão marcadas "Somente
 // Assinantes" (alertas de fidelização e de promoção, aviso sectorial,
@@ -37,9 +38,9 @@ export type Acesso = {
   creditos: number;
   /** Funcionalidades de proteção desbloqueadas. */
   temProtecao: boolean;
-  /** Pode abrir um caso novo no portal agora. */
+  /** Pode abrir um caso novo no portal agora (tem casos disponíveis). */
   podeCriarCaso: boolean;
-  /** Abrir um caso gasta um crédito. */
+  /** Abrir um caso gasta um crédito (sempre — não há casos sem pagamento). */
   casoConsomeCredito: boolean;
   /** Fim do período pago da subscrição (ISO), se houver. */
   fimPeriodo: string | null;
@@ -68,8 +69,8 @@ export function calcularAcesso(linha: LinhaAcesso | null): Acesso {
       estadoSubscricao: null,
       creditos: 0,
       temProtecao: false,
-      podeCriarCaso: true,
-      casoConsomeCredito: false,
+      podeCriarCaso: false,
+      casoConsomeCredito: true,
       fimPeriodo: null,
       cancelamentoAgendado: false,
     };
@@ -128,7 +129,7 @@ export type ResumoPlano = {
   renovacao: string | null;
   /** Data em que a Proteção termina (ISO), quando há cancelamento agendado. */
   fimAgendado: string | null;
-  /** null = não se aplica (ex.: conta sem plano Stripe, que abre casos livremente). */
+  /** null = não se aplica (ex.: conta sem nenhuma compra). */
   casosDisponiveis: number | null;
 };
 

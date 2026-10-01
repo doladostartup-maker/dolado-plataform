@@ -17,6 +17,7 @@ import {
   ROTAS_LEGAIS,
   consentimentoInicioImediato,
 } from "@/lib/legal";
+import { track } from "@/lib/analytics";
 import { IVA_INCLUIDO, PLANOS, formatarPreco, type PlanoId } from "@/lib/planos";
 
 export type OfertaConversao = { mensalidade: number; reembolso: number } | null;
@@ -36,6 +37,7 @@ export function ConfirmarCompra({
   fluxo,
   origem,
   conversao = null,
+  pedidoId,
   onFechar,
 }: {
   plano: PlanoId;
@@ -43,6 +45,8 @@ export function ConfirmarCompra({
   origem: OrigemCompra;
   /** Conversão de um Avulso elegível na 1.ª mensalidade (só no portal). */
   conversao?: OfertaConversao;
+  /** Pedido de caso a pagar (fluxo "pedido_caso"); a posse é validada no servidor. */
+  pedidoId?: string;
   onFechar: () => void;
 }) {
   const [estado, submeter, aSubmeter] = useActionState<EstadoCompra, FormData>(confirmarCompra, { erro: null });
@@ -128,10 +132,15 @@ export function ConfirmarCompra({
           .
         </p>
 
-        <form action={submeter} className="flex flex-col gap-3">
+        <form
+          action={submeter}
+          onSubmit={() => track("checkout_iniciado", { plano, fluxo })}
+          className="flex flex-col gap-3"
+        >
           <input type="hidden" name="plano" value={plano} />
           <input type="hidden" name="fluxo" value={fluxo} />
           <input type="hidden" name="origem" value={origem} />
+          {pedidoId && <input type="hidden" name="pedido_id" value={pedidoId} />}
 
           <label className="flex items-start gap-2 text-[13.5px] leading-relaxed text-[var(--color-ink)]">
             <input

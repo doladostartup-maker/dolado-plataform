@@ -112,6 +112,8 @@ export function parametrosCheckoutConversao({
   plano,
   siteUrl,
   metadataExtra = {},
+  successUrl,
+  cancelUrl,
 }: {
   precoId: string;
   cliente: { customer: string } | { customer_email: string | undefined };
@@ -121,6 +123,9 @@ export function parametrosCheckoutConversao({
   siteUrl: string;
   /** Ex.: consentimento_compra_id — vai para a sessão e para a subscrição. */
   metadataExtra?: Record<string, string>;
+  /** Regresso do Checkout (por omissão, o painel do portal). */
+  successUrl?: string;
+  cancelUrl?: string;
 }): Stripe.Checkout.SessionCreateParams {
   const metadata = {
     ...metadataExtra,
@@ -138,8 +143,8 @@ export function parametrosCheckoutConversao({
     // allow_promotion_codes.
     discounts: [{ coupon: CUPAO_CONVERSAO.id }],
     payment_method_collection: "always",
-    success_url: `${siteUrl}/portal?upgraded=true`,
-    cancel_url: `${siteUrl}/portal`,
+    success_url: successUrl ?? `${siteUrl}/portal?upgraded=true`,
+    cancel_url: cancelUrl ?? `${siteUrl}/portal`,
     metadata,
     subscription_data: { metadata },
   };

@@ -1,12 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { useActionState, useCallback, useEffect, useState } from "react";
+import { useActionState, useCallback, useState } from "react";
 import { criarVerificacaoElegibilidadePublica, type EstadoElegibilidadePublica } from "@/app/actions/elegibilidade-publico";
 import { DURACAO_LABEL, type DuracaoContrato, type Setor } from "@/lib/elegibilidade/regras";
-import { FormularioGuiado } from "./FormularioGuiado";
+import { urlTratarCaso } from "@/lib/site";
 import { SiteHeader } from "./SiteHeader";
-import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
+import { detectarOrigem, track } from "@/lib/analytics";
 
 const SETORES: Setor[] = ["Telecomunicações", "Energia", "Água"];
 const DURACOES: DuracaoContrato[] = ["menos_6m", "6_12m", "1_2anos", "mais_2anos"];
@@ -45,13 +44,14 @@ function ResultadoCard({ estado }: { estado: EstadoElegibilidadePublica }) {
           Enviámos os detalhes para o seu e-mail. Pode avançar já com a reclamação.
         </p>
         <div className="rounded-[var(--radius-input)] border-l-[3px] border-[var(--color-brand)] bg-[var(--color-brand-wash)] p-4 text-[13.5px] text-[var(--color-ink)]">
-          <p className="mb-2 font-semibold">Quer acompanhar isto?</p>
+          <p className="mb-2 font-semibold">Quer que a DoLado trate o seu caso?</p>
           <p className="mb-3 text-[var(--color-ink-muted)]">
-            Crie a sua conta gratuita para abrir a reclamação e seguir o caso no Portal.
+            Descreva o caso, crie a sua conta e escolha no final como quer que o tratemos. Acompanha
+            tudo no portal.
           </p>
-          <Link href="/registo" className={BOTAO_PRIMARIO}>
-            Criar a minha conta gratuita
-          </Link>
+          <a href={urlTratarCaso("/simulador-elegibilidade")} className={BOTAO_PRIMARIO}>
+            Tratar o meu caso
+          </a>
         </div>
       </div>
     );
@@ -252,27 +252,16 @@ function FormularioPassos({ erro }: { erro?: string }) {
 
 export function SimuladorElegibilidadePublico() {
   const [state, formAction] = useActionState(criarVerificacaoElegibilidadePublica, ESTADO_INICIAL);
-  const [formOpen, setFormOpen] = useState(false);
   const [origem] = useState(detectarOrigem);
 
   const openForm = useCallback(() => {
     track("click_nav_elegibilidade");
-    setFormOpen(true);
-  }, []);
-  const closeForm = useCallback(() => setFormOpen(false), []);
-
-  useEffect(() => {
-    if (!formOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeForm();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [formOpen, closeForm]);
+    window.location.assign(urlTratarCaso(origem));
+  }, [origem]);
 
   return (
     <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
-      <SiteHeader ctaLabel="Começar reclamação" onCtaClick={openForm} />
+      <SiteHeader ctaLabel="Tratar o meu caso" onCtaClick={openForm} />
 
       <section className="mx-auto max-w-[600px] px-4 pt-14 pb-2 text-center sm:px-10">
         <p className="mb-2 text-sm font-bold uppercase tracking-[0.06em] text-[var(--color-brand)]">
@@ -300,16 +289,6 @@ export function SimuladorElegibilidadePublico() {
         )}
       </section>
 
-      {formOpen && (
-        <div
-          onClick={closeForm}
-          className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[rgba(23,26,33,0.42)] px-4 py-8 sm:px-8"
-        >
-          <div onClick={(e) => e.stopPropagation()} className="my-auto w-full max-w-[640px] flex-none">
-            <FormularioGuiado onClose={closeForm} onSuccess={trackFormSuccess} origem={origem} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

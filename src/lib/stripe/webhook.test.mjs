@@ -34,6 +34,8 @@ function criarEstado() {
     refundFalhaDefinitiva: false,
     refundFalhaTransitoriaUmaVez: false,
     avisosAdmin: [],
+    pedidos: new Map(), // id → linha de pedidos_caso
+    casos: [], // casos criados (o trigger novo-caso dispara um e-mail por cada)
   };
 }
 
@@ -235,6 +237,20 @@ function criarDependencias(estado) {
       c.email ??= email;
       c.user_id ??= userId;
       return { termos_versao: c.termos_versao, pediu_inicio_imediato: true };
+    },
+    // Mesmas regras que a função SQL converter_pedido_em_caso.
+    async converterPedidoEmCaso(pedidoId, userId) {
+      const p = estado.pedidos.get(pedidoId);
+      if (!p || p.user_id !== userId) return null;
+      if (p.estado === "convertido") return p.caso_id;
+      if (p.estado === "cancelado") return null;
+      const c = estado.contas.get(userId);
+      if (!c || c.case_credits <= 0) return null;
+      c.case_credits -= 1;
+      const casoId = `caso_${estado.casos.length + 1}`;
+      estado.casos.push({ id: casoId, utilizador_id: userId, pedido_id: pedidoId, status: "Novo" });
+      Object.assign(p, { estado: "convertido", caso_id: casoId });
+      return casoId;
     },
     async enviarEmailPagamentoConfirmado(dados) {
       estado.emails.push(dados);
@@ -1122,6 +1138,125 @@ describe("consentimentos da compra (webhook)", () => {
     await processarEventoStripe(evento("checkout.session.completed", sessaoAvulso({ metadata: meta({ plano: "avulso", user_id: USER }) })), deps);
     assert.equal(estado.emails[0].plano, "avulso");
     assert.equal(estado.emails[0].renovacao, null);
+    assert.equal(conta().case_credits, 1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// "Tratar o meu caso": o pedido só passa a caso com o pagamento confirmado.
+// ---------------------------------------------------------------------------
+describe("pedido de caso pago no Checkout (metadata.pedido_id)", () => {
+  const PEDIDO = "20000000-0000-4000-a000-000000000001";
+  const novoPedido = (extra = {}) =>
+    estado.pedidos.set(PEDIDO, { id: PEDIDO, user_id: USER, estado: "aguarda_pagamento", caso_id: null, ...extra });
+  const avulsoDoPedido = (extra = {}) =>
+    sessaoAvulso({ metadata: { plano: "avulso", user_id: USER, pedido_id: PEDIDO }, ...extra });
+  const subscricaoDoPedido = (extra = {}) =>
+    sessaoSubscricao({ metadata: { plano: "assinatura", user_id: USER, pedido_id: PEDIDO, upgrade: "false" }, ...extra });
+
+  test("1. Avulso pago: o caso disponível comprado é usado no pedido e o caso é criado uma vez", async () => {
+    novoPedido();
+    const r = await processarEventoStripe(evento("checkout.session.completed", avulsoDoPedido()), deps);
+    assert.equal(r.status, 200);
+    assert.equal(estado.casos.length, 1);
+    assert.equal(estado.pedidos.get(PEDIDO).estado, "convertido");
+    assert.equal(conta().case_credits, 0, "o caso pago foi gasto neste pedido");
+    assert.equal(conta().subscription_plan, "none", "Avulso não dá proteção");
+    assert.equal(estado.pagamentos.get("cs_avulso").estado, "concluido");
+    assert.equal(estado.emails.length, 1);
+    assert.equal(estado.emails[0].contaExiste, true);
+    assert.equal(ultimoLog().resultado, "pagamento_confirmado_caso_criado");
+  });
+
+  test("2. Caso + Proteção pago: subscrição ativa, proteção e caso criado com o caso do 1.º mês", async () => {
+    novoPedido();
+    estado.stripeSubscricao = snapshot("active");
+    await processarEventoStripe(evento("checkout.session.completed", subscricaoDoPedido()), deps);
+    assert.equal(conta().subscription_plan, "caso_protecao");
+    assert.equal(conta().subscription_status, "active");
+    assert.equal(estado.casos.length, 1);
+    assert.equal(conta().case_credits, 0, "o caso do 1.º mês foi usado no pedido");
+    // invoice.paid da mesma fatura não volta a creditar nem cria outro caso.
+    await processarEventoStripe(evento("invoice.paid", fatura("in_primeira", "subscription_create")), deps);
+    assert.equal(conta().case_credits, 0);
+    assert.equal(estado.casos.length, 1);
+  });
+
+  test("3/6. Checkout concluído sem pagamento confirmado (ex.: SEPA): nem caso, nem acesso, nem e-mail", async () => {
+    novoPedido();
+    await processarEventoStripe(evento("checkout.session.completed", avulsoDoPedido({ payment_status: "unpaid" })), deps);
+    assert.equal(estado.casos.length, 0);
+    assert.equal(estado.pedidos.get(PEDIDO).estado, "aguarda_pagamento");
+    assert.equal(conta()?.case_credits ?? 0, 0);
+    assert.equal(estado.emails.length, 0);
+    // Só a confirmação assíncrona cria o caso.
+    await processarEventoStripe(evento("checkout.session.async_payment_succeeded", avulsoDoPedido()), deps);
+    assert.equal(estado.casos.length, 1);
+  });
+
+  test("pagamento assíncrono falhado: o pedido fica por pagar, sem caso", async () => {
+    novoPedido();
+    await processarEventoStripe(evento("checkout.session.completed", avulsoDoPedido({ payment_status: "unpaid" })), deps);
+    await processarEventoStripe(evento("checkout.session.async_payment_failed", avulsoDoPedido({ payment_status: "unpaid" })), deps);
+    assert.equal(estado.casos.length, 0);
+    assert.equal(estado.pedidos.get(PEDIDO).estado, "aguarda_pagamento");
+    assert.equal(estado.pagamentos.get("cs_avulso").estado, "falhado");
+  });
+
+  test("7. webhook duplicado ou eventos repetidos: um só caso, um só crédito, um só e-mail", async () => {
+    novoPedido();
+    const e = evento("checkout.session.completed", avulsoDoPedido());
+    await processarEventoStripe(e, deps);
+    const dup = await processarEventoStripe(e, deps);
+    assert.equal(dup.corpo.duplicado, true);
+    // Outro evento da mesma sessão (ex.: reenvio com outro id).
+    await processarEventoStripe(evento("checkout.session.completed", avulsoDoPedido()), deps);
+    assert.equal(estado.casos.length, 1);
+    assert.equal(estado.creditosConcedidos.size, 1);
+    assert.equal(conta().case_credits, 0);
+    assert.equal(estado.emails.length, 1);
+  });
+
+  test("falha a meio (antes do caso): o reenvio do Stripe conclui sem duplicar", async () => {
+    novoPedido();
+    estado.falharCreditoUmaVez = true;
+    const e = evento("checkout.session.completed", avulsoDoPedido());
+    assert.equal((await processarEventoStripe(e, deps)).status, 500);
+    assert.equal(estado.casos.length, 0);
+    assert.equal((await processarEventoStripe(e, deps)).status, 200);
+    assert.equal(estado.casos.length, 1);
+    assert.equal(conta().case_credits, 0);
+  });
+
+  test("5. pedido de outra conta na metadata: nenhum caso é criado nessa conta; o crédito pago fica na conta que pagou", async () => {
+    novoPedido({ user_id: "00000000-0000-4000-a000-0000000000ff" });
+    await processarEventoStripe(evento("checkout.session.completed", avulsoDoPedido()), deps);
+    assert.equal(estado.casos.length, 0);
+    assert.equal(conta().case_credits, 1, "o pagamento não se perde: fica um caso disponível");
+    assert.equal(estado.avisosAdmin.length, 1);
+    assert.equal(ultimoLog().resultado, "pagamento_confirmado_pedido_por_converter");
+  });
+
+  test("pedido já convertido (ex.: usou um caso disponível): não cria outro e o novo pagamento fica disponível", async () => {
+    novoPedido({ estado: "convertido", caso_id: "caso_existente" });
+    await processarEventoStripe(evento("checkout.session.completed", avulsoDoPedido()), deps);
+    assert.equal(estado.casos.length, 0);
+    assert.equal(conta().case_credits, 1);
+  });
+
+  test("compra sem pedido_id (portal / preçário): comportamento anterior, sem casos criados", async () => {
+    await processarEventoStripe(evento("checkout.session.completed", sessaoAvulso({ metadata: { plano: "avulso", user_id: USER } })), deps);
+    assert.equal(estado.casos.length, 0);
+    assert.equal(conta().case_credits, 1);
+    assert.equal(ultimoLog().resultado, "pagamento_confirmado");
+  });
+
+  test("pedido_id com formato inválido é ignorado", async () => {
+    await processarEventoStripe(
+      evento("checkout.session.completed", sessaoAvulso({ metadata: { plano: "avulso", user_id: USER, pedido_id: "x' or 1=1" } })),
+      deps,
+    );
+    assert.equal(estado.casos.length, 0);
     assert.equal(conta().case_credits, 1);
   });
 });

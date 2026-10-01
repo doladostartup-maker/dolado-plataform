@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { detectarOrigem, track, trackFormSuccess } from "@/lib/analytics";
-import { FormularioGuiado } from "./FormularioGuiado";
+import { useCallback, useState } from "react";
+import { detectarOrigem, track } from "@/lib/analytics";
+import { urlTratarCaso } from "@/lib/site";
 import { SiteHeader } from "./SiteHeader";
 
 type Item = {
@@ -62,28 +62,17 @@ const FAQS = [
 ];
 
 export function Transparencia() {
-  const [formOpen, setFormOpen] = useState(false);
   const [origem] = useState(detectarOrigem);
 
   const openForm = useCallback(() => {
     track("click_nav_transparencia");
-    setFormOpen(true);
-  }, []);
-  const closeForm = useCallback(() => setFormOpen(false), []);
-
-  useEffect(() => {
-    if (!formOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeForm();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [formOpen, closeForm]);
+    window.location.assign(urlTratarCaso(origem));
+  }, [origem]);
 
   return (
     <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
       {/* ===== Secção 1: Nav ===== */}
-      <SiteHeader ctaLabel="Começar reclamação" onCtaClick={openForm} />
+      <SiteHeader ctaLabel="Tratar o meu caso" onCtaClick={openForm} />
 
       {/* ===== Secção 2: Hero (brand-wash) ===== */}
       <section className="flex flex-col items-center gap-4 bg-[var(--color-brand-wash)] px-4 py-16 text-center sm:px-10">
@@ -184,18 +173,6 @@ export function Transparencia() {
           </div>
         </div>
       </section>
-
-      {/* Modal do formulário */}
-      {formOpen && (
-        <div
-          onClick={closeForm}
-          className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[rgba(23,26,33,0.42)] px-4 py-8 sm:px-8"
-        >
-          <div onClick={(e) => e.stopPropagation()} className="my-auto w-full max-w-[640px] flex-none">
-            <FormularioGuiado onClose={closeForm} onSuccess={trackFormSuccess} origem={origem} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

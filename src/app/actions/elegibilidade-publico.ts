@@ -66,7 +66,7 @@ async function enviarEmailBrevo(destino: { email: string; nome: string }, assunt
 
 function htmlResultado(nomeOuEmail: string, elegivel: boolean, razao: string) {
   const cta = elegivel
-    ? `<p style="margin:16px 0 0 0;"><a href="https://portal.dolado.pt/registo" style="display:inline-block;background-color:#0E6B5C;color:#FFFFFF;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">Abrir reclamação agora</a></p>`
+    ? `<p style="margin:16px 0 0 0;"><a href="https://portal.dolado.pt/tratar-caso?origem=email-simulador" style="display:inline-block;background-color:#0E6B5C;color:#FFFFFF;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">Tratar o meu caso</a></p>`
     : "";
 
   return `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8"></head>

@@ -46,11 +46,12 @@ describe("calcularAcesso", () => {
     assert.equal(calcularAcesso(linha("none", null, 0)).podeCriarCaso, false);
   });
 
-  test("sem plano Stripe (Remax / registo livre): como antes — cria casos sem crédito, sem proteção", () => {
+  test("conta sem nenhuma compra (registo livre): sem casos disponíveis nem proteção — criar conta não dá direito a um caso", () => {
     const a = calcularAcesso(null);
     assert.equal(a.temPlanoStripe, false);
-    assert.equal(a.podeCriarCaso, true);
-    assert.equal(a.casoConsomeCredito, false);
+    assert.equal(a.podeCriarCaso, false);
+    assert.equal(a.casoConsomeCredito, true);
+    assert.equal(a.creditos, 0);
     assert.equal(a.temProtecao, false);
   });
 

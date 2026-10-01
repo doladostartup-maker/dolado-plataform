@@ -28,20 +28,30 @@ export const CAMPO_INICIO_IMEDIATO = "pede_inicio_imediato";
 export const VALOR_ACEITE = "sim";
 
 /** Onde a compra começou (só para registo — não decide nada). */
-export const ORIGENS_COMPRA = ["landing", "portal", "novo_caso", "repetir_pagamento"] as const;
+export const ORIGENS_COMPRA = ["landing", "portal", "novo_caso", "repetir_pagamento", "tratar_caso"] as const;
 export type OrigemCompra = (typeof ORIGENS_COMPRA)[number];
 
 /**
  * Fluxo de checkout. "publico": preçário, sem sessão (a conta é criada
  * depois do pagamento). "avulso_conta": compra Avulso com sessão iniciada.
  * "adesao": subscrição com sessão iniciada (com conversão do Avulso, se houver).
+ * "pedido_caso": modalidade escolhida para um pedido de caso já preenchido
+ * ("Tratar o meu caso"), com sessão iniciada — Avulso ou Caso + Proteção.
  */
-export const FLUXOS_COMPRA = ["publico", "avulso_conta", "adesao"] as const;
+export const FLUXOS_COMPRA = ["publico", "avulso_conta", "adesao", "pedido_caso"] as const;
 export type FluxoCompra = (typeof FLUXOS_COMPRA)[number];
 
 export type TipoCompra = "avulso" | "subscricao" | "conversao_avulso";
 
-export type PedidoCompra = { plano: PlanoId; fluxo: FluxoCompra; origem: OrigemCompra };
+export type PedidoCompra = {
+  plano: PlanoId;
+  fluxo: FluxoCompra;
+  origem: OrigemCompra;
+  /** Só no fluxo "pedido_caso": o pedido a pagar (a posse é validada no servidor). */
+  pedidoId?: string;
+};
+
+const UUID_PEDIDO = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type ErroConsentimento = "dados_invalidos" | "termos" | "inicio_imediato";
 
@@ -68,11 +78,27 @@ export function lerPedidoCompra(
   // O fluxo tem de bater certo com o produto.
   if (fluxo === "avulso_conta" && plano !== "avulso") return { ok: false, erro: "dados_invalidos" };
   if (fluxo === "adesao" && plano === "avulso") return { ok: false, erro: "dados_invalidos" };
+  // Pedido de caso: só modalidades que tratam um caso, e sempre com o pedido.
+  const pedidoId = ler("pedido_id");
+  if (fluxo === "pedido_caso") {
+    if (plano === "protecao" || origem !== "tratar_caso") return { ok: false, erro: "dados_invalidos" };
+    if (typeof pedidoId !== "string" || !UUID_PEDIDO.test(pedidoId)) return { ok: false, erro: "dados_invalidos" };
+  } else if (origem === "tratar_caso") {
+    return { ok: false, erro: "dados_invalidos" };
+  }
 
   if (ler(CAMPO_ACEITA_TERMOS) !== VALOR_ACEITE) return { ok: false, erro: "termos" };
   if (ler(CAMPO_INICIO_IMEDIATO) !== VALOR_ACEITE) return { ok: false, erro: "inicio_imediato" };
 
-  return { ok: true, pedido: { plano, fluxo: fluxo as FluxoCompra, origem: origem as OrigemCompra } };
+  return {
+    ok: true,
+    pedido: {
+      plano,
+      fluxo: fluxo as FluxoCompra,
+      origem: origem as OrigemCompra,
+      ...(fluxo === "pedido_caso" ? { pedidoId: pedidoId as string } : {}),
+    },
+  };
 }
 
 export type RegistoConsentimento = {

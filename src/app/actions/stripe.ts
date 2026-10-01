@@ -23,6 +23,8 @@ import {
   type RegistoConsentimento,
 } from "@/lib/consentimentoCompra";
 import { PRECO_AVULSO_ID, precoDoPlano } from "@/lib/stripe/planos";
+import { DIAS_VALIDADE_PEDIDO, pedidoPorPagar } from "@/lib/pedidoCaso";
+import { pedidoDaConta } from "@/lib/pedidoCasoServidor";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!;
 
@@ -44,7 +46,23 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!;
 
 export type EstadoCompra = { erro: string | null };
 
-type Destino = { destino: string };
+type Destino = { destino: string; sessionId?: string };
+
+/**
+ * Pedido de caso a pagar neste checkout ("Tratar o meu caso"): o id vai na
+ * metadata (o webhook converte o pedido em caso depois de o pagamento ser
+ * confirmado) e o regresso é para as páginas do pedido. O regresso ao
+ * success_url não prova nada — a página só lê o estado gravado pelo webhook.
+ */
+type ContextoPedido = { pedidoId: string };
+
+function urlsDoPedido(ctx: ContextoPedido) {
+  const id = encodeURIComponent(ctx.pedidoId);
+  return {
+    success_url: `${SITE_URL}/tratar-caso/recebido?pedido=${id}`,
+    cancel_url: `${SITE_URL}/tratar-caso/modalidade?pedido=${id}&cancelado=1`,
+  };
+}
 
 function dependenciasCheckout(
   parametros: (metadata: Record<string, string>) => Stripe.Checkout.SessionCreateParams,
@@ -130,10 +148,11 @@ async function customerDaConta(userId: string) {
  * casos, ou depois de um pagamento falhado). O user_id vai nos metadados —
  * definidos aqui, no servidor — para o webhook creditar a conta certa.
  */
-async function compraAvulsoComConta(pedido: PedidoCompra): Promise<Destino> {
+async function compraAvulsoComConta(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Destino> {
   const { user } = await requireUser();
   const customerId = await customerDaConta(user.id);
   const voltar = pedido.origem === "novo_caso" ? "/portal/casos/novo" : "/portal";
+  const metadataPedido: Record<string, string> = ctx ? { pedido_id: ctx.pedidoId } : {};
 
   const registo = montarRegistoConsentimento({
     plano: "avulso",
@@ -142,7 +161,7 @@ async function compraAvulsoComConta(pedido: PedidoCompra): Promise<Destino> {
     userId: user.id,
     email: user.email ?? null,
   });
-  const { url } = await abrirCheckoutComConsentimento(
+  const { url, sessionId } = await abrirCheckoutComConsentimento(
     registo,
     dependenciasCheckout((metadata) => ({
       mode: "payment",
@@ -151,13 +170,14 @@ async function compraAvulsoComConta(pedido: PedidoCompra): Promise<Destino> {
         : { customer_creation: "always" as const, customer_email: user.email }),
       line_items: [{ price: PRECO_AVULSO_ID, quantity: 1 }],
       allow_promotion_codes: true,
-      payment_intent_data: { metadata },
-      success_url: `${SITE_URL}/portal/casos/novo?pagamento=1`,
-      cancel_url: `${SITE_URL}${voltar}`,
-      metadata: { ...metadata, plano: "avulso", user_id: user.id },
+      payment_intent_data: { metadata: { ...metadata, ...metadataPedido } },
+      ...(ctx
+        ? urlsDoPedido(ctx)
+        : { success_url: `${SITE_URL}/portal/casos/novo?pagamento=1`, cancel_url: `${SITE_URL}${voltar}` }),
+      metadata: { ...metadata, ...metadataPedido, plano: "avulso", user_id: user.id },
     })),
   );
-  return { destino: url ?? "/portal" };
+  return { destino: url ?? "/portal", sessionId };
 }
 
 async function garantirCupaoConversao(stripe: ReturnType<typeof getStripe>) {
@@ -185,14 +205,17 @@ async function garantirCupaoConversao(stripe: ReturnType<typeof getStripe>) {
  * webhook confirmar a subscrição. Abrir o Checkout não consome nada: se o
  * cliente desistir, o Avulso continua elegível.
  */
-async function adesao(pedido: PedidoCompra): Promise<Destino> {
+async function adesao(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Destino> {
   const plano = pedido.plano as "protecao" | "caso_protecao";
   const stripe = getStripe();
   const { supabase, user } = await requireUser();
   const acesso = await obterAcesso(supabase, user.id);
+  const metadataPedido: Record<string, string> = ctx ? { pedido_id: ctx.pedidoId } : {};
 
   // Já tem uma subscrição ativa: não abre uma segunda.
-  if (acesso.temProtecao) return { destino: "/portal" };
+  if (acesso.temProtecao) {
+    return { destino: ctx ? `/tratar-caso/modalidade?pedido=${encodeURIComponent(ctx.pedidoId)}` : "/portal" };
+  }
 
   const admin = createAdminClient();
   const precoId = precoDoPlano(plano);
@@ -226,20 +249,21 @@ async function adesao(pedido: PedidoCompra): Promise<Destino> {
       userId: user.id,
       email: user.email ?? null,
     });
-    const { url } = await abrirCheckoutComConsentimento(
+    const { url, sessionId } = await abrirCheckoutComConsentimento(
       registo,
       dependenciasCheckout((metadata) => ({
         mode: "subscription",
         ...cliente,
         line_items: [{ price: precoId, quantity: 1 }],
         allow_promotion_codes: true,
-        success_url: `${SITE_URL}/portal?upgraded=true`,
-        cancel_url: `${SITE_URL}/portal`,
-        metadata: { ...metadata, plano: "assinatura", upgrade: "false", user_id: user.id },
+        ...(ctx
+          ? urlsDoPedido(ctx)
+          : { success_url: `${SITE_URL}/portal?upgraded=true`, cancel_url: `${SITE_URL}/portal` }),
+        metadata: { ...metadata, ...metadataPedido, plano: "assinatura", upgrade: "false", user_id: user.id },
         subscription_data: { metadata },
       })),
     );
-    return { destino: url ?? "/portal" };
+    return { destino: url ?? "/portal", sessionId };
   }
 
   // Um checkout de conversão de cada vez: um anterior ainda aberto é
@@ -300,7 +324,8 @@ async function adesao(pedido: PedidoCompra): Promise<Destino> {
         userId: user.id,
         plano,
         siteUrl: SITE_URL,
-        metadataExtra: metadata,
+        metadataExtra: { ...metadata, ...metadataPedido },
+        ...(ctx ? { successUrl: urlsDoPedido(ctx).success_url, cancelUrl: urlsDoPedido(ctx).cancel_url } : {}),
       }),
     ),
   );
@@ -310,7 +335,58 @@ async function adesao(pedido: PedidoCompra): Promise<Destino> {
     .eq("id", conversaoId)
     .eq("estado", "checkout_aberto");
 
-  return { destino: url ?? "/portal" };
+  return { destino: url ?? "/portal", sessionId };
+}
+
+/**
+ * Modalidade escolhida para um pedido de caso ("Tratar o meu caso"). Exige
+ * sessão e a posse do pedido (validada aqui, nunca pelo browser). Um pedido
+ * tem no máximo um checkout aberto: o anterior é expirado; se o anterior já
+ * foi pago (ou está em confirmação), não abre outro — evita pagar duas
+ * vezes o mesmo pedido.
+ */
+async function checkoutPedidoCaso(pedido: PedidoCompra): Promise<Destino> {
+  const { user } = await requireUser();
+  const p = await pedidoDaConta(pedido.pedidoId ?? null, user.id);
+  if (!p) return { destino: "/tratar-caso" };
+  const recebido = `/tratar-caso/recebido?pedido=${encodeURIComponent(p.id)}`;
+  if (p.estado === "convertido") return { destino: recebido };
+  if (!pedidoPorPagar(p.estado)) return { destino: "/tratar-caso" };
+
+  const admin = createAdminClient();
+  if (p.checkout_session_id) {
+    const stripe = getStripe();
+    const anterior = await stripe.checkout.sessions.retrieve(p.checkout_session_id).catch(() => null);
+    if (anterior?.status === "complete") {
+      // Pago, ou pagamento assíncrono (ex.: SEPA) em confirmação: não se
+      // cobra outra vez. Só um pagamento que falhou deixa tentar de novo.
+      const { data: pagamento } = await admin
+        .from("stripe_payments")
+        .select("estado")
+        .eq("stripe_session_id", anterior.id)
+        .maybeSingle();
+      if (pagamento?.estado !== "falhado") return { destino: recebido };
+    } else if (anterior?.status === "open") {
+      await stripe.checkout.sessions.expire(anterior.id).catch(() => undefined);
+    }
+  }
+
+  const ctx = { pedidoId: p.id };
+  const r = pedido.plano === "avulso" ? await compraAvulsoComConta(pedido, ctx) : await adesao(pedido, ctx);
+  if (r.sessionId) {
+    await admin
+      .from("pedidos_caso")
+      .update({
+        estado: "aguarda_pagamento",
+        plano_escolhido: pedido.plano,
+        checkout_session_id: r.sessionId,
+        // Um pagamento SEPA pode demorar dias: o pedido não expira entretanto.
+        expira_em: new Date(Date.now() + DIAS_VALIDADE_PEDIDO * 24 * 3600 * 1000).toISOString(),
+      })
+      .eq("id", p.id)
+      .in("estado", ["rascunho", "aguarda_pagamento"]);
+  }
+  return r;
 }
 
 /**
@@ -330,7 +406,9 @@ export async function confirmarCompra(_anterior: EstadoCompra, formData: FormDat
         ? await checkoutPublico(pedido)
         : pedido.fluxo === "avulso_conta"
           ? await compraAvulsoComConta(pedido)
-          : await adesao(pedido);
+          : pedido.fluxo === "pedido_caso"
+            ? await checkoutPedidoCaso(pedido)
+            : await adesao(pedido);
     destino = r.destino;
   } catch (erro) {
     // requireUser() sem sessão faz redirect: deixa passar.
