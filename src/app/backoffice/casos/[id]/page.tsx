@@ -5,13 +5,21 @@ import { carregarAnexo, apagarAnexo } from "../anexos-actions";
 import { CasoForm } from "../_components/CasoForm";
 import { EnviarBoasVindas } from "../_components/EnviarBoasVindas";
 import { AnexosCaso } from "../_components/AnexosCaso";
+import {
+  TextoCaso,
+  type AutorizacaoTexto,
+  type EnvioTexto,
+  type EventoCaso,
+  type PedidoAlteracao,
+  type VersaoTexto,
+} from "../_components/TextoCaso";
 
 export default async function CasoDetalhePage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ erro?: string; guardado?: string }>;
+  searchParams: Promise<{ erro?: string; guardado?: string; texto_ok?: string; texto_erro?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -32,6 +40,19 @@ export default async function CasoDetalhePage({
     .select("id, nome_ficheiro, tamanho_bytes, created_at")
     .eq("caso_id", id)
     .order("created_at", { ascending: false });
+
+  // Texto para envio: leitura com a sessão do admin (RLS: só SELECT).
+  const [versoes, autorizacoes, pedidos, envios, eventos] = await Promise.all([
+    supabase
+      .from("casos_textos")
+      .select("id, versao, conteudo, conteudo_sha256, estado, created_at, enviado_para_revisao_em, autorizado_em, alteracoes_solicitadas_em, enviado_em, substituido_em")
+      .eq("caso_id", id)
+      .order("versao", { ascending: false }),
+    supabase.from("casos_textos_autorizacoes").select("texto_id, autorizado_em, metodo, conteudo_sha256").eq("caso_id", id),
+    supabase.from("casos_textos_pedidos_alteracao").select("texto_id, mensagem, created_at, metodo").eq("caso_id", id).order("created_at"),
+    supabase.from("casos_textos_envios").select("texto_id, destinatario, canal, resultado, enviado_em").eq("caso_id", id),
+    supabase.from("casos_eventos").select("tipo, versao, ator, created_at").eq("caso_id", id).order("created_at"),
+  ]);
 
   const anexos = (anexosData ?? []).map((anexo) => ({
     ...anexo,
@@ -88,6 +109,18 @@ export default async function CasoDetalhePage({
       <EnviarBoasVindas
         casoId={id}
         enviadoEmInicial={caso.email_boas_vindas_enviado_em ?? null}
+      />
+
+      <TextoCaso
+        casoId={id}
+        temEmail={!!caso.email}
+        versoes={(versoes.data ?? []) as VersaoTexto[]}
+        autorizacoes={(autorizacoes.data ?? []) as AutorizacaoTexto[]}
+        pedidos={(pedidos.data ?? []) as PedidoAlteracao[]}
+        envios={(envios.data ?? []) as EnvioTexto[]}
+        eventos={(eventos.data ?? []) as EventoCaso[]}
+        ok={query.texto_ok}
+        erro={query.texto_erro}
       />
 
       <AnexosCaso anexos={anexos} carregarAction={carregarComId} />

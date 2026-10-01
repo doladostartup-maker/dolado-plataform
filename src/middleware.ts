@@ -66,6 +66,12 @@ function ehVersaoDosTermos(pathname: string) {
   return pathname.startsWith("/termos/");
 }
 
+// Páginas públicas de revisão do texto (link do e-mail, sem login): não
+// precisam da sessão Supabase.
+function ehPaginaDeRevisaoDoTexto(pathname: string) {
+  return pathname.startsWith("/texto/");
+}
+
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host")?.split(":")[0] ?? "";
   const { pathname, search } = request.nextUrl;
@@ -96,7 +102,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/entrar", request.url));
   }
 
-  if (ROTAS_SEM_REFRESH_DE_SESSAO.includes(pathname) || ehVersaoDosTermos(pathname)) {
+  if (ROTAS_SEM_REFRESH_DE_SESSAO.includes(pathname) || ehVersaoDosTermos(pathname) || ehPaginaDeRevisaoDoTexto(pathname)) {
     return NextResponse.next();
   }
 

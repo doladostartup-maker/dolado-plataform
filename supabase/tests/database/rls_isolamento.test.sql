@@ -503,7 +503,7 @@ select is(testes.contar('select * from public.stripe_webhook_events'), 1::bigint
 select is(testes.contar('select * from public.stripe_subscriptions'), 1::bigint, 'admin: lê subscrições Stripe');
 select is(testes.contar('select * from public.conversoes_avulso'), 1::bigint, 'admin: lê conversões Avulso');
 select is(testes.contar('select * from public.subscricao_cancelamentos'), 1::bigint, 'admin: lê cancelamentos de subscrição');
-select is(testes.contar('select * from public.consentimentos_compra'), 3::bigint, 'admin: lê consentimentos de compra de todos');
+select is(testes.contar($$select * from public.consentimentos_compra where id::text like '1c000000-%'$$), 3::bigint, 'admin: lê consentimentos de compra de todos');
 select ok(testes.contar('select * from public.case_credit_freezes') >= 2, 'admin: lê casos congelados de todos');
 select is(testes.contar('select * from storage.objects'), 6::bigint, 'admin: vê ficheiros de todos os buckets');
 select ok(testes.permitido($$update public.casos set notas = 'revisto' where id = '10000000-0000-4000-a000-00000000000b'$$), 'admin: altera qualquer caso');

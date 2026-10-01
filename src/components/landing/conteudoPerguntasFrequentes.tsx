@@ -128,7 +128,7 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
         id: "nao-concordo",
         pergunta: "E se eu não concordar com o texto preparado?",
         resposta:
-          "Nada é enviado sem a sua aprovação. Se encontrar alguma informação incorreta ou algo que precise de ser ajustado, diga-nos antes de autorizar o envio.",
+          "Antes do envio, pode rever o texto preparado pela DoLado através do link que lhe enviamos por e-mail. Se pretender alguma alteração, selecione “Pedir alterações” e indique-nos o que gostaria de rever. A DoLado só procede ao envio depois de receber a sua autorização explícita.",
       },
       PRAZO,
       {

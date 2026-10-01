@@ -2,13 +2,15 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { decidirClienteCaso } from "../actions";
 import { StatusBadge } from "@/components/StatusBadge";
+import type { EstadoTexto } from "@/lib/textoCaso";
+import { TextoCliente } from "../_components/TextoCliente";
 
 export default async function CasoClienteDetalhePage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ erro?: string; guardado?: string }>;
+  searchParams: Promise<{ erro?: string; guardado?: string; texto?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -19,6 +21,19 @@ export default async function CasoClienteDetalhePage({
   if (!caso) {
     notFound();
   }
+
+  // Texto preparado: versão mais recente visível ao cliente (RLS exclui rascunhos).
+  const [{ data: textoAtual }, { data: eventos }] = await Promise.all([
+    supabase
+      .from("casos_textos")
+      .select("id, versao, conteudo, estado, autorizado_em, enviado_em")
+      .eq("caso_id", id)
+      .neq("estado", "substituido")
+      .order("versao", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase.from("casos_eventos").select("tipo, versao, created_at").eq("caso_id", id).order("created_at"),
+  ]);
 
   const aceitar = decidirClienteCaso.bind(null, id, "aceitou");
   const recusar = decidirClienteCaso.bind(null, id, "recusou");
@@ -74,6 +89,24 @@ export default async function CasoClienteDetalhePage({
           </div>
         )}
       </dl>
+
+      <TextoCliente
+        casoId={id}
+        texto={
+          textoAtual
+            ? {
+                id: textoAtual.id as string,
+                versao: textoAtual.versao as number,
+                conteudo: textoAtual.conteudo as string,
+                estado: textoAtual.estado as EstadoTexto,
+                autorizado_em: textoAtual.autorizado_em as string | null,
+              }
+            : null
+        }
+        enviadoEm={(textoAtual?.enviado_em as string | null) ?? null}
+        eventos={(eventos ?? []) as { tipo: string; versao: number | null; created_at: string }[]}
+        resultado={query.texto}
+      />
 
       {caso.status === "Aguardando decisão cliente" && (
         <div
