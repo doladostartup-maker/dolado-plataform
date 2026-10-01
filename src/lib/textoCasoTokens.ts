@@ -14,3 +14,8 @@ export function hashToken(token: string) {
 export function hashConteudo(conteudo: string) {
   return createHash("sha256").update(conteudo, "utf8").digest("hex");
 }
+
+/** SHA-256 dos bytes de um ficheiro (comprovativo). */
+export function hashBytes(bytes: Uint8Array) {
+  return createHash("sha256").update(bytes).digest("hex");
+}

@@ -220,6 +220,74 @@ select ok(tt.tenta($$update public.casos_textos set estado = 'autorizado'$$) in 
 select ok(tt.tenta($$select public.texto_registar_envio(gen_random_uuid(), 'x', 'x', 'email', null, null)$$) like 'erro:%', '22. admin não chama as funções do backend com a sessão dele');
 reset role;
 
+-- ---------------------------------------------------------------------------
+-- Pós-envio: texto enviado, comprovativo e histórico
+-- ---------------------------------------------------------------------------
+set local role service_role;
+insert into ids values ('envio_v2', (select id from public.casos_textos_envios where texto_id = (select id from ids where nome = 'v2')));
+select is((select t.conteudo from public.casos_textos_envios e join public.casos_textos t on t.id = e.texto_id where e.id = (select id from ids where nome = 'envio_v2')),
+  'Texto v2 corrigido', '2/3. o envio aponta para o texto exato da versão autorizada');
+select is((select conteudo_sha256 from public.casos_textos where id = (select id from ids where nome = 'v2')),
+  (select conteudo_sha256 from public.casos_textos_envios where id = (select id from ids where nome = 'envio_v2')), '3. hash do texto = hash enviado');
+select is(tt.tenta($$update public.casos_textos set conteudo = 'reescrito' where id = (select id from ids where nome = 'v2')$$), 'erro:42501', '4. versão enviada não pode ser editada');
+select is(tt.tenta($$update public.casos_textos_envios set destinatario = 'outro'$$), 'erro:42501', '4. registo de envio não pode ser editado');
+select is((select estado from public.casos_textos where id = (select id from ids where nome = 'v2')), 'enviado', '5. versões posteriores não mudam a versão enviada');
+
+-- Sem comprovativo: nada associado.
+select is((select count(*) from public.casos_comprovativos where caso_id = '20000000-0000-4000-a000-00000000000a'), 0::bigint, '7. sem comprovativo: nenhum registo (UI mostra mensagem neutra)');
+
+-- 6. Comprovativo (ficheiro) associado ao envio.
+insert into ids values ('comp1', public.comprovativo_registar('20000000-0000-4000-a000-00000000000a', (select id from ids where nome = 'envio_v2'),
+  'ficheiro', 'Comprovativo LR.pdf', '20000000-0000-4000-a000-00000000000a/x.pdf', 'application/pdf', 1000, 'abc', 'LR-123', 'nota interna', '00000000-0000-4000-a000-0000000000ad'));
+select is((select texto_id from public.casos_comprovativos where id = (select id from ids where nome = 'comp1')), (select id from ids where nome = 'v2'), '6. comprovativo ligado ao envio e à versão enviada');
+select is((select count(*) from public.casos_eventos where caso_id = '20000000-0000-4000-a000-00000000000a' and tipo = 'comprovativo_disponivel'), 1::bigint, '14. evento "comprovativo disponível"');
+
+-- Correção: novo registo substitui o anterior (sem apagar).
+insert into ids values ('comp2', public.comprovativo_registar('20000000-0000-4000-a000-00000000000a', (select id from ids where nome = 'envio_v2'),
+  'ficheiro', 'Comprovativo LR (corrigido).pdf', '20000000-0000-4000-a000-00000000000a/y.pdf', 'application/pdf', 1200, 'def', 'LR-123', null, '00000000-0000-4000-a000-0000000000ad'));
+select ok((select substituido_em is not null from public.casos_comprovativos where id = (select id from ids where nome = 'comp1')), 'correção: o anterior fica marcado como substituído');
+select is((select substitui_id from public.casos_comprovativos where id = (select id from ids where nome = 'comp2')), (select id from ids where nome = 'comp1'), 'correção: rastreável (substitui_id)');
+select is((select count(*) from public.casos_comprovativos where caso_id = '20000000-0000-4000-a000-00000000000a' and substituido_em is null), 1::bigint, 'um único comprovativo em vigor');
+select is((select count(*) from public.casos_eventos where caso_id = '20000000-0000-4000-a000-00000000000a' and tipo = 'comprovativo_disponivel'), 1::bigint, '14. correção não repete o evento');
+select is(tt.tenta($$update public.casos_comprovativos set storage_path = 'outro' where id = (select id from ids where nome = 'comp2')$$), 'erro:42501', 'comprovativo não pode ser reescrito');
+select is(tt.tenta($$delete from public.casos_comprovativos where caso_id = '20000000-0000-4000-a000-00000000000b'$$), 'ok:0', 'service role pode apagar (apagamento do caso), mas nenhuma ação o faz');
+select ok(tt.tenta($$select public.comprovativo_registar('20000000-0000-4000-a000-00000000000b', (select id from ids where nome = 'envio_v2'), 'identificador', null, null, null, null, null, 'X', null, null)$$) like 'erro:%',
+  'envio de outro caso não pode ser usado');
+
+-- 12. Caso antigo (sem envio no sistema): comprovativo só por identificador.
+select ok(public.comprovativo_registar('20000000-0000-4000-a000-00000000000b', null, 'identificador', null, null, null, null, null, 'LR-ANTIGO-9', null, null) is not null,
+  '12. caso antigo: comprovativo sem envio associado (sem inventar a relação)');
+
+-- 14. Dossiê final disponível (evento do trigger).
+reset role;
+update public.casos set dossie_url = 'https://exemplo.invalid/dossie.pdf' where id = '20000000-0000-4000-a000-00000000000a';
+update public.casos set notas = 'outra alteração' where id = '20000000-0000-4000-a000-00000000000a';
+select is((select count(*) from public.casos_eventos where caso_id = '20000000-0000-4000-a000-00000000000a' and tipo = 'dossie_disponivel'), 1::bigint, '13/14. dossiê disponível: um evento, dossie_url intacto');
+select is((select dossie_url from public.casos where id = '20000000-0000-4000-a000-00000000000a'), 'https://exemplo.invalid/dossie.pdf', '13. dossie_url continua a funcionar');
+
+-- 9/10. RLS dos comprovativos.
+select tt.como('00000000-0000-4000-a000-00000000000a');
+select is(tt.contar($$select id from public.casos_comprovativos where substituido_em is null$$), 1::bigint, '8. A vê o comprovativo do próprio caso');
+select ok(tt.tenta($$select storage_path from public.casos_comprovativos$$) like 'erro:%', '10. A não lê o caminho no storage');
+select ok(tt.tenta($$select nota from public.casos_comprovativos$$) like 'erro:%', 'A não lê a nota interna');
+select is(tt.contar($$select id from public.casos_comprovativos where caso_id = '20000000-0000-4000-a000-00000000000b'$$), 0::bigint, '9. A não vê comprovativos do caso de B');
+select is(tt.contar($$select id from storage.objects where bucket_id = 'comprovativos-casos'$$), 0::bigint, '10. A não acede ao bucket de comprovativos');
+select ok(tt.tenta($$insert into storage.objects (bucket_id, name) values ('comprovativos-casos', 'x/y.pdf')$$) like 'erro:%', '10. A não carrega ficheiros no bucket');
+reset role;
+select tt.como('00000000-0000-4000-a000-00000000000b');
+select is(tt.contar($$select id from public.casos_comprovativos where caso_id = '20000000-0000-4000-a000-00000000000a'$$), 0::bigint, '9. B não vê o comprovativo de A');
+select is(tt.contar($$select id from public.casos_textos_envios$$), 0::bigint, '9. B não vê o envio de A');
+reset role;
+select tt.como(null);
+select ok(tt.contar('select id from public.casos_comprovativos') <= 0, '10. anon não vê comprovativos');
+reset role;
+select tt.como('00000000-0000-4000-a000-0000000000ad');
+select ok(tt.contar('select id from public.casos_comprovativos') >= 3, '11. admin vê os comprovativos');
+select ok(tt.tenta($$insert into public.casos_comprovativos (caso_id, tipo, identificador_externo) values ('20000000-0000-4000-a000-00000000000a', 'identificador', 'forjado')$$) like 'erro:%', 'admin não insere comprovativos com a sessão dele');
+select ok(tt.tenta($$delete from storage.objects where bucket_id = 'comprovativos-casos'$$) in ('ok:0') or tt.tenta($$delete from storage.objects where bucket_id = 'comprovativos-casos'$$) like 'erro:%', 'admin não apaga ficheiros de comprovativo pela API');
+reset role;
+select ok((select public from storage.buckets where id = 'comprovativos-casos') = false, '10. bucket de comprovativos é privado');
+
 -- Apagar a conta do cliente não apaga nem altera a prova.
 delete from auth.users where id = '00000000-0000-4000-a000-00000000000a';
 select ok((select count(*) from public.casos_textos_autorizacoes where caso_id = '20000000-0000-4000-a000-00000000000a') = 3 and (select bool_and(utilizador_id is null) from public.casos_textos_autorizacoes where caso_id = '20000000-0000-4000-a000-00000000000a'),

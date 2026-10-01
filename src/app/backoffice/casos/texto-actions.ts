@@ -4,7 +4,15 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ehCanalEnvio } from "@/lib/textoCaso";
+import { randomUUID } from "node:crypto";
+import {
+  BUCKET_COMPROVATIVOS,
+  COMPROVATIVO_MAX_BYTES,
+  COMPROVATIVO_TIPOS_MIME,
+  ehCanalEnvio,
+  ehTipoComprovativo,
+} from "@/lib/textoCaso";
+import { hashBytes } from "@/lib/textoCasoTokens";
 import { emitirLinksEEnviarEmail } from "@/lib/textoCasoServidor";
 
 // Ações da equipa sobre o texto. requireAdmin primeiro; só depois a service
@@ -81,4 +89,55 @@ export async function registarEnvioTexto(casoId: string, textoId: string, formDa
   const r = (data as { resultado?: string } | null)?.resultado;
   if (error || r !== "enviado") voltar(casoId, "texto_erro", ERROS_ENVIO[r ?? ""] ?? "Não foi possível registar o envio.");
   voltar(casoId, "texto_ok", "Envio registado.");
+}
+
+/**
+ * Associa o comprovativo de submissão (ou regista que não existe / houve
+ * erro). Corrigir = registar de novo: o anterior fica marcado como
+ * substituído, nada é apagado. O ficheiro vai para o bucket privado com um
+ * caminho gerado aqui (nunca o nome original); só o servidor o lê.
+ */
+export async function registarComprovativo(casoId: string, envioId: string | null, formData: FormData) {
+  const { user } = await requireAdmin();
+  const tipo = formData.get("tipo");
+  const identificador = ((formData.get("identificador_externo") as string | null) ?? "").trim().slice(0, 200);
+  const nota = ((formData.get("nota") as string | null) ?? "").trim().slice(0, 1000);
+  const ficheiro = formData.get("ficheiro") as File | null;
+  if (!ehTipoComprovativo(tipo)) voltar(casoId, "texto_erro", "Escolha o tipo de comprovativo.");
+  if (tipo === "identificador" && !identificador) voltar(casoId, "texto_erro", "Indique o número/identificador da submissão.");
+
+  const admin = createAdminClient();
+  let ficheiroGuardado: { path: string; nome: string; mime: string; tamanho: number; sha256: string } | null = null;
+  if (tipo === "ficheiro") {
+    if (!ficheiro || ficheiro.size === 0) voltar(casoId, "texto_erro", "Escolha o ficheiro do comprovativo.");
+    const extensao = COMPROVATIVO_TIPOS_MIME[ficheiro.type];
+    if (!extensao) voltar(casoId, "texto_erro", "Formato não suportado (PDF, JPG, PNG ou WEBP).");
+    if (ficheiro.size > COMPROVATIVO_MAX_BYTES) voltar(casoId, "texto_erro", "O ficheiro tem mais de 20 MB.");
+    const bytes = Buffer.from(await ficheiro.arrayBuffer());
+    const path = `${casoId}/${randomUUID()}.${extensao}`;
+    const { error } = await admin.storage.from(BUCKET_COMPROVATIVOS).upload(path, bytes, { contentType: ficheiro.type, upsert: false });
+    if (error) voltar(casoId, "texto_erro", "Não foi possível carregar o ficheiro.");
+    const nomeOriginal = ficheiro.name.replace(/[^\p{L}\p{N} ._()-]/gu, "_").slice(0, 150) || `comprovativo.${extensao}`;
+    ficheiroGuardado = { path, nome: nomeOriginal, mime: ficheiro.type, tamanho: ficheiro.size, sha256: hashBytes(bytes) };
+  }
+
+  const { error } = await admin.rpc("comprovativo_registar", {
+    p_caso_id: casoId,
+    p_envio_id: envioId,
+    p_tipo: tipo,
+    p_nome: ficheiroGuardado?.nome ?? null,
+    p_storage_path: ficheiroGuardado?.path ?? null,
+    p_tipo_mime: ficheiroGuardado?.mime ?? null,
+    p_tamanho_bytes: ficheiroGuardado?.tamanho ?? null,
+    p_ficheiro_sha256: ficheiroGuardado?.sha256 ?? null,
+    p_identificador_externo: identificador || null,
+    p_nota: nota || null,
+    p_admin: user.id,
+  });
+  if (error) {
+    // Sem registo, o ficheiro não fica órfão no storage.
+    if (ficheiroGuardado) await admin.storage.from(BUCKET_COMPROVATIVOS).remove([ficheiroGuardado.path]);
+    voltar(casoId, "texto_erro", "Não foi possível registar o comprovativo.");
+  }
+  voltar(casoId, "texto_ok", "Comprovativo registado.");
 }

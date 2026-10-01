@@ -1,8 +1,9 @@
-import { ESTADO_TEXTO_CLIENTE, EVENTOS_CASO, MAX_PEDIDO_ALTERACOES, ehResultadoAcaoTexto, type EstadoTexto } from "@/lib/textoCaso";
+import { ESTADO_TEXTO_CLIENTE, MAX_PEDIDO_ALTERACOES, ehResultadoAcaoTexto, type EstadoTexto } from "@/lib/textoCaso";
 import { MensagemTexto, TextoIntegral, formatarDataHora } from "@/app/texto/_components/Mensagem";
 import { autorizarTextoNoPortal, pedirAlteracoesNoPortal } from "../texto-actions";
 
-// Texto preparado, visto pelo cliente autenticado. Mesmas regras que os
+// Texto em curso (ainda não enviado), visto pelo cliente autenticado. O
+// texto já enviado aparece à parte, em ReclamacaoEnviada. Mesmas regras que os
 // links do e-mail (mesmas funções da base de dados). O RLS nunca devolve
 // rascunhos ao cliente.
 
@@ -14,14 +15,10 @@ const BOTAO_SEC =
 export function TextoCliente({
   casoId,
   texto,
-  enviadoEm,
-  eventos,
   resultado,
 }: {
   casoId: string;
   texto: { id: string; versao: number; conteudo: string; estado: EstadoTexto; autorizado_em: string | null } | null;
-  enviadoEm: string | null;
-  eventos: { tipo: string; versao: number | null; created_at: string }[];
   resultado?: string;
 }) {
   if (!texto) return null;
@@ -79,19 +76,6 @@ export function TextoCliente({
 
       {texto.estado === "autorizado" && texto.autorizado_em && (
         <p className="text-[13.5px] text-[var(--color-ink-muted)]">Autorizou o envio em {formatarDataHora(texto.autorizado_em)}.</p>
-      )}
-      {texto.estado === "enviado" && enviadoEm && (
-        <p className="text-[13.5px] text-[var(--color-ink-muted)]">Enviado em {formatarDataHora(enviadoEm)}.</p>
-      )}
-
-      {eventos.length > 0 && (
-        <ol className="flex flex-col gap-1 border-t border-[var(--color-hairline)] pt-3 text-[13px] text-[var(--color-ink-muted)]">
-          {eventos.map((e, i) => (
-            <li key={i}>
-              {formatarDataHora(e.created_at)} · {EVENTOS_CASO[e.tipo] ?? e.tipo}
-            </li>
-          ))}
-        </ol>
       )}
     </section>
   );

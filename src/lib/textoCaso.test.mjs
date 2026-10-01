@@ -7,6 +7,9 @@ import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 import { gerarToken, hashConteudo, hashToken } from "./textoCasoTokens.ts";
 import {
+  COMPROVATIVO_URL_SEGUNDOS,
+  EVENTOS_CASO,
+  mensagemComprovativoCliente,
   ESTADO_TEXTO_CLIENTE,
   MENSAGENS_TEXTO,
   VALIDADE_LINKS_REVISAO_DIAS,
@@ -137,7 +140,7 @@ describe("22. a equipa não consegue contornar a autorização", () => {
 
   test("ações do backoffice: guardar, enviar para revisão e registar envio — nenhuma autoriza", () => {
     const exportadas = [...backoffice.matchAll(/export async function (\w+)/g)].map((m) => m[1]);
-    assert.deepEqual(exportadas, ["guardarTexto", "enviarTextoParaRevisao", "registarEnvioTexto"]);
+    assert.deepEqual(exportadas, ["guardarTexto", "enviarTextoParaRevisao", "registarEnvioTexto", "registarComprovativo"]);
     assert.equal(/autoriz.*\.rpc|texto_autorizar|casos_textos_autorizacoes|estado: "autorizado"/.test(backoffice), false);
     for (const nome of exportadas) {
       const corpo = backoffice.slice(backoffice.indexOf(`export async function ${nome}`));
@@ -176,5 +179,76 @@ describe("17. FAQ", () => {
     const faq = fonte("../components/landing/conteudoPerguntasFrequentes.tsx");
     assert.match(faq, /selecione “Pedir alterações”/);
     assert.match(faq, /só procede ao envio depois de receber a sua autorização explícita/);
+  });
+});
+
+describe("pós-envio: texto enviado e comprovativo", () => {
+  const portal = fonte("../app/portal/casos/[id]/page.tsx");
+  const rota = fonte("../app/api/comprovativos/[id]/route.ts");
+  const componente = fonte("../app/portal/casos/_components/ReclamacaoEnviada.tsx");
+
+  test("3/5. o portal mostra o texto da versão apontada pelo envio, nunca a mais recente", () => {
+    assert.match(portal, /from\("casos_textos_envios"\)[\s\S]*texto_id/);
+    assert.match(portal, /from\("casos_textos"\)\.select\("id, versao, conteudo"\)\.in\("id", idsTextosEnviados\)/);
+    // O texto "em curso" exclui enviados e substituídos.
+    assert.match(portal, /\.in\("estado", \["aguardando_aprovacao", "alteracoes_solicitadas", "autorizado"\]\)/);
+  });
+
+  test("4. texto enviado só de leitura (sem formulários na secção)", () => {
+    assert.equal(/<form|textarea|action=/.test(componente), false);
+  });
+
+  test("7. sem ficheiro: mensagem neutra, sem botão", () => {
+    assert.equal(mensagemComprovativoCliente(null), "O comprovativo de submissão será disponibilizado aqui assim que estiver disponível.");
+    assert.equal(mensagemComprovativoCliente("erro_obtencao"), mensagemComprovativoCliente(null));
+    assert.match(mensagemComprovativoCliente("sem_comprovativo"), /não tem comprovativo/);
+    // Os links só existem dentro do ramo com ficheiro.
+    const ramo = componente.slice(componente.indexOf("{temFicheiro && ("), componente.indexOf("{!temFicheiro && !temIdentificador"));
+    assert.equal((componente.match(/href=\{`\/api\/comprovativos\//g) ?? []).length, 2);
+    assert.equal((ramo.match(/href=\{`\/api\/comprovativos\//g) ?? []).length, 2);
+  });
+
+  test("10. o portal nunca pede o caminho no storage", () => {
+    assert.equal(/storage_path/.test(portal), false);
+    assert.equal(/storage_path/.test(componente), false);
+  });
+
+  test("8/9/10. rota do comprovativo: sessão → RLS do utilizador → URL assinada curta", () => {
+    const iSessao = rota.indexOf("getClaims()");
+    const iRls = rota.indexOf('supabase\n    .from("casos_comprovativos")');
+    const iAdmin = rota.indexOf("createAdminClient()");
+    assert.ok(iSessao > 0 && iRls > iSessao && iAdmin > iRls, "ordem: sessão, RLS, só depois service role");
+    assert.match(rota, /redirect\(new URL\("\/login"/);
+    assert.match(rota, /createSignedUrl\([\s\S]*COMPROVATIVO_URL_SEGUNDOS/);
+    assert.ok(COMPROVATIVO_URL_SEGUNDOS <= 300);
+    assert.match(rota, /status: 404/);
+    assert.match(rota, /"Cache-Control": "no-store"/);
+    assert.equal(/getPublicUrl/.test(rota), false);
+  });
+
+  test("admin: associar comprovativo sem apagar nem reescrever", () => {
+    const acoes = fonte("../app/backoffice/casos/texto-actions.ts");
+    const corpo = acoes.slice(acoes.indexOf("export async function registarComprovativo"));
+    assert.match(corpo.slice(0, 200), /await requireAdmin\(\)/);
+    assert.match(corpo, /rpc\("comprovativo_registar"/);
+    assert.match(corpo, /randomUUID\(\)/); // caminho gerado, nunca o nome original
+    assert.match(corpo, /upsert: false/);
+    assert.equal(/from\("casos_comprovativos"\)\s*\.(insert|update|delete)/.test(acoes), false);
+  });
+
+  test("14. histórico com os eventos certos", () => {
+    assert.equal(EVENTOS_CASO.comunicacao_enviada, "Reclamação enviada");
+    assert.equal(EVENTOS_CASO.comprovativo_disponivel, "Comprovativo de submissão disponível");
+    assert.equal(EVENTOS_CASO.dossie_disponivel, "Dossiê final disponível");
+  });
+
+  test("13. dossiê final continua no portal, separado", () => {
+    assert.match(portal, /caso\.dossie_url/);
+  });
+
+  test("FAQ e copy: sem \"acesso permanente\"", () => {
+    const faq = fonte("../components/landing/conteudoPerguntasFrequentes.tsx");
+    assert.match(faq, /pode consultar no seu caso o texto exato da reclamação submetida/);
+    for (const f of [faq, componente, portal]) assert.equal(/acesso permanente/i.test(f), false);
   });
 });

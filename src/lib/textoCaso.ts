@@ -49,8 +49,44 @@ export const EVENTOS_CASO: Record<string, string> = {
   links_reemitidos: "Novo link de revisão enviado",
   alteracoes_pedidas: "Cliente pediu alterações",
   texto_autorizado: "Cliente autorizou o envio",
-  comunicacao_enviada: "Comunicação enviada",
+  comunicacao_enviada: "Reclamação enviada",
+  comprovativo_disponivel: "Comprovativo de submissão disponível",
+  dossie_disponivel: "Dossiê final disponível",
 };
+
+// ---------------------------------------------------------------------------
+// Comprovativo de submissão (pós-envio)
+
+export const BUCKET_COMPROVATIVOS = "comprovativos-casos";
+export const COMPROVATIVO_MAX_BYTES = 20 * 1024 * 1024;
+export const COMPROVATIVO_TIPOS_MIME: Record<string, string> = {
+  "application/pdf": "pdf",
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+/** Validade das URLs assinadas para abrir/descarregar um comprovativo. */
+export const COMPROVATIVO_URL_SEGUNDOS = 60;
+
+export type TipoComprovativo = "ficheiro" | "identificador" | "sem_comprovativo" | "erro_obtencao";
+
+export const TIPOS_COMPROVATIVO_EQUIPA: Record<TipoComprovativo, string> = {
+  ficheiro: "Ficheiro do comprovativo (PDF ou imagem)",
+  identificador: "Só o número/identificador da submissão",
+  sem_comprovativo: "Envio sem comprovativo (o canal não emite)",
+  erro_obtencao: "Erro ao obter o comprovativo",
+};
+
+export function ehTipoComprovativo(v: unknown): v is TipoComprovativo {
+  return typeof v === "string" && v in TIPOS_COMPROVATIVO_EQUIPA;
+}
+
+/** Mensagem para o cliente quando não há ficheiro nem identificador a mostrar. */
+export function mensagemComprovativoCliente(tipo: TipoComprovativo | null) {
+  if (tipo === "sem_comprovativo") return "Este envio não tem comprovativo de submissão.";
+  // Sem registo, ou erro na obtenção: mensagem neutra, sem botões.
+  return "O comprovativo de submissão será disponibilizado aqui assim que estiver disponível.";
+}
 
 export const CANAIS_ENVIO = {
   livro_reclamacoes_eletronico: "Livro de Reclamações Eletrónico",

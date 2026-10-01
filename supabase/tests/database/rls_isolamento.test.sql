@@ -199,8 +199,11 @@ select is(
   'sem views em public (se surgir uma, auditar security_invoker e acrescentar testes)');
 select is(
   (select count(*) from pg_proc p where p.pronamespace = 'public'::regnamespace and p.prosecdef
-     and p.proname not in ('handle_new_user', 'is_admin', 'rls_auto_enable', 'notificar_novo_caso')), 0::bigint,
+     and p.proname not in ('handle_new_user', 'is_admin', 'rls_auto_enable', 'notificar_novo_caso', 'casos_evento_dossie')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
+-- casos_evento_dossie (trigger): só insere o evento "dossiê disponível"; search_path fixo; fora da API.
+select ok(not has_function_privilege('authenticated', 'public.casos_evento_dossie()', 'EXECUTE') and not has_function_privilege('anon', 'public.casos_evento_dossie()', 'EXECUTE'), 'privilégios: casos_evento_dossie() não executável pela API');
+select ok((select 'search_path=""' = any (proconfig) from pg_proc where proname = 'casos_evento_dossie'), 'casos_evento_dossie(): search_path fixo');
 select is(
   (select count(*) from pg_proc p where p.pronamespace = 'public'::regnamespace and p.prosecdef
      and not exists (select 1 from unnest(coalesce(p.proconfig, '{}')) c where c like 'search_path=%')), 0::bigint,
@@ -505,7 +508,7 @@ select is(testes.contar('select * from public.conversoes_avulso'), 1::bigint, 'a
 select is(testes.contar('select * from public.subscricao_cancelamentos'), 1::bigint, 'admin: lê cancelamentos de subscrição');
 select is(testes.contar($$select * from public.consentimentos_compra where id::text like '1c000000-%'$$), 3::bigint, 'admin: lê consentimentos de compra de todos');
 select ok(testes.contar('select * from public.case_credit_freezes') >= 2, 'admin: lê casos congelados de todos');
-select is(testes.contar('select * from storage.objects'), 6::bigint, 'admin: vê ficheiros de todos os buckets');
+select is(testes.contar($$select * from storage.objects where name in ('casoA/a.pdf', 'casoB/b.pdf', '00000000-0000-4000-a000-00000000000a/f.pdf', '00000000-0000-4000-a000-00000000000b/f.pdf', '00000000-0000-4000-a000-00000000000a/c.pdf', '00000000-0000-4000-a000-00000000000b/c.pdf')$$), 6::bigint, 'admin: vê ficheiros de todos os buckets');
 select ok(testes.permitido($$update public.casos set notas = 'revisto' where id = '10000000-0000-4000-a000-00000000000b'$$), 'admin: altera qualquer caso');
 
 -- ===========================================================================

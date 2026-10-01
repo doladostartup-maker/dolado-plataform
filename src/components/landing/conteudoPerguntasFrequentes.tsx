@@ -213,7 +213,7 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
         id: "copia",
         pergunta: "Recebo uma cópia da reclamação enviada?",
         resposta:
-          "Recebe o texto completo da reclamação antes do envio, para rever. No final do acompanhamento, entregamos-lhe um dossiê completo do caso — histórico, documentos e comunicações — que pode consultar na sua área de cliente assim que estiver disponível.",
+          "Sim. Depois do envio, pode consultar no seu caso o texto exato da reclamação submetida e, quando disponível, o respetivo comprovativo de submissão. Estes elementos ficam disponíveis no seu portal, juntamente com o histórico do caso. No final do acompanhamento, disponibilizamos também o dossiê do caso.",
       },
     ],
   },

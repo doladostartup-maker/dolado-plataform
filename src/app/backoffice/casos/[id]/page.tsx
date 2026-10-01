@@ -13,6 +13,8 @@ import {
   type PedidoAlteracao,
   type VersaoTexto,
 } from "../_components/TextoCaso";
+import { EnviosCaso, type ComprovativoEquipa, type EnvioEquipa } from "../_components/EnviosCaso";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function CasoDetalhePage({
   params,
@@ -50,9 +52,27 @@ export default async function CasoDetalhePage({
       .order("versao", { ascending: false }),
     supabase.from("casos_textos_autorizacoes").select("texto_id, autorizado_em, metodo, conteudo_sha256").eq("caso_id", id),
     supabase.from("casos_textos_pedidos_alteracao").select("texto_id, mensagem, created_at, metodo").eq("caso_id", id).order("created_at"),
-    supabase.from("casos_textos_envios").select("texto_id, destinatario, canal, resultado, enviado_em").eq("caso_id", id),
+    supabase
+      .from("casos_textos_envios")
+      .select("id, texto_id, destinatario, canal, resultado, enviado_em, conteudo_sha256")
+      .eq("caso_id", id)
+      .order("enviado_em"),
     supabase.from("casos_eventos").select("tipo, versao, ator, created_at").eq("caso_id", id).order("created_at"),
   ]);
+
+  // Comprovativos: com a service role (o layout já exigiu admin) para ler a
+  // nota interna, que a API não expõe. O caminho no storage nunca sai do servidor.
+  const { data: comprovativos } = await createAdminClient()
+    .from("casos_comprovativos")
+    .select("id, envio_id, tipo, nome, identificador_externo, nota, tamanho_bytes, created_at, substituido_em")
+    .eq("caso_id", id)
+    .order("created_at");
+  const textosPorId = new Map((versoes.data ?? []).map((v) => [v.id as string, v]));
+  const enviosEquipa: EnvioEquipa[] = (envios.data ?? []).map((e) => ({
+    ...(e as Omit<EnvioEquipa, "versao" | "conteudo">),
+    versao: (textosPorId.get(e.texto_id as string)?.versao as number | undefined) ?? null,
+    conteudo: (textosPorId.get(e.texto_id as string)?.conteudo as string | undefined) ?? null,
+  }));
 
   const anexos = (anexosData ?? []).map((anexo) => ({
     ...anexo,
@@ -122,6 +142,8 @@ export default async function CasoDetalhePage({
         ok={query.texto_ok}
         erro={query.texto_erro}
       />
+
+      <EnviosCaso casoId={id} envios={enviosEquipa} comprovativos={(comprovativos ?? []) as ComprovativoEquipa[]} />
 
       <AnexosCaso anexos={anexos} carregarAction={carregarComId} />
 

@@ -4,6 +4,13 @@ import { decidirClienteCaso } from "../actions";
 import { StatusBadge } from "@/components/StatusBadge";
 import type { EstadoTexto } from "@/lib/textoCaso";
 import { TextoCliente } from "../_components/TextoCliente";
+import {
+  Comprovativo,
+  HistoricoCaso,
+  ReclamacaoEnviada,
+  type ComprovativoCliente,
+  type EnvioCliente,
+} from "../_components/ReclamacaoEnviada";
 
 export default async function CasoClienteDetalhePage({
   params,
@@ -22,18 +29,48 @@ export default async function CasoClienteDetalhePage({
     notFound();
   }
 
-  // Texto preparado: versão mais recente visível ao cliente (RLS exclui rascunhos).
-  const [{ data: textoAtual }, { data: eventos }] = await Promise.all([
+  // Tudo com a sessão do cliente (RLS: só o próprio caso; nunca rascunhos;
+  // sem o caminho no storage dos comprovativos).
+  const [{ data: textoAtual }, { data: eventos }, { data: envios }, { data: comprovativos }] = await Promise.all([
+    // Texto em curso: o mais recente ainda não enviado nem substituído.
     supabase
       .from("casos_textos")
-      .select("id, versao, conteudo, estado, autorizado_em, enviado_em")
+      .select("id, versao, conteudo, estado, autorizado_em")
       .eq("caso_id", id)
-      .neq("estado", "substituido")
+      .in("estado", ["aguardando_aprovacao", "alteracoes_solicitadas", "autorizado"])
       .order("versao", { ascending: false })
       .limit(1)
       .maybeSingle(),
-    supabase.from("casos_eventos").select("tipo, versao, created_at").eq("caso_id", id).order("created_at"),
+    supabase.from("casos_eventos").select("tipo, created_at").eq("caso_id", id).order("created_at"),
+    supabase
+      .from("casos_textos_envios")
+      .select("id, texto_id, enviado_em, canal, destinatario")
+      .eq("caso_id", id)
+      .order("enviado_em", { ascending: false }),
+    supabase
+      .from("casos_comprovativos")
+      .select("id, envio_id, tipo, nome, identificador_externo")
+      .eq("caso_id", id)
+      .is("substituido_em", null),
   ]);
+
+  // Texto de cada envio: a versão apontada pelo registo de envio (imutável).
+  const idsTextosEnviados = (envios ?? []).map((e) => e.texto_id as string);
+  const { data: textosEnviados } = idsTextosEnviados.length
+    ? await supabase.from("casos_textos").select("id, versao, conteudo").in("id", idsTextosEnviados)
+    : { data: [] };
+  const textoDoEnvio = new Map((textosEnviados ?? []).map((t) => [t.id as string, t]));
+  const enviosCliente: EnvioCliente[] = (envios ?? []).map((e) => ({
+    id: e.id as string,
+    enviado_em: e.enviado_em as string,
+    canal: e.canal as string,
+    destinatario: e.destinatario as string,
+    versao: (textoDoEnvio.get(e.texto_id as string)?.versao as number | undefined) ?? null,
+    conteudo: (textoDoEnvio.get(e.texto_id as string)?.conteudo as string | undefined) ?? null,
+  }));
+  const listaComprovativos = (comprovativos ?? []) as ComprovativoCliente[];
+  // Casos antigos: comprovativo associado ao caso sem envio no sistema.
+  const comprovativoSemEnvio = listaComprovativos.find((c) => c.envio_id === null) ?? null;
 
   const aceitar = decidirClienteCaso.bind(null, id, "aceitou");
   const recusar = decidirClienteCaso.bind(null, id, "recusou");
@@ -103,10 +140,22 @@ export default async function CasoClienteDetalhePage({
               }
             : null
         }
-        enviadoEm={(textoAtual?.enviado_em as string | null) ?? null}
-        eventos={(eventos ?? []) as { tipo: string; versao: number | null; created_at: string }[]}
         resultado={query.texto}
       />
+
+      {enviosCliente.map((envio) => (
+        <ReclamacaoEnviada
+          key={envio.id}
+          envio={envio}
+          comprovativo={listaComprovativos.find((c) => c.envio_id === envio.id) ?? null}
+        />
+      ))}
+
+      {enviosCliente.length === 0 && comprovativoSemEnvio && (
+        <section className="rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-subtle)]">
+          <Comprovativo comprovativo={comprovativoSemEnvio} />
+        </section>
+      )}
 
       {caso.status === "Aguardando decisão cliente" && (
         <div
@@ -143,6 +192,7 @@ export default async function CasoClienteDetalhePage({
           </div>
         </div>
       )}
+      <HistoricoCaso eventos={(eventos ?? []) as { tipo: string; created_at: string }[]} />
     </div>
   );
 }
