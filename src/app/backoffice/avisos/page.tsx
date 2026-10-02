@@ -14,11 +14,9 @@ export default async function AvisosSetoriaisPage({
 
   const contagens: Record<string, number> = {};
   for (const setor of SETORES) {
-    const { count } = await supabase
-      .from("preferencias_setor")
-      .select("*", { count: "exact", head: true })
-      .eq("setor", setor);
-    contagens[setor] = count ?? 0;
+    // Os mesmos destinatários que o envio usa (setor ativo + Proteção ativa).
+    const { data } = await supabase.rpc("avisos_setor_destinatarios", { p_setor: setor });
+    contagens[setor] = data?.length ?? 0;
   }
 
   const { data: avisos } = await supabase
@@ -33,7 +31,7 @@ export default async function AvisosSetoriaisPage({
         Avisos Sectoriais
       </h1>
       <p className="text-sm text-[var(--color-ink-muted)]">
-        Envia um aviso por e-mail a todos os clientes que subscreveram o setor escolhido.
+        Envia um aviso por e-mail a todos os clientes com Proteção ativa que subscreveram o setor escolhido.
       </p>
 
       {params.enviado && (

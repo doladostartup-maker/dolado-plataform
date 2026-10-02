@@ -108,15 +108,14 @@ export async function enviarAvisoSectorial(formData: FormData) {
     );
   }
 
-  const { data: subscritores } = await supabase
-    .from("preferencias_setor")
-    .select("utilizadores(nome, email)")
-    .eq("setor", setor);
+  // Só setores ativos de contas com Proteção ativa, para o e-mail atual e
+  // confirmado da conta: no fim da subscrição os setores ficam desativados
+  // (migração 20261002180000_alertas_desativados_fim_subscricao.sql).
+  const { data: destinatarios } = await supabase.rpc("avisos_setor_destinatarios", { p_setor: setor });
 
   let enviados = 0;
-  for (const linha of subscritores ?? []) {
-    const destinatario = linha.utilizadores as unknown as { nome: string | null; email: string } | null;
-    if (!destinatario?.email) continue;
+  for (const destinatario of (destinatarios ?? []) as { nome: string | null; email: string | null }[]) {
+    if (!destinatario.email) continue;
 
     const nomeExibido = destinatario.nome || destinatario.email;
     try {

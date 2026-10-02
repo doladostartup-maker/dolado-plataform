@@ -5,6 +5,12 @@
 // `alertas_promocao_portal` e envia, via Brevo, o aviso a 30, 7 e 1 dia do
 // fim da promoção, uma única vez por janela.
 //
+// Depois dos envios, apaga os alertas com contrato anexado que estão
+// desativados há mais de 6 meses (fim da subscrição — ver migração
+// 20261002180000_alertas_desativados_fim_subscricao.sql): primeiro o
+// ficheiro no Storage, depois a linha. Os alertas sem ficheiro são apagados
+// por SQL (job pg_cron limpar-alertas-desativados).
+//
 // Secrets necessários (configurar com `supabase secrets set`):
 //   BREVO_API_KEY        — API key da Brevo
 //   BREVO_SENDER_EMAIL   — remetente autorizado na Brevo
@@ -137,6 +143,55 @@ async function processarJanela(campoEnviado: CampoEnviado, limiteDias: number): 
   return enviados;
 }
 
+const BUCKET_CONTRATOS = "contratos-promocao";
+
+async function rpc<T>(nome: string, corpo: Record<string, unknown> = {}): Promise<T> {
+  const resposta = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${nome}`, {
+    method: "POST",
+    headers: {
+      apikey: SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(corpo),
+  });
+  if (!resposta.ok) {
+    throw new Error(`Falha em ${nome}: ${resposta.status}`);
+  }
+  return await resposta.json();
+}
+
+// Fim dos 6 meses: ficheiro primeiro, linha depois. Se o ficheiro não
+// sair, a linha fica e volta a ser tentada no dia seguinte. A função SQL só
+// apaga se o alerta continuar fora do prazo.
+async function apagarAlertasExpirados(): Promise<number> {
+  const expirados = await rpc<{ id: string; ficheiro_contrato_caminho: string }[]>("alertas_promocao_expirados");
+  let apagados = 0;
+
+  for (const alerta of expirados) {
+    try {
+      const resposta = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET_CONTRATOS}`, {
+        method: "DELETE",
+        headers: {
+          apikey: SERVICE_ROLE_KEY,
+          Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prefixes: [alerta.ficheiro_contrato_caminho] }),
+      });
+      if (!resposta.ok) {
+        throw new Error(`Storage respondeu ${resposta.status}`);
+      }
+      if (await rpc<boolean>("apagar_alerta_promocao_expirado", { p_id: alerta.id })) apagados += 1;
+    } catch (erro) {
+      // Só o id — nunca o caminho do ficheiro nem dados do cliente.
+      console.error(`Falha ao apagar alerta de promoção expirado ${alerta.id}:`, erro);
+    }
+  }
+
+  return apagados;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.headers.get("x-cron-secret") !== CRON_SECRET) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
@@ -147,8 +202,21 @@ Deno.serve(async (req: Request) => {
     const enviados7d = await processarJanela("alerta_7d_enviado_em", 7);
     const enviados1d = await processarJanela("alerta_1d_enviado_em", 1);
 
+    // Uma falha na limpeza não pode afetar os envios do dia.
+    let apagadosExpirados: number | null = null;
+    try {
+      apagadosExpirados = await apagarAlertasExpirados();
+    } catch (erro) {
+      console.error("Falha ao apagar alertas de promoção expirados:", erro);
+    }
+
     return new Response(
-      JSON.stringify({ enviados_30d: enviados30d, enviados_7d: enviados7d, enviados_1d: enviados1d }),
+      JSON.stringify({
+        enviados_30d: enviados30d,
+        enviados_7d: enviados7d,
+        enviados_1d: enviados1d,
+        apagados_expirados: apagadosExpirados,
+      }),
       { status: 200, headers: { "Content-Type": "application/json" } },
     );
   } catch (erro) {
