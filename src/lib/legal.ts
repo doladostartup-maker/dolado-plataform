@@ -24,10 +24,20 @@ import { CONTACTO_EMAIL, ENTIDADE_LEGAL, MORADA_SEDE } from "./site.ts";
 export const TERMOS_VERSAO = "2026-10-02";
 
 /** Versão da Política de Privacidade em vigor. Cada versão fica acessível em /privacidade/<versão>. */
-export const PRIVACIDADE_VERSAO = "2026-10-02";
+export const PRIVACIDADE_VERSAO = "2026-10-02b";
 
 /** Versão do texto de pedido expresso de início imediato. */
 export const CONSENTIMENTO_INICIO_IMEDIATO_VERSAO = "2026-10-01";
+
+/**
+ * Autorização opcional para e-mails da DoLado com novidades e ofertas
+ * (caixa do formulário "Tratar o meu caso"). O texto exato e a versão ficam
+ * gravados com a autorização (consentimentos_comunicacoes). Mudar o texto =
+ * nova versão. Cada e-mail enviado com base nela tem de permitir retirá-la.
+ */
+export const CONSENTIMENTO_COMUNICACOES_VERSAO = "2026-10-02";
+export const TEXTO_CONSENTIMENTO_COMUNICACOES =
+  "Opcional: aceito receber e-mails da DoLado com novidades e ofertas, como a Proteção (alertas de fim de fidelização e de promoção). Pode cancelar a qualquer momento.";
 
 export const ROTAS_LEGAIS = {
   termos: "/termos",

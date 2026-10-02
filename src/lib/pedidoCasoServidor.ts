@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { CONSENTIMENTO_COMUNICACOES_VERSAO, TEXTO_CONSENTIMENTO_COMUNICACOES } from "@/lib/legal";
 import {
   COOKIE_PEDIDO,
   DIAS_VALIDADE_PEDIDO,
@@ -63,6 +64,10 @@ function linhaDoPedido(dados: DadosPedido) {
     pedido_confirmado_em: agora,
     consentimento_alertas: dados.consentimento_alertas,
     consentimento_alertas_em: dados.consentimento_alertas ? agora : null,
+    // Versão e texto aceites: sempre do servidor, nunca do browser. O
+    // trigger da base de dados regista a autorização na conta.
+    consentimento_comunicacoes_versao: dados.consentimento_alertas ? CONSENTIMENTO_COMUNICACOES_VERSAO : null,
+    consentimento_comunicacoes_texto: dados.consentimento_alertas ? TEXTO_CONSENTIMENTO_COMUNICACOES : null,
     anexo_caminho: dados.anexo?.caminho ?? null,
     anexo_nome: dados.anexo?.nome ?? null,
     anexo_tipo: dados.anexo?.tipo ?? null,

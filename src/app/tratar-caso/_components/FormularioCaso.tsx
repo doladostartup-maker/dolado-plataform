@@ -4,6 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import Link from "next/link";
 import { criarUploadAssinado } from "@/app/actions/formulario-guiado";
 import { track } from "@/lib/analytics";
+import { TEXTO_CONSENTIMENTO_COMUNICACOES } from "@/lib/legal";
 import { MOMENTOS, PROBLEMAS, SETORES, validNome, validTelemovel } from "@/lib/pedidoCaso";
 import { IVA_INCLUIDO, PLANOS, precoComUnidade } from "@/lib/planos";
 import { MARKETING_SITE_URL } from "@/lib/site";
@@ -536,10 +537,7 @@ export function FormularioCaso({
                   className="mt-0.5 h-4.5 w-4.5 flex-none"
                   style={{ accentColor: COR.brand }}
                 />
-                <span>
-                  Opcional: quero receber alertas de fim de fidelização e de mudanças no meu
-                  setor.
-                </span>
+                <span>{TEXTO_CONSENTIMENTO_COMUNICACOES}</span>
               </label>
             </div>
 

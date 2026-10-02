@@ -98,7 +98,7 @@ export default async function CasoDetalhePage({
         <p className="text-[var(--text-caption)] text-[var(--color-ink-faint)]">
           Criado em {criadoEm}
           {caso.origem && ` · origem: ${caso.origem}`}
-          {caso.consentimento_alertas && " · aceitou alertas"}
+          {caso.consentimento_alertas && " · marcou a caixa opcional de comunicações"}
         </p>
       </div>
 
