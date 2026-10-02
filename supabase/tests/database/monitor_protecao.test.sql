@@ -250,5 +250,18 @@ select is((select count(*) from public.contratos_campos where contrato_id = '700
 select is((select count(*) from public.contratos_monitorizados where id = '70000000-0000-4000-f000-0000000000b1'), 1::bigint, 'contrato ativo não é apagado');
 select is(public.apagar_documento_monitor_expirado('71000000-0000-4000-f000-0000000000a1'), false, 'apagar duas vezes: sem efeito');
 
+-- ===========================================================================
+-- 7. Ficheiros órfãos (carregados mas nunca registados)
+-- ===========================================================================
+insert into storage.objects (bucket_id, name, created_at) values
+  ('documentos-monitor', 'orfao/antigo.pdf', now() - interval '2 days'),
+  ('documentos-monitor', 'orfao/recente.pdf', now() - interval '1 hour');
+insert into public.documentos_monitor (utilizador_id, storage_path, created_at)
+values ('00000000-0000-4000-f000-00000000000b', 'orfao/registado.pdf', now());
+insert into storage.objects (bucket_id, name, created_at) values ('documentos-monitor', 'orfao/registado.pdf', now() - interval '2 days');
+select results_eq($$select storage_path from public.monitor_ficheiros_orfaos() where storage_path like 'orfao/%'$$,
+  array['orfao/antigo.pdf'], 'órfãos: só ficheiros sem registo com mais de 24 horas');
+select ok(not has_function_privilege('authenticated', 'public.monitor_ficheiros_orfaos()', 'EXECUTE'), 'órfãos: não executável pelo cliente');
+
 select * from finish();
 rollback;

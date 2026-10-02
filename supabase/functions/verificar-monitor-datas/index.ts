@@ -11,6 +11,8 @@
 //    duas vezes. Se o envio falhar, a reserva é libertada para amanhã.
 // 2. Conservação: documentos de contas sem Proteção há mais de 6 meses —
 //    apaga primeiro o ficheiro no Storage e só depois o registo.
+// 3. Ficheiros órfãos: carregados mas nunca registados (o cliente fechou a
+//    página antes de submeter), ao fim de 24 horas.
 //
 // Secrets: BREVO_API_KEY, BREVO_SENDER_EMAIL, CRON_SECRET (os mesmos das
 // funções anteriores). SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY são
@@ -134,6 +136,21 @@ async function apagarDocumentosExpirados() {
   return apagados;
 }
 
+async function apagarFicheirosOrfaos() {
+  const orfaos = await rpc<{ storage_path: string }[]>("monitor_ficheiros_orfaos", {});
+  if (orfaos.length === 0) return 0;
+  const r = await fetch(`${SUPABASE_URL}/storage/v1/object/documentos-monitor`, {
+    method: "DELETE",
+    headers: CABECALHOS,
+    body: JSON.stringify({ prefixes: orfaos.map((o) => o.storage_path) }),
+  });
+  if (!r.ok) {
+    console.error(`Falha ao apagar ficheiros órfãos: ${r.status} ${await r.text()}`);
+    return 0;
+  }
+  return orfaos.length;
+}
+
 Deno.serve(async (req: Request) => {
   if (!CRON_SECRET || req.headers.get("x-cron-secret") !== CRON_SECRET) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
@@ -143,7 +160,8 @@ Deno.serve(async (req: Request) => {
     const hoje = hojeLisboa();
     const alertas = await enviarAlertas(hoje);
     const documentosApagados = await apagarDocumentosExpirados();
-    return new Response(JSON.stringify({ ...alertas, documentos_apagados: documentosApagados }), {
+    const orfaosApagados = await apagarFicheirosOrfaos();
+    return new Response(JSON.stringify({ ...alertas, documentos_apagados: documentosApagados, orfaos_apagados: orfaosApagados }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

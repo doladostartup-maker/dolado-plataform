@@ -33,8 +33,8 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 
 - **Serviço / finalidade:** Postgres (todos os dados da plataforma), Supabase Auth (contas, palavra-passe
   em hash, início de sessão com Google, confirmação de e-mail), Supabase Storage (buckets privados
-  `anexos-casos`, `faturas-comparador`, `contratos-promocao`, `comprovativos-casos`), Edge Functions
-  (`novo-caso`, `verificar-alertas-fidelizacao`, `verificar-alertas-promocao`) e `pg_cron` / `pg_net`.
+  `anexos-casos`, `documentos-monitor`, `comprovativos-casos`), Edge Functions
+  (`novo-caso`, `verificar-monitor-datas`) e `pg_cron` / `pg_net`.
 - **Categorias de dados:** identificação e contacto (nome, e-mail, telefone); dados da conta e
   credenciais; pedidos e casos (descrição em texto livre, empresa visada, versões do texto, autorizações,
   envios, comprovativos); documentos anexados (faturas, contratos, capturas de ecrã — podem conter dados

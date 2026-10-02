@@ -1,15 +1,9 @@
 project_id = "eqsmzczjyrcrsbfqioxt"
 
-# verificar-alertas-fidelizacao é chamada pelo pg_cron via pg_net, não por
+# verificar-monitor-datas é chamada pelo pg_cron via pg_net, não por
 # um pedido autenticado com um JWT da Supabase — a autorização é feita pelo
 # cabeçalho x-cron-secret verificado dentro da própria função.
 [functions.verificar-monitor-datas]
-verify_jwt = false
-
-[functions.verificar-alertas-fidelizacao]
-verify_jwt = false
-
-[functions.verificar-alertas-promocao]
 verify_jwt = false
 
 # novo-caso é chamada pelo trigger notificar_novo_caso (pg_net), sem JWT —

@@ -89,17 +89,13 @@ insert into public.casos_elegibilidade_portal (id, utilizador_id, email, setor, 
   ('12000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'a@teste.invalid', 'Energia', '6_12m', false, 'A'),
   ('12000000-0000-4000-a000-00000000000b', '00000000-0000-4000-a000-00000000000b', 'b@teste.invalid', 'Energia', '6_12m', false, 'B');
 
-insert into public.comparacoes_fatura_portal (id, utilizador_id, nome, email, ficheiro_caminho) values
-  ('13000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'A', 'a@teste.invalid', '00000000-0000-4000-a000-00000000000a/f.pdf'),
-  ('13000000-0000-4000-a000-00000000000b', '00000000-0000-4000-a000-00000000000b', 'B', 'b@teste.invalid', '00000000-0000-4000-a000-00000000000b/f.pdf');
+insert into public.contratos_monitorizados (id, utilizador_id, setor, fornecedor, data_fim_fidelizacao) values
+  ('14000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'telecomunicacoes', 'Op A', '2027-01-01'),
+  ('14000000-0000-4000-a000-00000000000b', '00000000-0000-4000-a000-00000000000b', 'telecomunicacoes', 'Op B', '2027-01-05');
 
-insert into public.alertas_fidelizacao_portal (id, utilizador_id, nome, email, operadora, data_fim_fidelizacao) values
-  ('14000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'A', 'a@teste.invalid', 'Op', '2027-01-01'),
-  ('14000000-0000-4000-a000-00000000000b', '00000000-0000-4000-a000-00000000000b', 'B', 'b@teste.invalid', 'Op', '2027-01-01');
-
-insert into public.alertas_promocao_portal (id, utilizador_id, nome, email, operadora, descricao_promocao, data_fim_promocao) values
-  ('15000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'A', 'a@teste.invalid', 'Op', 'promo A', '2027-01-01'),
-  ('15000000-0000-4000-a000-00000000000b', '00000000-0000-4000-a000-00000000000b', 'B', 'b@teste.invalid', 'Op', 'promo B', '2027-01-01');
+insert into public.documentos_monitor (id, utilizador_id, contrato_id, tipo, storage_path) values
+  ('15000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', '14000000-0000-4000-a000-00000000000a', 'fatura', '00000000-0000-4000-a000-00000000000a/f.pdf'),
+  ('15000000-0000-4000-a000-00000000000b', '00000000-0000-4000-a000-00000000000b', '14000000-0000-4000-a000-00000000000b', 'fatura', '00000000-0000-4000-a000-00000000000b/f.pdf');
 
 insert into public.preferencias_setor (utilizador_id, setor) values
   ('00000000-0000-4000-a000-00000000000a', 'Energia'),
@@ -131,10 +127,8 @@ insert into public.templates (id, nome, texto) values
 insert into storage.objects (bucket_id, name) values
   ('anexos-casos',       'casoA/a.pdf'),
   ('anexos-casos',       'casoB/b.pdf'),
-  ('faturas-comparador', '00000000-0000-4000-a000-00000000000a/f.pdf'),
-  ('faturas-comparador', '00000000-0000-4000-a000-00000000000b/f.pdf'),
-  ('contratos-promocao', '00000000-0000-4000-a000-00000000000a/c.pdf'),
-  ('contratos-promocao', '00000000-0000-4000-a000-00000000000b/c.pdf');
+  ('documentos-monitor', '00000000-0000-4000-a000-00000000000a/f.pdf'),
+  ('documentos-monitor', '00000000-0000-4000-a000-00000000000b/f.pdf');
 
 -- ===========================================================================
 -- 1. ANON (sem sessão) — nada privado é visível nem alterável
@@ -145,9 +139,11 @@ select ok(testes.contar('select * from public.utilizadores') <= 0, 'anon: SELECT
 select ok(testes.contar('select * from public.casos') <= 0, 'anon: SELECT casos → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from public.anexos') <= 0, 'anon: SELECT anexos → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from public.casos_elegibilidade_portal') <= 0, 'anon: SELECT casos_elegibilidade_portal → nada (0 linhas ou sem permissão)');
-select ok(testes.contar('select * from public.comparacoes_fatura_portal') <= 0, 'anon: SELECT comparacoes_fatura_portal → nada (0 linhas ou sem permissão)');
-select ok(testes.contar('select * from public.alertas_fidelizacao_portal') <= 0, 'anon: SELECT alertas_fidelizacao_portal → nada (0 linhas ou sem permissão)');
-select ok(testes.contar('select * from public.alertas_promocao_portal') <= 0, 'anon: SELECT alertas_promocao_portal → nada (0 linhas ou sem permissão)');
+select ok(testes.contar('select * from public.contratos_monitorizados') <= 0, 'anon: SELECT contratos_monitorizados → nada (0 linhas ou sem permissão)');
+select ok(testes.contar('select * from public.documentos_monitor') <= 0, 'anon: SELECT documentos_monitor → nada (0 linhas ou sem permissão)');
+select ok(testes.contar('select * from public.contratos_campos') <= 0, 'anon: SELECT contratos_campos → nada (0 linhas ou sem permissão)');
+select ok(to_regclass('public.alertas_fidelizacao_portal') is null and to_regclass('public.alertas_promocao_portal') is null
+      and to_regclass('public.comparacoes_fatura_portal') is null, 'tabelas antigas (alertas e comparador) já não existem');
 select ok(testes.contar('select * from public.preferencias_setor') <= 0, 'anon: SELECT preferencias_setor → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from public.stripe_payments') <= 0, 'anon: SELECT stripe_payments → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from public.user_access') <= 0, 'anon: SELECT user_access → nada (0 linhas ou sem permissão)');
@@ -195,11 +191,10 @@ select is(
 select is(
   (select count(*) from pg_proc p where p.pronamespace = 'public'::regnamespace and p.prosecdef
      and p.proname not in ('handle_new_user', 'is_admin', 'rls_auto_enable', 'notificar_novo_caso', 'casos_evento_dossie',
-                           'alertas_portal_contacto_da_conta', 'alertas_fidelizacao_pendentes', 'alertas_promocao_pendentes',
-                           'alertas_seguir_protecao', 'avisos_setor_destinatarios',
+                                                      'alertas_seguir_protecao', 'avisos_setor_destinatarios',
                            'monitor_recalcular_estado', 'monitor_campo_aceitar', 'monitor_campo_rejeitar',
                            'monitor_campo_propor', 'monitor_campo_definir', 'monitor_alertas_pendentes',
-                           'monitor_reservar_alerta', 'monitor_libertar_alerta')), 0::bigint,
+                           'monitor_reservar_alerta', 'monitor_libertar_alerta', 'monitor_ficheiros_orfaos')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em
@@ -265,32 +260,15 @@ select ok(testes.negado($$update public.casos_elegibilidade_portal set estado_fi
 select ok(testes.negado($$update public.casos_elegibilidade_portal set descricao_problema = 'x' where id = '12000000-0000-4000-a000-00000000000b'$$), 'A: não altera a elegibilidade de B');
 select ok(testes.negado($$delete from public.casos_elegibilidade_portal where id = '12000000-0000-4000-a000-00000000000b'$$), 'A: não apaga a elegibilidade de B');
 
--- comparacoes_fatura_portal
-select is(testes.contar('select * from public.comparacoes_fatura_portal'), 1::bigint, 'A: vê só as próprias comparações de fatura');
-select is(testes.contar($$select * from public.comparacoes_fatura_portal where id = '13000000-0000-4000-a000-00000000000b'$$), 0::bigint, 'A: não lê a comparação de B pelo UUID');
-select ok(testes.negado($$insert into public.comparacoes_fatura_portal (utilizador_id, nome, email, ficheiro_caminho) values ('00000000-0000-4000-a000-00000000000a', 'A', 'a@teste.invalid', '00000000-0000-4000-a000-00000000000a/g.pdf')$$), 'A: não cria comparação de fatura diretamente (só pelo servidor)');
-select ok(testes.negado($$insert into public.comparacoes_fatura_portal (utilizador_id, nome, email, ficheiro_caminho) values ('00000000-0000-4000-a000-00000000000b', 'A', 'a@teste.invalid', 'x')$$), 'A: não cria comparação em nome de B');
-select ok(testes.negado($$update public.comparacoes_fatura_portal set analise = 'x' where id = '13000000-0000-4000-a000-00000000000b'$$), 'A: não altera a comparação de B');
-select ok(testes.negado($$delete from public.comparacoes_fatura_portal where id = '13000000-0000-4000-a000-00000000000b'$$), 'A: não apaga a comparação de B');
-
--- alertas_fidelizacao_portal (CRUD próprio permitido)
-select is(testes.contar('select * from public.alertas_fidelizacao_portal'), 1::bigint, 'A: vê só os próprios alertas de fidelização');
-select ok(testes.negado($$update public.alertas_fidelizacao_portal set operadora = 'Nova' where id = '14000000-0000-4000-a000-00000000000a'$$), 'A (Avulso): não edita alertas — funcionalidade de assinante');
-select ok(testes.negado($$insert into public.alertas_fidelizacao_portal (utilizador_id, nome, email, operadora, data_fim_fidelizacao) values ('00000000-0000-4000-a000-00000000000a', 'A', 'a@teste.invalid', 'Op', '2027-01-01')$$), 'A (Avulso): não cria alertas de fidelização pela API');
-select ok(testes.negado($$update public.alertas_fidelizacao_portal set operadora = 'x' where id = '14000000-0000-4000-a000-00000000000b'$$), 'A: não edita o alerta de B');
-select ok(testes.negado($$update public.alertas_fidelizacao_portal set utilizador_id = '00000000-0000-4000-a000-00000000000b' where id = '14000000-0000-4000-a000-00000000000a'$$), 'A: não transfere o próprio alerta para B');
-select ok(testes.negado($$insert into public.alertas_fidelizacao_portal (utilizador_id, nome, email, operadora, data_fim_fidelizacao) values ('00000000-0000-4000-a000-00000000000b', 'x', 'x@teste.invalid', 'Op', '2027-01-01')$$), 'A: não cria alerta em nome de B');
-select ok(testes.negado($$delete from public.alertas_fidelizacao_portal where id = '14000000-0000-4000-a000-00000000000b'$$), 'A: não apaga o alerta de B');
-select ok(testes.permitido($$delete from public.alertas_fidelizacao_portal where id = '14000000-0000-4000-a000-00000000000a'$$), 'A: apaga o próprio alerta de fidelização');
-
--- alertas_promocao_portal
-select is(testes.contar('select * from public.alertas_promocao_portal'), 1::bigint, 'A: vê só os próprios alertas de promoção');
-select ok(testes.negado($$update public.alertas_promocao_portal set operadora = 'Nova' where id = '15000000-0000-4000-a000-00000000000a'$$), 'A (Avulso): não edita alertas de promoção');
-select ok(testes.negado($$insert into public.alertas_promocao_portal (utilizador_id, nome, email, operadora, descricao_promocao, data_fim_promocao) values ('00000000-0000-4000-a000-00000000000a', 'A', 'a@teste.invalid', 'Op', 'x', '2027-01-01')$$), 'A (Avulso): não cria alertas de promoção pela API');
-select ok(testes.negado($$update public.alertas_promocao_portal set operadora = 'x' where id = '15000000-0000-4000-a000-00000000000b'$$), 'A: não edita o alerta de promoção de B');
-select ok(testes.negado($$update public.alertas_promocao_portal set utilizador_id = '00000000-0000-4000-a000-00000000000b' where id = '15000000-0000-4000-a000-00000000000a'$$), 'A: não transfere o próprio alerta de promoção para B');
-select ok(testes.negado($$insert into public.alertas_promocao_portal (utilizador_id, nome, email, operadora, descricao_promocao, data_fim_promocao) values ('00000000-0000-4000-a000-00000000000b', 'x', 'x@teste.invalid', 'Op', 'x', '2027-01-01')$$), 'A: não cria alerta de promoção em nome de B');
-select ok(testes.negado($$delete from public.alertas_promocao_portal where id = '15000000-0000-4000-a000-00000000000b'$$), 'A: não apaga o alerta de promoção de B');
+-- contratos do Monitor de Proteção (o cliente só lê os próprios)
+select is(testes.contar('select * from public.contratos_monitorizados'), 1::bigint, 'A: vê só o próprio contrato monitorizado');
+select is(testes.contar($$select * from public.contratos_monitorizados where id = '14000000-0000-4000-a000-00000000000b'$$), 0::bigint, 'A: não lê o contrato de B pelo UUID');
+select is(testes.contar('select * from public.documentos_monitor'), 1::bigint, 'A: vê só os próprios documentos do Monitor');
+select ok(testes.negado($$insert into public.contratos_monitorizados (utilizador_id) values ('00000000-0000-4000-a000-00000000000a')$$), 'A: não cria contratos pela API (só pelo servidor)');
+select ok(testes.negado($$update public.contratos_monitorizados set fornecedor = 'x' where id = '14000000-0000-4000-a000-00000000000a'$$), 'A: não altera o próprio contrato diretamente');
+select ok(testes.negado($$update public.contratos_monitorizados set utilizador_id = '00000000-0000-4000-a000-00000000000a' where id = '14000000-0000-4000-a000-00000000000b'$$), 'A: não se apropria do contrato de B');
+select ok(testes.negado($$delete from public.contratos_monitorizados where id = '14000000-0000-4000-a000-00000000000b'$$), 'A: não apaga o contrato de B');
+select ok(testes.negado($$insert into public.documentos_monitor (utilizador_id, storage_path) values ('00000000-0000-4000-a000-00000000000a', 'x.pdf')$$), 'A: não regista documentos pela API');
 
 -- preferencias_setor
 select is(testes.contar('select * from public.preferencias_setor'), 1::bigint, 'A: vê só as próprias preferências');
@@ -341,7 +319,7 @@ select ok(testes.negado($$insert into public.templates (nome, texto) values ('x'
 
 -- storage (todos os buckets são só de admin; uploads entram pelo servidor)
 select is(testes.contar('select * from storage.objects'), 0::bigint, 'A: não lista ficheiros em nenhum bucket (nem os próprios)');
-select ok(testes.negado($$insert into storage.objects (bucket_id, name) values ('faturas-comparador', '00000000-0000-4000-a000-00000000000a/x.pdf')$$), 'A: não faz upload direto para faturas-comparador');
+select ok(testes.negado($$insert into storage.objects (bucket_id, name) values ('documentos-monitor', '00000000-0000-4000-a000-00000000000a/x.pdf')$$), 'A: não faz upload direto para documentos-monitor');
 select ok(testes.negado($$insert into storage.objects (bucket_id, name) values ('anexos-casos', 'casoB/x.pdf')$$), 'A: não faz upload para a pasta de B');
 select ok(testes.negado($$update storage.objects set name = 'roubado.pdf' where name = 'casoB/b.pdf'$$), 'A: não substitui/renomeia ficheiro de B');
 select ok(testes.negado($$delete from storage.objects where name = 'casoB/b.pdf'$$), 'A: não apaga ficheiro de B');
@@ -351,65 +329,25 @@ select ok(testes.negado($$delete from storage.objects where name = 'casoB/b.pdf'
 -- Quando a decisão for tomada e implementada, retirar o todo().
 select ok(testes.negado($$insert into public.casos_elegibilidade_portal (utilizador_id, email, setor, duracao_contrato, empresa_respondeu_bem, descricao_problema, estado_final) values ('00000000-0000-4000-a000-00000000000a', 'a@teste.invalid', 'Energia', '6_12m', false, 'x', 'elegivel')$$), 'A: não cria elegibilidade já com estado_final (decisão humana)');
 select ok(testes.negado($$insert into public.casos_elegibilidade_portal (utilizador_id, email, setor, duracao_contrato, empresa_respondeu_bem, descricao_problema, sugestao_ia_estado) values ('00000000-0000-4000-a000-00000000000a', 'a@teste.invalid', 'Energia', '6_12m', false, 'x', 'elegivel')$$), 'A: não forja a sugestão da IA');
-select ok(testes.negado($$insert into public.comparacoes_fatura_portal (utilizador_id, nome, email, ficheiro_caminho, status, analise) values ('00000000-0000-4000-a000-00000000000a', 'A', 'a@teste.invalid', 'x', 'sent_to_client', 'forjada')$$), 'A: não cria comparação de fatura já concluída');
--- E-mail dos alertas preso ao e-mail da conta (corrigido a 01/10/2026,
--- migração 20261001200000). O UPDATE/INSERT é aceite, mas o trigger repõe
--- sempre o e-mail e o nome da conta — o valor enviado pelo cliente é
--- ignorado. Por isso verifica-se o valor gravado, não um erro.
+-- Alertas do Monitor: o destinatário é sempre o e-mail atual e confirmado da
+-- conta (monitor_alertas_pendentes, só service_role); o cliente não guarda
+-- nenhum e-mail de envio.
 reset role;
-select testes.como('00000000-0000-4000-a000-00000000000b');
-select ok(testes.tenta($$update public.alertas_promocao_portal set email = 'terceiro@exemplo.invalid', nome = '<a href="https://phishing.invalid">x</a>' where id = '15000000-0000-4000-a000-00000000000b'$$) like 'ok:%', 'B: UPDATE do alerta de promoção aceite (o trigger ignora e-mail e nome)');
-select ok(testes.tenta($$update public.alertas_fidelizacao_portal set email = 'terceiro@exemplo.invalid' where id = '14000000-0000-4000-a000-00000000000b'$$) like 'ok:%', 'B: UPDATE do alerta de fidelização aceite');
-select ok(testes.tenta($$insert into public.alertas_promocao_portal (id, utilizador_id, nome, email, operadora, descricao_promocao, data_fim_promocao) values ('15000000-0000-4000-a000-0000000000b2', '00000000-0000-4000-a000-00000000000b', 'Falso', 'terceiro@exemplo.invalid', 'Op', 'x', '2027-01-05')$$) like 'ok:%', 'B: INSERT de alerta de promoção aceite');
-select ok(testes.tenta($$insert into public.alertas_fidelizacao_portal (id, utilizador_id, nome, email, operadora, data_fim_fidelizacao) values ('14000000-0000-4000-a000-0000000000b2', '00000000-0000-4000-a000-00000000000b', 'Falso', 'terceiro@exemplo.invalid', 'Op', '2027-01-05')$$) like 'ok:%', 'B: INSERT de alerta de fidelização aceite');
-reset role;
-select is((select email from public.alertas_promocao_portal where id = '15000000-0000-4000-a000-00000000000b'), 'b@teste.invalid', 'B: UPDATE do e-mail do alerta de promoção não redireciona para um terceiro');
-select is((select nome from public.alertas_promocao_portal where id = '15000000-0000-4000-a000-00000000000b'), 'Utilizador B', 'B: o nome do alerta vem do perfil (HTML do cliente ignorado)');
-select is((select email from public.alertas_fidelizacao_portal where id = '14000000-0000-4000-a000-00000000000b'), 'b@teste.invalid', 'B: UPDATE do e-mail do alerta de fidelização não redireciona');
-select is((select email from public.alertas_promocao_portal where id = '15000000-0000-4000-a000-0000000000b2'), 'b@teste.invalid', 'B: INSERT com e-mail de terceiro grava o e-mail da conta (promoção)');
-select is((select email from public.alertas_fidelizacao_portal where id = '14000000-0000-4000-a000-0000000000b2'), 'b@teste.invalid', 'B: INSERT com e-mail de terceiro grava o e-mail da conta (fidelização)');
-select is(testes.tenta($$update public.alertas_promocao_portal set email = 'x@y.invalid' where id = '15000000-0000-4000-a000-00000000000b'$$), 'ok:1', 'superutilizador: UPDATE aceite…');
-select is((select email from public.alertas_promocao_portal where id = '15000000-0000-4000-a000-00000000000b'), 'b@teste.invalid', '…mas o e-mail continua o da conta (vale para qualquer escritor)');
-select ok(testes.tenta($$insert into public.alertas_promocao_portal (utilizador_id, nome, email, operadora, descricao_promocao, data_fim_promocao) values ('00000000-0000-4000-a000-00000000000b', 'B', 'b@teste.invalid', repeat('x', 121), 'x', '2027-01-05')$$) like 'erro:%', 'operadora com mais de 120 caracteres → recusada');
-select ok(testes.tenta($$insert into public.alertas_promocao_portal (utilizador_id, nome, email, operadora, descricao_promocao, data_fim_promocao) values ('00000000-0000-4000-a000-00000000000b', 'B', 'b@teste.invalid', 'Op', repeat('x', 501), '2027-01-05')$$) like 'erro:%', 'descrição da promoção com mais de 500 caracteres → recusada');
-
--- Pendentes para as Edge Functions: destinatário = e-mail atual e
--- confirmado da conta, só com Proteção ativa.
 update auth.users set email_confirmed_at = now() where id in ('00000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000b');
 grant usage on schema testes to service_role;
 grant execute on all functions in schema testes to service_role;
 set local role service_role;
-select is((select email from public.alertas_promocao_pendentes('alerta_7d_enviado_em', '2027-01-01', '2027-01-08') where id = '15000000-0000-4000-a000-0000000000b2'),
-  'b@teste.invalid', 'pendentes (promoção): devolve o e-mail da conta');
-select is((select count(*) from public.alertas_fidelizacao_pendentes('alerta_30d_enviado_em', '2027-01-01', '2027-01-08') where id = '14000000-0000-4000-a000-0000000000b2'),
-  1::bigint, 'pendentes (fidelização): inclui o alerta de B (com Proteção)');
-select is((select count(*) from public.alertas_promocao_pendentes('alerta_30d_enviado_em', '2026-12-01', '2027-02-01') where id = '15000000-0000-4000-a000-00000000000a'),
-  0::bigint, 'pendentes: A (sem Proteção) não recebe alertas');
-select is((select count(*) from public.alertas_promocao_pendentes('campo_invalido', '2026-12-01', '2027-02-01')), 0::bigint, 'pendentes: campo inválido → nada');
+select is((select email from public.monitor_alertas_pendentes('2026-12-01') where contrato_id = '14000000-0000-4000-a000-00000000000b'),
+  'b@teste.invalid', 'pendentes (Monitor): devolve o e-mail da conta');
+select is((select count(*) from public.monitor_alertas_pendentes('2026-12-01') where contrato_id = '14000000-0000-4000-a000-00000000000a'),
+  0::bigint, 'pendentes (Monitor): A (sem Proteção) não recebe alertas');
 reset role;
--- Mudança do e-mail da conta: o envio segue o e-mail atual, sem tocar no alerta.
 update auth.users set email = 'b-novo@teste.invalid' where id = '00000000-0000-4000-a000-00000000000b';
 set local role service_role;
-select is((select email from public.alertas_promocao_pendentes('alerta_7d_enviado_em', '2027-01-01', '2027-01-08') where id = '15000000-0000-4000-a000-0000000000b2'),
-  'b-novo@teste.invalid', 'pendentes: segue o e-mail atual da conta (mudança de e-mail)');
+select is((select email from public.monitor_alertas_pendentes('2026-12-01') where contrato_id = '14000000-0000-4000-a000-00000000000b'),
+  'b-novo@teste.invalid', 'pendentes (Monitor): segue o e-mail atual da conta (mudança de e-mail)');
 reset role;
-update auth.users set email_confirmed_at = null where id = '00000000-0000-4000-a000-00000000000b';
-set local role service_role;
-select is((select count(*) from public.alertas_promocao_pendentes('alerta_7d_enviado_em', '2027-01-01', '2027-01-08')), 0::bigint, 'pendentes: conta sem e-mail confirmado não recebe');
-reset role;
-update auth.users set email = 'b@teste.invalid', email_confirmed_at = now() where id = '00000000-0000-4000-a000-00000000000b';
-select ok(not has_function_privilege('authenticated', 'public.alertas_promocao_pendentes(text, date, date)', 'EXECUTE')
-      and not has_function_privilege('anon', 'public.alertas_promocao_pendentes(text, date, date)', 'EXECUTE')
-      and not has_function_privilege('authenticated', 'public.alertas_fidelizacao_pendentes(text, date, date)', 'EXECUTE')
-      and not has_function_privilege('anon', 'public.alertas_fidelizacao_pendentes(text, date, date)', 'EXECUTE'),
-  'privilégios: funções de pendentes (lêem auth.users) fora da API pública');
-select ok(not has_function_privilege('authenticated', 'public.alertas_portal_contacto_da_conta()', 'EXECUTE')
-      and not has_function_privilege('anon', 'public.alertas_portal_contacto_da_conta()', 'EXECUTE'),
-  'privilégios: trigger do contacto da conta não executável pela API');
-select ok((select bool_and('search_path=""' = any (proconfig)) from pg_proc
-            where proname in ('alertas_portal_contacto_da_conta', 'alertas_fidelizacao_pendentes', 'alertas_promocao_pendentes')),
-  'funções SECURITY DEFINER dos alertas: search_path fixo');
-reset role;
+update auth.users set email = 'b@teste.invalid' where id = '00000000-0000-4000-a000-00000000000b';
 select testes.como('00000000-0000-4000-a000-00000000000b');
 
 -- ===========================================================================
@@ -417,22 +355,16 @@ select testes.como('00000000-0000-4000-a000-00000000000b');
 -- ===========================================================================
 reset role;
 select testes.como('00000000-0000-4000-a000-00000000000b');
-select ok(testes.permitido($$insert into public.alertas_fidelizacao_portal (utilizador_id, nome, email, operadora, data_fim_fidelizacao) values ('00000000-0000-4000-a000-00000000000b', 'B', 'b@teste.invalid', 'Op', '2027-06-01')$$), 'B (assinatura): cria alerta de fidelização');
-select ok(testes.permitido($$update public.alertas_fidelizacao_portal set operadora = 'Nova' where id = '14000000-0000-4000-a000-00000000000b'$$), 'B (assinatura): edita o próprio alerta de fidelização');
-select ok(testes.permitido($$insert into public.alertas_promocao_portal (utilizador_id, nome, email, operadora, descricao_promocao, data_fim_promocao) values ('00000000-0000-4000-a000-00000000000b', 'B', 'b@teste.invalid', 'Op', 'x', '2027-06-01')$$), 'B (assinatura): cria alerta de promoção');
-select ok(testes.permitido($$update public.alertas_promocao_portal set operadora = 'Nova' where id = '15000000-0000-4000-a000-00000000000b'$$), 'B (assinatura): edita o próprio alerta de promoção');
-select ok(testes.negado($$update public.alertas_fidelizacao_portal set operadora = 'x' where id = '14000000-0000-4000-a000-00000000000a'$$), 'B (assinatura): continua sem editar o alerta de A');
-select ok(testes.negado($$insert into public.alertas_fidelizacao_portal (utilizador_id, nome, email, operadora, data_fim_fidelizacao) values ('00000000-0000-4000-a000-00000000000a', 'x', 'x@teste.invalid', 'Op', '2027-01-01')$$), 'B (assinatura): não cria alerta em nome de A');
+select is(testes.contar('select * from public.contratos_monitorizados'), 1::bigint, 'B (assinatura): vê o próprio contrato');
+select ok(testes.negado($$insert into public.contratos_monitorizados (utilizador_id) values ('00000000-0000-4000-a000-00000000000b')$$), 'B (assinatura): mesmo com Proteção, só o servidor cria contratos');
 select is(public.tem_protecao(), true, 'B: tem_protecao() → true');
 reset role;
 select testes.como('00000000-0000-4000-a000-00000000000c');
-select ok(testes.negado($$insert into public.alertas_fidelizacao_portal (utilizador_id, nome, email, operadora, data_fim_fidelizacao) values ('00000000-0000-4000-a000-00000000000c', 'C', 'c@teste.invalid', 'Op', '2027-01-01')$$), 'C (sem plano): não cria alertas');
 select is(public.tem_protecao(), false, 'C: tem_protecao() → false');
 select ok(testes.negado($$insert into public.casos (utilizador_id, nome, email, descricao, autorizacao) values ('00000000-0000-4000-a000-00000000000c', 'C', 'c@teste.invalid', 'novo', true)$$), 'C (conta sem compra): não cria caso pela API — criar conta não dá direito a um caso');
 reset role;
 select testes.como('00000000-0000-4000-a000-00000000000a');
 select is(public.tem_protecao(), false, 'A (Avulso): tem_protecao() → false');
-select ok(testes.negado($$insert into public.alertas_fidelizacao_portal (utilizador_id, nome, email, operadora, data_fim_fidelizacao) values ('00000000-0000-4000-a000-00000000000a', 'A', 'a@teste.invalid', 'Op', '2027-01-01')$$), 'A (Avulso): não cria alertas de proteção');
 reset role;
 
 -- ===========================================================================
@@ -611,7 +543,7 @@ select is(testes.contar('select * from public.conversoes_avulso'), 1::bigint, 'a
 select is(testes.contar('select * from public.subscricao_cancelamentos'), 1::bigint, 'admin: lê cancelamentos de subscrição');
 select is(testes.contar($$select * from public.consentimentos_compra where id::text like '1c000000-%'$$), 3::bigint, 'admin: lê consentimentos de compra de todos');
 select ok(testes.contar('select * from public.case_credit_freezes') >= 2, 'admin: lê casos congelados de todos');
-select is(testes.contar($$select * from storage.objects where name in ('casoA/a.pdf', 'casoB/b.pdf', '00000000-0000-4000-a000-00000000000a/f.pdf', '00000000-0000-4000-a000-00000000000b/f.pdf', '00000000-0000-4000-a000-00000000000a/c.pdf', '00000000-0000-4000-a000-00000000000b/c.pdf')$$), 6::bigint, 'admin: vê ficheiros de todos os buckets');
+select is(testes.contar($$select * from storage.objects where name in ('casoA/a.pdf', 'casoB/b.pdf', '00000000-0000-4000-a000-00000000000a/f.pdf', '00000000-0000-4000-a000-00000000000b/f.pdf')$$), 4::bigint, 'admin: vê ficheiros de todos os buckets');
 select ok(testes.permitido($$update public.casos set notas = 'revisto' where id = '10000000-0000-4000-a000-00000000000b'$$), 'admin: altera qualquer caso');
 
 -- ===========================================================================
@@ -626,7 +558,7 @@ select ok(testes.permitido($$update public.stripe_payments set estado = 'pendent
 select ok(testes.permitido($$update public.stripe_payments set estado = 'falhado' where id = '16000000-0000-4000-a000-00000000000a'$$), 'stripe_payments.estado aceita falhado');
 select is((select utilizador_id from public.casos where id = '10000000-0000-4000-a000-00000000000b'), '00000000-0000-4000-a000-00000000000b'::uuid, 'integridade: caso de B continua de B');
 select is((select descricao from public.casos where id = '10000000-0000-4000-a000-00000000000b'), 'caso de B', 'integridade: descrição do caso de B intacta');
-select is((select count(*) from public.alertas_fidelizacao_portal where id = '14000000-0000-4000-a000-00000000000b'), 1::bigint, 'integridade: alerta de B continua a existir');
+select is((select count(*) from public.contratos_monitorizados where id = '14000000-0000-4000-a000-00000000000b'), 1::bigint, 'integridade: contrato de B continua a existir');
 select is((select count(*) from storage.objects where name = 'casoB/b.pdf'), 1::bigint, 'integridade: ficheiro de B continua no storage');
 
 -- ===========================================================================
