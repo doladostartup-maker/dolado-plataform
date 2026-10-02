@@ -4,8 +4,9 @@
 // servidor). Chave ANTHROPIC_API_KEY ainda por contratar (previsto
 // 01/10) — enquanto não existir, devolve sempre `{ ok: false }`.
 
+import { MODELO_DOCUMENTOS, PARAMETROS_EXTRACAO, textoDaResposta } from "@/lib/claude";
+
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const MODELO = "claude-sonnet-5";
 
 const SYSTEM_PROMPT = `Vais receber uma fatura de um cliente (telecom, energia ou água).
 Extrai os valores e devolve APENAS JSON:
@@ -62,8 +63,8 @@ async function chamarClaude(base64: string, tipoMime: string) {
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      model: MODELO,
-      max_tokens: 1024,
+      model: MODELO_DOCUMENTOS,
+      ...PARAMETROS_EXTRACAO,
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -99,7 +100,7 @@ export async function extrairValoresFatura(buffer: Buffer, tipoMime: string): Pr
   }
 
   const corpo = await resposta.json();
-  const textoResposta: string | undefined = corpo?.content?.[0]?.text;
+  const textoResposta: string | undefined = textoDaResposta(corpo);
   if (!textoResposta) {
     return { ok: false, motivo: "resposta_vazia" };
   }

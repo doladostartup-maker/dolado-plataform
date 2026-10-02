@@ -9,10 +9,11 @@ type LinkMenu = { href: string; label: string };
 // Ordem no menu: Como funciona · Ferramentas ▾ · Planos · Perguntas Frequentes · A DoLado ▾
 const COMO_FUNCIONA: LinkMenu = { href: "/como-funciona", label: "Como funciona" };
 
-// Ferramentas públicas e gratuitas, agrupadas no dropdown "Ferramentas"
+// Ferramentas e guias públicos e gratuitos, agrupados no dropdown "Ferramentas"
 const FERRAMENTAS_LINKS: LinkMenu[] = [
   { href: "/simulador-elegibilidade", label: "Simulador de Elegibilidade" },
   { href: "/calculadora-cancelamento", label: "Calculadora de Cancelamento" },
+  { href: "/mudanca-de-casa", label: "Guia de Mudança de Casa" },
 ];
 
 const NAV_LINKS: LinkMenu[] = [
