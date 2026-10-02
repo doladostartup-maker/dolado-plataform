@@ -12,6 +12,7 @@ import {
   type ConversaoParaReembolso,
   type DependenciasWebhook,
   type EstadoPagamento,
+  type EstadoRetiradaAvulso,
 } from "@/lib/stripe/webhook";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "thiago.pereira@dolado.pt";
@@ -250,6 +251,43 @@ export function criarDependenciasWebhook(): DependenciasWebhook {
       });
       falhar("conceder_credito_caso", error);
       return data === true;
+    },
+
+    async retirarCreditoAvulso(origem, motivo) {
+      const { data, error } = await admin.rpc("retirar_credito_avulso", {
+        p_origem: origem,
+        p_motivo: motivo,
+      });
+      falhar("retirar_credito_avulso", error);
+      return data as EstadoRetiradaAvulso;
+    },
+
+    async avulsoDoPagamento(paymentIntentId) {
+      const stripe = getStripe();
+      // Só o Avulso é pago em modo "payment".
+      const sessoes = await stripe.checkout.sessions.list({ payment_intent: paymentIntentId, limit: 1 });
+      const sessao = sessoes.data[0];
+      if (!sessao || sessao.mode !== "payment") return null;
+      const { data, error } = await admin
+        .from("stripe_payments")
+        .select("plano")
+        .eq("stripe_session_id", sessao.id)
+        .maybeSingle();
+      falhar("stripe_payments.select", error);
+      if (data && data.plano !== "avulso") return null;
+
+      const pagamento = await stripe.paymentIntents.retrieve(paymentIntentId, { expand: ["latest_charge"] });
+      const cobranca = pagamento.latest_charge;
+      const totalmenteReembolsado = typeof cobranca === "object" && cobranca !== null && cobranca.refunded === true;
+      return { sessionId: sessao.id, totalmenteReembolsado };
+    },
+
+    async marcarPagamentoReembolsado(sessionId) {
+      const { error } = await admin
+        .from("stripe_payments")
+        .update({ estado: "reembolsado" })
+        .eq("stripe_session_id", sessionId);
+      falhar("stripe_payments.update", error);
     },
 
     async congelarCreditosCaso(subscriptionId, em) {

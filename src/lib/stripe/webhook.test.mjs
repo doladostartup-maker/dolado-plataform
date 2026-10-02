@@ -5,7 +5,8 @@
 // evento no acesso e nos créditos.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { beforeEach, describe, test } from "node:test";
+import { afterEach, beforeEach, describe, test } from "node:test";
+import { calcularAcesso } from "../acesso.ts";
 import { aplicarCompraConfirmadaNaConta, processarEventoStripe } from "./webhook.ts";
 
 const CUSTOMER = "cus_teste";
@@ -21,7 +22,9 @@ function criarEstado() {
     subscricoes: new Map(), // subscription_id → linha
     contas: new Map(), // user_id → linha de user_access
     creditosConcedidos: new Set(), // origens (case_credit_grants)
-    creditosPorConta: new Map(), // origem → user_id (para congelar_creditos_caso)
+    creditosPorConta: new Map(), // origem → user_id
+    avulsos: new Map(), // origem checkout:<sessão> → { user_id, estado } (case_credit_grants.estado)
+    stripeAvulsos: new Map(), // payment_intent → { sessionId, totalmenteReembolsado } (o que o "Stripe" diz)
     congelamentos: [], // case_credit_freezes
     cancelamentos: [], // subscricao_cancelamentos
     consentimentos: new Map(), // id → linha de consentimentos_compra
@@ -44,9 +47,35 @@ function contaVazia() {
     subscription_plan: "none",
     subscription_status: null,
     case_credits: 0,
+    avulso_credits: 0,
     stripe_customer_id: null,
     stripe_subscription_id: null,
   };
+}
+
+// Mesmas regras que a função SQL consumir_credito_caso: subscrição primeiro,
+// depois o Avulso mais antigo. Devolve null, "subscricao" ou a origem.
+function consumirCredito(estado, userId) {
+  const c = estado.contas.get(userId);
+  if (!c || c.case_credits <= 0) return null;
+  if (c.case_credits - c.avulso_credits > 0) {
+    c.case_credits -= 1;
+    return "subscricao";
+  }
+  const [origem, avulso] = [...estado.avulsos].find(([, a]) => a.user_id === userId && a.estado === "disponivel");
+  avulso.estado = "consumido";
+  c.case_credits -= 1;
+  c.avulso_credits -= 1;
+  return origem;
+}
+
+// Invariante da base de dados (check user_access_avulso_credits_check).
+function verificarInvariante(estado) {
+  for (const [userId, c] of estado.contas) {
+    const disponiveis = [...estado.avulsos.values()].filter((a) => a.user_id === userId && a.estado === "disponivel").length;
+    assert.ok(c.avulso_credits >= 0 && c.avulso_credits <= c.case_credits, "0 <= avulso_credits <= case_credits");
+    assert.equal(c.avulso_credits, disponiveis, "avulso_credits = Avulsos disponíveis");
+  }
 }
 
 function criarDependencias(estado) {
@@ -69,7 +98,10 @@ function criarDependencias(estado) {
       return estado.pagamentos.get(sessionId)?.user_id ?? null;
     },
     async gravarPagamento(dados) {
-      estado.pagamentos.set(dados.stripe_session_id, { ...estado.pagamentos.get(dados.stripe_session_id), ...dados });
+      const atual = estado.pagamentos.get(dados.stripe_session_id);
+      // Trigger stripe_payments_reembolsado_final: reembolsado é final.
+      const final = atual?.estado === "reembolsado" ? { estado: "reembolsado" } : {};
+      estado.pagamentos.set(dados.stripe_session_id, { ...atual, ...dados, ...final });
     },
     async marcarPagamentosDaSubscricao(subId, novoEstado) {
       for (const p of estado.pagamentos.values()) if (p.stripe_subscription_id === subId) p.estado = novoEstado;
@@ -129,10 +161,18 @@ function criarDependencias(estado) {
         estado.falharCreditoUmaVez = false;
         throw Object.assign(new Error("falha simulada"), { code: "08006" });
       }
+      const avulso = origem.startsWith("checkout:");
+      if (avulso && estado.pagamentos.get(origem.slice("checkout:".length))?.estado === "reembolsado") return false;
       if (estado.creditosConcedidos.has(origem)) return false;
       estado.creditosConcedidos.add(origem);
       estado.creditosPorConta.set(origem, userId);
       const c = estado.contas.get(userId);
+      if (avulso) {
+        estado.avulsos.set(origem, { user_id: userId, estado: "disponivel" });
+        c.case_credits += 1;
+        c.avulso_credits += 1;
+        return true;
+      }
       c.case_credits = maximo == null ? c.case_credits + 1 : Math.max(c.case_credits, Math.min(c.case_credits + 1, maximo));
       return true;
     },
@@ -142,8 +182,7 @@ function criarDependencias(estado) {
       for (const [userId, c] of estado.contas) {
         if (c.stripe_subscription_id !== subId) continue;
         if (estado.congelamentos.some((f) => f.sub === subId && f.user_id === userId && !f.restaurado_em)) continue;
-        const avulso = [...estado.creditosPorConta].filter(([o, u]) => u === userId && o.startsWith("checkout:")).length;
-        const quantidade = Math.max(c.case_credits - avulso, 0);
+        const quantidade = c.case_credits - c.avulso_credits;
         const expira = new Date(new Date(em).getTime() + 90 * DIA_MS).toISOString();
         estado.congelamentos.push({ user_id: userId, sub: subId, quantidade, congelado_em: em, expira_em: expira, restaurado_em: null });
         c.case_credits -= quantidade;
@@ -165,6 +204,24 @@ function criarDependencias(estado) {
         c.case_credits = novo;
       }
       return total;
+    },
+    // Mesmas regras que a função SQL retirar_credito_avulso.
+    async retirarCreditoAvulso(origem, motivo) {
+      const a = estado.avulsos.get(origem);
+      if (!a) return "sem_credito";
+      if (a.estado !== "disponivel") return a.estado;
+      a.estado = motivo;
+      const c = estado.contas.get(a.user_id);
+      c.case_credits -= 1;
+      c.avulso_credits -= 1;
+      return "retirado";
+    },
+    async avulsoDoPagamento(paymentIntentId) {
+      return estado.stripeAvulsos.get(paymentIntentId) ?? null;
+    },
+    async marcarPagamentoReembolsado(sessionId) {
+      const p = estado.pagamentos.get(sessionId);
+      if (p) p.estado = "reembolsado";
     },
     async sincronizarCancelamento(subId, { agendado, fimPrevisto, plano, em }) {
       const aberto = estado.cancelamentos.find((x) => x.sub === subId && !x.revertido_em && !x.terminado_em);
@@ -244,9 +301,7 @@ function criarDependencias(estado) {
       if (!p || p.user_id !== userId) return null;
       if (p.estado === "convertido") return p.caso_id;
       if (p.estado === "cancelado") return null;
-      const c = estado.contas.get(userId);
-      if (!c || c.case_credits <= 0) return null;
-      c.case_credits -= 1;
+      if (!consumirCredito(estado, userId)) return null;
       const casoId = `caso_${estado.casos.length + 1}`;
       estado.casos.push({ id: casoId, utilizador_id: userId, pedido_id: pedidoId, status: "Novo" });
       Object.assign(p, { estado: "convertido", caso_id: casoId });
@@ -345,6 +400,8 @@ beforeEach(() => {
   estado = criarEstado();
   deps = criarDependencias(estado);
 });
+
+afterEach(() => verificarInvariante(estado));
 
 function comConta(extra = {}) {
   estado.contas.set(USER, { ...contaVazia(), stripe_customer_id: CUSTOMER, ...extra });
@@ -662,7 +719,9 @@ describe("idempotência, eventos desconhecidos e erros", () => {
 });
 
 describe("conversão Avulso → assinatura com reembolso parcial", () => {
-  function conversao(plano_destino, reembolso, extra = {}) {
+  // O Avulso da conversão foi comprado pela conta (caso ainda por usar).
+  async function conversao(plano_destino, reembolso, extra = {}) {
+    if (estado.contas.has(USER)) await deps.concederCreditoCaso(USER, "checkout:cs_avulso", null);
     estado.conversoes.set("conv_1", {
       id: "conv_1",
       plano_destino,
@@ -689,7 +748,7 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
 
   test("Avulso → Proteção: subscrição confirmada, reembolso de 10,00 €, sem créditos de caso", async () => {
     comConta({ case_credits: 0 });
-    conversao("protecao", 1000);
+    await conversao("protecao", 1000);
     estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
     await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
     assert.equal(conta().subscription_plan, "protecao");
@@ -703,7 +762,7 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
 
   test("Avulso → Caso + Proteção: reembolso de 7,00 €; o caso do ciclo é gerido à parte", async () => {
     comConta({ case_credits: 0 });
-    conversao("caso_protecao", 700);
+    await conversao("caso_protecao", 700);
     estado.stripeSubscricao = snapshot("active", PRECO_CASO_PROTECAO);
     await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
     assert.equal(estado.refundsStripe[0].amount, 700);
@@ -713,7 +772,7 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
 
   test("webhook repetido (novo event.id, mesma sessão): o segundo reembolso não é criado", async () => {
     comConta();
-    conversao("protecao", 1000);
+    await conversao("protecao", 1000);
     estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
     await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
     await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
@@ -723,14 +782,14 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
 
   test("Checkout abandonado: sem evento de conclusão não há reembolso e o Avulso fica por converter", async () => {
     comConta();
-    conversao("protecao", 1000);
+    await conversao("protecao", 1000);
     assert.equal(estado.refundsStripe.length, 0);
     assert.equal(conv().estado, "checkout_aberto");
   });
 
   test("checkout antigo (substituído por um novo) não converte nem reembolsa", async () => {
     comConta();
-    conversao("protecao", 1000, { checkout_session_id: "cs_novo" });
+    await conversao("protecao", 1000, { checkout_session_id: "cs_novo" });
     estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
     await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
     assert.equal(conv().estado, "checkout_aberto");
@@ -739,7 +798,7 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
 
   test("o mesmo Avulso já convertido noutro checkout: recusado", async () => {
     comConta();
-    conversao("protecao", 1000, { estado: "convertido", checkout_session_id: "cs_outro", refund_id: "re_antigo" });
+    await conversao("protecao", 1000, { estado: "convertido", checkout_session_id: "cs_outro", refund_id: "re_antigo" });
     estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
     await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
     assert.equal(estado.refundsStripe.length, 0);
@@ -747,7 +806,7 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
 
   test("subscrição ainda não ativa: não converte (reembolso só depois da adesão confirmada)", async () => {
     comConta();
-    conversao("protecao", 1000);
+    await conversao("protecao", 1000);
     estado.stripeSubscricao = snapshot("incomplete", PRECO_PROTECAO);
     await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
     assert.equal(conv().estado, "checkout_aberto");
@@ -756,7 +815,7 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
 
   test("plano pago diferente do oferecido: sem reembolso, fica para intervenção", async () => {
     comConta();
-    conversao("protecao", 1000);
+    await conversao("protecao", 1000);
     estado.stripeSubscricao = snapshot("active", PRECO_CASO_PROTECAO);
     await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
     assert.equal(estado.refundsStripe.length, 0);
@@ -766,7 +825,7 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
 
   test("falha transitória do Stripe: 500 e o reenvio cria o reembolso uma única vez", async () => {
     comConta();
-    conversao("protecao", 1000);
+    await conversao("protecao", 1000);
     estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
     estado.refundFalhaTransitoriaUmaVez = true;
     const e = evento("checkout.session.completed", sessaoUpgrade());
@@ -778,7 +837,7 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
 
   test("reembolso recusado pelo Stripe: regista, marca intervenção, avisa o admin e não cancela a assinatura", async () => {
     comConta();
-    conversao("protecao", 1000);
+    await conversao("protecao", 1000);
     estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
     estado.refundFalhaDefinitiva = true;
     const r = await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
@@ -794,21 +853,21 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
   });
 
   test("refund.updated: o estado real do reembolso fica registado", async () => {
-    conversao("protecao", 1000, { estado: "convertido", refund_id: "re_1", refund_estado: "pending" });
+    await conversao("protecao", 1000, { estado: "convertido", refund_id: "re_1", refund_estado: "pending" });
     await processarEventoStripe(evento("refund.updated", { id: "re_1", object: "refund", status: "succeeded", metadata: { conversao_id: "conv_1" } }), deps);
     assert.equal(conv().refund_estado, "succeeded");
     assert.equal(conv().requer_intervencao, false);
   });
 
   test("refund.created antes de o refund_id estar gravado: liga pela conversão nos metadados", async () => {
-    conversao("protecao", 1000, { estado: "convertido" });
+    await conversao("protecao", 1000, { estado: "convertido" });
     await processarEventoStripe(evento("refund.created", { id: "re_9", object: "refund", status: "pending", metadata: { conversao_id: "conv_1" } }), deps);
     assert.equal(conv().refund_id, "re_9");
   });
 
   test("refund.failed: estado registado, intervenção possível, sem novo reembolso nem cancelamento", async () => {
     comConta({ subscription_plan: "protecao", subscription_status: "active", stripe_subscription_id: SUB });
-    conversao("protecao", 1000, { estado: "convertido", refund_id: "re_1", refund_estado: "pending" });
+    await conversao("protecao", 1000, { estado: "convertido", refund_id: "re_1", refund_estado: "pending" });
     const r = await processarEventoStripe(evento("refund.failed", { id: "re_1", object: "refund", status: "failed", metadata: { conversao_id: "conv_1" } }), deps);
     assert.equal(r.status, 200);
     assert.equal(conv().refund_estado, "failed");
@@ -1258,5 +1317,242 @@ describe("pedido de caso pago no Checkout (metadata.pedido_id)", () => {
     );
     assert.equal(estado.casos.length, 0);
     assert.equal(conta().case_credits, 1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Casos Avulso vs. casos da subscrição (correção de 01/10/2026). Antes, o fim
+// do Caso + Proteção protegia do congelamento um caso por cada Avulso
+// comprado desde sempre — incluindo Avulsos já usados. Agora só os Avulsos
+// por usar (avulso_credits) ficam utilizáveis.
+// ---------------------------------------------------------------------------
+describe("casos Avulso por usar vs. casos da subscrição", () => {
+  const T0 = 1_780_000_000;
+  const SUB_NOVA = "sub_nova";
+  let pedidos = 0;
+
+  // Avulso pago no "Tratar o meu caso" e usado logo nesse pedido.
+  async function avulsoUsadoNumPedido(sessionId = "cs_avulso") {
+    const id = `20000000-0000-4000-a000-0000000001${String(++pedidos).padStart(2, "0")}`;
+    estado.pedidos.set(id, { id, user_id: USER, estado: "aguarda_pagamento", caso_id: null });
+    await processarEventoStripe(
+      evento("checkout.session.completed", sessaoAvulso({ id: sessionId, metadata: { plano: "avulso", user_id: USER, pedido_id: id } })),
+      deps,
+    );
+    assert.equal(estado.avulsos.get(`checkout:${sessionId}`).estado, "consumido");
+  }
+
+  // Avulso comprado e ainda por usar.
+  async function avulsoPorUsar(sessionId = "cs_avulso") {
+    await processarEventoStripe(
+      evento("checkout.session.completed", sessaoAvulso({ id: sessionId, metadata: { plano: "avulso", user_id: USER } })),
+      deps,
+    );
+  }
+
+  // Caso + Proteção com `ciclos` faturas pagas (1 caso por ciclo).
+  async function subscreverComCasos(ciclos, sub = SUB, criado = T0) {
+    estado.stripeSubscricao = { ...snapshot("active"), stripe_subscription_id: sub };
+    const sufixo = sub === SUB ? "" : `_${sub}`;
+    await processarEventoStripe(
+      evento("checkout.session.completed", sessaoSubscricao({ id: `cs_sub${sufixo}`, subscription: sub, invoice: `in_1${sufixo}` }), criado),
+      deps,
+    );
+    for (let i = 2; i <= ciclos; i++) {
+      await processarEventoStripe(
+        evento("invoice.paid", { ...fatura(`in_${i}${sufixo}`), parent: { subscription_details: { subscription: sub } } }, criado + i),
+        deps,
+      );
+    }
+  }
+
+  const terminar = (sub = SUB, criado = T0 + 100) =>
+    processarEventoStripe(evento("customer.subscription.deleted", { ...subscricao("canceled"), id: sub }, criado), deps);
+
+  test("1. (bug original) Avulso usado + 3 casos da subscrição: o fim congela os 3 e não fica nenhum utilizável", async () => {
+    comConta();
+    await avulsoUsadoNumPedido();
+    await subscreverComCasos(3);
+    assert.equal(conta().case_credits, 3, "antes do fim: 3 utilizáveis");
+    assert.equal(conta().avulso_credits, 0);
+
+    await terminar();
+    assert.equal(conta().case_credits, 0, "depois do fim: 0 utilizáveis");
+    assert.equal(estado.congelamentos[0].quantidade, 3, "3 congelados");
+    assert.equal(calcularAcesso(conta()).podeCriarCaso, false);
+  });
+
+  test("2. Avulso por usar + 2 casos da subscrição: fica 1 utilizável (o Avulso) e 2 congelados", async () => {
+    comConta();
+    await avulsoPorUsar();
+    await subscreverComCasos(2);
+    assert.equal(conta().case_credits, 3);
+
+    await terminar();
+    assert.equal(conta().case_credits, 1);
+    assert.equal(conta().avulso_credits, 1, "o caso que fica é o Avulso");
+    assert.equal(estado.avulsos.get("checkout:cs_avulso").estado, "disponivel");
+    assert.equal(estado.congelamentos[0].quantidade, 2);
+  });
+
+  test("3. 2 Avulsos (1 já usado) + casos da subscrição: só o Avulso por usar fica fora do congelamento", async () => {
+    comConta();
+    await avulsoUsadoNumPedido("cs_avulso_usado");
+    await avulsoPorUsar("cs_avulso_livre");
+    await subscreverComCasos(3);
+    assert.equal(conta().case_credits, 4);
+    assert.equal(conta().avulso_credits, 1);
+
+    await terminar();
+    assert.equal(conta().case_credits, 1);
+    assert.equal(conta().avulso_credits, 1);
+    assert.equal(estado.congelamentos[0].quantidade, 3);
+  });
+
+  test("4/5. abrir um caso gasta primeiro a subscrição; o Avulso só quando já não há casos da subscrição", async () => {
+    comConta();
+    await avulsoPorUsar();
+    await subscreverComCasos(1);
+    assert.equal(conta().case_credits, 2);
+
+    estado.pedidos.set("p_sub", { id: "p_sub", user_id: USER, estado: "aguarda_pagamento", caso_id: null });
+    await deps.converterPedidoEmCaso("p_sub", USER);
+    assert.equal(conta().case_credits, 1, "gastou o caso da subscrição");
+    assert.equal(conta().avulso_credits, 1, "o Avulso por usar ficou intacto");
+
+    estado.pedidos.set("p_avulso", { id: "p_avulso", user_id: USER, estado: "aguarda_pagamento", caso_id: null });
+    await deps.converterPedidoEmCaso("p_avulso", USER);
+    assert.equal(conta().case_credits, 0, "sem casos da subscrição: gasta o Avulso");
+    assert.equal(conta().avulso_credits, 0, "case_credits e avulso_credits descem juntos");
+    assert.equal(estado.avulsos.get("checkout:cs_avulso").estado, "consumido");
+  });
+
+  test("10. ciclo subscrever → acumular → terminar → voltar a subscrever → terminar: nada escapa ao congelamento", async () => {
+    comConta();
+    await avulsoUsadoNumPedido();
+    await subscreverComCasos(3);
+    await terminar(SUB, T0 + 100);
+    assert.equal(conta().case_credits, 0);
+    assert.equal(calcularAcesso(conta()).podeCriarCaso, false, "sem subscrição, nenhum caso utilizável");
+
+    // Volta dentro dos 90 dias: 3 recuperados + 1 do novo ciclo (limite 4).
+    await subscreverComCasos(1, SUB_NOVA, T0 + 10 * 86_400);
+    assert.equal(conta().case_credits, 4);
+    await terminar(SUB_NOVA, T0 + 20 * 86_400);
+    assert.equal(conta().case_credits, 0);
+    assert.equal(estado.congelamentos.at(-1).quantidade, 4);
+    assert.equal(calcularAcesso(conta()).podeCriarCaso, false);
+  });
+
+  describe("conversão de um Avulso", () => {
+    const sessaoUpgrade = () =>
+      sessaoSubscricao({
+        id: "cs_upgrade",
+        payment_status: "no_payment_required",
+        amount_total: 0,
+        metadata: { plano: "assinatura", upgrade: "true", user_id: USER, conversao_id: "conv_1" },
+      });
+    const abrirConversao = (plano_destino, reembolso) =>
+      estado.conversoes.set("conv_1", {
+        id: "conv_1",
+        plano_destino,
+        estado: "checkout_aberto",
+        checkout_session_id: "cs_upgrade",
+        avulso_session_id: "cs_avulso",
+        refund_montante_centimos: reembolso,
+        refund_id: null,
+        refund_estado: null,
+        requer_intervencao: false,
+      });
+
+    test("7. Avulso por usar → Caso + Proteção: o Avulso sai do saldo, fica só o caso do 1.º ciclo", async () => {
+      comConta();
+      await avulsoPorUsar();
+      abrirConversao("caso_protecao", 700);
+      estado.stripeSubscricao = snapshot("active");
+      await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+      assert.equal(conta().case_credits, 1, "sem duplicação: o Avulso pagou o 1.º mês");
+      assert.equal(conta().avulso_credits, 0);
+      assert.equal(estado.avulsos.get("checkout:cs_avulso").estado, "convertido");
+      assert.equal(estado.refundsStripe[0].amount, 700, "regra financeira da conversão inalterada");
+      // Reenvio: não retira outra vez nem cria outro reembolso.
+      await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+      assert.equal(conta().case_credits, 1);
+      assert.equal(estado.refundsStripe.length, 1);
+    });
+
+    test("8. Avulso usado entre abrir o Checkout e pagar: sem reembolso automático, fica para intervenção", async () => {
+      comConta();
+      await avulsoPorUsar();
+      abrirConversao("protecao", 1000);
+      estado.pedidos.set("p_1", { id: "p_1", user_id: USER, estado: "aguarda_pagamento", caso_id: null });
+      await deps.converterPedidoEmCaso("p_1", USER); // o cliente usou o Avulso
+      estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
+      await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+      assert.equal(estado.refundsStripe.length, 0);
+      assert.equal(estado.conversoes.get("conv_1").requer_intervencao, true);
+      assert.match(estado.conversoes.get("conv_1").intervencao_motivo, /consumido/);
+      assert.equal(estado.avisosAdmin.length, 1);
+      assert.equal(conta().case_credits, 0, "nunca saldo negativo");
+    });
+  });
+
+  describe("reembolso de um Avulso (fora de uma conversão)", () => {
+    const reembolso = (extra = {}) =>
+      evento("refund.created", { id: "re_manual", object: "refund", status: "succeeded", payment_intent: "pi_avulso", metadata: {}, ...extra });
+
+    test("9. Avulso por usar totalmente reembolsado: o caso sai do saldo e o pagamento fica reembolsado", async () => {
+      comConta();
+      await avulsoPorUsar();
+      estado.stripeAvulsos.set("pi_avulso", { sessionId: "cs_avulso", totalmenteReembolsado: true });
+      await processarEventoStripe(reembolso(), deps);
+      assert.equal(conta().case_credits, 0);
+      assert.equal(conta().avulso_credits, 0);
+      assert.equal(estado.avulsos.get("checkout:cs_avulso").estado, "reembolsado");
+      assert.equal(estado.pagamentos.get("cs_avulso").estado, "reembolsado");
+      assert.equal(ultimoLog().resultado, "reembolso_avulso_retirado");
+      // refund.updated repetido: nada muda.
+      await processarEventoStripe(evento("refund.updated", { id: "re_manual", object: "refund", status: "succeeded", payment_intent: "pi_avulso", metadata: {} }), deps);
+      assert.equal(conta().case_credits, 0);
+    });
+
+    test("Avulso já usado e depois reembolsado: sem saldo negativo e sem devolver nada", async () => {
+      comConta();
+      await avulsoUsadoNumPedido();
+      await subscreverComCasos(1);
+      estado.stripeAvulsos.set("pi_avulso", { sessionId: "cs_avulso", totalmenteReembolsado: true });
+      await processarEventoStripe(reembolso(), deps);
+      assert.equal(conta().case_credits, 1, "o caso da subscrição não é tocado");
+      assert.equal(estado.pagamentos.get("cs_avulso").estado, "reembolsado");
+      assert.equal(ultimoLog().resultado, "reembolso_avulso_consumido");
+    });
+
+    test("pagamento reembolsado nunca mais dá crédito (ex.: conta ligada depois, webhook reenviado)", async () => {
+      estado.pagamentos.set("cs_avulso", { stripe_session_id: "cs_avulso", estado: "reembolsado" });
+      comConta();
+      await aplicarCompraConfirmadaNaConta(sessaoAvulso(), USER, deps);
+      assert.equal(conta().case_credits, 0);
+      await avulsoPorUsar(); // checkout.session.completed tardio
+      assert.equal(conta().case_credits, 0);
+      assert.equal(estado.pagamentos.get("cs_avulso").estado, "reembolsado", "reembolsado é final");
+    });
+
+    test("reembolso parcial de um Avulso: o caso mantém-se e o admin é avisado", async () => {
+      comConta();
+      await avulsoPorUsar();
+      estado.stripeAvulsos.set("pi_avulso", { sessionId: "cs_avulso", totalmenteReembolsado: false });
+      await processarEventoStripe(reembolso(), deps);
+      assert.equal(conta().case_credits, 1);
+      assert.equal(estado.avisosAdmin.length, 1);
+      assert.equal(ultimoLog().resultado, "reembolso_parcial_avulso");
+    });
+
+    test("reembolso ainda pendente: nada muda", async () => {
+      comConta();
+      await avulsoPorUsar();
+      estado.stripeAvulsos.set("pi_avulso", { sessionId: "cs_avulso", totalmenteReembolsado: true });
+      await processarEventoStripe(reembolso({ status: "pending" }), deps);
+      assert.equal(conta().case_credits, 1);
+    });
   });
 });

@@ -36,6 +36,8 @@ export async function criarCasoCliente(formData: FormData) {
 
   // Abrir um caso gasta sempre 1 caso disponível (pago): de forma atómica
   // (dois pedidos em paralelo não gastam o mesmo) e só depois cria o caso.
+  // Gasta primeiro um caso da subscrição; só depois um Avulso. Devolve o que
+  // gastou, para o devolver exatamente se a criação falhar.
   // O RLS não deixa o cliente criar casos diretamente, por isso o insert é
   // feito aqui com service_role — os dados vêm deste formulário e o dono é
   // o utilizador da sessão. Sem casos disponíveis, nada é criado.
@@ -43,7 +45,7 @@ export async function criarCasoCliente(formData: FormData) {
   const { data: consumido, error: erroCredito } = await admin.rpc("consumir_credito_caso", {
     p_user_id: user.id,
   });
-  if (erroCredito || consumido !== true) {
+  if (erroCredito || typeof consumido !== "string" || !consumido) {
     redirect("/portal/casos/novo");
   }
 
@@ -55,7 +57,7 @@ export async function criarCasoCliente(formData: FormData) {
 
   if (error || !data) {
     // O caso não foi criado: o crédito volta para a conta.
-    await admin.rpc("devolver_credito_caso", { p_user_id: user.id });
+    await admin.rpc("devolver_credito_caso", { p_user_id: user.id, p_consumo: consumido });
     redirect(`/portal/casos/novo?erro=${encodeURIComponent("Não foi possível criar o caso. Tente novamente.")}`);
   }
 

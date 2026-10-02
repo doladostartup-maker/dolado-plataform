@@ -7,7 +7,9 @@ import { pedidoDaConta } from "@/lib/pedidoCasoServidor";
 import { IVA_INCLUIDO, PLANOS, precoComUnidade, textoCasosDisponiveis } from "@/lib/planos";
 import {
   escolherAvulsoParaConversao,
+  sessoesAvulsoDisponiveis,
   type ConversaoExistente,
+  type CreditoConcedido,
   type PagamentoAvulso,
 } from "@/lib/stripe/conversao";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -66,19 +68,21 @@ export default async function ModalidadePage({
   // O que um Avulso pago cobre no Caso + Proteção (regra existente de conversão).
   let conversao: { mensalidade: number; reembolso: number } | null = null;
   if (opcoes.modalidades.includes("caso_protecao")) {
-    const [{ data: pagamentos }, { data: conversoes }] = await Promise.all([
+    const [{ data: pagamentos }, { data: conversoes }, { data: creditos }] = await Promise.all([
       supabase
         .from("stripe_payments")
         .select("id, stripe_session_id, user_id, plano, estado, valor_total_centimos, created_at")
         .eq("user_id", userId)
         .eq("plano", "avulso"),
       supabase.from("conversoes_avulso").select("id, stripe_payment_id, estado, checkout_session_id").eq("user_id", userId),
+      supabase.from("case_credit_grants").select("origem, estado").eq("user_id", userId).eq("estado", "disponivel"),
     ]);
     const escolha = escolherAvulsoParaConversao(
       (pagamentos ?? []) as PagamentoAvulso[],
       (conversoes ?? []) as ConversaoExistente[],
       userId,
       "caso_protecao",
+      sessoesAvulsoDisponiveis((creditos ?? []) as CreditoConcedido[]),
     );
     if (escolha) conversao = { mensalidade: escolha.calculo.mensalidade, reembolso: escolha.calculo.reembolso };
   }

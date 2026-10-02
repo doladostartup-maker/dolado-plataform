@@ -36,7 +36,12 @@ import { pedidoDaMetadata } from "../pedidoCaso.ts";
 //   subscrição estar confirmada e ativa é que se reembolsa a diferença, uma
 //   única vez; refund.* atualiza o estado e um reembolso falhado fica para
 //   intervenção manual (nunca um segundo reembolso automático nem
-//   cancelamento da assinatura).
+//   cancelamento da assinatura). Antes do reembolso, o caso do Avulso sai
+//   do saldo (retirarCreditoAvulso); se entretanto foi usado, não há
+//   reembolso automático — fica para intervenção.
+// - Avulso reembolsado na totalidade (refund.* fora de uma conversão): o
+//   pagamento fica "reembolsado" (final) e o caso, se ainda estiver por
+//   usar, sai do saldo. Um caso já usado não é tocado (nunca saldo negativo).
 // - Consentimentos da compra (metadata.consentimento_compra_id, gravado pelo
 //   servidor ANTES de criar a sessão): o webhook só completa as ligações em
 //   falta (sessão, pagamento, subscrição, e-mail, conta). Nunca cria nem
@@ -122,6 +127,8 @@ export type ResultadoReembolso =
   | { ok: true; id: string; status: string | null; payment_intent_id: string }
   | { ok: false; motivo: string };
 
+export type EstadoRetiradaAvulso = "retirado" | "consumido" | "convertido" | "reembolsado" | "sem_credito";
+
 export type ConsentimentoLigado = {
   termos_versao: string;
   /** Pedido expresso de início imediato registado antes do pagamento. */
@@ -170,6 +177,20 @@ export interface DependenciasWebhook {
   garantirConta(userId: string, customerId: string | null): Promise<void>;
   /** +1 crédito uma única vez por origem; maximo limita o saldo. true se creditou. */
   concederCreditoCaso(userId: string, origem: string, maximo: number | null): Promise<boolean>;
+  /**
+   * Retira do saldo o caso de uma compra Avulso (origem checkout:<sessão>)
+   * se ainda estiver por usar. "retirado" se saiu agora; o estado atual
+   * ("consumido", "convertido", "reembolsado") se já não estava
+   * disponível; "sem_credito" se a compra nunca deu crédito. Idempotente.
+   */
+  retirarCreditoAvulso(origem: string, motivo: "convertido" | "reembolsado"): Promise<EstadoRetiradaAvulso>;
+  /**
+   * Compra Avulso paga por este PaymentIntent (null se não for um Avulso)
+   * e se já está totalmente reembolsada no Stripe.
+   */
+  avulsoDoPagamento(paymentIntentId: string): Promise<{ sessionId: string; totalmenteReembolsado: boolean } | null>;
+  /** Marca o pagamento como reembolsado (estado final na base de dados). */
+  marcarPagamentoReembolsado(sessionId: string): Promise<void>;
   /**
    * Fim do Caso + Proteção: congela os casos da subscrição nas contas que a
    * têm (90 dias). Idempotente por subscrição. Devolve quantos congelou.
@@ -443,6 +464,20 @@ async function converterAvulso(
 ) {
   const conversao = await deps.reclamarConversao(conversaoId, session.id, subscriptionId);
   if (!conversao || conversao.refund_id || conversao.requer_intervencao) return;
+
+  // O Avulso pagou a 1.ª mensalidade: o caso dele sai do saldo (o caso do
+  // 1.º ciclo já foi dado pela subscrição). "convertido" = reenvio deste
+  // mesmo passo. Se o caso já foi usado (ex.: entre abrir o Checkout e
+  // pagar) ou o Avulso foi reembolsado, não há reembolso automático.
+  const credito = await deps.retirarCreditoAvulso(`checkout:${conversao.avulso_session_id}`, "convertido");
+  if (credito !== "retirado" && credito !== "convertido") {
+    await deps.marcarIntervencaoConversao(conversao.id, `caso do Avulso indisponível (${credito}) — sem reembolso automático`);
+    await deps.notificarAdmin(
+      "Conversão Avulso por rever — DoLado",
+      `A conversão ${conversao.id} não foi reembolsada: o caso do Avulso já não estava disponível (${credito}). A subscrição ${subscriptionId} continua ativa. Decidir manualmente no Stripe.`,
+    );
+    return;
+  }
 
   if (planoAplicado !== conversao.plano_destino) {
     // O plano pago não é o que foi oferecido na conversão — não reembolsa
@@ -756,7 +791,7 @@ const ESTADOS_REEMBOLSO_FALHADO: ReadonlySet<string> = new Set(["failed", "cance
 async function tratarReembolso(event: Stripe.Event, deps: DependenciasWebhook): Promise<Tratamento> {
   const refund = event.data.object as Stripe.Refund;
   const atualizado = await deps.atualizarReembolso(refund.id, refund.status ?? null, refund.metadata?.conversao_id ?? null);
-  if (!atualizado) return { resultado: "ignorado_sem_conversao" };
+  if (!atualizado) return tratarReembolsoForaDeConversao(refund, deps);
 
   if (atualizado.passouAFalhado && ESTADOS_REEMBOLSO_FALHADO.has(refund.status ?? "")) {
     // Nunca cria um segundo reembolso automaticamente nem cancela a
@@ -772,6 +807,30 @@ async function tratarReembolso(event: Stripe.Event, deps: DependenciasWebhook): 
     return { resultado: "reembolso_falhado_intervencao" };
   }
   return { resultado: `reembolso_${refund.status ?? "sem_estado"}` };
+}
+
+/**
+ * Reembolso feito fora de uma conversão (ex.: livre resolução, decidido à
+ * mão no Stripe). Só um Avulso totalmente reembolsado mexe no saldo; um
+ * reembolso parcial fica para decisão manual (o caso mantém-se).
+ */
+async function tratarReembolsoForaDeConversao(refund: Stripe.Refund, deps: DependenciasWebhook): Promise<Tratamento> {
+  const paymentIntentId = idDe(refund.payment_intent);
+  if (refund.status !== "succeeded" || !paymentIntentId) return { resultado: "ignorado_sem_conversao" };
+  const avulso = await deps.avulsoDoPagamento(paymentIntentId);
+  if (!avulso) return { resultado: "ignorado_sem_conversao" };
+
+  if (!avulso.totalmenteReembolsado) {
+    await deps.notificarAdmin(
+      "Reembolso parcial de Avulso — DoLado",
+      `O pagamento Avulso ${avulso.sessionId} foi reembolsado parcialmente (${refund.id}). O caso disponível não foi retirado automaticamente — decidir manualmente.`,
+    );
+    return { resultado: "reembolso_parcial_avulso" };
+  }
+
+  await deps.marcarPagamentoReembolsado(avulso.sessionId);
+  const credito = await deps.retirarCreditoAvulso(`checkout:${avulso.sessionId}`, "reembolsado");
+  return { resultado: `reembolso_avulso_${credito}` };
 }
 
 const TRATAMENTOS: Record<string, (event: Stripe.Event, deps: DependenciasWebhook) => Promise<Tratamento>> = {

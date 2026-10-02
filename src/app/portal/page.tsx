@@ -4,7 +4,9 @@ import { obterAcesso, requireUser } from "@/lib/auth";
 import {
   escolherAvulsoParaConversao,
   mensagemConversao,
+  sessoesAvulsoDisponiveis,
   type ConversaoExistente,
+  type CreditoConcedido,
   type PagamentoAvulso,
   type PlanoDestino,
 } from "@/lib/stripe/conversao";
@@ -42,7 +44,7 @@ export default async function PortalIndex({
   // confirmado. ?upgraded=true apenas escolhe a mensagem de regresso.
   const acesso = await obterAcesso(supabase, user.id);
 
-  const [{ data: pagamentos }, { data: conversoes }] = await Promise.all([
+  const [{ data: pagamentos }, { data: conversoes }, { data: creditos }] = await Promise.all([
     supabase
       .from("stripe_payments")
       .select("id, stripe_session_id, user_id, plano, estado, valor_total_centimos, created_at")
@@ -55,7 +57,9 @@ export default async function PortalIndex({
       )
       .eq("user_id", user.id)
       .order("convertido_em", { ascending: false, nullsFirst: false }),
+    supabase.from("case_credit_grants").select("origem, estado").eq("user_id", user.id).eq("estado", "disponivel"),
   ]);
+  const avulsosDisponiveis = sessoesAvulsoDisponiveis((creditos ?? []) as CreditoConcedido[]);
   const lista = (pagamentos ?? []) as PagamentoAvulso[];
   const listaConversoes = (conversoes ?? []) as (ConversaoExistente & {
     plano_destino: PlanoDestino;
@@ -79,7 +83,7 @@ export default async function PortalIndex({
 
   // O que o Avulso cobre em cada plano, para o cliente ver antes de aderir.
   const ofertaConversao = (plano: PlanoDestino) => {
-    const escolha = escolherAvulsoParaConversao(lista, listaConversoes, user.id, plano);
+    const escolha = escolherAvulsoParaConversao(lista, listaConversoes, user.id, plano, avulsosDisponiveis);
     return escolha ? { mensalidade: escolha.calculo.mensalidade, reembolso: escolha.calculo.reembolso } : null;
   };
 
