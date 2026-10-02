@@ -1,4 +1,4 @@
-// DoLado — extração de faturas de telecomunicações (Monitor de Proteção).
+// DoLado — extração de faturas (Monitor de Proteção).
 //
 // A Claude API só LÊ e estrutura (structured outputs com o schema abaixo).
 // Este módulo valida o resultado antes de qualquer gravação: datas, valores,
@@ -8,10 +8,10 @@
 // Versões: mudar o schema ou o prompt = nova versão (permite reprocessar
 // documentos sem repetir extrações já feitas — extracoes_documento).
 
-export const SCHEMA_FATURA_TELECOM_VERSAO = "telecom_invoice_v1";
-export const PROMPT_FATURA_TELECOM_VERSAO = "telecom_invoice_prompt_v1";
+export const SCHEMA_FATURA_VERSAO = "fatura_v1";
+export const PROMPT_FATURA_VERSAO = "fatura_prompt_v1";
 
-export const PROMPT_FATURA_TELECOM = `És um extrator de dados da DoLado, uma plataforma portuguesa de apoio a consumidores.
+export const PROMPT_FATURA = `És um extrator de dados da DoLado, uma plataforma portuguesa de apoio a consumidores.
 
 Analisa exclusivamente o documento fornecido e devolve os campos exigidos pelo schema.
 
@@ -22,11 +22,12 @@ Regras:
 - Não inventes valores. Se um campo não estiver presente, usa valor null e confianca "not_found". Se houver mais de um valor possível, usa confianca "ambiguous".
 - Valores em euros com ponto decimal (ex.: 42.99). Datas no formato AAAA-MM-DD.
 - "mensalidade" é o valor mensal recorrente do serviço contratado, sem consumos extra nem valores pontuais.
+- "mensalidade" nas faturas de eletricidade, gás ou água: o total recorrente da fatura sem consumos (se não for possível separar, usa null e confianca "not_found").
 - "valor_cessacao" é o valor que a fatura indica a pagar se o contrato terminar antecipadamente, na data indicada no documento. Não calcules: só o que está escrito.
 - Para fornecedor, total, mensalidade, data_fim_fidelizacao e valor_cessacao indica a página (a primeira é 1) e um excerto curto (até 150 caracteres) do texto onde encontraste o valor.
 - Nas linhas, os descontos têm valor negativo.`;
 
-const CONFIANCAS = ["high", "medium", "low", "not_found", "ambiguous"] as const;
+export const CONFIANCAS = ["high", "medium", "low", "not_found", "ambiguous"] as const;
 export type Confianca = (typeof CONFIANCAS)[number];
 
 const CATEGORIAS_LINHA = [
@@ -40,7 +41,7 @@ const CATEGORIAS_LINHA = [
 ] as const;
 export type CategoriaLinha = (typeof CATEGORIAS_LINHA)[number];
 
-function campo(tipoValor: "string" | "number") {
+export function campoSchema(tipoValor: "string" | "number") {
   return {
     type: "object",
     additionalProperties: false,
@@ -55,7 +56,7 @@ function campo(tipoValor: "string" | "number") {
 }
 
 // JSON Schema para output_config.format (structured outputs).
-export const SCHEMA_FATURA_TELECOM = {
+export const SCHEMA_FATURA = {
   type: "object",
   additionalProperties: false,
   required: [
@@ -77,16 +78,16 @@ export const SCHEMA_FATURA_TELECOM = {
   properties: {
     tipo_documento: { type: "string", enum: ["fatura", "contrato", "outro"] },
     setor: { type: "string", enum: ["telecomunicacoes", "eletricidade", "gas", "agua", "desconhecido"] },
-    fornecedor: campo("string"),
-    referencia_contrato: campo("string"),
-    data_emissao: campo("string"),
+    fornecedor: campoSchema("string"),
+    referencia_contrato: campoSchema("string"),
+    data_emissao: campoSchema("string"),
     periodo_inicio: { type: ["string", "null"] },
     periodo_fim: { type: ["string", "null"] },
     moeda: { type: ["string", "null"] },
-    total: campo("number"),
-    mensalidade: campo("number"),
-    data_fim_fidelizacao: campo("string"),
-    valor_cessacao: campo("number"),
+    total: campoSchema("number"),
+    mensalidade: campoSchema("number"),
+    data_fim_fidelizacao: campoSchema("string"),
+    valor_cessacao: campoSchema("number"),
     data_referencia_cessacao: { type: ["string", "null"] },
     linhas: {
       type: "array",
@@ -109,8 +110,24 @@ export const SCHEMA_FATURA_TELECOM = {
 // Validação de domínio
 // ---------------------------------------------------------------------------
 
+// Campos de contratos_campos (lista fechada na base de dados).
+export type CampoContrato =
+  | "fornecedor"
+  | "referencia_contrato"
+  | "servico"
+  | "data_inicio"
+  | "data_fim_fidelizacao"
+  | "data_fim_promocao"
+  | "descricao_promocao"
+  | "mensalidade_cents"
+  | "vantagem_cents"
+  | "cessacao_operador_cents"
+  | "cessacao_operador_data"
+  | "cpe"
+  | "cui";
+
 export type CampoProposto = {
-  campo: "fornecedor" | "referencia_contrato" | "mensalidade_cents" | "data_fim_fidelizacao" | "cessacao_operador_cents" | "cessacao_operador_data";
+  campo: CampoContrato;
   valor: string | number;
   confianca: Confianca;
   pagina: number | null;
@@ -136,6 +153,7 @@ export type ResultadoValidacao =
   | { ok: false; motivo: "formato_invalido" | "nao_e_fatura" | "setor_nao_suportado" | "moeda_nao_suportada" }
   | {
       ok: true;
+      setor: SetorFatura;
       fatura: FaturaNormalizada;
       // Só campos com confiança high/medium e valores válidos.
       propostas: CampoProposto[];
@@ -145,6 +163,9 @@ export type ResultadoValidacao =
       avisos: string[];
     };
 
+export const SETORES_FATURA = ["telecomunicacoes", "eletricidade", "gas", "agua"] as const;
+export type SetorFatura = (typeof SETORES_FATURA)[number];
+
 const CAMPOS_CRITICOS = ["fornecedor", "total", "mensalidade", "data_fim_fidelizacao", "valor_cessacao"] as const;
 const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 // Diferença tolerada entre o total e a soma das linhas (arredondamentos).
@@ -152,7 +173,7 @@ const TOLERANCIA_TOTAL_CENTS = 5;
 
 type Campo = { valor: unknown; confianca: unknown; pagina: unknown; evidencia: unknown };
 
-function ehObjeto(v: unknown): v is Record<string, unknown> {
+export function ehObjeto(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
@@ -177,24 +198,24 @@ function somarDias(iso: string, dias: number) {
   return d.toISOString().slice(0, 10);
 }
 
-function textoCurto(v: unknown, max: number): string | null {
+export function textoCurto(v: unknown, max: number): string | null {
   if (typeof v !== "string") return null;
   const t = v.replace(/\s+/g, " ").trim();
   return t ? t.slice(0, max) : null;
 }
 
-function pagina(v: unknown): number | null {
+export function pagina(v: unknown): number | null {
   return typeof v === "number" && Number.isInteger(v) && v > 0 ? v : null;
 }
 
 const CONFIANCA_SUFICIENTE: Confianca[] = ["high", "medium"];
 
-export function validarExtracaoFaturaTelecom(bruto: unknown, hoje: string): ResultadoValidacao {
+export function validarExtracaoFatura(bruto: unknown, hoje: string): ResultadoValidacao {
   if (!ehObjeto(bruto) || !Array.isArray(bruto.linhas) || !CAMPOS_CRITICOS.every((c) => ehCampo(bruto[c]))) {
     return { ok: false, motivo: "formato_invalido" };
   }
   if (bruto.tipo_documento !== "fatura") return { ok: false, motivo: "nao_e_fatura" };
-  if (bruto.setor !== "telecomunicacoes") return { ok: false, motivo: "setor_nao_suportado" };
+  if (!SETORES_FATURA.includes(bruto.setor as SetorFatura)) return { ok: false, motivo: "setor_nao_suportado" };
   if (bruto.moeda != null && String(bruto.moeda).trim().toUpperCase() !== "EUR" && String(bruto.moeda).trim() !== "€") {
     return { ok: false, motivo: "moeda_nao_suportada" };
   }
@@ -293,7 +314,7 @@ export function validarExtracaoFaturaTelecom(bruto: unknown, hoje: string): Resu
   if (referencia) propor("referencia_contrato", referencia, textoCurto(referencia.valor, 120));
   propor("mensalidade_cents", mensalidade, mensalidadeCents);
   propor("data_fim_fidelizacao", fimFidelizacao, dataFimFidelizacao);
-  if (cessacaoCents !== null && dataRefCessacao && CONFIANCA_SUFICIENTE.includes(cessacao.confianca as Confianca)) {
+  if (bruto.setor === "telecomunicacoes" && cessacaoCents !== null && dataRefCessacao && CONFIANCA_SUFICIENTE.includes(cessacao.confianca as Confianca)) {
     propor("cessacao_operador_cents", cessacao, cessacaoCents);
     propor("cessacao_operador_data", cessacao, dataRefCessacao);
   }
@@ -302,6 +323,7 @@ export function validarExtracaoFaturaTelecom(bruto: unknown, hoje: string): Resu
 
   return {
     ok: true,
+    setor: bruto.setor as SetorFatura,
     fatura: {
       dataEmissao,
       periodoInicio,

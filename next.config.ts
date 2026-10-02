@@ -17,8 +17,14 @@ const nextConfig: NextConfig = {
       { source: "/portal/elegibilidade", destination: "/simulador-elegibilidade", permanent: true },
       // "Porquê subscrever" (02/10/2026): página órfã desde que "Planos" passou
       // a apontar para o preçário, com um alerta grátis que nenhuma rotina
-      // enviava. Os alertas de fidelização são da Proteção (/portal/alertas).
+      // enviava. Os alertas de fidelização são da Proteção (/portal/contratos).
       { source: "/por-que-assinar", destination: "/#precario", permanent: true },
+      // Monitor de Proteção (PR B): alertas de fidelização, de promoção e
+      // comparador de faturas passaram a "Os meus contratos".
+      { source: "/portal/alertas/:caminho*", destination: "/portal/contratos", permanent: true },
+      { source: "/portal/promocoes/:caminho*", destination: "/portal/contratos", permanent: true },
+      { source: "/portal/faturas/:caminho*", destination: "/portal/contratos", permanent: true },
+      { source: "/backoffice/faturas/:caminho*", destination: "/backoffice/monitor", permanent: true },
     ];
   },
 };

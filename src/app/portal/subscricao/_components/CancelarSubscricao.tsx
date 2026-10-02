@@ -91,8 +91,8 @@ export function CancelarSubscricao({
             Depois dessa data, a subscrição não será renovada e não haverá novas cobranças.
           </p>
           <p className="rounded-[var(--radius-card)] border-l-[3px] border-[var(--color-brand)] bg-[var(--color-brand-wash)] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--color-ink)]">
-            Ao cancelar a subscrição, os seus alertas serão desativados quando a Proteção terminar e deixará de os
-            receber. Conservaremos os dados associados durante {MESES_ALERTAS_GUARDADOS} meses, caso decida voltar à
+            Ao cancelar a subscrição, deixamos de acompanhar os seus contratos e de enviar alertas quando a Proteção
+            terminar. Conservaremos os contratos, os documentos e os dados associados durante {MESES_ALERTAS_GUARDADOS} meses, caso decida voltar à
             DoLado. Após esse período, serão eliminados ou anonimizados.
           </p>
           {mostrarCasosGuardados && (

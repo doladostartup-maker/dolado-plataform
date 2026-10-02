@@ -1,0 +1,113 @@
+import Link from "next/link";
+import { requireProtecao } from "@/lib/auth";
+import { ROTULO_SETOR, proximaData, textoProximaData, type SetorContratoMonitor } from "@/lib/monitor/contratos";
+import { UploadDocumento } from "./_components/UploadDocumento";
+import { CARTAO, TITULO_SECCAO } from "./_components/estilos";
+
+function hojeLisboa() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(new Date());
+}
+
+const MENSAGENS: Record<string, { texto: string; tom: "ok" | "info" | "erro" }> = {
+  removido: { texto: "Deixámos de acompanhar o contrato e apagámos os documentos e os dados associados.", tom: "ok" },
+  repetido: { texto: "Este documento já tinha sido carregado.", tom: "info" },
+  pendente: {
+    texto: "Recebemos o documento. Ainda não o conseguimos ler automaticamente: a DoLado vai verificá-lo e os dados aparecem aqui quando estiverem prontos.",
+    tom: "info",
+  },
+  a_rever: { texto: "Recebemos o documento. Alguns dados precisam de ser verificados pela DoLado antes de aparecerem.", tom: "info" },
+};
+
+export default async function ContratosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ erro?: string; removido?: string; aviso?: string; documento?: string }>;
+}) {
+  const params = await searchParams;
+  const { supabase, user } = await requireProtecao("contratos");
+
+  const [{ data: contratos }, { data: porConfirmar }, { data: aLer }] = await Promise.all([
+    supabase
+      .from("contratos_monitorizados")
+      .select("id, setor, fornecedor, estado, data_fim_fidelizacao, data_fim_promocao, desativado_em")
+      .eq("utilizador_id", user.id)
+      .is("desativado_em", null)
+      .order("created_at", { ascending: true }),
+    supabase.from("contratos_campos").select("contrato_id").eq("utilizador_id", user.id).in("estado", ["proposto", "em_conflito"]),
+    supabase
+      .from("documentos_monitor")
+      .select("id")
+      .eq("utilizador_id", user.id)
+      .is("contrato_id", null)
+      .in("estado", ["pendente", "a_rever"]),
+  ]);
+
+  const pendentesPorContrato = new Map<string, number>();
+  for (const c of porConfirmar ?? []) pendentesPorContrato.set(c.contrato_id, (pendentesPorContrato.get(c.contrato_id) ?? 0) + 1);
+
+  const hoje = hojeLisboa();
+  const chaveMensagem = params.removido ? "removido" : params.aviso ?? params.documento;
+  const mensagem = chaveMensagem ? MENSAGENS[chaveMensagem] : undefined;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">Os meus contratos</h1>
+        <p className="max-w-[62ch] text-sm leading-relaxed text-[var(--color-ink-muted)]">
+          Carregue uma fatura ou o contrato. A DoLado acompanha as datas de fim de fidelização e de promoção, guarda o
+          histórico das suas faturas e avisa-o por e-mail a 60 e a 30 dias e na própria data.
+        </p>
+      </div>
+
+      {mensagem && (
+        <p className={`text-sm ${mensagem.tom === "ok" ? "text-[var(--color-status-success)]" : "text-[var(--color-ink-muted)]"}`}>{mensagem.texto}</p>
+      )}
+      {params.erro && <p className="text-sm text-[var(--color-status-danger)]">{params.erro}</p>}
+
+      {(contratos ?? []).length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {(contratos ?? []).map((c) => {
+            const pendentes = pendentesPorContrato.get(c.id) ?? 0;
+            return (
+              <Link key={c.id} href={`/portal/contratos/${c.id}`} className={`${CARTAO} flex flex-col gap-1.5 transition hover:border-[var(--color-brand)]`}>
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-[15px] font-semibold text-[var(--color-ink)]">{c.fornecedor ?? "Fornecedor por confirmar"}</p>
+                  {pendentes > 0 && (
+                    <span className="shrink-0 rounded-[var(--radius-pill)] bg-[var(--color-brand-wash)] px-2 py-0.5 text-[11px] font-semibold text-[var(--color-brand)]">
+                      {pendentes === 1 ? "1 dado por confirmar" : `${pendentes} dados por confirmar`}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[13px] text-[var(--color-ink-faint)]">{ROTULO_SETOR[c.setor as SetorContratoMonitor] ?? c.setor}</p>
+                <p className="text-sm text-[var(--color-ink-muted)]">{textoProximaData(proximaData(c, hoje))}</p>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {(aLer ?? []).length > 0 && (
+        <p className="text-sm text-[var(--color-ink-muted)]">
+          {aLer!.length === 1 ? "1 documento está" : `${aLer!.length} documentos estão`} a ser verificados pela DoLado.
+          Os dados aparecem aqui quando estiverem prontos.
+        </p>
+      )}
+
+      <div className={`${CARTAO} max-w-xl`}>
+        <h2 className={`${TITULO_SECCAO} mb-1`}>{(contratos ?? []).length ? "Carregar outro documento" : "Comece com uma fatura"}</h2>
+        <p className="mb-4 text-sm text-[var(--color-ink-muted)]">
+          Basta uma fatura para começar. Se o documento for de um fornecedor que já acompanhamos, juntamo-lo a esse contrato.
+        </p>
+        <UploadDocumento />
+      </div>
+
+      <p className="text-sm text-[var(--color-ink-muted)]">
+        Não tem o documento à mão?{" "}
+        <Link href="/portal/contratos/novo" className="font-medium text-[var(--color-brand)] underline">
+          Indique os dados do contrato
+        </Link>
+        .
+      </p>
+    </div>
+  );
+}

@@ -150,7 +150,7 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
         id: "o-que-inclui-protecao",
         pergunta: "O que inclui o plano Proteção?",
         resposta:
-          "O plano Proteção dá acesso às funcionalidades de prevenção e acompanhamento de contratos disponíveis na DoLado — alertas de fim de fidelização e de fim de promoção, aviso sectorial e comparador de faturas. Não inclui o tratamento de reclamações.",
+          "O plano Proteção dá acesso às funcionalidades de prevenção e acompanhamento de contratos disponíveis na DoLado — o Monitor de Proteção, que acompanha os seus contratos e faturas e o avisa do fim da fidelização e das promoções, e o aviso sectorial. Não inclui o tratamento de reclamações.",
       },
       {
         id: "o-que-inclui-caso-protecao",

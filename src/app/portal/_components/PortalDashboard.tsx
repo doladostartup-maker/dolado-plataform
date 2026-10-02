@@ -22,7 +22,7 @@ type OfertaConversao = { mensalidade: number; reembolso: number } | null;
 const OPCOES = [
   {
     plano: "protecao",
-    descricao: "Alertas, aviso sectorial e comparador de faturas. Não inclui casos.",
+    descricao: "Monitor de Proteção (contratos, faturas e alertas de datas) e aviso sectorial. Não inclui casos.",
     cta: "Aderir à Proteção",
   },
   {
@@ -129,28 +129,16 @@ const CARDS: Card[] = [
     sempreActivo: true,
   },
   {
-    slug: "alertas",
-    titulo: "⏰ Fidelização",
-    descricao: "Avisamos quando o período de fidelização do seu contrato terminar.",
-    href: "/portal/alertas",
-  },
-  {
-    slug: "promocoes",
-    titulo: "🏷️ Promoção",
-    descricao: "Avisamos antes de uma promoção contratada terminar.",
-    href: "/portal/promocoes",
+    slug: "contratos",
+    titulo: "🛡️ Os meus contratos",
+    descricao: "Carregue uma fatura ou o contrato: acompanhamos as datas de fidelização e de promoção e o histórico das faturas.",
+    href: "/portal/contratos",
   },
   {
     slug: "sectorial",
     titulo: "📢 Sectorial",
     descricao: "Avisamos quando o seu operador anunciar subida de preços no setor.",
     href: "/portal/perfil",
-  },
-  {
-    slug: "faturas",
-    titulo: "📊 Faturas",
-    descricao: "Compare a fatura com o mês anterior e detete cobranças fora do padrão.",
-    href: "/portal/faturas",
   },
 ];
 
@@ -311,8 +299,8 @@ export function PortalDashboard({
               </div>
             ) : (
               <p className="mb-5 text-[13.5px] leading-relaxed text-[var(--color-ink-muted)]">
-                Os planos Proteção e Caso + Proteção desbloqueiam os alertas, o aviso sectorial e o
-                comparador de faturas.
+                Os planos Proteção e Caso + Proteção desbloqueiam o Monitor de Proteção (os seus
+                contratos, faturas e alertas de datas) e o aviso sectorial.
               </p>
             )}
 
