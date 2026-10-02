@@ -93,8 +93,8 @@ export default async function ContratosPage({
         </p>
       )}
 
-      <div className={`${CARTAO} max-w-xl`}>
-        <h2 className={`${TITULO_SECCAO} mb-1`}>{(contratos ?? []).length ? "Carregar outro documento" : "Comece com uma fatura"}</h2>
+      <div id="acrescentar" className={`${CARTAO} max-w-xl scroll-mt-24`}>
+        <h2 className={`${TITULO_SECCAO} mb-1`}>{(contratos ?? []).length ? "Acrescentar outro contrato" : "Comece com uma fatura"}</h2>
         <p className="mb-4 text-sm text-[var(--color-ink-muted)]">
           Basta uma fatura para começar. Se o documento for de um fornecedor que já acompanhamos, juntamo-lo a esse contrato.
         </p>

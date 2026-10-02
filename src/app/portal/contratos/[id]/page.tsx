@@ -123,9 +123,14 @@ export default async function ContratoPage({
           <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">{contrato.fornecedor ?? "Fornecedor por confirmar"}</h1>
           <p className="text-sm text-[var(--color-ink-faint)]">{ROTULO_SETOR[contrato.setor as SetorContratoMonitor] ?? contrato.setor}</p>
         </div>
-        <Link href="/portal/contratos" className="text-sm text-[var(--color-ink-muted)] underline">
-          Voltar
-        </Link>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <Link href="/portal/contratos#acrescentar" className={BOTAO_SECUNDARIO}>
+            Acrescentar outro contrato
+          </Link>
+          <Link href="/portal/contratos" className="text-sm text-[var(--color-ink-muted)] underline">
+            Voltar
+          </Link>
+        </div>
       </div>
 
       {query.documento && MENSAGEM_DOCUMENTO[query.documento] && (
