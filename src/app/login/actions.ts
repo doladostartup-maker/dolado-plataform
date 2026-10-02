@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { destinoSeguro } from "@/lib/pedidoCaso";
 import { createClient } from "@/lib/supabase/server";
+import { mensagemErroConta } from "@/lib/mensagensErro";
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -15,7 +16,7 @@ export async function login(formData: FormData) {
 
   if (error) {
     const voltar = next === "/conta" ? "" : `&next=${encodeURIComponent(next)}`;
-    redirect(`/login?erro=${encodeURIComponent(error.message)}${voltar}`);
+    redirect(`/login?erro=${encodeURIComponent(mensagemErroConta(error.code, error.message))}${voltar}`);
   }
 
   redirect(next);

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 
 export async function criarCasoCliente(formData: FormData) {
   const supabase = await createClient();
@@ -111,7 +112,7 @@ export async function decidirClienteCaso(
   const { error } = await admin.from("casos").update(dados).eq("id", id);
 
   if (error) {
-    redirect(`/portal/casos/${id}?erro=${encodeURIComponent(error.message)}`);
+    redirect(`/portal/casos/${id}?erro=${encodeURIComponent(MSG_ERRO_GUARDAR)}`);
   }
 
   revalidatePath(`/portal/casos/${id}`);

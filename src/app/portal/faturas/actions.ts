@@ -7,6 +7,7 @@ import { temProtecao } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { extrairValoresFatura, gerarAnalise } from "@/lib/facturas/extrairFatura";
 import { CONTACTO_EMAIL } from "@/lib/site";
+import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 
 const BUCKET = "faturas-comparador";
 const TAMANHO_MAXIMO = 10 * 1024 * 1024; // 10 MB
@@ -155,7 +156,7 @@ export async function criarComparacaoFaturaPortal(formData: FormData) {
     });
 
     if (error) {
-      redirect(`/portal/faturas?erro=${encodeURIComponent(error.message)}`);
+      redirect(`/portal/faturas?erro=${encodeURIComponent(MSG_ERRO_GUARDAR)}`);
     }
 
     await enviarEmailBrevo(
@@ -228,7 +229,7 @@ export async function criarComparacaoFaturaPortal(formData: FormData) {
   });
 
   if (erroInsert) {
-    redirect(`/portal/faturas?erro=${encodeURIComponent(erroInsert.message)}`);
+    redirect(`/portal/faturas?erro=${encodeURIComponent(MSG_ERRO_GUARDAR)}`);
   }
 
   await enviarEmailBrevo(

@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { temProtecao } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CONTACTO_EMAIL } from "@/lib/site";
+import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 
 const BUCKET = "contratos-promocao";
 const TAMANHO_MAXIMO = 10 * 1024 * 1024; // 10 MB
@@ -175,7 +176,7 @@ export async function criarAlertaPromocaoPortal(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/portal/promocoes?erro=${encodeURIComponent(error.message)}`);
+    redirect(`/portal/promocoes?erro=${encodeURIComponent(MSG_ERRO_GUARDAR)}`);
   }
 
   await enviarEmailConfirmacao(
@@ -232,7 +233,7 @@ export async function actualizarAlertaPromocaoPortal(id: string, formData: FormD
     .eq("id", id);
 
   if (error) {
-    redirect(`/portal/promocoes/${id}?erro=${encodeURIComponent(error.message)}`);
+    redirect(`/portal/promocoes/${id}?erro=${encodeURIComponent(MSG_ERRO_GUARDAR)}`);
   }
 
   revalidatePath("/portal/promocoes");
@@ -253,7 +254,7 @@ export async function apagarAlertaPromocaoPortal(id: string, _formData: FormData
   const { error } = await supabase.from("alertas_promocao_portal").delete().eq("id", id);
 
   if (error) {
-    redirect(`/portal/promocoes?erro=${encodeURIComponent(error.message)}`);
+    redirect(`/portal/promocoes?erro=${encodeURIComponent(MSG_ERRO_GUARDAR)}`);
   }
 
   revalidatePath("/portal/promocoes");

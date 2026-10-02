@@ -19,6 +19,7 @@ const PAGINAS_PUBLICAS = [
   "/sobre-nos",
   "/contacto",
   "/simulador-elegibilidade",
+  "/calculadora-cancelamento",
   "/perguntas-frequentes",
 ];
 
@@ -54,6 +55,7 @@ const PAGINAS_SO_MARKETING = [
   "/sobre-nos",
   "/contacto",
   "/simulador-elegibilidade",
+  "/calculadora-cancelamento",
   "/perguntas-frequentes",
 ];
 

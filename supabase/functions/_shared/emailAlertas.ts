@@ -66,7 +66,7 @@ export function htmlAvisoFidelizacao(nome: string, operadora: string, dias: numb
                   <td style="padding:16px 20px; font-family:'Inter', Arial, Helvetica, sans-serif; color:#171A21; font-size:14px; line-height:1.6;">
                     <p style="margin:0 0 8px 0; font-weight:600;">Pode:</p>
                     <p style="margin:0 0 4px 0;">— Renegociar as condições</p>
-                    <p style="margin:0 0 4px 0;">— Trocar de operadora</p>
+                    <p style="margin:0 0 4px 0;">— Mudar de operadora</p>
                     <p style="margin:0;">— Apresentar uma reclamação se houver mudanças não autorizadas</p>
                   </td>
                 </tr>

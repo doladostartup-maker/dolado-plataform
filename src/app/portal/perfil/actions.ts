@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { MSG_ERRO_GUARDAR, mensagemErroConta } from "@/lib/mensagensErro";
 
 export async function alterarPassword(formData: FormData) {
   const password = formData.get("password") as string;
@@ -24,7 +25,7 @@ export async function alterarPassword(formData: FormData) {
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    redirect(`/portal/perfil?erro=${encodeURIComponent(error.message)}`);
+    redirect(`/portal/perfil?erro=${encodeURIComponent(mensagemErroConta(error.code, error.message))}`);
   }
 
   redirect("/portal/perfil?guardado=1");
@@ -52,7 +53,7 @@ export async function guardarPreferenciasSetor(formData: FormData) {
     .eq("utilizador_id", user.id);
 
   if (erroApagar) {
-    redirect(`/portal/perfil?erro=${encodeURIComponent(erroApagar.message)}`);
+    redirect(`/portal/perfil?erro=${encodeURIComponent(MSG_ERRO_GUARDAR)}`);
   }
 
   if (setores.length > 0) {
@@ -61,7 +62,7 @@ export async function guardarPreferenciasSetor(formData: FormData) {
       .insert(setores.map((setor) => ({ utilizador_id: user.id, setor })));
 
     if (erroInserir) {
-      redirect(`/portal/perfil?erro=${encodeURIComponent(erroInserir.message)}`);
+      redirect(`/portal/perfil?erro=${encodeURIComponent(MSG_ERRO_GUARDAR)}`);
     }
   }
 
