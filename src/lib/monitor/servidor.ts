@@ -225,7 +225,26 @@ async function avaliarAchados(admin: Admin, contratoId: string, documentoId: str
   return n;
 }
 
-export async function processarDocumento(documentoId: string): Promise<{ estado: EstadoDocumento; contratoId: string | null }> {
+export type MotivoPendente =
+  | "orcamento_atingido"
+  | "formato_nao_lido"
+  | "ficheiro_nao_encontrado"
+  | "api_nao_configurada"
+  | "erro_api"
+  | "recusa"
+  | "resposta_invalida"
+  | "validacao"
+  | "erro_inesperado";
+
+export type ResultadoProcessamento = {
+  estado: EstadoDocumento;
+  contratoId: string | null;
+  /** Porque não ficou processado (só para o admin). */
+  motivo?: MotivoPendente;
+  detalhe?: string;
+};
+
+export async function processarDocumento(documentoId: string): Promise<ResultadoProcessamento> {
   const admin = createAdminClient();
   const { data: doc } = await admin
     .from("documentos_monitor")
@@ -242,19 +261,19 @@ export async function processarDocumento(documentoId: string): Promise<{ estado:
     const gastoAntes = await gastoApiUsd(admin);
     if (estadoOrcamento(gastoAntes, teto).bloqueado) {
       await avisarAdmin("Orçamento da Claude API atingido", `Documento ${doc.id} ficou pendente: o gasto (${gastoAntes.toFixed(2)} USD) atingiu o teto de ${teto} USD.`);
-      return { estado: "pendente", contratoId: doc.contrato_id };
+      return { estado: "pendente", contratoId: doc.contrato_id, motivo: "orcamento_atingido" };
     }
 
     // 2. Ficheiro
     if (!MIME_ACEITES.includes(doc.mime_type as MimeAceite)) {
       await marcar(admin, doc.id, "a_rever");
       await avisarAdmin("Documento por rever", `Documento ${doc.id}: formato ${doc.mime_type ?? "desconhecido"} não é lido automaticamente.`);
-      return { estado: "a_rever", contratoId: doc.contrato_id };
+      return { estado: "a_rever", contratoId: doc.contrato_id, motivo: "formato_nao_lido" };
     }
     const { data: ficheiro, error: erroFicheiro } = await admin.storage.from(doc.bucket).download(doc.storage_path);
     if (erroFicheiro || !ficheiro) {
       await avisarAdmin("Documento por processar", `Documento ${doc.id}: o ficheiro não foi encontrado no Storage.`);
-      return { estado: "pendente", contratoId: doc.contrato_id };
+      return { estado: "pendente", contratoId: doc.contrato_id, motivo: "ficheiro_nao_encontrado" };
     }
 
     const ehContrato = doc.tipo === "contrato";
@@ -308,8 +327,8 @@ export async function processarDocumento(documentoId: string): Promise<{ estado:
       if (!chamada.ok) {
         if (chamada.motivo === "api_nao_configurada" || chamada.motivo === "erro_api") {
           // Caminho manual, sem erro para o cliente.
-          await avisarAdmin("Documento por processar", `Documento ${doc.id} ficou pendente (${chamada.motivo}).`);
-          return { estado: "pendente", contratoId: doc.contrato_id };
+          await avisarAdmin("Documento por processar", `Documento ${doc.id} ficou pendente (${chamada.motivo}${chamada.detalhe ? `: ${chamada.detalhe}` : ""}).`);
+          return { estado: "pendente", contratoId: doc.contrato_id, motivo: chamada.motivo, detalhe: chamada.detalhe };
         }
         await admin.from("extracoes_documento").insert({
           documento_id: doc.id,
@@ -321,7 +340,7 @@ export async function processarDocumento(documentoId: string): Promise<{ estado:
         });
         await marcar(admin, doc.id, "a_rever");
         await avisarAdmin("Documento por rever", `Documento ${doc.id}: leitura sem resultado válido (${chamada.motivo}).`);
-        return { estado: "a_rever", contratoId: doc.contrato_id };
+        return { estado: "a_rever", contratoId: doc.contrato_id, motivo: chamada.motivo };
       }
 
       const { data: extracao, error: erroExtracao } = await admin
@@ -347,7 +366,7 @@ export async function processarDocumento(documentoId: string): Promise<{ estado:
       if (!v.ok) {
         await marcar(admin, doc.id, "a_rever");
         await avisarAdmin("Documento por rever", `Documento ${doc.id}: ${v.motivo}.`);
-        return { estado: "a_rever", contratoId: doc.contrato_id };
+        return { estado: "a_rever", contratoId: doc.contrato_id, motivo: "validacao", detalhe: v.motivo };
       }
       const fornecedor = v.propostas.find((p) => p.campo === "fornecedor")?.valor as string | undefined;
       const contratoId = await contratoParaDocumento(admin, doc, fornecedor ?? null, v.setor);
@@ -363,7 +382,7 @@ export async function processarDocumento(documentoId: string): Promise<{ estado:
     if (!v.ok) {
       await marcar(admin, doc.id, "a_rever");
       await avisarAdmin("Documento por rever", `Documento ${doc.id}: ${v.motivo}.`);
-      return { estado: "a_rever", contratoId: doc.contrato_id };
+      return { estado: "a_rever", contratoId: doc.contrato_id, motivo: "validacao", detalhe: v.motivo };
     }
     const fornecedor = v.propostas.find((p) => p.campo === "fornecedor")?.valor as string | undefined;
     const contratoId = await contratoParaDocumento(admin, doc, fornecedor ?? null, v.setor);
@@ -397,8 +416,9 @@ export async function processarDocumento(documentoId: string): Promise<{ estado:
     if (estado === "a_rever") await avisarAdmin("Documento por rever", `Documento ${doc.id}: ${v.avisos.join("; ") || "confiança baixa num campo importante"}.`);
     return { estado, contratoId };
   } catch (erro) {
+    const detalhe = (erro instanceof Error ? erro.message : String(erro)).slice(0, 300);
     console.error(`Falha ao processar o documento ${documentoId}:`, erro);
-    await avisarAdmin("Documento por processar", `Documento ${documentoId}: erro inesperado no processamento.`);
-    return { estado: "pendente", contratoId: doc.contrato_id };
+    await avisarAdmin("Documento por processar", `Documento ${documentoId}: erro inesperado no processamento (${detalhe}).`);
+    return { estado: "pendente", contratoId: doc.contrato_id, motivo: "erro_inesperado", detalhe };
   }
 }
