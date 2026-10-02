@@ -27,10 +27,10 @@ const FUNCIONALIDADES: Funcionalidade[] = [
     descricao: "Abertura guiada, identificação da legislação aplicável e reclamação preparada por si.",
   },
   {
-    icone: "⏰",
+    icone: "🛡️",
     badge: "DISPONÍVEL",
-    titulo: "Alertas",
-    descricao: "Fim de fidelização e fim de período promocional, com aviso por e-mail antes da data.",
+    titulo: "Monitor de Proteção",
+    descricao: "Carregue uma fatura ou o contrato: acompanhamos as datas de fidelização e de promoção e o histórico das faturas, com aviso por e-mail.",
   },
   {
     icone: "📢",
@@ -38,18 +38,20 @@ const FUNCIONALIDADES: Funcionalidade[] = [
     titulo: "Aviso Sectorial",
     descricao: "Alertamos quando o seu operador anuncia subida de preços no setor.",
   },
-  {
-    icone: "📊",
-    badge: "DISPONÍVEL",
-    titulo: "Comparador de Faturas",
-    descricao: "Compare a fatura com o mês anterior e detete cobranças fora do padrão.",
-  },
+
   {
     icone: "🧑‍🤝‍🧑",
     badge: "DISPONÍVEL",
     titulo: "Simulador de Elegibilidade",
     descricao: "Grátis e sem conta — 4 perguntas para ver se a DoLado pode ajudar com o seu caso.",
     href: "/simulador-elegibilidade",
+  },
+  {
+    icone: "🧮",
+    badge: "DISPONÍVEL",
+    titulo: "Calculadora de Cancelamento",
+    descricao: "Grátis e sem conta — estime o encargo máximo de cancelar um contrato de telecomunicações com fidelização.",
+    href: "/calculadora-cancelamento",
   },
   {
     icone: "➕",

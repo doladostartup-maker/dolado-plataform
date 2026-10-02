@@ -1,8 +1,8 @@
 # Rascunho — Política de Privacidade, versão para o Monitor de Proteção
 
-**Estado:** rascunho para validação pela advogada. **Não publicado.**
+**Estado:** validado pela advogada (confirmado por Thiago a 02/10/2026) e **publicado como versão `2026-10-02e`**. Mantido como registo das alterações.
 **Base:** versão em vigor `2026-10-02d`.
-**Versão proposta:** `2026-10-0X` (a data da publicação, depois da validação).
+**Versão publicada:** `2026-10-02e`.
 **Porquê:** o Monitor de Proteção (`docs/especificacoes/PLANO_MONITOR_FASE1.md`) junta e alarga as funcionalidades de proteção: a DoLado passa a guardar um registo estruturado de cada contrato acompanhado, o histórico das faturas carregadas, identificadores da instalação (CPE/CUI) e situações detetadas nas faturas, com revisão humana antes de qualquer comunicação.
 
 Só mudam as secções 2, 3, 4, 5 (Anthropic) e 6 (tabela de prazos). As secções 1 e 7 a 10 não mudam.

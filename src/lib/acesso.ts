@@ -16,8 +16,8 @@
 //   o caso é pago no fluxo "Tratar o meu caso" (src/lib/pedidoCaso.ts).
 //
 // "Funcionalidades de proteção" são as que hoje estão marcadas "Somente
-// Assinantes" (alertas de fidelização e de promoção, aviso sectorial,
-// comparador de faturas). O Simulador de Elegibilidade é público e gratuito
+// Assinantes" (Monitor de Proteção — contratos, faturas e alertas de datas —
+// e aviso sectorial). O Simulador de Elegibilidade é público e gratuito
 // desde 01/10/2026 — não depende do plano. Funcionalidades
 // futuras de proteção usam a mesma verificação (temProtecao).
 

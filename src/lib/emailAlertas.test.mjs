@@ -58,12 +58,38 @@ describe("destinatário dos alertas diários", () => {
     });
   }
 
-  test("confirmação imediata do alerta de promoção também faz escape", () => {
-    const acoes = fonte("../app/portal/promocoes/actions.ts");
-    assert.match(acoes, /escaparHtml\(operadora\)/);
-    assert.match(acoes, /escaparHtml\(descricao\)/);
-    assert.match(acoes, /escaparHtml\(destino\.nome\)/);
-    // O destino desta confirmação é o e-mail da sessão.
-    assert.match(acoes, /\{ email: user\.email!/);
+  test("verificar-monitor-datas: destinatário da função da conta, reserva antes de enviar, e-mail com escape", () => {
+    const codigo = fonte("../../supabase/functions/verificar-monitor-datas/index.ts");
+    assert.match(codigo, /rpc<AlertaPendente\[\]>\("monitor_alertas_pendentes"/);
+    assert.match(codigo, /from "\.\.\/_shared\/emailAlertas\.ts"/);
+    // A reserva vem antes do envio; uma falha liberta a reserva.
+    assert.ok(codigo.indexOf('"monitor_reservar_alerta"') < codigo.indexOf("await enviarEmailBrevo("));
+    assert.match(codigo, /"monitor_libertar_alerta"/);
+    // Nunca lê tabelas diretamente para escolher destinatários.
+    assert.equal(/rest\/v1\/contratos_/.test(codigo), false);
+  });
+});
+
+describe("e-mails do Monitor de Proteção", async () => {
+  const { assuntoAlertaMonitor, htmlAlertaMonitor } = await import("../../supabase/functions/_shared/emailAlertas.ts");
+  const base = { nome: "Ana", fornecedor: "Vodafone", descricaoPromocao: null, dataFim: "2027-02-28", contratoId: "abc" };
+
+  test("assuntos por janela", () => {
+    assert.equal(assuntoAlertaMonitor("fidelizacao_60d", "Vodafone", 59), "A fidelização com Vodafone termina dentro de 59 dias");
+    assert.equal(assuntoAlertaMonitor("promocao_fim", "NOS", 0), "A promoção com NOS termina hoje");
+    assert.equal(assuntoAlertaMonitor("fidelizacao_fim", null, -1), "A fidelização terminou");
+  });
+
+  test("texto factual, com ligação ao contrato e sem conclusões sobre direitos", () => {
+    const html = htmlAlertaMonitor({ ...base, regra: "fidelizacao_30d", dias: 30 });
+    assert.ok(html.includes("que temos registada termina dentro de 30 dias"));
+    assert.ok(html.includes("https://portal.dolado.pt/portal/contratos/abc"));
+    assert.equal(/tem direito|ilegal|violou/i.test(html), false);
+  });
+
+  test("escape do fornecedor e da descrição da promoção", () => {
+    const html = htmlAlertaMonitor({ ...base, regra: "promocao_30d", dias: 10, fornecedor: MALICIOSO, descricaoPromocao: MALICIOSO });
+    assert.equal(html.includes("<script>"), false);
+    assert.equal(html.includes('phishing.invalid">'), false);
   });
 });

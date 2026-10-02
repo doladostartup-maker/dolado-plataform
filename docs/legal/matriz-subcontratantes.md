@@ -5,7 +5,7 @@ Documento interno (art. 28.º e 30.º do RGPD). Fonte única desta informação 
 em `src/lib/legal.ts`) tem de ficar coerente com esta matriz: se um fornecedor, uma finalidade ou um
 mecanismo de transferência mudar, rever a Política (nova versão — as publicadas não se editam).
 
-- **Última revisão:** 02/10/2026 (Política de Privacidade `2026-10-02c`).
+- **Última revisão:** 02/10/2026 (Política de Privacidade `2026-10-02e` — Monitor de Proteção).
 - **Fontes:** código e configuração do repositório, API da Supabase (região do projeto), `CLAUDE.md`
   e confirmação de Thiago (01/10/2026) de que os DPA estão obtidos.
 - **"A validar"** = não se confirma pelo repositório; confirmar no DPA / conta do fornecedor e
@@ -22,7 +22,7 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 | Supabase | Base de dados, autenticação, armazenamento de documentos, funções agendadas | Subcontratante | UE — AWS `eu-west-3` (Paris) | Possíveis (empresa dos EUA) | SCCs (segundo o `CLAUDE.md`) — confirmar no DPA | Obtido |
 | Clever Cloud | Alojamento e execução da aplicação Next.js | Subcontratante | UE — `par` (Paris) | Não previstas — a validar subcontratantes ulteriores | Não aplicável, salvo o que o DPA indicar | Obtido |
 | Brevo | E-mail transacional | Subcontratante | UE (sede em França) | Não previstas — a validar subcontratantes ulteriores | A validar no DPA | Obtido |
-| Anthropic | Claude API (Alerta de fim de promoção, Comparador de Faturas) | Subcontratante | A validar | Possíveis | A validar no DPA (SCCs, se aplicável) | Obtido |
+| Anthropic | Claude API (leitura de faturas e contratos no Monitor de Proteção) | Subcontratante | A validar | Possíveis | A validar no DPA (SCCs, se aplicável) | Obtido |
 | Stripe | Pagamentos, subscrições, faturação, reembolsos | Subcontratante; responsável autónomo para finalidades próprias | A validar (entidade contratante) | Possíveis | A validar no DPA (SCCs / DPF) | Obtido |
 | Google | GA4, Tag Manager, Google Ads (com consentimento); início de sessão com Google | Subcontratante na medição; responsável autónomo para fins próprios e no início de sessão | A validar | Possíveis | A validar no DPA (SCCs / DPF) | Obtido |
 | Cookiebot (Usercentrics) | Gestão do consentimento de cookies | Subcontratante | A validar | A validar | A validar | **Por confirmar** |
@@ -90,10 +90,11 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 
 ### Anthropic (Claude API)
 
-- **Serviço / finalidade:** extração factual por IA — data de fim de promoção a partir do contrato
-  (`src/app/api/internal/extract-promotion-date/route.ts`) e valores da fatura no Comparador de Faturas
-  (`src/lib/facturas/extrairFatura.ts`). Sem decisões automatizadas com efeitos jurídicos (secção 4 da
-  Política; regras em "Uso de IA" no `CLAUDE.md`).
+- **Serviço / finalidade:** extração factual por IA no Monitor de Proteção — datas, valores e fornecedor
+  lidos das faturas e dos contratos carregados (`src/lib/monitor/claudeDocumentos.ts`), um documento por
+  chamada, sem histórico nem ferramentas. Comparações e regras em código; revisão humana antes de comunicar
+  qualquer situação detetada. Sem decisões automatizadas com efeitos jurídicos (secção 4 da Política;
+  regras em "Uso de IA" no `CLAUDE.md`).
 - **Categorias de dados:** o documento submetido pelo cliente (PDF ou imagem, enviado em base64), que
   pode conter nome, morada, NIF, número de cliente e dados de consumo. A DoLado não acrescenta nome,
   e-mail nem telefone da conta.

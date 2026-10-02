@@ -76,6 +76,8 @@ select ok(not has_function_privilege('service_role', 'public.limpar_alertas_desa
 select ok(not has_table_privilege('authenticated', 'public.contratos_monitorizados', 'INSERT'), 'contratos: cliente sem INSERT');
 select ok(not has_table_privilege('authenticated', 'public.contratos_campos', 'UPDATE'), 'proveniência: cliente sem UPDATE');
 select ok(not has_table_privilege('authenticated', 'public.uso_api_claude', 'INSERT'), 'custo da API: cliente sem INSERT');
+select ok(exists (select 1 from cron.job where jobname = 'verificar-monitor-datas-diario' and command like '%verificar-monitor-datas%'), 'cron: alertas do Monitor agendados');
+select ok(not exists (select 1 from cron.job where jobname in ('verificar-alertas-fidelizacao-diario', 'verificar-alertas-promocao-diario')), 'cron: agendamentos antigos removidos (sem envios duplicados)');
 
 -- ===========================================================================
 -- 2. RLS: o cliente só lê o que é seu, e nunca escreve
