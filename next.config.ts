@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
       // O Simulador de Elegibilidade saiu do portal (01/10/2026): é público,
       // sem conta. Redirect aqui, antes do middleware e do login do portal.
       { source: "/portal/elegibilidade", destination: "/simulador-elegibilidade", permanent: true },
+      // "Porquê subscrever" (02/10/2026): página órfã desde que "Planos" passou
+      // a apontar para o preçário, com um alerta grátis que nenhuma rotina
+      // enviava. Os alertas de fidelização são da Proteção (/portal/alertas).
+      { source: "/por-que-assinar", destination: "/#precario", permanent: true },
     ];
   },
 };
