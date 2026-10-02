@@ -61,6 +61,11 @@ export async function criarCasoCliente(formData: FormData) {
     redirect(`/portal/casos/novo?erro=${encodeURIComponent("Não foi possível criar o caso. Tente novamente.")}`);
   }
 
+  // Auditoria: o caso aberto com um Avulso fica ligado a essa compra.
+  if (consumido.startsWith("checkout:")) {
+    await admin.from("case_credit_grants").update({ caso_id: data.id }).eq("origem", consumido);
+  }
+
   redirect(`/portal/casos/${data.id}`);
 }
 

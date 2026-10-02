@@ -53,7 +53,7 @@ export default async function PortalIndex({
     supabase
       .from("conversoes_avulso")
       .select(
-        "id, stripe_payment_id, estado, checkout_session_id, plano_destino, valor_primeira_mensalidade_centimos, refund_montante_centimos, refund_estado, requer_intervencao, intervencao_resolvida_em, convertido_em",
+        "id, stripe_payment_id, estado, checkout_session_id, plano_destino, valor_primeira_mensalidade_centimos, refund_montante_centimos, refund_estado, requer_intervencao, intervencao_resolvida_em, convertido_em, anulada_em",
       )
       .eq("user_id", user.id)
       .order("convertido_em", { ascending: false, nullsFirst: false }),
@@ -69,6 +69,7 @@ export default async function PortalIndex({
     requer_intervencao: boolean;
     intervencao_resolvida_em: string | null;
     convertido_em: string | null;
+    anulada_em: string | null;
   })[];
   const ultimo = lista[0] ?? null;
 
@@ -91,6 +92,9 @@ export default async function PortalIndex({
   const conversaoRecente = listaConversoes.find(
     (c) => c.estado === "convertido" && convertidaRecentemente(c.convertido_em),
   );
+  // Adesão por conversão anulada nos últimos 30 dias (o caso do Avulso já
+  // tinha sido usado quando o pagamento foi confirmado).
+  const conversaoAnulada = listaConversoes.some((c) => c.estado === "anulada" && convertidaRecentemente(c.anulada_em));
   const reembolso = conversaoRecente
     ? estadoReembolsoCliente({
         refundEstado: conversaoRecente.refund_estado,
@@ -122,6 +126,16 @@ export default async function PortalIndex({
               <p className="leading-relaxed text-[var(--color-ink-muted)]">{reembolso.texto}</p>
             </div>
           )}
+        </div>
+      )}
+      {conversaoAnulada && !acesso.temProtecao && (
+        <div className={CAIXA_INFO}>
+          <p className="mb-1 font-semibold">A adesão não foi concluída</p>
+          <p className="leading-relaxed text-[var(--color-ink-muted)]">
+            O caso do seu Avulso já tinha sido utilizado quando o pagamento foi confirmado, por isso o valor do
+            Avulso não pode cobrir a primeira mensalidade. A subscrição foi cancelada sem qualquer cobrança. Pode
+            aderir a uma subscrição como nova compra.
+          </p>
         </div>
       )}
       {aviso === "pagamento_pendente" && (

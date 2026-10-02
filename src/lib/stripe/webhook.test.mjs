@@ -25,6 +25,7 @@ function criarEstado() {
     creditosPorConta: new Map(), // origem → user_id
     avulsos: new Map(), // origem checkout:<sessão> → { user_id, estado } (case_credit_grants.estado)
     stripeAvulsos: new Map(), // payment_intent → { sessionId, totalmenteReembolsado } (o que o "Stripe" diz)
+    subscricoesCanceladasStripe: [], // cancelamentos pedidos ao "Stripe" (cancelarSubscricaoStripe)
     congelamentos: [], // case_credit_freezes
     cancelamentos: [], // subscricao_cancelamentos
     consentimentos: new Map(), // id → linha de consentimentos_compra
@@ -53,11 +54,20 @@ function contaVazia() {
   };
 }
 
-// Mesmas regras que a função SQL consumir_credito_caso: subscrição primeiro,
-// depois o Avulso mais antigo. Devolve null, "subscricao" ou a origem.
-function consumirCredito(estado, userId) {
+// Mesmas regras que a função SQL consumir_credito_caso. Normal: subscrição
+// primeiro, depois o Avulso mais antigo. Vinculado (origem dada): só esse
+// Avulso. Devolve null, "subscricao" ou a origem do Avulso gasto.
+function consumirCredito(estado, userId, origemAvulso = null) {
   const c = estado.contas.get(userId);
   if (!c || c.case_credits <= 0) return null;
+  if (origemAvulso) {
+    const a = estado.avulsos.get(origemAvulso);
+    if (!a || a.user_id !== userId || a.estado !== "disponivel") return null;
+    a.estado = "consumido";
+    c.case_credits -= 1;
+    c.avulso_credits -= 1;
+    return origemAvulso;
+  }
   if (c.case_credits - c.avulso_credits > 0) {
     c.case_credits -= 1;
     return "subscricao";
@@ -244,6 +254,19 @@ function criarDependencias(estado) {
       if (estado.cancelamentos.some((x) => x.sub === subId && x.terminado_em)) return;
       estado.cancelamentos.push({ sub: subId, plano, origem: "stripe", pedido_em: null, revertido_em: null, terminado_em: em });
     },
+    async obterConversao(id) {
+      const c = estado.conversoes.get(id);
+      return c ? { id: c.id, estado: c.estado, checkout_session_id: c.checkout_session_id, avulso_session_id: c.avulso_session_id } : null;
+    },
+    async anularConversao(id, checkoutSessionId, motivo) {
+      const c = estado.conversoes.get(id);
+      if (c && c.estado === "checkout_aberto" && c.checkout_session_id === checkoutSessionId) {
+        Object.assign(c, { estado: "anulada", anulada_motivo: motivo });
+      }
+    },
+    async cancelarSubscricaoStripe(subId) {
+      if (!estado.subscricoesCanceladasStripe.includes(subId)) estado.subscricoesCanceladasStripe.push(subId);
+    },
     async reclamarConversao(id, checkoutSessionId, subscriptionId) {
       const c = estado.conversoes.get(id);
       if (!c || c.checkout_session_id !== checkoutSessionId) return null;
@@ -296,12 +319,12 @@ function criarDependencias(estado) {
       return { termos_versao: c.termos_versao, pediu_inicio_imediato: true };
     },
     // Mesmas regras que a função SQL converter_pedido_em_caso.
-    async converterPedidoEmCaso(pedidoId, userId) {
+    async converterPedidoEmCaso(pedidoId, userId, origemAvulso) {
       const p = estado.pedidos.get(pedidoId);
       if (!p || p.user_id !== userId) return null;
       if (p.estado === "convertido") return p.caso_id;
       if (p.estado === "cancelado") return null;
-      if (!consumirCredito(estado, userId)) return null;
+      if (!consumirCredito(estado, userId, origemAvulso)) return null;
       const casoId = `caso_${estado.casos.length + 1}`;
       estado.casos.push({ id: casoId, utilizador_id: userId, pedido_id: pedidoId, status: "Novo" });
       Object.assign(p, { estado: "convertido", caso_id: casoId });
@@ -1427,6 +1450,42 @@ describe("casos Avulso por usar vs. casos da subscrição", () => {
     assert.equal(estado.avulsos.get("checkout:cs_avulso").estado, "consumido");
   });
 
+  test("E. Avulso pago para um pedido: o pedido gasta esse Avulso, não o caso da subscrição", async () => {
+    comConta();
+    await subscreverComCasos(1);
+    assert.equal(conta().case_credits, 1);
+    await avulsoUsadoNumPedido("cs_avulso_do_pedido"); // verifica que ESTE Avulso ficou consumido
+    assert.equal(conta().case_credits, 1, "o caso da subscrição continua disponível");
+    assert.equal(conta().avulso_credits, 0, "nenhum Avulso guardado");
+    assert.equal(estado.casos.length, 1);
+  });
+
+  test("P. idempotência: webhook, fatura, reembolso e cancelamento repetidos não duplicam nem retiram duas vezes", async () => {
+    comConta();
+    const compra = evento("checkout.session.completed", sessaoAvulso({ metadata: { plano: "avulso", user_id: USER } }));
+    await processarEventoStripe(compra, deps);
+    await processarEventoStripe(compra, deps); // mesmo event.id
+    await processarEventoStripe(evento("checkout.session.completed", sessaoAvulso({ metadata: { plano: "avulso", user_id: USER } })), deps);
+    assert.equal(conta().case_credits, 1, "Avulso creditado uma vez");
+
+    await subscreverComCasos(2);
+    await processarEventoStripe(evento("invoice.paid", fatura("in_2")), deps); // fatura repetida
+    assert.equal(conta().case_credits, 3);
+
+    await terminar();
+    await terminar(); // cancelamento repetido
+    await processarEventoStripe(evento("customer.subscription.updated", subscricao("canceled"), T0 + 200), deps);
+    assert.equal(estado.congelamentos.length, 1);
+    assert.equal(conta().case_credits, 1);
+
+    estado.stripeAvulsos.set("pi_avulso", { sessionId: "cs_avulso", totalmenteReembolsado: true });
+    const reembolso = { id: "re_p", object: "refund", status: "succeeded", payment_intent: "pi_avulso", metadata: {} };
+    await processarEventoStripe(evento("refund.created", reembolso), deps);
+    await processarEventoStripe(evento("refund.updated", reembolso), deps); // reembolso repetido
+    assert.equal(conta().case_credits, 0, "retirado uma só vez");
+    assert.equal(conta().avulso_credits, 0);
+  });
+
   test("10. ciclo subscrever → acumular → terminar → voltar a subscrever → terminar: nada escapa ao congelamento", async () => {
     comConta();
     await avulsoUsadoNumPedido();
@@ -1481,19 +1540,98 @@ describe("casos Avulso por usar vs. casos da subscrição", () => {
       assert.equal(estado.refundsStripe.length, 1);
     });
 
-    test("8. Avulso usado entre abrir o Checkout e pagar: sem reembolso automático, fica para intervenção", async () => {
+    test("I. Avulso já usado: não é elegível (sem conversão, reembolso nem caso extra)", async () => {
+      // A elegibilidade no início é testada em conversao.test.mjs; aqui: se
+      // mesmo assim chegasse uma conversão, a confirmação anula-a.
       comConta();
-      await avulsoPorUsar();
-      abrirConversao("protecao", 1000);
-      estado.pedidos.set("p_1", { id: "p_1", user_id: USER, estado: "aguarda_pagamento", caso_id: null });
-      await deps.converterPedidoEmCaso("p_1", USER); // o cliente usou o Avulso
-      estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
+      await avulsoUsadoNumPedido();
+      abrirConversao("caso_protecao", 700);
+      estado.stripeSubscricao = snapshot("active");
       await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
       assert.equal(estado.refundsStripe.length, 0);
-      assert.equal(estado.conversoes.get("conv_1").requer_intervencao, true);
-      assert.match(estado.conversoes.get("conv_1").intervencao_motivo, /consumido/);
-      assert.equal(estado.avisosAdmin.length, 1);
-      assert.equal(conta().case_credits, 0, "nunca saldo negativo");
+      assert.equal(conta().case_credits, 0, "nenhum caso extra");
+      assert.equal(estado.conversoes.get("conv_1").estado, "anulada");
+    });
+
+    describe("J. race condition: Avulso usado entre abrir o Checkout e pagar", () => {
+      async function prepararCorrida(plano = "caso_protecao") {
+        comConta();
+        await avulsoPorUsar(); // elegível quando o Checkout é aberto
+        abrirConversao(plano, plano === "protecao" ? 1000 : 700);
+        estado.pedidos.set("p_1", { id: "p_1", user_id: USER, estado: "aguarda_pagamento", caso_id: null });
+        await deps.converterPedidoEmCaso("p_1", USER, null); // entretanto, o cliente usa o Avulso
+        estado.stripeSubscricao = snapshot("active", plano === "protecao" ? PRECO_PROTECAO : PRECO_CASO_PROTECAO);
+      }
+
+      test("o backend revalida: conversão anulada, subscrição cancelada, sem plano, casos, reembolso nem e-mail", async () => {
+        await prepararCorrida();
+        const emailsAntes = estado.emails.length; // o da compra Avulso
+        const r = await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+        assert.equal(r.status, 200);
+        assert.equal(ultimoLog().resultado, "conversao_anulada_avulso_indisponivel");
+        const conv = estado.conversoes.get("conv_1");
+        assert.equal(conv.estado, "anulada");
+        assert.match(conv.anulada_motivo, /consumido/, "motivo registado para auditoria");
+        assert.deepEqual(estado.subscricoesCanceladasStripe, [SUB], "subscrição cancelada no Stripe");
+        assert.equal(conta().subscription_plan, "none", "sem proteção");
+        assert.equal(conta().case_credits, 0, "sem o caso do 1.º ciclo");
+        assert.equal(estado.refundsStripe.length, 0, "sem reembolso parcial");
+        assert.equal(estado.emails.length, emailsAntes, "sem e-mail de pagamento confirmado da adesão");
+        assert.equal(estado.pagamentos.get("cs_upgrade").estado, "assinatura_cancelada");
+        assert.equal(estado.avisosAdmin.length, 0, "sem intervenção manual");
+      });
+
+      test("idempotente: reenvios e eventos seguintes não aplicam nada", async () => {
+        await prepararCorrida();
+        await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+        await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps); // novo event.id
+        estado.stripeSubscricao = { ...snapshot("active"), conversao_id: "conv_1" };
+        await processarEventoStripe(evento("invoice.paid", fatura("in_primeira", "subscription_create")), deps);
+        assert.equal(ultimoLog().resultado, "pago_conversao_anulada");
+        await processarEventoStripe(evento("customer.subscription.deleted", { ...subscricao("canceled"), metadata: { conversao_id: "conv_1" } }), deps);
+        assert.equal(estado.subscricoesCanceladasStripe.length, 1);
+        assert.equal(conta().subscription_plan, "none");
+        assert.equal(conta().case_credits, 0);
+        assert.equal(estado.congelamentos.length, 0);
+        assert.equal(estado.refundsStripe.length, 0);
+      });
+
+      test("invoice.paid antes do checkout: não aplica nada até à revalidação", async () => {
+        await prepararCorrida();
+        estado.stripeSubscricao = { ...snapshot("active"), conversao_id: "conv_1" };
+        await processarEventoStripe(evento("invoice.paid", fatura("in_primeira", "subscription_create")), deps);
+        assert.equal(ultimoLog().resultado, "pago_aguarda_conversao");
+        assert.equal(conta().subscription_plan, "none");
+        assert.equal(conta().case_credits, 0);
+        await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+        assert.equal(estado.conversoes.get("conv_1").estado, "anulada");
+        assert.equal(conta().case_credits, 0);
+      });
+
+      test("depois de anulada, o cliente adere normalmente como nova compra", async () => {
+        await prepararCorrida("protecao");
+        await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+        estado.stripeSubscricao = { ...snapshot("active", PRECO_PROTECAO), stripe_subscription_id: "sub_normal" };
+        await processarEventoStripe(
+          evento("checkout.session.completed", sessaoSubscricao({ id: "cs_normal", subscription: "sub_normal", invoice: "in_normal", amount_total: 499 })),
+          deps,
+        );
+        assert.equal(conta().subscription_plan, "protecao");
+        assert.equal(estado.refundsStripe.length, 0);
+      });
+
+      test("invoice.paid de uma conversão confirmada aplica-se normalmente (e uma só vez)", async () => {
+        comConta();
+        await avulsoPorUsar();
+        abrirConversao("caso_protecao", 700);
+        estado.stripeSubscricao = { ...snapshot("active"), conversao_id: "conv_1" };
+        await processarEventoStripe(evento("checkout.session.completed", sessaoUpgrade()), deps);
+        await processarEventoStripe(evento("invoice.paid", fatura("in_primeira", "subscription_create")), deps);
+        assert.equal(estado.conversoes.get("conv_1").estado, "convertido");
+        assert.equal(conta().case_credits, 1);
+        await processarEventoStripe(evento("invoice.paid", fatura("in_2")), deps);
+        assert.equal(conta().case_credits, 2, "renovações seguem a regra normal");
+      });
     });
   });
 

@@ -49,7 +49,7 @@ select ('00000000-0000-4000-c000-00000000000' || i)::uuid, 'caso_protecao', 'act
 -- ===========================================================================
 -- 0. Estrutura e privilégios
 -- ===========================================================================
-select ok(not has_function_privilege('authenticated', 'public.consumir_credito_caso(uuid)', 'EXECUTE'), 'consumir_credito_caso: não executável por authenticated');
+select ok(not has_function_privilege('authenticated', 'public.consumir_credito_caso(uuid, text)', 'EXECUTE'), 'consumir_credito_caso: não executável por authenticated');
 select ok(not has_function_privilege('authenticated', 'public.devolver_credito_caso(uuid, text)', 'EXECUTE'), 'devolver_credito_caso: não executável por authenticated');
 select ok(not has_function_privilege('authenticated', 'public.retirar_credito_avulso(text, text)', 'EXECUTE'), 'retirar_credito_avulso: não executável por authenticated');
 select ok(not has_function_privilege('anon', 'public.retirar_credito_avulso(text, text)', 'EXECUTE'), 'retirar_credito_avulso: não executável por anon');
@@ -139,6 +139,30 @@ select isnt(public.converter_pedido_em_caso('30000000-0000-4000-c000-00000000000
 select is(testes.saldo('00000000-0000-4000-c000-000000000004'), '0/0', 'pedido: sem subscrição, gastou o Avulso');
 
 -- ===========================================================================
+-- E. Avulso vinculado: o pedido pago com um Avulso gasta ESSE Avulso
+-- ===========================================================================
+-- u4 tem agora 0 casos. Recebe 1 caso da subscrição e paga um Avulso para um pedido.
+select public.conceder_credito_caso('00000000-0000-4000-c000-000000000004', 'invoice:u4_v1', 4);
+select public.conceder_credito_caso('00000000-0000-4000-c000-000000000004', 'checkout:cs_u4_pedido', null);
+select is(testes.saldo('00000000-0000-4000-c000-000000000004'), '2/1', 'E: 1 caso da subscrição + o Avulso acabado de pagar');
+reset role;
+insert into public.pedidos_caso (id, user_id, token_hash, nome, sector, empresa, problema_tipo, momento_cliente, autorizacao, pedido_confirmado_em) values
+  ('30000000-0000-4000-c000-000000000003', '00000000-0000-4000-c000-000000000004', 'hash_u4_3', 'U4', 'Energia', 'EDP', 'Outro', 'Ainda não reclamei', true, now());
+set local role service_role;
+create temp table caso_vinculado on commit drop as
+  select public.converter_pedido_em_caso('30000000-0000-4000-c000-000000000003', '00000000-0000-4000-c000-000000000004', 'checkout:cs_u4_pedido') as id;
+select isnt((select id from caso_vinculado), null::uuid, 'E: o pedido passa a caso');
+select is(testes.saldo('00000000-0000-4000-c000-000000000004'), '1/0', 'E: gastou o Avulso do pedido; o caso da subscrição fica');
+select is(testes.estado('checkout:cs_u4_pedido'), 'consumido', 'E: o Avulso da compra ficou consumido');
+select is((select caso_id from public.case_credit_grants where origem = 'checkout:cs_u4_pedido'), (select id from caso_vinculado), 'E: a compra fica ligada ao caso (auditoria)');
+select is(public.consumir_credito_caso('00000000-0000-4000-c000-000000000004', 'checkout:cs_u4_pedido'), null::text, 'E: vinculado a um Avulso já gasto não gasta mais nada');
+select is(public.consumir_credito_caso('00000000-0000-4000-c000-000000000004', 'checkout:cs_u2'), null::text, 'E: vinculado a um Avulso de outra conta não gasta nada');
+select is(testes.saldo('00000000-0000-4000-c000-000000000004'), '1/0', 'E: saldo intacto');
+select is(testes.saldo('00000000-0000-4000-c000-000000000002'), '1/1', 'E: a outra conta não foi tocada');
+-- Repor u4 a 0 para os passos seguintes.
+select public.consumir_credito_caso('00000000-0000-4000-c000-000000000004');
+
+-- ===========================================================================
 -- 7. Conversão de um Avulso por usar
 -- ===========================================================================
 select public.conceder_credito_caso('00000000-0000-4000-c000-000000000005', 'checkout:cs_u5', null);
@@ -195,8 +219,18 @@ set local role service_role;
 select is(public.restaurar_creditos_caso('sub_u8_b', now() + interval '10 days', 4), 3, '10: volta nos 90 dias e recupera os 3');
 select public.conceder_credito_caso('00000000-0000-4000-c000-000000000008', 'invoice:u8_b1', 4);
 select is(testes.saldo('00000000-0000-4000-c000-000000000008'), '4/0', '10: 4 casos da subscrição');
+-- Restaurar nunca mexe nos Avulsos (11 do pedido): conta com 1 Avulso e casos congelados.
+select public.conceder_credito_caso('00000000-0000-4000-c000-000000000003', 'invoice:u3_extra', 4);
 select is(public.congelar_creditos_caso('sub_u8_b', now() + interval '20 days', 90), 4, '10: 2.º fim congela os 4');
 select is(testes.saldo('00000000-0000-4000-c000-000000000008'), '0/0', '10: nenhum caso da subscrição escapa');
+
+-- Restauração: u3 (1 caso Avulso por usar + 3 congelados de sub_u3) volta ao Caso + Proteção.
+reset role;
+update public.user_access set stripe_subscription_id = 'sub_u3_nova' where user_id = '00000000-0000-4000-c000-000000000003';
+set local role service_role;
+select is(testes.saldo('00000000-0000-4000-c000-000000000003'), '2/1', 'restaurar: antes, 1 Avulso + 1 caso do novo ciclo');
+select is(public.restaurar_creditos_caso('sub_u3_nova', now() + interval '5 days', 4), 2, 'restaurar: só até ao limite de 4');
+select is(testes.saldo('00000000-0000-4000-c000-000000000003'), '4/1', 'restaurar: avulso_credits inalterado; só voltam casos da subscrição');
 
 -- ===========================================================================
 -- 11. Constraints
@@ -207,6 +241,13 @@ select is(testes.tenta($$update public.user_access set avulso_credits = case_cre
 select is(testes.tenta($$update public.user_access set case_credits = 0 where user_id = '00000000-0000-4000-c000-000000000002'$$), 'erro:23514', '11: case_credits abaixo de avulso_credits rejeitado');
 select is(testes.tenta($$insert into public.case_credit_grants (origem, user_id, quantidade) values ('checkout:cs_sem_estado', '00000000-0000-4000-c000-000000000002', 1)$$), 'erro:23514', '11: compra Avulso sem estado rejeitada');
 select is(testes.tenta($$insert into public.case_credit_grants (origem, user_id, quantidade, estado) values ('invoice:com_estado', '00000000-0000-4000-c000-000000000002', 1, 'disponivel')$$), 'erro:23514', '11: caso da subscrição com estado Avulso rejeitado');
+
+insert into public.stripe_payments (id, user_id, stripe_session_id, email, plano) values
+  ('16000000-0000-4000-c000-000000000006', '00000000-0000-4000-c000-000000000006', 'cs_u6', 'u6@teste.invalid', 'avulso');
+insert into public.conversoes_avulso (id, stripe_payment_id, user_id, plano_destino, valor_avulso_centimos, valor_primeira_mensalidade_centimos, refund_montante_centimos, checkout_session_id) values
+  ('1a000000-0000-4000-c000-000000000006', '16000000-0000-4000-c000-000000000006', '00000000-0000-4000-c000-000000000006', 'caso_protecao', 1499, 799, 700, 'cs_upgrade_u6');
+select is(testes.tenta($$update public.conversoes_avulso set estado = 'anulada' where id = '1a000000-0000-4000-c000-000000000006'$$), 'erro:23514', '11: conversão anulada sem data de anulação rejeitada');
+select is(testes.tenta($$update public.conversoes_avulso set estado = 'anulada', anulada_em = now(), anulada_motivo = 'caso do Avulso indisponível (consumido)' where id = '1a000000-0000-4000-c000-000000000006'$$), 'ok:1', '11: conversão anulada com data e motivo');
 
 -- ===========================================================================
 -- 12. Limite de 4 (regra inalterada)

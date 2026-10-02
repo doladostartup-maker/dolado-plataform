@@ -10,6 +10,7 @@ import {
   idDe,
   snapshotDeSubscricao,
   type ConversaoParaReembolso,
+  type ConversaoNoWebhook,
   type DependenciasWebhook,
   type EstadoPagamento,
   type EstadoRetiradaAvulso,
@@ -387,6 +388,48 @@ export function criarDependenciasWebhook(): DependenciasWebhook {
       falhar("subscricao_cancelamentos.insert", erroInsert);
     },
 
+    async obterConversao(conversaoId) {
+      if (!/^[0-9a-f-]{36}$/i.test(conversaoId)) return null;
+      const { data, error } = await admin
+        .from("conversoes_avulso")
+        .select("id, estado, checkout_session_id, stripe_payments(stripe_session_id)")
+        .eq("id", conversaoId)
+        .maybeSingle();
+      falhar("conversoes_avulso.select", error);
+      if (!data) return null;
+      const pagamento = data.stripe_payments as unknown as { stripe_session_id: string } | { stripe_session_id: string }[] | null;
+      const avulso = Array.isArray(pagamento) ? pagamento[0] : pagamento;
+      return {
+        id: data.id as string,
+        estado: data.estado as ConversaoNoWebhook["estado"],
+        checkout_session_id: (data.checkout_session_id as string | null) ?? null,
+        avulso_session_id: avulso?.stripe_session_id ?? "",
+      };
+    },
+
+    async anularConversao(conversaoId, checkoutSessionId, motivo) {
+      // Atómico: só a conversão aberta deste checkout passa a anulada.
+      const { error } = await admin
+        .from("conversoes_avulso")
+        .update({ estado: "anulada", anulada_em: agora(), anulada_motivo: motivo, updated_at: agora() })
+        .eq("id", conversaoId)
+        .eq("estado", "checkout_aberto")
+        .eq("checkout_session_id", checkoutSessionId);
+      falhar("conversoes_avulso.update", error);
+    },
+
+    async cancelarSubscricaoStripe(subscriptionId) {
+      const stripe = getStripe();
+      const atual = await stripe.subscriptions.retrieve(subscriptionId);
+      if (atual.status === "canceled" || atual.status === "incomplete_expired") return;
+      // Imediato, sem fatura final nem prorrateio: a 1.ª fatura foi 0 €.
+      await stripe.subscriptions.cancel(
+        subscriptionId,
+        { invoice_now: false, prorate: false },
+        { idempotencyKey: `conversao-anulada-${subscriptionId}` },
+      );
+    },
+
     async reclamarConversao(conversaoId, checkoutSessionId, subscriptionId) {
       const colunas =
         "id, plano_destino, estado, checkout_session_id, refund_montante_centimos, refund_id, requer_intervencao, stripe_payments(stripe_session_id)";
@@ -572,10 +615,11 @@ export function criarDependenciasWebhook(): DependenciasWebhook {
       };
     },
 
-    async converterPedidoEmCaso(pedidoId, userId) {
+    async converterPedidoEmCaso(pedidoId, userId, origemAvulso) {
       const { data, error } = await admin.rpc("converter_pedido_em_caso", {
         p_pedido_id: pedidoId,
         p_user_id: userId,
+        p_origem_avulso: origemAvulso,
       });
       falhar("converter_pedido_em_caso", error);
       return (data as string | null) ?? null;

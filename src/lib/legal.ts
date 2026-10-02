@@ -21,7 +21,7 @@ import { CONTACTO_EMAIL, ENTIDADE_LEGAL, MORADA_SEDE } from "./site.ts";
 // mesmo dia leva um sufixo de letra ("2026-10-01b").
 
 /** Versão dos Termos e Condições em vigor. Cada versão fica acessível em /termos/<versão>. */
-export const TERMOS_VERSAO = "2026-10-01b";
+export const TERMOS_VERSAO = "2026-10-02";
 
 /** Versão da Política de Privacidade em vigor. Cada versão fica acessível em /privacidade/<versão>. */
 export const PRIVACIDADE_VERSAO = "2026-10-01c";
