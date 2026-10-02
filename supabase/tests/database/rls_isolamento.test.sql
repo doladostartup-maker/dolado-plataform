@@ -122,9 +122,6 @@ insert into public.case_credit_grants (origem, user_id, quantidade, estado) valu
 insert into public.stripe_subscriptions (stripe_subscription_id, stripe_customer_id, status) values
   ('sub_teste_b', 'cus_teste_b', 'active');
 
-insert into public.alertas_fidelizacao (id, email, operadora) values
-  ('17000000-0000-4000-a000-000000000001', 'lead@teste.invalid', 'Op');
-
 insert into public.avisos_setoriais (id, setor, titulo, descricao, criado_por_admin_id) values
   ('18000000-0000-4000-a000-000000000001', 'Energia', 'Aviso', 'Texto', '00000000-0000-4000-a000-0000000000ad');
 
@@ -157,13 +154,11 @@ select ok(testes.contar('select * from public.user_access') <= 0, 'anon: SELECT 
 select ok(testes.contar('select * from public.stripe_webhook_events') <= 0, 'anon: SELECT stripe_webhook_events → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from public.stripe_subscriptions') <= 0, 'anon: SELECT stripe_subscriptions → nada (0 linhas ou sem permissão)');
 select ok(testes.negado($$insert into public.stripe_webhook_events (event_id, tipo) values ('evt_anon', 'x')$$), 'anon: não reclama eventos do webhook');
-select ok(testes.contar('select * from public.alertas_fidelizacao') <= 0, 'anon: SELECT alertas_fidelizacao (leads) → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from public.avisos_setoriais') <= 0, 'anon: SELECT avisos_setoriais → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from storage.objects') <= 0, 'anon: SELECT storage.objects → nada (0 linhas ou sem permissão)');
 select is(testes.contar('select * from public.templates'), 1::bigint, 'anon: SELECT templates → permitido (público por decisão de produto)');
 
 select ok(testes.negado($$insert into public.casos (nome, email) values ('x', 'x@teste.invalid')$$), 'anon: INSERT casos → negado');
-select ok(testes.negado($$insert into public.alertas_fidelizacao (email, operadora) values ('x@teste.invalid', 'Op')$$), 'anon: INSERT alertas_fidelizacao → negado (entra só pelo servidor)');
 select ok(testes.negado($$insert into public.templates (nome, texto) values ('x', 'x')$$), 'anon: INSERT templates → negado');
 select ok(testes.negado($$update public.casos set notas = 'x'$$), 'anon: UPDATE casos → negado');
 select ok(testes.negado($$delete from public.casos$$), 'anon: DELETE casos → negado');
@@ -326,7 +321,7 @@ select ok(testes.negado($$insert into public.stripe_subscriptions (stripe_subscr
 select ok(testes.negado($$update public.stripe_subscriptions set status = 'active'$$), 'A: não altera o estado de subscrições');
 
 -- tabelas só de admin
-select is(testes.contar('select * from public.alertas_fidelizacao'), 0::bigint, 'A: não lê leads de alertas de fidelização');
+select ok(to_regclass('public.alertas_fidelizacao') is null, 'alertas_fidelizacao (alerta público retirado) já não existe');
 select is(testes.contar('select * from public.avisos_setoriais'), 0::bigint, 'A: não lê avisos sectoriais');
 select ok(testes.negado($$insert into public.avisos_setoriais (setor, titulo, descricao, criado_por_admin_id) values ('Energia', 'x', 'x', '00000000-0000-4000-a000-00000000000a')$$), 'A: não cria avisos sectoriais');
 select ok(testes.negado($$update public.templates set texto = 'x'$$), 'A: não altera templates');
