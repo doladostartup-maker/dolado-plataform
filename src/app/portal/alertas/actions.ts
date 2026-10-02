@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { temProtecao } from "@/lib/auth";
+import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 
 function validarDatas(dataInicio: string | null, dataFim: string) {
   const hoje = new Date().toISOString().slice(0, 10);
@@ -70,7 +71,7 @@ export async function criarAlertaFidelizacaoPortal(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/portal/alertas?erro=${encodeURIComponent(error.message)}`);
+    redirect(`/portal/alertas?erro=${encodeURIComponent(MSG_ERRO_GUARDAR)}`);
   }
 
   revalidatePath("/portal/alertas");
@@ -122,7 +123,7 @@ export async function actualizarAlertaFidelizacaoPortal(id: string, formData: Fo
     .eq("id", id);
 
   if (error) {
-    redirect(`/portal/alertas/${id}?erro=${encodeURIComponent(error.message)}`);
+    redirect(`/portal/alertas/${id}?erro=${encodeURIComponent(MSG_ERRO_GUARDAR)}`);
   }
 
   revalidatePath("/portal/alertas");
@@ -143,7 +144,7 @@ export async function apagarAlertaFidelizacaoPortal(id: string, _formData: FormD
   const { error } = await supabase.from("alertas_fidelizacao_portal").delete().eq("id", id);
 
   if (error) {
-    redirect(`/portal/alertas?erro=${encodeURIComponent(error.message)}`);
+    redirect(`/portal/alertas?erro=${encodeURIComponent(MSG_ERRO_GUARDAR)}`);
   }
 
   revalidatePath("/portal/alertas");

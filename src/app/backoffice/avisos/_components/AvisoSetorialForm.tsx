@@ -70,7 +70,7 @@ export function AvisoSetorialForm({
         onClick={() => setMostrarPreview((v) => !v)}
         className="self-start text-sm font-medium text-[var(--color-brand)] underline"
       >
-        {mostrarPreview ? "Esconder pré-visualização" : "Como vai parecer no email?"}
+        {mostrarPreview ? "Esconder pré-visualização" : "Como vai aparecer no e-mail?"}
       </button>
 
       {mostrarPreview && (

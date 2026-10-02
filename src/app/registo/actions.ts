@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { mensagemErroConta } from "@/lib/mensagensErro";
 
 export async function registar(formData: FormData) {
   const supabase = await createClient();
@@ -16,7 +17,7 @@ export async function registar(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/registo?erro=${encodeURIComponent(error.message)}`);
+    redirect(`/registo?erro=${encodeURIComponent(mensagemErroConta(error.code, error.message))}`);
   }
 
   if (data.session) {

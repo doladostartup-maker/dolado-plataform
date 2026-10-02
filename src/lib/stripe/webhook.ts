@@ -515,7 +515,7 @@ async function converterAvulso(
   await deps.marcarIntervencaoConversao(conversao.id, `o Stripe recusou o reembolso (${reembolso.motivo})`);
   await deps.notificarAdmin(
     "Reembolso de conversão falhou — DoLado",
-    `O reembolso da conversão ${conversao.id} não foi criado (${reembolso.motivo}). A assinatura continua ativa. Resolver manualmente no Stripe.`,
+    `O reembolso da conversão ${conversao.id} não foi criado (${reembolso.motivo}). A subscrição continua ativa. Resolver manualmente no Stripe.`,
   );
 }
 
@@ -888,7 +888,7 @@ async function tratarReembolso(event: Stripe.Event, deps: DependenciasWebhook): 
     );
     await deps.notificarAdmin(
       "Reembolso de conversão falhou — DoLado",
-      `O reembolso ${refund.id} (conversão ${atualizado.conversaoId}) ficou "${refund.status}". A assinatura continua ativa. Resolver manualmente no Stripe.`,
+      `O reembolso ${refund.id} (conversão ${atualizado.conversaoId}) ficou "${refund.status}". A subscrição continua ativa. Resolver manualmente no Stripe.`,
     );
     return { resultado: "reembolso_falhado_intervencao" };
   }

@@ -16,6 +16,13 @@ const STATUS_STYLES: Record<string, { color: string; wash: string }> = {
   Bloqueado: { color: "var(--color-status-danger)", wash: "var(--color-status-danger-wash)" },
 };
 
+// Texto mostrado para os valores de casos.status (os valores na base de
+// dados não mudam — só o rótulo, em português europeu).
+const STATUS_ROTULOS: Record<string, string> = {
+  "Aguardando operador": "A aguardar o operador",
+  "Aguardando decisão cliente": "A aguardar decisão",
+};
+
 export function StatusBadge({ status }: { status: string }) {
   const style = STATUS_STYLES[status] ?? STATUS_STYLES.Novo;
 
@@ -24,7 +31,7 @@ export function StatusBadge({ status }: { status: string }) {
       className="inline-flex items-center rounded-[var(--radius-pill)] px-[10px] py-[4px] text-[12px] font-medium"
       style={{ backgroundColor: style.wash, color: style.color }}
     >
-      {status}
+      {STATUS_ROTULOS[status] ?? status}
     </span>
   );
 }

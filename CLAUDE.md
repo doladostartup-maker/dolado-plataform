@@ -205,6 +205,14 @@ Ferramenta gratuita de aquisição/qualificação, antes da compra — responde 
 - Política de Privacidade `2026-10-02d` (e as anteriores desde a `2026-10-01c`) descreve o simulador público (sem recolha, só o tipo de resultado na medição com consentimento).
 - Nunca usar no simulador: "tem direito", "não tem direito", "a empresa está errada", "a lei garante", "vai ganhar", "não pode reclamar", "descubra se tem direito".
 
+## Calculadora de Cancelamento pública (02/10/2026)
+
+Ferramenta gratuita de aquisição, como o Simulador: estima o encargo **máximo** de um cancelamento antecipado de um contrato de **telecomunicações** por iniciativa do cliente, quando não exista motivo legal ou contratual para cancelar sem encargos (nota obrigatória antes do resultado). Não avalia esse motivo nem é parecer jurídico.
+
+- `/calculadora-cancelamento` (pública, sem sessão; nas duas listas de `src/middleware.ts`). Menu: `SiteHeader` tem "Como funciona" isolado e o dropdown **Ferramentas** (Simulador de Elegibilidade + Calculadora de Cancelamento).
+- Corre só no browser: sem login, sem e-mail, sem IA, sem gravação; não cria conta, caso, pedido nem acesso. CTA "Tratar o meu caso" → `/tratar-caso?origem=/calculadora-cancelamento&setor=Telecomunicações&problema=Fidelização ou penalização`. Sem eventos gtag próprios (só os já existentes).
+- Regras e validação em `src/lib/calculadoraCancelamento/regras.ts` (`calcularEncargoCancelamento`), testes em `regras.test.mjs`. A = V × R/D (em dias); B = M × N × 50% (1.º ano) ou 30% (2.º ano), sempre 30% em refidelização sem nova instalação/alteração do lacete local; resultado = MIN(A, B). Fidelização terminada → 0 €. Antes de 14/11/2022: primeira fidelização → só A; refidelização → "não calculável automaticamente" (decisão pendente sobre o limite de 30% nesse regime). Equipamento subsidiado nunca entra no valor (só aviso). Valores em cêntimos.
+
 ## Uso de IA (decisão: 25/09/2026)
 
 A exclusão geral de IA da v1 foi revista. A Claude API está agora em escopo, mas só dentro destas regras — não é uma autorização em aberto para qualquer uso de IA sem mais:
