@@ -45,7 +45,7 @@ export async function reprocessarDocumento(formData: FormData) {
   await admin.from("documentos_monitor").update({ estado: "pendente" }).eq("id", doc.id);
   const r = await processarDocumento(doc.id);
   revalidatePath("/backoffice/monitor");
-  voltar(doc.id, { resultado: r.estado });
+  voltar(doc.id, { resultado: r.estado, ...(r.motivo ? { motivo: r.motivo } : {}), ...(r.detalhe ? { detalhe: r.detalhe } : {}) });
 }
 
 export async function marcarDocumento(formData: FormData) {

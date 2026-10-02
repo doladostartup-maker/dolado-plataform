@@ -25,7 +25,13 @@ export type UsoChamada = {
 
 export type ResultadoChamada =
   | { ok: true; bruto: unknown; uso: UsoChamada }
-  | { ok: false; motivo: "api_nao_configurada" | "recusa" | "resposta_invalida" | "erro_api"; uso: UsoChamada | null };
+  | {
+      ok: false;
+      motivo: "api_nao_configurada" | "recusa" | "resposta_invalida" | "erro_api";
+      uso: UsoChamada | null;
+      /** Só para o admin (estado HTTP e mensagem da API), nunca para o cliente. */
+      detalhe?: string;
+    };
 
 let cliente: Anthropic | null = null;
 
@@ -92,11 +98,11 @@ export async function lerDocumentoComClaude({
       return { ok: false, motivo: "resposta_invalida", uso };
     }
   } catch (erro) {
-    if (erro instanceof Anthropic.APIError) {
-      console.error(`Claude API (${erro.status ?? "sem estado"}) ao ler documento:`, erro.message);
-    } else {
-      console.error("Falha ao chamar a Claude API:", erro);
-    }
-    return { ok: false, motivo: "erro_api", uso: null };
+    const detalhe =
+      erro instanceof Anthropic.APIError
+        ? `HTTP ${erro.status ?? "sem estado"}: ${erro.message}`.slice(0, 300)
+        : `${erro instanceof Error ? erro.message : String(erro)}`.slice(0, 300);
+    console.error("Falha ao chamar a Claude API:", detalhe);
+    return { ok: false, motivo: "erro_api", uso: null, detalhe };
   }
 }

@@ -5,6 +5,19 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ROTULO_CAMPO, ROTULO_ORIGEM, ROTULO_SETOR, SETORES_CONTRATO, formatarValorCampo } from "@/lib/monitor/contratos";
 import type { CampoContrato } from "@/lib/monitor/extracaoFatura";
 import { criarContratoParaDocumento, definirCampoAdmin, marcarDocumento, reprocessarDocumento } from "../actions";
+import { BotaoAcao } from "../_components/BotaoAcao";
+
+const MOTIVO: Record<string, string> = {
+  api_nao_configurada: "A ANTHROPIC_API_KEY não está configurada no servidor (Clever Cloud). O documento fica pendente até haver chave.",
+  erro_api: "A Claude API respondeu com erro. Verifique a chave e o modelo (ANTHROPIC_DOCUMENT_MODEL) no Clever Cloud.",
+  orcamento_atingido: "O orçamento da Claude API (ANTHROPIC_ORCAMENTO_USD) foi atingido. Aumente o teto para continuar a ler documentos automaticamente.",
+  ficheiro_nao_encontrado: "O ficheiro não foi encontrado no Storage.",
+  formato_nao_lido: "Este formato não é lido automaticamente.",
+  recusa: "A Claude API recusou ler o documento.",
+  resposta_invalida: "A leitura não devolveu um resultado válido.",
+  validacao: "Os dados lidos não passaram a validação.",
+  erro_inesperado: "Erro inesperado no processamento.",
+};
 
 const INPUT =
   "rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)]";
@@ -16,7 +29,7 @@ export default async function DocumentoMonitorPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ erro?: string; guardado?: string; resultado?: string }>;
+  searchParams: Promise<{ erro?: string; guardado?: string; resultado?: string; motivo?: string; detalhe?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -26,15 +39,13 @@ export default async function DocumentoMonitorPage({
   const { data: doc } = await admin.from("documentos_monitor").select("*").eq("id", id).maybeSingle();
   if (!doc) notFound();
 
-  const [{ data: conta }, { data: extracoes }, { data: contrato }, { data: campos }, ficheiro] = await Promise.all([
+  const [{ data: conta }, { data: extracoes }, { data: contrato }, { data: campos }] = await Promise.all([
     admin.from("utilizadores").select("nome, email").eq("id", doc.utilizador_id).maybeSingle(),
     admin.from("extracoes_documento").select("id, modelo, schema_versao, prompt_versao, estado, erro, resultado, created_at").eq("documento_id", id).order("created_at", { ascending: false }),
     doc.contrato_id ? admin.from("contratos_monitorizados").select("id, setor, fornecedor, estado").eq("id", doc.contrato_id).maybeSingle() : Promise.resolve({ data: null }),
     doc.contrato_id
       ? admin.from("contratos_campos").select("id, campo, valor, origem, estado, confianca").eq("contrato_id", doc.contrato_id).in("estado", ["atual", "proposto", "em_conflito"]).order("campo")
       : Promise.resolve({ data: [] }),
-    // Ligação temporária (60 s) para ver o ficheiro.
-    admin.storage.from(doc.bucket).createSignedUrl(doc.storage_path, 60),
   ]);
 
   return (
@@ -46,7 +57,21 @@ export default async function DocumentoMonitorPage({
         </Link>
       </div>
 
-      {query.resultado && <p className="text-sm text-[var(--color-ink-muted)]">Estado do documento: {query.resultado}</p>}
+      {query.resultado && (
+        <div
+          className={`rounded-[10px] border px-4 py-3 text-sm ${
+            query.resultado === "processado"
+              ? "border-[var(--color-status-success)] text-[var(--color-status-success)]"
+              : "border-[var(--color-status-danger)] text-[var(--color-ink)]"
+          }`}
+        >
+          <p className="font-medium">
+            {query.resultado === "processado" ? "✓ Documento lido." : `O documento ficou ${query.resultado === "pendente" ? "pendente" : "por rever"}.`}
+          </p>
+          {query.motivo && <p>{MOTIVO[query.motivo] ?? query.motivo}</p>}
+          {query.detalhe && <p className="mt-1 break-words text-[12px] text-[var(--color-ink-faint)]">{query.detalhe}</p>}
+        </div>
+      )}
       {query.guardado && <p className="text-sm text-[var(--color-status-success)]">✓ Guardado.</p>}
       {query.erro && <p className="text-sm text-[var(--color-status-danger)]">{query.erro}</p>}
 
@@ -57,13 +82,10 @@ export default async function DocumentoMonitorPage({
         <dd>{doc.estado}</dd>
         <dt className="text-[var(--color-ink-muted)]">Ficheiro</dt>
         <dd>
-          {ficheiro.data?.signedUrl ? (
-            <a href={ficheiro.data.signedUrl} target="_blank" rel="noopener noreferrer" className="text-[var(--color-brand)] underline">
-              Abrir ({doc.mime_type}, {Math.round((doc.tamanho_bytes ?? 0) / 1024)} KB)
-            </a>
-          ) : (
-            "indisponível"
-          )}
+          {/* Ligação assinada gerada no clique (rota /api/monitor/documentos). */}
+          <a href={`/api/monitor/documentos/${doc.id}`} target="_blank" rel="noopener noreferrer" className="text-[var(--color-brand)] underline">
+            Abrir ({doc.mime_type}, {Math.round((doc.tamanho_bytes ?? 0) / 1024)} KB)
+          </a>
         </dd>
         <dt className="text-[var(--color-ink-muted)]">Contrato</dt>
         <dd>{contrato ? `${contrato.fornecedor ?? "sem fornecedor"} · ${ROTULO_SETOR[contrato.setor as keyof typeof ROTULO_SETOR]} · ${contrato.estado}` : "por associar"}</dd>
@@ -72,7 +94,9 @@ export default async function DocumentoMonitorPage({
       <div className="flex flex-wrap gap-2">
         <form action={reprocessarDocumento}>
           <input type="hidden" name="documento_id" value={doc.id} />
-          <button className={BOTAO}>Ler de novo</button>
+          <BotaoAcao className={BOTAO} aDecorrer="A ler… pode demorar até um minuto">
+            Ler de novo
+          </BotaoAcao>
         </form>
         <form action={marcarDocumento}>
           <input type="hidden" name="documento_id" value={doc.id} />
