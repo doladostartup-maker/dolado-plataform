@@ -107,7 +107,8 @@ export default async function GestaoSubscricaoPage({
           <div className="flex flex-col gap-3 border-t border-[var(--color-hairline)] pt-4">
             <p className="text-[13.5px] leading-relaxed text-[var(--color-ink)]">
               <span className="font-semibold">Cancelamento agendado.</span> A sua Proteção está ativa até{" "}
-              {formatarData(resumo.fimAgendado)}. Até lá, tudo continua a funcionar normalmente.
+              {formatarData(resumo.fimAgendado)}. Até lá, tudo continua a funcionar normalmente. Nessa data, os seus
+              alertas serão desativados e deixará de os receber.
             </p>
             <form action={manterSubscricao}>
               <BotaoManter />

@@ -184,6 +184,12 @@ export function resumoPlanoPortal(acesso: Acesso): ResumoPlano {
 
 export const DIAS_CASOS_GUARDADOS = 90;
 
+// Alertas desativados no fim da subscrição: dados conservados 6 meses, só
+// para o cliente recuperar a configuração se voltar. O prazo efetivo vive na
+// base de dados (public.retencao_alertas_desativados()); este valor é só
+// para o texto.
+export const MESES_ALERTAS_GUARDADOS = 6;
+
 export type CongelamentoCasos = {
   quantidade: number;
   expira_em: string;

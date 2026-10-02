@@ -30,6 +30,10 @@ import { pedidoDaMetadata } from "../pedidoCaso.ts";
 //   apaga nada. No Caso + Proteção, os casos disponíveis da subscrição ficam
 //   congelados 90 dias (congelarCreditosCaso) e voltam se a conta tiver de
 //   novo Caso + Proteção ativo nesse prazo (restaurarCreditosCaso).
+//   Os alertas (fidelização, promoção, setores do aviso sectorial) ficam
+//   desativados — sem envios — e conservados 6 meses; quem o faz é o
+//   trigger user_access_alertas_seguir_protecao, em qualquer mudança de
+//   user_access que retire (ou devolva) a Proteção, não este ficheiro.
 // - Uma compra de raiz (sem conta ainda) fica registada; /criar-conta aplica
 //   o acesso quando liga o pagamento à conta nova.
 // - Conversão Avulso → assinatura (metadata.conversao_id): só depois de a
@@ -857,7 +861,8 @@ async function tratarSubscricaoEliminada(event: Stripe.Event, deps: Dependencias
   }
 
   // Retira só o plano desta subscrição: a conta fica sem subscrição (não
-  // "Avulso"). Casos, documentos, histórico e alertas ficam.
+  // "Avulso"). Casos, documentos e histórico ficam; os alertas ficam
+  // desativados e conservados 6 meses (trigger em user_access).
   const afetadas = await deps.atualizarSubscricaoNasContas(snapshot.stripe_subscription_id, {
     plano: "none",
     status: "canceled",

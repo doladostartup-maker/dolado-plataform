@@ -195,7 +195,8 @@ select is(
 select is(
   (select count(*) from pg_proc p where p.pronamespace = 'public'::regnamespace and p.prosecdef
      and p.proname not in ('handle_new_user', 'is_admin', 'rls_auto_enable', 'notificar_novo_caso', 'casos_evento_dossie',
-                           'alertas_portal_contacto_da_conta', 'alertas_fidelizacao_pendentes', 'alertas_promocao_pendentes')), 0::bigint,
+                           'alertas_portal_contacto_da_conta', 'alertas_fidelizacao_pendentes', 'alertas_promocao_pendentes',
+                           'alertas_seguir_protecao', 'avisos_setor_destinatarios')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- casos_evento_dossie (trigger): só insere o evento "dossiê disponível"; search_path fixo; fora da API.
 select ok(not has_function_privilege('authenticated', 'public.casos_evento_dossie()', 'EXECUTE') and not has_function_privilege('anon', 'public.casos_evento_dossie()', 'EXECUTE'), 'privilégios: casos_evento_dossie() não executável pela API');

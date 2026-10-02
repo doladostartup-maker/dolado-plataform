@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { MAX_MOTIVO_TEXTO, MOTIVOS_CANCELAMENTO } from "@/lib/gestaoSubscricao";
-import { DIAS_CASOS_GUARDADOS } from "@/lib/acesso";
+import { DIAS_CASOS_GUARDADOS, MESES_ALERTAS_GUARDADOS } from "@/lib/acesso";
 import { cancelarSubscricao } from "../actions";
 
 const BOTAO_PRIMARIO =
@@ -89,6 +89,11 @@ export function CancelarSubscricao({
               ? `A sua Proteção continuará ativa até ${fimTexto}. `
               : "A sua Proteção continuará ativa até ao fim do período já pago. "}
             Depois dessa data, a subscrição não será renovada e não haverá novas cobranças.
+          </p>
+          <p className="rounded-[var(--radius-card)] border-l-[3px] border-[var(--color-brand)] bg-[var(--color-brand-wash)] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--color-ink)]">
+            Ao cancelar a subscrição, os seus alertas serão desativados quando a Proteção terminar e deixará de os
+            receber. Conservaremos os dados associados durante {MESES_ALERTAS_GUARDADOS} meses, caso decida voltar à
+            DoLado. Após esse período, serão eliminados ou anonimizados.
           </p>
           {mostrarCasosGuardados && (
             <p className="text-[13.5px] leading-relaxed text-[var(--color-ink)]">
