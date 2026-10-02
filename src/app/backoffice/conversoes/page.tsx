@@ -76,7 +76,7 @@ export default async function ConversoesPage({
 
   const colunas =
     "id, plano_destino, refund_montante_centimos, refund_estado, intervencao_motivo, intervencao_resolvida_em, updated_at, stripe_payments(email)";
-  const [{ data: porResolver }, { data: resolvidas }] = await Promise.all([
+  const [{ data: porResolver }, { data: resolvidas }, { data: anuladas }] = await Promise.all([
     supabase
       .from("conversoes_avulso")
       .select(colunas)
@@ -87,6 +87,12 @@ export default async function ConversoesPage({
       .select(colunas)
       .not("intervencao_resolvida_em", "is", null)
       .order("intervencao_resolvida_em", { ascending: false })
+      .limit(20),
+    supabase
+      .from("conversoes_avulso")
+      .select("id, plano_destino, anulada_em, anulada_motivo, stripe_payments(email)")
+      .eq("estado", "anulada")
+      .order("anulada_em", { ascending: false })
       .limit(20),
   ]);
 
@@ -118,6 +124,24 @@ export default async function ConversoesPage({
         <section className="flex flex-col gap-3">
           <h2 className="text-[15px] font-semibold text-[var(--color-ink)]">Resolvidas recentemente</h2>
           <Tabela linhas={resolvidas as unknown as Linha[]} resolvidas />
+        </section>
+      )}
+
+      {anuladas && anuladas.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-[15px] font-semibold text-[var(--color-ink)]">Anuladas automaticamente</h2>
+          <p className="text-sm text-[var(--color-ink-muted)]">
+            O caso do Avulso já não estava disponível quando o pagamento foi confirmado: a subscrição foi cancelada
+            no Stripe, sem reembolso nem casos. Não é preciso fazer nada.
+          </p>
+          <ul className="flex flex-col gap-1 text-sm text-[var(--color-ink)]">
+            {(anuladas as unknown as (Linha & { anulada_em: string; anulada_motivo: string | null })[]).map((l) => (
+              <li key={l.id}>
+                {emailDe(l)} · {NOME_PLANO[l.plano_destino]} · {new Date(l.anulada_em).toLocaleString("pt-PT")}
+                <span className="block text-[12px] text-[var(--color-ink-faint)]">{l.anulada_motivo ?? "—"}</span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
     </div>

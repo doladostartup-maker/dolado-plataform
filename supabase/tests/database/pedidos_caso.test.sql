@@ -76,9 +76,9 @@ grant select on base to anon, authenticated, service_role;
 -- 1. Estrutura e privilégios
 -- ===========================================================================
 select ok((select relrowsecurity from pg_class where oid = 'public.pedidos_caso'::regclass), 'pedidos_caso: RLS ativo');
-select ok(not has_function_privilege('authenticated', 'public.converter_pedido_em_caso(uuid, uuid)', 'EXECUTE'), 'converter_pedido_em_caso: não executável por authenticated');
-select ok(not has_function_privilege('anon', 'public.converter_pedido_em_caso(uuid, uuid)', 'EXECUTE'), 'converter_pedido_em_caso: não executável por anon');
-select ok(has_function_privilege('service_role', 'public.converter_pedido_em_caso(uuid, uuid)', 'EXECUTE'), 'converter_pedido_em_caso: executável pelo servidor');
+select ok(not has_function_privilege('authenticated', 'public.converter_pedido_em_caso(uuid, uuid, text)', 'EXECUTE'), 'converter_pedido_em_caso: não executável por authenticated');
+select ok(not has_function_privilege('anon', 'public.converter_pedido_em_caso(uuid, uuid, text)', 'EXECUTE'), 'converter_pedido_em_caso: não executável por anon');
+select ok(has_function_privilege('service_role', 'public.converter_pedido_em_caso(uuid, uuid, text)', 'EXECUTE'), 'converter_pedido_em_caso: executável pelo servidor');
 select ok((select not prosecdef and 'search_path=""' = any (proconfig) from pg_proc where proname = 'converter_pedido_em_caso'), 'converter_pedido_em_caso: SECURITY INVOKER e search_path fixo');
 select is((select count(*) from pg_policies where tablename = 'casos' and policyname = 'Cliente cria os próprios casos'), 0::bigint, 'casos: o cliente deixa de ter policy de INSERT');
 select throws_ok($$insert into public.pedidos_caso (nome, sector, empresa, problema_tipo, momento_cliente, autorizacao, pedido_confirmado_em) values ('x', 'Energia', 'x', 'Outro', 'x', false, now())$$,

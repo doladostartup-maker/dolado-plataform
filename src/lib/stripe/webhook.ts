@@ -36,9 +36,16 @@ import { pedidoDaMetadata } from "../pedidoCaso.ts";
 //   subscrição estar confirmada e ativa é que se reembolsa a diferença, uma
 //   única vez; refund.* atualiza o estado e um reembolso falhado fica para
 //   intervenção manual (nunca um segundo reembolso automático nem
-//   cancelamento da assinatura). Antes do reembolso, o caso do Avulso sai
-//   do saldo (retirarCreditoAvulso); se entretanto foi usado, não há
-//   reembolso automático — fica para intervenção.
+//   cancelamento da assinatura). A elegibilidade é revalidada quando o
+//   pagamento é confirmado, ANTES de aplicar a subscrição: o caso do Avulso
+//   sai do saldo (retirarCreditoAvulso). Se entretanto foi usado (ou
+//   reembolsado), a conversão é anulada automaticamente: sem subscrição na
+//   conta, sem casos, sem reembolso, e a subscrição é cancelada no Stripe
+//   (1.ª fatura a 0 € pelo cupão). Idempotente; o motivo fica em
+//   conversoes_avulso.anulada_motivo. invoice.paid de uma subscrição de
+//   conversão ainda por decidir (ou anulada) não aplica nada.
+// - Pedido pago com um Avulso: o pedido gasta o caso DESSA compra (modo
+//   vinculado), mesmo que a conta tenha casos da subscrição.
 // - Avulso reembolsado na totalidade (refund.* fora de uma conversão): o
 //   pagamento fica "reembolsado" (final) e o caso, se ainda estiver por
 //   usar, sai do saldo. Um caso já usado não é tocado (nunca saldo negativo).
@@ -83,6 +90,8 @@ export type SnapshotSubscricao = {
   cancel_at: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
+  /** Conversão Avulso → subscrição que criou esta subscrição (metadata), se houver. */
+  conversao_id?: string | null;
 };
 
 export type SubscricaoNaConta = {
@@ -126,6 +135,14 @@ export type ConversaoParaReembolso = {
 export type ResultadoReembolso =
   | { ok: true; id: string; status: string | null; payment_intent_id: string }
   | { ok: false; motivo: string };
+
+export type ConversaoNoWebhook = {
+  id: string;
+  estado: "checkout_aberto" | "convertido" | "anulada";
+  checkout_session_id: string | null;
+  /** Checkout Session da compra Avulso original. */
+  avulso_session_id: string;
+};
 
 export type EstadoRetiradaAvulso = "retirado" | "consumido" | "convertido" | "reembolsado" | "sem_credito";
 
@@ -254,7 +271,13 @@ export interface DependenciasWebhook {
    * tinha sido convertido) ou null se não converteu (pedido de outra conta,
    * cancelado, ou conta sem caso disponível).
    */
-  converterPedidoEmCaso(pedidoId: string, userId: string): Promise<string | null>;
+  converterPedidoEmCaso(pedidoId: string, userId: string, origemAvulso: string | null): Promise<string | null>;
+  /** Conversão Avulso → subscrição (só o que o webhook precisa para decidir). */
+  obterConversao(conversaoId: string): Promise<ConversaoNoWebhook | null>;
+  /** checkout_aberto → anulada (só se for deste checkout). Idempotente. */
+  anularConversao(conversaoId: string, checkoutSessionId: string, motivo: string): Promise<void>;
+  /** Cancela já a subscrição no Stripe, sem fatura final. Idempotente (já cancelada = ok). */
+  cancelarSubscricaoStripe(subscriptionId: string): Promise<void>;
 
   enviarEmailPagamentoConfirmado(dados: {
     email: string;
@@ -325,6 +348,7 @@ export function snapshotDeSubscricao(sub: Stripe.Subscription): SnapshotSubscric
     cancel_at: paraIso(sub.cancel_at),
     current_period_start: paraIso(item?.current_period_start),
     current_period_end: paraIso(item?.current_period_end),
+    conversao_id: sub.metadata?.conversao_id ?? null,
   };
 }
 
@@ -465,19 +489,6 @@ async function converterAvulso(
   const conversao = await deps.reclamarConversao(conversaoId, session.id, subscriptionId);
   if (!conversao || conversao.refund_id || conversao.requer_intervencao) return;
 
-  // O Avulso pagou a 1.ª mensalidade: o caso dele sai do saldo (o caso do
-  // 1.º ciclo já foi dado pela subscrição). "convertido" = reenvio deste
-  // mesmo passo. Se o caso já foi usado (ex.: entre abrir o Checkout e
-  // pagar) ou o Avulso foi reembolsado, não há reembolso automático.
-  const credito = await deps.retirarCreditoAvulso(`checkout:${conversao.avulso_session_id}`, "convertido");
-  if (credito !== "retirado" && credito !== "convertido") {
-    await deps.marcarIntervencaoConversao(conversao.id, `caso do Avulso indisponível (${credito}) — sem reembolso automático`);
-    await deps.notificarAdmin(
-      "Conversão Avulso por rever — DoLado",
-      `A conversão ${conversao.id} não foi reembolsada: o caso do Avulso já não estava disponível (${credito}). A subscrição ${subscriptionId} continua ativa. Decidir manualmente no Stripe.`,
-    );
-    return;
-  }
 
   if (planoAplicado !== conversao.plano_destino) {
     // O plano pago não é o que foi oferecido na conversão — não reembolsa
@@ -528,6 +539,57 @@ async function ligarConsentimentoDaSessao(
  * não está concluído e o reenvio repete tudo; se já estava, não repete o
  * e-mail.
  */
+/**
+ * Revalida uma conversão Avulso → subscrição quando o pagamento é
+ * confirmado, ANTES de aplicar a subscrição. "anulada" = não aplicar nada.
+ *
+ * Só decide se a conversão é deste checkout e ainda está aberta, com a
+ * subscrição ativa no Stripe. Nesse caso retira o caso do Avulso do saldo
+ * (atómico); se o Avulso já não estiver disponível — usado entretanto ou
+ * reembolsado —, anula a conversão. Reenvios: "convertido" segue (o Avulso
+ * já saiu do saldo nesta conversão), "anulada" continua anulada.
+ */
+async function revalidarConversao(
+  sessionId: string,
+  conversaoId: string,
+  subscriptionId: string,
+  deps: DependenciasWebhook,
+): Promise<"seguir" | "anulada"> {
+  const conversao = await deps.obterConversao(conversaoId);
+  // Checkout antigo (substituído) ou conversão desconhecida: sem conversão.
+  if (!conversao || conversao.checkout_session_id !== sessionId) return "seguir";
+  if (conversao.estado === "anulada") return "anulada";
+  if (conversao.estado === "convertido") return "seguir";
+
+  const snapshot = await deps.obterSubscricaoStripe(subscriptionId);
+  if (!subscricaoEstaAtiva(snapshot.status)) return "seguir"; // nada é aplicado ainda
+
+  const credito = await deps.retirarCreditoAvulso(`checkout:${conversao.avulso_session_id}`, "convertido");
+  if (credito === "retirado" || credito === "convertido") return "seguir";
+
+  await deps.anularConversao(conversao.id, sessionId, `caso do Avulso indisponível na confirmação do pagamento (${credito})`);
+  return "anulada";
+}
+
+/**
+ * Conversão anulada: a subscrição deste checkout não é aplicada à conta
+ * (sem proteção, casos nem reembolso) e é cancelada no Stripe. O pagamento
+ * fica registado como "assinatura_cancelada", sem e-mail de confirmação.
+ * Tudo idempotente — um reenvio repete os mesmos passos sem efeito.
+ */
+async function concluirConversaoAnulada(
+  session: Stripe.Checkout.Session,
+  s: DadosSessao,
+  contas: string[],
+  subscriptionId: string,
+  deps: DependenciasWebhook,
+) {
+  await deps.cancelarSubscricaoStripe(subscriptionId);
+  await deps.gravarPagamento(dadosPagamento(session, s, "assinatura_cancelada"));
+  await ligarConsentimentoDaSessao(session, s, contas, deps);
+  return "conversao_anulada_avulso_indisponivel";
+}
+
 async function confirmarCompra(
   session: Stripe.Checkout.Session,
   s: DadosSessao,
@@ -536,6 +598,15 @@ async function confirmarCompra(
   em: string,
 ) {
   const contas = await contasDaCompra(session, s, deps);
+
+  // Conversão de um Avulso: revalidada antes de dar qualquer direito.
+  const conversaoId = session.metadata?.conversao_id;
+  if (conversaoId && s.subscriptionId && contas.length > 0) {
+    if ((await revalidarConversao(session.id, conversaoId, s.subscriptionId, deps)) === "anulada") {
+      return concluirConversaoAnulada(session, s, contas, s.subscriptionId, deps);
+    }
+  }
+
   // Plano efetivamente aplicado a uma conta (subscrição confirmada e ativa).
   let planoAplicado: Plano | null = null;
   for (const userId of contas) {
@@ -551,7 +622,6 @@ async function confirmarCompra(
   // Conversão de um Avulso: só depois de a subscrição estar confirmada e
   // ativa na conta (plano aplicado acima). Antes do "concluido", para um
   // reenvio depois de uma falha voltar a tentar o reembolso.
-  const conversaoId = session.metadata?.conversao_id;
   if (conversaoId && s.subscriptionId && contas.length > 0) {
     // Só com a subscrição ativa na conta — nunca com base apenas no price.
     if (planoAplicado) await converterAvulso(session, conversaoId, s.subscriptionId, planoAplicado, deps);
@@ -563,7 +633,9 @@ async function confirmarCompra(
   const pedidoId = pedidoDaMetadata(session.metadata);
   let casoDoPedido: string | null = null;
   if (pedidoId && contas.length > 0) {
-    casoDoPedido = planoAplicado ? await deps.converterPedidoEmCaso(pedidoId, contas[0]) : null;
+    // Pago com Avulso: o pedido gasta o caso desta compra (vinculado).
+    const origemAvulso = session.mode === "payment" ? `checkout:${session.id}` : null;
+    casoDoPedido = planoAplicado ? await deps.converterPedidoEmCaso(pedidoId, contas[0], origemAvulso) : null;
     if (!casoDoPedido && estadoAnterior !== "concluido") {
       await deps.notificarAdmin(
         "Pedido de caso pago por converter — DoLado",
@@ -687,6 +759,15 @@ async function tratarFatura(
   const plano = deps.planoDoPreco(snapshot.price_id);
   if (!plano) return { resultado: "pago_preco_desconhecido", ...ids };
   if (!subscricaoEstaAtiva(snapshot.status)) return { resultado: "pago_subscricao_inativa", ...ids };
+
+  // Subscrição de uma conversão Avulso: só o checkout.session.completed
+  // decide (revalidação). Antes disso, ou se foi anulada, não aplica nada.
+  if (snapshot.conversao_id) {
+    const conversao = await deps.obterConversao(snapshot.conversao_id);
+    if (conversao && conversao.estado !== "convertido") {
+      return { resultado: conversao.estado === "anulada" ? "pago_conversao_anulada" : "pago_aguarda_conversao", ...ids };
+    }
+  }
 
   const contas = customerId ? await deps.contasDoCustomer(customerId) : [];
   if (contas.length === 0) return { resultado: "pago_sem_conta_ligada", ...ids };
