@@ -26,15 +26,13 @@ export default async function DocumentoMonitorPage({
   const { data: doc } = await admin.from("documentos_monitor").select("*").eq("id", id).maybeSingle();
   if (!doc) notFound();
 
-  const [{ data: conta }, { data: extracoes }, { data: contrato }, { data: campos }, ficheiro] = await Promise.all([
+  const [{ data: conta }, { data: extracoes }, { data: contrato }, { data: campos }] = await Promise.all([
     admin.from("utilizadores").select("nome, email").eq("id", doc.utilizador_id).maybeSingle(),
     admin.from("extracoes_documento").select("id, modelo, schema_versao, prompt_versao, estado, erro, resultado, created_at").eq("documento_id", id).order("created_at", { ascending: false }),
     doc.contrato_id ? admin.from("contratos_monitorizados").select("id, setor, fornecedor, estado").eq("id", doc.contrato_id).maybeSingle() : Promise.resolve({ data: null }),
     doc.contrato_id
       ? admin.from("contratos_campos").select("id, campo, valor, origem, estado, confianca").eq("contrato_id", doc.contrato_id).in("estado", ["atual", "proposto", "em_conflito"]).order("campo")
       : Promise.resolve({ data: [] }),
-    // Ligação temporária (60 s) para ver o ficheiro.
-    admin.storage.from(doc.bucket).createSignedUrl(doc.storage_path, 60),
   ]);
 
   return (
@@ -57,13 +55,10 @@ export default async function DocumentoMonitorPage({
         <dd>{doc.estado}</dd>
         <dt className="text-[var(--color-ink-muted)]">Ficheiro</dt>
         <dd>
-          {ficheiro.data?.signedUrl ? (
-            <a href={ficheiro.data.signedUrl} target="_blank" rel="noopener noreferrer" className="text-[var(--color-brand)] underline">
-              Abrir ({doc.mime_type}, {Math.round((doc.tamanho_bytes ?? 0) / 1024)} KB)
-            </a>
-          ) : (
-            "indisponível"
-          )}
+          {/* Ligação assinada gerada no clique (rota /api/monitor/documentos). */}
+          <a href={`/api/monitor/documentos/${doc.id}`} target="_blank" rel="noopener noreferrer" className="text-[var(--color-brand)] underline">
+            Abrir ({doc.mime_type}, {Math.round((doc.tamanho_bytes ?? 0) / 1024)} KB)
+          </a>
         </dd>
         <dt className="text-[var(--color-ink-muted)]">Contrato</dt>
         <dd>{contrato ? `${contrato.fornecedor ?? "sem fornecedor"} · ${ROTULO_SETOR[contrato.setor as keyof typeof ROTULO_SETOR]} · ${contrato.estado}` : "por associar"}</dd>

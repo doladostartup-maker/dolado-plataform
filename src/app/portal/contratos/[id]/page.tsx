@@ -237,10 +237,10 @@ export default async function ContratoPage({
           <ul className="flex flex-col gap-1.5">
             {documentos!.map((d) => (
               <li key={d.id} className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
-                <span className="text-[var(--color-ink)]">
+                <a href={`/api/monitor/documentos/${d.id}`} target="_blank" rel="noopener noreferrer" className="text-[var(--color-ink)] underline decoration-[var(--color-hairline-strong)] underline-offset-2 hover:text-[var(--color-brand)]">
                   {d.tipo === "contrato" ? "Contrato" : "Fatura"} · {formatarDataPt(d.created_at)}
                   {d.nome_ficheiro && <span className="text-[var(--color-ink-faint)]"> · {d.nome_ficheiro}</span>}
-                </span>
+                </a>
                 <span className="text-[12.5px] text-[var(--color-ink-faint)]">{ESTADO_DOCUMENTO[d.estado] ?? d.estado}</span>
               </li>
             ))}
