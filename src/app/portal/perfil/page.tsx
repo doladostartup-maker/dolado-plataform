@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/auth";
-import { alterarPassword, guardarPreferenciasSetor } from "./actions";
+import { alterarPassword, guardarPreferenciasSetor, retirarConsentimentoComunicacoes } from "./actions";
 
 const INPUT_CLASS =
   "w-full rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-hairline-strong)] focus:outline-none";
@@ -9,7 +9,13 @@ const SETORES = ["Telecomunicações", "Energia", "Água"];
 export default async function PerfilPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string; guardado?: string; preferencias_guardadas?: string }>;
+  searchParams: Promise<{
+    erro?: string;
+    guardado?: string;
+    preferencias_guardadas?: string;
+    comunicacoes_retiradas?: string;
+    erro_comunicacoes?: string;
+  }>;
 }) {
   const query = await searchParams;
   const { supabase, user } = await requireUser();
@@ -26,6 +32,14 @@ export default async function PerfilPage({
     .eq("utilizador_id", user.id);
 
   const setoresSubscritos = new Set((preferencias ?? []).map((p) => p.setor));
+
+  // Autorização ativa para e-mails com novidades e ofertas (RLS: só a própria).
+  const { data: comunicacoes } = await supabase
+    .from("consentimentos_comunicacoes")
+    .select("aceite_em")
+    .eq("user_id", user.id)
+    .is("retirado_em", null)
+    .maybeSingle();
 
   return (
     <div className="flex max-w-xl flex-col gap-6">
@@ -123,6 +137,43 @@ export default async function PerfilPage({
             Guardar preferências
           </button>
         </form>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-subtle)]">
+        <h2 className="text-[var(--text-subheading)] font-medium text-[var(--color-ink)]">
+          E-mails com novidades e ofertas
+        </h2>
+        {query.comunicacoes_retiradas && (
+          <p className="text-sm text-[var(--color-status-success)]">
+            ✓ Deixou de receber e-mails com novidades e ofertas da DoLado.
+          </p>
+        )}
+        {query.erro_comunicacoes && (
+          <p className="text-sm text-[var(--color-status-danger)]">{query.erro_comunicacoes}</p>
+        )}
+        {comunicacoes ? (
+          <>
+            <p className="text-sm text-[var(--color-ink-muted)]">
+              Aceitou receber e-mails da DoLado com novidades e ofertas em{" "}
+              {new Date(comunicacoes.aceite_em).toLocaleDateString("pt-PT")}. Pode deixar de os receber a qualquer
+              momento.
+            </p>
+            <form action={retirarConsentimentoComunicacoes}>
+              <button
+                type="submit"
+                className="rounded-[var(--radius-button)] border border-[var(--color-hairline-strong)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-ink)] hover:bg-[var(--color-surface-sunken)]"
+              >
+                Deixar de receber
+              </button>
+            </form>
+          </>
+        ) : (
+          !query.comunicacoes_retiradas && (
+            <p className="text-sm text-[var(--color-ink-muted)]">
+              Não recebe e-mails da DoLado com novidades e ofertas.
+            </p>
+          )
+        )}
       </div>
     </div>
   );

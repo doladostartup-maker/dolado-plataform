@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function alterarPassword(formData: FormData) {
   const password = formData.get("password") as string;
@@ -65,4 +66,32 @@ export async function guardarPreferenciasSetor(formData: FormData) {
   }
 
   redirect("/portal/perfil?preferencias_guardadas=1");
+}
+
+/**
+ * Retira a autorização para e-mails com novidades e ofertas. A sessão é
+ * validada antes de usar a service role; só a autorização ativa desta conta
+ * é marcada como retirada (o registo de prova mantém-se).
+ */
+export async function retirarConsentimentoComunicacoes() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { error } = await createAdminClient()
+    .from("consentimentos_comunicacoes")
+    .update({ retirado_em: new Date().toISOString(), retirado_origem: "portal" })
+    .eq("user_id", user.id)
+    .is("retirado_em", null);
+
+  if (error) {
+    redirect(`/portal/perfil?erro_comunicacoes=${encodeURIComponent("Não foi possível guardar. Tente novamente.")}`);
+  }
+
+  redirect("/portal/perfil?comunicacoes_retiradas=1");
 }
