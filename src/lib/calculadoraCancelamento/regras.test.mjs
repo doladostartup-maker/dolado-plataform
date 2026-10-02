@@ -145,13 +145,27 @@ describe("contratos anteriores a 14/11/2022", () => {
     assert.equal(r.criterio, "so_vantagem");
   });
 
-  test("refidelização: não calculável automaticamente (com ou sem nova instalação)", () => {
-    for (const novaInstalacao of ["sim", "nao"]) {
-      const r = calc({ dataInicio: "2021-06-01", tipo: "refidelizacao", novaInstalacao }, HOJE_ANTIGO);
-      assert.equal(r.ok, true);
-      assert.equal(r.estado, "nao_calculavel");
-      assert.match(r.motivo, /14 de novembro de 2022/);
-    }
+  test("refidelização sem nova instalação: MIN(A, 30% das mensalidades em falta), confirmado pela ANACOM", () => {
+    // N = 12; B = 10 € × 12 × 30% = 36 €; A = 50 € → vale o limite
+    const r = calc({ dataInicio: "2021-06-01", tipo: "refidelizacao", novaInstalacao: "nao", vantagem: "100", mensalidade: "10" }, HOJE_ANTIGO);
+    assert.equal(r.estado, "calculado");
+    assert.equal(r.regime, "anterior_a_2022_11_14");
+    assert.equal(r.vantagemProporcionalCentimos, 5000);
+    assert.equal(r.percentagemLimite, 30);
+    assert.equal(r.limiteMensalidadesCentimos, 3600);
+    assert.equal(r.resultadoCentimos, 3600);
+    assert.equal(r.criterio, "limite");
+    // 30% também no 1.º ano da refidelização
+    const ano1 = calc({ dataInicio: "2022-01-01", tipo: "refidelizacao", novaInstalacao: "nao" }, HOJE_ANTIGO);
+    assert.equal(ano1.anoFidelizacao, 1);
+    assert.equal(ano1.percentagemLimite, 30);
+  });
+
+  test("refidelização com nova instalação: só a vantagem proporcional", () => {
+    const r = calc({ dataInicio: "2021-06-01", tipo: "refidelizacao", novaInstalacao: "sim", vantagem: "100", mensalidade: "1" }, HOJE_ANTIGO);
+    assert.equal(r.limiteMensalidadesCentimos, null);
+    assert.equal(r.resultadoCentimos, 5000);
+    assert.equal(r.criterio, "so_vantagem");
   });
 
   test("14/11/2022 já é o regime novo; 13/11/2022 ainda não", () => {

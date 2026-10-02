@@ -22,10 +22,10 @@
 //           refidelização com nova instalação/alteração do lacete local;
 //       B = M × N × 30% — refidelização sem nova instalação;
 //       resultado = MIN(A, B).
-//   * Anterior a 14/11/2022:
-//       primeira fidelização → resultado = A (sem o limite dos 50%/30%);
-//       refidelização → não calculável automaticamente (o enquadramento do
-//       limite de 30% nesse regime não está fechado — decisão pendente).
+//   * Anterior a 14/11/2022 (confirmado com a ANACOM, decisão de 02/10/2026):
+//       refidelização sem nova instalação/alteração do lacete local →
+//         resultado = MIN(A, M × N × 30%);
+//       restantes casos → resultado = A (sem o limite dos 50%/30%).
 //   * Equipamento subsidiado: nunca entra no valor; só um aviso.
 //
 // R/D é calculado em dias (proporção exata do tempo em falta); N e o ano da
@@ -77,13 +77,6 @@ export type ResultadoCalculadora =
       tempo: TempoFidelizacao;
       equipamento: boolean;
       resultadoCentimos: 0;
-    }
-  | {
-      ok: true;
-      estado: "nao_calculavel";
-      tempo: TempoFidelizacao;
-      equipamento: boolean;
-      motivo: string;
     }
   | {
       ok: true;
@@ -262,17 +255,9 @@ export function calcularEncargoCancelamento(dados: DadosCalculadora, hoje: strin
   const A = Math.round((V * diasEmFalta) / diasTotais);
   const anoFidelizacao: 1 | 2 = decorrido.meses < 12 ? 1 : 2;
 
-  if (dados.dataInicio < DATA_REGIME_LCE) {
-    if (dados.tipo === "refidelizacao") {
-      return {
-        ok: true,
-        estado: "nao_calculavel",
-        tempo,
-        equipamento,
-        motivo:
-          "Numa refidelização iniciada antes de 14 de novembro de 2022, o limite aplicável ao encargo depende de condições que esta calculadora não consegue confirmar automaticamente.",
-      };
-    }
+  const refidelizacaoSemInstalacao = dados.tipo === "refidelizacao" && dados.novaInstalacao === "nao";
+
+  if (dados.dataInicio < DATA_REGIME_LCE && !refidelizacaoSemInstalacao) {
     return {
       ok: true,
       estado: "calculado",
@@ -288,15 +273,15 @@ export function calcularEncargoCancelamento(dados: DadosCalculadora, hoje: strin
     };
   }
 
-  const reiniciaPrazos = dados.tipo === "primeira" || dados.novaInstalacao === "sim";
-  const percentagemLimite: 50 | 30 = reiniciaPrazos && anoFidelizacao === 1 ? 50 : 30;
+  // Refidelização sem nova instalação: sempre 30% (nos dois regimes).
+  const percentagemLimite: 50 | 30 = !refidelizacaoSemInstalacao && anoFidelizacao === 1 ? 50 : 30;
   const B = Math.round((M * N * percentagemLimite) / 100);
   const resultado = Math.min(A, B);
 
   return {
     ok: true,
     estado: "calculado",
-    regime: "a_partir_de_2022_11_14",
+    regime: dados.dataInicio < DATA_REGIME_LCE ? "anterior_a_2022_11_14" : "a_partir_de_2022_11_14",
     tempo,
     equipamento,
     vantagemProporcionalCentimos: A,

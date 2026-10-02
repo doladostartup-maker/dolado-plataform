@@ -150,56 +150,42 @@ function Resultado({ resultado, mensalidade, onRecomecar }: { resultado: Resulta
     <div aria-live="polite" className="flex flex-col gap-4">
       <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--color-brand)]">Resultado</p>
 
-      {resultado.estado === "nao_calculavel" ? (
-        <>
-          <h2 className="text-[19px] font-semibold leading-snug text-[var(--color-ink)]">
-            Não é possível calcular automaticamente o encargo deste contrato.
-          </h2>
-          <p className="text-[14.5px] leading-relaxed text-[var(--color-ink-muted)]">{resultado.motivo}</p>
-          <p className="text-[14.5px] leading-relaxed text-[var(--color-ink-muted)]">
-            Se quiser avançar, a DoLado pode analisar o seu caso a partir do contrato.
-          </p>
-        </>
-      ) : (
-        <>
-          <h2 className="text-[19px] font-semibold leading-snug text-[var(--color-ink)]">
-            Estimativa máxima do encargo de cancelamento:{" "}
-            <span className="whitespace-nowrap text-[var(--color-brand)]">{formatarEuros(resultado.resultadoCentimos)}</span>
-          </h2>
+      <h2 className="text-[19px] font-semibold leading-snug text-[var(--color-ink)]">
+        Estimativa máxima do encargo de cancelamento:{" "}
+        <span className="whitespace-nowrap text-[var(--color-brand)]">{formatarEuros(resultado.resultadoCentimos)}</span>
+      </h2>
 
-          {resultado.estado === "terminada" && (
-            <p className="text-[14.5px] leading-relaxed text-[var(--color-ink-muted)]">
-              Com base nas datas introduzidas, a fidelização terminou a {formatarData(tempo.dataFim)}: já não existe
-              período de fidelização em curso.
-            </p>
-          )}
-
-          {resultado.estado === "calculado" && (
-            <ul className="flex flex-col gap-1.5 text-[14.5px] leading-relaxed text-[var(--color-ink)]">
-              <li>
-                Vantagem proporcional ainda por recuperar:{" "}
-                <strong>{formatarEuros(resultado.vantagemProporcionalCentimos)}</strong>
-              </li>
-              {resultado.limiteMensalidadesCentimos !== null && (
-                <li>
-                  Limite pelas mensalidades restantes ({tempo.mensalidadesEmFalta} × {mensalidade} ×{" "}
-                  {resultado.percentagemLimite}%): <strong>{formatarEuros(resultado.limiteMensalidadesCentimos)}</strong>
-                </li>
-              )}
-              <li>
-                Valor aplicável: <strong>{formatarEuros(resultado.resultadoCentimos)}</strong>
-                {(resultado.criterio === "vantagem" || resultado.criterio === "limite") && ", por ser o menor dos dois"}
-                {resultado.criterio === "iguais" && ", por os dois valores serem iguais"}
-                {resultado.criterio === "so_vantagem" &&
-                  ". Num contrato iniciado antes de 14 de novembro de 2022, a calculadora usa apenas a vantagem proporcional"}
-                .
-              </li>
-            </ul>
-          )}
-        </>
+      {resultado.estado === "terminada" && (
+        <p className="text-[14.5px] leading-relaxed text-[var(--color-ink-muted)]">
+          Com base nas datas introduzidas, a fidelização terminou a {formatarData(tempo.dataFim)}: já não existe
+          período de fidelização em curso.
+        </p>
       )}
 
-      {resultado.estado !== "terminada" && (
+      {resultado.estado === "calculado" && (
+        <ul className="flex flex-col gap-1.5 text-[14.5px] leading-relaxed text-[var(--color-ink)]">
+          <li>
+            Vantagem proporcional ainda por recuperar:{" "}
+            <strong>{formatarEuros(resultado.vantagemProporcionalCentimos)}</strong>
+          </li>
+          {resultado.limiteMensalidadesCentimos !== null && (
+            <li>
+              Limite pelas mensalidades restantes ({tempo.mensalidadesEmFalta} × {mensalidade} ×{" "}
+              {resultado.percentagemLimite}%): <strong>{formatarEuros(resultado.limiteMensalidadesCentimos)}</strong>
+            </li>
+          )}
+          <li>
+            Valor aplicável: <strong>{formatarEuros(resultado.resultadoCentimos)}</strong>
+            {(resultado.criterio === "vantagem" || resultado.criterio === "limite") && ", por ser o menor dos dois"}
+            {resultado.criterio === "iguais" && ", por os dois valores serem iguais"}
+            {resultado.criterio === "so_vantagem" &&
+              ". Num contrato iniciado antes de 14 de novembro de 2022, só se aplica a vantagem proporcional, exceto numa refidelização sem nova instalação"}
+            .
+          </li>
+        </ul>
+      )}
+
+      {resultado.estado === "calculado" && (
         <dl className="rounded-[10px] bg-[var(--color-canvas)] px-4 py-1">
           <LinhaTempo rotulo="Tempo já decorrido" valor={textoDuracao(tempo.decorrido)} />
           <LinhaTempo rotulo="Tempo de fidelização em falta" valor={textoDuracao(tempo.emFalta)} />
@@ -427,7 +413,8 @@ export function CalculadoraCancelamentoPublica() {
             fidelização iniciada ou renovada a partir de 14 de novembro de 2022, o encargo corresponde ao menor de
             dois valores: a parte da vantagem ainda por recuperar, proporcional ao tempo de fidelização em falta, e
             uma percentagem das mensalidades em falta (50% no primeiro ano e 30% no segundo; 30% numa refidelização
-            sem nova instalação).
+            sem nova instalação). Nos contratos anteriores, conta a vantagem proporcional ao tempo em falta e, numa
+            refidelização sem nova instalação, também o limite de 30% das mensalidades em falta.
           </li>
           <li>
             <strong className="text-[var(--color-ink)]">O que não é.</strong> Não avalia se pode cancelar sem
