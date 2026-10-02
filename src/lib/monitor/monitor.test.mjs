@@ -163,7 +163,10 @@ describe("validação da extração de faturas", () => {
     assert.equal(dataValida("2026-02-29"), false);
     assert.equal(dataValida("2028-02-29"), true);
     assert.equal(paraCents(42.995), 4300);
-    assert.equal(paraCents("42"), null);
+    assert.equal(paraCents("42"), 4200);
+    assert.equal(paraCents("42,50"), 4250);
+    assert.equal(paraCents("abc"), null);
+    assert.equal(paraCents(""), null);
   });
 
   test("schema exige todos os campos e não aceita campos extra", () => {
@@ -381,5 +384,83 @@ describe("F4: custo de saída a partir do contrato", async () => {
     assert.equal(div.diferencaCents, 5000);
     assert.equal(compararCessacao(contrato({ equipamento_subsidiado: "sim" }), est + 5000, "2026-09-15").resultado, "equipamento");
     assert.equal(compararCessacao(contrato(), null, null).resultado, "sem_dados");
+  });
+});
+
+
+// ---------------------------------------------------------------------------
+
+describe("schemas aceites pela Claude API (structured outputs)", async () => {
+  const { SCHEMA_FATURA, validarExtracaoFatura } = await import("./extracaoFatura.ts");
+  const { SCHEMA_CONTRATO, validarExtracaoContrato } = await import("./extracaoContrato.ts");
+
+  // Parâmetros com tipos em união (type em array ou anyOf): a API aceita no
+  // máximo 16 por schema.
+  function contarUnioes(no) {
+    if (!no || typeof no !== "object") return 0;
+    let n = Array.isArray(no.type) || Array.isArray(no.anyOf) ? 1 : 0;
+    for (const v of Object.values(no)) n += typeof v === "object" ? contarUnioes(v) : 0;
+    return n;
+  }
+
+  test("nenhum dos schemas passa o limite de 16 parâmetros em união", () => {
+    assert.ok(contarUnioes(SCHEMA_FATURA) <= 16, `fatura: ${contarUnioes(SCHEMA_FATURA)}`);
+    assert.ok(contarUnioes(SCHEMA_CONTRATO) <= 16, `contrato: ${contarUnioes(SCHEMA_CONTRATO)}`);
+  });
+
+  const c = (valor, confianca = "high", pagina = 1, evidencia = "texto") => ({ valor, confianca, pagina, evidencia });
+
+  test("fatura no formato v2 (tudo texto, vazio = em falta, página 0) é validada como antes", () => {
+    const r = validarExtracaoFatura(
+      {
+        tipo_documento: "fatura",
+        setor: "telecomunicacoes",
+        fornecedor: c("Vodafone"),
+        referencia_contrato: c("", "not_found", 0, ""),
+        data_emissao: c("2026-09-15"),
+        periodo_inicio: "2026-09-01",
+        periodo_fim: "2026-09-30",
+        moeda: "",
+        total: c("47.99"),
+        mensalidade: c("42.99"),
+        data_fim_fidelizacao: c("2027-02-28", "high", 2),
+        valor_cessacao: c("74.10", "high", 0, ""),
+        data_referencia_cessacao: "",
+        linhas: [
+          { descricao: "Pacote Fibra", categoria: "servico_base", valor: 42.99, recorrente: "sim" },
+          { descricao: "Canal extra", categoria: "servico_extra", valor: 5, recorrente: "sim" },
+          { descricao: "Instalação", categoria: "outro", valor: 0, recorrente: "nao" },
+        ],
+      },
+      "2026-10-02",
+    );
+    assert.equal(r.ok, true);
+    assert.equal(r.precisaRevisao, false);
+    assert.equal(r.fatura.totalCents, 4799);
+    assert.equal(r.fatura.recorrenteCents, 4799);
+    const porCampo = Object.fromEntries(r.propostas.map((p) => [p.campo, p]));
+    assert.equal(porCampo.mensalidade_cents.valor, 4299);
+    assert.equal(porCampo.cessacao_operador_cents.valor, 7410);
+    assert.equal(porCampo.cessacao_operador_cents.pagina, null);
+    assert.equal(porCampo.cessacao_operador_cents.evidencia, null);
+    assert.equal(porCampo.referencia_contrato, undefined);
+  });
+
+  test("contrato no formato v2", () => {
+    const r = validarExtracaoContrato({
+      tipo_documento: "contrato",
+      setor: "telecomunicacoes",
+      fornecedor: c("NOS"),
+      data_inicio: c("2025-03-01"),
+      data_fim_fidelizacao: c("2027-02-28"),
+      data_fim_promocao: c("", "not_found", 0, ""),
+      descricao_promocao: c("", "not_found", 0, ""),
+      mensalidade: c("39.99"),
+      vantagem: c("120.00", "medium"),
+    });
+    assert.equal(r.ok, true);
+    assert.equal(r.precisaRevisao, false);
+    const porCampo = Object.fromEntries(r.propostas.map((p) => [p.campo, p.valor]));
+    assert.deepEqual(porCampo, { fornecedor: "NOS", data_inicio: "2025-03-01", data_fim_fidelizacao: "2027-02-28", mensalidade_cents: 3999, vantagem_cents: 12000 });
   });
 });
