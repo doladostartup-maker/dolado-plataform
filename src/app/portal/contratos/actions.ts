@@ -1,6 +1,6 @@
 "use server";
 
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireProtecao } from "@/lib/auth";
@@ -8,7 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { excedeuLimiteTaxa } from "@/lib/rateLimit";
 import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 import { MIME_ACEITES, type MimeAceite } from "@/lib/monitor/claudeDocumentos";
-import { processarDocumento } from "@/lib/monitor/servidor";
+import { inspecionarFicheiro, processarDocumento } from "@/lib/monitor/servidor";
 import { SETORES_CONTRATO, lerEurosParaCents } from "@/lib/monitor/contratos";
 import { dataValida, type CampoContrato } from "@/lib/monitor/extracaoFatura";
 
@@ -113,14 +113,13 @@ export async function registarDocumento(formData: FormData) {
   }
 
   const admin = createAdminClient();
-  const { data: ficheiro } = await admin.storage.from(BUCKET).download(caminho);
-  if (!ficheiro) irPara(voltar, { erro: "Não encontrámos o ficheiro carregado. Tente novamente." });
-  if (ficheiro.size > TAMANHO_MAXIMO || !MIME_ACEITES.includes(ficheiro.type as MimeAceite)) {
+  // Lido em streaming (hash + tamanho), sem ter o ficheiro inteiro em memória.
+  const ficheiro = await inspecionarFicheiro(BUCKET, caminho);
+  if (!ficheiro || ficheiro.tamanho > TAMANHO_MAXIMO || !MIME_ACEITES.includes(ficheiro.mime as MimeAceite)) {
     await admin.storage.from(BUCKET).remove([caminho]);
-    irPara(voltar, { erro: "Formato ou tamanho não suportado." });
+    irPara(voltar, { erro: ficheiro ? "Formato ou tamanho não suportado." : "Não encontrámos o ficheiro carregado ou excede 10 MB. Tente novamente." });
   }
-
-  const sha256 = createHash("sha256").update(Buffer.from(await ficheiro.arrayBuffer())).digest("hex");
+  const sha256 = ficheiro.sha256;
   const { data: repetido } = await admin
     .from("documentos_monitor")
     .select("id, contrato_id")
@@ -140,8 +139,8 @@ export async function registarDocumento(formData: FormData) {
       tipo,
       storage_path: caminho,
       nome_ficheiro: nomeFicheiro,
-      mime_type: ficheiro.type,
-      tamanho_bytes: ficheiro.size,
+      mime_type: ficheiro.mime,
+      tamanho_bytes: ficheiro.tamanho,
       sha256,
     })
     .select("id")

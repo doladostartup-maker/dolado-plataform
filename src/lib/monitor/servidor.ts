@@ -11,6 +11,7 @@
 // Nunca lança para o cliente: falhas deixam o documento "pendente" (a DoLado
 // trata manualmente) ou "a_rever", com aviso ao admin.
 
+import { createHash } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ADMIN_EMAIL, enviarEmailBrevo } from "@/lib/email/brevo";
 import { MODELO_DOCUMENTOS } from "@/lib/claude";
@@ -57,6 +58,40 @@ async function avisarAdmin(assunto: string, texto: string) {
   } catch (erro) {
     console.error("Falha ao avisar o admin (Monitor):", erro);
   }
+}
+
+// Validade da URL assinada entregue à Claude API para descarregar o documento.
+const URL_DOCUMENTO_SEGUNDOS = 300;
+const TAMANHO_MAXIMO_DOCUMENTO = 10 * 1024 * 1024;
+
+// Hash SHA-256, tamanho e tipo de um ficheiro do Storage, lido em streaming
+// (bloco a bloco): o ficheiro nunca fica inteiro em memória. null se não
+// existir ou exceder o tamanho máximo.
+export async function inspecionarFicheiro(
+  bucket: string,
+  caminho: string,
+): Promise<{ sha256: string; tamanho: number; mime: string } | null> {
+  const admin = createAdminClient();
+  const { data: assinado } = await admin.storage.from(bucket).createSignedUrl(caminho, 60);
+  if (!assinado?.signedUrl) return null;
+  const resposta = await fetch(assinado.signedUrl);
+  if (!resposta.ok || !resposta.body) return null;
+
+  const hash = createHash("sha256");
+  let tamanho = 0;
+  const leitor = resposta.body.getReader();
+  for (;;) {
+    const { done, value } = await leitor.read();
+    if (done) break;
+    tamanho += value.byteLength;
+    if (tamanho > TAMANHO_MAXIMO_DOCUMENTO) {
+      await leitor.cancel();
+      return null;
+    }
+    hash.update(value);
+  }
+  const mime = (resposta.headers.get("content-type") ?? "").split(";")[0].trim();
+  return { sha256: hash.digest("hex"), tamanho, mime };
 }
 
 export async function gastoApiUsd(admin: Admin): Promise<number> {
@@ -270,8 +305,10 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
       await avisarAdmin("Documento por rever", `Documento ${doc.id}: formato ${doc.mime_type ?? "desconhecido"} não é lido automaticamente.`);
       return { estado: "a_rever", contratoId: doc.contrato_id, motivo: "formato_nao_lido" };
     }
-    const { data: ficheiro, error: erroFicheiro } = await admin.storage.from(doc.bucket).download(doc.storage_path);
-    if (erroFicheiro || !ficheiro) {
+    const { data: assinado, error: erroFicheiro } = await admin.storage
+      .from(doc.bucket)
+      .createSignedUrl(doc.storage_path, URL_DOCUMENTO_SEGUNDOS);
+    if (erroFicheiro || !assinado?.signedUrl) {
       await avisarAdmin("Documento por processar", `Documento ${doc.id}: o ficheiro não foi encontrado no Storage.`);
       return { estado: "pendente", contratoId: doc.contrato_id, motivo: "ficheiro_nao_encontrado" };
     }
@@ -300,7 +337,7 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
       bruto = anterior.resultado;
     } else {
       const chamada = await lerDocumentoComClaude({
-        conteudo: Buffer.from(await ficheiro.arrayBuffer()),
+        url: assinado.signedUrl,
         mime: doc.mime_type as MimeAceite,
         prompt: ehContrato ? PROMPT_CONTRATO : PROMPT_FATURA,
         schema: ehContrato ? SCHEMA_CONTRATO : SCHEMA_FATURA,
