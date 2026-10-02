@@ -1,63 +1,46 @@
-// E-mails dos alertas diários (Edge Functions verificar-alertas-*) — `npm test`.
+// E-mails dos alertas diários (Edge Function verificar-monitor-datas) — `npm test`.
 // O módulo partilhado não usa APIs de Deno, por isso corre também em Node.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 import {
-  assuntoFidelizacao,
-  assuntoPromocao,
+  assuntoAlertaMonitor,
   escaparHtml,
-  htmlAvisoFidelizacao,
-  htmlAvisoPromocao,
+  htmlAlertaMonitor,
   textoParaAssunto,
 } from "../../supabase/functions/_shared/emailAlertas.ts";
 
 const fonte = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 const MALICIOSO = '<a href="https://phishing.invalid">Clique aqui</a><script>x()</script>';
+const BASE = { nome: "Ana", fornecedor: "Vodafone", descricaoPromocao: null, dataFim: "2027-02-28", contratoId: "abc" };
 
 describe("escape de conteúdo do cliente", () => {
-  test("HTML de nome, operadora e descrição não passa para o e-mail", () => {
-    const fid = htmlAvisoFidelizacao(MALICIOSO, MALICIOSO, 30, "2027-01-01");
-    const promo = htmlAvisoPromocao(MALICIOSO, MALICIOSO, MALICIOSO, 7, "2027-01-01");
+  test("HTML de nome, fornecedor e descrição não passa para o e-mail", () => {
+    const fid = htmlAlertaMonitor({ ...BASE, regra: "fidelizacao_30d", dias: 30, nome: MALICIOSO, fornecedor: MALICIOSO });
+    const promo = htmlAlertaMonitor({ ...BASE, regra: "promocao_30d", dias: 7, nome: MALICIOSO, fornecedor: MALICIOSO, descricaoPromocao: MALICIOSO });
     for (const html of [fid, promo]) {
-      assert.equal(html.includes("phishing.invalid\">"), false);
+      assert.equal(html.includes('phishing.invalid">'), false);
       assert.equal(html.includes("<script>"), false);
       assert.ok(html.includes("&lt;a href=&quot;https://phishing.invalid&quot;&gt;"));
     }
   });
 
   test("texto normal continua legível (acentos não são alterados)", () => {
-    const html = htmlAvisoPromocao("Ana", "Operadora Ação & Cª", "Fibra 1 Gbps", 1, "2027-01-01");
+    const html = htmlAlertaMonitor({ ...BASE, regra: "promocao_30d", dias: 1, fornecedor: "Operadora Ação & Cª", descricaoPromocao: "Fibra 1 Gbps" });
     assert.ok(html.includes("Operadora Ação &amp; Cª"));
-    assert.ok(html.includes("termina em 1 dia (em"));
+    assert.ok(html.includes("termina amanhã"));
   });
 
   test("assunto: sem quebras de linha nem cabeçalhos injetados, comprimento limitado", () => {
-    const a = assuntoPromocao("Op\r\nBcc: alvo@exemplo.invalid", 7);
+    const a = assuntoAlertaMonitor("promocao_30d", "Op\r\nBcc: alvo@exemplo.invalid", 7);
     assert.equal(/[\r\n]/.test(a), false);
-    assert.ok(assuntoFidelizacao("x".repeat(500), 30).length < 120);
+    assert.ok(assuntoAlertaMonitor("fidelizacao_30d", "x".repeat(500), 30).length < 120);
     assert.equal(textoParaAssunto("  a \n b  "), "a b");
     assert.equal(escaparHtml(`"'<>&`), "&quot;&#39;&lt;&gt;&amp;");
   });
 });
 
 describe("destinatário dos alertas diários", () => {
-  for (const f of ["verificar-alertas-fidelizacao", "verificar-alertas-promocao"]) {
-    const codigo = fonte(`../../supabase/functions/${f}/index.ts`);
-
-    test(`${f}: pendentes vêm da função que devolve o e-mail da conta`, () => {
-      assert.match(codigo, /\/rest\/v1\/rpc\/alertas_(fidelizacao|promocao)_pendentes/);
-      // Já não lê a tabela para escolher destinatários (só a usa para marcar enviados).
-      assert.equal(/rest\/v1\/alertas_[a-z_]+_portal\?select=/.test(codigo), false);
-      assert.match(codigo, /method: "PATCH"/);
-    });
-
-    test(`${f}: monta o e-mail com o módulo que faz escape`, () => {
-      assert.match(codigo, /from "\.\.\/_shared\/emailAlertas\.ts"/);
-      assert.equal(/function htmlAviso\(/.test(codigo), false);
-    });
-  }
-
   test("verificar-monitor-datas: destinatário da função da conta, reserva antes de enviar, e-mail com escape", () => {
     const codigo = fonte("../../supabase/functions/verificar-monitor-datas/index.ts");
     assert.match(codigo, /rpc<AlertaPendente\[\]>\("monitor_alertas_pendentes"/);
