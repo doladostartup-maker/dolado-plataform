@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { temProtecao } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { excedeuLimiteTaxa } from "@/lib/rateLimit";
+import { MODELO_DOCUMENTOS, PARAMETROS_EXTRACAO, textoDaResposta } from "@/lib/claude";
 
 // DoLado — Extração da data de fim de promoção a partir do contrato
 // (Fase 4). Chave ANTHROPIC_API_KEY ainda por contratar (previsto
@@ -14,7 +15,6 @@ import { excedeuLimiteTaxa } from "@/lib/rateLimit";
 
 const BUCKET = "contratos-promocao";
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const MODELO = "claude-sonnet-5";
 
 const SYSTEM_PROMPT = `Vais receber um documento de contrato de um cliente (telecom, energia ou água).
 A tua única tarefa é extrair a data de fim da promoção/período promocional, se existir.
@@ -121,8 +121,8 @@ export async function POST(request: Request) {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: MODELO,
-        max_tokens: 1024,
+        model: MODELO_DOCUMENTOS,
+        ...PARAMETROS_EXTRACAO,
         system: SYSTEM_PROMPT,
         messages: [
           {
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
     }
 
     const corpo = await resposta.json();
-    const textoResposta: string | undefined = corpo?.content?.[0]?.text;
+    const textoResposta: string | undefined = textoDaResposta(corpo);
     if (!textoResposta) {
       return NextResponse.json({ ok: false, motivo: "resposta_vazia" });
     }
