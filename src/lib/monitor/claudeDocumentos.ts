@@ -5,6 +5,11 @@ import { custoEstimadoUsd } from "./custos.ts";
 // DoLado — chamada à Claude API para ler um documento do Monitor de
 // Proteção (docs/especificacoes/CLAUDE_API_MONITORIZACAO.md).
 //
+// O documento vai por URL assinada de curta duração (a API descarrega-o
+// diretamente do Storage): o servidor nunca tem o ficheiro em memória — na
+// instância "pico" (120 MB de heap) um PDF de 3,8 MB em base64 bloqueava o
+// processo.
+//
 // Uma chamada isolada por documento: sem histórico, sem dados da conta, sem
 // ferramentas. Structured outputs com o schema da versão em uso. Novas
 // tentativas só por erro técnico (2 tentativas no total, feitas pelo SDK);
@@ -42,13 +47,14 @@ function obterCliente() {
 }
 
 export async function lerDocumentoComClaude({
-  conteudo,
+  url,
   mime,
   prompt,
   schema,
   instrucao,
 }: {
-  conteudo: Buffer;
+  /** URL assinada (curta duração) do ficheiro no Storage privado. */
+  url: string;
   mime: MimeAceite;
   prompt: string;
   schema: Record<string, unknown>;
@@ -57,11 +63,10 @@ export async function lerDocumentoComClaude({
   const client = obterCliente();
   if (!client) return { ok: false, motivo: "api_nao_configurada", uso: null };
 
-  const data = conteudo.toString("base64");
   const bloco: Anthropic.ContentBlockParam =
     mime === "application/pdf"
-      ? { type: "document", source: { type: "base64", media_type: "application/pdf", data } }
-      : { type: "image", source: { type: "base64", media_type: mime, data } };
+      ? { type: "document", source: { type: "url", url } }
+      : { type: "image", source: { type: "url", url } };
 
   const inicio = Date.now();
   try {
