@@ -196,8 +196,19 @@ select is(
   (select count(*) from pg_proc p where p.pronamespace = 'public'::regnamespace and p.prosecdef
      and p.proname not in ('handle_new_user', 'is_admin', 'rls_auto_enable', 'notificar_novo_caso', 'casos_evento_dossie',
                            'alertas_portal_contacto_da_conta', 'alertas_fidelizacao_pendentes', 'alertas_promocao_pendentes',
-                           'alertas_seguir_protecao', 'avisos_setor_destinatarios')), 0::bigint,
+                           'alertas_seguir_protecao', 'avisos_setor_destinatarios',
+                           'monitor_recalcular_estado', 'monitor_campo_aceitar', 'monitor_campo_rejeitar',
+                           'monitor_campo_propor', 'monitor_campo_definir', 'monitor_alertas_pendentes',
+                           'monitor_reservar_alerta', 'monitor_libertar_alerta')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
+-- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
+-- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em
+-- monitor_protecao.test.sql.
+select is(
+  (select count(*) from pg_proc p where p.pronamespace = 'public'::regnamespace and p.prosecdef
+     and p.proname like 'monitor\_%'
+     and (has_function_privilege('authenticated', p.oid, 'EXECUTE') or has_function_privilege('anon', p.oid, 'EXECUTE'))),
+  0::bigint, 'privilégios: funções monitor_* não executáveis pela API');
 -- casos_evento_dossie (trigger): só insere o evento "dossiê disponível"; search_path fixo; fora da API.
 select ok(not has_function_privilege('authenticated', 'public.casos_evento_dossie()', 'EXECUTE') and not has_function_privilege('anon', 'public.casos_evento_dossie()', 'EXECUTE'), 'privilégios: casos_evento_dossie() não executável pela API');
 select ok((select 'search_path=""' = any (proconfig) from pg_proc where proname = 'casos_evento_dossie'), 'casos_evento_dossie(): search_path fixo');
