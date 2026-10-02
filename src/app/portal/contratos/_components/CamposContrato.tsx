@@ -15,6 +15,9 @@ export type ValoresContrato = {
   descricao_promocao?: string | null;
   mensalidade_cents?: number | null;
   vantagem_cents?: number | null;
+  tipo_fidelizacao?: string | null;
+  nova_instalacao?: string | null;
+  equipamento_subsidiado?: string | null;
 };
 
 function Campo({ label, ajuda, children }: { label: string; ajuda?: string; children: React.ReactNode }) {
@@ -65,6 +68,27 @@ export function CamposContrato({ valores = {}, setorObrigatorio = false }: { val
       </Campo>
       <Campo label="Promoção">
         <input name="descricao_promocao" defaultValue={valores.descricao_promocao ?? ""} placeholder="ex.: Desconto de 10 € na mensalidade" className={INPUT_CLASS} />
+      </Campo>
+      <Campo label="Tipo de fidelização" ajuda="Para estimar o custo de saída (telecomunicações).">
+        <select name="tipo_fidelizacao" defaultValue={valores.tipo_fidelizacao ?? ""} className={INPUT_CLASS}>
+          <option value="">Não sei / não se aplica</option>
+          <option value="primeira">Primeira fidelização</option>
+          <option value="refidelizacao">Refidelização (renovação)</option>
+        </select>
+      </Campo>
+      <Campo label="Houve nova instalação na refidelização?" ajuda="Por exemplo, mudança de tecnologia ou de morada.">
+        <select name="nova_instalacao" defaultValue={valores.nova_instalacao ?? ""} className={INPUT_CLASS}>
+          <option value="">Não sei / não se aplica</option>
+          <option value="sim">Sim</option>
+          <option value="nao">Não</option>
+        </select>
+      </Campo>
+      <Campo label="Tem equipamento subsidiado?" ajuda="Por exemplo, um telemóvel ou uma box pagos em prestações ou oferecidos.">
+        <select name="equipamento_subsidiado" defaultValue={valores.equipamento_subsidiado ?? ""} className={INPUT_CLASS}>
+          <option value="">Não sei</option>
+          <option value="sim">Sim</option>
+          <option value="nao">Não</option>
+        </select>
       </Campo>
       <Campo label="Referência do contrato" ajuda="Opcional.">
         <input name="referencia_contrato" defaultValue={valores.referencia_contrato ?? ""} className={INPUT_CLASS} />

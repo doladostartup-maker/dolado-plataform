@@ -3,7 +3,8 @@
 // Pipeline (docs/especificacoes/CLAUDE_API_MONITORIZACAO.md, secção 10):
 //   documento pendente → orçamento → Claude (structured output) → registo do
 //   custo → extração (staging) → validação de domínio → contrato (existente
-//   ou novo) → valores propostos (o cliente confirma) → fatura normalizada.
+//   ou novo) → valores propostos (o cliente confirma) → fatura normalizada →
+//   regras F2/F4 (achados para revisão humana).
 //
 // Usa a service role: quem chama tem de ter validado a sessão, a posse do
 // documento e a Proteção ANTES (Server Actions do portal / backoffice).
@@ -16,6 +17,8 @@ import { MODELO_DOCUMENTOS } from "@/lib/claude";
 import { MIME_ACEITES, lerDocumentoComClaude, type MimeAceite } from "./claudeDocumentos";
 import { avisosAtravessados, estadoOrcamento, lerTetoOrcamentoUsd } from "./custos";
 import { chaveFornecedor } from "./contratos";
+import { avaliarFatura, type FaturaHistorico } from "./regrasFaturas";
+import { VERSAO_REGRA_CESSACAO, compararCessacao, textoCessacaoDivergente } from "./custoSaida";
 import {
   PROMPT_FATURA,
   PROMPT_FATURA_VERSAO,
@@ -142,6 +145,84 @@ async function registarPropostas(
       }
     }
   }
+}
+
+// F2/F4: compara a fatura nova com o histórico e o contrato e regista as
+// situações detetadas para revisão humana (nunca vão diretamente ao cliente).
+// Só telecomunicações nesta fase. Idempotente: chave única por regra.
+async function avaliarAchados(admin: Admin, contratoId: string, documentoId: string) {
+  const [{ data: contrato }, { data: faturas }] = await Promise.all([
+    admin.from("contratos_monitorizados").select("*").eq("id", contratoId).single(),
+    admin
+      .from("faturas_monitor")
+      .select("id, documento_id, utilizador_id, data_emissao, periodo_inicio, periodo_fim, recorrente_cents, linhas, cessacao_operador_cents")
+      .eq("contrato_id", contratoId),
+  ]);
+  if (!contrato || contrato.setor !== "telecomunicacoes") return 0;
+  const atual = (faturas ?? []).find((f) => f.documento_id === documentoId);
+  if (!atual) return 0;
+
+  const historico: FaturaHistorico[] = (faturas ?? []).map((f) => ({
+    id: f.id,
+    dataEmissao: f.data_emissao,
+    periodoInicio: f.periodo_inicio,
+    periodoFim: f.periodo_fim,
+    recorrenteCents: f.recorrente_cents,
+    linhas: Array.isArray(f.linhas) ? f.linhas : [],
+  }));
+
+  type NovoAchado = {
+    contrato_id: string;
+    utilizador_id: string;
+    fatura_id: string;
+    tipo: string;
+    versao_regra: string;
+    chave_idempotencia: string;
+    evidencia: Record<string, unknown>;
+  };
+  const novos: NovoAchado[] = avaliarFatura(atual.id, historico, { dataFimPromocao: contrato.data_fim_promocao }).map((a) => ({
+    contrato_id: contratoId,
+    utilizador_id: contrato.utilizador_id,
+    fatura_id: atual.id,
+    tipo: a.tipo,
+    versao_regra: a.versaoRegra,
+    chave_idempotencia: a.chave,
+    evidencia: { ...a.evidencia, texto_proposto: a.textoProposto },
+  }));
+
+  const dataOperador = contrato.cessacao_operador_data ?? atual.data_emissao;
+  const cessacao = compararCessacao(contrato, atual.cessacao_operador_cents, dataOperador);
+  if (cessacao.resultado === "divergente") {
+    novos.push({
+      contrato_id: contratoId,
+      utilizador_id: contrato.utilizador_id,
+      fatura_id: atual.id,
+      tipo: "cessacao_divergente",
+      versao_regra: VERSAO_REGRA_CESSACAO,
+      chave_idempotencia: `${VERSAO_REGRA_CESSACAO}:${atual.id}`,
+      evidencia: {
+        fatura_atual_id: atual.id,
+        operador_cents: cessacao.operadorCents,
+        estimativa_cents: cessacao.estimativaCents,
+        diferenca_cents: cessacao.diferencaCents,
+        data_valor: dataOperador,
+        texto_proposto: textoCessacaoDivergente(cessacao.operadorCents, dataOperador!, cessacao.estimativaCents),
+      },
+    });
+  }
+  if (novos.length === 0) return 0;
+
+  const { data: inseridos, error } = await admin
+    .from("achados_monitor")
+    .upsert(novos, { onConflict: "chave_idempotencia", ignoreDuplicates: true })
+    .select("id");
+  if (error) {
+    console.error("Falha ao registar achados:", error.message);
+    return 0;
+  }
+  const n = inseridos?.length ?? 0;
+  if (n > 0) await avisarAdmin("Situações por rever", `${n} situação(ões) detetada(s) numa fatura nova (contrato ${contratoId}).`);
+  return n;
 }
 
 export async function processarDocumento(documentoId: string): Promise<{ estado: EstadoDocumento; contratoId: string | null }> {
@@ -309,6 +390,7 @@ export async function processarDocumento(documentoId: string): Promise<{ estado:
       { onConflict: "documento_id", ignoreDuplicates: true },
     );
     await registarPropostas(admin, contratoId, doc.id, extracaoId, "fatura", v.propostas);
+    await avaliarAchados(admin, contratoId, doc.id);
 
     const estado: EstadoDocumento = v.precisaRevisao ? "a_rever" : "processado";
     await marcar(admin, doc.id, estado);

@@ -36,6 +36,16 @@ export const ROTULO_CAMPO: Record<CampoContrato, string> = {
   cessacao_operador_data: "Data desse valor",
   cpe: "CPE",
   cui: "CUI",
+  tipo_fidelizacao: "Tipo de fidelização",
+  nova_instalacao: "Houve nova instalação",
+  equipamento_subsidiado: "Equipamento subsidiado",
+};
+
+const ROTULO_OPCAO: Record<string, string> = {
+  primeira: "Primeira fidelização",
+  refidelizacao: "Refidelização",
+  sim: "Sim",
+  nao: "Não",
 };
 
 export const ROTULO_ORIGEM: Record<string, string> = {
@@ -103,6 +113,9 @@ export function formatarValorCampo(campo: CampoContrato, valor: unknown): string
   if (valor == null) return "—";
   if (campo.endsWith("_cents") && typeof valor === "number") return formatarEurosCents(valor);
   if ((campo.startsWith("data_") || campo === "cessacao_operador_data") && typeof valor === "string") return formatarDataPt(valor);
+  if (typeof valor === "string" && ROTULO_OPCAO[valor] && ["tipo_fidelizacao", "nova_instalacao", "equipamento_subsidiado"].includes(campo)) {
+    return ROTULO_OPCAO[valor];
+  }
   return String(valor);
 }
 

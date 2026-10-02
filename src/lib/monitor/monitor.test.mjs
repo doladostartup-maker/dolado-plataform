@@ -249,3 +249,137 @@ describe("validação da extração de contratos", async () => {
     assert.deepEqual(validarExtracaoContrato(contrato({ tipo_documento: "fatura" })), { ok: false, motivo: "nao_e_contrato" });
   });
 });
+
+// ---------------------------------------------------------------------------
+
+describe("F2: regras das faturas", async () => {
+  const { avaliarFatura, chaveDescricao, classificarAumento } = await import("./regrasFaturas.ts");
+  const linha = (descricao, valorCents, extra = {}) => ({ descricao, categoria: "servico_base", valorCents, recorrente: true, ...extra });
+  const fatura = (id, mes, recorrenteCents, linhas = [linha("Pacote Fibra", recorrenteCents)]) => ({
+    id,
+    dataEmissao: `2026-${mes}-05`,
+    periodoInicio: `2026-${mes}-01`,
+    periodoFim: `2026-${mes}-28`,
+    recorrenteCents,
+    linhas,
+  });
+
+  test("aumento sem explicação no contrato: achado com texto factual", () => {
+    const h = [fatura("f1", "08", 3999), fatura("f2", "09", 4499)];
+    const a = avaliarFatura("f2", h, { dataFimPromocao: null });
+    assert.equal(a.length, 1);
+    assert.equal(a[0].tipo, "aumento_nao_explicado");
+    assert.equal(a[0].versaoRegra, "f2_aumento_v1");
+    assert.equal(a[0].evidencia.diferenca_cents, 500);
+    assert.match(a[0].textoProposto, /39,99.*44,99.*\+12,5%/);
+    assert.equal(/sem aviso|indevid|ilegal/i.test(a[0].textoProposto), false);
+  });
+
+  test("fim de promoção registado entre as faturas explica o aumento (sem achado)", () => {
+    const h = [fatura("f1", "08", 3999), fatura("f2", "09", 4499)];
+    assert.deepEqual(avaliarFatura("f2", h, { dataFimPromocao: "2026-08-31" }), []);
+    assert.equal(classificarAumento(h[0], h[1], { dataFimPromocao: "2026-08-31" }).resultado, "explicado");
+  });
+
+  test("fim de promoção fora do intervalo não explica", () => {
+    const h = [fatura("f1", "08", 3999), fatura("f2", "09", 4499)];
+    assert.equal(avaliarFatura("f2", h, { dataFimPromocao: "2026-12-31" })[0].tipo, "aumento_nao_explicado");
+  });
+
+  test("aumento abaixo do limiar ou sem dados: nada", () => {
+    assert.equal(classificarAumento(fatura("a", "08", 3999), fatura("b", "09", 4050), { dataFimPromocao: null }).resultado, "sem_aumento");
+    assert.equal(classificarAumento(fatura("a", "08", null), fatura("b", "09", 4050), { dataFimPromocao: null }).resultado, "sem_dados");
+    assert.deepEqual(avaliarFatura("f1", [fatura("f1", "08", 3999)], { dataFimPromocao: null }), []);
+  });
+
+  test("linha recorrente nova (material) é sinalizada; impostos e descontos não", () => {
+    const h = [
+      fatura("f1", "07", 3999),
+      fatura("f2", "08", 3999),
+      fatura("f3", "09", 3999, [
+        linha("Pacote Fibra", 3999),
+        linha("Serviço X Premium", 499),
+        linha("IVA 23%", 900, { categoria: "imposto" }),
+        linha("Desconto fidelização", -500, { categoria: "desconto" }),
+        linha("Taxa 0,50", 50),
+      ]),
+    ];
+    const a = avaliarFatura("f3", h, { dataFimPromocao: null }).filter((x) => x.tipo === "linha_nova");
+    assert.equal(a.length, 1);
+    assert.equal(a[0].evidencia.descricao, "Serviço X Premium");
+    assert.match(a[0].textoProposto, /nas 2 faturas anteriores/);
+    assert.equal(/não pedid/i.test(a[0].textoProposto), false);
+  });
+
+  test("a mesma descrição com outro valor não é linha nova", () => {
+    assert.equal(chaveDescricao("Pacote Fibra 1 Gbps"), chaveDescricao("PACOTE FIBRA 500 Mbps").replace("mbps", "gbps"));
+    const h = [fatura("f1", "08", 3999, [linha("Canal Sport TV", 1500)]), fatura("f2", "09", 3999, [linha("Canal Sport TV", 1700)])];
+    assert.equal(avaliarFatura("f2", h, { dataFimPromocao: null }).some((x) => x.tipo === "linha_nova"), false);
+  });
+
+  test("possível dupla faturação: duas linhas iguais e duas faturas do mesmo período", () => {
+    const dupla = fatura("f2", "09", 3999, [linha("Pacote Fibra", 3999), linha("Pacote Fibra", 3999)]);
+    const a = avaliarFatura("f2", [fatura("f1", "08", 3999), dupla], { dataFimPromocao: null }).filter((x) => x.tipo === "possivel_dupla_faturacao");
+    assert.equal(a.length, 1);
+    assert.match(a[0].textoProposto, /Pode tratar-se/);
+
+    const outra = { ...fatura("f3", "09", 3999), id: "f3" };
+    const b = avaliarFatura("f3", [fatura("f2", "09", 3999), outra], { dataFimPromocao: null }).filter((x) => x.tipo === "possivel_dupla_faturacao");
+    assert.equal(b.length, 1);
+    assert.equal(b[0].chave, "f2_dupla_v1:periodo:f2:f3");
+  });
+
+  test("chaves de idempotência estáveis", () => {
+    const h = [fatura("f1", "08", 3999), fatura("f2", "09", 4499)];
+    assert.deepEqual(avaliarFatura("f2", h, { dataFimPromocao: null }).map((x) => x.chave), avaliarFatura("f2", h, { dataFimPromocao: null }).map((x) => x.chave));
+  });
+});
+
+describe("F4: custo de saída a partir do contrato", async () => {
+  const { compararCessacao, dadosCalculoDoContrato, duracaoEmMeses, evolucaoCustoSaida } = await import("./custoSaida.ts");
+  const contrato = (extra = {}) => ({
+    setor: "telecomunicacoes",
+    data_inicio: "2025-03-01",
+    data_fim_fidelizacao: "2027-02-28",
+    mensalidade_cents: 4299,
+    vantagem_cents: 12000,
+    tipo_fidelizacao: "primeira",
+    nova_instalacao: null,
+    equipamento_subsidiado: "nao",
+    ...extra,
+  });
+
+  test("duração em meses: aniversário ou véspera", () => {
+    assert.equal(duracaoEmMeses("2025-03-01", "2027-03-01"), 24);
+    assert.equal(duracaoEmMeses("2025-03-01", "2027-02-28"), 24);
+    assert.equal(duracaoEmMeses("2025-03-01", "2027-02-10"), null);
+  });
+
+  test("dados em falta e setor", () => {
+    const r = dadosCalculoDoContrato(contrato({ vantagem_cents: null, tipo_fidelizacao: null }));
+    assert.deepEqual(r, { ok: false, motivo: "faltam_dados", faltam: ["vantagem_cents", "tipo_fidelizacao"] });
+    assert.equal(dadosCalculoDoContrato(contrato({ setor: "eletricidade" })).motivo, "setor");
+    assert.deepEqual(dadosCalculoDoContrato(contrato({ tipo_fidelizacao: "refidelizacao" })).faltam, ["nova_instalacao"]);
+  });
+
+  test("estimativa igual à da Calculadora pública e evolução a 3 meses", () => {
+    const d = dadosCalculoDoContrato(contrato());
+    assert.equal(d.ok, true);
+    const { hoje, futuro } = evolucaoCustoSaida(d.dados, "2026-10-02");
+    assert.equal(hoje.ok, true);
+    assert.ok(hoje.resultadoCentimos > 0);
+    assert.ok(futuro[0].cents < hoje.resultadoCentimos);
+  });
+
+  test("valor da fatura vs. estimativa: próximo, divergente, equipamento, sem dados", () => {
+    const d = dadosCalculoDoContrato(contrato());
+    const { hoje } = evolucaoCustoSaida(d.dados, "2026-09-15");
+    const est = hoje.resultadoCentimos;
+    assert.equal(compararCessacao(contrato(), est + 100, "2026-09-15").resultado, "proximo");
+    const div = compararCessacao(contrato(), est + 5000, "2026-09-15");
+    assert.equal(div.resultado, "divergente");
+    assert.equal(div.diferencaCents, 5000);
+    assert.equal(compararCessacao(contrato({ equipamento_subsidiado: "sim" }), est + 5000, "2026-09-15").resultado, "equipamento");
+    assert.equal(compararCessacao(contrato(), null, null).resultado, "sem_dados");
+  });
+});

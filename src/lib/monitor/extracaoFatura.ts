@@ -124,7 +124,10 @@ export type CampoContrato =
   | "cessacao_operador_cents"
   | "cessacao_operador_data"
   | "cpe"
-  | "cui";
+  | "cui"
+  | "tipo_fidelizacao"
+  | "nova_instalacao"
+  | "equipamento_subsidiado";
 
 export type CampoProposto = {
   campo: CampoContrato;
