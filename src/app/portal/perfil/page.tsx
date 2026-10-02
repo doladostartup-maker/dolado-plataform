@@ -1,4 +1,5 @@
-import { requireUser } from "@/lib/auth";
+import Link from "next/link";
+import { obterAcesso, requireUser } from "@/lib/auth";
 import { alterarPassword, guardarPreferenciasSetor, retirarConsentimentoComunicacoes } from "./actions";
 
 const INPUT_CLASS =
@@ -32,6 +33,10 @@ export default async function PerfilPage({
     .eq("utilizador_id", user.id);
 
   const setoresSubscritos = new Set((preferencias ?? []).map((p) => p.setor));
+
+  // O aviso sectorial só é enviado a contas com Proteção ativa
+  // (avisos_setor_destinatarios); sem ela, as escolhas não geram avisos.
+  const { temProtecao } = await obterAcesso(supabase, user.id);
 
   // Autorização ativa para e-mails com novidades e ofertas (RLS: só a própria).
   const { data: comunicacoes } = await supabase
@@ -109,11 +114,26 @@ export default async function PerfilPage({
           preços anunciada — no(s) setor(es) que escolher.
         </p>
 
+        {!temProtecao && (
+          <p className="rounded-[var(--radius-card)] border-l-[3px] border-[var(--color-brand)] bg-[var(--color-brand-wash)] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--color-ink)]">
+            O aviso sectorial está incluído na Proteção: só enviamos avisos enquanto tiver uma subscrição ativa.{" "}
+            <Link href="/portal?bloqueado=subscricao" className="underline">
+              Ver subscrições
+            </Link>
+          </p>
+        )}
+
         {query.preferencias_guardadas && (
           <p className="text-sm text-[var(--color-status-success)]">
-            ✓ Vamos avisar-lhe sobre{" "}
-            {setoresSubscritos.size > 0 ? Array.from(setoresSubscritos).join(", ") : "nenhum setor por agora"}
-            .
+            {temProtecao ? (
+              <>
+                ✓ Vamos avisar-lhe sobre{" "}
+                {setoresSubscritos.size > 0 ? Array.from(setoresSubscritos).join(", ") : "nenhum setor por agora"}
+                .
+              </>
+            ) : (
+              "✓ Preferências guardadas."
+            )}
           </p>
         )}
 
