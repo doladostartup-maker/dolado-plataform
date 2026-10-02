@@ -7,7 +7,6 @@ import {
   ROTULO_ORIGEM,
   ROTULO_SETOR,
   formatarDataPt,
-  formatarEurosCents,
   formatarValorCampo,
   proximaData,
   setorTratarCaso,
@@ -17,6 +16,7 @@ import {
 import type { CampoContrato } from "@/lib/monitor/extracaoFatura";
 import { confirmarValor, corrigirContrato, deixarDeAcompanhar, rejeitarValor } from "../actions";
 import { CamposContrato } from "../_components/CamposContrato";
+import { CustoSaida } from "../_components/CustoSaida";
 import { UploadDocumento } from "../_components/UploadDocumento";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CARTAO, TITULO_SECCAO } from "../_components/estilos";
 
@@ -33,6 +33,9 @@ const ORDEM: CampoContrato[] = [
   "data_inicio",
   "data_fim_fidelizacao",
   "vantagem_cents",
+  "tipo_fidelizacao",
+  "nova_instalacao",
+  "equipamento_subsidiado",
   "data_fim_promocao",
   "descricao_promocao",
   "cpe",
@@ -210,14 +213,6 @@ export default async function ContratoPage({
           })}
           {atuais.size === 0 && <p className="text-sm text-[var(--color-ink-muted)]">Ainda não temos dados confirmados deste contrato.</p>}
         </dl>
-        {contrato.cessacao_operador_cents != null && (
-          <p className="rounded-[10px] bg-[var(--color-surface-sunken)] px-4 py-3 text-sm text-[var(--color-ink-muted)]">
-            Valor indicado na última fatura para terminar o contrato antecipadamente:{" "}
-            <strong className="text-[var(--color-ink)]">{formatarEurosCents(contrato.cessacao_operador_cents)}</strong>
-            {contrato.cessacao_operador_data && ` (em ${formatarDataPt(contrato.cessacao_operador_data)})`}.
-          </p>
-        )}
-
         <details open={Boolean(query.editar)} className="pt-1">
           <summary className="cursor-pointer text-sm font-medium text-[var(--color-brand)]">Corrigir ou acrescentar dados</summary>
           <form action={corrigirContrato} className="mt-4 flex flex-col gap-4">
@@ -232,6 +227,8 @@ export default async function ContratoPage({
           </form>
         </details>
       </section>
+
+      <CustoSaida contrato={contrato} hoje={hoje} />
 
       {/* ===== Documentos ===== */}
       <section className={`${CARTAO} flex flex-col gap-4`}>

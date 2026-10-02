@@ -162,6 +162,14 @@ select public.monitor_campo_definir('70000000-0000-4000-f000-0000000000a1', 'van
 select is((select estado from public.contratos_monitorizados where id = '70000000-0000-4000-f000-0000000000a1'), 'completo', 'telecom com todos os dados: completo');
 select is((select data_fim_fidelizacao from public.contratos_monitorizados where id = '70000000-0000-4000-f000-0000000000a1'), current_date + 45, 'data guardada como date');
 
+-- Campos do custo de saída (tipo de fidelização, nova instalação, equipamento).
+select public.monitor_campo_definir('70000000-0000-4000-f000-0000000000a1', 'tipo_fidelizacao', '"refidelizacao"', 'cliente');
+select public.monitor_campo_definir('70000000-0000-4000-f000-0000000000a1', 'equipamento_subsidiado', '"nao"', 'cliente');
+select is((select tipo_fidelizacao || '/' || equipamento_subsidiado from public.contratos_monitorizados where id = '70000000-0000-4000-f000-0000000000a1'),
+  'refidelizacao/nao', 'custo de saída: tipo e equipamento guardados no contrato');
+select is(testes.tenta($$select public.monitor_campo_definir('70000000-0000-4000-f000-0000000000a1', 'tipo_fidelizacao', '"outra"', 'cliente')$$), 'erro:23514', 'tipo de fidelização fora da lista é rejeitado');
+select is(testes.tenta($$select public.monitor_campo_definir('70000000-0000-4000-f000-0000000000a1', 'nova_instalacao', '"talvez"', 'cliente')$$), 'erro:23514', 'nova instalação só sim/não');
+
 -- Proveniência imutável.
 select is(testes.tenta($$update public.contratos_campos set valor = '1' where campo = 'vantagem_cents'$$), 'erro:42501', 'valor de um campo não pode ser reescrito');
 select is(testes.tenta($$select public.monitor_campo_definir('70000000-0000-4000-f000-0000000000a1', 'nao_existe', '1', 'cliente')$$), 'erro:23514', 'campo fora da lista é rejeitado');

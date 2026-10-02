@@ -11,7 +11,7 @@ export default async function MonitorBackofficePage() {
   await requireAdmin();
   const admin = createAdminClient();
 
-  const [gasto, { data: documentos }, { count: conflitos }, { count: contratos }, { count: chamadas }] = await Promise.all([
+  const [gasto, { data: documentos }, { count: conflitos }, { count: contratos }, { count: chamadas }, { count: achados }] = await Promise.all([
     gastoApiUsd(admin),
     admin
       .from("documentos_monitor")
@@ -22,6 +22,7 @@ export default async function MonitorBackofficePage() {
     admin.from("contratos_campos").select("id", { count: "exact", head: true }).eq("estado", "em_conflito"),
     admin.from("contratos_monitorizados").select("id", { count: "exact", head: true }).is("desativado_em", null),
     admin.from("uso_api_claude").select("id", { count: "exact", head: true }),
+    admin.from("achados_monitor").select("id", { count: "exact", head: true }).in("estado", ["detetado", "em_revisao", "confirmado"]),
   ]);
 
   const ids = [...new Set((documentos ?? []).map((d) => d.utilizador_id))];
@@ -55,6 +56,14 @@ export default async function MonitorBackofficePage() {
           <p className="text-lg font-semibold text-[var(--color-ink)]">{conflitos ?? 0}</p>
         </div>
       </div>
+
+      <Link
+        href="/backoffice/monitor/achados"
+        className="flex items-center justify-between rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-4 hover:border-[var(--color-brand)]"
+      >
+        <span className="text-sm font-medium text-[var(--color-ink)]">Situações detetadas nas faturas, por rever</span>
+        <span className={`text-lg font-semibold ${achados ? "text-[var(--color-status-danger)]" : "text-[var(--color-ink)]"}`}>{achados ?? 0}</span>
+      </Link>
 
       <h2 className="text-[var(--text-subheading)] font-medium text-[var(--color-ink)]">Documentos por tratar</h2>
       {documentos && documentos.length > 0 ? (

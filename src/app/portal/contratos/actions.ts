@@ -26,7 +26,9 @@ const EXTENSOES: Record<MimeAceite, string> = {
 };
 
 // Campos que o cliente pode introduzir ou corrigir, e o tipo de cada um.
-const CAMPOS_EDITAVEIS: Partial<Record<CampoContrato, "texto" | "data" | "euros">> = {
+type TipoCampo = "texto" | "data" | "euros" | "tipo" | "simnao";
+
+const CAMPOS_EDITAVEIS: Partial<Record<CampoContrato, TipoCampo>> = {
   fornecedor: "texto",
   referencia_contrato: "texto",
   servico: "texto",
@@ -36,6 +38,9 @@ const CAMPOS_EDITAVEIS: Partial<Record<CampoContrato, "texto" | "data" | "euros"
   descricao_promocao: "texto",
   mensalidade_cents: "euros",
   vantagem_cents: "euros",
+  tipo_fidelizacao: "tipo",
+  nova_instalacao: "simnao",
+  equipamento_subsidiado: "simnao",
 };
 
 function irPara(caminho: string, params: Record<string, string>): never {
@@ -54,9 +59,11 @@ async function contratoDoCliente(contratoId: string) {
   return { supabase, user, contrato };
 }
 
-function lerValor(tipo: "texto" | "data" | "euros", bruto: string): string | number | null {
+function lerValor(tipo: TipoCampo, bruto: string): string | number | null {
   const texto = bruto.trim();
   if (!texto) return null;
+  if (tipo === "tipo") return texto === "primeira" || texto === "refidelizacao" ? texto : null;
+  if (tipo === "simnao") return texto === "sim" || texto === "nao" ? texto : null;
   if (tipo === "texto") return texto.slice(0, 200);
   if (tipo === "data") return dataValida(texto) ? texto : null;
   return lerEurosParaCents(texto);
@@ -231,7 +238,7 @@ export async function criarContratoManual(formData: FormData) {
   }
 
   const valores: [CampoContrato, string | number][] = [["fornecedor", fornecedor.slice(0, 200)]];
-  for (const [campo, tipo] of Object.entries(CAMPOS_EDITAVEIS) as [CampoContrato, "texto" | "data" | "euros"][]) {
+  for (const [campo, tipo] of Object.entries(CAMPOS_EDITAVEIS) as [CampoContrato, TipoCampo][]) {
     if (campo === "fornecedor" || !formData.has(campo)) continue;
     const bruto = String(formData.get(campo) ?? "");
     if (!bruto.trim()) continue;
