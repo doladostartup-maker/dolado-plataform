@@ -39,7 +39,7 @@ Toda a infraestrutura abaixo já está montada e ligada. O Claude Code deve usar
 
 Variáveis de ambiente a configurar no Clever Cloud durante a Fase 1: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `BREVO_API_KEY` (esta última só é necessária a partir da Fase 4, mas pode ser configurada desde já).
 
-`ANTHROPIC_API_KEY` (Claude API) ainda não está contratada — previsto 01/10/2026. As funcionalidades que dependem dela (ver "Uso de IA") já estão construídas e em produção, mas caem em modo manual/revisão até a chave ser configurada em `.env.local` e nos secrets das Supabase Edge Functions relevantes.
+`ANTHROPIC_API_KEY` (Claude API) ainda não está contratada — previsto 01/10/2026. As funcionalidades que dependem dela (ver "Uso de IA") já estão construídas e em produção, mas caem em modo manual/revisão até a chave ser configurada em `.env.local` e nos secrets das Supabase Edge Functions relevantes. O modelo de extração vem de `ANTHROPIC_DOCUMENT_MODEL` (por omissão `claude-sonnet-5-5`); parâmetros e leitura da resposta partilhados em `src/lib/claude.ts` — a resposta começa com blocos de raciocínio, nunca ler `content[0]`.
 
 ## Contactos institucionais (decisão: 30/09/2026)
 
@@ -212,6 +212,15 @@ Ferramenta gratuita de aquisição, como o Simulador: estima o encargo **máximo
 - `/calculadora-cancelamento` (pública, sem sessão; nas duas listas de `src/middleware.ts`). Menu: `SiteHeader` tem "Como funciona" isolado e o dropdown **Ferramentas** (Simulador de Elegibilidade + Calculadora de Cancelamento).
 - Corre só no browser: sem login, sem e-mail, sem IA, sem gravação; não cria conta, caso, pedido nem acesso. CTA "Tratar o meu caso" → `/tratar-caso?origem=/calculadora-cancelamento&setor=Telecomunicações&problema=Fidelização ou penalização`. Sem eventos gtag próprios (só os já existentes).
 - Regras e validação em `src/lib/calculadoraCancelamento/regras.ts` (`calcularEncargoCancelamento`), testes em `regras.test.mjs`. A = V × R/D (em dias); B = M × N × 50% (1.º ano) ou 30% (2.º ano), sempre 30% em refidelização sem nova instalação/alteração do lacete local; resultado = MIN(A, B). Fidelização terminada → 0 €. Antes de 14/11/2022: refidelização sem nova instalação → MIN(A, M × N × 30%) (confirmado pela ANACOM, decisão de 02/10/2026); restantes → só A. Textos da Calculadora e resumo da regra por validar pela advogada (não bloqueia). Equipamento subsidiado nunca entra no valor (só aviso). Valores em cêntimos.
+
+## Guia de Mudança de Casa público (02/10/2026)
+
+F3 de `docs/especificacoes/F3_MUDANCA_CASA_PUBLICA.md`: página pública e estática de aquisição/educação, não funcionalidade da Proteção.
+
+- `/mudanca-de-casa` (sem sessão; nas duas listas de `src/middleware.ts`; no dropdown **Ferramentas** do `SiteHeader`). Componente `src/components/landing/MudancaDeCasa.tsx`.
+- Quatro momentos (antes, dia da saída, casa nova, depois) × telecomunicações, eletricidade, gás e água; CPE e CUI explicados; "Quando a DoLado pode ajudar" (a DoLado não trata atos operacionais de rotina); perguntas frequentes.
+- Sem login, sem formulários, sem IA, sem gravação. CTAs "Tratar o meu caso" → `/tratar-caso?origem=/mudanca-de-casa` (no cartão de telecomunicações também `setor=Telecomunicações`). Medição (gtag, só com consentimento): `mudanca_casa_clique_tratar_caso` (`local`).
+- Não criar conteúdo diferente para parceiros (Remax): os parceiros podem divulgar esta página e não recebem dados.
 
 ## Uso de IA (decisão: 25/09/2026)
 

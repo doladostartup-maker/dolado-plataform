@@ -20,6 +20,7 @@ const PAGINAS_PUBLICAS = [
   "/contacto",
   "/simulador-elegibilidade",
   "/calculadora-cancelamento",
+  "/mudanca-de-casa",
   "/perguntas-frequentes",
 ];
 
@@ -56,6 +57,7 @@ const PAGINAS_SO_MARKETING = [
   "/contacto",
   "/simulador-elegibilidade",
   "/calculadora-cancelamento",
+  "/mudanca-de-casa",
   "/perguntas-frequentes",
 ];
 
