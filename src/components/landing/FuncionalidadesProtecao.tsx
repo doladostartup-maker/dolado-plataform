@@ -3,6 +3,10 @@ import type { ReactNode } from "react";
 // Secção de funcionalidades da homepage: o valor recorrente da Proteção em
 // três benefícios, e o tratamento de casos numa faixa à parte.
 //
+// Posicionamento (decisão de Thiago, 03/10/2026): os contratos e as faturas
+// são contexto, o produto é a resolução do problema. Cada cartão descreve um
+// acontecimento que pode tornar-se num problema, nunca a gestão de contratos.
+//
 // A copy segue o que o produto faz hoje (Monitor de Proteção e Aviso
 // Sectorial), descrito pelo benefício e sem nomes internos. A comparação de
 // faturas não se apresenta como exclusiva de um setor (decisão de Thiago,
@@ -38,8 +42,8 @@ const BENEFICIOS: Beneficio[] = [
         <path d="M9 10h6M9 14h6M9 18h3" />
       </svg>
     ),
-    titulo: "O que está a pagar",
-    texto: "Comparamos cada fatura com as anteriores para o ajudar a perceber quando alguma coisa mudou.",
+    titulo: "Algo mudou na sua fatura?",
+    texto: "Comparamos cada fatura com as anteriores para identificar alterações que possam merecer a sua atenção.",
     detalhe: "Comparação mês a mês",
   },
   {
@@ -49,8 +53,8 @@ const BENEFICIOS: Beneficio[] = [
         <path d="M3.5 10h17M8 3v4M16 3v4" />
       </svg>
     ),
-    titulo: "Datas importantes",
-    texto: "Avisamos por e-mail antes do fim de promoções e de períodos de fidelização.",
+    titulo: "Está a aproximar-se uma data importante?",
+    texto: "Avisamo-lo por e-mail antes do fim de promoções e de períodos de fidelização, para que possa decidir a tempo.",
     detalhe: "Promoções · Fidelizações",
   },
   {
@@ -60,8 +64,8 @@ const BENEFICIOS: Beneficio[] = [
         <path d="M10 20.5a2 2 0 0 0 4 0" />
       </svg>
     ),
-    titulo: "Alterações relevantes",
-    texto: "Avisamos quando há alterações no seu setor que podem merecer a sua atenção, como subidas de preços anunciadas.",
+    titulo: "Mudaram as condições?",
+    texto: "Avisamo-lo de alterações anunciadas no seu setor que possam afetá-lo, como subidas de preços ou mudanças nas condições dos serviços.",
     detalhe: "Telecomunicações · Energia · Água",
   },
 ];
@@ -80,11 +84,12 @@ export function FuncionalidadesProtecao({
       <div className="mx-auto max-w-[1120px] px-4 py-16 sm:px-10 sm:py-20">
         <div className="mb-10 max-w-[620px]">
           <h2 className="mb-3 text-[clamp(24px,3.2vw,32px)] font-semibold leading-tight tracking-[-0.01em] text-[var(--color-ink)]">
-            A DoLado fica atenta por si.
+            Um problema nem sempre começa com uma reclamação.
           </h2>
           <p className="text-base leading-relaxed text-[var(--color-ink-muted)]">
-            Acompanhamos o que paga, as datas importantes dos seus contratos e alterações que podem
-            merecer a sua atenção.
+            Com a Proteção, a DoLado também está atenta a alterações nas suas faturas, a datas importantes
+            e a mudanças nas condições que possam vir a prejudicá-lo. Se alguma coisa merecer atenção,
+            avisamo-lo. E, se houver um problema, ajudamos a tratá-lo.
           </p>
         </div>
 

@@ -23,7 +23,7 @@ import {
 // FuncionalidadesProtecao.tsx) e nunca pelos nomes internos.
 
 const FUNCIONALIDADES_PROTECAO = [
-  "Comparação de faturas mês a mês",
+  "Comparação de faturas mês a mês, para identificar alterações",
   "Avisos antes do fim de promoções",
   "Avisos antes do fim de períodos de fidelização",
   "Alertas sobre alterações relevantes no seu setor",
@@ -40,13 +40,13 @@ type Cartao = {
 const CARTOES: Record<PlanoId, Cartao> = {
   protecao: {
     resumo:
-      "Para quem quer que a DoLado acompanhe o que paga, as datas importantes dos seus contratos e as alterações que podem merecer a sua atenção.",
+      "Para quem quer identificar alterações importantes e antecipar problemas, antes de perder dinheiro ou a oportunidade de agir.",
     inclui: FUNCIONALIDADES_PROTECAO,
     naoInclui: "Não inclui o tratamento de casos.",
     cta: "Aderir à Proteção",
   },
   caso_protecao: {
-    resumo: "A DoLado fica atenta por si e, quando surgir um problema, também o trata consigo.",
+    resumo: "Tratamos dos problemas quando surgem e ajudamos a identificar outros antes que lhe causem prejuízo.",
     inclui: [
       "Tudo o que está incluído na Proteção",
       "1 novo caso por mês",

@@ -15,7 +15,7 @@ const O_QUE_E: Pergunta = {
   id: "o-que-e",
   pergunta: "O que é a DoLado?",
   resposta:
-    "A DoLado ajuda os consumidores a acompanhar os seus contratos, faturas e alterações importantes em serviços como as telecomunicações, a energia e a água. Quando surge um problema, ajudamo-lo a preparar, enviar e acompanhar a reclamação. O objetivo é estar do seu lado antes e depois de surgir um problema.",
+    "A DoLado ajuda os consumidores a tratar problemas com empresas de serviços como as telecomunicações, a energia e a água. Quando é necessário reclamar, analisamos o caso, identificamos a informação relevante, preparamos a reclamação e acompanhamos o processo. Com a Proteção, também ajudamos a identificar situações que possam tornar-se num problema, antes que seja tarde para agir.",
 };
 
 // A Proteção descreve-se pelo benefício, como na secção de funcionalidades
@@ -25,7 +25,7 @@ const COMO_FUNCIONA: Pergunta = {
   id: "como-funciona-dolado",
   pergunta: "Como funciona a DoLado?",
   resposta:
-    "Com a Proteção, a DoLado acompanha as informações dos seus contratos e faturas e avisa-o quando há algo que pode merecer a sua atenção. Se surgir um problema, pode abrir um caso: analisamos o que aconteceu, preparamos a reclamação e só a enviamos depois da sua autorização. Depois do envio, acompanhamos o que acontece a seguir.",
+    "Se tiver um problema com uma empresa, pode abrir um caso: analisamos o que aconteceu, preparamos a reclamação e só a enviamos depois da sua autorização. Depois do envio, acompanhamos o que acontece a seguir. Com a Proteção, a DoLado usa as informações das suas faturas e contratos para identificar alterações ou datas que possam tornar-se num problema e avisa-o a tempo de agir.",
 };
 
 const SEM_AUTORIZACAO: Pergunta = {
@@ -47,7 +47,7 @@ const DIFERENCA_PLANOS: Pergunta = {
   id: "diferenca-planos",
   pergunta: "Qual é a diferença entre Proteção, Caso + Proteção e Avulso?",
   resposta:
-    "A Proteção acompanha as suas faturas, as datas importantes dos seus contratos e as alterações relevantes no seu setor, sem tratamento de casos. O Caso + Proteção inclui esse acompanhamento contínuo e acrescenta 1 novo caso por mês. O Avulso serve para tratar um único problema, com pagamento único, sem subscrição nem funcionalidades da Proteção.",
+    "A Proteção ajuda a identificar alterações nas suas faturas, datas importantes e alterações relevantes no seu setor que possam tornar-se num problema, sem tratamento de casos. O Caso + Proteção junta essa prevenção ao tratamento de problemas, com 1 novo caso por mês. O Avulso serve para tratar um único problema, com pagamento único, sem subscrição nem funcionalidades da Proteção.",
 };
 
 // O prazo documentado (FormularioGuiado, e-mail "novo-caso", indicador do
@@ -159,7 +159,7 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
         id: "o-que-inclui-protecao",
         pergunta: "O que inclui o plano Proteção?",
         resposta:
-          "A Proteção mantém a DoLado atenta por si. Comparamos as suas faturas com as anteriores, acompanhamos datas importantes, como o fim de promoções e de períodos de fidelização, e avisamo-lo por e-mail antes dessas datas. Também o avisamos de alterações relevantes nos setores que escolher, como subidas de preços anunciadas. A Proteção não inclui o tratamento de reclamações.",
+          "A Proteção ajuda a identificar situações que possam tornar-se num problema. Comparamos as suas faturas com as anteriores para identificar alterações, estamos atentos a datas importantes, como o fim de promoções e de períodos de fidelização, e avisamo-lo por e-mail antes dessas datas. Também o avisamos de alterações relevantes nos setores que escolher, como subidas de preços anunciadas. A Proteção não inclui o tratamento de reclamações.",
       },
       {
         // Fluxo real: /portal/contratos (carregar fatura ou contrato, ou

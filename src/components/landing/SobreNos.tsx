@@ -30,7 +30,7 @@ const SECOES: Secao[] = [
     paragrafos: [
       "Muitos dos problemas enfrentados pelos consumidores poderiam ser evitados se a informação certa chegasse no momento certo.",
       "Por isso, a DoLado não existe apenas para ajudar quando algo corre mal.",
-      "A plataforma permite acompanhar informação importante sobre os seus contratos e receber alertas com antecedência, ajudando a evitar situações como renovações indesejadas, o fim de períodos promocionais, o termo de períodos de fidelização ou alterações significativas no valor das faturas.",
+      "Com a Proteção, a DoLado ajuda a identificar situações que podem tornar-se num problema e avisa com antecedência — como o fim de períodos promocionais, o termo de períodos de fidelização ou alterações significativas no valor das faturas — para que possa agir a tempo.",
       "Queremos que cada consumidor tenha mais controlo e menos surpresas.",
     ],
   },
