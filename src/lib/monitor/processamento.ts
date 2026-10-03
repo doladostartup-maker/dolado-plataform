@@ -42,6 +42,8 @@ export type SituacaoDocumento =
   | { tipo: "em_curso"; passo: number }
   | { tipo: "pronto"; contratoId: string | null; estado: string }
   | { tipo: "repetido"; contratoId: string | null }
+  /** Lido, mas não confirmámos a que serviço pertence: o cliente decide. */
+  | { tipo: "por_associar" }
   | { tipo: "nao_concluido"; podeRepetir: boolean };
 
 /**
@@ -52,13 +54,21 @@ export type SituacaoDocumento =
  * repetir (regra 3 do "Uso de IA": nunca bloquear o cliente).
  */
 export function situacaoDocumento(
-  doc: { etapa: string | null; etapa_atualizada_em: string | null; estado: string; contrato_id: string | null; motivo?: string | null },
+  doc: {
+    etapa: string | null;
+    etapa_atualizada_em: string | null;
+    estado: string;
+    contrato_id: string | null;
+    associacao_estado?: string | null;
+    motivo?: string | null;
+  },
   agoraMs: number,
 ): SituacaoDocumento {
   if (doc.etapa === "repetido") return { tipo: "repetido", contratoId: doc.contrato_id };
   if (parado(doc.etapa, doc.etapa_atualizada_em, agoraMs)) return { tipo: "nao_concluido", podeRepetir: true };
   if (emCurso(doc.etapa)) return { tipo: "em_curso", passo: indicePasso(doc.etapa) };
   if (doc.etapa === "falhou") return { tipo: "nao_concluido", podeRepetir: doc.estado === "pendente" };
+  if (!doc.contrato_id && (doc.associacao_estado === "possivel" || doc.associacao_estado === "conflito")) return { tipo: "por_associar" };
   return { tipo: "pronto", contratoId: doc.contrato_id, estado: doc.estado };
 }
 

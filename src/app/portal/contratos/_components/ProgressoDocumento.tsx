@@ -19,6 +19,7 @@ type Linha = {
   etapa_atualizada_em: string | null;
   estado: string;
   contrato_id: string | null;
+  associacao_estado?: string | null;
 };
 
 export function ProgressoDocumento({
@@ -47,7 +48,7 @@ export function ProgressoDocumento({
     async function ler() {
       const { data } = await supabase
         .from("documentos_monitor")
-        .select("etapa, etapa_atualizada_em, estado, contrato_id")
+        .select("etapa, etapa_atualizada_em, estado, contrato_id, associacao_estado")
         .eq("id", documentoId)
         .maybeSingle();
       if (!ativo) return;
@@ -62,9 +63,15 @@ export function ProgressoDocumento({
     };
   }, [documentoId, final]);
 
-  // Fim da leitura: mostra o contrato com os dados por confirmar.
+  // Fim da leitura: mostra o serviço com o resultado, ou — se não
+  // confirmámos a que serviço pertence o documento — a decisão do cliente.
   useEffect(() => {
     if (!situacao || terminou.current) return;
+    if (situacao.tipo === "por_associar") {
+      terminou.current = true;
+      router.push(`/portal/contratos/documentos/${documentoId}`);
+      return;
+    }
     if (situacao.tipo === "pronto") {
       terminou.current = true;
       const destino = situacao.contratoId ?? null;
@@ -87,7 +94,7 @@ export function ProgressoDocumento({
         Este documento já tinha sido carregado.{" "}
         {situacao.contratoId && (
           <a href={`/portal/contratos/${situacao.contratoId}`} className="font-medium text-[var(--color-brand)] underline">
-            Ver o contrato
+            Ver o serviço
           </a>
         )}
       </div>
@@ -156,8 +163,8 @@ export function ProgressoDocumento({
         })}
       </ol>
       <p className="text-[12.5px] leading-relaxed text-[var(--color-ink-muted)]">
-        Normalmente demora menos de meio minuto. Pode continuar a usar a DoLado: a análise prossegue e os dados aparecem
-        no contrato quando estiverem prontos.
+        Normalmente demora menos de meio minuto. Pode continuar a usar a DoLado: a análise prossegue e o resultado aparece
+        no serviço quando estiver pronto.
       </p>
     </div>
   );

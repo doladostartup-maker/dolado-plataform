@@ -171,7 +171,7 @@ function Navegacao() {
           Os meus casos
         </ItemNav>
         <ItemNav href="/portal/contratos" icon={<IconFaturas />}>
-          Os meus contratos
+          Os meus serviços
         </ItemNav>
         <ItemNav href="/conta" icon={<IconConta />}>
           A minha conta

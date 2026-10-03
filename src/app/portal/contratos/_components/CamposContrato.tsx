@@ -21,6 +21,9 @@ export type ValoresContrato = {
   tipo_fidelizacao?: string | null;
   nova_instalacao?: string | null;
   equipamento_subsidiado?: string | null;
+  desconto_promocao_cents?: number | null;
+  data_inicio_promocao?: string | null;
+  servicos_incluidos?: string | null;
 };
 
 function Campo({ label, ajuda, children }: { label: string; ajuda?: string; children: React.ReactNode }) {
@@ -69,17 +72,26 @@ export function CamposContrato({ valores = {}, setorObrigatorio = false }: { val
       <Campo label="Fim da fidelização" ajuda="Só se o contrato indicar a data de fim.">
         <input type="date" name="data_fim_fidelizacao" defaultValue={valores.data_fim_fidelizacao ?? ""} className={INPUT_CLASS} />
       </Campo>
-      <Campo label="Mensalidade (€)" ajuda="O valor mensal do serviço, sem consumos extra.">
+      <Campo label="Mensalidade contratada (€)" ajuda="O preço mensal indicado no contrato, sem consumos extra.">
         <input name="mensalidade_cents" inputMode="decimal" defaultValue={euros(valores.mensalidade_cents)} placeholder="ex.: 42,99" className={INPUT_CLASS} />
       </Campo>
       <Campo label="Valor da vantagem da fidelização (€)" ajuda="Descontos, instalação ou equipamento oferecidos em troca da fidelização, se o contrato indicar.">
         <input name="vantagem_cents" inputMode="decimal" defaultValue={euros(valores.vantagem_cents)} placeholder="ex.: 120,00" className={INPUT_CLASS} />
       </Campo>
+      <Campo label="Promoção">
+        <input name="descricao_promocao" defaultValue={valores.descricao_promocao ?? ""} placeholder="ex.: Desconto de 10 € na mensalidade" className={INPUT_CLASS} />
+      </Campo>
+      <Campo label="Desconto mensal da promoção (€)" ajuda="Para verificarmos se o desconto aparece nas faturas.">
+        <input name="desconto_promocao_cents" inputMode="decimal" defaultValue={euros(valores.desconto_promocao_cents)} placeholder="ex.: 10,00" className={INPUT_CLASS} />
+      </Campo>
+      <Campo label="Início da promoção">
+        <input type="date" name="data_inicio_promocao" defaultValue={valores.data_inicio_promocao ?? ""} className={INPUT_CLASS} />
+      </Campo>
       <Campo label="Fim da promoção">
         <input type="date" name="data_fim_promocao" defaultValue={valores.data_fim_promocao ?? ""} className={INPUT_CLASS} />
       </Campo>
-      <Campo label="Promoção">
-        <input name="descricao_promocao" defaultValue={valores.descricao_promocao ?? ""} placeholder="ex.: Desconto de 10 € na mensalidade" className={INPUT_CLASS} />
+      <Campo label="Serviços incluídos" ajuda="Opcional.">
+        <input name="servicos_incluidos" defaultValue={valores.servicos_incluidos ?? ""} placeholder="ex.: Internet, TV, telefone fixo, 2 cartões móveis" className={INPUT_CLASS} />
       </Campo>
       <Campo label="Tipo de fidelização" ajuda="Para estimar o custo de saída (telecomunicações).">
         <select name="tipo_fidelizacao" defaultValue={valores.tipo_fidelizacao ?? ""} className={INPUT_CLASS}>

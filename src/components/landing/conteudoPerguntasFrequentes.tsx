@@ -167,7 +167,7 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
         id: "comecar-protecao",
         pergunta: "Como começo a usar a Proteção?",
         resposta:
-          "Depois de subscrever, entre na sua área de cliente e abra “Os meus contratos”. Basta carregar uma fatura ou o contrato, em PDF ou imagem: a DoLado lê os dados principais, como o fornecedor, os valores e as datas, e pede-lhe que os confirme. Se não tiver o documento à mão, pode indicar os dados manualmente — basta o fornecedor e uma data, como o fim da fidelização ou da promoção. Para receber alertas sobre alterações no seu setor, escolha os setores que lhe interessam em “Gestão de Perfil”.",
+          "Depois de subscrever, entre na sua área de cliente e abra “Os meus serviços”. Basta carregar uma fatura, em PDF ou imagem: a DoLado começa a acompanhar a evolução desse serviço mês a mês. Se tiver o contrato, pode adicioná-lo para verificarmos também os preços contratados, as promoções e a fidelização. Se não tiver o documento à mão, pode indicar os dados manualmente — basta o fornecedor e uma data, como o fim da fidelização ou da promoção. Para receber alertas sobre alterações no seu setor, escolha os setores que lhe interessam em “Gestão de Perfil”.",
       },
       {
         id: "o-que-inclui-caso-protecao",

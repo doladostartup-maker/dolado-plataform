@@ -9,12 +9,19 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { excedeuLimiteTaxa } from "@/lib/rateLimit";
 import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 import { MIME_ACEITES, type MimeAceite } from "@/lib/monitor/claudeDocumentos";
-import { processarDocumentoEmSegundoPlano, reiniciarProcessamento } from "@/lib/monitor/servidor";
+import {
+  cancelarDocumentoPorAssociar,
+  concluirAssociacao,
+  processarDocumentoEmSegundoPlano,
+  recalcularAcompanhamentoEmSegundoPlano,
+  registarRespostaFatura,
+  reiniciarProcessamento,
+} from "@/lib/monitor/servidor";
 import { LIMITE_SEM_AVANCO_MS } from "@/lib/monitor/processamento";
 import { CAMPOS_EDITAVEIS, SETORES_CONTRATO, lerEurosParaCents, lerMeses, type TipoCampo } from "@/lib/monitor/contratos";
 import { dataValida, type CampoContrato } from "@/lib/monitor/extracaoFatura";
 
-// Monitor de Proteção — ações do cliente. O cliente não escreve nas tabelas
+// Monitor de Proteção (serviços acompanhados) — ações do cliente. O cliente não escreve nas tabelas
 // do Monitor (RLS só de leitura): cada ação valida sessão, Proteção e posse
 // (pelo cliente da sessão, com RLS) e só depois usa a service role.
 
@@ -171,8 +178,19 @@ export type ResultadoDecisoes = { ok: true } | { ok: false; erro: string };
  * não está correto, corrigido). Uma só ida à base de dados, atómica
  * (monitor_campos_decidir); sem redirecionar — o browser atualiza a página.
  */
-export async function confirmarDadosContrato(contratoId: string, decisoes: DecisaoCampo[]): Promise<ResultadoDecisoes> {
+export type AlteracaoContrato = { desde: string; motivo: string } | null;
+
+const MOTIVOS_ALTERACAO = ["renegociacao", "alteracao_tarifaria", "nova_promocao", "mudanca_pacote", "outro"];
+
+export async function confirmarDadosContrato(
+  contratoId: string,
+  decisoes: DecisaoCampo[],
+  alteracao: AlteracaoContrato = null,
+): Promise<ResultadoDecisoes> {
   const { user, contrato } = await contratoDoCliente(String(contratoId ?? ""));
+  if (alteracao && (!dataValida(alteracao.desde) || !MOTIVOS_ALTERACAO.includes(alteracao.motivo))) {
+    return { ok: false, erro: "Indique a data a partir da qual as novas condições se aplicam." };
+  }
   if (!Array.isArray(decisoes) || decisoes.length === 0 || decisoes.length > 50) {
     return { ok: false, erro: "Indique pelo menos uma decisão." };
   }
@@ -202,15 +220,23 @@ export async function confirmarDadosContrato(contratoId: string, decisoes: Decis
     lote.push({ campo_id: d.campoId, acao: "corrigir", valor });
   }
 
+  // Alteração legítima do contrato (renegociação, nova promoção…): a versão
+  // em vigor fecha na véspera, na mesma transação das decisões, e as faturas
+  // anteriores continuam a ser comparadas com ela.
   const { error } = await admin.rpc("monitor_campos_decidir", {
     p_utilizador: user.id,
     p_contrato: contrato.id,
     p_decisoes: lote,
+    p_alteracao_desde: alteracao?.desde ?? null,
+    p_alteracao_motivo: alteracao?.motivo ?? null,
   });
   if (error) {
     console.error("[monitor] falha ao gravar decisões:", error.code, error.message);
+    if (alteracao && error.code === "22023") return { ok: false, erro: "A data indicada tem de ser posterior ao início das condições atuais." };
     return { ok: false, erro: MSG_ERRO_GUARDAR };
   }
+  // Comparação retroativa das faturas com as condições confirmadas (sem IA).
+  after(() => recalcularAcompanhamentoEmSegundoPlano(contrato.id));
   revalidatePath(`/portal/contratos/${contrato.id}`);
   revalidatePath("/portal/contratos");
   return { ok: true };
@@ -250,6 +276,7 @@ export async function corrigirContrato(formData: FormData) {
     if (error) irPara(voltar, { erro: MSG_ERRO_GUARDAR, editar: "1" });
   }
 
+  after(() => recalcularAcompanhamentoEmSegundoPlano(contrato.id));
   revalidatePath(voltar);
   irPara(voltar, { guardado: "1" });
 }
@@ -290,6 +317,53 @@ export async function criarContratoManual(formData: FormData) {
 
   revalidatePath("/portal/contratos");
   irPara(`/portal/contratos/${contrato.id}`, { guardado: "1" });
+}
+
+// ---------------------------------------------------------------------------
+// Documento por associar — decisão explícita do cliente (auditada)
+// ---------------------------------------------------------------------------
+
+export async function decidirDocumento(formData: FormData) {
+  const { user } = await requireProtecao("contratos");
+  const documentoId = String(formData.get("documento_id") ?? "");
+  const decisao = String(formData.get("decisao") ?? "");
+  const voltar = `/portal/contratos/documentos/${documentoId}`;
+
+  if (decisao === "cancelar") {
+    const ok = await cancelarDocumentoPorAssociar(documentoId, user.id);
+    if (!ok) irPara(voltar, { erro: MSG_ERRO_GUARDAR });
+    revalidatePath("/portal/contratos");
+    irPara("/portal/contratos", { documento: "cancelado" });
+  }
+  if (decisao !== "associar_mesmo_assim" && decisao !== "outro_servico" && decisao !== "novo_servico") irPara(voltar, { erro: MSG_ERRO_GUARDAR });
+
+  const servicoId = decisao === "outro_servico" ? String(formData.get("servico_id") ?? "") : null;
+  if (decisao === "outro_servico" && !servicoId) irPara(voltar, { erro: "Escolha o serviço a que pertence o documento." });
+
+  let r: Awaited<ReturnType<typeof concluirAssociacao>>;
+  try {
+    r = await concluirAssociacao({ documentoId, utilizadorId: user.id, decisao, servicoId, papel: "cliente", por: user.id });
+  } catch {
+    irPara(voltar, { erro: MSG_ERRO_GUARDAR });
+  }
+  if (!r.ok) {
+    if (r.erro === "nao_encontrado") redirect("/portal/contratos");
+    irPara(voltar, { erro: r.erro === "servico_invalido" ? "Escolha o serviço a que pertence o documento." : MSG_ERRO_GUARDAR });
+  }
+  revalidatePath("/portal/contratos");
+  revalidatePath(`/portal/contratos/${r.servicoId}`);
+  irPara(`/portal/contratos/${r.servicoId}`, r.repetido ? { aviso: "repetido" } : { associado: decisao });
+}
+
+/** "Confirmar fatura" / "Os valores não estão corretos". */
+export async function responderFatura(formData: FormData) {
+  const { user } = await requireProtecao("contratos");
+  const faturaId = String(formData.get("fatura_id") ?? "");
+  const contratoId = String(formData.get("contrato_id") ?? "");
+  const acao = formData.get("acao") === "contestar" ? "contestar" : "confirmar";
+  await registarRespostaFatura(faturaId, user.id, acao);
+  revalidatePath(`/portal/contratos/${contratoId}`);
+  irPara(`/portal/contratos/${contratoId}`, { fatura: acao === "confirmar" ? "confirmada" : "contestada" });
 }
 
 // Deixar de acompanhar: apaga o contrato, os documentos (ficheiros primeiro)

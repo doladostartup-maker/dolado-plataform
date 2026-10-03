@@ -131,8 +131,8 @@ const CARDS: Card[] = [
   },
   {
     slug: "contratos",
-    titulo: "🛡️ Os meus contratos",
-    descricao: "Carregue uma fatura ou o contrato: acompanhamos as datas de fidelização e de promoção e o histórico das faturas.",
+    titulo: "🛡️ Os meus serviços",
+    descricao: "Carregue uma fatura: acompanhamos a evolução do serviço mês a mês. Com o contrato, verificamos também as condições contratadas.",
     href: "/portal/contratos",
   },
   {

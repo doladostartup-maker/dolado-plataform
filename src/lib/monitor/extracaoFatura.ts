@@ -2,17 +2,23 @@
 //
 // A Claude API só LÊ e estrutura (structured outputs com o schema abaixo).
 // Este módulo valida o resultado antes de qualquer gravação: datas, valores,
-// moeda e coerência. Nada daqui decide se há um problema — isso são as
-// regras da F2, em código, com revisão humana.
+// moeda e coerência. Nada daqui decide se há um problema — isso é a
+// comparação em código (acompanhamento.ts), com revisão humana.
 //
 // Versões: mudar o schema ou o prompt = nova versão (permite reprocessar
 // documentos sem repetir extrações já feitas — extracoes_documento).
 
+import type { IdentificadorLido, TipoIdentificador } from "./identificacao.ts";
+
 // v2 (02/10/2026): sem campos "nullable" — a API aceita no máximo 16 parâmetros
 // com tipos em união; o v1 tinha 26. Valor em falta = texto vazio, página
 // desconhecida = 0; normalizarCampo() converte para null antes da validação.
-export const SCHEMA_FATURA_VERSAO = "fatura_v2";
-export const PROMPT_FATURA_VERSAO = "fatura_prompt_v2";
+// v3 (04/10/2026): identificação do titular e do serviço (para associar a
+// fatura ao serviço certo), número da fatura (duplicados) e linhas de crédito.
+// A fatura deixa de propor fornecedor, mensalidade e referência como dados do
+// contrato: são dados OBSERVADOS (faturas_monitor) ou de identificação.
+export const SCHEMA_FATURA_VERSAO = "fatura_v3";
+export const PROMPT_FATURA_VERSAO = "fatura_prompt_v3";
 
 export const PROMPT_FATURA = `És um extrator de dados da DoLado, uma plataforma portuguesa de apoio a consumidores.
 
@@ -29,7 +35,8 @@ Regras:
 - "mensalidade" nas faturas de eletricidade, gás ou água: o total recorrente da fatura sem consumos (se não for possível separar, usa "" e confianca "not_found").
 - "valor_cessacao" é o valor que a fatura indica a pagar se o contrato terminar antecipadamente, na data indicada no documento. Não calcules: só o que está escrito.
 - Para fornecedor, total, mensalidade, data_fim_fidelizacao e valor_cessacao indica a página (a primeira é 1) e um excerto curto (até 150 caracteres) do texto onde encontraste o valor.
-- Nas linhas, os descontos têm valor negativo.`;
+- Nas linhas, os descontos têm valor negativo. "credito" é um acerto ou devolução pontual a favor do cliente (valor negativo). "consumo" são chamadas, dados ou outros consumos fora do pacote.
+- Em "identificacao" copia exatamente o que está escrito no documento (texto vazio se não existir): nome do titular, NIF do titular, número de cliente, número/referência da conta, número do serviço (telefone, CPE ou CUI) e número da fatura. Não confundas o NIF do fornecedor com o NIF do titular.`;
 
 export const CONFIANCAS = ["high", "medium", "low", "not_found", "ambiguous"] as const;
 export type Confianca = (typeof CONFIANCAS)[number];
@@ -39,6 +46,7 @@ const CATEGORIAS_LINHA = [
   "servico_extra",
   "equipamento",
   "desconto",
+  "credito",
   "consumo",
   "imposto",
   "outro",
@@ -61,6 +69,19 @@ export function campoSchema() {
   };
 }
 
+// Identificação (texto simples, "" = não encontrado): sem tipos em união.
+export function schemaIdentificacao(campos: readonly string[]) {
+  return {
+    type: "object",
+    additionalProperties: false,
+    required: [...campos],
+    properties: Object.fromEntries(campos.map((c) => [c, { type: "string" }])),
+  };
+}
+
+const CAMPOS_IDENTIFICACAO_FATURA = ["titular", "nif_titular", "numero_cliente", "referencia_conta", "numero_servico", "numero_fatura"] as const;
+const SCHEMA_IDENTIFICACAO_FATURA = schemaIdentificacao(CAMPOS_IDENTIFICACAO_FATURA);
+
 // JSON Schema para output_config.format (structured outputs).
 export const SCHEMA_FATURA = {
   type: "object",
@@ -79,6 +100,7 @@ export const SCHEMA_FATURA = {
     "data_fim_fidelizacao",
     "valor_cessacao",
     "data_referencia_cessacao",
+    "identificacao",
     "linhas",
   ],
   properties: {
@@ -95,6 +117,7 @@ export const SCHEMA_FATURA = {
     data_fim_fidelizacao: campoSchema(),
     valor_cessacao: campoSchema(),
     data_referencia_cessacao: { type: "string" },
+    identificacao: SCHEMA_IDENTIFICACAO_FATURA,
     linhas: {
       type: "array",
       items: {
@@ -137,7 +160,10 @@ export type CampoContrato =
   | "data_assinatura"
   | "data_ativacao"
   | "duracao_fidelizacao_meses"
-  | "inicio_na_ativacao";
+  | "inicio_na_ativacao"
+  | "desconto_promocao_cents"
+  | "data_inicio_promocao"
+  | "servicos_incluidos";
 
 export type CampoProposto = {
   campo: CampoContrato;
@@ -150,6 +176,9 @@ export type CampoProposto = {
 export type LinhaFatura = { descricao: string; categoria: CategoriaLinha; valorCents: number; recorrente: boolean | null };
 
 export type FaturaNormalizada = {
+  numeroFatura: string | null;
+  /** Mensalidade escrita na fatura: valor OBSERVADO, nunca condição contratual. */
+  mensalidadeLidaCents: number | null;
   dataEmissao: string | null;
   periodoInicio: string | null;
   periodoFim: string | null;
@@ -168,7 +197,12 @@ export type ResultadoValidacao =
       ok: true;
       setor: SetorFatura;
       fatura: FaturaNormalizada;
-      // Só campos com confiança high/medium e valores válidos.
+      /** Nome do fornecedor lido (identificação, nunca proposto ao contrato). */
+      fornecedor: string | null;
+      /** Identificadores do titular e do serviço, para a associação. */
+      identificacao: IdentificadorLido[];
+      // Só informação contratual explícita na fatura (fim da fidelização,
+      // valor de cessação), com confiança high/medium e valores válidos.
       propostas: CampoProposto[];
       // Campos críticos com confiança baixa/ambígua ou valor inválido:
       // nunca alimentam conclusões — o documento fica para revisão.
@@ -246,6 +280,17 @@ export function pagina(v: unknown): number | null {
 }
 
 const CONFIANCA_SUFICIENTE: Confianca[] = ["high", "medium"];
+
+/** Lê o objeto "identificacao" (v3) para a lista de identificadores. */
+export function lerIdentificacao(bruto: unknown, mapa: Record<string, TipoIdentificador>): IdentificadorLido[] {
+  if (!ehObjeto(bruto)) return [];
+  const out: IdentificadorLido[] = [];
+  for (const [campo, tipo] of Object.entries(mapa)) {
+    const v = textoCurto(bruto[campo], 120);
+    if (v) out.push({ tipo, valor: v });
+  }
+  return out;
+}
 
 function normalizarFatura(bruto: unknown): unknown {
   if (!ehObjeto(bruto)) return bruto;
@@ -357,11 +402,22 @@ export function validarExtracaoFatura(entrada: unknown, hoje: string): Resultado
 
   const dataRefCessacao = dataValida(bruto.data_referencia_cessacao) ? bruto.data_referencia_cessacao : dataEmissao;
 
-  // Propostas para o contrato (só valores válidos e com confiança suficiente)
+  // Identificação: fornecedor e referências servem para associar a fatura ao
+  // serviço; nunca são propostos como dados do contrato.
   const nomeFornecedor = textoCurto(fornecedor.valor, 120);
-  propor("fornecedor", fornecedor, nomeFornecedor);
-  if (referencia) propor("referencia_contrato", referencia, textoCurto(referencia.valor, 120));
-  propor("mensalidade_cents", mensalidade, mensalidadeCents);
+  const identificacao = lerIdentificacao(bruto.identificacao, {
+    titular: "titular",
+    nif_titular: "nif_titular",
+    numero_cliente: "numero_cliente",
+    referencia_conta: "referencia_conta",
+    numero_servico: "numero_servico",
+  });
+  const refContrato = referencia && CONFIANCA_SUFICIENTE.includes(referencia.confianca as Confianca) ? textoCurto(referencia.valor, 120) : null;
+  if (refContrato) identificacao.push({ tipo: "referencia_contrato", valor: refContrato });
+  const numeroFatura = ehObjeto(bruto.identificacao) ? textoCurto(bruto.identificacao.numero_fatura, 60) : null;
+
+  // Informação contratual explícita na fatura (nível 2): só o fim da
+  // fidelização e o valor de cessação, com origem "Lido da fatura".
   propor("data_fim_fidelizacao", fimFidelizacao, dataFimFidelizacao);
   if (bruto.setor === "telecomunicacoes" && cessacaoCents !== null && dataRefCessacao && CONFIANCA_SUFICIENTE.includes(cessacao.confianca as Confianca)) {
     propor("cessacao_operador_cents", cessacao, cessacaoCents);
@@ -373,7 +429,11 @@ export function validarExtracaoFatura(entrada: unknown, hoje: string): Resultado
   return {
     ok: true,
     setor: bruto.setor as SetorFatura,
+    fornecedor: nomeFornecedor,
+    identificacao,
     fatura: {
+      numeroFatura,
+      mensalidadeLidaCents: CONFIANCA_SUFICIENTE.includes(mensalidade.confianca as Confianca) ? mensalidadeCents : null,
       dataEmissao,
       periodoInicio,
       periodoFim,

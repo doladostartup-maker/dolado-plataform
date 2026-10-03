@@ -2,9 +2,11 @@
 //
 // Pipeline (docs/especificacoes/CLAUDE_API_MONITORIZACAO.md, secção 10):
 //   documento pendente → orçamento → Claude (structured output) → registo do
-//   custo → extração (staging) → validação de domínio → contrato (existente
-//   ou novo) → valores propostos (o cliente confirma) → fatura normalizada →
-//   regras F2/F4 (achados para revisão humana).
+//   custo → extração (staging) → validação de domínio → associação ao serviço
+//   (identificadores: confirmada / possível / conflito / serviço novo) →
+//   fatura normalizada + comparação mensal em código (eventos; os que merecem
+//   atenção vão para revisão humana) ou condições do contrato (o cliente
+//   confirma). Uma fatura nunca altera condições contratuais.
 //
 // Usa a service role: quem chama tem de ter validado a sessão, a posse do
 // documento e a Proteção ANTES (Server Actions do portal / backoffice).
@@ -20,7 +22,25 @@ import { avisosAtravessados, estadoOrcamento, lerTetoOrcamentoUsd } from "./cust
 import { chaveFornecedor } from "./contratos";
 import { nomeComercial, type Fornecedor } from "./fornecedores";
 import { falhaTransitoria } from "./processamento";
-import { avaliarFatura, type FaturaHistorico } from "./regrasFaturas";
+import {
+  TIPO_ACHADO,
+  VERSAO_ACOMPANHAMENTO,
+  compararFatura,
+  fraseEvento,
+  ordenarFaturas,
+  resultadoFatura,
+  versaoValida,
+  type FaturaComparavel,
+  type VersaoContrato,
+} from "./acompanhamento";
+import {
+  escolherServico,
+  normalizarIdentificadores,
+  type IdentidadeServico,
+  type IdentificadorLido,
+  type ResultadoAssociacao,
+  type TipoIdentificador,
+} from "./identificacao";
 import { VERSAO_REGRA_CESSACAO, compararCessacao, textoCessacaoDivergente } from "./custoSaida";
 import {
   PROMPT_FATURA,
@@ -51,6 +71,11 @@ function hojeLisboa() {
 }
 
 async function avisarAdmin(assunto: string, texto: string) {
+  // Sem Brevo configurada (testes locais): não há para onde enviar.
+  if (!process.env.BREVO_API_KEY) {
+    console.log(`[monitor] aviso ao admin (sem envio): ${assunto} — ${texto}`);
+    return;
+  }
   try {
     await enviarEmailBrevo(
       ADMIN_EMAIL,
@@ -140,50 +165,252 @@ export async function apresentarFornecedor(nome: string | null | undefined) {
 // Mesmo fornecedor apesar de nome legal vs. comercial ("Vodafone Portugal,
 // Comunicações Pessoais, S.A." e "Vodafone").
 function chaveComercial(nome: string | null | undefined, lista: Fornecedor[]) {
-  return chaveFornecedor(nomeComercial(nome, lista));
+  return chaveFornecedor(nomeComercial(nome, lista)) || null;
 }
 
-async function contratoParaDocumento(
-  admin: Admin,
-  doc: { utilizador_id: string; contrato_id: string | null },
-  fornecedor: string | null,
-  setor: string,
-): Promise<string> {
-  if (doc.contrato_id) {
-    // Contrato escolhido pelo cliente: só preenche o setor se ainda faltar.
-    await admin
-      .from("contratos_monitorizados")
-      .update({ setor })
-      .eq("id", doc.contrato_id)
-      .eq("setor", "nao_indicado");
-    return doc.contrato_id;
-  }
+// ---------------------------------------------------------------------------
+// Leitura validada de um documento (a partir da extração gravada — sem IA)
+// ---------------------------------------------------------------------------
 
+type ValidacaoFaturaOk = Extract<ReturnType<typeof validarExtracaoFatura>, { ok: true }>;
+type ValidacaoContratoOk = Extract<ReturnType<typeof validarExtracaoContrato>, { ok: true }>;
+
+export type LeituraDocumento =
+  | { tipo: "fatura"; setor: string; fornecedor: string | null; identificacao: IdentificadorLido[]; v: ValidacaoFaturaOk }
+  | { tipo: "contrato"; setor: string; fornecedor: string | null; identificacao: IdentificadorLido[]; v: ValidacaoContratoOk };
+
+function validarLeitura(tipo: "fatura" | "contrato", bruto: unknown): { ok: true; leitura: LeituraDocumento } | { ok: false; motivo: string } {
+  if (tipo === "contrato") {
+    const v = validarExtracaoContrato(bruto);
+    if (!v.ok) return { ok: false, motivo: v.motivo };
+    return { ok: true, leitura: { tipo, setor: v.setor, fornecedor: v.fornecedor, identificacao: v.identificacao, v } };
+  }
+  const v = validarExtracaoFatura(bruto, hojeLisboa());
+  if (!v.ok) return { ok: false, motivo: v.motivo };
+  return { ok: true, leitura: { tipo, setor: v.setor, fornecedor: v.fornecedor, identificacao: v.identificacao, v } };
+}
+
+// ---------------------------------------------------------------------------
+// A que serviço pertence o documento?
+// ---------------------------------------------------------------------------
+
+async function identidadesServicos(admin: Admin, utilizadorId: string, fornecedores: Fornecedor[]): Promise<IdentidadeServico[]> {
+  const { data: servicos } = await admin
+    .from("contratos_monitorizados")
+    .select("id, fornecedor")
+    .eq("utilizador_id", utilizadorId)
+    .is("desativado_em", null)
+    .neq("estado", "terminado")
+    .order("created_at", { ascending: true });
+  if (!servicos?.length) return [];
+  const { data: ids } = await admin
+    .from("servicos_identificadores")
+    .select("contrato_id, tipo, valor_normalizado, apresentacao")
+    .in("contrato_id", servicos.map((s) => s.id));
+  return servicos.map((s) => ({
+    id: s.id,
+    fornecedorChave: chaveComercial(s.fornecedor, fornecedores),
+    ids: (ids ?? [])
+      .filter((i) => i.contrato_id === s.id)
+      .map((i) => ({ tipo: i.tipo as TipoIdentificador, valorNormalizado: i.valor_normalizado, apresentacao: i.apresentacao })),
+  }));
+}
+
+async function decidirDestino(admin: Admin, doc: { utilizador_id: string; contrato_id: string | null }, leitura: LeituraDocumento) {
   const fornecedores = await listaFornecedores(admin);
-  const chave = chaveComercial(fornecedor, fornecedores);
-  if (chave) {
-    const { data: existentes } = await admin
-      .from("contratos_monitorizados")
-      .select("id, fornecedor, setor, created_at")
-      .eq("utilizador_id", doc.utilizador_id)
-      .neq("estado", "terminado")
-      .order("created_at", { ascending: true });
-    const igual = (existentes ?? []).find((c) => chaveComercial(c.fornecedor, fornecedores) === chave);
-    if (igual) {
-      if (igual.setor === "nao_indicado" && setor !== "nao_indicado") {
-        await admin.from("contratos_monitorizados").update({ setor }).eq("id", igual.id);
-      }
-      return igual.id;
+  const servicos = await identidadesServicos(admin, doc.utilizador_id, fornecedores);
+  const identidade = { fornecedorChave: chaveComercial(leitura.fornecedor, fornecedores), ids: normalizarIdentificadores(leitura.identificacao) };
+  return escolherServico(identidade, servicos, doc.contrato_id);
+}
+
+// Novo serviço a partir de um documento. Numa fatura, o fornecedor é só
+// identificação (aceite pelo sistema, origem "Lido da fatura"); num contrato
+// segue as propostas normais, que o cliente confirma.
+async function criarServico(admin: Admin, utilizadorId: string, leitura: LeituraDocumento, documentoId: string): Promise<string> {
+  const { data: novo, error } = await admin
+    .from("contratos_monitorizados")
+    .insert({ utilizador_id: utilizadorId, setor: leitura.setor })
+    .select("id")
+    .single();
+  if (error || !novo) throw new Error(`Não foi possível criar o serviço: ${error?.message}`);
+  if (leitura.tipo === "fatura" && leitura.fornecedor) {
+    const nome = nomeComercial(leitura.fornecedor, await listaFornecedores(admin)) ?? leitura.fornecedor;
+    const { data: campoId } = await admin.rpc("monitor_campo_propor", {
+      p_contrato: novo.id,
+      p_campo: "fornecedor",
+      p_valor: nome,
+      p_origem: "fatura",
+      p_documento: documentoId,
+      p_evidencia: leitura.fornecedor,
+      p_confianca: "high",
+    });
+    if (campoId) await admin.rpc("monitor_campo_aceitar", { p_campo_id: campoId, p_por: null });
+  }
+  return novo.id;
+}
+
+async function guardarPendente(admin: Admin, documentoId: string, servicoId: string, r: ResultadoAssociacao, tipo: "fatura" | "contrato") {
+  await admin
+    .from("documentos_monitor")
+    .update({
+      contrato_id: null,
+      tipo,
+      associacao_estado: r.estado === "conflito" ? "conflito" : "possivel",
+      associacao_confianca: r.confianca,
+      associacao_motivos: r.motivos,
+      associacao_conflitos: r.conflitos,
+      associacao_sugerida: servicoId,
+    })
+    .eq("id", documentoId);
+}
+
+type Registo = {
+  documentoId: string;
+  utilizadorId: string;
+  servicoId: string;
+  extracaoId: string;
+  leitura: LeituraDocumento;
+  estado: "confirmada" | "novo_servico" | "manual";
+  resultado: ResultadoAssociacao | null;
+  decisao: "automatica" | "associar_mesmo_assim" | "outro_servico" | "novo_servico";
+  papel: "cliente" | "admin" | "sistema";
+  por: string | null;
+};
+
+/**
+ * Regista um documento num serviço (associação já decidida). Uma fatura
+ * repetida (mesmo número, ou mesmo período e total) não cria outro mês.
+ */
+async function registarNoServico(admin: Admin, a: Registo): Promise<{ repetido: boolean }> {
+  const { leitura } = a;
+
+  if (leitura.tipo === "fatura") {
+    const f = leitura.v.fatura;
+    let repetida = null;
+    if (f.numeroFatura) {
+      ({ data: repetida } = await admin
+        .from("faturas_monitor")
+        .select("id")
+        .eq("contrato_id", a.servicoId)
+        .eq("numero_fatura", f.numeroFatura)
+        .neq("documento_id", a.documentoId)
+        .maybeSingle());
+    } else if (f.periodoInicio && f.periodoFim && f.totalCents != null) {
+      ({ data: repetida } = await admin
+        .from("faturas_monitor")
+        .select("id")
+        .eq("contrato_id", a.servicoId)
+        .eq("periodo_inicio", f.periodoInicio)
+        .eq("periodo_fim", f.periodoFim)
+        .eq("total_cents", f.totalCents)
+        .neq("documento_id", a.documentoId)
+        .limit(1)
+        .maybeSingle());
+    }
+    if (repetida) {
+      await admin.from("documentos_monitor").update({ contrato_id: a.servicoId, associacao_sugerida: null }).eq("id", a.documentoId);
+      return { repetido: true };
     }
   }
 
-  const { data: novo, error } = await admin
-    .from("contratos_monitorizados")
-    .insert({ utilizador_id: doc.utilizador_id, setor })
+  await admin
+    .from("documentos_monitor")
+    .update({
+      contrato_id: a.servicoId,
+      tipo: leitura.tipo,
+      associacao_estado: a.estado,
+      associacao_confianca: a.resultado?.confianca ?? null,
+      associacao_motivos: a.resultado?.motivos ?? [],
+      associacao_conflitos: a.resultado?.conflitos ?? [],
+      associacao_sugerida: null,
+    })
+    .eq("id", a.documentoId);
+
+  // Identificadores: ficam no serviço para associar os próximos documentos.
+  const ids = normalizarIdentificadores(leitura.identificacao);
+  if (ids.length) {
+    await admin.from("servicos_identificadores").upsert(
+      ids.map((i) => ({
+        contrato_id: a.servicoId,
+        utilizador_id: a.utilizadorId,
+        tipo: i.tipo,
+        valor_normalizado: i.valorNormalizado,
+        apresentacao: i.apresentacao,
+        origem: leitura.tipo,
+        documento_id: a.documentoId,
+      })),
+      { onConflict: "contrato_id,tipo,valor_normalizado", ignoreDuplicates: true },
+    );
+  }
+
+  await admin.from("associacoes_documento").insert({
+    documento_id: a.documentoId,
+    utilizador_id: a.utilizadorId,
+    contrato_id: a.servicoId,
+    decisao: a.decisao,
+    estado_associacao: a.estado,
+    motivos: a.resultado?.motivos ?? [],
+    conflitos: a.resultado?.conflitos ?? [],
+    decidido_por: a.por,
+    papel: a.papel,
+  });
+
+  await admin.from("contratos_monitorizados").update({ setor: leitura.setor }).eq("id", a.servicoId).eq("setor", "nao_indicado");
+
+  if (leitura.tipo === "contrato") {
+    await registarPropostas(admin, a.servicoId, a.documentoId, a.extracaoId, "contrato", leitura.v.propostas);
+    return { repetido: false };
+  }
+
+  const f = leitura.v.fatura;
+  const { data: fatura } = await admin
+    .from("faturas_monitor")
+    .upsert(
+      {
+        contrato_id: a.servicoId,
+        utilizador_id: a.utilizadorId,
+        documento_id: a.documentoId,
+        extracao_id: a.extracaoId,
+        numero_fatura: f.numeroFatura,
+        mensalidade_lida_cents: f.mensalidadeLidaCents,
+        data_emissao: f.dataEmissao,
+        periodo_inicio: f.periodoInicio,
+        periodo_fim: f.periodoFim,
+        total_cents: f.totalCents,
+        recorrente_cents: f.recorrenteCents,
+        pontual_cents: f.pontualCents,
+        descontos_cents: f.descontosCents,
+        linhas: f.linhas,
+        cessacao_operador_cents: f.cessacaoOperadorCents,
+        data_fim_fidelizacao: f.dataFimFidelizacao,
+      },
+      { onConflict: "documento_id" },
+    )
     .select("id")
     .single();
-  if (error || !novo) throw new Error(`Não foi possível criar o contrato: ${error?.message}`);
-  return novo.id;
+
+  // Nível 2: o que a fatura diz expressamente sobre a fidelização ou o valor
+  // de cessação só é proposto quando o serviço não tem esse dado de outra
+  // fonte (contrato, cliente, DoLado, cálculo). Uma fatura nunca compete com
+  // o contrato: a diferença passa a evento para revisão.
+  const { data: atuais } = await admin
+    .from("contratos_campos")
+    .select("campo, origem")
+    .eq("contrato_id", a.servicoId)
+    .eq("estado", "atual");
+  const deOutraFonte = new Set((atuais ?? []).filter((c) => c.origem !== "fatura").map((c) => c.campo as string));
+  await registarPropostas(
+    admin,
+    a.servicoId,
+    a.documentoId,
+    a.extracaoId,
+    "fatura",
+    leitura.v.propostas.filter((p) => !deOutraFonte.has(p.campo)),
+  );
+
+  if (fatura) await avaliarCessacao(admin, a.servicoId, fatura.id);
+  await recalcularAcompanhamento(admin, a.servicoId);
+  return { repetido: false };
 }
 
 async function registarPropostas(
@@ -202,8 +429,7 @@ async function registarPropostas(
   );
 
   // Em paralelo: cada proposta é uma função SQL curta (a base de dados põe
-  // em série as que tocam no mesmo contrato); antes eram ~10 idas e voltas
-  // seguidas, cada uma a somar a latência do servidor.
+  // em série as que tocam no mesmo contrato).
   await Promise.all(
     normalizadas.map(async (p) => {
       const { data: campoId, error } = await admin.rpc("monitor_campo_propor", {
@@ -231,84 +457,138 @@ async function registarPropostas(
   );
 }
 
-// F2/F4: compara a fatura nova com o histórico e o contrato e regista as
-// situações detetadas para revisão humana (nunca vão diretamente ao cliente).
-// Só telecomunicações nesta fase. Idempotente: chave única por regra.
-async function avaliarAchados(admin: Admin, contratoId: string, documentoId: string) {
-  const [{ data: contrato }, { data: faturas }, { data: camposAtuais }] = await Promise.all([
+// F4: valor de cessação indicado na fatura × estimativa a partir do
+// contrato (telecomunicações). Regra e achado próprios, com revisão humana.
+async function avaliarCessacao(admin: Admin, contratoId: string, faturaId: string) {
+  const [{ data: contrato }, { data: atual }, { data: camposAtuais }] = await Promise.all([
     admin.from("contratos_monitorizados").select("*").eq("id", contratoId).single(),
-    admin
-      .from("faturas_monitor")
-      .select("id, documento_id, utilizador_id, data_emissao, periodo_inicio, periodo_fim, recorrente_cents, linhas, cessacao_operador_cents")
-      .eq("contrato_id", contratoId),
+    admin.from("faturas_monitor").select("id, data_emissao, cessacao_operador_cents").eq("id", faturaId).single(),
     admin.from("contratos_campos").select("campo, origem").eq("contrato_id", contratoId).eq("estado", "atual"),
   ]);
-  if (!contrato || contrato.setor !== "telecomunicacoes") return 0;
-  const atual = (faturas ?? []).find((f) => f.documento_id === documentoId);
-  if (!atual) return 0;
+  if (!contrato || !atual || contrato.setor !== "telecomunicacoes") return;
+  const dataOperador = contrato.cessacao_operador_data ?? atual.data_emissao;
+  const origens = Object.fromEntries((camposAtuais ?? []).map((c) => [c.campo as string, c.origem as string]));
+  const cessacao = compararCessacao(contrato, atual.cessacao_operador_cents, dataOperador, origens);
+  if (cessacao.resultado !== "divergente") return;
+  const { data: inseridos } = await admin
+    .from("achados_monitor")
+    .upsert(
+      {
+        contrato_id: contratoId,
+        utilizador_id: contrato.utilizador_id,
+        fatura_id: atual.id,
+        tipo: "cessacao_divergente",
+        versao_regra: VERSAO_REGRA_CESSACAO,
+        chave_idempotencia: `${VERSAO_REGRA_CESSACAO}:${atual.id}`,
+        evidencia: {
+          fatura_atual_id: atual.id,
+          operador_cents: cessacao.operadorCents,
+          estimativa_cents: cessacao.estimativaCents,
+          diferenca_cents: cessacao.diferencaCents,
+          data_valor: dataOperador,
+          texto_proposto: textoCessacaoDivergente(cessacao.operadorCents, dataOperador!, cessacao.estimativaCents),
+        },
+      },
+      { onConflict: "chave_idempotencia", ignoreDuplicates: true },
+    )
+    .select("id");
+  if (inseridos?.length) await avisarAdmin("Situação por rever", `Valor de cessação divergente numa fatura nova (serviço ${contratoId}).`);
+}
 
-  const historico: FaturaHistorico[] = (faturas ?? []).map((f) => ({
+// ---------------------------------------------------------------------------
+// Comparação de todas as faturas do serviço (sem IA)
+// ---------------------------------------------------------------------------
+// Cada fatura é comparada com as anteriores e com a versão do contrato válida
+// no seu período. Os eventos anteriores ficam substituídos (nunca apagados);
+// os "atencao" geram achados para revisão humana — o cliente só os vê
+// depois de comunicados. Corre depois de cada fatura nova, de cada
+// associação e quando as condições do contrato mudam (comparação retroativa).
+
+export async function recalcularAcompanhamento(admin: Admin, servicoId: string): Promise<{ faturas: number; novosAchados: number }> {
+  const [{ data: faturas }, { data: versoes }, { count: antes }] = await Promise.all([
+    admin
+      .from("faturas_monitor")
+      .select("id, data_emissao, periodo_inicio, periodo_fim, total_cents, mensalidade_lida_cents, recorrente_cents, linhas, data_fim_fidelizacao")
+      .eq("contrato_id", servicoId),
+    admin
+      .from("contratos_versoes")
+      .select("id, valido_desde, valido_ate, mensalidade_cents, desconto_cents, descricao_promocao, promocao_inicio, promocao_fim, data_fim_fidelizacao")
+      .eq("contrato_id", servicoId),
+    admin.from("achados_monitor").select("id", { count: "exact", head: true }).eq("contrato_id", servicoId).eq("estado", "detetado"),
+  ]);
+
+  const lista: FaturaComparavel[] = (faturas ?? []).map((f) => ({
     id: f.id,
     dataEmissao: f.data_emissao,
     periodoInicio: f.periodo_inicio,
     periodoFim: f.periodo_fim,
+    totalCents: f.total_cents,
+    mensalidadeLidaCents: f.mensalidade_lida_cents,
     recorrenteCents: f.recorrente_cents,
     linhas: Array.isArray(f.linhas) ? f.linhas : [],
+    dataFimFidelizacao: f.data_fim_fidelizacao,
+  }));
+  const vs: VersaoContrato[] = (versoes ?? []).map((v) => ({
+    id: v.id,
+    validoDesde: v.valido_desde,
+    validoAte: v.valido_ate,
+    mensalidadeCents: v.mensalidade_cents,
+    descontoCents: v.desconto_cents,
+    descricaoPromocao: v.descricao_promocao,
+    promocaoInicio: v.promocao_inicio,
+    promocaoFim: v.promocao_fim,
+    dataFimFidelizacao: v.data_fim_fidelizacao,
   }));
 
-  type NovoAchado = {
-    contrato_id: string;
-    utilizador_id: string;
-    fatura_id: string;
-    tipo: string;
-    versao_regra: string;
-    chave_idempotencia: string;
-    evidencia: Record<string, unknown>;
-  };
-  const novos: NovoAchado[] = avaliarFatura(atual.id, historico, { dataFimPromocao: contrato.data_fim_promocao }).map((a) => ({
-    contrato_id: contratoId,
-    utilizador_id: contrato.utilizador_id,
-    fatura_id: atual.id,
-    tipo: a.tipo,
-    versao_regra: a.versaoRegra,
-    chave_idempotencia: a.chave,
-    evidencia: { ...a.evidencia, texto_proposto: a.textoProposto },
-  }));
-
-  const dataOperador = contrato.cessacao_operador_data ?? atual.data_emissao;
-  const origens = Object.fromEntries((camposAtuais ?? []).map((c) => [c.campo as string, c.origem as string]));
-  const cessacao = compararCessacao(contrato, atual.cessacao_operador_cents, dataOperador, origens);
-  if (cessacao.resultado === "divergente") {
-    novos.push({
-      contrato_id: contratoId,
-      utilizador_id: contrato.utilizador_id,
-      fatura_id: atual.id,
-      tipo: "cessacao_divergente",
-      versao_regra: VERSAO_REGRA_CESSACAO,
-      chave_idempotencia: `${VERSAO_REGRA_CESSACAO}:${atual.id}`,
-      evidencia: {
-        fatura_atual_id: atual.id,
-        operador_cents: cessacao.operadorCents,
-        estimativa_cents: cessacao.estimativaCents,
-        diferenca_cents: cessacao.diferencaCents,
-        data_valor: dataOperador,
-        texto_proposto: textoCessacaoDivergente(cessacao.operadorCents, dataOperador!, cessacao.estimativaCents),
-      },
+  const ordenadas = ordenarFaturas(lista);
+  for (let i = 0; i < ordenadas.length; i++) {
+    const atual = ordenadas[i];
+    const eventos = compararFatura(atual, ordenadas.slice(0, i), versaoValida(vs, atual));
+    const { error } = await admin.rpc("monitor_eventos_substituir", {
+      p_contrato: servicoId,
+      p_fatura: atual.id,
+      p_eventos: eventos.map((e) => ({
+        tipo: e.tipo,
+        base: e.base,
+        severidade: e.severidade,
+        periodo: e.periodo,
+        montante_cents: e.montanteCents,
+        dados: e.dados,
+        confianca: "alta",
+        versao_regra: VERSAO_ACOMPANHAMENTO,
+        chave: e.chave,
+        contrato_versao_id: e.contratoVersaoId,
+        achado:
+          e.severidade === "atencao" && TIPO_ACHADO[e.tipo]
+            ? {
+                tipo: TIPO_ACHADO[e.tipo],
+                versao_regra: VERSAO_ACOMPANHAMENTO,
+                evidencia: { ...e.dados, fatura_atual_id: atual.id, base: e.base, texto_proposto: fraseEvento(e) },
+              }
+            : null,
+      })),
+      p_resultado: resultadoFatura(eventos),
     });
+    if (error) console.error(`[monitor] falha ao gravar eventos da fatura ${atual.id}:`, error.message);
   }
-  if (novos.length === 0) return 0;
 
-  const { data: inseridos, error } = await admin
+  const { count: depois } = await admin
     .from("achados_monitor")
-    .upsert(novos, { onConflict: "chave_idempotencia", ignoreDuplicates: true })
-    .select("id");
-  if (error) {
-    console.error("Falha ao registar achados:", error.message);
-    return 0;
+    .select("id", { count: "exact", head: true })
+    .eq("contrato_id", servicoId)
+    .eq("estado", "detetado");
+  const novos = Math.max(0, (depois ?? 0) - (antes ?? 0));
+  if (novos > 0) await avisarAdmin("Situações por rever", `${novos} situação(ões) detetada(s) nas faturas do serviço ${servicoId}.`);
+  return { faturas: ordenadas.length, novosAchados: novos };
+}
+
+/** Comparação retroativa em segundo plano (nunca lança). */
+export async function recalcularAcompanhamentoEmSegundoPlano(servicoId: string) {
+  try {
+    await recalcularAcompanhamento(createAdminClient(), servicoId);
+  } catch (erro) {
+    console.error(`[monitor] falha na reanálise do serviço ${servicoId}:`, erro);
   }
-  const n = inseridos?.length ?? 0;
-  if (n > 0) await avisarAdmin("Situações por rever", `${n} situação(ões) detetada(s) numa fatura nova (contrato ${contratoId}).`);
-  return n;
 }
 
 export type MotivoPendente =
@@ -330,6 +610,8 @@ export type ResultadoProcessamento = {
   detalhe?: string;
   /** Duração da chamada à Claude API (ms), quando houve. */
   lerMs?: number;
+  /** A mesma fatura já estava registada no serviço (número, ou período e total). */
+  repetido?: boolean;
 };
 
 export async function processarDocumento(documentoId: string): Promise<ResultadoProcessamento> {
@@ -456,61 +738,43 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
       bruto = chamada.bruto;
     }
 
-    // 4. Validação de domínio e gravação
-    if (ehContrato) {
-      const v = validarExtracaoContrato(bruto);
-      if (!v.ok) {
-        await marcar(admin, doc.id, "a_rever");
-        await avisarAdmin("Documento por rever", `Documento ${doc.id}: ${v.motivo}.`);
-        return { estado: "a_rever", contratoId: doc.contrato_id, motivo: "validacao", detalhe: v.motivo };
-      }
-      const fornecedor = v.propostas.find((p) => p.campo === "fornecedor")?.valor as string | undefined;
-      const contratoId = await contratoParaDocumento(admin, doc, fornecedor ?? null, v.setor);
-      await admin.from("documentos_monitor").update({ contrato_id: contratoId }).eq("id", doc.id);
-      await registarPropostas(admin, contratoId, doc.id, extracaoId, "contrato", v.propostas);
-      const estado: EstadoDocumento = v.precisaRevisao ? "a_rever" : "processado";
-      await marcar(admin, doc.id, estado);
-      if (estado === "a_rever") await avisarAdmin("Documento por rever", `Documento ${doc.id}: ${v.avisos.join("; ") || "confiança baixa"}.`);
-      return { estado, contratoId, lerMs };
-    }
-
-    const v = validarExtracaoFatura(bruto, hojeLisboa());
-    if (!v.ok) {
+    // 4. Validação de domínio, associação ao serviço e registo
+    const validada = validarLeitura(ehContrato ? "contrato" : "fatura", bruto);
+    if (!validada.ok) {
       await marcar(admin, doc.id, "a_rever");
-      await avisarAdmin("Documento por rever", `Documento ${doc.id}: ${v.motivo}.`);
-      return { estado: "a_rever", contratoId: doc.contrato_id, motivo: "validacao", detalhe: v.motivo };
+      await avisarAdmin("Documento por rever", `Documento ${doc.id}: ${validada.motivo}.`);
+      return { estado: "a_rever", contratoId: doc.contrato_id, motivo: "validacao", detalhe: validada.motivo };
     }
-    const fornecedor = v.propostas.find((p) => p.campo === "fornecedor")?.valor as string | undefined;
-    const contratoId = await contratoParaDocumento(admin, doc, fornecedor ?? null, v.setor);
-    await admin.from("documentos_monitor").update({ contrato_id: contratoId, tipo: "fatura" }).eq("id", doc.id);
+    const leitura = validada.leitura;
+    const estado: EstadoDocumento = leitura.v.precisaRevisao ? "a_rever" : "processado";
+    const destino = await decidirDestino(admin, doc, leitura);
 
-    const f = v.fatura;
-    await admin.from("faturas_monitor").upsert(
-      {
-        contrato_id: contratoId,
-        utilizador_id: doc.utilizador_id,
-        documento_id: doc.id,
-        extracao_id: extracaoId,
-        data_emissao: f.dataEmissao,
-        periodo_inicio: f.periodoInicio,
-        periodo_fim: f.periodoFim,
-        total_cents: f.totalCents,
-        recorrente_cents: f.recorrenteCents,
-        pontual_cents: f.pontualCents,
-        descontos_cents: f.descontosCents,
-        linhas: f.linhas,
-        cessacao_operador_cents: f.cessacaoOperadorCents,
-        data_fim_fidelizacao: f.dataFimFidelizacao,
-      },
-      { onConflict: "documento_id", ignoreDuplicates: true },
-    );
-    await registarPropostas(admin, contratoId, doc.id, extracaoId, "fatura", v.propostas);
-    await avaliarAchados(admin, contratoId, doc.id);
+    if (destino.acao === "perguntar") {
+      // Identificação não confirmada: nada é registado no serviço até o
+      // cliente decidir (associar, serviço novo, outro serviço, cancelar).
+      await guardarPendente(admin, doc.id, destino.servicoId, destino.resultado, leitura.tipo);
+      await marcar(admin, doc.id, estado);
+      return { estado, contratoId: null, lerMs };
+    }
 
-    const estado: EstadoDocumento = v.precisaRevisao ? "a_rever" : "processado";
+    const servicoId = destino.acao === "associar" ? destino.servicoId : await criarServico(admin, doc.utilizador_id, leitura, doc.id);
+    const { repetido } = await registarNoServico(admin, {
+      documentoId: doc.id,
+      utilizadorId: doc.utilizador_id,
+      servicoId,
+      extracaoId,
+      leitura,
+      estado: destino.acao === "associar" ? "confirmada" : "novo_servico",
+      resultado: destino.resultado,
+      decisao: "automatica",
+      papel: "sistema",
+      por: null,
+    });
     await marcar(admin, doc.id, estado);
-    if (estado === "a_rever") await avisarAdmin("Documento por rever", `Documento ${doc.id}: ${v.avisos.join("; ") || "confiança baixa num campo importante"}.`);
-    return { estado, contratoId, lerMs };
+    if (estado === "a_rever" && !repetido) {
+      await avisarAdmin("Documento por rever", `Documento ${doc.id}: ${leitura.v.avisos.join("; ") || "confiança baixa num campo importante"}.`);
+    }
+    return { estado, contratoId: servicoId, lerMs, repetido };
   } catch (erro) {
     const detalhe = (erro instanceof Error ? erro.message : String(erro)).slice(0, 300);
     console.error(`Falha ao processar o documento ${documentoId}:`, erro);
@@ -599,6 +863,12 @@ export async function processarDocumentoEmSegundoPlano(documentoId: string): Pro
     tempos.registar = Date.now() - t - (resultado.lerMs ?? 0);
     tempos.total = Date.now() - inicio;
 
+    if (resultado.repetido) {
+      // Mesma fatura já registada (outro ficheiro): não cria outro mês.
+      await admin.storage.from(reservado.bucket ?? BUCKET_MONITOR).remove([reservado.storage_path]);
+      await marcarEtapa(admin, documentoId, "repetido", { tempos_ms: tempos });
+      return;
+    }
     const transitoria = resultado.estado === "pendente" && falhaTransitoria(resultado.motivo);
     await marcarEtapa(admin, documentoId, transitoria ? "falhou" : "concluido", { tempos_ms: tempos });
     console.log(
@@ -637,4 +907,178 @@ export async function reiniciarProcessamento(documentoId: string, limiteParadoIs
     .select("id")
     .maybeSingle();
   return !!parado;
+}
+
+// ---------------------------------------------------------------------------
+// Decisão explícita do cliente sobre um documento por associar
+// ---------------------------------------------------------------------------
+// Usa a leitura já gravada (sem nova chamada à IA). Reserva o documento antes
+// de registar: dois cliques não registam duas vezes. Fica sempre em
+// associacoes_documento quem decidiu e o que a verificação tinha encontrado.
+
+export type DecisaoDocumento = "associar_mesmo_assim" | "outro_servico" | "novo_servico";
+
+export async function concluirAssociacao(a: {
+  documentoId: string;
+  utilizadorId: string;
+  decisao: DecisaoDocumento;
+  servicoId?: string | null;
+  papel: "cliente" | "admin";
+  por: string;
+}): Promise<{ ok: true; servicoId: string; repetido: boolean } | { ok: false; erro: "nao_encontrado" | "servico_invalido" | "leitura_invalida" }> {
+  const admin = createAdminClient();
+  const { data: doc } = await admin
+    .from("documentos_monitor")
+    .select("id, utilizador_id, tipo, bucket, storage_path, associacao_estado, associacao_sugerida, associacao_motivos, associacao_conflitos, associacao_confianca")
+    .eq("id", a.documentoId)
+    .eq("utilizador_id", a.utilizadorId)
+    .is("contrato_id", null)
+    .in("associacao_estado", ["possivel", "conflito"])
+    .maybeSingle();
+  if (!doc) return { ok: false, erro: "nao_encontrado" };
+
+  let alvo: string | null = null;
+  if (a.decisao === "associar_mesmo_assim") alvo = doc.associacao_sugerida;
+  if (a.decisao === "outro_servico") alvo = a.servicoId ?? null;
+  if (a.decisao !== "novo_servico") {
+    if (!alvo) return { ok: false, erro: "servico_invalido" };
+    const { data: servico } = await admin
+      .from("contratos_monitorizados")
+      .select("id")
+      .eq("id", alvo)
+      .eq("utilizador_id", a.utilizadorId)
+      .is("desativado_em", null)
+      .maybeSingle();
+    if (!servico) return { ok: false, erro: "servico_invalido" };
+  }
+
+  const { data: extracao } = await admin
+    .from("extracoes_documento")
+    .select("id, resultado")
+    .eq("documento_id", doc.id)
+    .eq("estado", "sucesso")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const validada = extracao ? validarLeitura(doc.tipo === "contrato" ? "contrato" : "fatura", extracao.resultado) : null;
+  if (!extracao || !validada?.ok) return { ok: false, erro: "leitura_invalida" };
+
+  // Reserva (só um pedido avança).
+  const { data: reservado } = await admin
+    .from("documentos_monitor")
+    .update({ associacao_estado: "manual" })
+    .eq("id", doc.id)
+    .is("contrato_id", null)
+    .in("associacao_estado", ["possivel", "conflito"])
+    .select("id")
+    .maybeSingle();
+  if (!reservado) return { ok: false, erro: "nao_encontrado" };
+
+  try {
+    const servicoId = alvo ?? (await criarServico(admin, a.utilizadorId, validada.leitura, doc.id));
+    const { repetido } = await registarNoServico(admin, {
+      documentoId: doc.id,
+      utilizadorId: a.utilizadorId,
+      servicoId,
+      extracaoId: extracao.id,
+      leitura: validada.leitura,
+      estado: a.decisao === "novo_servico" ? "novo_servico" : "manual",
+      resultado: {
+        estado: doc.associacao_estado === "conflito" ? "conflito" : "possivel",
+        confianca: Number(doc.associacao_confianca ?? 0),
+        motivos: Array.isArray(doc.associacao_motivos) ? doc.associacao_motivos : [],
+        conflitos: Array.isArray(doc.associacao_conflitos) ? doc.associacao_conflitos : [],
+      },
+      decisao: a.decisao,
+      papel: a.papel,
+      por: a.por,
+    });
+    if (repetido) {
+      await admin.storage.from(doc.bucket ?? BUCKET_MONITOR).remove([doc.storage_path]);
+      await admin.from("documentos_monitor").update({ etapa: "repetido" }).eq("id", doc.id);
+    }
+    return { ok: true, servicoId, repetido };
+  } catch (erro) {
+    // Devolve o documento ao estado anterior para o cliente poder decidir de novo.
+    console.error(`[monitor] falha ao associar o documento ${doc.id}:`, erro);
+    await admin
+      .from("documentos_monitor")
+      .update({ associacao_estado: doc.associacao_estado, contrato_id: null })
+      .eq("id", doc.id);
+    throw erro;
+  }
+}
+
+/** "Cancelar": o documento por associar é apagado (ficheiro primeiro). */
+export async function cancelarDocumentoPorAssociar(documentoId: string, utilizadorId: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data: doc } = await admin
+    .from("documentos_monitor")
+    .select("id, bucket, storage_path")
+    .eq("id", documentoId)
+    .eq("utilizador_id", utilizadorId)
+    .is("contrato_id", null)
+    .in("associacao_estado", ["possivel", "conflito"])
+    .maybeSingle();
+  if (!doc) return false;
+  const { error } = await admin.storage.from(doc.bucket ?? BUCKET_MONITOR).remove([doc.storage_path]);
+  if (error) return false;
+  await admin.from("documentos_monitor").delete().eq("id", doc.id).is("contrato_id", null);
+  return true;
+}
+
+/** Resposta do cliente ao resumo de uma fatura: confirmar ou indicar que os valores não estão certos. */
+export async function registarRespostaFatura(faturaId: string, utilizadorId: string, acao: "confirmar" | "contestar"): Promise<boolean> {
+  const admin = createAdminClient();
+  const coluna = acao === "confirmar" ? "confirmada_cliente_em" : "valores_contestados_em";
+  const { data } = await admin
+    .from("faturas_monitor")
+    .update({ [coluna]: new Date().toISOString() })
+    .eq("id", faturaId)
+    .eq("utilizador_id", utilizadorId)
+    .is("confirmada_cliente_em", null)
+    .is("valores_contestados_em", null)
+    .select("id, contrato_id")
+    .maybeSingle();
+  if (data && acao === "contestar") {
+    await avisarAdmin("Valores de fatura por rever", `O cliente indicou que os valores lidos da fatura ${data.id} (serviço ${data.contrato_id}) não estão corretos.`);
+  }
+  return !!data;
+}
+
+/**
+ * O que lemos num documento por associar (para o cliente decidir). Só depois
+ * de a página ter validado a posse; usa a leitura gravada (sem IA).
+ */
+export async function resumoDocumentoPorAssociar(documentoId: string, utilizadorId: string) {
+  const admin = createAdminClient();
+  const { data: doc } = await admin
+    .from("documentos_monitor")
+    .select("id, tipo")
+    .eq("id", documentoId)
+    .eq("utilizador_id", utilizadorId)
+    .maybeSingle();
+  if (!doc) return null;
+  const { data: extracao } = await admin
+    .from("extracoes_documento")
+    .select("resultado")
+    .eq("documento_id", doc.id)
+    .eq("estado", "sucesso")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const validada = extracao ? validarLeitura(doc.tipo === "contrato" ? "contrato" : "fatura", extracao.resultado) : null;
+  if (!validada?.ok) return null;
+  const l = validada.leitura;
+  return {
+    tipo: l.tipo,
+    fornecedor: nomeComercial(l.fornecedor, await listaFornecedores(admin)),
+    dataEmissao: l.tipo === "fatura" ? l.v.fatura.dataEmissao : null,
+    periodoInicio: l.tipo === "fatura" ? l.v.fatura.periodoInicio : null,
+    periodoFim: l.tipo === "fatura" ? l.v.fatura.periodoFim : null,
+    totalCents: l.tipo === "fatura" ? l.v.fatura.totalCents : null,
+    identificacao: normalizarIdentificadores(l.identificacao)
+      .filter((i) => i.apresentacao)
+      .map((i) => ({ tipo: i.tipo, apresentacao: i.apresentacao! })),
+  };
 }
