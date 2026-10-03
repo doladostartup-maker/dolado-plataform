@@ -12,21 +12,27 @@ import {
   campoSchema,
   dataValida,
   ehObjeto,
+  lerIdentificacao,
   normalizarCampo,
   pagina,
   paraCents,
+  schemaIdentificacao,
   textoCurto,
   type CampoProposto,
   type Confianca,
 } from "./extracaoFatura.ts";
+import type { IdentificadorLido } from "./identificacao.ts";
 
 // v2 (02/10/2026): sem campos "nullable" (limite de 16 da API) — ver extracaoFatura.ts.
 // v3 (03/10/2026): a data de assinatura deixa de poder ser o início; datas de
 // assinatura e de instalação/ativação, duração da fidelização em meses e se o
 // contrato começa na ativação lidas à parte; o fim da fidelização só quando
 // escrito no documento (o código calcula-o a partir do início e da duração).
-export const SCHEMA_CONTRATO_VERSAO = "contrato_v3";
-export const PROMPT_CONTRATO_VERSAO = "contrato_prompt_v3";
+// v4 (04/10/2026): identificação do titular e do serviço (para confirmar que o
+// contrato pertence ao serviço acompanhado), desconto mensal e início da
+// promoção e serviços incluídos (comparação fatura × contrato).
+export const SCHEMA_CONTRATO_VERSAO = "contrato_v4";
+export const PROMPT_CONTRATO_VERSAO = "contrato_prompt_v4";
 
 export const PROMPT_CONTRATO = `És um extrator de dados da DoLado, uma plataforma portuguesa de apoio a consumidores.
 
@@ -44,6 +50,9 @@ Regras:
 - "data_fim_fidelizacao" e "data_fim_promocao": só se a data de fim estiver escrita no documento. Não calcules datas a partir de outras.
 - "vantagem" é o valor total da vantagem atribuída em troca da fidelização (descontos, instalação ou equipamento oferecidos), quando o documento o indicar.
 - "descricao_promocao" descreve em poucas palavras a promoção (ex.: "Desconto de 10 € na mensalidade").
+- "mensalidade" é o preço mensal do pacote ou tarifário indicado no contrato. "desconto_promocao" é o desconto mensal da promoção, em euros (ex.: "10.00"), e "data_inicio_promocao" a data em que começa, só se estiverem escritos.
+- "servicos_incluidos" lista em poucas palavras os serviços incluídos (ex.: "Internet 1 Gbps, TV, telefone fixo, 2 cartões móveis").
+- Em "identificacao" copia exatamente o que está escrito (texto vazio se não existir): nome do titular, NIF do titular, número de cliente, número/referência da conta, número do contrato e número do serviço (telefone, CPE ou CUI). Não confundas o NIF do fornecedor com o NIF do titular.
 - Para cada campo indica a página (a primeira é 1) e um excerto curto (até 150 caracteres) do texto onde encontraste o valor.`;
 
 export const SCHEMA_CONTRATO = {
@@ -63,6 +72,10 @@ export const SCHEMA_CONTRATO = {
     "descricao_promocao",
     "mensalidade",
     "vantagem",
+    "desconto_promocao",
+    "data_inicio_promocao",
+    "servicos_incluidos",
+    "identificacao",
   ],
   properties: {
     tipo_documento: { type: "string", enum: ["contrato", "fatura", "outro"] },
@@ -78,6 +91,10 @@ export const SCHEMA_CONTRATO = {
     descricao_promocao: campoSchema(),
     mensalidade: campoSchema(),
     vantagem: campoSchema(),
+    desconto_promocao: campoSchema(),
+    data_inicio_promocao: campoSchema(),
+    servicos_incluidos: campoSchema(),
+    identificacao: schemaIdentificacao(["titular", "nif_titular", "numero_cliente", "referencia_conta", "numero_contrato", "numero_servico"]),
   },
 } as const;
 
@@ -85,7 +102,16 @@ export type SetorContrato = "telecomunicacoes" | "eletricidade" | "gas" | "agua"
 
 export type ResultadoValidacaoContrato =
   | { ok: false; motivo: "formato_invalido" | "nao_e_contrato" }
-  | { ok: true; setor: SetorContrato; propostas: CampoProposto[]; precisaRevisao: boolean; avisos: string[] };
+  | {
+      ok: true;
+      setor: SetorContrato;
+      /** Nome do fornecedor lido (também proposto como dado do contrato). */
+      fornecedor: string | null;
+      identificacao: IdentificadorLido[];
+      propostas: CampoProposto[];
+      precisaRevisao: boolean;
+      avisos: string[];
+    };
 
 type Campo = { valor: unknown; confianca: unknown; pagina: unknown; evidencia: unknown };
 
@@ -102,6 +128,8 @@ const CAMPOS = [
   "mensalidade",
   "vantagem",
 ] as const;
+// Campos do v4: opcionais na validação (extrações v3 continuam válidas).
+const CAMPOS_V4 = ["desconto_promocao", "data_inicio_promocao", "servicos_incluidos"] as const;
 const SUFICIENTE: Confianca[] = ["high", "medium"];
 const SETORES = ["telecomunicacoes", "eletricidade", "gas", "agua"];
 
@@ -111,7 +139,9 @@ function ehCampo(v: unknown): v is Campo {
 
 export function validarExtracaoContrato(entrada: unknown): ResultadoValidacaoContrato {
   const bruto = ehObjeto(entrada)
-    ? Object.fromEntries(Object.entries(entrada).map(([k, v]) => [k, (CAMPOS as readonly string[]).includes(k) ? normalizarCampo(v) : v]))
+    ? Object.fromEntries(
+        Object.entries(entrada).map(([k, v]) => [k, ([...CAMPOS, ...CAMPOS_V4] as readonly string[]).includes(k) ? normalizarCampo(v) : v]),
+      )
     : entrada;
   if (!ehObjeto(bruto) || !CAMPOS.every((c) => ehCampo(bruto[c]))) return { ok: false, motivo: "formato_invalido" };
   if (bruto.tipo_documento !== "contrato") return { ok: false, motivo: "nao_e_contrato" };
@@ -164,6 +194,10 @@ export function validarExtracaoContrato(entrada: unknown): ResultadoValidacaoCon
   propor("descricao_promocao", b.descricao_promocao, textoCurto(b.descricao_promocao.valor, 200), "descrição da promoção");
   propor("mensalidade_cents", b.mensalidade, cents(b.mensalidade), "mensalidade");
   propor("vantagem_cents", b.vantagem, cents(b.vantagem), "valor da vantagem");
+  const v4 = bruto as Record<(typeof CAMPOS_V4)[number], unknown>;
+  if (ehCampo(v4.desconto_promocao)) propor("desconto_promocao_cents", v4.desconto_promocao, cents(v4.desconto_promocao), "desconto da promoção");
+  if (ehCampo(v4.data_inicio_promocao)) propor("data_inicio_promocao", v4.data_inicio_promocao, data(v4.data_inicio_promocao), "início da promoção");
+  if (ehCampo(v4.servicos_incluidos)) propor("servicos_incluidos", v4.servicos_incluidos, textoCurto(v4.servicos_incluidos.valor, 300), "serviços incluídos");
 
   // Salvaguarda: a data de assinatura nunca passa a início. Se o modelo a
   // repetir em "data_inicio" ou "data_ativacao" quando o documento diz que o
@@ -193,6 +227,15 @@ export function validarExtracaoContrato(entrada: unknown): ResultadoValidacaoCon
   return {
     ok: true,
     setor: SETORES.includes(bruto.setor as string) ? (bruto.setor as SetorContrato) : "nao_indicado",
+    fornecedor: textoCurto(b.fornecedor.valor, 120),
+    identificacao: lerIdentificacao(bruto.identificacao, {
+      titular: "titular",
+      nif_titular: "nif_titular",
+      numero_cliente: "numero_cliente",
+      referencia_conta: "referencia_conta",
+      numero_contrato: "referencia_contrato",
+      numero_servico: "numero_servico",
+    }),
     propostas,
     precisaRevisao,
     avisos,

@@ -3,38 +3,66 @@ import { notFound } from "next/navigation";
 import { requireProtecao } from "@/lib/auth";
 import { urlTratarCaso } from "@/lib/site";
 import {
+  CAMPOS_EDITAVEIS,
   ROTULO_CAMPO,
   ROTULO_ORIGEM,
   ROTULO_SETOR,
   formatarDataPt,
+  formatarEurosCents,
   formatarValorCampo,
   proximaData,
   setorTratarCaso,
   textoProximaData,
+  valorParaEdicao,
   type SetorContratoMonitor,
 } from "@/lib/monitor/contratos";
-import type { CampoContrato } from "@/lib/monitor/extracaoFatura";
-import { CAMPOS_EDITAVEIS, valorParaEdicao } from "@/lib/monitor/contratos";
+import {
+  componentesFatura,
+  dataReferencia,
+  fraseEvento,
+  fraseVariacaoTotal,
+  mesAno,
+  mesAnoTexto,
+  ordenarFaturas,
+  padraoObservado,
+  type FaturaComparavel,
+  type Severidade,
+  type TipoEvento,
+} from "@/lib/monitor/acompanhamento";
+import type { CampoContrato, LinhaFatura } from "@/lib/monitor/extracaoFatura";
 import { emCurso } from "@/lib/monitor/processamento";
 import { apresentarFornecedor } from "@/lib/monitor/servidor";
-import { corrigirContrato, deixarDeAcompanhar } from "../actions";
+import { corrigirContrato, deixarDeAcompanhar, responderFatura } from "../actions";
 import { CamposContrato } from "../_components/CamposContrato";
 import { ConfirmarDados, type CampoPorConfirmar } from "../_components/ConfirmarDados";
 import { ProgressoDocumento } from "../_components/ProgressoDocumento";
 import { CustoSaida } from "../_components/CustoSaida";
 import { UploadDocumento } from "../_components/UploadDocumento";
+import { HistoricoServico, type PeriodoHistorico } from "../_components/HistoricoServico";
+import { BotaoSubmeter } from "../_components/BotaoSubmeter";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CARTAO, TITULO_SECCAO } from "../_components/estilos";
+
+// Serviço acompanhado. Funciona só com faturas (histórico e padrão
+// observado) e fica mais completo com o contrato (contratado × faturado,
+// promoções, fidelização, custo de saída). Ordem: resumo → mês a mês →
+// situações → condições do contrato → padrões observados → documentos.
+//
+// Sem contrato nunca se fala de "contratado": os valores das faturas são
+// observados. Uma fatura nunca altera as condições do contrato.
 
 function hojeLisboa() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(new Date());
 }
 
-// Ordem de apresentação dos dados do contrato.
-const ORDEM: CampoContrato[] = [
-  "fornecedor",
+// Condições do contrato, pela ordem de apresentação.
+const CONDICOES: CampoContrato[] = [
   "servico",
-  "referencia_contrato",
   "mensalidade_cents",
+  "servicos_incluidos",
+  "descricao_promocao",
+  "desconto_promocao_cents",
+  "data_inicio_promocao",
+  "data_fim_promocao",
   "data_assinatura",
   "data_ativacao",
   "inicio_na_ativacao",
@@ -45,21 +73,24 @@ const ORDEM: CampoContrato[] = [
   "tipo_fidelizacao",
   "nova_instalacao",
   "equipamento_subsidiado",
-  "data_fim_promocao",
-  "descricao_promocao",
+  "referencia_contrato",
   "cpe",
   "cui",
 ];
+// Propostas que mudam o preço/promoção/serviços (podem ser uma alteração do contrato).
+const CAMPOS_COMERCIAIS = new Set<CampoContrato>([
+  "mensalidade_cents",
+  "desconto_promocao_cents",
+  "descricao_promocao",
+  "data_inicio_promocao",
+  "data_fim_promocao",
+  "servicos_incluidos",
+]);
+// Informação contratual que a própria fatura pode indicar (nível 2).
+const LIDOS_DA_FATURA: CampoContrato[] = ["data_fim_fidelizacao", "cessacao_operador_cents", "cessacao_operador_data"];
 
-const ESTADO_DOCUMENTO: Record<string, string> = {
-  pendente: "A ser verificado pela DoLado",
-  processado: "Lido",
-  a_rever: "A ser verificado pela DoLado",
-  ilegivel: "Não foi possível ler — carregue outra versão",
-};
-
-const MENSAGEM_DOCUMENTO: Record<string, string> = {
-  processado: "Lemos o documento. Confirme os dados abaixo.",
+const MENSAGEM: Record<string, string> = {
+  processado: "Lemos o documento.",
   pendente: "Recebemos o documento. Ainda não o conseguimos ler automaticamente: a DoLado vai verificá-lo.",
   a_rever: "Lemos o documento, mas alguns dados precisam de ser verificados pela DoLado.",
 };
@@ -72,9 +103,22 @@ type Campo = {
   estado: string;
   pagina: number | null;
   evidencia: string | null;
+  documento_id: string | null;
   confirmado_cliente_em: string | null;
   created_at: string;
 };
+
+type Evento = {
+  fatura_id: string | null;
+  tipo: TipoEvento;
+  base: "contrato" | "historico";
+  severidade: Severidade;
+  montante_cents: number | null;
+  dados: Record<string, unknown>;
+  achado_id: string | null;
+};
+
+const ORDEM_SEVERIDADE: Record<Severidade, number> = { atencao: 0, info: 1, ok: 2 };
 
 function Origem({ c }: { c: Campo }) {
   const partes = [ROTULO_ORIGEM[c.origem] ?? c.origem];
@@ -83,12 +127,21 @@ function Origem({ c }: { c: Campo }) {
   return <span className="text-[12.5px] text-[var(--color-ink-faint)]">{partes.join(" · ")}</span>;
 }
 
-export default async function ContratoPage({
+function Linha({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-0.5 border-b border-[var(--color-hairline)] py-2.5 last:border-b-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+      <dt className="text-sm text-[var(--color-ink-muted)]">{rotulo}</dt>
+      <dd className="flex flex-col text-[15px] text-[var(--color-ink)] sm:items-end sm:text-right">{children}</dd>
+    </div>
+  );
+}
+
+export default async function ServicoPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ erro?: string; guardado?: string; documento?: string; aviso?: string; editar?: string }>;
+  searchParams: Promise<{ erro?: string; guardado?: string; documento?: string; aviso?: string; editar?: string; associado?: string; fatura?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -103,40 +156,149 @@ export default async function ContratoPage({
     .maybeSingle();
   if (!contrato) notFound();
 
-  const [{ data: campos }, { data: documentos }, { data: achados }] = await Promise.all([
+  const [
+    { data: campos },
+    { data: documentos },
+    { data: faturas },
+    { data: eventos },
+    { data: achados },
+    { data: versoes },
+    { data: porAssociar },
+  ] = await Promise.all([
     supabase
       .from("contratos_campos")
-      .select("id, campo, valor, origem, estado, pagina, evidencia, confirmado_cliente_em, created_at")
+      .select("id, campo, valor, origem, estado, pagina, evidencia, documento_id, confirmado_cliente_em, created_at")
       .eq("contrato_id", id)
       .in("estado", ["atual", "proposto", "em_conflito"])
       .order("created_at", { ascending: true }),
     supabase
       .from("documentos_monitor")
-      .select("id, tipo, nome_ficheiro, estado, etapa, etapa_atualizada_em, contrato_id, created_at")
+      .select("id, tipo, nome_ficheiro, estado, etapa, etapa_atualizada_em, contrato_id, associacao_estado, created_at")
       .eq("contrato_id", id)
       .or("etapa.is.null,etapa.neq.repetido")
       .order("created_at", { ascending: false }),
-    supabase.from("achados_monitor").select("id, texto_cliente, comunicado_em").eq("contrato_id", id).order("comunicado_em", { ascending: false }),
+    supabase
+      .from("faturas_monitor")
+      .select(
+        "id, documento_id, data_emissao, periodo_inicio, periodo_fim, total_cents, mensalidade_lida_cents, recorrente_cents, linhas, data_fim_fidelizacao, em_verificacao, confirmada_cliente_em, valores_contestados_em",
+      )
+      .eq("contrato_id", id),
+    supabase
+      .from("eventos_servico")
+      .select("fatura_id, tipo, base, severidade, montante_cents, dados, achado_id")
+      .eq("contrato_id", id)
+      .is("substituido_em", null),
+    supabase.from("achados_monitor").select("id, fatura_id, texto_cliente, comunicado_em").eq("contrato_id", id).order("comunicado_em", { ascending: false }),
+    supabase
+      .from("contratos_versoes")
+      .select("id, valido_desde, valido_ate, mensalidade_cents, desconto_cents, motivo")
+      .eq("contrato_id", id)
+      .order("valido_desde", { ascending: false, nullsFirst: false }),
+    supabase
+      .from("documentos_monitor")
+      .select("id, tipo, associacao_estado")
+      .eq("utilizador_id", user.id)
+      .eq("associacao_sugerida", id)
+      .is("contrato_id", null)
+      .in("associacao_estado", ["possivel", "conflito"]),
   ]);
 
+  const hoje = hojeLisboa();
   const lista = (campos ?? []) as Campo[];
   const atuais = new Map(lista.filter((c) => c.estado === "atual").map((c) => [c.campo, c]));
-  const porConfirmar = lista.filter((c) => c.estado === "proposto" || c.estado === "em_conflito");
-  const hoje = hojeLisboa();
+  // Condições do contrato: nunca valores lidos de faturas.
+  const condicao = (campo: CampoContrato) => {
+    const c = atuais.get(campo);
+    return c && c.origem !== "fatura" ? c : undefined;
+  };
+  const docs = documentos ?? [];
+  const docsContrato = docs.filter((d) => d.tipo === "contrato");
+  const versaoAtual = (versoes ?? []).find((v) => v.valido_ate === null) ?? null;
+  const mensalidadeContratada = versaoAtual?.mensalidade_cents ?? null;
+  const temContrato = mensalidadeContratada != null || CONDICOES.some((c) => c !== "referencia_contrato" && condicao(c));
+  const fornecedor = await apresentarFornecedor(contrato.fornecedor);
   const setor = setorTratarCaso(contrato.setor);
   const hrefCaso = `${urlTratarCaso("/portal/contratos")}${setor ? `&setor=${encodeURIComponent(setor)}` : ""}`;
-  const fornecedor = await apresentarFornecedor(contrato.fornecedor);
-  const emAnalise = (documentos ?? []).filter((d) => emCurso(d.etapa) || d.etapa === "falhou");
-  const nomeFornecedor = (campo: CampoContrato, valor: unknown) =>
-    campo === "fornecedor" && typeof valor === "string" ? valor : formatarValorCampo(campo, valor);
+  const emAnalise = docs.filter((d) => emCurso(d.etapa) || d.etapa === "falhou");
 
-  // A mesma leitura vinda de vários documentos (ex.: duas faturas com a
-  // mesma mensalidade) aparece uma só vez; a decisão aplica-se a todas.
+  // ---- Faturas e histórico ----------------------------------------------
+  type FaturaLinha = NonNullable<typeof faturas>[number];
+  const comparaveis: (FaturaComparavel & { linha: FaturaLinha })[] = (faturas ?? []).map((f) => ({
+    id: f.id,
+    dataEmissao: f.data_emissao,
+    periodoInicio: f.periodo_inicio,
+    periodoFim: f.periodo_fim,
+    totalCents: f.total_cents,
+    mensalidadeLidaCents: f.mensalidade_lida_cents,
+    recorrenteCents: f.recorrente_cents,
+    linhas: (Array.isArray(f.linhas) ? f.linhas : []) as LinhaFatura[],
+    dataFimFidelizacao: f.data_fim_fidelizacao,
+    linha: f,
+  }));
+  const ordenadas = ordenarFaturas(comparaveis);
+  const ultima = ordenadas.at(-1) ?? null;
+  const padrao = padraoObservado(ordenadas);
+  const textoAchado = new Map((achados ?? []).map((a) => [a.id, a.texto_cliente]));
+  const eventosPorFatura = new Map<string, Evento[]>();
+  for (const e of (eventos ?? []) as Evento[]) {
+    if (!e.fatura_id) continue;
+    eventosPorFatura.set(e.fatura_id, [...(eventosPorFatura.get(e.fatura_id) ?? []), e]);
+  }
+  const itensDe = (faturaId: string) =>
+    (eventosPorFatura.get(faturaId) ?? [])
+      .sort((a, b) => ORDEM_SEVERIDADE[a.severidade] - ORDEM_SEVERIDADE[b.severidade])
+      .map((e) => ({
+        severidade: e.severidade,
+        texto: (e.achado_id && textoAchado.get(e.achado_id)) || fraseEvento({ tipo: e.tipo, base: e.base, montanteCents: e.montante_cents, dados: e.dados }),
+      }));
+
+  const periodos: PeriodoHistorico[] = ordenadas
+    .map((f, i) => {
+      const itens = itensDe(f.id);
+      return {
+        id: f.id,
+        titulo: mesAno(dataReferencia(f)),
+        totalCents: f.totalCents,
+        itens: itens.length || f.linha.em_verificacao ? itens : [{ severidade: "ok" as const, texto: "Não encontrámos diferenças relevantes neste mês." }],
+        explicacao: fraseVariacaoTotal(f, ordenadas[i - 1] ?? null),
+        emVerificacao: f.linha.em_verificacao,
+        data: dataReferencia(f) ?? "",
+      };
+    })
+    .concat(
+      docsContrato.map((d) => ({
+        id: d.id,
+        titulo: `Contrato adicionado a ${formatarDataPt(d.created_at)}`,
+        totalCents: null,
+        itens: [],
+        explicacao: ordenadas.length ? "As faturas são comparadas com as condições do contrato depois de as confirmar." : null,
+        emVerificacao: false,
+        nota: true,
+        data: d.created_at.slice(0, 10),
+      })),
+    )
+    .sort((a, b) => (a.data < b.data ? 1 : -1));
+  const ultimoResultado: { severidade: Severidade; texto: string }[] = ultima
+    ? [
+        ...(ultima.linha.em_verificacao ? [{ severidade: "info" as const, texto: "Em verificação pela DoLado" }] : []),
+        ...itensDe(ultima.id),
+      ].slice(0, 2)
+    : [];
+  const cUltima = ultima ? componentesFatura(ultima) : null;
+
+  // Resumo da última fatura por confirmar (só o essencial).
+  const docUltima = ultima ? docs.find((d) => d.id === ultima.linha.documento_id) : undefined;
+  const porConfirmarFatura = ultima && !ultima.linha.confirmada_cliente_em && !ultima.linha.valores_contestados_em ? ultima : null;
+
+  // ---- Dados lidos por confirmar (contrato; fidelização lida da fatura) ---
+  const porConfirmar = lista.filter((c) => c.estado === "proposto" || c.estado === "em_conflito");
   const grupos = new Map<string, Campo[]>();
   for (const c of porConfirmar) {
     const chave = `${c.campo}:${JSON.stringify(c.valor)}`;
     grupos.set(chave, [...(grupos.get(chave) ?? []), c]);
   }
+  const nomeFornecedor = (campo: CampoContrato, valor: unknown) =>
+    campo === "fornecedor" && typeof valor === "string" ? valor : formatarValorCampo(campo, valor);
   const camposPorConfirmar: CampoPorConfirmar[] = [...grupos.values()].map((iguais) => {
     const c = iguais[0];
     const tipo = CAMPOS_EDITAVEIS[c.campo] ?? null;
@@ -154,52 +316,180 @@ export default async function ContratoPage({
       valorEdicao: tipo ? valorParaEdicao(tipo, c.valor) : "",
     };
   });
+  const camposCondicoes = [...grupos.values()].filter((iguais) => CAMPOS_COMERCIAIS.has(iguais[0].campo)).map((iguais) => iguais[0].id);
+  const propostasDoContrato = porConfirmar.some((c) => c.origem === "contrato");
+
+  const fimFidelizacao = atuais.get("data_fim_fidelizacao");
+  const vistoEmFaturas = LIDOS_DA_FATURA.map((c) => atuais.get(c)).filter((c): c is Campo => !!c && c.origem === "fatura");
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
+      {/* ===== Cabeçalho ===== */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="break-words text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">{fornecedor ?? "Fornecedor por confirmar"}</h1>
           <p className="text-sm text-[var(--color-ink-faint)]">{ROTULO_SETOR[contrato.setor as SetorContratoMonitor] ?? contrato.setor}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:flex-col sm:items-end">
-          <Link href="/portal/contratos#acrescentar" className={`${BOTAO_SECUNDARIO} min-h-11 sm:min-h-0`}>
-            Acrescentar outro contrato
-          </Link>
-          <Link href="/portal/contratos" className="inline-flex min-h-11 items-center text-sm text-[var(--color-ink-muted)] underline sm:min-h-0">
-            Voltar
-          </Link>
-        </div>
+        <Link href="/portal/contratos" className="inline-flex min-h-11 items-center text-sm text-[var(--color-ink-muted)] underline sm:min-h-0">
+          Voltar aos serviços
+        </Link>
       </div>
 
-      {query.documento && MENSAGEM_DOCUMENTO[query.documento] && (
-        <p className="text-sm text-[var(--color-ink-muted)]">{MENSAGEM_DOCUMENTO[query.documento]}</p>
+      {query.documento && MENSAGEM[query.documento] && <p className="text-sm text-[var(--color-ink-muted)]">{MENSAGEM[query.documento]}</p>}
+      {query.aviso === "repetido" && <p className="text-sm text-[var(--color-ink-muted)]">Esta fatura já estava registada neste serviço: não criámos outro mês.</p>}
+      {query.associado && (
+        <p className="text-sm text-[var(--color-status-success)]">
+          {query.associado === "novo_servico" ? "✓ Criámos um serviço novo para este documento." : "✓ Documento associado a este serviço."}
+        </p>
       )}
-      {query.aviso === "repetido" && <p className="text-sm text-[var(--color-ink-muted)]">Este documento já tinha sido carregado.</p>}
+      {query.fatura === "confirmada" && <p className="text-sm text-[var(--color-status-success)]">✓ Fatura confirmada.</p>}
+      {query.fatura === "contestada" && (
+        <p className="text-sm text-[var(--color-ink-muted)]">Obrigado. A DoLado vai verificar os valores desta fatura.</p>
+      )}
       {query.guardado && <p className="text-sm text-[var(--color-status-success)]">✓ Dados guardados.</p>}
       {query.erro && <p className="text-sm text-[var(--color-status-danger)]">{query.erro}</p>}
 
-      <p className="text-[15px] font-medium text-[var(--color-ink)]">{textoProximaData(proximaData(contrato, hoje))}</p>
+      {/* ===== Identidade por resolver (primeiro, antes de tudo o resto) ===== */}
+      {(porAssociar ?? []).map((d) => (
+        <div key={d.id} role="alert" className={`${CARTAO} flex flex-col gap-2 border-[var(--color-status-urgent)]`}>
+          <p className="text-sm font-semibold text-[var(--color-ink)]">
+            {d.associacao_estado === "conflito"
+              ? `${d.tipo === "contrato" ? "Um contrato" : "Uma fatura"} que carregou parece pertencer a outro serviço ou cliente.`
+              : `Não conseguimos confirmar que ${d.tipo === "contrato" ? "o contrato" : "a fatura"} que carregou pertence a este serviço.`}
+          </p>
+          <p className="text-sm text-[var(--color-ink-muted)]">Não alterámos o acompanhamento deste serviço.</p>
+          <Link href={`/portal/contratos/documentos/${d.id}`} className={`${BOTAO_PRIMARIO} self-start`}>
+            Rever dados
+          </Link>
+        </div>
+      ))}
 
-      {/* ===== Documentos em análise ===== */}
       {emAnalise.map((d) => (
         <ProgressoDocumento key={d.id} documentoId={d.id} contratoAtual={contrato.id} inicial={d} />
       ))}
 
-      {/* ===== Dados por confirmar ===== */}
-      {camposPorConfirmar.length > 0 && (
-        <section className={`${CARTAO} flex flex-col gap-4 border-[var(--color-brand)]`}>
-          <div>
-            <h2 className={TITULO_SECCAO}>Encontrámos estes dados no documento</h2>
+      {/* ===== 1. Resumo ===== */}
+      <section className={`${CARTAO} flex flex-col gap-3`}>
+        <h2 className={TITULO_SECCAO}>Resumo</h2>
+        <dl className="flex flex-col">
+          {temContrato ? (
+            <>
+              <Linha rotulo="Estado">{contrato.estado === "terminado" ? "Terminado" : "Ativo"}</Linha>
+              {mensalidadeContratada != null && <Linha rotulo="Mensalidade contratada">{formatarEurosCents(mensalidadeContratada)}</Linha>}
+            </>
+          ) : (
+            <>
+              <Linha rotulo="Acompanhamento iniciado">{mesAno(padrao.inicio ?? contrato.created_at)}</Linha>
+              {padrao.mensalidadeHabitualCents != null && (
+                <Linha rotulo="Mensalidade habitual observada">{formatarEurosCents(padrao.mensalidadeHabitualCents)}</Linha>
+              )}
+            </>
+          )}
+          {ultima && (
+            <Linha rotulo="Última fatura">
+              {formatarEurosCents(ultima.totalCents)}
+              <span className="text-[12.5px] text-[var(--color-ink-faint)]">{mesAno(dataReferencia(ultima))}</span>
+            </Linha>
+          )}
+          <Linha rotulo="Fidelização">
+            {fimFidelizacao ? (
+              <>
+                até {formatarDataPt(String(fimFidelizacao.valor))}
+                <Origem c={fimFidelizacao} />
+              </>
+            ) : (
+              <span className="text-sm text-[var(--color-ink-muted)]">
+                {ordenadas.length ? "Não conseguimos determinar através das faturas disponíveis." : "Por indicar"}
+              </span>
+            )}
+          </Linha>
+          {ultimoResultado.length > 0 && (
+            <Linha rotulo="Último resultado">
+              {ultimoResultado.map((r, n) => (
+                <span key={n} className="text-sm">
+                  {r.severidade === "ok" ? "✓" : r.severidade === "info" ? "ℹ" : "⚠"} {r.texto}
+                </span>
+              ))}
+            </Linha>
+          )}
+          {!temContrato && (
+            <Linha rotulo="Contrato">
+              <span className="text-sm text-[var(--color-ink-muted)]">Não adicionado</span>
+              <a href="#adicionar-contrato" className="text-sm font-medium text-[var(--color-brand)] underline">
+                Adicionar contrato
+              </a>
+            </Linha>
+          )}
+        </dl>
+        <p className="text-sm text-[var(--color-ink-muted)]">{textoProximaData(proximaData(contrato, hoje))}</p>
+      </section>
+
+      {/* ===== Fatura nova: resumo para confirmar (sem campo a campo) ===== */}
+      {porConfirmarFatura && cUltima && (
+        <section className={`${CARTAO} flex flex-col gap-3 border-[var(--color-brand)]`}>
+          {docUltima?.estado === "a_rever" ? (
             <p className="text-sm text-[var(--color-ink-muted)]">
-              Reveja cada valor e confirme no fim. Só começamos a usá-los depois de confirmar.
+              Lemos a fatura de {mesAnoTexto(dataReferencia(porConfirmarFatura))}. Alguns valores vão ser verificados pela DoLado antes de os usarmos.
             </p>
-          </div>
-          <ConfirmarDados contratoId={contrato.id} campos={camposPorConfirmar} />
+          ) : (
+            <>
+              <h2 className={TITULO_SECCAO}>Encontrámos estes dados na fatura de {mesAnoTexto(dataReferencia(porConfirmarFatura))}</h2>
+              <dl className="flex flex-col">
+                {cUltima.mensalidadeCents != null && <Linha rotulo="Mensalidade">{formatarEurosCents(cUltima.mensalidadeCents)}</Linha>}
+                {cUltima.descontoCents > 0 && <Linha rotulo="Desconto">−{formatarEurosCents(cUltima.descontoCents)}</Linha>}
+                {cUltima.consumosCents > 0 && <Linha rotulo="Consumo adicional">{formatarEurosCents(cUltima.consumosCents)}</Linha>}
+                {cUltima.pontuaisCents > 0 && <Linha rotulo="Cobranças pontuais">{formatarEurosCents(cUltima.pontuaisCents)}</Linha>}
+                <Linha rotulo="Total">{formatarEurosCents(porConfirmarFatura.totalCents)}</Linha>
+              </dl>
+              <form action={responderFatura} className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <input type="hidden" name="fatura_id" value={porConfirmarFatura.id} />
+                <input type="hidden" name="contrato_id" value={contrato.id} />
+                <BotaoSubmeter name="acao" value="confirmar" className={BOTAO_PRIMARIO}>
+                  Confirmar fatura
+                </BotaoSubmeter>
+                <BotaoSubmeter name="acao" value="contestar" aDecorrer="A enviar…" className="text-sm text-[var(--color-ink-muted)] underline">
+                  Os valores não estão corretos
+                </BotaoSubmeter>
+              </form>
+            </>
+          )}
         </section>
       )}
 
-      {/* ===== Situações comunicadas pela DoLado ===== */}
+      {/* ===== Dados lidos por confirmar ===== */}
+      {camposPorConfirmar.length > 0 && (
+        <section className={`${CARTAO} flex flex-col gap-4 border-[var(--color-brand)]`}>
+          <div>
+            <h2 className={TITULO_SECCAO}>{propostasDoContrato ? "Encontrámos estes dados no contrato" : "Encontrámos estes dados no documento"}</h2>
+            <p className="text-sm text-[var(--color-ink-muted)]">Reveja cada valor e confirme no fim. Só começamos a usá-los depois de confirmar.</p>
+            {propostasDoContrato && ordenadas.length > 0 && (
+              <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
+                Encontrámos {ordenadas.length === 1 ? "1 fatura anterior" : `${ordenadas.length} faturas anteriores`}. Depois de confirmar, vamos
+                compará-{ordenadas.length === 1 ? "la" : "las"} com as condições do contrato.
+              </p>
+            )}
+          </div>
+          <ConfirmarDados contratoId={contrato.id} campos={camposPorConfirmar} camposCondicoes={camposCondicoes} />
+        </section>
+      )}
+
+      {/* ===== 2. Acompanhamento mês a mês ===== */}
+      <section className={`${CARTAO} flex flex-col gap-3`}>
+        <div>
+          <h2 className={TITULO_SECCAO}>Acompanhamento mês a mês</h2>
+          <p className="text-sm text-[var(--color-ink-muted)]">
+            {temContrato
+              ? "Comparamos cada fatura com as condições do contrato e com as faturas anteriores."
+              : "Estamos a acompanhar as suas faturas e a comparar cada mês com os anteriores."}
+          </p>
+        </div>
+        <HistoricoServico
+          periodos={periodos}
+          vazio={<p className="text-sm text-[var(--color-ink-muted)]">Adicione uma fatura: começamos a acompanhar a evolução deste serviço.</p>}
+        />
+      </section>
+
+      {/* ===== 3. Situações comunicadas pela DoLado ===== */}
       {(achados ?? []).length > 0 && (
         <section className={`${CARTAO} flex flex-col gap-3`}>
           <h2 className={TITULO_SECCAO}>Situações que merecem ser verificadas</h2>
@@ -215,61 +505,134 @@ export default async function ContratoPage({
         </section>
       )}
 
-      {/* ===== Dados do contrato ===== */}
-      <section className={`${CARTAO} flex flex-col gap-3`}>
-        <h2 className={TITULO_SECCAO}>Dados do contrato</h2>
-        <dl className="flex flex-col">
-          {ORDEM.filter((campo) => atuais.has(campo)).map((campo) => {
-            const c = atuais.get(campo)!;
-            return (
-              <div key={campo} className="flex flex-col gap-0.5 border-b border-[var(--color-hairline)] py-2.5 last:border-b-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
-                <dt className="text-sm text-[var(--color-ink-muted)]">{ROTULO_CAMPO[campo]}</dt>
-                <dd className="flex flex-col sm:items-end">
-                  <span className="text-[15px] text-[var(--color-ink)]">{campo === "fornecedor" ? fornecedor : formatarValorCampo(campo, c.valor)}</span>
+      {/* ===== 4. Condições do contrato ===== */}
+      {temContrato ? (
+        <section className={`${CARTAO} flex flex-col gap-3`}>
+          <h2 className={TITULO_SECCAO}>Condições do contrato</h2>
+          <dl className="flex flex-col">
+            {CONDICOES.filter((campo) => condicao(campo)).map((campo) => {
+              const c = condicao(campo)!;
+              return (
+                <Linha key={campo} rotulo={ROTULO_CAMPO[campo]}>
+                  <span>{formatarValorCampo(campo, c.valor)}</span>
                   <Origem c={c} />
-                </dd>
-              </div>
-            );
-          })}
-          {atuais.size === 0 && <p className="text-sm text-[var(--color-ink-muted)]">Ainda não temos dados confirmados deste contrato.</p>}
-        </dl>
-        <details open={Boolean(query.editar)} className="pt-1">
-          <summary className="cursor-pointer text-sm font-medium text-[var(--color-brand)]">Corrigir ou acrescentar dados</summary>
-          <form action={corrigirContrato} className="mt-4 flex flex-col gap-4">
-            <input type="hidden" name="contrato_id" value={contrato.id} />
-            <CamposContrato valores={contrato} />
-            <p className="text-[12.5px] text-[var(--color-ink-faint)]">
-              Os valores que corrigir passam a ser os registados; os anteriores ficam guardados no histórico.
+                </Linha>
+              );
+            })}
+          </dl>
+          {(versoes ?? []).length > 1 && (
+            <div className="flex flex-col gap-1 pt-1">
+              <p className="text-sm font-medium text-[var(--color-ink)]">Alterações do contrato</p>
+              {versoes!.map((v) => (
+                <p key={v.id} className="text-[13px] text-[var(--color-ink-muted)]">
+                  {v.valido_desde ? `Desde ${formatarDataPt(v.valido_desde)}` : "Condições iniciais"}
+                  {v.valido_ate ? ` até ${formatarDataPt(v.valido_ate)}` : " (em vigor)"}
+                  {v.mensalidade_cents != null ? ` · ${formatarEurosCents(v.mensalidade_cents)}` : ""}
+                  {v.desconto_cents ? ` · desconto de ${formatarEurosCents(v.desconto_cents)}` : ""}
+                </p>
+              ))}
+            </div>
+          )}
+          <details open={Boolean(query.editar)} className="pt-1">
+            <summary className="cursor-pointer text-sm font-medium text-[var(--color-brand)]">Corrigir ou acrescentar condições</summary>
+            <form action={corrigirContrato} className="mt-4 flex flex-col gap-4">
+              <input type="hidden" name="contrato_id" value={contrato.id} />
+              <CamposContrato valores={{ ...contrato, mensalidade_cents: condicao("mensalidade_cents") ? contrato.mensalidade_cents : null }} />
+              <p className="text-[12.5px] text-[var(--color-ink-faint)]">
+                Os valores que corrigir passam a ser os registados; os anteriores ficam guardados no histórico.
+              </p>
+              <button type="submit" className={`${BOTAO_PRIMARIO} self-start`}>
+                Guardar
+              </button>
+            </form>
+          </details>
+        </section>
+      ) : (
+        <section id="adicionar-contrato" className={`${CARTAO} flex scroll-mt-24 flex-col gap-3`}>
+          <h2 className={TITULO_SECCAO}>Tem o contrato?</h2>
+          <p className="text-sm text-[var(--color-ink-muted)]">
+            Adicione-o para desbloquear as comparações com as condições contratadas: preço, promoções, serviços e fidelização.
+          </p>
+          <UploadDocumento contratoId={contrato.id} tipoInicial="contrato" />
+          <details className="pt-1">
+            <summary className="cursor-pointer text-sm font-medium text-[var(--color-brand)]">Prefere indicar as condições à mão?</summary>
+            <form action={corrigirContrato} className="mt-4 flex flex-col gap-4">
+              <input type="hidden" name="contrato_id" value={contrato.id} />
+              <CamposContrato valores={{ ...contrato, mensalidade_cents: null }} />
+              <button type="submit" className={`${BOTAO_PRIMARIO} self-start`}>
+                Guardar
+              </button>
+            </form>
+          </details>
+        </section>
+      )}
+
+      {temContrato && <CustoSaida contrato={contrato} origens={Object.fromEntries([...atuais].map(([campo, c]) => [campo, c.origem]))} hoje={hoje} />}
+
+      {/* ===== 5. Padrões observados nas faturas ===== */}
+      {ordenadas.length >= 2 && (
+        <section className={`${CARTAO} flex flex-col gap-2`}>
+          <h2 className={TITULO_SECCAO}>Padrões observados nas faturas</h2>
+          {padrao.trechos.map((t, i) => (
+            <p key={i} className="text-sm text-[var(--color-ink)]">
+              {padrao.trechos.length === 1
+                ? `Mensalidade de ${formatarEurosCents(t.valorCents)} em ${t.faturas === 1 ? "1 fatura" : `${t.faturas} faturas seguidas`}.`
+                : i === padrao.trechos.length - 1
+                  ? `Desde ${mesAnoTexto(t.desde)}: ${formatarEurosCents(t.valorCents)}.`
+                  : `${t.ate !== t.desde ? `De ${mesAnoTexto(t.desde)} a ${mesAnoTexto(t.ate)}` : `Em ${mesAnoTexto(t.desde)}`}: ${formatarEurosCents(t.valorCents)}.`}
             </p>
-            <button type="submit" className={`${BOTAO_PRIMARIO} self-start`}>
-              Guardar
-            </button>
-          </form>
-        </details>
-      </section>
+          ))}
+          {padrao.descontoAtualCents > 0 && (
+            <p className="text-sm text-[var(--color-ink)]">Desconto identificado nas faturas: {formatarEurosCents(padrao.descontoAtualCents)}/mês.</p>
+          )}
+          {vistoEmFaturas.map((c) => (
+            <p key={c.id} className="text-sm text-[var(--color-ink)]">
+              {ROTULO_CAMPO[c.campo]}: {formatarValorCampo(c.campo, c.valor)} <span className="text-[12.5px] text-[var(--color-ink-faint)]">· Lido da fatura</span>
+            </p>
+          ))}
+          {!temContrato && (
+            <p className="text-[12.5px] text-[var(--color-ink-faint)]">
+              Valores observados nas faturas. Para os comparar com o que foi contratado, adicione o contrato.
+            </p>
+          )}
+        </section>
+      )}
 
-      <CustoSaida contrato={contrato} origens={Object.fromEntries([...atuais].map(([campo, c]) => [campo, c.origem]))} hoje={hoje} />
-
-      {/* ===== Documentos ===== */}
+      {/* ===== 6. Documentos ===== */}
       <section className={`${CARTAO} flex flex-col gap-4`}>
         <h2 className={TITULO_SECCAO}>Documentos</h2>
-        {(documentos ?? []).length > 0 ? (
+        {docs.length > 0 ? (
           <ul className="flex flex-col gap-1.5">
-            {documentos!.map((d) => (
+            {docs.map((d) => (
               <li key={d.id} className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
-                <a href={`/api/monitor/documentos/${d.id}`} target="_blank" rel="noopener noreferrer" className="text-[var(--color-ink)] underline decoration-[var(--color-hairline-strong)] underline-offset-2 hover:text-[var(--color-brand)]">
+                <a
+                  href={`/api/monitor/documentos/${d.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--color-ink)] underline decoration-[var(--color-hairline-strong)] underline-offset-2 hover:text-[var(--color-brand)]"
+                >
                   {d.tipo === "contrato" ? "Contrato" : "Fatura"} · {formatarDataPt(d.created_at)}
                   {d.nome_ficheiro && <span className="text-[var(--color-ink-faint)]"> · {d.nome_ficheiro}</span>}
                 </a>
-                <span className="text-[12.5px] text-[var(--color-ink-faint)]">{emCurso(d.etapa) ? "Em análise" : ESTADO_DOCUMENTO[d.estado] ?? d.estado}</span>
+                <span className="text-[12.5px] text-[var(--color-ink-faint)]">
+                  {emCurso(d.etapa)
+                    ? "Em análise"
+                    : d.estado === "processado"
+                      ? d.associacao_estado === "manual"
+                        ? "Lido · associado por si"
+                        : "Lido"
+                      : d.estado === "ilegivel"
+                        ? "Não foi possível ler — carregue outra versão"
+                        : "A ser verificado pela DoLado"}
+                </span>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-[var(--color-ink-muted)]">Ainda não carregou documentos deste contrato.</p>
+          <p className="text-sm text-[var(--color-ink-muted)]">Ainda não carregou documentos deste serviço.</p>
         )}
         <details>
-          <summary className="cursor-pointer text-sm font-medium text-[var(--color-brand)]">Adicionar contrato ou fatura</summary>
+          <summary className="cursor-pointer text-sm font-medium text-[var(--color-brand)]">Adicionar fatura ou contrato</summary>
           <div className="mt-4">
             <UploadDocumento contratoId={contrato.id} />
           </div>
@@ -278,18 +641,18 @@ export default async function ContratoPage({
 
       {/* ===== Ações ===== */}
       <section className="flex flex-col gap-3">
-        <p className="text-sm text-[var(--color-ink-muted)]">Está a ter um problema com este contrato?</p>
+        <p className="text-sm text-[var(--color-ink-muted)]">Está a ter um problema com este serviço?</p>
         <a href={hrefCaso} className={`${BOTAO_SECUNDARIO} self-start`}>
           Tratar o meu caso
         </a>
       </section>
 
       <details className="text-sm">
-        <summary className="cursor-pointer text-[var(--color-status-danger)]">Deixar de acompanhar este contrato</summary>
+        <summary className="cursor-pointer text-[var(--color-status-danger)]">Deixar de acompanhar este serviço</summary>
         <form action={deixarDeAcompanhar} className="mt-3 flex flex-col gap-3">
           <input type="hidden" name="contrato_id" value={contrato.id} />
           <p className="text-[var(--color-ink-muted)]">
-            Deixamos de enviar avisos e apagamos os documentos e os dados deste contrato. Esta ação não pode ser desfeita.
+            Deixamos de enviar avisos e apagamos os documentos e os dados deste serviço. Esta ação não pode ser desfeita.
           </p>
           <label className="flex items-center gap-2 text-[var(--color-ink)]">
             <input type="checkbox" name="confirmar" value="sim" required /> Quero deixar de acompanhar e apagar os dados

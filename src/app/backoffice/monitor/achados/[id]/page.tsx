@@ -70,17 +70,25 @@ export default async function AchadoPage({
   const [{ data: contrato }, { data: campos }, { data: faturas }, { data: revisoes }] = await Promise.all([
     admin.from("contratos_monitorizados").select("id, fornecedor, setor, utilizador_id").eq("id", a.contrato_id).maybeSingle(),
     admin.from("contratos_campos").select("campo, valor, origem, confianca").eq("contrato_id", a.contrato_id).eq("estado", "atual"),
-    admin
-      .from("faturas_monitor")
-      .select("id, documento_id, data_emissao, periodo_inicio, periodo_fim, total_cents, recorrente_cents, cessacao_operador_cents, linhas")
-      .in("id", [...new Set(idsFaturas)]),
+    // Acompanhamento (acomp_*): a fatura e as anteriores do mesmo serviço.
+    String(a.versao_regra).startsWith("acomp_")
+      ? admin
+          .from("faturas_monitor")
+          .select("id, documento_id, data_emissao, periodo_inicio, periodo_fim, total_cents, recorrente_cents, cessacao_operador_cents, linhas")
+          .eq("contrato_id", a.contrato_id)
+          .order("data_emissao", { ascending: false })
+          .limit(6)
+      : admin
+          .from("faturas_monitor")
+          .select("id, documento_id, data_emissao, periodo_inicio, periodo_fim, total_cents, recorrente_cents, cessacao_operador_cents, linhas")
+          .in("id", [...new Set(idsFaturas)]),
     admin.from("achados_revisoes").select("decisao, notas, created_at").eq("achado_id", id).order("created_at"),
   ]);
 
   const porId = new Map(((faturas ?? []) as Fatura[]).map((f) => [f.id, f]));
   const atual = a.fatura_id ? porId.get(a.fatura_id) : undefined;
   const outras = [...porId.values()].filter((f) => f.id !== a.fatura_id);
-  const decidido = ["comunicado", "descartado"].includes(a.estado);
+  const decidido = ["comunicado", "descartado", "obsoleto"].includes(a.estado);
   const textoProposto = (a.texto_cliente as string | null) ?? (evidencia.texto_proposto as string | undefined) ?? "";
 
   return (

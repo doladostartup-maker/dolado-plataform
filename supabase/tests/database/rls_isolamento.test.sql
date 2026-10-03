@@ -196,6 +196,9 @@ select is(
                            'monitor_recalcular_estado', 'monitor_fim_fidelizacao_calcular', 'monitor_campo_aceitar', 'monitor_campo_rejeitar',
                            'monitor_campo_propor', 'monitor_campo_definir', 'monitor_campos_decidir', 'monitor_alertas_pendentes',
                            'monitor_reservar_alerta', 'monitor_libertar_alerta', 'monitor_ficheiros_orfaos',
+                           -- 20261004090000: só service_role (ou trigger), search_path fixo
+                           'monitor_valor_contratual', 'monitor_versao_sincronizar', 'monitor_versao_nova',
+                           'monitor_eventos_substituir', 'faturas_monitor_atualizar_verificacao',
                            -- compras sem conta / associação (só service_role; testes em compras_sem_conta.test.sql)
                            'conta_existe_com_email', 'registar_compra_sem_conta', 'reclamar_compra_sem_conta',
                            'compras_sem_conta_pendentes', 'reservar_lembrete_compra', 'compras_sem_conta_resolver_ao_ligar')), 0::bigint,

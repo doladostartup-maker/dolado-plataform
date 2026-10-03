@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { TipoCampo } from "@/lib/monitor/contratos";
-import { confirmarDadosContrato, type DecisaoCampo } from "../actions";
+import { confirmarDadosContrato, type AlteracaoContrato, type DecisaoCampo } from "../actions";
 import { BOTAO_PRIMARIO, INPUT_CLASS } from "./estilos";
 
 // Valores lidos do documento, por confirmar. Cada clique só muda o estado no
@@ -64,9 +64,32 @@ function CampoEdicao({ tipo, valor, onChange, rotulo }: { tipo: TipoCampo; valor
   );
 }
 
-export function ConfirmarDados({ contratoId, campos }: { contratoId: string; campos: CampoPorConfirmar[] }) {
+const MOTIVOS: { valor: string; texto: string }[] = [
+  { valor: "renegociacao", texto: "Renegociação" },
+  { valor: "alteracao_tarifaria", texto: "Alteração de preço" },
+  { valor: "nova_promocao", texto: "Nova promoção" },
+  { valor: "mudanca_pacote", texto: "Mudança de pacote" },
+  { valor: "outro", texto: "Outro motivo" },
+];
+
+export function ConfirmarDados({
+  contratoId,
+  campos,
+  camposCondicoes = [],
+}: {
+  contratoId: string;
+  campos: CampoPorConfirmar[];
+  /** Ids das propostas sobre condições do contrato (preço, promoção, serviços) que podem ser uma alteração. */
+  camposCondicoes?: string[];
+}) {
   const router = useRouter();
   const [decisoes, setDecisoes] = useState<Record<string, Decisao>>({});
+  // Novas condições em conflito com as registadas: correção dos dados, ou
+  // alteração do contrato a partir de uma data (as faturas anteriores
+  // continuam a ser comparadas com as condições antigas).
+  const [tipoMudanca, setTipoMudanca] = useState<"correcao" | "alteracao">("correcao");
+  const [desde, setDesde] = useState("");
+  const [motivo, setMotivo] = useState("renegociacao");
   const [erro, setErro] = useState<string | null>(null);
   const [aGuardar, iniciar] = useTransition();
   // Um só envio de cada vez, mesmo com cliques repetidos antes de o botão
@@ -74,6 +97,8 @@ export function ConfirmarDados({ contratoId, campos }: { contratoId: string; cam
   const emEnvio = useRef(false);
 
   const decididos = campos.filter((c) => decisoes[c.id]).length;
+  const mudaCondicoes = campos.some((c) => c.valorAtual !== null && camposCondicoes.includes(c.id) && decisoes[c.id] && decisoes[c.id].acao !== "rejeitar");
+  const faltaData = mudaCondicoes && tipoMudanca === "alteracao" && !desde;
   const correcaoVazia = campos.some((c) => {
     const d = decisoes[c.id];
     return d?.acao === "corrigir" && !d.valor.trim();
@@ -94,7 +119,8 @@ export function ConfirmarDados({ contratoId, campos }: { contratoId: string; cam
     emEnvio.current = true;
     iniciar(async () => {
       try {
-        const r = await confirmarDadosContrato(contratoId, lote);
+        const alteracao: AlteracaoContrato = mudaCondicoes && tipoMudanca === "alteracao" ? { desde, motivo } : null;
+        const r = await confirmarDadosContrato(contratoId, lote, alteracao);
         if (!r.ok) {
           setErro(r.erro);
           return;
@@ -192,6 +218,38 @@ export function ConfirmarDados({ contratoId, campos }: { contratoId: string; cam
         })}
       </ul>
 
+      {mudaCondicoes && (
+        <fieldset className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-hairline)] p-3 text-sm">
+          <legend className="px-1 font-medium text-[var(--color-ink)]">As condições do contrato mudaram?</legend>
+          <label className="flex items-start gap-2 text-[var(--color-ink)]">
+            <input type="radio" name="tipo_mudanca" checked={tipoMudanca === "correcao"} onChange={() => setTipoMudanca("correcao")} className="mt-1" />
+            Não — os dados que tinha registado estavam errados.
+          </label>
+          <label className="flex items-start gap-2 text-[var(--color-ink)]">
+            <input type="radio" name="tipo_mudanca" checked={tipoMudanca === "alteracao"} onChange={() => setTipoMudanca("alteracao")} className="mt-1" />
+            Sim — o contrato foi alterado. As faturas anteriores continuam a ser comparadas com as condições antigas.
+          </label>
+          {tipoMudanca === "alteracao" && (
+            <div className="flex flex-col gap-2 pl-6 sm:flex-row">
+              <label className="flex flex-col gap-1 text-[var(--color-ink-muted)]">
+                Aplica-se desde
+                <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className={`${INPUT_CLASS} text-sm`} />
+              </label>
+              <label className="flex flex-col gap-1 text-[var(--color-ink-muted)]">
+                Motivo
+                <select value={motivo} onChange={(e) => setMotivo(e.target.value)} className={`${INPUT_CLASS} text-sm`}>
+                  {MOTIVOS.map((m) => (
+                    <option key={m.valor} value={m.valor}>
+                      {m.texto}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
+        </fieldset>
+      )}
+
       {erro && (
         <p role="alert" className="text-sm text-[var(--color-status-danger)]">
           {erro}
@@ -199,7 +257,7 @@ export function ConfirmarDados({ contratoId, campos }: { contratoId: string; cam
       )}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <button type="button" onClick={guardar} disabled={decididos === 0 || correcaoVazia || aGuardar} className={BOTAO_PRIMARIO}>
+        <button type="button" onClick={guardar} disabled={decididos === 0 || correcaoVazia || faltaData || aGuardar} className={BOTAO_PRIMARIO}>
           {aGuardar ? "A guardar…" : "Confirmar informações"}
         </button>
         {campos.some((c) => !decisoes[c.id] && c.valorAtual === null) && !aGuardar && (

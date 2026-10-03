@@ -9,6 +9,7 @@ const ESTADO: Record<string, string> = {
   confirmado: "Confirmado",
   comunicado: "Comunicado",
   descartado: "Descartado",
+  obsoleto: "Já não se verifica (reanálise)",
 };
 
 export default async function AchadosPage({ searchParams }: { searchParams: Promise<{ todos?: string }> }) {

@@ -59,9 +59,9 @@ insert into ids values
 -- ===========================================================================
 -- 1. Privilégios
 -- ===========================================================================
-select ok(not has_function_privilege('authenticated', 'public.monitor_campos_decidir(uuid, uuid, jsonb)', 'EXECUTE'), 'decidir em lote: não executável pelo cliente');
-select ok(not has_function_privilege('anon', 'public.monitor_campos_decidir(uuid, uuid, jsonb)', 'EXECUTE'), 'decidir em lote: não executável por anon');
-select ok(has_function_privilege('service_role', 'public.monitor_campos_decidir(uuid, uuid, jsonb)', 'EXECUTE'), 'decidir em lote: servidor (service_role)');
+select ok(not has_function_privilege('authenticated', 'public.monitor_campos_decidir(uuid, uuid, jsonb, date, text)', 'EXECUTE'), 'decidir em lote: não executável pelo cliente');
+select ok(not has_function_privilege('anon', 'public.monitor_campos_decidir(uuid, uuid, jsonb, date, text)', 'EXECUTE'), 'decidir em lote: não executável por anon');
+select ok(has_function_privilege('service_role', 'public.monitor_campos_decidir(uuid, uuid, jsonb, date, text)', 'EXECUTE'), 'decidir em lote: servidor (service_role)');
 select ok(not has_table_privilege('authenticated', 'public.fornecedores', 'INSERT'), 'fornecedores: cliente sem INSERT');
 select ok(not has_table_privilege('authenticated', 'public.fornecedores', 'UPDATE'), 'fornecedores: cliente sem UPDATE');
 select ok(not has_column_privilege('authenticated', 'public.documentos_monitor', 'etapa', 'UPDATE'), 'etapa: cliente sem UPDATE');

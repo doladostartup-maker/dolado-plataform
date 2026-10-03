@@ -43,6 +43,9 @@ export const CAMPOS_EDITAVEIS: Partial<Record<CampoContrato, TipoCampo>> = {
   tipo_fidelizacao: "tipo",
   nova_instalacao: "simnao",
   equipamento_subsidiado: "simnao",
+  desconto_promocao_cents: "euros",
+  data_inicio_promocao: "data",
+  servicos_incluidos: "texto",
 };
 
 /** Valor guardado (jsonb) no formato do campo de edição ("71,46", "2025-04-08", "sim"). */
@@ -73,6 +76,9 @@ export const ROTULO_CAMPO: Record<CampoContrato, string> = {
   data_ativacao: "Data de instalação/ativação",
   duracao_fidelizacao_meses: "Duração da fidelização",
   inicio_na_ativacao: "O contrato começa na instalação/ativação",
+  desconto_promocao_cents: "Desconto mensal da promoção",
+  data_inicio_promocao: "Início da promoção",
+  servicos_incluidos: "Serviços incluídos",
 };
 
 const ROTULO_OPCAO: Record<string, string> = {

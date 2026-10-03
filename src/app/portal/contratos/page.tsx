@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireProtecao } from "@/lib/auth";
-import { ROTULO_SETOR, proximaData, textoProximaData, type SetorContratoMonitor } from "@/lib/monitor/contratos";
+import { ROTULO_SETOR, formatarEurosCents, proximaData, textoProximaData, type SetorContratoMonitor } from "@/lib/monitor/contratos";
+import { mesAnoTexto } from "@/lib/monitor/acompanhamento";
 import { nomeComercial } from "@/lib/monitor/fornecedores";
 import { emCurso } from "@/lib/monitor/processamento";
 import { listaFornecedores } from "@/lib/monitor/servidor";
@@ -13,7 +14,8 @@ function hojeLisboa() {
 }
 
 const MENSAGENS: Record<string, { texto: string; tom: "ok" | "info" | "erro" }> = {
-  removido: { texto: "Deixámos de acompanhar o contrato e apagámos os documentos e os dados associados.", tom: "ok" },
+  removido: { texto: "Deixámos de acompanhar o serviço e apagámos os documentos e os dados associados.", tom: "ok" },
+  cancelado: { texto: "O documento foi apagado. Nada foi alterado nos seus serviços.", tom: "ok" },
   repetido: { texto: "Este documento já tinha sido carregado.", tom: "info" },
   pendente: {
     texto: "Recebemos o documento. Ainda não o conseguimos ler automaticamente: a DoLado vai verificá-lo e os dados aparecem aqui quando estiverem prontos.",
@@ -30,7 +32,7 @@ export default async function ContratosPage({
   const params = await searchParams;
   const { supabase, user } = await requireProtecao("contratos");
 
-  const [{ data: contratos }, { data: porConfirmar }, { data: aLer }] = await Promise.all([
+  const [{ data: contratos }, { data: porConfirmar }, { data: aLer }, { data: faturas }, { data: versoes }, { data: porAssociar }] = await Promise.all([
     supabase
       .from("contratos_monitorizados")
       .select("id, setor, fornecedor, estado, data_fim_fidelizacao, data_fim_promocao, desativado_em")
@@ -45,7 +47,34 @@ export default async function ContratosPage({
       .is("contrato_id", null)
       .in("estado", ["pendente", "a_rever"])
       .or("etapa.is.null,etapa.neq.repetido"),
+    supabase.from("faturas_monitor").select("contrato_id, data_emissao, periodo_fim, total_cents").eq("utilizador_id", user.id),
+    supabase.from("contratos_versoes").select("contrato_id").eq("utilizador_id", user.id).is("valido_ate", null).not("mensalidade_cents", "is", null),
+    supabase
+      .from("documentos_monitor")
+      .select("id, tipo, associacao_estado")
+      .eq("utilizador_id", user.id)
+      .is("contrato_id", null)
+      .in("associacao_estado", ["possivel", "conflito"]),
   ]);
+  // Última fatura de cada serviço e serviços com condições contratuais.
+  const ultimaFatura = new Map<string, { data: string; totalCents: number | null }>();
+  for (const f of faturas ?? []) {
+    const data = f.data_emissao ?? f.periodo_fim ?? "";
+    const atual = ultimaFatura.get(f.contrato_id);
+    if (!atual || data > atual.data) ultimaFatura.set(f.contrato_id, { data, totalCents: f.total_cents });
+  }
+  const comContrato = new Set((versoes ?? []).map((v) => v.contrato_id));
+  // Identificador visível para distinguir dois serviços do mesmo fornecedor.
+  const { data: identificadores } = await supabase
+    .from("servicos_identificadores")
+    .select("contrato_id, tipo, apresentacao")
+    .eq("utilizador_id", user.id)
+    .in("tipo", ["numero_servico", "cpe", "cui", "referencia_conta", "numero_cliente", "referencia_contrato"])
+    .not("apresentacao", "is", null);
+  const referencia = new Map<string, string>();
+  for (const i of identificadores ?? []) {
+    if (!referencia.has(i.contrato_id) || i.tipo === "numero_servico") referencia.set(i.contrato_id, i.apresentacao as string);
+  }
   const fornecedores = await listaFornecedores();
   // Em análise (ou falhada e por repetir): progresso com as etapas reais.
   const emAnalise = (aLer ?? []).filter((d) => emCurso(d.etapa) || d.etapa === "falhou");
@@ -61,10 +90,11 @@ export default async function ContratosPage({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">Os meus contratos</h1>
+        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">Os meus serviços</h1>
         <p className="max-w-[62ch] text-sm leading-relaxed text-[var(--color-ink-muted)]">
-          Carregue uma fatura ou o contrato. A DoLado acompanha as datas de fim de fidelização e de promoção, guarda o
-          histórico das suas faturas e avisa-o por e-mail a 60 e a 30 dias e na própria data.
+          Basta uma fatura para começar: acompanhamos a evolução de cada serviço mês a mês e assinalamos alterações. Com o
+          contrato, verificamos também se o que é faturado corresponde ao que foi contratado e avisamo-lo por e-mail antes do
+          fim da fidelização e das promoções.
         </p>
       </div>
 
@@ -72,6 +102,19 @@ export default async function ContratosPage({
         <p className={`text-sm ${mensagem.tom === "ok" ? "text-[var(--color-status-success)]" : "text-[var(--color-ink-muted)]"}`}>{mensagem.texto}</p>
       )}
       {params.erro && <p className="text-sm text-[var(--color-status-danger)]">{params.erro}</p>}
+
+      {(porAssociar ?? []).map((d) => (
+        <div key={d.id} role="alert" className={`${CARTAO} flex max-w-xl flex-col gap-2 border-[var(--color-status-urgent)]`}>
+          <p className="text-sm font-semibold text-[var(--color-ink)]">
+            {d.associacao_estado === "conflito"
+              ? `${d.tipo === "contrato" ? "Um contrato" : "Uma fatura"} que carregou parece pertencer a outro serviço ou cliente.`
+              : `Não conseguimos confirmar a que serviço pertence ${d.tipo === "contrato" ? "o contrato" : "a fatura"} que carregou.`}
+          </p>
+          <Link href={`/portal/contratos/documentos/${d.id}`} className="self-start text-sm font-medium text-[var(--color-brand)] underline">
+            Rever dados
+          </Link>
+        </div>
+      ))}
 
       {(contratos ?? []).length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -87,7 +130,16 @@ export default async function ContratosPage({
                     </span>
                   )}
                 </div>
-                <p className="text-[13px] text-[var(--color-ink-faint)]">{ROTULO_SETOR[c.setor as SetorContratoMonitor] ?? c.setor}</p>
+                <p className="text-[13px] text-[var(--color-ink-faint)]">
+                  {ROTULO_SETOR[c.setor as SetorContratoMonitor] ?? c.setor}
+                  {referencia.has(c.id) ? ` · ${referencia.get(c.id)}` : ""} · {comContrato.has(c.id) ? "Com contrato" : "Contrato não adicionado"}
+                </p>
+                {ultimaFatura.has(c.id) && (
+                  <p className="text-sm text-[var(--color-ink)]">
+                    Última fatura: {formatarEurosCents(ultimaFatura.get(c.id)!.totalCents)}{" "}
+                    <span className="text-[var(--color-ink-faint)]">({mesAnoTexto(ultimaFatura.get(c.id)!.data || null)})</span>
+                  </p>
+                )}
                 <p className="text-sm text-[var(--color-ink-muted)]">{textoProximaData(proximaData(c, hoje))}</p>
               </Link>
             );
@@ -109,9 +161,11 @@ export default async function ContratosPage({
       )}
 
       <div id="acrescentar" className={`${CARTAO} max-w-xl scroll-mt-24`}>
-        <h2 className={`${TITULO_SECCAO} mb-1`}>{(contratos ?? []).length ? "Acrescentar outro contrato" : "Comece com uma fatura"}</h2>
+        <h2 className={`${TITULO_SECCAO} mb-1`}>{(contratos ?? []).length ? "Adicionar fatura ou contrato" : "Adicione a sua fatura"}</h2>
         <p className="mb-4 text-sm text-[var(--color-ink-muted)]">
-          Basta uma fatura para começar. Se o documento for de um fornecedor que já acompanhamos, juntamo-lo a esse contrato.
+          {(contratos ?? []).length
+            ? "Se o documento for de um serviço que já acompanhamos (mesmo titular e mesma conta ou número de serviço), juntamo-lo a esse serviço. Se não tivermos a certeza, perguntamos."
+            : "Começamos a acompanhar a evolução deste serviço. O contrato é opcional: pode adicioná-lo mais tarde."}
         </p>
         <UploadDocumento />
       </div>
@@ -119,7 +173,7 @@ export default async function ContratosPage({
       <p className="text-sm text-[var(--color-ink-muted)]">
         Não tem o documento à mão?{" "}
         <Link href="/portal/contratos/novo" className="font-medium text-[var(--color-brand)] underline">
-          Indique os dados do contrato
+          Indique os dados do serviço
         </Link>
         .
       </p>
