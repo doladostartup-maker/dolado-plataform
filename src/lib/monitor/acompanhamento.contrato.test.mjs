@@ -161,6 +161,16 @@ describe("acompanhamento de serviços (Supabase real)", { skip: !ATIVO && "só c
     assert.equal(outra.doc.associacao_sugerida, servico);
     assert.ok(outra.doc.associacao_conflitos.includes("O NIF do titular é diferente"));
 
+    // A leitura gravada já não tem o NIF nem o nome do titular em texto.
+    const { data: leituras } = await admin.from("extracoes_documento").select("resultado").in("documento_id", [contrato.id, outra.id]);
+    for (const l of leituras) {
+      const texto = JSON.stringify(l.resultado);
+      assert.equal(/123456789|987654321|Maria Silva|João Pereira/.test(texto), false, "NIF/titular em claro na leitura");
+      assert.match(l.resultado.identificacao.nif_titular, /^hmac:[0-9a-f]{64}$/);
+    }
+    const { data: idsServico } = await admin.from("servicos_identificadores").select("tipo, valor_normalizado").eq("contrato_id", servico);
+    assert.ok(idsServico.some((i) => i.tipo === "nif_titular" && i.valor_normalizado.startsWith("hmac:")));
+
     const { data: camposDepois } = await admin.from("contratos_campos").select("id, campo, valor, estado").eq("contrato_id", servico).order("id");
     assert.deepEqual(camposDepois, camposAntes, "nenhum dado do contrato foi alterado nem proposto");
     const { count: faturas } = await admin.from("faturas_monitor").select("id", { count: "exact", head: true }).eq("contrato_id", servico);
