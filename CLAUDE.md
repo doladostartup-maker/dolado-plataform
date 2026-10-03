@@ -4,12 +4,23 @@ Este ficheiro é lido automaticamente pelo Claude Code no início de cada sessã
 
 ## Contexto do negócio
 
-A DoLado é uma plataforma portuguesa de acompanhamento de reclamações de consumo (telecomunicações, energia, água). Está em fase de validação com dois canais em paralelo:
+A DoLado é uma plataforma portuguesa que trata e ajuda a resolver problemas do consumidor com empresas, incluindo reclamações nos setores das telecomunicações, energia e água. Está em fase de validação com dois canais em paralelo:
 
 1. **B2C directo** — clientes que chegam via Google Ads / formulário público, processo hoje 100% manual (email, Google Sheet)
 2. **Piloto B2B2C** — parceria gratuita com a Remax Duplo Prestígio (75 colaboradores), sem data de lançamento fixa, ~10-20 casos/mês esperados
 
 Este repositório constrói a **v1 da plataforma**, que substitui o processo manual (Google Sheet + email) por um backoffice e um portal do cliente simples. **Não é a especificação completa do produto final** — funcionalidades como autenticação CMD/eIDAS, RPA para o Livro de Reclamações, e dashboards avançados ficam deliberadamente fora desta v1. O uso de IA (Claude API) passou a estar em escopo a partir de 25/09/2026, sob as regras descritas em "Uso de IA" — não é mais uma exclusão geral. Pagamentos/Stripe passaram a estar em escopo a partir de 25/09/2026, só para o canal B2C directo — ver "Pagamentos (Stripe)" abaixo.
+
+## Posicionamento do produto
+
+Os princípios seguintes orientam decisões de produto, copy e interface:
+
+- **Regra de produto:** “Os contratos são contexto. O produto é a resolução do problema.” Contratos, faturas, períodos de fidelização, promoções, preços, datas e condições são contexto e sinais para prevenir, detetar, contextualizar ou resolver problemas do consumidor; nunca são um fim em si mesmos.
+- Não posicionar a DoLado, nem evoluir o produto, como uma empresa de gestão de contratos ou subscrições.
+- Uma nova funcionalidade só faz sentido se ajudar a prevenir, identificar, contextualizar, resolver ou acompanhar um problema do consumidor.
+- **Arquitetura mental:** `Problema → Tratamento`; `Risco de problema → Deteção/Proteção → Tratamento, se necessário`.
+- Evitar copy e UI que façam a DoLado parecer “reclamações + gestão de contratos”.
+- Em textos públicos, sempre que se mencionem contratos, faturas, datas, preços ou condições, explicar como essa informação ajuda a prevenir ou resolver um problema do consumidor.
 
 ## Quem constrói e opera
 
@@ -81,7 +92,7 @@ O piloto Remax é gratuito (sem receita ainda). Prioridade: **ficar nos tiers gr
 
 ## Idioma e tom
 
-- Todo o texto visível na aplicação (UI, mensagens, emails) em português europeu, segundo o Acordo Ortográfico de 1990 (ex.: "fatura", "direção", "ação" — não "factura", "direcção", "acção")
+- Todo o texto visível, incluindo textos públicos, em português europeu clássico e segundo o Acordo Ortográfico de 1990 (ex.: "fatura", "direção", "ação" — não "factura", "direcção", "acção")
 - Comentários de código podem ser em português ou inglês, à escolha, mas texto orientado ao utilizador é sempre português europeu
 
 ## Regras de escrita (obrigatórias em todo o texto visível ao utilizador)
