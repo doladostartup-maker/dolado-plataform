@@ -58,6 +58,14 @@ import { pedidoDaMetadata } from "../pedidoCaso.ts";
 //   falta (sessão, pagamento, subscrição, e-mail, conta). Nunca cria nem
 //   altera o que foi aceite, e uma compra sem registo (sessões antigas) não
 //   perde o acesso por isso.
+// - Compra paga sem conta (preçário sem sessão): fica em compras_sem_conta
+//   para os lembretes a 1 e 3 dias, e o admin é avisado uma única vez. A
+//   ligação a uma conta existente é feita só por src/lib/compra/associacao.ts
+//   (login + e-mail confirmado igual ao do Checkout) — nunca pelo e-mail aqui.
+// - Subscrição duplicada: uma conta que já tem uma subscrição ativa nunca
+//   recebe uma segunda por cima (a primeira ficava órfã). Fica em
+//   subscricoes_duplicadas "por_rever" e o admin é avisado; não se cancela
+//   nem se reembolsa nada automaticamente.
 
 export type Plano = "avulso" | "protecao" | "caso_protecao";
 export type EstadoPagamento =
@@ -154,6 +162,14 @@ export type ConsentimentoLigado = {
   termos_versao: string;
   /** Pedido expresso de início imediato registado antes do pagamento. */
   pediu_inicio_imediato: boolean;
+};
+
+export type SubscricaoDuplicada = {
+  novaSubscriptionId: string;
+  userId: string;
+  subscricaoExistenteId: string;
+  sessionId: string | null;
+  origem: "associacao" | "checkout" | "fatura";
 };
 
 export type LinhaLog = {
@@ -282,6 +298,16 @@ export interface DependenciasWebhook {
   anularConversao(conversaoId: string, checkoutSessionId: string, motivo: string): Promise<void>;
   /** Cancela já a subscrição no Stripe, sem fatura final. Idempotente (já cancelada = ok). */
   cancelarSubscricaoStripe(subscriptionId: string): Promise<void>;
+
+  /**
+   * Compra paga sem conta: regista-a (lembretes a 1 e 3 dias). true só na
+   * primeira vez — o aviso ao admin sai uma única vez, mesmo com reenvios.
+   */
+  registarCompraSemConta(sessionId: string, email: string, plano: Plano): Promise<boolean>;
+  /** Subscrição ativa já ligada à conta (user_access), se houver. */
+  subscricaoAtivaDaConta(userId: string): Promise<string | null>;
+  /** Segunda subscrição de uma conta, por rever. true só na primeira vez. */
+  registarSubscricaoDuplicada(dados: SubscricaoDuplicada): Promise<boolean>;
 
   enviarEmailPagamentoConfirmado(dados: {
     email: string;
@@ -431,19 +457,39 @@ function dadosPagamento(
 }
 
 /**
+ * A conta já tem OUTRA subscrição ativa: não se aplica esta por cima (a
+ * anterior ficava órfã na conta). Regista para revisão e avisa o admin uma
+ * única vez. Nada é cancelado nem reembolsado automaticamente.
+ */
+export async function sinalizarSubscricaoDuplicada(deps: DependenciasWebhook, dados: SubscricaoDuplicada) {
+  if (!(await deps.registarSubscricaoDuplicada(dados))) return;
+  await deps.notificarAdmin(
+    "Subscrição duplicada por rever — DoLado",
+    `A conta ${dados.userId} já tem a subscrição ativa ${dados.subscricaoExistenteId} e foi paga uma segunda subscrição, ${dados.novaSubscriptionId}` +
+      `${dados.sessionId ? ` (compra ${dados.sessionId})` : ""}, detetada em: ${dados.origem}. ` +
+      "A segunda subscrição NÃO foi aplicada à conta; nada foi cancelado nem reembolsado. " +
+      "Ação recomendada: confirmar com o cliente, cancelar no Stripe Dashboard a subscrição a mais e, se houve cobrança, decidir o reembolso; depois marcar como resolvida no backoffice.",
+  );
+}
+
+/** Resultado de aplicar uma compra: o plano, uma subscrição duplicada (não aplicada) ou nada. */
+export type ResultadoAplicacao = Plano | "subscricao_duplicada" | null;
+
+/**
  * Aplica uma compra JÁ CONFIRMADA a uma conta: crédito Avulso, ou
  * subscrição (+ crédito do primeiro ciclo no Caso + Proteção). Idempotente
- * — usado pelo webhook e por /criar-conta, que podem correr por qualquer
- * ordem. Quem chama tem de ter confirmado o pagamento. Devolve o plano
- * aplicado (null se o price for desconhecido ou a subscrição não estiver
- * ativa).
+ * — usado pelo webhook, por /criar-conta e pela associação de uma compra,
+ * que podem correr por qualquer ordem. Quem chama tem de ter confirmado o
+ * pagamento. Devolve o plano aplicado (null se o price for desconhecido ou
+ * a subscrição não estiver ativa; "subscricao_duplicada" se a conta já
+ * tinha outra subscrição ativa).
  */
 export async function aplicarCompraConfirmadaNaConta(
   session: Stripe.Checkout.Session,
   userId: string,
   deps: DependenciasWebhook,
   em: string = new Date().toISOString(),
-): Promise<Plano | null> {
+): Promise<ResultadoAplicacao> {
   await deps.garantirConta(userId, idDe(session.customer));
 
   if (session.mode === "payment") {
@@ -456,6 +502,18 @@ export async function aplicarCompraConfirmadaNaConta(
   const snapshot = await deps.obterSubscricaoStripe(subscriptionId);
   const plano = deps.planoDoPreco(snapshot.price_id);
   if (!plano || !subscricaoEstaAtiva(snapshot.status)) return null;
+
+  const existente = await deps.subscricaoAtivaDaConta(userId);
+  if (existente && existente !== subscriptionId) {
+    await sinalizarSubscricaoDuplicada(deps, {
+      novaSubscriptionId: subscriptionId,
+      userId,
+      subscricaoExistenteId: existente,
+      sessionId: session.id,
+      origem: "checkout",
+    });
+    return "subscricao_duplicada";
+  }
 
   await deps.aplicarSubscricaoNaConta(userId, dadosNaConta(snapshot, plano));
   if (plano === "caso_protecao") {
@@ -613,8 +671,11 @@ async function confirmarCompra(
 
   // Plano efetivamente aplicado a uma conta (subscrição confirmada e ativa).
   let planoAplicado: Plano | null = null;
+  let duplicada = false;
   for (const userId of contas) {
-    planoAplicado = (await aplicarCompraConfirmadaNaConta(session, userId, deps, em)) ?? planoAplicado;
+    const aplicado = await aplicarCompraConfirmadaNaConta(session, userId, deps, em);
+    if (aplicado === "subscricao_duplicada") duplicada = true;
+    else planoAplicado = aplicado ?? planoAplicado;
   }
   // Nome do plano para o e-mail — pode vir só do price.
   let plano: Plano | null = planoAplicado ?? (s.tipo === "avulso" ? "avulso" : null);
@@ -649,6 +710,16 @@ async function confirmarCompra(
   }
 
   await deps.gravarPagamento(dadosPagamento(session, s, "concluido"));
+  // Sem conta: fica para os lembretes (depois do pagamento gravado — a
+  // tabela aponta para ele). Idempotente: o aviso ao admin sai uma vez.
+  if (contas.length === 0 && plano && (await deps.registarCompraSemConta(session.id, s.email, plano))) {
+    await deps.notificarAdmin(
+      "Compra paga sem conta associada — DoLado",
+      `O pagamento da sessão ${session.id} (${plano}) foi confirmado sem conta associada. ` +
+        "O cliente recebeu o e-mail para criar a conta ou, se já tiver conta com o mesmo e-mail, iniciar sessão e associar a compra. " +
+        "Seguem-se lembretes ao cliente a 1 e 3 dias; ao fim de 3 dias recebe novo aviso.",
+    );
+  }
   const consentimento = await ligarConsentimentoDaSessao(session, s, contas, deps);
   if (estadoAnterior !== "concluido" && plano) {
     const renovacao =
@@ -667,6 +738,7 @@ async function confirmarCompra(
   }
   if (!plano) return "confirmado_preco_desconhecido";
   if (estadoAnterior === "concluido") return "ja_confirmado";
+  if (duplicada) return "pagamento_confirmado_subscricao_duplicada";
   if (pedidoId) return casoDoPedido ? "pagamento_confirmado_caso_criado" : "pagamento_confirmado_pedido_por_converter";
   return contas.length > 0 ? "pagamento_confirmado" : "pagamento_confirmado_sem_conta";
 }
@@ -773,8 +845,27 @@ async function tratarFatura(
     }
   }
 
-  const contas = customerId ? await deps.contasDoCustomer(customerId) : [];
-  if (contas.length === 0) return { resultado: "pago_sem_conta_ligada", ...ids };
+  const doCustomer = customerId ? await deps.contasDoCustomer(customerId) : [];
+  if (doCustomer.length === 0) return { resultado: "pago_sem_conta_ligada", ...ids };
+
+  // Conta com OUTRA subscrição ativa (ex.: duas subscrições no mesmo
+  // Customer): esta não lhe é aplicada por cima — fica por rever.
+  const contas: string[] = [];
+  for (const userId of doCustomer) {
+    const existente = await deps.subscricaoAtivaDaConta(userId);
+    if (existente && existente !== subscriptionId) {
+      await sinalizarSubscricaoDuplicada(deps, {
+        novaSubscriptionId: subscriptionId,
+        userId,
+        subscricaoExistenteId: existente,
+        sessionId: null,
+        origem: "fatura",
+      });
+    } else {
+      contas.push(userId);
+    }
+  }
+  if (contas.length === 0) return { resultado: "pago_subscricao_duplicada", ...ids };
 
   for (const userId of contas) {
     await deps.aplicarSubscricaoNaConta(userId, dadosNaConta(snapshot, plano));

@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ConfirmarCompra } from "@/components/compra/ConfirmarCompra";
 import { track } from "@/lib/analytics";
-import { urlTratarCaso } from "@/lib/site";
+import { urlComprar, urlTratarCaso } from "@/lib/site";
 import {
   IVA_INCLUIDO,
   LIMITE_CASOS_ACUMULADOS,
@@ -14,9 +12,11 @@ import {
 } from "@/lib/planos";
 
 // Preçário público. Nomes, preços e Price IDs vêm de src/lib/planos.ts. Nas
-// subscrições, o botão abre a confirmação da compra (Termos, início imediato,
-// livre resolução); só esta envia o PlanoId à Server Action, que escolhe o
-// Price ID. O Avulso leva a "Tratar o meu caso" (caso primeiro, pagamento
+// subscrições, o botão leva a portal.dolado.pt/comprar: dolado.pt não vê a
+// sessão (cookies host-only do portal), e é lá que se decide se quem compra
+// já tem conta (mesmo Customer, nunca uma segunda subscrição desligada da
+// conta) antes da confirmação da compra (Termos, início imediato, livre
+// resolução). O Avulso leva a "Tratar o meu caso" (caso primeiro, pagamento
 // no fim).
 // Só se listam funcionalidades de proteção já disponíveis na plataforma.
 
@@ -90,17 +90,11 @@ const BOTAO_SECUNDARIO =
   "inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-2.5 text-[13.5px] font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)] hover:bg-[var(--color-canvas)] disabled:opacity-60";
 
 export function Precario() {
-  const [aConfirmar, setAConfirmar] = useState<PlanoId | null>(null);
-
   const escolher = (plano: PlanoId) => {
     track(`click_precario_${plano}`);
     // Avulso é o tratamento de um caso: começa pela descrição do caso e só
     // no fim se escolhe e paga a modalidade ("Tratar o meu caso").
-    if (plano === "avulso") {
-      window.location.assign(urlTratarCaso("precario"));
-      return;
-    }
-    setAConfirmar(plano);
+    window.location.assign(plano === "avulso" ? urlTratarCaso("precario") : urlComprar(plano));
   };
 
   return (
@@ -198,14 +192,6 @@ export function Precario() {
           </tbody>
         </table>
       </div>
-      {aConfirmar && (
-        <ConfirmarCompra
-          plano={aConfirmar}
-          fluxo="publico"
-          origem="landing"
-          onFechar={() => setAConfirmar(null)}
-        />
-      )}
     </section>
   );
 }

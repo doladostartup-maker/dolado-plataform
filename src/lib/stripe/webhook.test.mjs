@@ -40,6 +40,8 @@ function criarEstado() {
     avisosAdmin: [],
     pedidos: new Map(), // id → linha de pedidos_caso
     casos: [], // casos criados (o trigger novo-caso dispara um e-mail por cada)
+    comprasSemConta: new Map(), // session_id → { email, plano } (compras_sem_conta)
+    duplicadas: new Map(), // nova subscription_id → registo (subscricoes_duplicadas)
   };
 }
 
@@ -137,6 +139,23 @@ function criarDependencias(estado) {
     },
     async contasDoCustomer(customerId) {
       return [...estado.contas.entries()].filter(([, c]) => c.stripe_customer_id === customerId).map(([id]) => id);
+    },
+    // Mesma regra que registar_compra_sem_conta: true só na 1.ª vez.
+    async registarCompraSemConta(sessionId, email, plano) {
+      if (estado.comprasSemConta.has(sessionId)) return false;
+      estado.comprasSemConta.set(sessionId, { email, plano });
+      return true;
+    },
+    async subscricaoAtivaDaConta(userId) {
+      const c = estado.contas.get(userId);
+      if (!c?.stripe_subscription_id || c.subscription_plan === "none") return null;
+      return ["active", "trialing", "past_due"].includes(c.subscription_status) ? c.stripe_subscription_id : null;
+    },
+    // Chave primária nova_subscription_id: true só na 1.ª vez.
+    async registarSubscricaoDuplicada(dados) {
+      if (estado.duplicadas.has(dados.novaSubscriptionId)) return false;
+      estado.duplicadas.set(dados.novaSubscriptionId, dados);
+      return true;
     },
     async aplicarSubscricaoNaConta(userId, sub) {
       estado.contas.set(userId, {
@@ -1692,5 +1711,88 @@ describe("casos Avulso por usar vs. casos da subscrição", () => {
       await processarEventoStripe(reembolso({ status: "pending" }), deps);
       assert.equal(conta().case_credits, 1);
     });
+  });
+});
+
+// Compras pelo preçário público sem conta (lembretes) e proteção contra uma
+// segunda subscrição aplicada por cima da que a conta já tem (03/10/2026).
+describe("compra sem conta e subscrições duplicadas", () => {
+  const avisos = (assunto) => estado.avisosAdmin.filter((a) => a.assunto.startsWith(assunto));
+
+  test("compra paga sem conta: fica para os lembretes e o admin é avisado uma única vez", async () => {
+    await processarEventoStripe(evento("checkout.session.completed", sessaoAvulso()), deps);
+    assert.equal(ultimoLog().resultado, "pagamento_confirmado_sem_conta");
+    assert.deepEqual(estado.comprasSemConta.get("cs_avulso"), { email: "cliente@teste.invalid", plano: "avulso" });
+    assert.equal(avisos("Compra paga sem conta associada").length, 1);
+
+    // Reenvio (novo event.id, mesma sessão): nada de novo.
+    await processarEventoStripe(evento("checkout.session.completed", sessaoAvulso()), deps);
+    assert.equal(avisos("Compra paga sem conta associada").length, 1);
+    assert.equal(estado.comprasSemConta.size, 1);
+  });
+
+  test("pagamento pendente sem conta: ainda não entra nos lembretes", async () => {
+    await processarEventoStripe(evento("checkout.session.completed", sessaoAvulso({ payment_status: "unpaid" })), deps);
+    assert.equal(estado.comprasSemConta.size, 0);
+    assert.equal(avisos("Compra paga sem conta associada").length, 0);
+  });
+
+  test("compra com conta: não entra nos lembretes", async () => {
+    comConta();
+    estado.stripeSubscricao = snapshot("active");
+    await processarEventoStripe(evento("checkout.session.completed", sessaoSubscricao()), deps);
+    assert.equal(estado.comprasSemConta.size, 0);
+  });
+
+  test("conta com outra subscrição ativa: a nova não é aplicada por cima, fica por rever e o admin é avisado", async () => {
+    comConta({ subscription_plan: "protecao", subscription_status: "active", stripe_subscription_id: "sub_antiga" });
+    estado.stripeSubscricao = snapshot("active");
+    const r = await processarEventoStripe(evento("checkout.session.completed", sessaoSubscricao()), deps);
+    assert.equal(r.status, 200);
+    assert.equal(ultimoLog().resultado, "pagamento_confirmado_subscricao_duplicada");
+    assert.equal(conta().stripe_subscription_id, "sub_antiga", "a subscrição existente continua ligada à conta");
+    assert.equal(conta().subscription_plan, "protecao");
+    assert.equal(conta().case_credits, 0, "sem casos da subscrição duplicada");
+    assert.deepEqual(estado.duplicadas.get(SUB), {
+      novaSubscriptionId: SUB,
+      userId: USER,
+      subscricaoExistenteId: "sub_antiga",
+      sessionId: "cs_sub",
+      origem: "checkout",
+    });
+    assert.equal(avisos("Subscrição duplicada por rever").length, 1);
+    assert.equal(estado.subscricoesCanceladasStripe.length, 0, "nada é cancelado automaticamente");
+
+    // Reenvio: sem segundo aviso.
+    await processarEventoStripe(evento("checkout.session.completed", sessaoSubscricao()), deps);
+    assert.equal(avisos("Subscrição duplicada por rever").length, 1);
+  });
+
+  test("invoice.paid de uma segunda subscrição no mesmo Customer: não é aplicada à conta", async () => {
+    comConta({ subscription_plan: "protecao", subscription_status: "active", stripe_subscription_id: "sub_antiga" });
+    estado.stripeSubscricao = snapshot("active");
+    await processarEventoStripe(evento("invoice.paid", fatura("in_nova", "subscription_create")), deps);
+    assert.equal(ultimoLog().resultado, "pago_subscricao_duplicada");
+    assert.equal(conta().stripe_subscription_id, "sub_antiga");
+    assert.equal(conta().case_credits, 0);
+    assert.equal(estado.duplicadas.get(SUB).origem, "fatura");
+    assert.equal(avisos("Subscrição duplicada por rever").length, 1);
+  });
+
+  test("renovação da própria subscrição da conta continua a ser aplicada", async () => {
+    comConta({ subscription_plan: "caso_protecao", subscription_status: "active", stripe_subscription_id: SUB });
+    estado.stripeSubscricao = snapshot("active");
+    await processarEventoStripe(evento("invoice.paid", fatura("in_ciclo_2")), deps);
+    assert.equal(conta().case_credits, 1);
+    assert.equal(estado.duplicadas.size, 0);
+  });
+
+  test("subscrição antiga já terminada não bloqueia uma nova", async () => {
+    comConta({ subscription_plan: "none", subscription_status: "canceled", stripe_subscription_id: "sub_antiga" });
+    estado.stripeSubscricao = snapshot("active");
+    await processarEventoStripe(evento("checkout.session.completed", sessaoSubscricao()), deps);
+    assert.equal(conta().stripe_subscription_id, SUB);
+    assert.equal(conta().subscription_plan, "caso_protecao");
+    assert.equal(estado.duplicadas.size, 0);
   });
 });

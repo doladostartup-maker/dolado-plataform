@@ -1,0 +1,49 @@
+# Testes em todos os PRs (e em main): TypeScript, lint, testes unitários e
+# testes de contrato Stripe ↔ Supabase com a base de dados REAL (Supabase
+# local em Docker, recriada a partir das migrations). Sem segredos: nada
+# aqui fala com a Supabase de produção nem com o Stripe.
+name: Testes
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: testes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unitarios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npm test
+
+  contrato:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.117.0
+      - run: npm ci
+      # Só a base de dados, a API (PostgREST) e a Auth: arranque mais rápido.
+      - run: supabase start -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,realtime,postgres-meta
+      # pgTAP (RLS, privilégios, funções SQL) primeiro, com a base acabada de
+      # criar: rls_isolamento conta linhas e precisa da base vazia.
+      - run: supabase test db
+      - run: npm run test:contrato

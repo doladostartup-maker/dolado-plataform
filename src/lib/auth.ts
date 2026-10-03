@@ -45,6 +45,24 @@ export async function requireAdmin() {
   return { supabase, user };
 }
 
+/** Utilizador da sessão, sem redirecionar (null sem sessão). */
+export async function utilizadorAtual() {
+  return utilizadorPorPedido();
+}
+
+/**
+ * Conta da sessão com o estado de confirmação do e-mail. Usa getUser() (vai
+ * à Supabase Auth): o JWT não traz email_confirmed_at de forma fiável, e
+ * associar uma compra exige o e-mail confirmado no momento.
+ */
+export async function contaComEmailConfirmado() {
+  const supabase = await clientePorPedido();
+  const { data } = await supabase.auth.getUser();
+  const user = data?.user;
+  if (!user) return null;
+  return { id: user.id, email: user.email ?? null, emailConfirmado: !!user.email_confirmed_at };
+}
+
 export async function requireUser() {
   const { supabase, user } = await utilizadorPorPedido();
 

@@ -210,7 +210,10 @@ describe("nenhum fluxo abre o Checkout sem consentimento (código das ações)",
 describe("pontos de entrada usam a confirmação", () => {
   const fonte = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
   const pontos = {
-    "5. landing (preçário)": ["../components/landing/Precario.tsx", /<ConfirmarCompra[\s\S]*fluxo="publico"[\s\S]*origem="landing"/],
+    "5. landing (preçário → portal /comprar)": [
+      "../app/comprar/page.tsx",
+      /<BotaoComprar[\s\S]*fluxo="publico"[\s\S]*origem="landing"[\s\S]*<CompraConfirmacao[\s\S]*fluxo="adesao"/,
+    ],
     "6. portal (painel)": ["../app/portal/_components/PortalDashboard.tsx", /<ConfirmarCompra[\s\S]*fluxo="adesao"[\s\S]*origem="portal"/],
     "7. pedido de caso (modalidade)": [
       "../app/tratar-caso/modalidade/page.tsx",
@@ -225,6 +228,21 @@ describe("pontos de entrada usam a confirmação", () => {
       assert.equal(/iniciarCheckout|iniciarCompraAvulsoComConta|iniciarUpgradePara/.test(f), false);
     });
   }
+
+  test("preçário de dolado.pt não abre Checkout: leva sempre a portal.dolado.pt/comprar (ou ao Tratar o meu caso)", () => {
+    const precario = fonte("../components/landing/Precario.tsx");
+    assert.equal(/ConfirmarCompra|confirmarCompra|BotaoComprar/.test(precario), false);
+    assert.match(precario, /urlComprar\(plano\)/);
+    assert.match(precario, /urlTratarCaso\("precario"\)/);
+    const confirmacao = fonte("../app/comprar/CompraConfirmacao.tsx");
+    assert.match(confirmacao, /<ConfirmarCompra[\s\S]*origem="landing"/);
+  });
+
+  test("compra pública com sessão iniciada segue os fluxos da conta (nunca checkoutPublico)", () => {
+    const acoes = fonte("../app/actions/stripe.ts");
+    assert.match(acoes, /comSessao = pedido\.fluxo === "publico" && !!\(await utilizadorAtual\(\)\)\.user/);
+    assert.match(acoes, /pedido\.fluxo === "publico" && !comSessao\s*\?\s*await checkoutPublico\(pedido\)/);
+  });
 
   test("modal: checkboxes não pré-selecionadas, sem checkbox de Política de Privacidade", () => {
     const modal = fonte("../components/compra/ConfirmarCompra.tsx");

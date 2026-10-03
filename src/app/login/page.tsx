@@ -56,7 +56,7 @@ export default async function LoginPage({
       </div>
 
       <a
-        href="/auth/login/google"
+        href={params.next ? `/auth/login/google?next=${encodeURIComponent(params.next)}` : "/auth/login/google"}
         className="block w-full rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-[18px] py-[10px] text-center text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
       >
         Entrar com Google

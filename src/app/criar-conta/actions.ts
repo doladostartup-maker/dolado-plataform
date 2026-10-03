@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { MARKETING_SITE_URL } from "@/lib/site";
 import { getStripe } from "@/lib/stripe/client";
+import { contaExisteComEmail } from "@/lib/compra/servidor";
 import { avaliarSessaoParaCriarConta } from "@/lib/stripe/criarConta";
 import { aplicarCompraConfirmadaNaConta, idDe } from "@/lib/stripe/webhook";
 import { criarDependenciasWebhook } from "@/lib/stripe/webhookDependencias";
@@ -43,9 +44,17 @@ export async function criarContaComPagamento(formData: FormData) {
     .eq("stripe_session_id", sessionId)
     .maybeSingle();
 
-  const avaliacao = avaliarSessaoParaCriarConta(session, pagamento?.user_id ?? null);
+  const emailCheckout = session.customer_details?.email;
+  const avaliacao = avaliarSessaoParaCriarConta(
+    session,
+    pagamento?.user_id ?? null,
+    !!emailCheckout && !pagamento?.user_id && (await contaExisteComEmail(emailCheckout)),
+  );
   if (!avaliacao.ok) {
     if (avaliacao.motivo === "sessao_invalida") redirect(`${MARKETING_SITE_URL}/#precario`);
+    // Nunca uma segunda conta com o mesmo e-mail: a página explica como
+    // iniciar sessão e associar a compra.
+    if (avaliacao.motivo === "email_com_conta") redirect(`/criar-conta?session_id=${encodeURIComponent(sessionId)}`);
     redirect(`/login?info=${encodeURIComponent("Esta compra já tem uma conta associada. Inicie sessão.")}`);
   }
 
