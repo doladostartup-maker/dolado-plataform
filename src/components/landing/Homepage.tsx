@@ -6,60 +6,10 @@ import { detectarOrigem, track } from "@/lib/analytics";
 import { LIVRO_RECLAMACOES_URL, ROTAS_LEGAIS } from "@/lib/legal";
 import { ENTIDADE_LEGAL, NIPC, urlTratarCaso } from "@/lib/site";
 import { AccordionPerguntas } from "./AccordionPerguntas";
+import { FuncionalidadesProtecao } from "./FuncionalidadesProtecao";
 import { PERGUNTAS_HOMEPAGE } from "./conteudoPerguntasFrequentes";
 import { Precario } from "./Precario";
 import { SiteHeader } from "./SiteHeader";
-
-type Funcionalidade = {
-  icone: string;
-  badge?: "DISPONÍVEL" | "EM BREVE";
-  titulo: string;
-  descricao: string;
-  tracejado?: boolean;
-  href?: string;
-};
-
-const FUNCIONALIDADES: Funcionalidade[] = [
-  {
-    icone: "📝",
-    badge: "DISPONÍVEL",
-    titulo: "Gestão de Casos",
-    descricao: "Abertura guiada, identificação da legislação aplicável e reclamação preparada por si.",
-  },
-  {
-    icone: "🛡️",
-    badge: "DISPONÍVEL",
-    titulo: "Monitor de Proteção",
-    descricao: "Carregue uma fatura ou o contrato: acompanhamos as datas de fidelização e de promoção e o histórico das faturas, com aviso por e-mail.",
-  },
-  {
-    icone: "📢",
-    badge: "DISPONÍVEL",
-    titulo: "Aviso Sectorial",
-    descricao: "Alertamos quando o seu operador anuncia subida de preços no setor.",
-  },
-
-  {
-    icone: "🧑‍🤝‍🧑",
-    badge: "DISPONÍVEL",
-    titulo: "Simulador de Elegibilidade",
-    descricao: "Grátis e sem conta — 4 perguntas para ver se a DoLado pode ajudar com o seu caso.",
-    href: "/simulador-elegibilidade",
-  },
-  {
-    icone: "🧮",
-    badge: "DISPONÍVEL",
-    titulo: "Calculadora de Cancelamento",
-    descricao: "Grátis e sem conta — estime o encargo máximo de cancelar um contrato de telecomunicações com fidelização.",
-    href: "/calculadora-cancelamento",
-  },
-  {
-    icone: "➕",
-    titulo: "Outros",
-    descricao: "Mais setores e outras funcionalidades ainda em estudo.",
-    tracejado: true,
-  },
-];
 
 const BOTAO_PRIMARIO =
   "inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)]";
@@ -157,64 +107,11 @@ export function Homepage() {
       </section>
 
       {/* ===== Secção 2: Funcionalidades ===== */}
-      <section className="border-y border-[var(--color-hairline)] bg-white">
-        <div className="mx-auto max-w-[1120px] px-4 py-16 sm:px-10">
-          <p className="mb-8 text-sm font-bold uppercase tracking-wide text-[var(--color-brand)]">
-            Funcionalidades
-          </p>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {FUNCIONALIDADES.map((f) => {
-              const className = `rounded-[var(--radius-card)] border bg-[var(--color-surface)] p-[22px] ${
-                f.href ? "block transition hover:border-[var(--color-brand)] hover:shadow-[var(--shadow-md)]" : ""
-              } ${
-                f.badge === "DISPONÍVEL"
-                  ? "border-[var(--color-hairline)] shadow-[var(--shadow-subtle)]"
-                  : f.tracejado
-                    ? "border-dashed border-[var(--color-hairline-strong)] opacity-70"
-                    : "border-[var(--color-hairline-strong)] opacity-85"
-              }`;
-
-              const conteudo = (
-                <>
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-brand-wash)] text-base">
-                      {f.icone}
-                    </span>
-                    {f.badge && (
-                      <span
-                        className={`rounded-[var(--radius-pill)] px-2 py-0.5 text-[10px] font-semibold ${
-                          f.badge === "DISPONÍVEL"
-                            ? "bg-[var(--color-brand-wash)] text-[var(--color-brand)]"
-                            : "bg-[var(--color-surface-sunken)] text-[var(--color-ink-faint)]"
-                        }`}
-                      >
-                        {f.badge}
-                      </span>
-                    )}
-                  </div>
-                  <p className="mb-1.5 text-[14.5px] font-semibold text-[var(--color-ink)]">{f.titulo}</p>
-                  <p className="text-[13px] leading-relaxed text-[var(--color-ink-muted)]">{f.descricao}</p>
-                  {f.href && (
-                    <p className="mt-2 text-[12.5px] font-semibold text-[var(--color-brand)]">
-                      Experimentar →
-                    </p>
-                  )}
-                </>
-              );
-
-              return f.href ? (
-                <Link key={f.titulo} href={f.href} className={className}>
-                  {conteudo}
-                </Link>
-              ) : (
-                <div key={f.titulo} className={className}>
-                  {conteudo}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      <FuncionalidadesProtecao
+        botaoPrimario={BOTAO_PRIMARIO}
+        botaoSecundario={BOTAO_SECUNDARIO}
+        onProblemaClick={() => openForm("click_funcionalidades_reclamacao")}
+      />
 
       {/* ===== Secção 3: Preçário ===== */}
       <Precario />
