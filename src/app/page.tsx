@@ -5,7 +5,7 @@ import { Homepage } from "@/components/landing/Homepage";
 export const metadata: Metadata = {
   title: "A sua reclamação, feita bem - DoLado",
   description:
-    "A DoLado prepara a sua reclamação formal com a legislação aplicável, mostra-lhe o texto antes do envio e, só com a sua autorização, submete-a ao Livro de Reclamações — e acompanha o caso até à resposta.",
+    "A DoLado acompanha as suas faturas, as datas importantes dos seus contratos e as alterações relevantes e, quando surge um problema, prepara a reclamação com a legislação aplicável e só a envia com a sua autorização.",
 };
 
 export default function LandingPage() {

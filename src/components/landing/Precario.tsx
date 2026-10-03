@@ -18,13 +18,15 @@ import {
 // conta) antes da confirmação da compra (Termos, início imediato, livre
 // resolução). O Avulso leva a "Tratar o meu caso" (caso primeiro, pagamento
 // no fim).
-// Só se listam funcionalidades de proteção já disponíveis na plataforma.
+// Só se listam funcionalidades de proteção já disponíveis na plataforma,
+// descritas pelo benefício (como na secção de funcionalidades da homepage,
+// FuncionalidadesProtecao.tsx) e nunca pelos nomes internos.
 
 const FUNCIONALIDADES_PROTECAO = [
-  "Alerta de fim de fidelização",
-  "Alerta de fim de promoção",
-  "Aviso sectorial de aumento de preços",
-  "Comparador de faturas mês a mês",
+  "Comparação de faturas mês a mês",
+  "Avisos antes do fim de promoções",
+  "Avisos antes do fim de períodos de fidelização",
+  "Alertas sobre alterações relevantes no seu setor",
 ];
 
 type Cartao = {
@@ -37,16 +39,17 @@ type Cartao = {
 
 const CARTOES: Record<PlanoId, Cartao> = {
   protecao: {
-    resumo: "Para quem quer antecipar problemas e acompanhar o que pode mudar nos seus contratos.",
+    resumo:
+      "Para quem quer que a DoLado acompanhe o que paga, as datas importantes dos seus contratos e as alterações que podem merecer a sua atenção.",
     inclui: FUNCIONALIDADES_PROTECAO,
     naoInclui: "Não inclui o tratamento de casos.",
     cta: "Aderir à Proteção",
   },
   caso_protecao: {
-    resumo: "Proteção contínua e acompanhamento quando precisar de tratar um problema.",
+    resumo: "A DoLado fica atenta por si e, quando surgir um problema, também o trata consigo.",
     inclui: [
-      "Tudo o que está incluído no plano Proteção",
-      "1 caso por mês",
+      "Tudo o que está incluído na Proteção",
+      "1 novo caso por mês",
       `Casos não utilizados acumulam até ao limite de ${LIMITE_CASOS_ACUMULADOS}`,
       "Sem período de carência",
     ],
@@ -54,13 +57,13 @@ const CARTOES: Record<PlanoId, Cartao> = {
     destaque: true,
   },
   avulso: {
-    resumo: "Para quem precisa de tratar um problema pontual, sem aderir a uma subscrição.",
+    resumo: "Para tratar um único problema, com pagamento único e sem aderir a uma subscrição.",
     inclui: [
       "Tratamento de 1 caso",
       "Acompanhamento desse caso ao longo do processo",
       "Acesso ao histórico do caso na área de cliente",
     ],
-    naoInclui: "Não inclui as funcionalidades de proteção.",
+    naoInclui: "Não inclui as funcionalidades da Proteção.",
     cta: "Tratar o meu caso",
   },
 };
@@ -74,7 +77,7 @@ const COMPARACAO: { label: string; valores: Record<PlanoId, string> }[] = [
       avulso: formatarPreco(PLANOS.avulso.precoCentimos),
     },
   },
-  { label: "Proteção e prevenção", valores: { protecao: "Sim", caso_protecao: "Sim", avulso: "Não" } },
+  { label: "Acompanhamento e avisos da Proteção", valores: { protecao: "Sim", caso_protecao: "Sim", avulso: "Não" } },
   { label: "Casos incluídos", valores: { protecao: "0", caso_protecao: "1 por mês", avulso: "1" } },
   {
     label: "Acumulação de casos",

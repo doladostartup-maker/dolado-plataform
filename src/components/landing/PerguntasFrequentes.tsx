@@ -34,8 +34,8 @@ export function PerguntasFrequentes() {
           Perguntas frequentes
         </h1>
         <p className="mx-auto max-w-[520px] text-[15.5px] leading-relaxed text-[var(--color-ink-muted)]">
-          Encontre respostas sobre como funciona a DoLado, os nossos planos, o envio da
-          reclamação e o que acontece depois.
+          Encontre respostas sobre como funciona a DoLado, a Proteção, os nossos planos, o envio
+          da reclamação e o que acontece depois.
         </p>
       </section>
 

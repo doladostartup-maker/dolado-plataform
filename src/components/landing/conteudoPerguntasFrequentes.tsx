@@ -15,7 +15,17 @@ const O_QUE_E: Pergunta = {
   id: "o-que-e",
   pergunta: "O que é a DoLado?",
   resposta:
-    "A DoLado ajuda consumidores a preparar, enviar e acompanhar reclamações de consumo. Analisamos o caso, identificamos a legislação aplicável e ajudamos a estruturar a reclamação e os próximos passos.",
+    "A DoLado ajuda os consumidores a acompanhar os seus contratos, faturas e alterações importantes em serviços como as telecomunicações, a energia e a água. Quando surge um problema, ajudamo-lo a preparar, enviar e acompanhar a reclamação. O objetivo é estar do seu lado antes e depois de surgir um problema.",
+};
+
+// A Proteção descreve-se pelo benefício, como na secção de funcionalidades
+// e no preçário da homepage — nunca pelos nomes internos (Monitor de
+// Proteção, aviso sectorial) nem limitada a um setor.
+const COMO_FUNCIONA: Pergunta = {
+  id: "como-funciona-dolado",
+  pergunta: "Como funciona a DoLado?",
+  resposta:
+    "Com a Proteção, a DoLado acompanha as informações dos seus contratos e faturas e avisa-o quando há algo que pode merecer a sua atenção. Se surgir um problema, pode abrir um caso: analisamos o que aconteceu, preparamos a reclamação e só a enviamos depois da sua autorização. Depois do envio, acompanhamos o que acontece a seguir.",
 };
 
 const SEM_AUTORIZACAO: Pergunta = {
@@ -37,7 +47,7 @@ const DIFERENCA_PLANOS: Pergunta = {
   id: "diferenca-planos",
   pergunta: "Qual é a diferença entre Proteção, Caso + Proteção e Avulso?",
   resposta:
-    "A Proteção dá acesso às funcionalidades de prevenção e acompanhamento de contratos, sem tratamento de casos. O Caso + Proteção junta essas funcionalidades a 1 novo caso por mês. O Avulso é um pagamento único para tratar um caso, sem subscrição.",
+    "A Proteção acompanha as suas faturas, as datas importantes dos seus contratos e as alterações relevantes no seu setor, sem tratamento de casos. O Caso + Proteção inclui esse acompanhamento contínuo e acrescenta 1 novo caso por mês. O Avulso serve para tratar um único problema, com pagamento único, sem subscrição nem funcionalidades da Proteção.",
 };
 
 // O prazo documentado (FormularioGuiado, e-mail "novo-caso", indicador do
@@ -59,12 +69,7 @@ const SUBSTITUI_ADVOGADO: Pergunta = {
 
 export const PERGUNTAS_HOMEPAGE: Pergunta[] = [
   O_QUE_E,
-  {
-    id: "como-funciona",
-    pergunta: "Como funciona?",
-    resposta:
-      "Conte-nos o que aconteceu e analisamos o seu caso. A DoLado prepara a reclamação e apresenta-lhe o texto antes de qualquer envio. Depois de rever e autorizar, tratamos do envio e acompanhamos o que acontece a seguir.",
-  },
+  COMO_FUNCIONA,
   SEM_AUTORIZACAO,
   QUANTO_CUSTA,
   DIFERENCA_PLANOS,
@@ -108,6 +113,7 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
     id: "como-funciona",
     titulo: "Como funciona",
     perguntas: [
+      COMO_FUNCIONA,
       {
         id: "como-funciona-reclamacao",
         pergunta: "Como funciona uma reclamação com a DoLado?",
@@ -145,12 +151,23 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
     titulo: "Planos e proteção",
     perguntas: [
       QUANTO_CUSTA,
-      DIFERENCA_PLANOS,
+      {
+        ...DIFERENCA_PLANOS,
+        resposta: `${DIFERENCA_PLANOS.resposta} No Caso + Proteção, os casos não utilizados acumulam até ao limite de ${LIMITE_CASOS_ACUMULADOS}.`,
+      },
       {
         id: "o-que-inclui-protecao",
         pergunta: "O que inclui o plano Proteção?",
         resposta:
-          "O plano Proteção dá acesso às funcionalidades de prevenção e acompanhamento de contratos disponíveis na DoLado — o Monitor de Proteção, que acompanha os seus contratos e faturas e o avisa do fim da fidelização e das promoções, e o aviso sectorial. Não inclui o tratamento de reclamações.",
+          "A Proteção mantém a DoLado atenta por si. Comparamos as suas faturas com as anteriores, acompanhamos datas importantes, como o fim de promoções e de períodos de fidelização, e avisamo-lo por e-mail antes dessas datas. Também o avisamos de alterações relevantes nos setores que escolher, como subidas de preços anunciadas. A Proteção não inclui o tratamento de reclamações.",
+      },
+      {
+        // Fluxo real: /portal/contratos (carregar fatura ou contrato, ou
+        // /portal/contratos/novo sem documento) e setores no /portal/perfil.
+        id: "comecar-protecao",
+        pergunta: "Como começo a usar a Proteção?",
+        resposta:
+          "Depois de subscrever, entre na sua área de cliente e abra “Os meus contratos”. Basta carregar uma fatura ou o contrato, em PDF ou imagem: a DoLado lê os dados principais, como o fornecedor, os valores e as datas, e pede-lhe que os confirme. Se não tiver o documento à mão, pode indicar os dados manualmente — basta o fornecedor e uma data, como o fim da fidelização ou da promoção. Para receber alertas sobre alterações no seu setor, escolha os setores que lhe interessam em “Gestão de Perfil”.",
       },
       {
         id: "o-que-inclui-caso-protecao",
@@ -177,6 +194,8 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
               Sim. Pode cancelar a sua subscrição a qualquer momento na área{" "}
               <strong>Gestão de Subscrição</strong>. Depois de cancelar, continua a beneficiar da
               Proteção até ao fim do período que já pagou e não serão feitas novas cobranças.
+              Quando esse período terminar, os alertas da Proteção ficam desativados e deixam de
+              ser enviados.
             </p>
             <p className="mt-3">
               O cancelamento normal não dá direito ao reembolso proporcional da mensalidade já
