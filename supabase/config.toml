@@ -12,9 +12,11 @@ verify_jwt = false
 verify_jwt = false
 
 # E-mail "Confirm sign up" (confirmação do e-mail de uma conta nova).
-# Fonte única do texto: supabase/templates/confirmacao.html. Tem o código
-# ({{ .Token }}, usado em "Tratar o meu caso" sem sair da página) e a
-# ligação ({{ .ConfirmationURL }}, para /registo e /criar-conta).
+# Fonte única do texto: supabase/templates/confirmacao.html. Tem sempre a
+# ligação ({{ .ConfirmationURL }}, que volta a /auth/callback) e só mostra o
+# código ({{ .Token }}) às contas criadas em "Tratar o meu caso" — a única
+# página com campo para o introduzir (metadado mostrar_codigo, ver
+# src/lib/authServidor.ts). /registo e /criar-conta recebem só a ligação.
 # Este ficheiro só configura a stack local: em produção o mesmo assunto e
 # HTML têm de ser colados no Dashboard (Authentication → Emails →
 # Templates → Confirm sign up) sempre que o template mudar.

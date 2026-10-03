@@ -1,12 +1,14 @@
 import Link from "next/link";
+import { ehDestinoSeguro } from "@/lib/destinoAuth";
 import { registar } from "./actions";
 
 export default async function RegistoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string }>;
+  searchParams: Promise<{ erro?: string; next?: string }>;
 }) {
   const params = await searchParams;
+  const next = ehDestinoSeguro(params.next) ? params.next : null;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
@@ -19,6 +21,7 @@ export default async function RegistoPage({
       )}
 
       <form action={registar} className="flex flex-col gap-4">
+        {next && <input type="hidden" name="next" value={next} />}
         <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
           Nome
           <input
@@ -57,7 +60,7 @@ export default async function RegistoPage({
 
       <p className="text-sm text-[var(--color-ink-muted)]">
         Já tem conta?{" "}
-        <Link href="/login" className="text-[var(--color-brand)] underline">
+        <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} className="text-[var(--color-brand)] underline">
           Entre
         </Link>
       </p>

@@ -22,6 +22,32 @@ export function setorTratarCaso(setor: string): "Telecomunicações" | "Energia"
   return null;
 }
 
+// Campos que o cliente pode introduzir ou corrigir, e o tipo de cada um
+// (formulários do portal e validação nas Server Actions).
+export type TipoCampo = "texto" | "data" | "euros" | "tipo" | "simnao";
+
+export const CAMPOS_EDITAVEIS: Partial<Record<CampoContrato, TipoCampo>> = {
+  fornecedor: "texto",
+  referencia_contrato: "texto",
+  servico: "texto",
+  data_inicio: "data",
+  data_fim_fidelizacao: "data",
+  data_fim_promocao: "data",
+  descricao_promocao: "texto",
+  mensalidade_cents: "euros",
+  vantagem_cents: "euros",
+  tipo_fidelizacao: "tipo",
+  nova_instalacao: "simnao",
+  equipamento_subsidiado: "simnao",
+};
+
+/** Valor guardado (jsonb) no formato do campo de edição ("71,46", "2025-04-08", "sim"). */
+export function valorParaEdicao(tipo: TipoCampo, valor: unknown): string {
+  if (valor == null) return "";
+  if (tipo === "euros" && typeof valor === "number") return (valor / 100).toFixed(2).replace(".", ",");
+  return String(valor);
+}
+
 export const ROTULO_CAMPO: Record<CampoContrato, string> = {
   fornecedor: "Fornecedor",
   referencia_contrato: "Referência do contrato",

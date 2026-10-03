@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { COOKIE_DESTINO_POS_LOGIN, destinoSeguro } from "@/lib/pedidoCaso";
+import { destinoDepoisDeAutenticar } from "@/lib/authServidor";
+import { COOKIE_DESTINO_POS_LOGIN, ehDestinoSeguro } from "@/lib/destinoAuth";
 import { haPedidoPorPagarNoBrowser } from "@/lib/pedidoCasoServidor";
 import { createClient } from "@/lib/supabase/server";
 
@@ -32,24 +33,33 @@ export async function GET(request: Request) {
     console.error("[auth/callback] cookies recebidos:", nomesCookies.join(", ") || "(nenhum)");
 
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      // Sem destino explícito: se este browser tem um pedido de caso por
-      // pagar ("Tratar o meu caso" → Google, ou ligação de confirmação do
-      // e-mail), continua na escolha da modalidade.
-      const destinoGuardado = (await cookies()).get(COOKIE_DESTINO_POS_LOGIN)?.value;
-      const next = nextPedido
-        ? destinoSeguro(nextPedido)
-        : destinoGuardado
-          ? destinoSeguro(destinoGuardado)
-          : (await haPedidoPorPagarNoBrowser())
-            ? "/tratar-caso/modalidade"
-            : "/conta";
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const destinoGuardado = (await cookies()).get(COOKIE_DESTINO_POS_LOGIN)?.value;
+    if (!error && data.user) {
+      // Destino: ?next= explícito → destino guardado ao criar a conta ou ao
+      // sair para o Google (ex.: continuar a compra em /comprar) → pedido de
+      // caso por pagar neste browser → /portal/casos (ou backoffice, admin).
+      const next = await destinoDepoisDeAutenticar(supabase, data.user.id, {
+        nextExplicito: nextPedido,
+        destinoGuardado,
+        haPedidoPorPagar: haPedidoPorPagarNoBrowser,
+      });
       const resposta = NextResponse.redirect(`${siteUrl}${next}`);
       if (destinoGuardado) resposta.cookies.delete(COOKIE_DESTINO_POS_LOGIN);
       return resposta;
     }
-    console.error("[auth/callback] exchangeCodeForSession falhou:", error.message);
+    console.error("[auth/callback] exchangeCodeForSession falhou:", error?.message);
+
+    // A ligação de confirmação aberta noutro browser/dispositivo: a Supabase
+    // já confirmou o e-mail, mas a sessão só abre no browser que criou a
+    // conta (PKCE). Em vez de um erro, pede para iniciar sessão — e mantém o
+    // destino para continuar no mesmo passo.
+    const voltar = ehDestinoSeguro(destinoGuardado) ? `&next=${encodeURIComponent(destinoGuardado)}` : "";
+    return NextResponse.redirect(
+      `${siteUrl}/login?info=${encodeURIComponent(
+        "Se acabou de confirmar o seu e-mail, inicie sessão para continuar.",
+      )}${voltar}`,
+    );
   }
 
   return NextResponse.redirect(

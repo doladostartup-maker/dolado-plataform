@@ -40,9 +40,16 @@ export type ResultadoChamada =
 
 let cliente: Anthropic | null = null;
 
+// Limite por tentativa: um contrato de 11 páginas é lido em ~13–16 s
+// (medido em produção a 02–03/10/2026); 45 s cobre documentos maiores sem
+// deixar uma leitura pendurada. Com 1 nova tentativa (só por erro técnico),
+// o pior caso fica abaixo de ~100 s — abaixo do limite em que o cliente vê
+// "não concluído" e pode tentar de novo (LIMITE_SEM_AVANCO_MS, 3 min).
+const TIMEOUT_TENTATIVA_MS = 45_000;
+
 function obterCliente() {
   if (!process.env.ANTHROPIC_API_KEY) return null;
-  cliente ??= new Anthropic({ maxRetries: 1, timeout: 120_000 });
+  cliente ??= new Anthropic({ maxRetries: 1, timeout: TIMEOUT_TENTATIVA_MS });
   return cliente;
 }
 

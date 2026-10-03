@@ -194,7 +194,7 @@ select is(
      and p.proname not in ('handle_new_user', 'is_admin', 'rls_auto_enable', 'notificar_novo_caso', 'casos_evento_dossie',
                                                       'alertas_seguir_protecao', 'avisos_setor_destinatarios',
                            'monitor_recalcular_estado', 'monitor_campo_aceitar', 'monitor_campo_rejeitar',
-                           'monitor_campo_propor', 'monitor_campo_definir', 'monitor_alertas_pendentes',
+                           'monitor_campo_propor', 'monitor_campo_definir', 'monitor_campos_decidir', 'monitor_alertas_pendentes',
                            'monitor_reservar_alerta', 'monitor_libertar_alerta', 'monitor_ficheiros_orfaos',
                            -- compras sem conta / associação (só service_role; testes em compras_sem_conta.test.sql)
                            'conta_existe_com_email', 'registar_compra_sem_conta', 'reclamar_compra_sem_conta',

@@ -3,13 +3,15 @@
 import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { requireProtecao } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { excedeuLimiteTaxa } from "@/lib/rateLimit";
 import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 import { MIME_ACEITES, type MimeAceite } from "@/lib/monitor/claudeDocumentos";
-import { inspecionarFicheiro, processarDocumento } from "@/lib/monitor/servidor";
-import { SETORES_CONTRATO, lerEurosParaCents } from "@/lib/monitor/contratos";
+import { processarDocumentoEmSegundoPlano, reiniciarProcessamento } from "@/lib/monitor/servidor";
+import { LIMITE_SEM_AVANCO_MS } from "@/lib/monitor/processamento";
+import { CAMPOS_EDITAVEIS, SETORES_CONTRATO, lerEurosParaCents, type TipoCampo } from "@/lib/monitor/contratos";
 import { dataValida, type CampoContrato } from "@/lib/monitor/extracaoFatura";
 
 // Monitor de Proteção — ações do cliente. O cliente não escreve nas tabelas
@@ -23,24 +25,6 @@ const EXTENSOES: Record<MimeAceite, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
-};
-
-// Campos que o cliente pode introduzir ou corrigir, e o tipo de cada um.
-type TipoCampo = "texto" | "data" | "euros" | "tipo" | "simnao";
-
-const CAMPOS_EDITAVEIS: Partial<Record<CampoContrato, TipoCampo>> = {
-  fornecedor: "texto",
-  referencia_contrato: "texto",
-  servico: "texto",
-  data_inicio: "data",
-  data_fim_fidelizacao: "data",
-  data_fim_promocao: "data",
-  descricao_promocao: "texto",
-  mensalidade_cents: "euros",
-  vantagem_cents: "euros",
-  tipo_fidelizacao: "tipo",
-  nova_instalacao: "simnao",
-  equipamento_subsidiado: "simnao",
 };
 
 function irPara(caminho: string, params: Record<string, string>): never {
@@ -91,47 +75,41 @@ export async function prepararUploadDocumento(tipoMime: string, tamanho: number)
   return { ok: true, caminho, token: data.token };
 }
 
-export async function registarDocumento(formData: FormData) {
+export type ResultadoRegisto = { ok: true; documentoId: string } | { ok: false; erro: string };
+
+/**
+ * Regista o documento já carregado e responde logo: a leitura corre a seguir,
+ * no servidor (after), e o browser acompanha as etapas pela base de dados.
+ * Nenhum pedido HTTP fica à espera da Claude API.
+ */
+export async function registarDocumento(dados: {
+  caminho: string;
+  nomeFicheiro: string;
+  tipo: string;
+  contratoId?: string | null;
+}): Promise<ResultadoRegisto> {
   const { supabase, user } = await requireProtecao("contratos");
-  const caminho = String(formData.get("caminho") ?? "");
-  const nomeFicheiro = String(formData.get("nome_ficheiro") ?? "").slice(0, 200) || null;
-  const tipo = formData.get("tipo") === "contrato" ? "contrato" : "fatura";
-  const contratoId = String(formData.get("contrato_id") ?? "") || null;
-  const voltar = contratoId ? `/portal/contratos/${contratoId}` : "/portal/contratos";
+  const caminho = String(dados.caminho ?? "");
+  const nomeFicheiro = String(dados.nomeFicheiro ?? "").slice(0, 200) || null;
+  const tipo = dados.tipo === "contrato" ? "contrato" : "fatura";
+  const contratoId = dados.contratoId ? String(dados.contratoId) : null;
 
   // O ficheiro é lido com a service role: só caminhos gerados para este
   // utilizador por prepararUploadDocumento().
+  const extensao = caminho.split(".").pop() as string;
   if (!/^[0-9a-f-]{36}\/[0-9a-f-]{36}\.(pdf|jpg|png|webp)$/.test(caminho) || !caminho.startsWith(`${user.id}/`)) {
-    irPara(voltar, { erro: "Ficheiro inválido. Carregue o documento novamente." });
+    return { ok: false, erro: "Ficheiro inválido. Carregue o documento novamente." };
   }
   if (contratoId) {
     const { data: c } = await supabase.from("contratos_monitorizados").select("id").eq("id", contratoId).eq("utilizador_id", user.id).maybeSingle();
-    if (!c) redirect("/portal/contratos");
+    if (!c) return { ok: false, erro: "Contrato não encontrado." };
   }
   if (excedeuLimiteTaxa(`monitor-documento:${user.id}`)) {
-    irPara(voltar, { erro: "Já carregou vários documentos nos últimos minutos. Tente de novo daqui a pouco." });
+    return { ok: false, erro: "Já carregou vários documentos nos últimos minutos. Tente de novo daqui a pouco." };
   }
 
-  const admin = createAdminClient();
-  // Lido em streaming (hash + tamanho), sem ter o ficheiro inteiro em memória.
-  const ficheiro = await inspecionarFicheiro(BUCKET, caminho);
-  if (!ficheiro || ficheiro.tamanho > TAMANHO_MAXIMO || !MIME_ACEITES.includes(ficheiro.mime as MimeAceite)) {
-    await admin.storage.from(BUCKET).remove([caminho]);
-    irPara(voltar, { erro: ficheiro ? "Formato ou tamanho não suportado." : "Não encontrámos o ficheiro carregado ou excede 10 MB. Tente novamente." });
-  }
-  const sha256 = ficheiro.sha256;
-  const { data: repetido } = await admin
-    .from("documentos_monitor")
-    .select("id, contrato_id")
-    .eq("utilizador_id", user.id)
-    .eq("sha256", sha256)
-    .maybeSingle();
-  if (repetido) {
-    await admin.storage.from(BUCKET).remove([caminho]);
-    irPara(repetido.contrato_id ? `/portal/contratos/${repetido.contrato_id}` : "/portal/contratos", { aviso: "repetido" });
-  }
-
-  const { data: doc, error } = await admin
+  const mime = (Object.entries(EXTENSOES).find(([, ext]) => ext === extensao)?.[0] ?? null) as MimeAceite | null;
+  const { data: doc, error } = await createAdminClient()
     .from("documentos_monitor")
     .insert({
       utilizador_id: user.id,
@@ -139,54 +117,102 @@ export async function registarDocumento(formData: FormData) {
       tipo,
       storage_path: caminho,
       nome_ficheiro: nomeFicheiro,
-      mime_type: ficheiro.mime,
-      tamanho_bytes: ficheiro.tamanho,
-      sha256,
+      mime_type: mime,
+      etapa: "recebido",
+      etapa_atualizada_em: new Date().toISOString(),
     })
     .select("id")
     .single();
-  if (error || !doc) irPara(voltar, { erro: MSG_ERRO_GUARDAR });
+  if (error || !doc) return { ok: false, erro: MSG_ERRO_GUARDAR };
 
-  const resultado = await processarDocumento(doc.id);
-  revalidatePath("/portal/contratos");
-  const destino = resultado.contratoId ? `/portal/contratos/${resultado.contratoId}` : "/portal/contratos";
-  irPara(destino, { documento: resultado.estado });
+  after(() => processarDocumentoEmSegundoPlano(doc.id));
+  return { ok: true, documentoId: doc.id };
 }
 
-// ---------------------------------------------------------------------------
-// Valores do contrato
-// ---------------------------------------------------------------------------
-
-async function campoDoCliente(campoId: string) {
+async function documentoDoCliente(documentoId: string) {
   const { supabase, user } = await requireProtecao("contratos");
-  const { data: campo } = await supabase
-    .from("contratos_campos")
-    .select("id, contrato_id, estado")
-    .eq("id", campoId)
+  const { data: doc } = await supabase
+    .from("documentos_monitor")
+    .select("id, contrato_id, etapa, estado")
+    .eq("id", documentoId)
     .eq("utilizador_id", user.id)
     .maybeSingle();
-  if (!campo) redirect("/portal/contratos");
-  return campo;
+  return doc;
 }
 
-export async function confirmarValor(formData: FormData) {
-  const campo = await campoDoCliente(String(formData.get("campo_id") ?? ""));
-  if (campo.estado === "proposto" || campo.estado === "em_conflito") {
-    const { error } = await createAdminClient().rpc("monitor_campo_aceitar", { p_campo_id: campo.id, p_por: "cliente" });
-    if (error) irPara(`/portal/contratos/${campo.contrato_id}`, { erro: MSG_ERRO_GUARDAR });
-  }
-  revalidatePath(`/portal/contratos/${campo.contrato_id}`);
-  redirect(`/portal/contratos/${campo.contrato_id}`);
+/** "Tentar novamente" depois de uma leitura que falhou ou parou. */
+export async function tentarNovamenteDocumento(documentoId: string): Promise<{ ok: boolean }> {
+  const doc = await documentoDoCliente(String(documentoId ?? ""));
+  if (!doc) return { ok: false };
+  const limite = new Date(Date.now() - LIMITE_SEM_AVANCO_MS).toISOString();
+  if (!(await reiniciarProcessamento(doc.id, limite))) return { ok: false };
+  after(() => processarDocumentoEmSegundoPlano(doc.id));
+  return { ok: true };
 }
 
-export async function rejeitarValor(formData: FormData) {
-  const campo = await campoDoCliente(String(formData.get("campo_id") ?? ""));
-  if (campo.estado === "proposto" || campo.estado === "em_conflito") {
-    const { error } = await createAdminClient().rpc("monitor_campo_rejeitar", { p_campo_id: campo.id });
-    if (error) irPara(`/portal/contratos/${campo.contrato_id}`, { erro: MSG_ERRO_GUARDAR });
+/** O cliente já viu o aviso de documento repetido: a linha deixa de ser precisa. */
+export async function descartarDocumentoRepetido(documentoId: string) {
+  const doc = await documentoDoCliente(String(documentoId ?? ""));
+  if (doc?.etapa === "repetido") {
+    await createAdminClient().from("documentos_monitor").delete().eq("id", doc.id).eq("etapa", "repetido");
   }
-  revalidatePath(`/portal/contratos/${campo.contrato_id}`);
-  redirect(`/portal/contratos/${campo.contrato_id}`);
+}
+
+// ---------------------------------------------------------------------------
+// Valores lidos do documento — decisões do cliente, gravadas em lote
+// ---------------------------------------------------------------------------
+
+export type DecisaoCampo = { campoId: string; acao: "aceitar" | "rejeitar" | "corrigir"; valor?: string };
+export type ResultadoDecisoes = { ok: true } | { ok: false; erro: string };
+
+/**
+ * Grava de uma vez as decisões do cliente sobre os valores lidos (correto,
+ * não está correto, corrigido). Uma só ida à base de dados, atómica
+ * (monitor_campos_decidir); sem redirecionar — o browser atualiza a página.
+ */
+export async function confirmarDadosContrato(contratoId: string, decisoes: DecisaoCampo[]): Promise<ResultadoDecisoes> {
+  const { user, contrato } = await contratoDoCliente(String(contratoId ?? ""));
+  if (!Array.isArray(decisoes) || decisoes.length === 0 || decisoes.length > 50) {
+    return { ok: false, erro: "Indique pelo menos uma decisão." };
+  }
+
+  // Tipo de cada campo proposto, para validar as correções.
+  const ids = decisoes.map((d) => String(d.campoId));
+  const admin = createAdminClient();
+  const { data: campos } = await admin
+    .from("contratos_campos")
+    .select("id, campo")
+    .eq("contrato_id", contrato.id)
+    .eq("utilizador_id", user.id)
+    .in("id", ids);
+  const campoPorId = new Map((campos ?? []).map((c) => [c.id as string, c.campo as CampoContrato]));
+
+  const lote: { campo_id: string; acao: string; valor?: string | number }[] = [];
+  for (const d of decisoes) {
+    const campo = campoPorId.get(String(d.campoId));
+    if (!campo || !["aceitar", "rejeitar", "corrigir"].includes(d.acao)) return { ok: false, erro: MSG_ERRO_GUARDAR };
+    if (d.acao !== "corrigir") {
+      lote.push({ campo_id: d.campoId, acao: d.acao });
+      continue;
+    }
+    const tipo = CAMPOS_EDITAVEIS[campo];
+    const valor = tipo ? lerValor(tipo, String(d.valor ?? "")) : null;
+    if (valor === null) return { ok: false, erro: "Verifique os valores corrigidos (datas e montantes)." };
+    lote.push({ campo_id: d.campoId, acao: "corrigir", valor });
+  }
+
+  const { error } = await admin.rpc("monitor_campos_decidir", {
+    p_utilizador: user.id,
+    p_contrato: contrato.id,
+    p_decisoes: lote,
+  });
+  if (error) {
+    console.error("[monitor] falha ao gravar decisões:", error.code, error.message);
+    return { ok: false, erro: MSG_ERRO_GUARDAR };
+  }
+  revalidatePath(`/portal/contratos/${contrato.id}`);
+  revalidatePath("/portal/contratos");
+  return { ok: true };
 }
 
 export async function corrigirContrato(formData: FormData) {

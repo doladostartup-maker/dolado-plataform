@@ -44,8 +44,9 @@ function ConfirmarEmail({ email, info }: { email: string; info?: string }) {
         <h2 className="mb-1 text-[19px] font-bold text-[var(--color-ink)]">Confirme o seu e-mail</h2>
         <Info texto={reenvio.info ?? info} />
         <p className="mt-1 text-[14px] leading-relaxed text-[var(--color-ink-muted)]">
-          Enviámos uma mensagem para <strong className="text-[var(--color-ink)]">{email}</strong>. Introduza o código
-          que recebeu ou abra a ligação do e-mail neste dispositivo. Depois, escolhe a modalidade e conclui o pedido.
+          Enviámos uma mensagem para <strong className="text-[var(--color-ink)]">{email}</strong>. Introduza aqui o
+          código que recebeu ou carregue em “Confirmar o meu e-mail” neste dispositivo. Depois, escolhe a modalidade e
+          conclui o pedido.
         </p>
       </div>
       <form action={verificar} className="flex flex-col gap-3">

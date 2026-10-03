@@ -18,6 +18,8 @@ import { MODELO_DOCUMENTOS } from "@/lib/claude";
 import { MIME_ACEITES, lerDocumentoComClaude, type MimeAceite } from "./claudeDocumentos";
 import { avisosAtravessados, estadoOrcamento, lerTetoOrcamentoUsd } from "./custos";
 import { chaveFornecedor } from "./contratos";
+import { nomeComercial, type Fornecedor } from "./fornecedores";
+import { falhaTransitoria } from "./processamento";
 import { avaliarFatura, type FaturaHistorico } from "./regrasFaturas";
 import { VERSAO_REGRA_CESSACAO, compararCessacao, textoCessacaoDivergente } from "./custoSaida";
 import {
@@ -74,7 +76,7 @@ export async function inspecionarFicheiro(
   const admin = createAdminClient();
   const { data: assinado } = await admin.storage.from(bucket).createSignedUrl(caminho, 60);
   if (!assinado?.signedUrl) return null;
-  const resposta = await fetch(assinado.signedUrl);
+  const resposta = await fetch(assinado.signedUrl, { signal: AbortSignal.timeout(60_000) });
   if (!resposta.ok || !resposta.body) return null;
 
   const hash = createHash("sha256");
@@ -107,6 +109,40 @@ async function marcar(admin: Admin, documentoId: string, estado: EstadoDocumento
   await admin.from("documentos_monitor").update({ estado, ...extra }).eq("id", documentoId);
 }
 
+async function marcarEtapa(admin: Admin, documentoId: string, etapa: string, extra: Record<string, unknown> = {}) {
+  await admin
+    .from("documentos_monitor")
+    .update({ etapa, etapa_atualizada_em: new Date().toISOString(), ...extra })
+    .eq("id", documentoId);
+}
+
+// Lista de fornecedores (nome comercial ← nome legal/aliases), em memória
+// durante 10 minutos: muda raramente e é lida em cada documento.
+let fornecedoresCache: { lista: Fornecedor[]; lidoEm: number } | null = null;
+const FORNECEDORES_VALIDADE_MS = 10 * 60 * 1000;
+
+export async function listaFornecedores(admin: Admin = createAdminClient()): Promise<Fornecedor[]> {
+  if (fornecedoresCache && Date.now() - fornecedoresCache.lidoEm < FORNECEDORES_VALIDADE_MS) return fornecedoresCache.lista;
+  const { data, error } = await admin.from("fornecedores").select("id, nome_comercial, nome_legal, aliases").eq("ativo", true);
+  if (error) {
+    console.error("Falha ao ler os fornecedores:", error.message);
+    return fornecedoresCache?.lista ?? [];
+  }
+  fornecedoresCache = { lista: (data ?? []) as Fornecedor[], lidoEm: Date.now() };
+  return fornecedoresCache.lista;
+}
+
+/** Nome a apresentar ao cliente (comercial, se conhecido; senão o registado). */
+export async function apresentarFornecedor(nome: string | null | undefined) {
+  return nomeComercial(nome, await listaFornecedores());
+}
+
+// Mesmo fornecedor apesar de nome legal vs. comercial ("Vodafone Portugal,
+// Comunicações Pessoais, S.A." e "Vodafone").
+function chaveComercial(nome: string | null | undefined, lista: Fornecedor[]) {
+  return chaveFornecedor(nomeComercial(nome, lista));
+}
+
 async function contratoParaDocumento(
   admin: Admin,
   doc: { utilizador_id: string; contrato_id: string | null },
@@ -123,7 +159,8 @@ async function contratoParaDocumento(
     return doc.contrato_id;
   }
 
-  const chave = chaveFornecedor(fornecedor);
+  const fornecedores = await listaFornecedores(admin);
+  const chave = chaveComercial(fornecedor, fornecedores);
   if (chave) {
     const { data: existentes } = await admin
       .from("contratos_monitorizados")
@@ -131,7 +168,7 @@ async function contratoParaDocumento(
       .eq("utilizador_id", doc.utilizador_id)
       .neq("estado", "terminado")
       .order("created_at", { ascending: true });
-    const igual = (existentes ?? []).find((c) => chaveFornecedor(c.fornecedor) === chave);
+    const igual = (existentes ?? []).find((c) => chaveComercial(c.fornecedor, fornecedores) === chave);
     if (igual) {
       if (igual.setor === "nao_indicado" && setor !== "nao_indicado") {
         await admin.from("contratos_monitorizados").update({ setor }).eq("id", igual.id);
@@ -157,29 +194,41 @@ async function registarPropostas(
   origem: "fatura" | "contrato",
   propostas: CampoProposto[],
 ) {
-  for (const p of propostas) {
-    const { data: campoId, error } = await admin.rpc("monitor_campo_propor", {
-      p_contrato: contratoId,
-      p_campo: p.campo,
-      p_valor: p.valor,
-      p_origem: origem,
-      p_documento: documentoId,
-      p_extracao: extracaoId,
-      p_pagina: p.pagina,
-      p_evidencia: p.evidencia,
-      p_confianca: p.confianca,
-    });
-    if (error) {
-      console.error(`Falha ao propor ${p.campo}:`, error.message);
-      continue;
-    }
-    if (ACEITES_SEM_CONFIRMACAO.has(p.campo) && p.confianca === "high") {
-      const { data: campo } = await admin.from("contratos_campos").select("estado").eq("id", campoId).single();
-      if (campo?.estado === "proposto") {
-        await admin.rpc("monitor_campo_aceitar", { p_campo_id: campoId, p_por: null });
+  // Fornecedor: o cliente vê o nome comercial; o texto do documento fica na
+  // evidência (proveniência).
+  const fornecedores = await listaFornecedores(admin);
+  const normalizadas = propostas.map((p) =>
+    p.campo === "fornecedor" && typeof p.valor === "string" ? { ...p, valor: nomeComercial(p.valor, fornecedores) ?? p.valor } : p,
+  );
+
+  // Em paralelo: cada proposta é uma função SQL curta (a base de dados põe
+  // em série as que tocam no mesmo contrato); antes eram ~10 idas e voltas
+  // seguidas, cada uma a somar a latência do servidor.
+  await Promise.all(
+    normalizadas.map(async (p) => {
+      const { data: campoId, error } = await admin.rpc("monitor_campo_propor", {
+        p_contrato: contratoId,
+        p_campo: p.campo,
+        p_valor: p.valor,
+        p_origem: origem,
+        p_documento: documentoId,
+        p_extracao: extracaoId,
+        p_pagina: p.pagina,
+        p_evidencia: p.evidencia,
+        p_confianca: p.confianca,
+      });
+      if (error) {
+        console.error(`Falha ao propor ${p.campo}:`, error.message);
+        return;
       }
-    }
-  }
+      if (ACEITES_SEM_CONFIRMACAO.has(p.campo) && p.confianca === "high") {
+        const { data: campo } = await admin.from("contratos_campos").select("estado").eq("id", campoId).single();
+        if (campo?.estado === "proposto") {
+          await admin.rpc("monitor_campo_aceitar", { p_campo_id: campoId, p_por: null });
+        }
+      }
+    }),
+  );
 }
 
 // F2/F4: compara a fatura nova com o histórico e o contrato e regista as
@@ -277,6 +326,8 @@ export type ResultadoProcessamento = {
   /** Porque não ficou processado (só para o admin). */
   motivo?: MotivoPendente;
   detalhe?: string;
+  /** Duração da chamada à Claude API (ms), quando houve. */
+  lerMs?: number;
 };
 
 export async function processarDocumento(documentoId: string): Promise<ResultadoProcessamento> {
@@ -331,11 +382,15 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
 
     let extracaoId: string;
     let bruto: unknown;
+    let lerMs: number | undefined;
 
     if (anterior) {
       extracaoId = anterior.id;
       bruto = anterior.resultado;
+      await marcarEtapa(admin, doc.id, "a_registar");
     } else {
+      await marcarEtapa(admin, doc.id, "a_ler");
+      const inicioLeitura = Date.now();
       const chamada = await lerDocumentoComClaude({
         url: assinado.signedUrl,
         mime: doc.mime_type as MimeAceite,
@@ -343,6 +398,8 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
         schema: ehContrato ? SCHEMA_CONTRATO : SCHEMA_FATURA,
         instrucao: ehContrato ? "Extrai os dados deste contrato." : "Extrai os dados desta fatura.",
       });
+      lerMs = Date.now() - inicioLeitura;
+      await marcarEtapa(admin, doc.id, "a_registar");
 
       if (chamada.uso) {
         await admin.from("uso_api_claude").insert({
@@ -365,7 +422,7 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
         if (chamada.motivo === "api_nao_configurada" || chamada.motivo === "erro_api") {
           // Caminho manual, sem erro para o cliente.
           await avisarAdmin("Documento por processar", `Documento ${doc.id} ficou pendente (${chamada.motivo}${chamada.detalhe ? `: ${chamada.detalhe}` : ""}).`);
-          return { estado: "pendente", contratoId: doc.contrato_id, motivo: chamada.motivo, detalhe: chamada.detalhe };
+          return { estado: "pendente", contratoId: doc.contrato_id, motivo: chamada.motivo, detalhe: chamada.detalhe, lerMs };
         }
         await admin.from("extracoes_documento").insert({
           documento_id: doc.id,
@@ -412,7 +469,7 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
       const estado: EstadoDocumento = v.precisaRevisao ? "a_rever" : "processado";
       await marcar(admin, doc.id, estado);
       if (estado === "a_rever") await avisarAdmin("Documento por rever", `Documento ${doc.id}: ${v.avisos.join("; ") || "confiança baixa"}.`);
-      return { estado, contratoId };
+      return { estado, contratoId, lerMs };
     }
 
     const v = validarExtracaoFatura(bruto, hojeLisboa());
@@ -451,11 +508,131 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
     const estado: EstadoDocumento = v.precisaRevisao ? "a_rever" : "processado";
     await marcar(admin, doc.id, estado);
     if (estado === "a_rever") await avisarAdmin("Documento por rever", `Documento ${doc.id}: ${v.avisos.join("; ") || "confiança baixa num campo importante"}.`);
-    return { estado, contratoId };
+    return { estado, contratoId, lerMs };
   } catch (erro) {
     const detalhe = (erro instanceof Error ? erro.message : String(erro)).slice(0, 300);
     console.error(`Falha ao processar o documento ${documentoId}:`, erro);
     await avisarAdmin("Documento por processar", `Documento ${documentoId}: erro inesperado no processamento (${detalhe}).`);
     return { estado: "pendente", contratoId: doc.contrato_id, motivo: "erro_inesperado", detalhe };
   }
+}
+
+// ---------------------------------------------------------------------------
+// Processamento em segundo plano (depois de o upload responder)
+// ---------------------------------------------------------------------------
+// O pedido do upload só grava o documento (etapa "recebido") e responde; este
+// passo corre a seguir no servidor (after() da Server Action). O cliente
+// acompanha a etapa pela base de dados e pode navegar entretanto.
+//
+//   recebido → a_verificar (hash, documento repetido?) → a_ler (Claude API)
+//   → a_registar (validação e valores propostos) → concluido | falhou | repetido
+//
+// "falhou" só para falhas transitórias (API em baixo, limite de tempo,
+// erro inesperado): o documento fica "pendente" para a DoLado e o cliente
+// pode tentar de novo. Sem chave ou com o orçamento esgotado fica
+// "concluido" + estado "pendente" — tratado à mão, sem erro para o cliente.
+// Nunca lança.
+
+const BUCKET_MONITOR = "documentos-monitor";
+
+export async function processarDocumentoEmSegundoPlano(documentoId: string): Promise<void> {
+  const admin = createAdminClient();
+  const inicio = Date.now();
+  const tempos: Record<string, number> = {};
+
+  // Reserva: só um processamento por documento (ex.: duplo clique em
+  // "Tentar novamente"). Só avança quem passa "recebido" → "a_verificar".
+  const { data: reservado } = await admin
+    .from("documentos_monitor")
+    .update({ etapa: "a_verificar", etapa_atualizada_em: new Date().toISOString() })
+    .eq("id", documentoId)
+    .eq("etapa", "recebido")
+    .select("id, utilizador_id, bucket, storage_path, sha256")
+    .maybeSingle();
+  if (!reservado) return;
+
+  try {
+    // 1. Hash (lido em streaming) e documento repetido
+    if (!reservado.sha256) {
+      const t = Date.now();
+      const ficheiro = await inspecionarFicheiro(reservado.bucket ?? BUCKET_MONITOR, reservado.storage_path);
+      tempos.verificar = Date.now() - t;
+      if (!ficheiro) {
+        await marcarEtapa(admin, documentoId, "falhou", { tempos_ms: { ...tempos, total: Date.now() - inicio } });
+        await avisarAdmin("Documento por processar", `Documento ${documentoId}: o ficheiro não foi encontrado ou excede 10 MB.`);
+        return;
+      }
+      const { data: repetido } = await admin
+        .from("documentos_monitor")
+        .select("id, contrato_id")
+        .eq("utilizador_id", reservado.utilizador_id)
+        .eq("sha256", ficheiro.sha256)
+        .neq("id", documentoId)
+        .maybeSingle();
+      if (!MIME_ACEITES.includes(ficheiro.mime as MimeAceite)) {
+        await admin.storage.from(reservado.bucket ?? BUCKET_MONITOR).remove([reservado.storage_path]);
+        await marcar(admin, documentoId, "ilegivel");
+        await marcarEtapa(admin, documentoId, "concluido", { tempos_ms: { ...tempos, total: Date.now() - inicio } });
+        return;
+      }
+      if (repetido) {
+        // O mesmo documento não é lido (nem pago) duas vezes: o ficheiro novo
+        // é apagado e o cliente é levado ao contrato que já o tem.
+        await admin.storage.from(reservado.bucket ?? BUCKET_MONITOR).remove([reservado.storage_path]);
+        await marcarEtapa(admin, documentoId, "repetido", { contrato_id: repetido.contrato_id });
+        return;
+      }
+      const { error } = await admin
+        .from("documentos_monitor")
+        .update({ sha256: ficheiro.sha256, tamanho_bytes: ficheiro.tamanho, mime_type: ficheiro.mime })
+        .eq("id", documentoId);
+      if (error) throw new Error(`Falha ao gravar o hash: ${error.message}`);
+    }
+
+    // 2. Leitura (Claude API) e registo dos valores
+    await marcarEtapa(admin, documentoId, "a_ler");
+    const t = Date.now();
+    const resultado = await processarDocumento(documentoId);
+    if (resultado.lerMs !== undefined) tempos.ler = resultado.lerMs;
+    tempos.registar = Date.now() - t - (resultado.lerMs ?? 0);
+    tempos.total = Date.now() - inicio;
+
+    const transitoria = resultado.estado === "pendente" && falhaTransitoria(resultado.motivo);
+    await marcarEtapa(admin, documentoId, transitoria ? "falhou" : "concluido", { tempos_ms: tempos });
+    console.log(
+      JSON.stringify({ origem: "monitor_documento", documento: documentoId, estado: resultado.estado, motivo: resultado.motivo ?? null, tempos_ms: tempos }),
+    );
+  } catch (erro) {
+    const detalhe = (erro instanceof Error ? erro.message : String(erro)).slice(0, 300);
+    console.error(`Falha no processamento do documento ${documentoId}:`, detalhe);
+    await marcarEtapa(admin, documentoId, "falhou", { tempos_ms: { ...tempos, total: Date.now() - inicio } }).catch(() => {});
+  }
+}
+
+/**
+ * Volta a pôr na fila um documento cuja leitura falhou ou parou. Atómico:
+ * só reinicia se ainda estiver nesse estado (nunca dois processamentos).
+ */
+export async function reiniciarProcessamento(documentoId: string, limiteParadoIso: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const agora = new Date().toISOString();
+  const { data: falhado } = await admin
+    .from("documentos_monitor")
+    .update({ etapa: "recebido", etapa_atualizada_em: agora })
+    .eq("id", documentoId)
+    .eq("estado", "pendente")
+    .eq("etapa", "falhou")
+    .select("id")
+    .maybeSingle();
+  if (falhado) return true;
+  const { data: parado } = await admin
+    .from("documentos_monitor")
+    .update({ etapa: "recebido", etapa_atualizada_em: agora })
+    .eq("id", documentoId)
+    .eq("estado", "pendente")
+    .in("etapa", ["recebido", "a_verificar", "a_ler", "a_registar"])
+    .lt("etapa_atualizada_em", limiteParadoIso)
+    .select("id")
+    .maybeSingle();
+  return !!parado;
 }
