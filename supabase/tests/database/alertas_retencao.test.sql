@@ -66,6 +66,10 @@ select ok(not has_function_privilege('authenticated', 'public.alertas_seguir_pro
 select ok(not has_function_privilege('authenticated', 'public.limpar_alertas_desativados()', 'EXECUTE'), 'limpeza: não executável pelo cliente');
 select ok(not has_function_privilege('service_role', 'public.limpar_alertas_desativados()', 'EXECUTE'), 'limpeza: só pg_cron (postgres)');
 select ok(exists (select 1 from cron.job where jobname = 'limpar-alertas-desativados'), 'job pg_cron agendado');
+select ok(not has_function_privilege('authenticated', 'public.avisos_setor_destinatarios(text)', 'EXECUTE')
+          and not has_function_privilege('anon', 'public.avisos_setor_destinatarios(text)', 'EXECUTE'), 'avisos_setor_destinatarios: não executável pela API');
+select ok(has_function_privilege('service_role', 'public.avisos_setor_destinatarios(text)', 'EXECUTE'), 'avisos_setor_destinatarios: executável pela service_role');
+select ok((select 'search_path=""' = any (proconfig) from pg_proc where proname = 'avisos_setor_destinatarios'), 'avisos_setor_destinatarios: search_path fixo');
 
 -- ===========================================================================
 -- 2. Fim da subscrição (webhook: plano none, estado canceled)
@@ -100,12 +104,17 @@ reset role;
 select is((select desativado_em from public.preferencias_setor where utilizador_id = '00000000-0000-4000-f000-00000000000b'), null, '…mas desativado_em não muda');
 select is((select desativado_em from public.preferencias_setor where utilizador_id = '00000000-0000-4000-f000-00000000000a' and setor = 'Água'), now(), '…mas sem Proteção o setor nasce desativado');
 
--- Aviso sectorial: só setores ativos de contas com Proteção (e só para o admin).
+-- Aviso sectorial: só setores ativos de contas com Proteção, e só pelo
+-- servidor (service_role; o backoffice valida requireAdmin() antes).
+set local role service_role;
+select is((select count(*) from testes.so_teste_avisos('Energia')), 1::bigint, 'aviso sectorial: só a conta com Proteção');
+reset role;
+-- Nem cliente nem admin chamam a função pela API (/rest/v1/rpc).
+select testes.como('00000000-0000-4000-f000-00000000000a');
+select is(testes.tenta($$select * from public.avisos_setor_destinatarios('Energia')$$), 'erro:42501', 'aviso sectorial: cliente não executa a função');
 update public.utilizadores set role = 'admin' where id = '00000000-0000-4000-f000-00000000000b';
 select testes.como('00000000-0000-4000-f000-00000000000b');
-select is((select count(*) from testes.so_teste_avisos('Energia')), 1::bigint, 'aviso sectorial: só a conta com Proteção');
-select testes.como('00000000-0000-4000-f000-00000000000a');
-select is((select count(*) from testes.so_teste_avisos('Energia')), 0::bigint, 'aviso sectorial: cliente não-admin não lê destinatários');
+select is(testes.tenta($$select * from public.avisos_setor_destinatarios('Energia')$$), 'erro:42501', 'aviso sectorial: admin com sessão também não (só service_role)');
 reset role;
 
 -- ===========================================================================

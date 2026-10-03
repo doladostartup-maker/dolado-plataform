@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { CONTACTO_EMAIL } from "@/lib/site";
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
@@ -111,7 +112,11 @@ export async function enviarAvisoSectorial(formData: FormData) {
   // Só setores ativos de contas com Proteção ativa, para o e-mail atual e
   // confirmado da conta: no fim da subscrição os setores ficam desativados
   // (migração 20261002180000_alertas_desativados_fim_subscricao.sql).
-  const { data: destinatarios } = await supabase.rpc("avisos_setor_destinatarios", { p_setor: setor });
+  // Função só para service_role (20261003140000_…): o papel admin já foi
+  // validado acima por requireAdmin().
+  const { data: destinatarios } = await createAdminClient().rpc("avisos_setor_destinatarios", {
+    p_setor: setor,
+  });
 
   let enviados = 0;
   for (const destinatario of (destinatarios ?? []) as { nome: string | null; email: string | null }[]) {

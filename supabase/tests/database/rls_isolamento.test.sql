@@ -179,6 +179,7 @@ select is(
           or has_table_privilege('authenticated', c.oid, 'REFERENCES'))),
   0::bigint, 'privilégios: authenticated sem TRUNCATE/TRIGGER/REFERENCES');
 select ok(not has_function_privilege('authenticated', 'public.handle_new_user()', 'EXECUTE'), 'privilégios: handle_new_user() não executável pela API');
+select ok(not has_function_privilege('authenticated', 'public.avisos_setor_destinatarios(text)', 'EXECUTE') and not has_function_privilege('anon', 'public.avisos_setor_destinatarios(text)', 'EXECUTE'), 'privilégios: avisos_setor_destinatarios() só service_role (lê auth.users)');
 select ok(has_function_privilege('authenticated', 'public.is_admin()', 'EXECUTE'), 'privilégios: is_admin() executável por authenticated (as policies precisam)');
 select ok(not has_function_privilege('authenticated', 'public.notificar_novo_caso()', 'EXECUTE') and not has_function_privilege('anon', 'public.notificar_novo_caso()', 'EXECUTE'), 'privilégios: notificar_novo_caso() não executável pela API');
 select is(
