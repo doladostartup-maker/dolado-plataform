@@ -68,25 +68,6 @@ const CARTOES: Record<PlanoId, Cartao> = {
   },
 };
 
-const COMPARACAO: { label: string; valores: Record<PlanoId, string> }[] = [
-  {
-    label: "Preço",
-    valores: {
-      protecao: `${formatarPreco(PLANOS.protecao.precoCentimos)}/mês`,
-      caso_protecao: `${formatarPreco(PLANOS.caso_protecao.precoCentimos)}/mês`,
-      avulso: formatarPreco(PLANOS.avulso.precoCentimos),
-    },
-  },
-  { label: "Acompanhamento e avisos da Proteção", valores: { protecao: "Sim", caso_protecao: "Sim", avulso: "Não" } },
-  { label: "Casos incluídos", valores: { protecao: "0", caso_protecao: "1 por mês", avulso: "1" } },
-  {
-    label: "Acumulação de casos",
-    valores: { protecao: "—", caso_protecao: `Até ${LIMITE_CASOS_ACUMULADOS}`, avulso: "—" },
-  },
-  { label: "Subscrição", valores: { protecao: "Sim", caso_protecao: "Sim", avulso: "Não" } },
-  { label: IVA_INCLUIDO, valores: { protecao: "Sim", caso_protecao: "Sim", avulso: "Sim" } },
-];
-
 const BOTAO_PRIMARIO =
   "inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-[13.5px] font-semibold text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-60";
 const BOTAO_SECUNDARIO =
@@ -163,38 +144,6 @@ export function Precario() {
         Comprou um caso Avulso e ainda não o usou? Se aderir depois a uma subscrição, parte do valor já pago
         cobre o primeiro mês e o restante é reembolsado para o método de pagamento original.
       </p>
-
-      <div className="mt-10 overflow-x-auto rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)]">
-        <table className="w-full min-w-[520px] border-collapse text-left text-[12.5px]">
-          <caption className="sr-only">Comparação dos planos da DoLado</caption>
-          <thead>
-            <tr className="border-b border-[var(--color-hairline)]">
-              <th scope="col" className="px-4 py-3 font-semibold text-[var(--color-ink-muted)]">
-                <span className="sr-only">Característica</span>
-              </th>
-              {ORDEM_PLANOS.map((id) => (
-                <th key={id} scope="col" className="px-4 py-3 font-semibold text-[var(--color-ink)]">
-                  {PLANOS[id].nome}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {COMPARACAO.map((linha) => (
-              <tr key={linha.label} className="border-b border-[var(--color-hairline)] last:border-b-0">
-                <th scope="row" className="px-4 py-2.5 font-medium text-[var(--color-ink-muted)]">
-                  {linha.label}
-                </th>
-                {ORDEM_PLANOS.map((id) => (
-                  <td key={id} className="px-4 py-2.5 text-[var(--color-ink)]">
-                    {linha.valores[id]}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </section>
   );
 }
