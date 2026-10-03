@@ -6,17 +6,20 @@ import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 import { processarDocumento } from "@/lib/monitor/servidor";
-import { SETORES_CONTRATO, lerEurosParaCents } from "@/lib/monitor/contratos";
+import { SETORES_CONTRATO, lerEurosParaCents, lerMeses } from "@/lib/monitor/contratos";
 import { dataValida, type CampoContrato } from "@/lib/monitor/extracaoFatura";
 
 // Backoffice do Monitor: revisão de documentos que a leitura automática não
 // resolveu. As correções do admin ficam com origem "admin" na proveniência.
 
-const TIPO_CAMPO: Partial<Record<CampoContrato, "texto" | "data" | "euros">> = {
+const TIPO_CAMPO: Partial<Record<CampoContrato, "texto" | "data" | "euros" | "meses">> = {
   fornecedor: "texto",
   referencia_contrato: "texto",
   servico: "texto",
+  data_assinatura: "data",
+  data_ativacao: "data",
   data_inicio: "data",
+  duracao_fidelizacao_meses: "meses",
   data_fim_fidelizacao: "data",
   data_fim_promocao: "data",
   descricao_promocao: "texto",
@@ -90,8 +93,15 @@ export async function definirCampoAdmin(formData: FormData) {
   const bruto = String(formData.get("valor") ?? "").trim();
   if (!tipo || !bruto) voltar(doc.id, { erro: "Escolha o campo e indique o valor." });
 
-  const valor = tipo === "texto" ? bruto.slice(0, 200) : tipo === "data" ? (dataValida(bruto) ? bruto : null) : lerEurosParaCents(bruto);
-  if (valor === null) voltar(doc.id, { erro: "Valor inválido (datas AAAA-MM-DD; montantes como 42,99)." });
+  const valor =
+    tipo === "texto"
+      ? bruto.slice(0, 200)
+      : tipo === "data"
+        ? dataValida(bruto) ? bruto : null
+        : tipo === "meses"
+          ? lerMeses(bruto)
+          : lerEurosParaCents(bruto);
+  if (valor === null) voltar(doc.id, { erro: "Valor inválido (datas AAAA-MM-DD; montantes como 42,99; meses entre 1 e 60)." });
 
   const { error } = await admin.rpc("monitor_campo_definir", {
     p_contrato: doc.contrato_id,

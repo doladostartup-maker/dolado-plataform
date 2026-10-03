@@ -219,7 +219,11 @@ describe("validação da extração de contratos", async () => {
     tipo_documento: "contrato",
     setor: "telecomunicacoes",
     fornecedor: campo("NOS"),
+    data_assinatura: campo(null, "not_found", null, null),
+    data_ativacao: campo(null, "not_found", null, null),
+    inicio_na_ativacao: campo(null, "not_found", null, null),
     data_inicio: campo("2025-03-01"),
+    duracao_fidelizacao_meses: campo(null, "not_found", null, null),
     data_fim_fidelizacao: campo("2027-03-01", "medium"),
     data_fim_promocao: campo("2026-03-01"),
     descricao_promocao: campo("Desconto de 10 € na mensalidade"),
@@ -245,6 +249,45 @@ describe("validação da extração de contratos", async () => {
   test("fim anterior ao início: revisão", () => {
     const r = validarExtracaoContrato(contrato({ data_fim_fidelizacao: campo("2024-01-01") }));
     assert.equal(r.precisaRevisao, true);
+  });
+
+  test("v3: assinatura, ativação, duração e início na ativação lidos à parte", () => {
+    const r = validarExtracaoContrato(
+      contrato({
+        data_assinatura: campo("2025-04-08"),
+        inicio_na_ativacao: campo("sim"),
+        data_inicio: campo(null, "not_found", null, null),
+        duracao_fidelizacao_meses: campo("24"),
+        data_fim_fidelizacao: campo(null, "not_found", null, null),
+      }),
+    );
+    const porCampo = Object.fromEntries(r.propostas.map((p) => [p.campo, p.valor]));
+    assert.equal(porCampo.data_assinatura, "2025-04-08");
+    assert.equal(porCampo.inicio_na_ativacao, "sim");
+    assert.equal(porCampo.duracao_fidelizacao_meses, 24);
+    assert.equal(porCampo.data_inicio, undefined);
+    assert.equal(porCampo.data_fim_fidelizacao, undefined);
+    assert.equal(r.precisaRevisao, false);
+  });
+
+  test("v3: assinatura repetida como início num contrato que começa na ativação é retirada", () => {
+    const r = validarExtracaoContrato(
+      contrato({
+        data_assinatura: campo("2025-04-08"),
+        inicio_na_ativacao: campo("sim"),
+        data_inicio: campo("2025-04-08", "medium"),
+        data_ativacao: campo("2025-04-08", "medium"),
+      }),
+    );
+    const campos = r.propostas.map((p) => p.campo);
+    assert.ok(!campos.includes("data_inicio"));
+    assert.ok(!campos.includes("data_ativacao"));
+    assert.equal(r.precisaRevisao, true);
+  });
+
+  test("v3: duração fora de 1–60 ou não inteira é inválida", () => {
+    assert.equal(validarExtracaoContrato(contrato({ duracao_fidelizacao_meses: campo("0") })).precisaRevisao, true);
+    assert.equal(validarExtracaoContrato(contrato({ duracao_fidelizacao_meses: campo("24.5") })).precisaRevisao, true);
   });
 
   test("setor desconhecido fica por indicar; fatura não é contrato", () => {
@@ -360,7 +403,8 @@ describe("F4: custo de saída a partir do contrato", async () => {
 
   test("dados em falta e setor", () => {
     const r = dadosCalculoDoContrato(contrato({ vantagem_cents: null, tipo_fidelizacao: null }));
-    assert.deepEqual(r, { ok: false, motivo: "faltam_dados", faltam: ["vantagem_cents", "tipo_fidelizacao"] });
+    assert.equal(r.motivo, "faltam_dados");
+    assert.deepEqual(r.faltam, ["vantagem_cents", "tipo_fidelizacao"]);
     assert.equal(dadosCalculoDoContrato(contrato({ setor: "eletricidade" })).motivo, "setor");
     assert.deepEqual(dadosCalculoDoContrato(contrato({ tipo_fidelizacao: "refidelizacao" })).faltam, ["nova_instalacao"]);
   });
@@ -368,10 +412,11 @@ describe("F4: custo de saída a partir do contrato", async () => {
   test("estimativa igual à da Calculadora pública e evolução a 3 meses", () => {
     const d = dadosCalculoDoContrato(contrato());
     assert.equal(d.ok, true);
-    const { hoje, futuro } = evolucaoCustoSaida(d.dados, "2026-10-02");
+    const { hoje, pontos } = evolucaoCustoSaida(d.dados, "2026-10-02");
     assert.equal(hoje.ok, true);
     assert.ok(hoje.resultadoCentimos > 0);
-    assert.ok(futuro[0].cents < hoje.resultadoCentimos);
+    assert.deepEqual(pontos.map((p) => p.rotulo), ["hoje", "1_mes", "3_meses", "fim"]);
+    assert.ok(pontos[2].cents < hoje.resultadoCentimos);
   });
 
   test("valor da fatura vs. estimativa: próximo, divergente, equipamento, sem dados", () => {
@@ -384,6 +429,191 @@ describe("F4: custo de saída a partir do contrato", async () => {
     assert.equal(div.diferencaCents, 5000);
     assert.equal(compararCessacao(contrato({ equipamento_subsidiado: "sim" }), est + 5000, "2026-09-15").resultado, "equipamento");
     assert.equal(compararCessacao(contrato(), null, null).resultado, "sem_dados");
+  });
+});
+
+// Cenários do P1 de 03/10/2026 (custo de saída transparente). Contrato de
+// teste: Vodafone, 1.ª fidelização de 24 meses, mensalidade 71,46 €,
+// vantagem 696,00 € (29 € × 24).
+describe("F4: datas da fidelização e detalhe do cálculo", async () => {
+  const { dadosCalculoDoContrato, detalheCustoSaida, evolucaoCustoSaida, resolverDatasFidelizacao, textoSituacao, compararCessacao } =
+    await import("./custoSaida.ts");
+  const vodafone = (extra = {}) => ({
+    setor: "telecomunicacoes",
+    data_inicio: "2025-04-08",
+    data_fim_fidelizacao: null,
+    duracao_fidelizacao_meses: 24,
+    mensalidade_cents: 7146,
+    vantagem_cents: 69600,
+    tipo_fidelizacao: "primeira",
+    nova_instalacao: null,
+    equipamento_subsidiado: "nao",
+    ...extra,
+  });
+  const detalhe = (c, hoje, origens) => {
+    const d = dadosCalculoDoContrato(c, origens);
+    assert.equal(d.ok, true, JSON.stringify(d));
+    return detalheCustoSaida(d.dados, hoje);
+  };
+
+  test("contrato de teste a 03/10/2026: 150,07 € = 30% × 7 × 71,46 € (2.º ano da fidelização inicial)", () => {
+    const det = detalhe(vodafone(), "2026-10-03");
+    assert.equal(det.estado, "calculado");
+    assert.equal(det.dataFim, "2027-04-08");
+    assert.equal(det.anoFidelizacao, 2);
+    assert.equal(det.tipo, "primeira");
+    assert.equal(textoSituacao(det), "Segundo ano da fidelização inicial");
+    assert.equal(det.percentagem, 30);
+    assert.equal(det.mensalidadesPorVencer, 7);
+    assert.deepEqual(det.periodoEmCurso, { inicio: "2026-09-08", fim: "2026-10-07" });
+    assert.equal(det.limiteMensalidadesCents, 15007);
+    assert.equal(det.diasEmFalta, 187);
+    assert.equal(det.diasTotais, 730);
+    assert.equal(det.vantagemProporcionalCents, 17829);
+    assert.equal(det.criterio, "limite");
+    assert.equal(det.estimativaCents, 15007);
+    assert.deepEqual(det.semPeriodoEmCurso, { mensalidades: 6, limiteCents: 12863, estimativaCents: 12863 });
+  });
+
+  test("evolução: hoje, 1 mês, 3 meses e 0 € no fim da fidelização", () => {
+    const d = dadosCalculoDoContrato(vodafone());
+    const { pontos } = evolucaoCustoSaida(d.dados, "2026-10-03");
+    assert.deepEqual(pontos, [
+      { rotulo: "hoje", data: "2026-10-03", cents: 15007 },
+      { rotulo: "1_mes", data: "2026-11-03", cents: 12863 },
+      { rotulo: "3_meses", data: "2027-01-03", cents: 8575 },
+      { rotulo: "fim", data: "2027-04-08", cents: 0 },
+    ]);
+  });
+
+  test("A. 1.ª fidelização de 24 meses, cancelamento no 1.º ano: 50%", () => {
+    const det = detalhe(vodafone(), "2025-10-03");
+    assert.equal(det.anoFidelizacao, 1);
+    assert.equal(det.percentagem, 50);
+    assert.equal(textoSituacao(det), "Primeiro ano da fidelização inicial");
+    assert.equal(det.mensalidadesPorVencer, 19);
+    assert.equal(det.limiteMensalidadesCents, Math.round((7146 * 19 * 50) / 100));
+    assert.equal(det.estimativaCents, Math.min(det.vantagemProporcionalCents, det.limiteMensalidadesCents));
+  });
+
+  test("B. 1.ª fidelização de 24 meses, cancelamento no 2.º ano: 30%, continua a ser a fidelização inicial", () => {
+    const det = detalhe(vodafone(), "2026-04-08");
+    assert.equal(det.anoFidelizacao, 2);
+    assert.equal(det.percentagem, 30);
+    assert.equal(det.tipo, "primeira");
+    assert.equal(det.mensalidadesPorVencer, 12);
+  });
+
+  test("C. fidelização de 12 meses: sempre 1.º ano (50%)", () => {
+    const det = detalhe(vodafone({ duracao_fidelizacao_meses: 12 }), "2025-12-20");
+    assert.equal(det.dataFim, "2026-04-08");
+    assert.equal(det.anoFidelizacao, 1);
+    assert.equal(det.percentagem, 50);
+    assert.equal(det.mensalidadesPorVencer, 4);
+  });
+
+  test("D. refidelização sem nova instalação: 30% mesmo no 1.º ano; com nova instalação: 50%", () => {
+    const sem = detalhe(vodafone({ tipo_fidelizacao: "refidelizacao", nova_instalacao: "nao" }), "2025-10-03");
+    assert.equal(sem.percentagem, 30);
+    assert.equal(textoSituacao(sem), "Primeiro ano de uma refidelização (nova fidelização)");
+    const com = detalhe(vodafone({ tipo_fidelizacao: "refidelizacao", nova_instalacao: "sim" }), "2025-10-03");
+    assert.equal(com.percentagem, 50);
+  });
+
+  test("E. data de início explícita: é o início considerado (a ativação fica como início do contrato)", () => {
+    const r = resolverDatasFidelizacao(vodafone({ data_ativacao: "2025-04-20", data_assinatura: "2025-04-08", inicio_na_ativacao: "sim" }));
+    assert.equal(r.ok, true);
+    assert.equal(r.datas.inicioFidelizacao, "2025-04-08");
+    assert.equal(r.datas.origemInicio, "data_inicio");
+    assert.equal(r.datas.inicioContrato, "2025-04-20");
+    const so = resolverDatasFidelizacao(vodafone({ data_inicio: null, data_ativacao: "2025-04-20" }));
+    assert.equal(so.datas.inicioFidelizacao, "2025-04-20");
+    assert.equal(so.datas.origemInicio, "data_ativacao");
+    assert.equal(so.datas.fim, "2027-04-20");
+  });
+
+  test("F. só a data de assinatura: não se calcula, pede a data de início", () => {
+    const d = dadosCalculoDoContrato(vodafone({ data_inicio: null, data_assinatura: "2025-04-08" }));
+    assert.equal(d.ok, false);
+    assert.equal(d.motivo, "datas");
+    assert.equal(d.problema, "so_assinatura");
+    assert.deepEqual(d.faltam, ["data_inicio"]);
+  });
+
+  test("G. contrato começa na ativação e não há data de ativação: falta confirmar", () => {
+    const d = dadosCalculoDoContrato(vodafone({ data_inicio: null, data_assinatura: "2025-04-08", inicio_na_ativacao: "sim" }));
+    assert.equal(d.problema, "falta_ativacao");
+    assert.deepEqual(d.faltam, ["data_ativacao"]);
+    // Dados lidos antes da v3: início lido do documento igual à assinatura.
+    const antigo = dadosCalculoDoContrato(vodafone({ data_assinatura: "2025-04-08", inicio_na_ativacao: "sim" }), { data_inicio: "contrato" });
+    assert.equal(antigo.problema, "falta_ativacao");
+    // Se foi o cliente a indicar esse início, é o início.
+    assert.equal(dadosCalculoDoContrato(vodafone({ data_assinatura: "2025-04-08", inicio_na_ativacao: "sim" }), { data_inicio: "cliente" }).ok, true);
+  });
+
+  test("H. fim indicado no documento: prevalece e a duração é deduzida", () => {
+    const r = resolverDatasFidelizacao(
+      vodafone({ duracao_fidelizacao_meses: null, data_fim_fidelizacao: "2027-04-07" }),
+      { data_fim_fidelizacao: "contrato" },
+    );
+    assert.equal(r.ok, true);
+    assert.equal(r.datas.fim, "2027-04-07");
+    assert.equal(r.datas.origemFim, "documento");
+    assert.equal(r.datas.duracaoMeses, 24);
+    // Fim e duração que não batem certo: pede confirmação, não escolhe um.
+    const inc = resolverDatasFidelizacao(vodafone({ duracao_fidelizacao_meses: 12, data_fim_fidelizacao: "2027-04-08" }), { data_fim_fidelizacao: "contrato" });
+    assert.equal(inc.ok, false);
+    assert.equal(inc.problema, "datas_incoerentes");
+  });
+
+  test("I. fim calculado a partir do início + duração (origem calculado)", () => {
+    const r = resolverDatasFidelizacao(vodafone());
+    assert.equal(r.datas.fim, "2027-04-08");
+    assert.equal(r.datas.origemFim, "calculado");
+    // O fim calculado gravado na base de dados acompanha o início e a duração.
+    const gravado = resolverDatasFidelizacao(vodafone({ data_fim_fidelizacao: "2027-04-08", duracao_fidelizacao_meses: 12 }), { data_fim_fidelizacao: "calculado" });
+    assert.equal(gravado.datas.fim, "2026-04-08");
+    assert.equal(gravado.datas.origemFim, "calculado");
+    // Sem fim e sem duração: pede a duração.
+    assert.equal(dadosCalculoDoContrato(vodafone({ duracao_fidelizacao_meses: null })).problema, "falta_fim_ou_duracao");
+  });
+
+  test("J. muito perto do fim: 1 mensalidade no máximo, 0 sem a do período em curso", () => {
+    const det = detalhe(vodafone(), "2027-04-01");
+    assert.equal(det.mensalidadesPorVencer, 1);
+    assert.equal(det.semPeriodoEmCurso.mensalidades, 0);
+    assert.equal(det.semPeriodoEmCurso.estimativaCents, 0);
+    assert.equal(det.estimativaCents, Math.min(det.vantagemProporcionalCents, Math.round(7146 * 0.3)));
+    const { pontos } = evolucaoCustoSaida(dadosCalculoDoContrato(vodafone()).dados, "2027-04-01");
+    assert.deepEqual(pontos.map((p) => p.rotulo), ["hoje", "fim"]);
+  });
+
+  test("K. fidelização terminada: 0 €", () => {
+    assert.deepEqual(detalhe(vodafone(), "2027-04-08"), { estado: "terminada", dataFim: "2027-04-08" });
+    assert.deepEqual(detalhe(vodafone(), "2027-06-01"), { estado: "terminada", dataFim: "2027-04-08" });
+  });
+
+  test("L. menos mensalidades por vencer do que a diferença em meses arredondada sugere", () => {
+    // 03/10/2026 → 08/04/2027 = 6 meses e 5 dias: arredondar para cima daria 7.
+    // Se a mensalidade do período em curso já foi faturada, só 6 vencem depois.
+    const det = detalhe(vodafone(), "2026-10-03");
+    assert.equal(det.mensalidadesPorVencer, 7);
+    assert.equal(det.semPeriodoEmCurso.mensalidades, 6);
+    // A 10/03/2027 faltam 29 dias: 1 mensalidade no máximo, 0 se já faturada.
+    const fim = detalhe(vodafone(), "2027-03-10");
+    assert.equal(fim.mensalidadesPorVencer, 1);
+    assert.equal(fim.semPeriodoEmCurso.mensalidades, 0);
+  });
+
+  test("valor da fatura entre o mínimo e o máximo da estimativa não é divergência", () => {
+    assert.equal(compararCessacao(vodafone(), 12863, "2026-10-03").resultado, "proximo");
+    assert.equal(compararCessacao(vodafone(), 15007, "2026-10-03").resultado, "proximo");
+    const acima = compararCessacao(vodafone(), 25000, "2026-10-03");
+    assert.equal(acima.resultado, "divergente");
+    assert.equal(acima.estimativaCents, 15007);
+    const abaixo = compararCessacao(vodafone(), 5000, "2026-10-03");
+    assert.equal(abaixo.resultado, "divergente");
+    assert.equal(abaixo.estimativaCents, 12863);
   });
 });
 
@@ -446,12 +676,16 @@ describe("schemas aceites pela Claude API (structured outputs)", async () => {
     assert.equal(porCampo.referencia_contrato, undefined);
   });
 
-  test("contrato no formato v2", () => {
+  test("contrato no formato v3", () => {
     const r = validarExtracaoContrato({
       tipo_documento: "contrato",
       setor: "telecomunicacoes",
       fornecedor: c("NOS"),
+      data_assinatura: c("", "not_found", 0, ""),
+      data_ativacao: c("", "not_found", 0, ""),
+      inicio_na_ativacao: c("", "not_found", 0, ""),
       data_inicio: c("2025-03-01"),
+      duracao_fidelizacao_meses: c("", "not_found", 0, ""),
       data_fim_fidelizacao: c("2027-02-28"),
       data_fim_promocao: c("", "not_found", 0, ""),
       descricao_promocao: c("", "not_found", 0, ""),

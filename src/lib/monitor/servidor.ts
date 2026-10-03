@@ -235,12 +235,13 @@ async function registarPropostas(
 // situações detetadas para revisão humana (nunca vão diretamente ao cliente).
 // Só telecomunicações nesta fase. Idempotente: chave única por regra.
 async function avaliarAchados(admin: Admin, contratoId: string, documentoId: string) {
-  const [{ data: contrato }, { data: faturas }] = await Promise.all([
+  const [{ data: contrato }, { data: faturas }, { data: camposAtuais }] = await Promise.all([
     admin.from("contratos_monitorizados").select("*").eq("id", contratoId).single(),
     admin
       .from("faturas_monitor")
       .select("id, documento_id, utilizador_id, data_emissao, periodo_inicio, periodo_fim, recorrente_cents, linhas, cessacao_operador_cents")
       .eq("contrato_id", contratoId),
+    admin.from("contratos_campos").select("campo, origem").eq("contrato_id", contratoId).eq("estado", "atual"),
   ]);
   if (!contrato || contrato.setor !== "telecomunicacoes") return 0;
   const atual = (faturas ?? []).find((f) => f.documento_id === documentoId);
@@ -275,7 +276,8 @@ async function avaliarAchados(admin: Admin, contratoId: string, documentoId: str
   }));
 
   const dataOperador = contrato.cessacao_operador_data ?? atual.data_emissao;
-  const cessacao = compararCessacao(contrato, atual.cessacao_operador_cents, dataOperador);
+  const origens = Object.fromEntries((camposAtuais ?? []).map((c) => [c.campo as string, c.origem as string]));
+  const cessacao = compararCessacao(contrato, atual.cessacao_operador_cents, dataOperador, origens);
   if (cessacao.resultado === "divergente") {
     novos.push({
       contrato_id: contratoId,

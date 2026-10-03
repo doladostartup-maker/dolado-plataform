@@ -35,7 +35,11 @@ const ORDEM: CampoContrato[] = [
   "servico",
   "referencia_contrato",
   "mensalidade_cents",
+  "data_assinatura",
+  "data_ativacao",
+  "inicio_na_ativacao",
   "data_inicio",
+  "duracao_fidelizacao_meses",
   "data_fim_fidelizacao",
   "vantagem_cents",
   "tipo_fidelizacao",
@@ -244,7 +248,7 @@ export default async function ContratoPage({
         </details>
       </section>
 
-      <CustoSaida contrato={contrato} hoje={hoje} />
+      <CustoSaida contrato={contrato} origens={Object.fromEntries([...atuais].map(([campo, c]) => [campo, c.origem]))} hoje={hoje} />
 
       {/* ===== Documentos ===== */}
       <section className={`${CARTAO} flex flex-col gap-4`}>
