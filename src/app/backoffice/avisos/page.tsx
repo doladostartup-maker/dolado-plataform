@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarAvisoSectorial } from "./actions";
 import { AvisoSetorialForm } from "./_components/AvisoSetorialForm";
 
@@ -11,11 +12,14 @@ export default async function AvisosSetoriaisPage({
 }) {
   const params = await searchParams;
   const { supabase } = await requireAdmin();
+  // avisos_setor_destinatarios() só é executável pela service role; o papel
+  // admin foi validado acima.
+  const admin = createAdminClient();
 
   const contagens: Record<string, number> = {};
   for (const setor of SETORES) {
     // Os mesmos destinatários que o envio usa (setor ativo + Proteção ativa).
-    const { data } = await supabase.rpc("avisos_setor_destinatarios", { p_setor: setor });
+    const { data } = await admin.rpc("avisos_setor_destinatarios", { p_setor: setor });
     contagens[setor] = data?.length ?? 0;
   }
 
