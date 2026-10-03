@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { logout } from "@/app/auth/actions";
+import { MenuMovel } from "./_components/MenuMovel";
 
 function IconCasos() {
   return (
@@ -110,7 +111,7 @@ function ItemNav({
   return (
     <Link
       href={href}
-      className="flex items-center gap-2.5 rounded-[var(--radius-input)] px-3 py-2 text-sm font-medium text-[var(--color-ink)] hover:bg-[var(--color-surface-sunken)] hover:text-[var(--color-brand)]"
+      className="flex min-h-11 items-center gap-2.5 rounded-[var(--radius-input)] px-3 py-2 text-sm font-medium text-[var(--color-ink)] md:min-h-0 hover:bg-[var(--color-surface-sunken)] hover:text-[var(--color-brand)]"
     >
       {icon}
       {children}
@@ -128,12 +129,73 @@ function ItemDesactivado({
   return (
     <span
       aria-disabled="true"
-      className="flex cursor-not-allowed items-center gap-2.5 rounded-[var(--radius-input)] px-3 py-2 text-sm font-medium text-[var(--color-ink-faint)]"
+      className="flex min-h-11 cursor-not-allowed items-center gap-2.5 md:min-h-0 rounded-[var(--radius-input)] px-3 py-2 text-sm font-medium text-[var(--color-ink-faint)]"
     >
       {icon}
       <span className="flex-1">{children}</span>
       <BadgeEmBreve />
     </span>
+  );
+}
+
+function Logotipo() {
+  return (
+    <Link href="/portal/casos" className="flex items-center px-2">
+      <Image
+        src="/brand/dolado-logo-horizontal.svg"
+        alt="DoLado"
+        width={120}
+        height={28}
+        priority
+      />
+    </Link>
+  );
+}
+
+// Mesma navegação na barra lateral (md e acima) e no menu móvel.
+function Navegacao() {
+  return (
+    <>
+      <Link
+        href="/portal/casos/novo"
+        className="mb-6 flex min-h-11 items-center justify-center rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-center text-sm font-medium text-white hover:bg-[var(--color-brand-hover)] md:block md:min-h-0"
+      >
+        + Abrir novo caso
+      </Link>
+
+      <nav className="flex flex-col gap-1">
+        <ItemNav href="/portal" icon={<IconCasos />}>
+          Painel
+        </ItemNav>
+        <ItemNav href="/portal/casos" icon={<IconCasos />}>
+          Os meus casos
+        </ItemNav>
+        <ItemNav href="/portal/contratos" icon={<IconFaturas />}>
+          Os meus contratos
+        </ItemNav>
+        <ItemNav href="/conta" icon={<IconConta />}>
+          A minha conta
+        </ItemNav>
+        <ItemNav href="/portal/perfil" icon={<IconPerfil />}>
+          Gestão de Perfil
+        </ItemNav>
+        <ItemNav href="/portal/subscricao" icon={<IconSubscricao />}>
+          Gestão de Subscrição
+        </ItemNav>
+        <ItemDesactivado icon={<IconFacturacao />}>Faturação</ItemDesactivado>
+      </nav>
+
+      <div className="mt-auto pt-6">
+        <form action={logout}>
+          <button
+            type="submit"
+            className="min-h-11 w-full px-3 text-left text-sm text-[var(--color-ink-muted)] underline hover:text-[var(--color-ink)] md:min-h-0 md:px-0"
+          >
+            Terminar sessão
+          </button>
+        </form>
+      </div>
+    </>
   );
 }
 
@@ -145,60 +207,24 @@ export default async function PortalLayout({
   await requireUser();
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="flex w-64 shrink-0 flex-col border-r border-[var(--color-hairline)] bg-[var(--color-surface)] px-4 py-6">
-        <Link href="/portal/casos" className="mb-6 flex items-center px-2">
-          <Image
-            src="/brand/dolado-logo-horizontal.svg"
-            alt="DoLado"
-            width={120}
-            height={28}
-            priority
-          />
-        </Link>
-
-        <Link
-          href="/portal/casos/novo"
-          className="mb-6 rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-center text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-        >
-          + Abrir novo caso
-        </Link>
-
-        <nav className="flex flex-col gap-1">
-          <ItemNav href="/portal" icon={<IconCasos />}>
-            Painel
-          </ItemNav>
-          <ItemNav href="/portal/casos" icon={<IconCasos />}>
-            Os meus casos
-          </ItemNav>
-          <ItemNav href="/portal/contratos" icon={<IconFaturas />}>
-            Os meus contratos
-          </ItemNav>
-          <ItemNav href="/conta" icon={<IconConta />}>
-            A minha conta
-          </ItemNav>
-          <ItemNav href="/portal/perfil" icon={<IconPerfil />}>
-            Gestão de Perfil
-          </ItemNav>
-          <ItemNav href="/portal/subscricao" icon={<IconSubscricao />}>
-            Gestão de Subscrição
-          </ItemNav>
-          <ItemDesactivado icon={<IconFacturacao />}>Faturação</ItemDesactivado>
-        </nav>
-
-        <div className="mt-auto pt-6">
-          <form action={logout}>
-            <button
-              type="submit"
-              className="w-full text-left text-sm text-[var(--color-ink-muted)] underline hover:text-[var(--color-ink)]"
-            >
-              Terminar sessão
-            </button>
-          </form>
+    <div className="min-h-screen md:flex">
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[var(--color-hairline)] bg-[var(--color-surface)] px-4 md:hidden">
+        <div className="-ml-2">
+          <Logotipo />
         </div>
+        <MenuMovel>
+          <Navegacao />
+        </MenuMovel>
+      </header>
+
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-[var(--color-hairline)] bg-[var(--color-surface)] px-4 py-6 md:flex">
+        <div className="mb-6">
+          <Logotipo />
+        </div>
+        <Navegacao />
       </aside>
 
-      <main className="flex-1 px-8 py-8">
+      <main className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">
         <div className="mx-auto max-w-[1120px]">{children}</div>
       </main>
     </div>
