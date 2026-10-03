@@ -22,7 +22,8 @@ type OfertaConversao = { mensalidade: number; reembolso: number } | null;
 const OPCOES = [
   {
     plano: "protecao",
-    descricao: "Monitor de Proteção (contratos, faturas e alertas de datas) e aviso sectorial. Não inclui casos.",
+    descricao:
+      "Acompanhamento das suas faturas, avisos antes de datas importantes dos contratos e alertas sobre alterações no seu setor. Não inclui casos.",
     cta: "Aderir à Proteção",
   },
   {
@@ -299,8 +300,8 @@ export function PortalDashboard({
               </div>
             ) : (
               <p className="mb-5 text-[13.5px] leading-relaxed text-[var(--color-ink-muted)]">
-                Os planos Proteção e Caso + Proteção desbloqueiam o Monitor de Proteção (os seus
-                contratos, faturas e alertas de datas) e o aviso sectorial.
+                Os planos Proteção e Caso + Proteção incluem o acompanhamento dos seus contratos e
+                faturas, avisos antes de datas importantes e alertas sobre alterações no seu setor.
               </p>
             )}
 

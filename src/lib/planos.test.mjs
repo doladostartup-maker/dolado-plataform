@@ -132,7 +132,7 @@ describe("preçário público", () => {
 
   test("Proteção sem casos, Caso + Proteção com 1/mês e acumulação, Avulso com 1 caso", () => {
     assert.match(precario, /Não inclui o tratamento de casos\./);
-    assert.match(precario, /"1 caso por mês"/);
+    assert.match(precario, /"1 novo caso por mês"/);
     assert.match(precario, /acumulam até ao limite de \$\{LIMITE_CASOS_ACUMULADOS\}/);
     assert.match(precario, /"Tratamento de 1 caso"/);
     assert.match(precario, /casos incluídos", valores: \{ protecao: "0", caso_protecao: "1 por mês", avulso: "1" \}/i);

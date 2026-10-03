@@ -4,9 +4,12 @@ import type { ReactNode } from "react";
 // três benefícios, e o tratamento de casos numa faixa à parte.
 //
 // A copy segue o que o produto faz hoje (Monitor de Proteção e Aviso
-// Sectorial): a comparação de faturas é só de telecomunicações e cada
-// situação é revista por uma pessoa; os alertas de datas saem 60 e 30 dias
-// antes; o aviso sectorial é por setor. Mudar o produto = rever este texto.
+// Sectorial), descrito pelo benefício e sem nomes internos. A comparação de
+// faturas não se apresenta como exclusiva de um setor (decisão de Thiago,
+// 03/10/2026) e cada situação detetada é revista por uma pessoa; os alertas
+// de datas saem 60 e 30 dias antes; o aviso sectorial é por setor. A mesma
+// descrição está no preçário (Precario.tsx) e nas perguntas frequentes
+// (conteudoPerguntasFrequentes.tsx). Mudar o produto = rever estes textos.
 
 type Beneficio = {
   icone: ReactNode;
@@ -37,7 +40,7 @@ const BENEFICIOS: Beneficio[] = [
     ),
     titulo: "O que está a pagar",
     texto: "Comparamos cada fatura com as anteriores para o ajudar a perceber quando alguma coisa mudou.",
-    detalhe: "Faturas de telecomunicações",
+    detalhe: "Comparação mês a mês",
   },
   {
     icone: (
