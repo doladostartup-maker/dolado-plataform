@@ -170,8 +170,12 @@ export function criarDependenciasWebhook(): DependenciasWebhook {
         return false;
       }
 
+      // conversao_id vem da metadata do Stripe e não é coluna da tabela — ir
+      // no upsert dava PGRST204 e o evento falhava (invoice.paid, updated…).
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { conversao_id, ...colunas } = snapshot;
       const { error } = await admin.from("stripe_subscriptions").upsert(
-        { ...snapshot, ...dadosCobranca, estado_em: estadoEm, updated_at: agora() },
+        { ...colunas, ...dadosCobranca, estado_em: estadoEm, updated_at: agora() },
         { onConflict: "stripe_subscription_id" },
       );
       falhar("stripe_subscriptions.upsert", error);
