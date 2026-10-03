@@ -35,7 +35,9 @@ import {
 } from "./acompanhamento";
 import {
   escolherServico,
+  lerChaveIdentificadores,
   normalizarIdentificadores,
+  protegerExtracao,
   type IdentidadeServico,
   type IdentificadorLido,
   type ResultadoAssociacao,
@@ -162,6 +164,31 @@ export async function apresentarFornecedor(nome: string | null | undefined) {
   return nomeComercial(nome, await listaFornecedores());
 }
 
+// Chave dos pseudónimos do NIF e do nome do titular (identificacao.ts).
+// Sem chave válida, esses dois dados são ignorados — nunca guardados em claro.
+let avisoSemChave = false;
+function chaveIdentificadores(): string | null {
+  const chave = lerChaveIdentificadores(process.env.MONITOR_IDENTIFICADORES_CHAVE);
+  if (!chave && !avisoSemChave) {
+    avisoSemChave = true;
+    console.error("[monitor] MONITOR_IDENTIFICADORES_CHAVE em falta ou curta: NIF e nome do titular são ignorados na associação.");
+  }
+  return chave;
+}
+
+/**
+ * Leitura gravada, sem NIF nem nome do titular em texto. Uma leitura antiga
+ * ainda em claro é protegida e regravada antes de ser usada.
+ */
+async function leituraProtegida(admin: Admin, extracao: { id: string; resultado: unknown }): Promise<unknown> {
+  const { resultado, alterado } = protegerExtracao(extracao.resultado, chaveIdentificadores());
+  if (alterado) {
+    const { error } = await admin.from("extracoes_documento").update({ resultado }).eq("id", extracao.id);
+    if (error) console.error(`[monitor] falha ao proteger a leitura ${extracao.id}:`, error.message);
+  }
+  return resultado;
+}
+
 // Mesmo fornecedor apesar de nome legal vs. comercial ("Vodafone Portugal,
 // Comunicações Pessoais, S.A." e "Vodafone").
 function chaveComercial(nome: string | null | undefined, lista: Fornecedor[]) {
@@ -219,7 +246,7 @@ async function identidadesServicos(admin: Admin, utilizadorId: string, fornecedo
 async function decidirDestino(admin: Admin, doc: { utilizador_id: string; contrato_id: string | null }, leitura: LeituraDocumento) {
   const fornecedores = await listaFornecedores(admin);
   const servicos = await identidadesServicos(admin, doc.utilizador_id, fornecedores);
-  const identidade = { fornecedorChave: chaveComercial(leitura.fornecedor, fornecedores), ids: normalizarIdentificadores(leitura.identificacao) };
+  const identidade = { fornecedorChave: chaveComercial(leitura.fornecedor, fornecedores), ids: normalizarIdentificadores(leitura.identificacao, chaveIdentificadores()) };
   return escolherServico(identidade, servicos, doc.contrato_id);
 }
 
@@ -327,7 +354,7 @@ async function registarNoServico(admin: Admin, a: Registo): Promise<{ repetido: 
     .eq("id", a.documentoId);
 
   // Identificadores: ficam no serviço para associar os próximos documentos.
-  const ids = normalizarIdentificadores(leitura.identificacao);
+  const ids = normalizarIdentificadores(leitura.identificacao, chaveIdentificadores());
   if (ids.length) {
     await admin.from("servicos_identificadores").upsert(
       ids.map((i) => ({
@@ -670,7 +697,7 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
 
     if (anterior) {
       extracaoId = anterior.id;
-      bruto = anterior.resultado;
+      bruto = await leituraProtegida(admin, anterior);
       await marcarEtapa(admin, doc.id, "a_registar");
     } else {
       await marcarEtapa(admin, doc.id, "a_ler");
@@ -721,6 +748,8 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
         return { estado: "a_rever", contratoId: doc.contrato_id, motivo: chamada.motivo };
       }
 
+      // O NIF e o nome do titular nunca são gravados em texto (pseudónimo).
+      const protegido = protegerExtracao(chamada.bruto, chaveIdentificadores()).resultado;
       const { data: extracao, error: erroExtracao } = await admin
         .from("extracoes_documento")
         .insert({
@@ -729,13 +758,13 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
           schema_versao: versao.schema,
           prompt_versao: versao.prompt,
           estado: "sucesso",
-          resultado: chamada.bruto,
+          resultado: protegido,
         })
         .select("id")
         .single();
       if (erroExtracao || !extracao) throw new Error(`Falha ao gravar a extração: ${erroExtracao?.message}`);
       extracaoId = extracao.id;
-      bruto = chamada.bruto;
+      bruto = protegido;
     }
 
     // 4. Validação de domínio, associação ao serviço e registo
@@ -960,7 +989,7 @@ export async function concluirAssociacao(a: {
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  const validada = extracao ? validarLeitura(doc.tipo === "contrato" ? "contrato" : "fatura", extracao.resultado) : null;
+  const validada = extracao ? validarLeitura(doc.tipo === "contrato" ? "contrato" : "fatura", await leituraProtegida(admin, extracao)) : null;
   if (!extracao || !validada?.ok) return { ok: false, erro: "leitura_invalida" };
 
   // Reserva (só um pedido avança).
@@ -1061,13 +1090,13 @@ export async function resumoDocumentoPorAssociar(documentoId: string, utilizador
   if (!doc) return null;
   const { data: extracao } = await admin
     .from("extracoes_documento")
-    .select("resultado")
+    .select("id, resultado")
     .eq("documento_id", doc.id)
     .eq("estado", "sucesso")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  const validada = extracao ? validarLeitura(doc.tipo === "contrato" ? "contrato" : "fatura", extracao.resultado) : null;
+  const validada = extracao ? validarLeitura(doc.tipo === "contrato" ? "contrato" : "fatura", await leituraProtegida(admin, extracao)) : null;
   if (!validada?.ok) return null;
   const l = validada.leitura;
   return {
@@ -1077,7 +1106,7 @@ export async function resumoDocumentoPorAssociar(documentoId: string, utilizador
     periodoInicio: l.tipo === "fatura" ? l.v.fatura.periodoInicio : null,
     periodoFim: l.tipo === "fatura" ? l.v.fatura.periodoFim : null,
     totalCents: l.tipo === "fatura" ? l.v.fatura.totalCents : null,
-    identificacao: normalizarIdentificadores(l.identificacao)
+    identificacao: normalizarIdentificadores(l.identificacao, chaveIdentificadores())
       .filter((i) => i.apresentacao)
       .map((i) => ({ tipo: i.tipo, apresentacao: i.apresentacao! })),
   };

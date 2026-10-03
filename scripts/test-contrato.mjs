@@ -61,6 +61,8 @@ const r = spawnSync(
       BREVO_SENDER_EMAIL: "",
       BREVO_API_KEY: "",
       STRIPE_SECRET_KEY: "sk_test_contrato_nunca_usada",
+      // Chave dos pseudónimos do NIF/titular (só para estes testes).
+      MONITOR_IDENTIFICADORES_CHAVE: "chave-de-teste-contrato-com-mais-de-32-caracteres",
     },
   },
 );

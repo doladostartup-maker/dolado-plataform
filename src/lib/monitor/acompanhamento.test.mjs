@@ -14,7 +14,14 @@ import {
   resultadoFatura,
   versaoValida,
 } from "./acompanhamento.ts";
-import { avaliarAssociacao, escolherServico, normalizarIdentificador, normalizarIdentificadores } from "./identificacao.ts";
+import {
+  avaliarAssociacao,
+  escolherServico,
+  lerChaveIdentificadores,
+  normalizarIdentificador,
+  normalizarIdentificadores,
+  protegerExtracao,
+} from "./identificacao.ts";
 import { falhaTransitoria, situacaoDocumento } from "./processamento.ts";
 
 // ---------------------------------------------------------------------------
@@ -61,8 +68,11 @@ const frase = (e) => fraseEvento(e).replace(/\u00a0/g, " ");
 const tipos = (eventos) => eventos.map((e) => e.tipo).sort();
 const PALAVRAS_DE_CONTRATO = /contrat|deveria|indevid/i;
 
+// Chave dos pseudónimos só para os testes (a real vive na Clever Cloud).
+const CHAVE = "chave-de-teste-com-pelo-menos-32-caracteres";
+
 function ids(lidos) {
-  return normalizarIdentificadores(lidos);
+  return normalizarIdentificadores(lidos, CHAVE);
 }
 const MARIA = ids([
   { tipo: "nif_titular", valor: "123456789" },
@@ -81,20 +91,89 @@ const OUTRO_CLIENTE = ids([
 // ---------------------------------------------------------------------------
 
 describe("identificadores", () => {
-  test("NIF e titular nunca ficam em texto (hash + apresentação mascarada)", () => {
-    const nif = normalizarIdentificador("nif_titular", "PT 123 456 789");
-    assert.match(nif.valorNormalizado, /^sha256:[0-9a-f]{64}$/);
+  test("NIF e titular nunca ficam em texto (pseudónimo HMAC + apresentação mascarada)", () => {
+    const nif = normalizarIdentificador("nif_titular", "PT 123 456 789", CHAVE);
+    assert.match(nif.valorNormalizado, /^hmac:[0-9a-f]{64}$/);
+    assert.equal(nif.valorNormalizado.includes("123456789"), false);
     assert.equal(nif.apresentacao, "NIF terminado em 789");
-    assert.equal(normalizarIdentificador("nif_titular", "12345"), null);
-    const titular = normalizarIdentificador("titular", "Maria J. Silva");
-    assert.equal(titular.valorNormalizado, normalizarIdentificador("titular", "MARIA JOSÉ SILVA").valorNormalizado);
+    assert.equal(normalizarIdentificador("nif_titular", "12345", CHAVE), null);
+    const titular = normalizarIdentificador("titular", "Maria J. Silva", CHAVE);
+    assert.equal(titular.valorNormalizado, normalizarIdentificador("titular", "MARIA JOSÉ SILVA", CHAVE).valorNormalizado);
     assert.equal(titular.apresentacao, null);
+  });
+
+  test("o pseudónimo depende da chave secreta (sem ela não se reconstrói)", () => {
+    const a = normalizarIdentificador("nif_titular", "123456789", CHAVE).valorNormalizado;
+    const b = normalizarIdentificador("nif_titular", "123456789", "outra-chave-de-teste-com-32-caracteres!").valorNormalizado;
+    assert.notEqual(a, b);
+  });
+
+  test("sem chave válida, NIF e titular são ignorados (nunca guardados em claro)", () => {
+    assert.equal(lerChaveIdentificadores(undefined), null);
+    assert.equal(lerChaveIdentificadores("curta"), null);
+    assert.equal(lerChaveIdentificadores(CHAVE), CHAVE);
+    assert.equal(normalizarIdentificador("nif_titular", "123456789", null), null);
+    assert.equal(normalizarIdentificador("titular", "Maria Silva", null), null);
+    assert.equal(normalizarIdentificador("referencia_conta", "215960347", null).valorNormalizado, "215960347");
+  });
+
+  test("um pseudónimo já calculado é aceite tal como está (leituras protegidas)", () => {
+    const p = normalizarIdentificador("nif_titular", "123456789", CHAVE);
+    const outraVez = normalizarIdentificador("nif_titular", p.valorNormalizado, null, p.apresentacao);
+    assert.deepEqual(outraVez, p);
   });
 
   test("referências normalizadas (espaços, pontuação, zeros à esquerda, indicativo)", () => {
     assert.equal(normalizarIdentificador("referencia_conta", "0021-5960 347").valorNormalizado, "215960347");
     assert.equal(normalizarIdentificador("numero_servico", "+351 912 345 678").valorNormalizado, "912345678");
     assert.equal(normalizarIdentificador("numero_cliente", "12"), null);
+  });
+});
+
+describe("leitura gravada sem NIF nem nome do titular em texto", () => {
+  const bruto = {
+    tipo_documento: "fatura",
+    fornecedor: { valor: "Vodafone" },
+    identificacao: { titular: "Maria José Silva", nif_titular: "123456789", referencia_conta: "215960347", numero_fatura: "FT 1" },
+  };
+
+  test("protegerExtracao substitui NIF e titular e mantém o resto", () => {
+    const { resultado, alterado } = protegerExtracao(bruto, CHAVE);
+    assert.equal(alterado, true);
+    const texto = JSON.stringify(resultado);
+    assert.equal(texto.includes("123456789"), false);
+    assert.equal(/maria|silva/i.test(texto), false);
+    assert.equal(resultado.identificacao.nif_titular_apresentacao, "NIF terminado em 789");
+    assert.equal(resultado.identificacao.referencia_conta, "215960347");
+    assert.equal(resultado.identificacao.numero_fatura, "FT 1");
+    assert.equal(bruto.identificacao.nif_titular, "123456789", "o original não é alterado");
+  });
+
+  test("idempotente, e a associação continua a funcionar com a leitura protegida", () => {
+    const uma = protegerExtracao(bruto, CHAVE).resultado;
+    const duas = protegerExtracao(uma, CHAVE);
+    assert.equal(duas.alterado, false);
+    assert.deepEqual(duas.resultado, uma);
+    const lidos = [
+      { tipo: "nif_titular", valor: uma.identificacao.nif_titular, apresentacao: uma.identificacao.nif_titular_apresentacao },
+      { tipo: "titular", valor: uma.identificacao.titular },
+    ];
+    assert.deepEqual(
+      normalizarIdentificadores(lidos, null).map((i) => i.valorNormalizado),
+      ids([{ tipo: "nif_titular", valor: "123456789" }, { tipo: "titular", valor: "Maria Silva" }]).map((i) => i.valorNormalizado),
+    );
+  });
+
+  test("sem chave: NIF e titular são removidos da leitura", () => {
+    const { resultado } = protegerExtracao(bruto, null);
+    assert.equal(resultado.identificacao.nif_titular, "");
+    assert.equal(resultado.identificacao.titular, "");
+    assert.equal(JSON.stringify(resultado).includes("123456789"), false);
+  });
+
+  test("leituras sem identificação ficam iguais", () => {
+    const antiga = { tipo_documento: "fatura", total: { valor: "10" } };
+    assert.deepEqual(protegerExtracao(antiga, CHAVE), { resultado: antiga, alterado: false });
   });
 });
 

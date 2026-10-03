@@ -287,7 +287,10 @@ export function lerIdentificacao(bruto: unknown, mapa: Record<string, TipoIdenti
   const out: IdentificadorLido[] = [];
   for (const [campo, tipo] of Object.entries(mapa)) {
     const v = textoCurto(bruto[campo], 120);
-    if (v) out.push({ tipo, valor: v });
+    if (!v) continue;
+    // NIF já pseudonimizado (protegerExtracao): a apresentação mascarada vem à parte.
+    const apresentacao = tipo === "nif_titular" ? textoCurto(bruto.nif_titular_apresentacao, 60) : null;
+    out.push(apresentacao ? { tipo, valor: v, apresentacao } : { tipo, valor: v });
   }
   return out;
 }
