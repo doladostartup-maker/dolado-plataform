@@ -16,6 +16,8 @@ export async function enviarEmailBrevo(destinatario: string, assunto: string, ht
       subject: assunto,
       htmlContent: html,
     }),
+    // Nunca deixar um pedido pendurado à espera da Brevo.
+    signal: AbortSignal.timeout(10_000),
   });
   if (!resposta.ok) {
     throw Object.assign(new Error("Brevo recusou o envio"), { code: `brevo_${resposta.status}` });

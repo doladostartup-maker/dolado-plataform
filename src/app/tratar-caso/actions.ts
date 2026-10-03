@@ -6,6 +6,8 @@ import { getStripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
+import { dadosContaNova, guardarDestinoPosLogin, urlCallbackAuth } from "@/lib/authServidor";
+import { DESTINO_PEDIDO_POR_PAGAR } from "@/lib/destinoAuth";
 import { excedeuLimiteTaxa } from "@/lib/rateLimit";
 import { lerDadosPedido, pedidoPorPagar, validEmail } from "@/lib/pedidoCaso";
 import {
@@ -24,7 +26,6 @@ import {
 //   disponíveis, a função SQL não cria nada.
 // O caso pago pelo Checkout é criado pelo webhook Stripe.
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!;
 const MODALIDADE = "/tratar-caso/modalidade";
 
 async function obterIp() {
@@ -115,10 +116,9 @@ export async function criarContaPedido(_anterior: EstadoConta, formData: FormDat
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: {
-      data: { nome: (await nomeDoPedidoNoBrowser()) ?? undefined },
-      emailRedirectTo: `${SITE_URL}/auth/callback`,
-    },
+    // Única página com campo para o código: o e-mail mostra-o
+    // (mostrar_codigo) e também a ligação, que volta à modalidade.
+    options: dadosContaNova({ nome: await nomeDoPedidoNoBrowser(), mostrarCodigo: true }),
   });
   if (error) return { erro: mensagemErroAuth(error.code, error.message), passo: "conta" };
 
@@ -130,6 +130,7 @@ export async function criarContaPedido(_anterior: EstadoConta, formData: FormDat
     return { erro: "Já existe uma conta com este e-mail. Use “Já tenho conta” para entrar.", passo: "conta" };
   }
 
+  await guardarDestinoPosLogin(DESTINO_PEDIDO_POR_PAGAR);
   return {
     erro: null,
     passo: "codigo",
@@ -162,7 +163,7 @@ export async function reenviarCodigo(_anterior: EstadoConta, formData: FormData)
   const { error } = await supabase.auth.resend({
     type: "signup",
     email,
-    options: { emailRedirectTo: `${SITE_URL}/auth/callback` },
+    options: { emailRedirectTo: urlCallbackAuth() },
   });
   if (error) return { erro: mensagemErroAuth(error.code, error.message), passo: "codigo", email };
   return { erro: null, passo: "codigo", email, info: "Enviámos um novo e-mail de confirmação." };
@@ -178,7 +179,8 @@ export async function entrarPedido(_anterior: EstadoConta, formData: FormData): 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     if (error.code === "email_not_confirmed") {
-      await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: `${SITE_URL}/auth/callback` } });
+      await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: urlCallbackAuth() } });
+      await guardarDestinoPosLogin(DESTINO_PEDIDO_POR_PAGAR);
       return {
         erro: null,
         passo: "codigo",

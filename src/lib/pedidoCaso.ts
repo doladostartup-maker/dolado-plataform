@@ -165,16 +165,6 @@ export function pedidoDaMetadata(metadata: Record<string, string> | null | undef
   return ehUuid(id) ? id : null;
 }
 
-/**
- * Destino depois de iniciar sessão: só caminhos relativos deste site
- * (nunca "//outro.site" nem URLs absolutas — evita open redirect).
- */
-/** Destino depois do login com Google (cookie de 10 minutos; só caminhos deste site). */
-export const COOKIE_DESTINO_POS_LOGIN = "dolado_destino_pos_login";
-
-export function destinoSeguro(next: unknown, porOmissao = "/conta") {
-  if (typeof next !== "string" || !next.startsWith("/") || next.startsWith("//") || next.includes("\\")) {
-    return porOmissao;
-  }
-  return next;
-}
+// Destinos depois de autenticar: regras em destinoAuth.ts (reexportadas
+// aqui para quem já as importava deste módulo).
+export { COOKIE_DESTINO_POS_LOGIN, destinoSeguro } from "./destinoAuth.ts";

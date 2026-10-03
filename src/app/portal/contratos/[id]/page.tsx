@@ -14,8 +14,13 @@ import {
   type SetorContratoMonitor,
 } from "@/lib/monitor/contratos";
 import type { CampoContrato } from "@/lib/monitor/extracaoFatura";
-import { confirmarValor, corrigirContrato, deixarDeAcompanhar, rejeitarValor } from "../actions";
+import { CAMPOS_EDITAVEIS, valorParaEdicao } from "@/lib/monitor/contratos";
+import { emCurso } from "@/lib/monitor/processamento";
+import { apresentarFornecedor } from "@/lib/monitor/servidor";
+import { corrigirContrato, deixarDeAcompanhar } from "../actions";
 import { CamposContrato } from "../_components/CamposContrato";
+import { ConfirmarDados, type CampoPorConfirmar } from "../_components/ConfirmarDados";
+import { ProgressoDocumento } from "../_components/ProgressoDocumento";
 import { CustoSaida } from "../_components/CustoSaida";
 import { UploadDocumento } from "../_components/UploadDocumento";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CARTAO, TITULO_SECCAO } from "../_components/estilos";
@@ -103,8 +108,9 @@ export default async function ContratoPage({
       .order("created_at", { ascending: true }),
     supabase
       .from("documentos_monitor")
-      .select("id, tipo, nome_ficheiro, estado, created_at")
+      .select("id, tipo, nome_ficheiro, estado, etapa, etapa_atualizada_em, contrato_id, created_at")
       .eq("contrato_id", id)
+      .or("etapa.is.null,etapa.neq.repetido")
       .order("created_at", { ascending: false }),
     supabase.from("achados_monitor").select("id, texto_cliente, comunicado_em").eq("contrato_id", id).order("comunicado_em", { ascending: false }),
   ]);
@@ -115,12 +121,41 @@ export default async function ContratoPage({
   const hoje = hojeLisboa();
   const setor = setorTratarCaso(contrato.setor);
   const hrefCaso = `${urlTratarCaso("/portal/contratos")}${setor ? `&setor=${encodeURIComponent(setor)}` : ""}`;
+  const fornecedor = await apresentarFornecedor(contrato.fornecedor);
+  const emAnalise = (documentos ?? []).filter((d) => emCurso(d.etapa) || d.etapa === "falhou");
+  const nomeFornecedor = (campo: CampoContrato, valor: unknown) =>
+    campo === "fornecedor" && typeof valor === "string" ? valor : formatarValorCampo(campo, valor);
+
+  // A mesma leitura vinda de vários documentos (ex.: duas faturas com a
+  // mesma mensalidade) aparece uma só vez; a decisão aplica-se a todas.
+  const grupos = new Map<string, Campo[]>();
+  for (const c of porConfirmar) {
+    const chave = `${c.campo}:${JSON.stringify(c.valor)}`;
+    grupos.set(chave, [...(grupos.get(chave) ?? []), c]);
+  }
+  const camposPorConfirmar: CampoPorConfirmar[] = [...grupos.values()].map((iguais) => {
+    const c = iguais[0];
+    const tipo = CAMPOS_EDITAVEIS[c.campo] ?? null;
+    const atual = iguais.some((x) => x.estado === "em_conflito") ? atuais.get(c.campo) : undefined;
+    const origem = [ROTULO_ORIGEM[c.origem] ?? c.origem, c.pagina ? `página ${c.pagina}` : null].filter(Boolean).join(" · ");
+    return {
+      id: c.id,
+      ids: iguais.map((x) => x.id),
+      rotulo: ROTULO_CAMPO[c.campo],
+      valor: nomeFornecedor(c.campo, c.valor),
+      valorAtual: atual ? nomeFornecedor(c.campo, atual.valor) : null,
+      origem: iguais.length > 1 ? `${origem} (e mais ${iguais.length - 1} documento${iguais.length > 2 ? "s" : ""})` : origem,
+      evidencia: c.evidencia,
+      tipoEdicao: tipo,
+      valorEdicao: tipo ? valorParaEdicao(tipo, c.valor) : "",
+    };
+  });
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">{contrato.fornecedor ?? "Fornecedor por confirmar"}</h1>
+          <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">{fornecedor ?? "Fornecedor por confirmar"}</h1>
           <p className="text-sm text-[var(--color-ink-faint)]">{ROTULO_SETOR[contrato.setor as SetorContratoMonitor] ?? contrato.setor}</p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
@@ -142,45 +177,21 @@ export default async function ContratoPage({
 
       <p className="text-[15px] font-medium text-[var(--color-ink)]">{textoProximaData(proximaData(contrato, hoje))}</p>
 
+      {/* ===== Documentos em análise ===== */}
+      {emAnalise.map((d) => (
+        <ProgressoDocumento key={d.id} documentoId={d.id} contratoAtual={contrato.id} inicial={d} />
+      ))}
+
       {/* ===== Dados por confirmar ===== */}
-      {porConfirmar.length > 0 && (
+      {camposPorConfirmar.length > 0 && (
         <section className={`${CARTAO} flex flex-col gap-4 border-[var(--color-brand)]`}>
           <div>
             <h2 className={TITULO_SECCAO}>Encontrámos estes dados no documento</h2>
-            <p className="text-sm text-[var(--color-ink-muted)]">Confirme antes de começarmos a usá-los.</p>
+            <p className="text-sm text-[var(--color-ink-muted)]">
+              Reveja cada valor e confirme no fim. Só começamos a usá-los depois de confirmar.
+            </p>
           </div>
-          {porConfirmar.map((c) => {
-            const atual = atuais.get(c.campo);
-            return (
-              <div key={c.id} className="flex flex-col gap-2 border-t border-[var(--color-hairline)] pt-3 first:border-t-0 first:pt-0">
-                <p className="text-sm text-[var(--color-ink-muted)]">{ROTULO_CAMPO[c.campo]}</p>
-                {c.estado === "em_conflito" && atual ? (
-                  <p className="text-[15px] text-[var(--color-ink)]">
-                    Tem registado <strong>{formatarValorCampo(c.campo, atual.valor)}</strong>; o documento indica{" "}
-                    <strong>{formatarValorCampo(c.campo, c.valor)}</strong>.
-                  </p>
-                ) : (
-                  <p className="text-[15px] font-semibold text-[var(--color-ink)]">{formatarValorCampo(c.campo, c.valor)}</p>
-                )}
-                <Origem c={c} />
-                {c.evidencia && <p className="text-[13px] italic text-[var(--color-ink-faint)]">“{c.evidencia}”</p>}
-                <div className="flex flex-wrap gap-2">
-                  <form action={confirmarValor}>
-                    <input type="hidden" name="campo_id" value={c.id} />
-                    <button type="submit" className={BOTAO_PRIMARIO}>
-                      {c.estado === "em_conflito" ? "Usar o valor do documento" : "Está correto"}
-                    </button>
-                  </form>
-                  <form action={rejeitarValor}>
-                    <input type="hidden" name="campo_id" value={c.id} />
-                    <button type="submit" className={BOTAO_SECUNDARIO}>
-                      {c.estado === "em_conflito" ? "Manter o meu" : "Não está correto"}
-                    </button>
-                  </form>
-                </div>
-              </div>
-            );
-          })}
+          <ConfirmarDados contratoId={contrato.id} campos={camposPorConfirmar} />
         </section>
       )}
 
@@ -210,7 +221,7 @@ export default async function ContratoPage({
               <div key={campo} className="flex flex-col gap-0.5 border-b border-[var(--color-hairline)] py-2.5 last:border-b-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
                 <dt className="text-sm text-[var(--color-ink-muted)]">{ROTULO_CAMPO[campo]}</dt>
                 <dd className="flex flex-col sm:items-end">
-                  <span className="text-[15px] text-[var(--color-ink)]">{formatarValorCampo(campo, c.valor)}</span>
+                  <span className="text-[15px] text-[var(--color-ink)]">{campo === "fornecedor" ? fornecedor : formatarValorCampo(campo, c.valor)}</span>
                   <Origem c={c} />
                 </dd>
               </div>
@@ -246,7 +257,7 @@ export default async function ContratoPage({
                   {d.tipo === "contrato" ? "Contrato" : "Fatura"} · {formatarDataPt(d.created_at)}
                   {d.nome_ficheiro && <span className="text-[var(--color-ink-faint)]"> · {d.nome_ficheiro}</span>}
                 </a>
-                <span className="text-[12.5px] text-[var(--color-ink-faint)]">{ESTADO_DOCUMENTO[d.estado] ?? d.estado}</span>
+                <span className="text-[12.5px] text-[var(--color-ink-faint)]">{emCurso(d.etapa) ? "Em análise" : ESTADO_DOCUMENTO[d.estado] ?? d.estado}</span>
               </li>
             ))}
           </ul>
@@ -254,7 +265,7 @@ export default async function ContratoPage({
           <p className="text-sm text-[var(--color-ink-muted)]">Ainda não carregou documentos deste contrato.</p>
         )}
         <details>
-          <summary className="cursor-pointer text-sm font-medium text-[var(--color-brand)]">Carregar uma fatura ou o contrato</summary>
+          <summary className="cursor-pointer text-sm font-medium text-[var(--color-brand)]">Adicionar contrato ou fatura</summary>
           <div className="mt-4">
             <UploadDocumento contratoId={contrato.id} />
           </div>

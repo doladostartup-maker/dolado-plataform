@@ -5,6 +5,8 @@ import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { MARKETING_SITE_URL } from "@/lib/site";
+import { dadosContaNova, guardarDestinoPosLogin } from "@/lib/authServidor";
+import { DESTINO_POS_LOGIN, urlConfirmarEmail } from "@/lib/destinoAuth";
 import { getStripe } from "@/lib/stripe/client";
 import { contaExisteComEmail } from "@/lib/compra/servidor";
 import { avaliarSessaoParaCriarConta } from "@/lib/stripe/criarConta";
@@ -62,7 +64,9 @@ export async function criarContaComPagamento(formData: FormData) {
   const { data, error } = await supabase.auth.signUp({
     email: avaliacao.email,
     password,
-    options: { data: { nome } },
+    // Sem campo para o código nesta página: o e-mail leva só a ligação,
+    // que volta a /auth/callback e entra no portal.
+    options: dadosContaNova({ nome }),
   });
 
   if (error) voltar(sessionId, error.message);
@@ -133,11 +137,12 @@ export async function criarContaComPagamento(formData: FormData) {
     console.error("[criar-conta] falha ao aplicar a compra:", (erro as { code?: string }).code ?? "erro");
   }
 
+  // A compra já está paga e ligada à conta: depois de confirmar o e-mail,
+  // entra diretamente no portal.
   if (data.session) {
-    redirect("/portal");
+    redirect(DESTINO_POS_LOGIN);
   }
 
-  redirect(
-    `/login?info=${encodeURIComponent("Verifique o seu e-mail para confirmar o registo.")}`,
-  );
+  await guardarDestinoPosLogin(DESTINO_POS_LOGIN);
+  redirect(urlConfirmarEmail(DESTINO_POS_LOGIN));
 }

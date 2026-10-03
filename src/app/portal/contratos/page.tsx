@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { requireProtecao } from "@/lib/auth";
 import { ROTULO_SETOR, proximaData, textoProximaData, type SetorContratoMonitor } from "@/lib/monitor/contratos";
+import { nomeComercial } from "@/lib/monitor/fornecedores";
+import { emCurso } from "@/lib/monitor/processamento";
+import { listaFornecedores } from "@/lib/monitor/servidor";
+import { ProgressoDocumento } from "./_components/ProgressoDocumento";
 import { UploadDocumento } from "./_components/UploadDocumento";
 import { CARTAO, TITULO_SECCAO } from "./_components/estilos";
 
@@ -36,11 +40,16 @@ export default async function ContratosPage({
     supabase.from("contratos_campos").select("contrato_id").eq("utilizador_id", user.id).in("estado", ["proposto", "em_conflito"]),
     supabase
       .from("documentos_monitor")
-      .select("id")
+      .select("id, etapa, etapa_atualizada_em, estado, contrato_id")
       .eq("utilizador_id", user.id)
       .is("contrato_id", null)
-      .in("estado", ["pendente", "a_rever"]),
+      .in("estado", ["pendente", "a_rever"])
+      .or("etapa.is.null,etapa.neq.repetido"),
   ]);
+  const fornecedores = await listaFornecedores();
+  // Em análise (ou falhada e por repetir): progresso com as etapas reais.
+  const emAnalise = (aLer ?? []).filter((d) => emCurso(d.etapa) || d.etapa === "falhou");
+  const aVerificar = (aLer ?? []).filter((d) => !emCurso(d.etapa) && d.etapa !== "falhou");
 
   const pendentesPorContrato = new Map<string, number>();
   for (const c of porConfirmar ?? []) pendentesPorContrato.set(c.contrato_id, (pendentesPorContrato.get(c.contrato_id) ?? 0) + 1);
@@ -71,7 +80,7 @@ export default async function ContratosPage({
             return (
               <Link key={c.id} href={`/portal/contratos/${c.id}`} className={`${CARTAO} flex flex-col gap-1.5 transition hover:border-[var(--color-brand)]`}>
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-[15px] font-semibold text-[var(--color-ink)]">{c.fornecedor ?? "Fornecedor por confirmar"}</p>
+                  <p className="text-[15px] font-semibold text-[var(--color-ink)]">{nomeComercial(c.fornecedor, fornecedores) ?? "Fornecedor por confirmar"}</p>
                   {pendentes > 0 && (
                     <span className="shrink-0 rounded-[var(--radius-pill)] bg-[var(--color-brand-wash)] px-2 py-0.5 text-[11px] font-semibold text-[var(--color-brand)]">
                       {pendentes === 1 ? "1 dado por confirmar" : `${pendentes} dados por confirmar`}
@@ -86,9 +95,15 @@ export default async function ContratosPage({
         </div>
       )}
 
-      {(aLer ?? []).length > 0 && (
+      {emAnalise.map((d) => (
+        <div key={d.id} className="max-w-xl">
+          <ProgressoDocumento documentoId={d.id} inicial={d} />
+        </div>
+      ))}
+
+      {aVerificar.length > 0 && (
         <p className="text-sm text-[var(--color-ink-muted)]">
-          {aLer!.length === 1 ? "1 documento está" : `${aLer!.length} documentos estão`} a ser verificados pela DoLado.
+          {aVerificar.length === 1 ? "1 documento está" : `${aVerificar.length} documentos estão`} a ser verificados pela DoLado.
           Os dados aparecem aqui quando estiverem prontos.
         </p>
       )}

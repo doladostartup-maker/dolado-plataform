@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { fetchComLimite } from "./fetchComLimite";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -8,6 +9,9 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
+      // O middleware corre em todos os pedidos: o refresh da sessão nunca
+      // pode prender a navegação.
+      global: { fetch: fetchComLimite(8_000) },
       cookies: {
         getAll() {
           return request.cookies.getAll();
