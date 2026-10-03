@@ -11,7 +11,7 @@ import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 import { MIME_ACEITES, type MimeAceite } from "@/lib/monitor/claudeDocumentos";
 import { processarDocumentoEmSegundoPlano, reiniciarProcessamento } from "@/lib/monitor/servidor";
 import { LIMITE_SEM_AVANCO_MS } from "@/lib/monitor/processamento";
-import { CAMPOS_EDITAVEIS, SETORES_CONTRATO, lerEurosParaCents, type TipoCampo } from "@/lib/monitor/contratos";
+import { CAMPOS_EDITAVEIS, SETORES_CONTRATO, lerEurosParaCents, lerMeses, type TipoCampo } from "@/lib/monitor/contratos";
 import { dataValida, type CampoContrato } from "@/lib/monitor/extracaoFatura";
 
 // Monitor de Proteção — ações do cliente. O cliente não escreve nas tabelas
@@ -50,6 +50,7 @@ function lerValor(tipo: TipoCampo, bruto: string): string | number | null {
   if (tipo === "simnao") return texto === "sim" || texto === "nao" ? texto : null;
   if (tipo === "texto") return texto.slice(0, 200);
   if (tipo === "data") return dataValida(texto) ? texto : null;
+  if (tipo === "meses") return lerMeses(texto);
   return lerEurosParaCents(texto);
 }
 

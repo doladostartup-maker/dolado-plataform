@@ -24,13 +24,17 @@ export function setorTratarCaso(setor: string): "Telecomunicações" | "Energia"
 
 // Campos que o cliente pode introduzir ou corrigir, e o tipo de cada um
 // (formulários do portal e validação nas Server Actions).
-export type TipoCampo = "texto" | "data" | "euros" | "tipo" | "simnao";
+export type TipoCampo = "texto" | "data" | "euros" | "tipo" | "simnao" | "meses";
 
 export const CAMPOS_EDITAVEIS: Partial<Record<CampoContrato, TipoCampo>> = {
   fornecedor: "texto",
   referencia_contrato: "texto",
   servico: "texto",
+  data_assinatura: "data",
+  data_ativacao: "data",
+  inicio_na_ativacao: "simnao",
   data_inicio: "data",
+  duracao_fidelizacao_meses: "meses",
   data_fim_fidelizacao: "data",
   data_fim_promocao: "data",
   descricao_promocao: "texto",
@@ -52,7 +56,7 @@ export const ROTULO_CAMPO: Record<CampoContrato, string> = {
   fornecedor: "Fornecedor",
   referencia_contrato: "Referência do contrato",
   servico: "Serviço",
-  data_inicio: "Início do contrato",
+  data_inicio: "Início da fidelização",
   data_fim_fidelizacao: "Fim da fidelização",
   data_fim_promocao: "Fim da promoção",
   descricao_promocao: "Promoção",
@@ -65,6 +69,10 @@ export const ROTULO_CAMPO: Record<CampoContrato, string> = {
   tipo_fidelizacao: "Tipo de fidelização",
   nova_instalacao: "Houve nova instalação",
   equipamento_subsidiado: "Equipamento subsidiado",
+  data_assinatura: "Data de assinatura",
+  data_ativacao: "Data de instalação/ativação",
+  duracao_fidelizacao_meses: "Duração da fidelização",
+  inicio_na_ativacao: "O contrato começa na instalação/ativação",
 };
 
 const ROTULO_OPCAO: Record<string, string> = {
@@ -79,6 +87,7 @@ export const ROTULO_ORIGEM: Record<string, string> = {
   contrato: "Lido do contrato",
   fatura: "Lido da fatura",
   admin: "Corrigido pela DoLado",
+  calculado: "Calculado a partir do início e da duração da fidelização",
 };
 
 // Mesmo fornecedor apesar de maiúsculas, acentos, espaços e pontuação
@@ -139,7 +148,12 @@ export function formatarValorCampo(campo: CampoContrato, valor: unknown): string
   if (valor == null) return "—";
   if (campo.endsWith("_cents") && typeof valor === "number") return formatarEurosCents(valor);
   if ((campo.startsWith("data_") || campo === "cessacao_operador_data") && typeof valor === "string") return formatarDataPt(valor);
-  if (typeof valor === "string" && ROTULO_OPCAO[valor] && ["tipo_fidelizacao", "nova_instalacao", "equipamento_subsidiado"].includes(campo)) {
+  if (campo === "duracao_fidelizacao_meses" && typeof valor === "number") return `${valor} ${valor === 1 ? "mês" : "meses"}`;
+  if (
+    typeof valor === "string" &&
+    ROTULO_OPCAO[valor] &&
+    ["tipo_fidelizacao", "nova_instalacao", "equipamento_subsidiado", "inicio_na_ativacao"].includes(campo)
+  ) {
     return ROTULO_OPCAO[valor];
   }
   return String(valor);
@@ -150,4 +164,12 @@ export function lerEurosParaCents(texto: string): number | null {
   const limpo = texto.replace(/[€\s]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".");
   if (!/^\d+(\.\d{1,2})?$/.test(limpo)) return null;
   return Math.round(Number(limpo) * 100);
+}
+
+// Duração da fidelização escrita pelo cliente ("24", "24 meses"): 1 a 60.
+export function lerMeses(texto: string): number | null {
+  const limpo = texto.trim().replace(/\s*(meses|mês|mes)$/i, "");
+  if (!/^\d{1,2}$/.test(limpo)) return null;
+  const n = Number(limpo);
+  return n >= 1 && n <= 60 ? n : null;
 }

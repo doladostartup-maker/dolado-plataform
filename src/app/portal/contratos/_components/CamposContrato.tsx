@@ -9,7 +9,10 @@ export type ValoresContrato = {
   setor?: string;
   fornecedor?: string | null;
   referencia_contrato?: string | null;
+  data_assinatura?: string | null;
+  data_ativacao?: string | null;
   data_inicio?: string | null;
+  duracao_fidelizacao_meses?: number | null;
   data_fim_fidelizacao?: string | null;
   data_fim_promocao?: string | null;
   descricao_promocao?: string | null;
@@ -51,10 +54,19 @@ export function CamposContrato({ valores = {}, setorObrigatorio = false }: { val
           ))}
         </select>
       </Campo>
-      <Campo label="Início do contrato">
+      <Campo label="Data de assinatura" ajuda="Não é usada como início da fidelização.">
+        <input type="date" name="data_assinatura" defaultValue={valores.data_assinatura ?? ""} className={INPUT_CLASS} />
+      </Campo>
+      <Campo label="Data de instalação/ativação" ajuda="Muitos contratos começam nesta data.">
+        <input type="date" name="data_ativacao" defaultValue={valores.data_ativacao ?? ""} className={INPUT_CLASS} />
+      </Campo>
+      <Campo label="Início da fidelização" ajuda="Se não souber, deixe em branco: usamos a data de instalação/ativação.">
         <input type="date" name="data_inicio" defaultValue={valores.data_inicio ?? ""} className={INPUT_CLASS} />
       </Campo>
-      <Campo label="Fim da fidelização">
+      <Campo label="Duração da fidelização (meses)" ajuda="Com o início e a duração, calculamos o fim da fidelização.">
+        <input name="duracao_fidelizacao_meses" inputMode="numeric" defaultValue={valores.duracao_fidelizacao_meses ?? ""} placeholder="ex.: 24" className={INPUT_CLASS} />
+      </Campo>
+      <Campo label="Fim da fidelização" ajuda="Só se o contrato indicar a data de fim.">
         <input type="date" name="data_fim_fidelizacao" defaultValue={valores.data_fim_fidelizacao ?? ""} className={INPUT_CLASS} />
       </Campo>
       <Campo label="Mensalidade (€)" ajuda="O valor mensal do serviço, sem consumos extra.">

@@ -133,7 +133,11 @@ export type CampoContrato =
   | "cui"
   | "tipo_fidelizacao"
   | "nova_instalacao"
-  | "equipamento_subsidiado";
+  | "equipamento_subsidiado"
+  | "data_assinatura"
+  | "data_ativacao"
+  | "duracao_fidelizacao_meses"
+  | "inicio_na_ativacao";
 
 export type CampoProposto = {
   campo: CampoContrato;

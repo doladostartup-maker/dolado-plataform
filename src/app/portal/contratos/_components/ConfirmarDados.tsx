@@ -57,8 +57,8 @@ function CampoEdicao({ tipo, valor, onChange, rotulo }: { tipo: TipoCampo; valor
     <input
       value={valor}
       onChange={(e) => onChange(e.target.value)}
-      inputMode={tipo === "euros" ? "decimal" : undefined}
-      placeholder={tipo === "euros" ? "ex.: 42,99" : undefined}
+      inputMode={tipo === "euros" ? "decimal" : tipo === "meses" ? "numeric" : undefined}
+      placeholder={tipo === "euros" ? "ex.: 42,99" : tipo === "meses" ? "ex.: 24" : undefined}
       {...comum}
     />
   );
