@@ -157,16 +157,16 @@ export default async function ContratoPage({
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">{fornecedor ?? "Fornecedor por confirmar"}</h1>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="break-words text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">{fornecedor ?? "Fornecedor por confirmar"}</h1>
           <p className="text-sm text-[var(--color-ink-faint)]">{ROTULO_SETOR[contrato.setor as SetorContratoMonitor] ?? contrato.setor}</p>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-2">
-          <Link href="/portal/contratos#acrescentar" className={BOTAO_SECUNDARIO}>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:flex-col sm:items-end">
+          <Link href="/portal/contratos#acrescentar" className={`${BOTAO_SECUNDARIO} min-h-11 sm:min-h-0`}>
             Acrescentar outro contrato
           </Link>
-          <Link href="/portal/contratos" className="text-sm text-[var(--color-ink-muted)] underline">
+          <Link href="/portal/contratos" className="inline-flex min-h-11 items-center text-sm text-[var(--color-ink-muted)] underline sm:min-h-0">
             Voltar
           </Link>
         </div>
