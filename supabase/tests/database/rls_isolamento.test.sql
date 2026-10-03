@@ -194,7 +194,10 @@ select is(
                                                       'alertas_seguir_protecao', 'avisos_setor_destinatarios',
                            'monitor_recalcular_estado', 'monitor_campo_aceitar', 'monitor_campo_rejeitar',
                            'monitor_campo_propor', 'monitor_campo_definir', 'monitor_alertas_pendentes',
-                           'monitor_reservar_alerta', 'monitor_libertar_alerta', 'monitor_ficheiros_orfaos')), 0::bigint,
+                           'monitor_reservar_alerta', 'monitor_libertar_alerta', 'monitor_ficheiros_orfaos',
+                           -- compras sem conta / associação (só service_role; testes em compras_sem_conta.test.sql)
+                           'conta_existe_com_email', 'registar_compra_sem_conta', 'reclamar_compra_sem_conta',
+                           'compras_sem_conta_pendentes', 'reservar_lembrete_compra', 'compras_sem_conta_resolver_ao_ligar')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em

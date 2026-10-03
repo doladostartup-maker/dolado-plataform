@@ -4,11 +4,13 @@ import {
   montarHtmlNotificacaoNovoPagamento,
 } from "@/lib/email/pagamento";
 import { CONTACTO_EMAIL } from "@/lib/site";
-import { getStripe } from "@/lib/stripe/client";
+import type Stripe from "stripe";
+import { getStripe as stripeReal } from "@/lib/stripe/client";
 import { planoDoPreco } from "@/lib/stripe/planos";
 import {
   idDe,
   snapshotDeSubscricao,
+  subscricaoEstaAtiva,
   type ConversaoParaReembolso,
   type ConversaoNoWebhook,
   type DependenciasWebhook,
@@ -29,7 +31,10 @@ function escaparHtml(texto: string) {
 // Stripe e Brevo. Qualquer erro de escrita lança: o webhook liberta o evento
 // e devolve 500 para o Stripe voltar a tentar.
 
-async function enviarEmailBrevo(destinatario: string, assunto: string, html: string) {
+/** Envio de um e-mail transacional (Brevo). Substituível nos testes de contrato. */
+export type EnviarEmail = (destinatario: string, assunto: string, html: string) => Promise<void>;
+
+export async function enviarEmailReal(destinatario: string, assunto: string, html: string) {
   // Falha de e-mail nunca deve derrubar o webhook — o pagamento já está
   // registado; um e-mail perdido não é motivo para o Stripe reenviar o
   // evento.
@@ -59,8 +64,19 @@ function falhar(contexto: string, erro: { code?: string } | null) {
   throw Object.assign(new Error(`${contexto} falhou`), { code: erro.code || contexto });
 }
 
-export function criarDependenciasWebhook(): DependenciasWebhook {
+/**
+ * Só o Stripe e o envio de e-mails são substituíveis (testes de contrato com
+ * a base de dados real); em produção usam-se sempre os reais.
+ */
+export type OpcoesDependencias = {
+  stripe?: Pick<Stripe, "subscriptions" | "checkout" | "paymentIntents" | "refunds">;
+  enviarEmail?: EnviarEmail;
+};
+
+export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): DependenciasWebhook {
   const admin = createAdminClient();
+  const getStripe = () => opcoes.stripe ?? stripeReal();
+  const enviarEmailBrevo = opcoes.enviarEmail ?? enviarEmailReal;
   const agora = () => new Date().toISOString();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://portal.dolado.pt";
 
@@ -629,17 +645,68 @@ export function criarDependenciasWebhook(): DependenciasWebhook {
       return (data as string | null) ?? null;
     },
 
+    async registarCompraSemConta(sessionId, email, plano) {
+      const { data, error } = await admin.rpc("registar_compra_sem_conta", {
+        p_session_id: sessionId,
+        p_email: email,
+        p_plano: plano,
+      });
+      falhar("registar_compra_sem_conta", error);
+      return data === true;
+    },
+
+    async subscricaoAtivaDaConta(userId) {
+      const { data, error } = await admin
+        .from("user_access")
+        .select("subscription_plan, subscription_status, stripe_subscription_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+      falhar("user_access.select", error);
+      if (!data?.stripe_subscription_id || data.subscription_plan === "none") return null;
+      return subscricaoEstaAtiva(data.subscription_status ?? "") ? (data.stripe_subscription_id as string) : null;
+    },
+
+    async registarSubscricaoDuplicada({ novaSubscriptionId, userId, subscricaoExistenteId, sessionId, origem }) {
+      const { data, error } = await admin
+        .from("subscricoes_duplicadas")
+        .upsert(
+          {
+            nova_subscription_id: novaSubscriptionId,
+            user_id: userId,
+            subscricao_existente_id: subscricaoExistenteId,
+            stripe_session_id: sessionId,
+            origem,
+          },
+          { onConflict: "nova_subscription_id", ignoreDuplicates: true },
+        )
+        .select("nova_subscription_id");
+      falhar("subscricoes_duplicadas.insert", error);
+      return (data?.length ?? 0) > 0;
+    },
+
     async enviarEmailPagamentoConfirmado({ email, plano, contaExiste, sessionId, valorPagoCentimos, renovacao, consentimento }) {
+      // Sem conta ligada, mas o e-mail do Checkout já tem conta: iniciar
+      // sessão e associar a compra (nunca criar uma segunda conta).
+      let associar = false;
+      if (!contaExiste) {
+        const { data, error } = await admin.rpc("conta_existe_com_email", { p_email: email });
+        associar = !error && data === true;
+      }
       const ligacao = contaExiste
         ? `${siteUrl}/entrar`
-        : `${siteUrl}/criar-conta?session_id=${encodeURIComponent(sessionId)}`;
+        : associar
+          ? `${siteUrl}/associar-compra?session_id=${encodeURIComponent(sessionId)}`
+          : `${siteUrl}/criar-conta?session_id=${encodeURIComponent(sessionId)}`;
       await enviarEmailBrevo(
         email,
         contaExiste
           ? "Pagamento confirmado — o seu acesso está ativo ✓"
-          : "Pagamento confirmado — Falta criar a sua palavra-passe ✓",
+          : associar
+            ? "Pagamento confirmado — Associe esta compra à sua conta ✓"
+            : "Pagamento confirmado — Falta criar a sua palavra-passe ✓",
         montarHtmlBoasVindasPagamento(plano, {
           contaExiste,
+          associarCompra: associar,
           ligacao,
           valorPagoCentimos,
           renovacao,

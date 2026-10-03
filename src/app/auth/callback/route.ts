@@ -1,5 +1,6 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { destinoSeguro } from "@/lib/pedidoCaso";
+import { COOKIE_DESTINO_POS_LOGIN, destinoSeguro } from "@/lib/pedidoCaso";
 import { haPedidoPorPagarNoBrowser } from "@/lib/pedidoCasoServidor";
 import { createClient } from "@/lib/supabase/server";
 
@@ -36,12 +37,17 @@ export async function GET(request: Request) {
       // Sem destino explícito: se este browser tem um pedido de caso por
       // pagar ("Tratar o meu caso" → Google, ou ligação de confirmação do
       // e-mail), continua na escolha da modalidade.
+      const destinoGuardado = (await cookies()).get(COOKIE_DESTINO_POS_LOGIN)?.value;
       const next = nextPedido
         ? destinoSeguro(nextPedido)
-        : (await haPedidoPorPagarNoBrowser())
-          ? "/tratar-caso/modalidade"
-          : "/conta";
-      return NextResponse.redirect(`${siteUrl}${next}`);
+        : destinoGuardado
+          ? destinoSeguro(destinoGuardado)
+          : (await haPedidoPorPagarNoBrowser())
+            ? "/tratar-caso/modalidade"
+            : "/conta";
+      const resposta = NextResponse.redirect(`${siteUrl}${next}`);
+      if (destinoGuardado) resposta.cookies.delete(COOKIE_DESTINO_POS_LOGIN);
+      return resposta;
     }
     console.error("[auth/callback] exchangeCodeForSession falhou:", error.message);
   }

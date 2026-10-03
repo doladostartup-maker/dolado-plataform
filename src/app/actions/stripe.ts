@@ -3,7 +3,8 @@
 import { redirect } from "next/navigation";
 import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { obterAcesso, requireUser } from "@/lib/auth";
+import { obterAcesso, requireUser, utilizadorAtual } from "@/lib/auth";
+import { customerDaConta, subscricoesAtivasDoCustomer } from "@/lib/compra/servidor";
 import { MARKETING_SITE_URL } from "@/lib/site";
 import { getStripe } from "@/lib/stripe/client";
 import {
@@ -124,27 +125,6 @@ async function checkoutPublico(pedido: PedidoCompra): Promise<Destino> {
   return { destino: url ?? `${MARKETING_SITE_URL}/#precario` };
 }
 
-/** Customer Stripe já associado à conta (se houver), para não criar outro. */
-async function customerDaConta(userId: string) {
-  const admin = createAdminClient();
-  const { data: acesso } = await admin
-    .from("user_access")
-    .select("stripe_customer_id")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (acesso?.stripe_customer_id) return acesso.stripe_customer_id as string;
-
-  const { data: pagamento } = await admin
-    .from("stripe_payments")
-    .select("stripe_customer_id")
-    .eq("user_id", userId)
-    .not("stripe_customer_id", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  return (pagamento?.stripe_customer_id as string | undefined) ?? null;
-}
-
 /**
  * Compra de um caso Avulso por quem já tem conta (ex.: plano Proteção sem
  * casos, ou depois de um pagamento falhado). O user_id vai nos metadados —
@@ -214,14 +194,17 @@ async function adesao(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Desti
   const acesso = await obterAcesso(supabase, user.id);
   const metadataPedido: Record<string, string> = ctx ? { pedido_id: ctx.pedidoId } : {};
 
-  // Já tem uma subscrição ativa: não abre uma segunda.
-  if (acesso.temProtecao) {
-    return { destino: ctx ? `/tratar-caso/modalidade?pedido=${encodeURIComponent(ctx.pedidoId)}` : "/portal" };
+  const customerId = await customerDaConta(user.id);
+
+  // Já tem uma subscrição ativa (na conta ou no Stripe, no Customer da
+  // conta): não abre uma segunda.
+  if (acesso.temProtecao || (await subscricoesAtivasDoCustomer(customerId)).length > 0) {
+    if (ctx) return { destino: `/tratar-caso/modalidade?pedido=${encodeURIComponent(ctx.pedidoId)}` };
+    return { destino: pedido.origem === "landing" ? `/comprar?plano=${plano}` : "/portal" };
   }
 
   const admin = createAdminClient();
   const precoId = precoDoPlano(plano);
-  const customerId = await customerDaConta(user.id);
   const cliente = customerId ? { customer: customerId } : { customer_email: user.email };
 
   const [{ data: pagamentos }, { data: conversoes }, { data: creditos }] = await Promise.all([
@@ -406,14 +389,22 @@ export async function confirmarCompra(_anterior: EstadoCompra, formData: FormDat
   let destino: string;
   try {
     const { pedido } = lido;
+    // A compra "pública" (sem conta) só é para quem não tem sessão. Com
+    // sessão, segue sempre os fluxos da conta — mesmo Customer, e nunca uma
+    // segunda subscrição desligada da conta.
+    const comSessao = pedido.fluxo === "publico" && !!(await utilizadorAtual()).user;
     const r =
-      pedido.fluxo === "publico"
+      pedido.fluxo === "publico" && !comSessao
         ? await checkoutPublico(pedido)
-        : pedido.fluxo === "avulso_conta"
+        : comSessao && pedido.plano === "avulso"
           ? await compraAvulsoComConta(pedido)
-          : pedido.fluxo === "pedido_caso"
-            ? await checkoutPedidoCaso(pedido)
-            : await adesao(pedido);
+          : comSessao
+            ? await adesao(pedido)
+            : pedido.fluxo === "avulso_conta"
+              ? await compraAvulsoComConta(pedido)
+              : pedido.fluxo === "pedido_caso"
+                ? await checkoutPedidoCaso(pedido)
+                : await adesao(pedido);
     destino = r.destino;
   } catch (erro) {
     // requireUser() sem sessão faz redirect: deixa passar.

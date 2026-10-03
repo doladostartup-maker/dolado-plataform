@@ -100,12 +100,16 @@ describe("checkout: o browser só escolhe o plano, o servidor escolhe o preço",
     assert.match(corpo, /plano: avulso \? "avulso" : "assinatura"/);
   });
 
-  test("o preçário envia só o PlanoId (pela confirmação), sem Price IDs nem chaves", () => {
+  test("o preçário envia só o PlanoId (para /comprar e daí pela confirmação), sem Price IDs nem chaves", () => {
     const precario = fonte("../components/landing/Precario.tsx");
-    assert.match(precario, /<ConfirmarCompra/);
+    assert.match(precario, /urlComprar\(plano\)/);
+    const comprar = fonte("../app/comprar/page.tsx");
+    assert.match(comprar, /ehPlanoId\(plano\)/);
+    const confirmacao = fonte("../app/comprar/CompraConfirmacao.tsx");
+    assert.match(confirmacao, /<ConfirmarCompra/);
     const modal = fonte("../components/compra/ConfirmarCompra.tsx");
     assert.match(modal, /name="plano" value=\{plano\}/);
-    for (const f of [precario, modal]) assert.equal(/price_|sk_(live|test)_|whsec_/.test(f), false);
+    for (const f of [precario, comprar, confirmacao, modal]) assert.equal(/price_|sk_(live|test)_|whsec_/.test(f), false);
   });
 });
 

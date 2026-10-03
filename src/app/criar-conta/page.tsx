@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MARKETING_SITE_URL } from "@/lib/site";
 import { getStripe } from "@/lib/stripe/client";
-import { avaliarSessaoParaCriarConta } from "@/lib/stripe/criarConta";
+import { contaExisteComEmail } from "@/lib/compra/servidor";
+import { MENSAGEM_EMAIL_COM_CONTA, avaliarSessaoParaCriarConta } from "@/lib/stripe/criarConta";
 import { criarContaComPagamento } from "./actions";
 
 export default async function CriarContaPage({
@@ -28,12 +30,35 @@ export default async function CriarContaPage({
     .eq("stripe_session_id", params.session_id)
     .maybeSingle();
 
-  const avaliacao = avaliarSessaoParaCriarConta(session, pagamento?.user_id ?? null);
+  const email = session.customer_details?.email;
+  const avaliacao = avaliarSessaoParaCriarConta(
+    session,
+    pagamento?.user_id ?? null,
+    !!email && !pagamento?.user_id && (await contaExisteComEmail(email)),
+  );
   if (!avaliacao.ok) {
     if (avaliacao.motivo === "sessao_invalida") redirect(`${MARKETING_SITE_URL}/#precario`);
+    if (avaliacao.motivo === "email_com_conta") {
+      const associar = `/associar-compra?session_id=${encodeURIComponent(params.session_id)}`;
+      return (
+        <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
+          <div>
+            <p className="mb-1 text-sm font-semibold text-[var(--color-brand)]">Pagamento recebido</p>
+            <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">Associar a compra</h1>
+          </div>
+          <p className="text-sm leading-relaxed text-[var(--color-ink)]">{MENSAGEM_EMAIL_COM_CONTA}</p>
+          <Link
+            href={`/login?next=${encodeURIComponent(associar)}`}
+            className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-center text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
+          >
+            Iniciar sessão
+          </Link>
+        </main>
+      );
+    }
     redirect(`/login?info=${encodeURIComponent("Esta compra já tem uma conta associada. Inicie sessão.")}`);
   }
-  const { email, pagamentoConfirmado } = avaliacao;
+  const { pagamentoConfirmado } = avaliacao;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
@@ -74,7 +99,7 @@ export default async function CriarContaPage({
           E-mail
           <input
             type="email"
-            value={email}
+            value={avaliacao.email}
             readOnly
             disabled
             className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface-sunken)] px-3 py-2 text-[var(--color-ink-muted)]"

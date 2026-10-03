@@ -1,7 +1,7 @@
 // /criar-conta: quando uma Checkout Session permite criar conta — `npm test`.
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { avaliarSessaoParaCriarConta } from "./criarConta.ts";
+import { MENSAGEM_EMAIL_COM_CONTA, avaliarSessaoParaCriarConta } from "./criarConta.ts";
 
 const sessao = (extra = {}) => ({
   status: "complete",
@@ -47,5 +47,24 @@ describe("avaliarSessaoParaCriarConta", () => {
 
   test("sessão de outro fluxo (sem plano): recusa", () => {
     assert.equal(avaliarSessaoParaCriarConta(sessao({ metadata: {} }), null).ok, false);
+  });
+});
+
+describe("e-mail do Checkout que já tem conta", () => {
+  test("nunca cria uma segunda conta: pede login para associar a compra", () => {
+    assert.deepEqual(avaliarSessaoParaCriarConta(sessao(), null, true), {
+      ok: false,
+      motivo: "email_com_conta",
+      email: "cliente@teste.invalid",
+    });
+    assert.equal(MENSAGEM_EMAIL_COM_CONTA, "Já existe uma conta com este e-mail. Inicie sessão para associar esta compra.");
+  });
+
+  test("compra já ligada continua a ter prioridade (já tem conta)", () => {
+    assert.equal(avaliarSessaoParaCriarConta(sessao(), "user-1", true).motivo, "ja_tem_conta");
+  });
+
+  test("pessoa nova: cria conta normalmente", () => {
+    assert.equal(avaliarSessaoParaCriarConta(sessao(), null, false).ok, true);
   });
 });

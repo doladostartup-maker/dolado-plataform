@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { COOKIE_DESTINO_POS_LOGIN, destinoSeguro } from "@/lib/pedidoCaso";
 import { createClient } from "@/lib/supabase/server";
 
 // Route Handler em vez de Server Action: redirect() para um domínio
@@ -6,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 // fiável o Set-Cookie do code verifier PKCE — confirmado em produção
 // (o callback só recebia cookies de GA, nunca o da Supabase). Um Route
 // Handler que devolve NextResponse.redirect() não tem esse problema.
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createClient();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
@@ -21,5 +22,19 @@ export async function GET() {
     );
   }
 
-  return NextResponse.redirect(data.url);
+  const resposta = NextResponse.redirect(data.url);
+  // Destino depois do login (ex.: /comprar ou /associar-compra). Num cookie
+  // de curta duração, e não no redirectTo: o URL de regresso autorizado na
+  // Supabase é fixo. Só caminhos deste site.
+  const next = new URL(request.url).searchParams.get("next");
+  if (next) {
+    resposta.cookies.set(COOKIE_DESTINO_POS_LOGIN, destinoSeguro(next), {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 600,
+    });
+  }
+  return resposta;
 }

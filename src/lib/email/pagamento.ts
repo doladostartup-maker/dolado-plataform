@@ -14,6 +14,11 @@ export type DadosEmailPagamento = {
   /** /criar-conta?session_id=… quando a conta ainda não existe; /entrar quando já existe. */
   ligacao: string;
   contaExiste: boolean;
+  /**
+   * Compra sem conta ligada, mas o e-mail do Checkout já tem conta: o passo
+   * é iniciar sessão e associar a compra (nunca criar outra conta).
+   */
+  associarCompra?: boolean;
   /** Valor efetivamente pago agora (com descontos/cupões), em cêntimos. */
   valorPagoCentimos: number | null;
   /** Próxima renovação (ISO) nas subscrições, se conhecida. */
@@ -45,15 +50,17 @@ const TD_V = 'style="padding:4px 0; color:#171A21; font-size:14px; font-weight:6
  * Privacidade. Textos legais vêm de src/lib/legal.ts; preços de planos.ts.
  */
 export function montarHtmlBoasVindasPagamento(plano: PlanoEmail, dados: DadosEmailPagamento) {
-  const { contaExiste, ligacao, valorPagoCentimos, renovacao, consentimento, portalUrl } = dados;
+  const { contaExiste, associarCompra = false, ligacao, valorPagoCentimos, renovacao, consentimento, portalUrl } = dados;
   const info = PLANOS[plano];
   const nomePlano = info.nome;
   const passo = contaExiste
     ? "Já pode iniciar sessão no portal: o seu acesso já está ativo."
-    : plano === "protecao"
-      ? "Falta só um passo: crie a sua palavra-passe para aceder ao portal."
-      : "Falta só um passo: crie a sua palavra-passe para aceder ao portal e abrir o seu caso.";
-  const botao = contaExiste ? "Iniciar sessão" : "Criar a minha conta";
+    : associarCompra
+      ? "Já existe uma conta na DoLado com este e-mail. Falta só um passo: inicie sessão e associe esta compra à sua conta."
+      : plano === "protecao"
+        ? "Falta só um passo: crie a sua palavra-passe para aceder ao portal."
+        : "Falta só um passo: crie a sua palavra-passe para aceder ao portal e abrir o seu caso.";
+  const botao = contaExiste ? "Iniciar sessão" : associarCompra ? "Associar a compra" : "Criar a minha conta";
 
   const linhas: [string, string][] = [["Produto", nomePlano]];
   if (valorPagoCentimos !== null) linhas.push(["Valor pago", `${formatarPreco(valorPagoCentimos)} (${IVA_INCLUIDO})`]);

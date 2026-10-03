@@ -33,3 +33,11 @@ export const URL_TRATAR_CASO = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/tratar
 export function urlTratarCaso(origem?: string) {
   return origem ? `${URL_TRATAR_CASO}?origem=${encodeURIComponent(origem)}` : URL_TRATAR_CASO;
 }
+
+// Compra de uma subscrição a partir do preçário de dolado.pt. A decisão é
+// sempre tomada em portal.dolado.pt, onde está a sessão (cookies host-only):
+// quem já tem conta compra com o Customer da conta e nunca abre uma segunda
+// subscrição desligada dela.
+export function urlComprar(plano: string) {
+  return `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/comprar?plano=${encodeURIComponent(plano)}`;
+}
