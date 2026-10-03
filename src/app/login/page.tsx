@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ehDestinoSeguro } from "@/lib/destinoAuth";
 import { login } from "./actions";
 
 export default async function LoginPage({
@@ -7,6 +8,7 @@ export default async function LoginPage({
   searchParams: Promise<{ erro?: string; info?: string; next?: string }>;
 }) {
   const params = await searchParams;
+  const next = ehDestinoSeguro(params.next) ? params.next : null;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
@@ -22,7 +24,7 @@ export default async function LoginPage({
       )}
 
       <form action={login} className="flex flex-col gap-4">
-        {params.next && <input type="hidden" name="next" value={params.next} />}
+        {next && <input type="hidden" name="next" value={next} />}
         <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
           E-mail
           <input
@@ -56,7 +58,7 @@ export default async function LoginPage({
       </div>
 
       <a
-        href={params.next ? `/auth/login/google?next=${encodeURIComponent(params.next)}` : "/auth/login/google"}
+        href={next ? `/auth/login/google?next=${encodeURIComponent(next)}` : "/auth/login/google"}
         className="block w-full rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-[18px] py-[10px] text-center text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
       >
         Entrar com Google
@@ -64,7 +66,7 @@ export default async function LoginPage({
 
       <p className="text-sm text-[var(--color-ink-muted)]">
         Não tem conta?{" "}
-        <Link href="/registo" className="text-[var(--color-brand)] underline">
+        <Link href={next ? `/registo?next=${encodeURIComponent(next)}` : "/registo"} className="text-[var(--color-brand)] underline">
           Registe-se
         </Link>
         {" "}· Para tratar um caso,{" "}

@@ -14,6 +14,7 @@ const PAGINAS_PUBLICAS = [
   "/login",
   "/registo",
   "/criar-conta",
+  "/confirmar-email",
   "/como-funciona",
   "/transparencia",
   "/sobre-nos",
@@ -100,6 +101,12 @@ export async function middleware(request: NextRequest) {
   // portal.dolado.pt é o subdomínio da aplicação — a raiz deve cair no
   // acesso (login/registo), não na landing de marketing servida em dolado.pt.
   if (pathname === "/" && host.startsWith("portal.")) {
+    // Ligação de confirmação de e-mail antiga (enviada para o "Site URL" do
+    // projeto, sem /auth/callback): troca o código pela sessão em vez de o
+    // perder no redirecionamento para /entrar.
+    if (request.nextUrl.searchParams.has("code")) {
+      return NextResponse.redirect(new URL(`/auth/callback${search}`, process.env.NEXT_PUBLIC_SITE_URL ?? request.url));
+    }
     return NextResponse.redirect(new URL("/entrar", request.url));
   }
 

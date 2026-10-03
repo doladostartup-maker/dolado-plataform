@@ -14,14 +14,15 @@
           <tr>
             <td style="padding:24px 32px 8px 32px; color:#171A21; font-size:16px; line-height:1.6;">
               <p style="margin:0 0 16px 0;">Olá,</p>
-              <p style="margin:0 0 16px 0;">Para concluir a criação da sua conta na DoLado, confirme o seu endereço de e-mail.</p>
-              <p style="margin:0 0 8px 0;">Se está a tratar o seu caso no site, introduza este código na página onde criou a conta:</p>
-              <p style="margin:0 0 24px 0; font-size:30px; font-weight:700; letter-spacing:6px; color:#0E6B5C;">{{ .Token }}</p>
-              <p style="margin:0 0 16px 0;">Em alternativa, confirme através do botão abaixo, de preferência neste mesmo dispositivo e navegador:</p>
+              <p style="margin:0 0 24px 0;">Para concluir a criação da sua conta na DoLado, confirme o seu endereço de e-mail.</p>
               <p style="margin:0 0 24px 0;">
                 <a href="{{ .ConfirmationURL }}" style="display:inline-block; background-color:#0E6B5C; color:#FFFFFF; text-decoration:none; font-weight:600; padding:10px 18px; border-radius:8px;">Confirmar o meu e-mail</a>
               </p>
-              <p style="margin:0 0 16px 0; font-size:14px; color:#5B6270;">O código e a ligação são válidos durante um período limitado. Se não pediu a criação de uma conta na DoLado, pode ignorar este e-mail.</p>
+              {{ with .Data }}{{ if .mostrar_codigo }}
+              <p style="margin:0 0 8px 0;">Também pode introduzir este código na página onde criou a conta:</p>
+              <p style="margin:0 0 24px 0; font-size:30px; font-weight:700; letter-spacing:6px; color:#0E6B5C;">{{ $.Token }}</p>
+              {{ end }}{{ end }}
+              <p style="margin:0 0 16px 0; font-size:14px; color:#5B6270;">Abra a ligação de preferência neste mesmo dispositivo e navegador. A ligação é válida durante um período limitado. Se não criou uma conta na DoLado, pode ignorar este e-mail.</p>
             </td>
           </tr>
           <tr>

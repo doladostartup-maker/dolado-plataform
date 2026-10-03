@@ -39,7 +39,7 @@ export async function requireAdmin() {
     .single();
 
   if (perfil?.role !== "admin") {
-    redirect("/conta");
+    redirect("/portal/casos");
   }
 
   return { supabase, user };

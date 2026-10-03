@@ -113,11 +113,11 @@ describe("metadata e redirecionamentos", () => {
   });
   test("destino depois do login: só caminhos deste site", () => {
     assert.equal(destinoSeguro("/tratar-caso/recebido?pedido=x"), "/tratar-caso/recebido?pedido=x");
-    assert.equal(destinoSeguro("//evil.example"), "/conta");
-    assert.equal(destinoSeguro("https://evil.example"), "/conta");
-    assert.equal(destinoSeguro("@evil.example"), "/conta");
-    assert.equal(destinoSeguro("/\\evil.example"), "/conta");
-    assert.equal(destinoSeguro(null), "/conta");
+    assert.equal(destinoSeguro("//evil.example"), "/portal/casos");
+    assert.equal(destinoSeguro("https://evil.example"), "/portal/casos");
+    assert.equal(destinoSeguro("@evil.example"), "/portal/casos");
+    assert.equal(destinoSeguro("/\\evil.example"), "/portal/casos");
+    assert.equal(destinoSeguro(null), "/portal/casos");
   });
 });
 

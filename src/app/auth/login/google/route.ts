@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { COOKIE_DESTINO_POS_LOGIN, destinoSeguro } from "@/lib/pedidoCaso";
+import { COOKIE_DESTINO_POS_LOGIN, VALIDADE_DESTINO_GOOGLE_S, destinoSeguro } from "@/lib/destinoAuth";
 import { createClient } from "@/lib/supabase/server";
 
 // Route Handler em vez de Server Action: redirect() para um domínio
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
       secure: true,
       sameSite: "lax",
       path: "/",
-      maxAge: 600,
+      maxAge: VALIDADE_DESTINO_GOOGLE_S,
     });
   }
   return resposta;

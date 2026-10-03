@@ -11,6 +11,7 @@ import { customerDaConta, ofertaConversaoDaConta, subscricoesAtivasDoCustomer } 
 import { PLANOS, ehPlanoId } from "@/lib/planos";
 import { MARKETING_SITE_URL, urlTratarCaso } from "@/lib/site";
 import { BotaoComprar } from "@/components/compra/BotaoComprar";
+import { destinoCompra } from "@/lib/destinoAuth";
 import { CompraConfirmacao } from "./CompraConfirmacao";
 
 export const metadata = { title: "Comprar — DoLado", robots: { index: false } };
@@ -73,7 +74,7 @@ export default async function ComprarPage({
           </p>
           <div className="flex flex-col gap-3">
             <Link
-              href={`/login?next=${encodeURIComponent(`/comprar?plano=${plano}`)}`}
+              href={`/login?next=${encodeURIComponent(destinoCompra(plano))}`}
               className="min-h-11 rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-center text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)]"
             >
               Iniciar sessão
@@ -88,7 +89,11 @@ export default async function ComprarPage({
             </BotaoComprar>
           </div>
           <p className="text-[13px] text-[var(--color-ink-muted)]">
-            Sem conta, cria a sua conta depois do pagamento.{" "}
+            Sem conta, cria a sua conta depois do pagamento. Prefere criá-la já?{" "}
+            <Link href={`/registo?next=${encodeURIComponent(destinoCompra(plano))}`} className={LINK}>
+              Criar conta e continuar
+            </Link>
+            .{" "}
             <a href={PRECARIO} className={LINK}>
               Voltar ao preçário
             </a>
