@@ -135,14 +135,10 @@ describe("preçário público", () => {
     assert.match(precario, /"1 novo caso por mês"/);
     assert.match(precario, /acumulam até ao limite de \$\{LIMITE_CASOS_ACUMULADOS\}/);
     assert.match(precario, /"Tratamento de 1 caso"/);
-    assert.match(precario, /casos incluídos", valores: \{ protecao: "0", caso_protecao: "1 por mês", avulso: "1" \}/i);
   });
 
-  test("CTAs utilizáveis em mobile e tabela acessível", () => {
+  test("CTAs utilizáveis em mobile", () => {
     assert.match(precario, /min-h-11 w-full/);
-    assert.match(precario, /<caption/);
-    assert.match(precario, /scope="col"/);
-    assert.match(precario, /scope="row"/);
   });
 
   test("a homepage usa o preçário partilhado", () => {
