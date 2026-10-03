@@ -20,6 +20,12 @@ import { DIAS_CASOS_GUARDADOS } from "@/lib/acesso";
 import { VALOR_MENSALIDADE_CENTIMOS } from "@/lib/stripe/conversao";
 import { CONTACTO_EMAIL, PRIVACIDADE_EMAIL } from "@/lib/site";
 
+// Descrição da Proteção tal como estava em src/lib/planos.ts quando esta
+// versão foi publicada. Uma versão publicada não muda: o texto fica aqui
+// fixo, mesmo que a descrição usada no site e na compra mude.
+const DESCRICAO_PROTECAO_PUBLICADA =
+  "Alertas de fim de fidelização e de fim de promoção, aviso sectorial, comparador de faturas e simulador de elegibilidade. Não inclui o tratamento de casos.";
+
 const H2 = "text-xl font-semibold text-[var(--color-ink)]";
 const P = "text-base leading-relaxed text-[var(--color-ink)]";
 const UL = "flex list-disc flex-col gap-2 pl-5 text-base leading-relaxed text-[var(--color-ink)]";
@@ -97,7 +103,7 @@ export function TermosV20261001() {
         <ul className={UL}>
           <li>
             <strong>{PLANOS.protecao.nome}</strong> — {formatarPreco(PLANOS.protecao.precoCentimos)} por mês.{" "}
-            {PLANOS.protecao.descricaoCurta}
+            {DESCRICAO_PROTECAO_PUBLICADA}
           </li>
           <li>
             <strong>{PLANOS.caso_protecao.nome}</strong> — {formatarPreco(PLANOS.caso_protecao.precoCentimos)} por
