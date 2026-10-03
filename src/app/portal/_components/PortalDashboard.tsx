@@ -300,8 +300,9 @@ export function PortalDashboard({
               </div>
             ) : (
               <p className="mb-5 text-[13.5px] leading-relaxed text-[var(--color-ink-muted)]">
-                Os planos Proteção e Caso + Proteção incluem o acompanhamento dos seus contratos e
-                faturas, avisos antes de datas importantes e alertas sobre alterações no seu setor.
+                Os planos Proteção e Caso + Proteção ajudam a identificar situações que possam tornar-se
+                num problema: alterações nas suas faturas, datas importantes, como o fim de promoções e de
+                períodos de fidelização, e alterações relevantes no seu setor.
               </p>
             )}
 
