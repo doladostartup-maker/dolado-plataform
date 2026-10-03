@@ -15,7 +15,7 @@ evitar, passamos a ler e a comparar os **dados de identificação que constam do
 | Ponto | Antes | Agora |
 |---|---|---|
 | Dados lidos dos documentos | Fornecedor, datas, valores, referência do contrato | Também nome e NIF do titular, número de cliente, de conta, de contrato e de serviço, e número da fatura |
-| Como ficam guardados | — | NIF e nome do titular: só em hash SHA-256 junto do serviço (pseudonimização). Referências de conta/contrato/serviço: em claro. O resultado bruto da leitura de cada documento (acesso restrito à DoLado, como já acontecia) contém os valores tal como lidos |
+| Como ficam guardados | — | NIF e nome do titular **nunca em texto** na base de dados: logo a seguir à leitura (antes de qualquer gravação) são substituídos por um pseudónimo HMAC-SHA256 calculado com uma chave secreta guardada só no servidor de aplicação (Clever Cloud). Do NIF fica apenas "NIF terminado em 789". Referências de conta/contrato/serviço: em claro. O documento carregado continua guardado tal como foi enviado (armazenamento privado) |
 | Finalidade | Acompanhar datas e condições; comparar faturas | Igual, e confirmar que cada documento pertence ao serviço certo, para não misturar dados de outra pessoa ou de outro serviço |
 | Decisões do Utilizador | Confirmar/corrigir valores lidos | Também associar um documento a um serviço quando não foi possível confirmar (registado com data e autor) |
 | Documento de outra pessoa | Era associado ao contrato | Não é associado; o Utilizador decide (novo serviço, outro serviço ou cancelar — cancelar apaga o documento de imediato) |
@@ -40,9 +40,10 @@ Secções 1, 5, 7, 9 e 10: sem alterações.
 
 ## Pontos a confirmar pela advogada
 
-1. Se "pseudonimizada (hash SHA-256)" é a descrição adequada para o NIF (um NIF tem 9 dígitos, pelo que o
-   hash, sem chave secreta, não deve ser descrito como irreversível).
-2. Se é preciso referir que o resultado bruto da leitura de cada documento guarda os dados de identificação
-   em claro (hoje dito de forma genérica: "os valores lidos desses documentos"). Alternativa técnica possível:
-   deixar de os guardar em claro nesse resultado.
-3. Se a DPIA em curso deve passar a incluir a comparação de identificadores.
+1. Se a descrição do pseudónimo (secção 2) é adequada. Trata-se de pseudonimização (art. 4.º, n.º 5, RGPD):
+   a chave secreta é guardada separadamente da base de dados; sem ela, o pseudónimo não permite conhecer o
+   NIF nem o nome. Continua a ser dado pessoal.
+2. Se a DPIA em curso deve passar a incluir a comparação de identificadores.
+
+Nota: a Anthropic continua a receber o documento completo para o ler (já descrito na 2026-10-02e); a
+pseudonimização aplica-se ao que a DoLado guarda depois da leitura.

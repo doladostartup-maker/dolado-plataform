@@ -4,7 +4,8 @@
 // rascunho para a advogada em
 // docs/legal/rascunho-privacidade-acompanhamento-servicos.md): secção 2
 // (serviços acompanhados; dados de identificação lidos dos documentos para os
-// associar ao serviço certo, NIF e nome do titular pseudonimizados; histórico
+// associar ao serviço certo, NIF e nome do titular nunca em texto —
+// pseudonimizados com chave secreta (HMAC-SHA256); histórico
 // mensal; decisões de associação), secção 3 (finalidade), secção 4 (a IA lê
 // também a identificação; associação e comparação em código; sem confirmação
 // nada é associado), secção 6 (conservação) e secção 8 (documentos de outra
@@ -149,9 +150,11 @@ export function PrivacidadeV20261003() {
               <li>
                 <strong>dados de identificação que constam dos documentos</strong> — nome e NIF do titular, número de
                 cliente, de conta, de contrato e de serviço —, usados apenas para confirmar que cada documento pertence
-                ao serviço certo. O NIF e o nome do titular ficam associados ao serviço apenas sob forma
-                pseudonimizada (hash SHA-256), que permite comparar documentos sem guardar o valor junto do serviço;
-                as referências de conta, de contrato e de serviço são guardadas tal como constam do documento;
+                ao serviço certo. O NIF e o nome do titular nunca são guardados em texto: logo depois de lidos, são
+                substituídos por um código pseudonimizado, calculado com uma chave secreta, que serve apenas para
+                comparar documentos e não permite, sem essa chave, conhecer o valor original. Do NIF, a DoLado
+                mostra apenas os últimos três dígitos. As referências de conta, de contrato e de serviço são guardadas
+                tal como constam do documento. Os documentos carregados continuam guardados tal como foram enviados;
               </li>
               <li>
                 a origem de cada dado (introduzido pelo Utilizador, lido de um documento, calculado ou corrigido pela
