@@ -21,7 +21,8 @@ export default async function PedirAlteracoesPage({ params }: { params: Promise<
           </p>
           <p className="text-[14.5px] leading-relaxed text-[var(--color-ink)]">
             Este é o texto preparado pela DoLado. Indique-nos o que gostaria de rever — vamos preparar uma nova versão e
-            enviá-la para a sua aprovação. Nada é enviado sem a sua autorização.
+            enviá-la para a sua aprovação. O pedido só fica registado quando selecionar “Enviar pedido de alterações”, e
+            nada é enviado sem a sua autorização.
           </p>
           <TextoIntegral conteudo={info.conteudo} />
           <PedirAlteracoes token={token} />

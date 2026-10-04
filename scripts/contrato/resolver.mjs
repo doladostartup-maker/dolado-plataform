@@ -1,6 +1,8 @@
 // Hooks de resolução para os testes de contrato: o código real do servidor
 // importa "@/…" (alias do tsconfig) e caminhos sem extensão — o Next.js
 // resolve-os no build; aqui é o Node, com type stripping, que os carrega.
+// Subcaminhos de pacotes sem "exports" (ex.: "next/headers") são tentados
+// também com ".js", como o bundler faz.
 import { existsSync, statSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -21,6 +23,10 @@ function alternativa(especificador, contexto) {
   return null;
 }
 
+function subcaminhoDePacote(especificador) {
+  return /^[a-z@][^:]*\/[^.]+$/.test(especificador) && !especificador.startsWith("@/");
+}
+
 /** registerHooks (Node ≥ 22.15): síncrono. */
 export function resolveSincrono(especificador, contexto, seguinte) {
   if (especificador.startsWith("@/")) {
@@ -32,6 +38,7 @@ export function resolveSincrono(especificador, contexto, seguinte) {
   } catch (erro) {
     const ficheiro = erro?.code === "ERR_MODULE_NOT_FOUND" ? alternativa(especificador, contexto) : null;
     if (ficheiro) return { url: pathToFileURL(ficheiro).href, shortCircuit: true };
+    if (erro?.code === "ERR_MODULE_NOT_FOUND" && subcaminhoDePacote(especificador)) return seguinte(`${especificador}.js`, contexto);
     throw erro;
   }
 }
@@ -47,6 +54,7 @@ export async function resolve(especificador, contexto, seguinte) {
   } catch (erro) {
     const ficheiro = erro?.code === "ERR_MODULE_NOT_FOUND" ? alternativa(especificador, contexto) : null;
     if (ficheiro) return { url: pathToFileURL(ficheiro).href, shortCircuit: true };
+    if (erro?.code === "ERR_MODULE_NOT_FOUND" && subcaminhoDePacote(especificador)) return seguinte(`${especificador}.js`, contexto);
     throw erro;
   }
 }

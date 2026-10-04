@@ -20,7 +20,8 @@ export default async function ReverTextoPage({ params }: { params: Promise<{ tok
             {info.versao && info.versao > 1 ? ` · versão ${info.versao}` : ""}
           </p>
           <p className="text-[14.5px] leading-relaxed text-[var(--color-ink)]">
-            Este é exatamente o texto que a DoLado vai enviar em seu nome. Leia-o com atenção.
+            Este é exatamente o texto que a DoLado vai enviar em seu nome. Leia-o com atenção. Abrir este link não
+            autorizou nada: o envio só fica autorizado depois de selecionar “Autorizo o envio”.
           </p>
           <TextoIntegral conteudo={info.conteudo} />
           <AutorizarEnvio token={token} />
