@@ -51,9 +51,13 @@ describe("desempenho em produção", () => {
   });
 
   test("o logótipo leva sempre à página inicial da DoLado (dolado.pt)", () => {
-    for (const p of ["../components/marketing-v2/Logotipo.tsx", "../app/portal/layout.tsx", "../app/entrar/page.tsx", "../app/texto/layout.tsx", "../app/tratar-caso/layout.tsx"]) {
+    for (const p of ["../components/marketing-v2/Logotipo.tsx", "../app/entrar/page.tsx", "../app/texto/layout.tsx", "../app/tratar-caso/layout.tsx"]) {
       const f = fonte(p);
       assert.match(f, /href=\{MARKETING_SITE_URL\}[\s\S]{0,260}dolado-logo/, p);
     }
+    // O portal usa o mesmo Logotipo V2 (verificado acima).
+    const portal = fonte("../app/portal/layout.tsx");
+    assert.match(portal, /import \{ Logotipo \} from "@\/components\/marketing-v2\/Logotipo"/);
+    assert.match(portal, /<Logotipo \/>/);
   });
 });

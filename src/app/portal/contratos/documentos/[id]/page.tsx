@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requireProtecao } from "@/lib/auth";
 import { formatarDataPt, formatarEurosCents } from "@/lib/monitor/contratos";
@@ -8,6 +7,10 @@ import { listaFornecedores, resumoDocumentoPorAssociar } from "@/lib/monitor/ser
 import { decidirDocumento } from "../../actions";
 import { BotaoSubmeter } from "../../_components/BotaoSubmeter";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CARTAO, INPUT_CLASS, TITULO_SECCAO } from "../../_components/estilos";
+import { Aviso } from "@/components/portal/Aviso";
+import { CabecalhoPagina } from "@/components/portal/Cabecalho";
+import { IconeAlerta, IconeCirculoVisto } from "@/components/portal/Icones";
+import { BOTAO_FANTASMA, ROTULO } from "@/components/portal/ui";
 
 // Documento lido cuja identificação não confirma o serviço (outro cliente,
 // outro número de serviço, ou dados insuficientes). Primeiro resolve-se a
@@ -61,33 +64,35 @@ export default async function DocumentoPorAssociarPage({
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-          {conflito
+      <CabecalhoPagina
+        voltar={{ href: "/portal/contratos", texto: "Proteção" }}
+        contexto="Documento por associar"
+        titulo={
+          conflito
             ? `${documento} parece pertencer a outro serviço ou cliente.`
-            : `Não conseguimos confirmar que ${ehContrato ? "este contrato" : "esta fatura"} pertence a ${sugerido ? `“${nomeServico(sugerido)}”` : "um dos seus serviços"}.`}
-        </h1>
-        <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
-          {conflito
+            : `Não conseguimos confirmar que ${ehContrato ? "este contrato" : "esta fatura"} pertence a ${sugerido ? `“${nomeServico(sugerido)}”` : "um dos seus serviços"}.`
+        }
+        descricao={
+          conflito
             ? "Encontrámos diferenças nos dados de identificação e não alterámos o acompanhamento atual."
-            : "Não alterámos nada. Reveja os dados e escolha o que fazer com o documento."}
-        </p>
-      </div>
+            : "Não alterámos nada. Reveja os dados e escolha o que fazer com o documento."
+        }
+      />
 
-      {erro && <p role="alert" className="text-sm text-[var(--color-status-danger)]">{erro}</p>}
+      {erro && <Aviso tom="erro">{erro}</Aviso>}
 
       <section className={`${CARTAO} flex flex-col gap-3`}>
         <h2 className={TITULO_SECCAO}>O que verificámos</h2>
         <ul className="flex flex-col gap-1.5 text-sm">
           {conflitos.map((c) => (
             <li key={c} className="flex gap-2 text-[var(--color-ink)]">
-              <span aria-hidden className="text-[var(--color-status-urgent)]">⚠</span>
+              <IconeAlerta tamanho={18} className="mt-0.5 shrink-0 text-[var(--v2-aviso)]" />
               {c}
             </li>
           ))}
           {motivos.map((m) => (
             <li key={m} className="flex gap-2 text-[var(--color-ink-muted)]">
-              <span aria-hidden className="text-[var(--color-status-success)]">✓</span>
+              <IconeCirculoVisto tamanho={18} className="mt-0.5 shrink-0 text-[var(--v2-green)]" />
               {m}
             </li>
           ))}
@@ -135,7 +140,7 @@ export default async function DocumentoPorAssociarPage({
         </details>
       </section>
 
-      <section className="flex flex-col gap-4">
+      <section aria-label="O que fazer com o documento" className={`${CARTAO} flex flex-col gap-5`}>
         {!conflito && sugerido && (
           <form action={decidirDocumento} className="flex flex-col gap-1.5">
             <input type="hidden" name="documento_id" value={doc.id} />
@@ -159,7 +164,7 @@ export default async function DocumentoPorAssociarPage({
           <form action={decidirDocumento} className="flex flex-col gap-2 sm:flex-row sm:items-end">
             <input type="hidden" name="documento_id" value={doc.id} />
             <input type="hidden" name="decisao" value="outro_servico" />
-            <label className="flex flex-1 flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+            <label className={`${ROTULO} flex-1`}>
               Escolher outro serviço
               <select name="servico_id" required defaultValue="" className={INPUT_CLASS}>
                 <option value="" disabled>
@@ -180,16 +185,13 @@ export default async function DocumentoPorAssociarPage({
 
         <form action={decidirDocumento} className="flex flex-col gap-1">
           <input type="hidden" name="documento_id" value={doc.id} />
-          <BotaoSubmeter name="decisao" value="cancelar" aDecorrer="A cancelar…" className="self-start text-sm text-[var(--color-ink-muted)] underline">
-            Cancelar
+          <BotaoSubmeter name="decisao" value="cancelar" aDecorrer="A cancelar…" className={`${BOTAO_FANTASMA} self-start`}>
+            Cancelar e apagar o documento
           </BotaoSubmeter>
           <span className="text-[12.5px] text-[var(--color-ink-faint)]">O documento é apagado e nada fica registado.</span>
         </form>
       </section>
 
-      <Link href="/portal/contratos" className="text-sm text-[var(--color-ink-muted)] underline">
-        Voltar aos serviços
-      </Link>
     </div>
   );
 }

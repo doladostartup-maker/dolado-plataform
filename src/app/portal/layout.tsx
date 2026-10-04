@@ -1,205 +1,12 @@
-import Image from "next/image";
-import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { logout } from "@/app/auth/actions";
+import { Logotipo } from "@/components/marketing-v2/Logotipo";
+import { fonteV2 } from "@/components/marketing-v2/fonte";
 import { MenuMovel } from "./_components/MenuMovel";
-import { MARKETING_SITE_URL } from "@/lib/site";
+import { NavegacaoPortal } from "./_components/NavegacaoPortal";
 
-function IconCasos() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
-      <path
-        d="M2 4.5a1 1 0 011-1h3l1.5 1.5H13a1 1 0 011 1V12a1 1 0 01-1 1H3a1 1 0 01-1-1V4.5z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconConta() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
-      <rect x="2" y="3.5" width="12" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="5.5" cy="7.5" r="1.25" stroke="currentColor" strokeWidth="1.5" />
-      <path
-        d="M4 10.5c.3-1 1-1.5 1.5-1.5s1.2.5 1.5 1.5M9 6.5h4M9 9h3"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function IconPerfil() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
-      <circle cx="8" cy="5.5" r="2.5" stroke="currentColor" strokeWidth="1.5" />
-      <path
-        d="M3 13c0-2.2 2.2-4 5-4s5 1.8 5 4"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function IconFaturas() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
-      <rect x="3" y="2" width="10" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function IconSubscricao() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
-      <path
-        d="M12.5 4.5H5.5A2.5 2.5 0 003 7v1M3.5 11.5h7A2.5 2.5 0 0013 9V8"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M10.5 2.5L12.5 4.5L10.5 6.5M5.5 9.5L3.5 11.5L5.5 13.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconFacturacao() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
-      <path
-        d="M4 2h8v12l-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1L4 14V2z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M6 5.5h4M6 8h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function BadgeEmBreve() {
-  return (
-    <span className="rounded-[var(--radius-input)] bg-[var(--color-surface-sunken)] px-[10px] py-[4px] text-[12px] font-medium text-[var(--color-ink-muted)]">
-      Em breve
-    </span>
-  );
-}
-
-function ItemNav({
-  href,
-  icon,
-  children,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex min-h-11 items-center gap-2.5 rounded-[var(--radius-input)] px-3 py-2 text-sm font-medium text-[var(--color-ink)] md:min-h-0 hover:bg-[var(--color-surface-sunken)] hover:text-[var(--color-brand)]"
-    >
-      {icon}
-      {children}
-    </Link>
-  );
-}
-
-function ItemDesactivado({
-  icon,
-  children,
-}: {
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <span
-      aria-disabled="true"
-      className="flex min-h-11 cursor-not-allowed items-center gap-2.5 md:min-h-0 rounded-[var(--radius-input)] px-3 py-2 text-sm font-medium text-[var(--color-ink-faint)]"
-    >
-      {icon}
-      <span className="flex-1">{children}</span>
-      <BadgeEmBreve />
-    </span>
-  );
-}
-
-function Logotipo() {
-  return (
-    // O logótipo leva sempre à página inicial da DoLado (dolado.pt).
-    <a href={MARKETING_SITE_URL} aria-label="DoLado — página inicial" className="flex items-center px-2">
-      <Image
-        src="/brand/dolado-logo-horizontal.svg"
-        alt="DoLado"
-        width={120}
-        height={28}
-        priority
-      />
-    </a>
-  );
-}
-
-// Mesma navegação na barra lateral (md e acima) e no menu móvel.
-function Navegacao() {
-  return (
-    <>
-      <Link
-        href="/portal/casos/novo"
-        className="mb-6 flex min-h-11 items-center justify-center rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-center text-sm font-medium text-white hover:bg-[var(--color-brand-hover)] md:block md:min-h-0"
-      >
-        + Abrir novo caso
-      </Link>
-
-      <nav className="flex flex-col gap-1">
-        <ItemNav href="/portal" icon={<IconCasos />}>
-          Painel
-        </ItemNav>
-        <ItemNav href="/portal/casos" icon={<IconCasos />}>
-          Os meus casos
-        </ItemNav>
-        <ItemNav href="/portal/contratos" icon={<IconFaturas />}>
-          Os meus serviços
-        </ItemNav>
-        <ItemNav href="/conta" icon={<IconConta />}>
-          A minha conta
-        </ItemNav>
-        <ItemNav href="/portal/perfil" icon={<IconPerfil />}>
-          Gestão de Perfil
-        </ItemNav>
-        <ItemNav href="/portal/subscricao" icon={<IconSubscricao />}>
-          Gestão de Subscrição
-        </ItemNav>
-        <ItemDesactivado icon={<IconFacturacao />}>Faturação</ItemDesactivado>
-      </nav>
-
-      <div className="mt-auto pt-6">
-        <form action={logout}>
-          <button
-            type="submit"
-            className="min-h-11 w-full px-3 text-left text-sm text-[var(--color-ink-muted)] underline hover:text-[var(--color-ink)] md:min-h-0 md:px-0"
-          >
-            Terminar sessão
-          </button>
-        </form>
-      </div>
-    </>
-  );
-}
+// Portal do cliente no Design System V2 (.tema-portal em globals.css): a
+// mesma marca, fonte e tokens das páginas públicas, com uma moldura de
+// aplicação — barra lateral no computador, cabeçalho com menu no telemóvel.
 
 export default async function PortalLayout({
   children,
@@ -209,25 +16,30 @@ export default async function PortalLayout({
   await requireUser();
 
   return (
-    <div className="min-h-screen md:flex">
-      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[var(--color-hairline)] bg-[var(--color-surface)] px-4 md:hidden">
-        <div className="-ml-2">
-          <Logotipo />
-        </div>
+    <div className={`tema-portal ${fonteV2.className} min-h-screen bg-[#F7F9FC] text-[var(--v2-navy)] antialiased md:flex`}>
+      <a
+        href="#conteudo"
+        className="sr-only z-50 rounded-[10px] bg-white px-4 py-2 font-semibold focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+      >
+        Saltar para o conteúdo
+      </a>
+
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[var(--v2-line)] bg-white px-4 md:hidden">
+        <Logotipo />
         <MenuMovel>
-          <Navegacao />
+          <NavegacaoPortal />
         </MenuMovel>
       </header>
 
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-[var(--color-hairline)] bg-[var(--color-surface)] px-4 py-6 md:flex">
-        <div className="mb-6">
+      <aside className="sticky top-0 hidden h-screen w-[264px] shrink-0 flex-col overflow-y-auto border-r border-[var(--v2-line)] bg-white px-4 py-6 md:flex">
+        <div className="mb-8 px-2">
           <Logotipo />
         </div>
-        <Navegacao />
+        <NavegacaoPortal />
       </aside>
 
-      <main className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">
-        <div className="mx-auto max-w-[1120px]">{children}</div>
+      <main id="conteudo" className="min-w-0 flex-1 px-4 pb-16 pt-6 sm:px-6 md:px-10 md:pt-10">
+        <div className="mx-auto max-w-[1040px]">{children}</div>
       </main>
     </div>
   );

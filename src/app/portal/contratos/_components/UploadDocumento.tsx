@@ -115,7 +115,7 @@ export function UploadDocumento({ contratoId, tipoInicial = "fatura" }: { contra
   return (
     <div className="flex flex-col gap-4">
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm text-[var(--color-ink-muted)]">Que documento vai carregar?</legend>
+        <legend className="mb-1 text-[14px] font-semibold text-[var(--v2-navy)]">Que documento vai carregar?</legend>
         <div className="flex flex-wrap gap-2">
           {(
             [
@@ -128,7 +128,7 @@ export function UploadDocumento({ contratoId, tipoInicial = "fatura" }: { contra
               type="button"
               aria-pressed={tipo === valor}
               onClick={() => setTipo(valor)}
-              className={`rounded-[var(--radius-button)] border px-3.5 py-2 text-sm font-medium ${
+              className={`min-h-11 rounded-[var(--radius-button)] border px-4 text-[14.5px] font-semibold ${
                 tipo === valor
                   ? "border-[var(--color-brand)] bg-[var(--color-brand-wash)] text-[var(--color-brand)]"
                   : "border-[var(--color-hairline-strong)] text-[var(--color-ink)]"
@@ -161,7 +161,7 @@ export function UploadDocumento({ contratoId, tipoInicial = "fatura" }: { contra
             <p className="truncate text-sm font-medium text-[var(--color-ink)]">{ficheiro.nome}</p>
             <p className="text-[12.5px] text-[var(--color-ink-faint)]">{tamanhoLegivel(ficheiro.tamanho)} · pronto a analisar</p>
           </div>
-          <div className="flex gap-3 text-sm">
+          <div className="flex min-h-11 items-center gap-4 text-sm">
             <label htmlFor={idInput} className="cursor-pointer font-medium text-[var(--color-brand)] underline">
               Substituir
             </label>
@@ -213,10 +213,10 @@ export function UploadDocumento({ contratoId, tipoInicial = "fatura" }: { contra
         </p>
       )}
 
-      <button type="button" onClick={analisar} disabled={estado.fase !== "carregado"} className={`${BOTAO_PRIMARIO} self-start`}>
+      <button type="button" onClick={analisar} disabled={estado.fase !== "carregado"} className={`${BOTAO_PRIMARIO} w-full sm:w-auto sm:self-start`}>
         {estado.fase === "a-registar" ? "A enviar…" : tipo === "fatura" ? "Analisar a fatura" : "Analisar o contrato"}
       </button>
-      <p className="text-[13px] leading-relaxed text-[var(--color-ink-faint)]">
+      <p className="text-[13px] leading-relaxed text-[var(--v2-muted)]">
         Lemos as datas e os valores do documento e pedimos-lhe que os confirme antes de começarmos a acompanhar. Envie
         apenas o necessário e, se possível, oculte dados de outras pessoas.
       </p>

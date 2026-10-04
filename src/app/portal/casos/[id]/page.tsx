@@ -1,16 +1,38 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { decidirClienteCaso } from "../actions";
-import { StatusBadge } from "@/components/StatusBadge";
 import type { EstadoTexto } from "@/lib/textoCaso";
+import { estadoCasoCliente, rotuloEventoCliente, type EstadoTextoRelevante } from "@/lib/portal/estadoCaso";
+import { formatarDataHora } from "@/app/texto/_components/Mensagem";
+import { Aviso } from "@/components/portal/Aviso";
+import { CabecalhoPagina } from "@/components/portal/Cabecalho";
+import { Dado, ListaDados } from "@/components/portal/Dados";
+import { Etiqueta } from "@/components/portal/Etiqueta";
+import { IconeDocumentoVisto, IconeSeta } from "@/components/portal/Icones";
+import { LinhaTemporal, type PassoLinhaTemporal } from "@/components/portal/LinhaTemporal";
+import {
+  BOTAO_SECUNDARIO,
+  CARTAO,
+  CARTAO_ACAO,
+  CARTAO_DESTAQUE,
+  CARTAO_SUCESSO,
+  LIGACAO,
+  TEXTO,
+  TEXTO_SECUNDARIO,
+  TITULO_SECCAO,
+} from "@/components/portal/ui";
 import { TextoCliente } from "../_components/TextoCliente";
 import {
   Comprovativo,
-  HistoricoCaso,
   ReclamacaoEnviada,
   type ComprovativoCliente,
   type EnvioCliente,
 } from "../_components/ReclamacaoEnviada";
+
+// Caso visto pelo cliente: ponto de situação → o que precisa de si (decisão
+// ou autorização do texto) → reclamação enviada e comprovativo → linha
+// temporal e detalhes. Só apresentação; as ações são as Server Actions de
+// sempre (decidirClienteCaso, texto-actions) e o RLS decide o que é lido.
 
 export default async function CasoClienteDetalhePage({
   params,
@@ -75,124 +97,157 @@ export default async function CasoClienteDetalhePage({
   const aceitar = decidirClienteCaso.bind(null, id, "aceitou");
   const recusar = decidirClienteCaso.bind(null, id, "recusou");
 
+  const apresentacao = estadoCasoCliente(caso.status, (textoAtual?.estado as EstadoTextoRelevante | undefined) ?? null);
+  const concluido = caso.status === "Resolvido";
+  const aguardaDecisao = caso.status === "Aguardando decisão cliente";
+
+  // Linha temporal: caso recebido → acontecimentos registados → situação
+  // atual → próximo passo (ou conclusão).
+  const passos: PassoLinhaTemporal[] = [
+    { id: "recebido", titulo: "Caso recebido", quando: formatarDataHora(caso.created_at), estado: "feito" },
+    ...((eventos ?? []) as { tipo: string; created_at: string }[]).map((e, i) => ({
+      id: `evento-${i}`,
+      titulo: rotuloEventoCliente(e.tipo),
+      quando: formatarDataHora(e.created_at),
+      estado: "feito" as const,
+    })),
+    concluido
+      ? { id: "concluido", titulo: "Caso concluído", estado: "feito" as const }
+      : { id: "atual", titulo: apresentacao.rotulo, estado: "atual" as const },
+    ...(!concluido && apresentacao.proximoPasso
+      ? [{ id: "seguinte", titulo: "A seguir", detalhe: apresentacao.proximoPasso, estado: "futuro" as const }]
+      : []),
+  ];
+
   return (
-    <div className="flex max-w-xl flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-          {caso.empresa ?? caso.empresa_parceira ?? "O seu caso"}
-        </h1>
-        <StatusBadge status={caso.status} />
-      </div>
-
-      {query.guardado && (
-        <p className="text-sm text-[var(--color-status-success)]">
-          A sua decisão foi registada.
-        </p>
-      )}
-      {query.erro && <p className="text-sm text-[var(--color-status-danger)]">{query.erro}</p>}
-
-      <dl className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 text-sm shadow-[var(--shadow-subtle)]">
-        <div>
-          <dt className="text-[var(--color-ink-muted)]">Setor</dt>
-          <dd className="text-[var(--color-ink)]">{caso.sector ?? "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-[var(--color-ink-muted)]">Tipo de problema</dt>
-          <dd className="text-[var(--color-ink)]">{caso.tipo_problema ?? caso.problema_tipo ?? "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-[var(--color-ink-muted)]">Descrição</dt>
-          <dd className="text-[var(--color-ink)]">{caso.descricao ?? "—"}</dd>
-        </div>
-        {caso.data_fim_fidelidade && (
-          <div>
-            <dt className="text-[var(--color-ink-muted)]">Fim de fidelidade</dt>
-            <dd className="text-[var(--color-ink)]">{caso.data_fim_fidelidade}</dd>
-          </div>
-        )}
-        {caso.dossie_url && (
-          <div>
-            <dt className="text-[var(--color-ink-muted)]">Dossiê</dt>
-            <dd>
-              <a
-                href={caso.dossie_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[var(--color-brand)] underline"
-              >
-                Ver dossiê
-              </a>
-            </dd>
-          </div>
-        )}
-      </dl>
-
-      <TextoCliente
-        casoId={id}
-        texto={
-          textoAtual
-            ? {
-                id: textoAtual.id as string,
-                versao: textoAtual.versao as number,
-                conteudo: textoAtual.conteudo as string,
-                estado: textoAtual.estado as EstadoTexto,
-                autorizado_em: textoAtual.autorizado_em as string | null,
-              }
-            : null
-        }
-        resultado={query.texto}
+    <div className="flex flex-col gap-6">
+      <CabecalhoPagina
+        voltar={{ href: "/portal/casos", texto: "Os meus casos" }}
+        contexto={[caso.sector, caso.tipo_problema ?? caso.problema_tipo].filter(Boolean).join(" · ") || undefined}
+        titulo={caso.empresa ?? caso.empresa_parceira ?? "O seu caso"}
+        estado={<Etiqueta tom={apresentacao.tom}>{apresentacao.rotulo}</Etiqueta>}
       />
 
-      {enviosCliente.map((envio) => (
-        <ReclamacaoEnviada
-          key={envio.id}
-          envio={envio}
-          comprovativo={listaComprovativos.find((c) => c.envio_id === envio.id) ?? null}
-        />
-      ))}
+      {query.guardado && <Aviso tom="sucesso">A sua decisão foi registada.</Aviso>}
+      {query.erro && <Aviso tom="erro">{query.erro}</Aviso>}
 
-      {enviosCliente.length === 0 && comprovativoSemEnvio && (
-        <section className="rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-subtle)]">
-          <Comprovativo comprovativo={comprovativoSemEnvio} />
-        </section>
-      )}
-
-      {caso.status === "Aguardando decisão cliente" && (
-        <div
-          className="flex flex-col gap-3 rounded-[var(--radius-card)] p-5"
-          style={{ backgroundColor: "var(--color-status-urgent-wash)" }}
-        >
-          <p
-            className="text-sm font-medium"
-            style={{ color: "var(--color-status-urgent)" }}
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex min-w-0 flex-col gap-6">
+          {/* Ponto de situação */}
+          <section
+            aria-labelledby="situacao"
+            className={`${concluido ? CARTAO_SUCESSO : apresentacao.requerAcao ? CARTAO_ACAO : CARTAO_DESTAQUE} flex flex-col gap-3`}
           >
-            Foi encontrada uma proposta para o seu caso
-            {caso.valor_indicado != null
-              ? ` no valor de ${caso.valor_indicado} €`
-              : ""}
-            . O que decide?
-          </p>
-          <div className="flex gap-3">
-            <form action={aceitar}>
-              <button
-                type="submit"
-                className="rounded-[var(--radius-button)] border border-[var(--color-status-success)] bg-[var(--color-surface)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-status-success)] hover:bg-[var(--color-status-success-wash)]"
-              >
-                Aceito
-              </button>
-            </form>
-            <form action={recusar}>
-              <button
-                type="submit"
-                className="rounded-[var(--radius-button)] border border-[var(--color-status-danger)] bg-[var(--color-surface)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-status-danger)] hover:bg-[var(--color-status-danger-wash)]"
-              >
-                Não aceito, quero avançar
-              </button>
-            </form>
-          </div>
+            <h2 id="situacao" className="text-[13px] font-bold uppercase tracking-[0.08em] text-[var(--v2-muted)]">
+              Ponto de situação
+            </h2>
+            <p className="text-[19px] font-bold leading-snug tracking-[-0.01em] text-[var(--v2-navy)]">{apresentacao.explicacao}</p>
+            {apresentacao.proximoPasso && (
+              <p className={TEXTO_SECUNDARIO}>
+                <span className="font-semibold text-[var(--v2-navy)]">Próximo passo: </span>
+                {apresentacao.proximoPasso}
+              </p>
+            )}
+            {apresentacao.requerAcao && (
+              <a href={aguardaDecisao ? "#decisao" : "#texto"} className={`${LIGACAO} self-start text-[14.5px]`}>
+                {aguardaDecisao ? "Ver a proposta" : "Rever o texto"}
+                <IconeSeta tamanho={16} />
+              </a>
+            )}
+          </section>
+
+          {aguardaDecisao && (
+            <section id="decisao" aria-labelledby="decisao-titulo" className={`${CARTAO_ACAO} flex scroll-mt-24 flex-col gap-4`}>
+              <h2 id="decisao-titulo" className={TITULO_SECCAO}>
+                Precisamos da sua decisão
+              </h2>
+              <p className={TEXTO}>
+                Foi encontrada uma proposta para o seu caso
+                {caso.valor_indicado != null ? ` no valor de ${caso.valor_indicado} €` : ""}. O que decide?
+              </p>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <form action={aceitar}>
+                  <button type="submit" className={`${BOTAO_SECUNDARIO} w-full sm:w-auto`}>
+                    Aceito
+                  </button>
+                </form>
+                <form action={recusar}>
+                  <button type="submit" className={`${BOTAO_SECUNDARIO} w-full sm:w-auto`}>
+                    Não aceito, quero avançar
+                  </button>
+                </form>
+              </div>
+            </section>
+          )}
+
+          <TextoCliente
+            casoId={id}
+            texto={
+              textoAtual
+                ? {
+                    id: textoAtual.id as string,
+                    versao: textoAtual.versao as number,
+                    conteudo: textoAtual.conteudo as string,
+                    estado: textoAtual.estado as EstadoTexto,
+                    autorizado_em: textoAtual.autorizado_em as string | null,
+                  }
+                : null
+            }
+            resultado={query.texto}
+          />
+
+          {enviosCliente.map((envio) => (
+            <ReclamacaoEnviada
+              key={envio.id}
+              envio={envio}
+              comprovativo={listaComprovativos.find((c) => c.envio_id === envio.id) ?? null}
+            />
+          ))}
+
+          {enviosCliente.length === 0 && comprovativoSemEnvio && (
+            <section className={CARTAO}>
+              <Comprovativo comprovativo={comprovativoSemEnvio} />
+            </section>
+          )}
         </div>
-      )}
-      <HistoricoCaso eventos={(eventos ?? []) as { tipo: string; created_at: string }[]} />
+
+        <aside className="flex min-w-0 flex-col gap-6 xl:sticky xl:top-8">
+          <section aria-labelledby="linha-temporal" className={`${CARTAO} flex flex-col gap-4`}>
+            <h2 id="linha-temporal" className={TITULO_SECCAO}>
+              O que já aconteceu
+            </h2>
+            <LinhaTemporal passos={passos} rotulo="Linha temporal do caso" />
+          </section>
+
+          {caso.dossie_url && (
+            <section className={`${CARTAO} flex flex-col gap-3`}>
+              <div className="flex items-center gap-3">
+                <span aria-hidden className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] bg-[var(--v2-mint-bg)] text-[var(--v2-green)]">
+                  <IconeDocumentoVisto tamanho={20} />
+                </span>
+                <h2 className={TITULO_SECCAO}>Dossiê do caso</h2>
+              </div>
+              <a href={caso.dossie_url} target="_blank" rel="noopener noreferrer" className={`${BOTAO_SECUNDARIO} self-start`}>
+                Ver dossiê
+              </a>
+            </section>
+          )}
+
+          <section aria-labelledby="detalhes" className={`${CARTAO} flex flex-col gap-4`}>
+            <h2 id="detalhes" className={TITULO_SECCAO}>
+              Detalhes do caso
+            </h2>
+            <ListaDados>
+              <Dado rotulo="Setor">{caso.sector ?? "—"}</Dado>
+              <Dado rotulo="Tipo de problema">{caso.tipo_problema ?? caso.problema_tipo ?? "—"}</Dado>
+              {caso.data_fim_fidelidade && <Dado rotulo="Fim da fidelização">{caso.data_fim_fidelidade}</Dado>}
+              <Dado rotulo="O que nos contou">
+                <span className="whitespace-pre-wrap">{caso.descricao ?? "—"}</span>
+              </Dado>
+            </ListaDados>
+          </section>
+        </aside>
+      </div>
     </div>
   );
 }

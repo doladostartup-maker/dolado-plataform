@@ -7,13 +7,11 @@ import { CONTACTO_EMAIL, MARKETING_SITE_URL } from "@/lib/site";
 import { manterSubscricao } from "./actions";
 import { BotaoManter } from "./_components/BotaoManter";
 import { CancelarSubscricao } from "./_components/CancelarSubscricao";
-
-const CAIXA_INFO =
-  "rounded-[var(--radius-card)] border-l-[3px] border-[var(--color-brand)] bg-[var(--color-brand-wash)] px-5 py-4 text-[13.5px] text-[var(--color-ink)]";
-const CAIXA_ERRO =
-  "rounded-[var(--radius-card)] border-l-[3px] border-[var(--color-status-danger)] bg-[var(--color-surface-sunken)] px-5 py-4 text-[13.5px] text-[var(--color-ink)]";
-const BOTAO_PRIMARIO =
-  "inline-flex min-h-11 items-center rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)]";
+import { Aviso } from "@/components/portal/Aviso";
+import { CabecalhoPagina } from "@/components/portal/Cabecalho";
+import { Dado, ListaDados } from "@/components/portal/Dados";
+import { Etiqueta } from "@/components/portal/Etiqueta";
+import { BOTAO_PRIMARIO, CARTAO, LIGACAO_DISCRETA, METADADOS, TEXTO, TITULO_CARTAO } from "@/components/portal/ui";
 
 const MENSAGENS_ERRO: Record<string, string> = {
   indisponivel: "Não encontrámos uma subscrição ativa que possa ser alterada. Atualize a página.",
@@ -68,44 +66,43 @@ export default async function GestaoSubscricaoPage({
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">Gestão de Subscrição</h1>
+      <CabecalhoPagina titulo="Subscrição" descricao="O seu plano, a próxima renovação e os casos disponíveis." />
 
       {params.cancelada && resumo.fimAgendado && (
-        <div className={CAIXA_INFO}>
-          <p className="mb-1 font-semibold">Cancelamento agendado</p>
-          <p className="leading-relaxed">
-            A sua Proteção continua ativa até {formatarData(resumo.fimAgendado)}. Depois dessa data não haverá novas
-            cobranças.
-          </p>
-        </div>
+        <Aviso tom="info" titulo="Cancelamento agendado">
+          A sua Proteção continua ativa até {formatarData(resumo.fimAgendado)}. Depois dessa data não haverá novas
+          cobranças.
+        </Aviso>
       )}
       {params.mantida && resumo.renovacao && (
-        <div className={CAIXA_INFO}>
-          <p className="mb-1 font-semibold">Subscrição mantida</p>
-          <p className="leading-relaxed">
-            O cancelamento foi retirado. A sua subscrição renova-se normalmente a {formatarData(resumo.renovacao)}.
-          </p>
-        </div>
+        <Aviso tom="sucesso" titulo="Subscrição mantida">
+          O cancelamento foi retirado. A sua subscrição renova-se normalmente a {formatarData(resumo.renovacao)}.
+        </Aviso>
       )}
-      {params.erro && (
-        <div className={`${CAIXA_ERRO} font-medium text-[var(--color-status-danger)]`}>
-          {MENSAGENS_ERRO[params.erro] ?? MENSAGENS_ERRO.falha}
-        </div>
-      )}
+      {params.erro && <Aviso tom="erro">{MENSAGENS_ERRO[params.erro] ?? MENSAGENS_ERRO.falha}</Aviso>}
 
-      <section className="flex flex-col gap-4 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-[22px] shadow-[var(--shadow-subtle)]">
-        <dl className="grid gap-x-6 gap-y-3 text-[13.5px] sm:grid-cols-2">
+      <section aria-labelledby="plano" className={`${CARTAO} flex flex-col gap-5`}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="plano" className={TITULO_CARTAO}>
+            {comSubscricao ? PLANOS[resumo.plano as "protecao" | "caso_protecao"].nome : "Sem subscrição ativa"}
+          </h2>
+          {comSubscricao && (
+            <Etiqueta tom={resumo.fimAgendado ? "espera" : acesso.temProtecao ? "concluido" : "neutro"}>
+              {resumo.fimAgendado ? "Cancelamento agendado" : acesso.temProtecao ? "Proteção ativa" : (resumo.estado ?? "Inativa")}
+            </Etiqueta>
+          )}
+        </div>
+        <ListaDados colunas={2}>
           {linhas.map((l) => (
-            <div key={l.label}>
-              <dt className="text-[var(--color-ink-muted)]">{l.label}</dt>
-              <dd className="font-medium text-[var(--color-ink)]">{l.valor}</dd>
-            </div>
+            <Dado key={l.label} rotulo={l.label}>
+              {l.valor}
+            </Dado>
           ))}
-        </dl>
+        </ListaDados>
 
         {resumo.fimAgendado && (
-          <div className="flex flex-col gap-3 border-t border-[var(--color-hairline)] pt-4">
-            <p className="text-[13.5px] leading-relaxed text-[var(--color-ink)]">
+          <div className="flex flex-col gap-3 border-t border-[var(--v2-line)] pt-5">
+            <p className={TEXTO}>
               <span className="font-semibold">Cancelamento agendado.</span> A sua Proteção está ativa até{" "}
               {formatarData(resumo.fimAgendado)}. Até lá, tudo continua a funcionar normalmente. Nessa data, deixamos de
               acompanhar os seus contratos e de enviar alertas.
@@ -117,7 +114,7 @@ export default async function GestaoSubscricaoPage({
         )}
 
         {podeCancelar && (
-          <div className="border-t border-[var(--color-hairline)] pt-4">
+          <div className="border-t border-[var(--v2-line)] pt-5">
             <CancelarSubscricao
               fimTexto={fimTexto}
               mostrarCasosGuardados={resumo.plano === "caso_protecao" && (resumo.casosDisponiveis ?? 0) > 0}
@@ -126,9 +123,9 @@ export default async function GestaoSubscricaoPage({
         )}
 
         {!comSubscricao && (
-          <div className="flex flex-col gap-3 border-t border-[var(--color-hairline)] pt-4">
+          <div className="flex flex-col gap-3 border-t border-[var(--v2-line)] pt-5">
             {guardados && (
-              <p className="text-[13.5px] leading-relaxed text-[var(--color-ink)]">
+              <p className={TEXTO}>
                 Tem{" "}
                 {guardados.quantidade === 1
                   ? "1 caso disponível guardado"
@@ -146,23 +143,28 @@ export default async function GestaoSubscricaoPage({
         )}
       </section>
 
-      <p className="text-[13px] leading-relaxed text-[var(--color-ink-muted)]">
-        Cancelar a subscrição não apaga os casos que já abriu, os documentos nem o histórico — continuam disponíveis
-        em <Link href="/portal/casos" className="underline">Os meus casos</Link>. Para questões sobre cobranças,
-        contacte-nos através de{" "}
-        <a href={`mailto:${CONTACTO_EMAIL}`} className="underline">
-          {CONTACTO_EMAIL}
-        </a>
-        .
-      </p>
-      <p className="text-[13px] leading-relaxed text-[var(--color-ink-muted)]">
-        O cancelamento é diferente do direito de livre resolução, que pode ser exercido nos{" "}
-        {PRAZO_LIVRE_RESOLUCAO_DIAS} dias seguintes à compra, nas condições previstas na lei.{" "}
-        <a href={`${MARKETING_SITE_URL}${ROTAS_LEGAIS.livreResolucao}`} className="underline">
-          Saber mais sobre a livre resolução
-        </a>
-        .
-      </p>
+      <div className={`${METADADOS} flex flex-col gap-3 leading-relaxed`}>
+        <p>
+          Cancelar a subscrição não apaga os casos que já abriu, os documentos nem o histórico — continuam disponíveis
+          em{" "}
+          <Link href="/portal/casos" className={LIGACAO_DISCRETA}>
+            Os meus casos
+          </Link>
+          . Para questões sobre cobranças, contacte-nos através de{" "}
+          <a href={`mailto:${CONTACTO_EMAIL}`} className={LIGACAO_DISCRETA}>
+            {CONTACTO_EMAIL}
+          </a>
+          .
+        </p>
+        <p>
+          O cancelamento é diferente do direito de livre resolução, que pode ser exercido nos{" "}
+          {PRAZO_LIVRE_RESOLUCAO_DIAS} dias seguintes à compra, nas condições previstas na lei.{" "}
+          <a href={`${MARKETING_SITE_URL}${ROTAS_LEGAIS.livreResolucao}`} className={LIGACAO_DISCRETA}>
+            Saber mais sobre a livre resolução
+          </a>
+          .
+        </p>
+      </div>
     </div>
   );
 }

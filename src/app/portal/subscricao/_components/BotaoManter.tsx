@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { BOTAO_PRIMARIO } from "@/components/portal/ui";
 
 export function BotaoManter() {
   const { pending } = useFormStatus();
@@ -8,7 +9,7 @@ export function BotaoManter() {
     <button
       type="submit"
       disabled={pending}
-      className="min-h-11 rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-60"
+      className={`${BOTAO_PRIMARIO} w-full sm:w-auto`}
     >
       {pending ? "A guardar…" : "Manter subscrição"}
     </button>
