@@ -10,10 +10,11 @@ import { usarCasoDisponivel } from "../actions";
 import { Etapas } from "../_components/Etapas";
 import { RegistarEvento } from "../_components/RegistarEvento";
 import { AguardarConfirmacao } from "./AguardarConfirmacao";
+import { Etiqueta } from "@/components/portal/Etiqueta";
+import { BOTAO_PRIMARIO as BOTAO, CARTAO as CARTAO_BASE, LIGACAO, TEXTO_SECUNDARIO } from "@/components/portal/ui";
 
-const BOTAO =
-  "inline-flex min-h-11 items-center justify-center rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[22px] py-2.5 text-[15px] font-semibold text-white hover:bg-[var(--color-brand-hover)]";
-const CARTAO = "rounded-[16px] bg-white p-6 shadow-[var(--shadow-subtle)] sm:p-8";
+const CARTAO = `${CARTAO_BASE} sm:p-8`;
+const TITULO = "mb-2 text-[24px] font-extrabold leading-tight tracking-[-0.02em] text-[var(--v2-navy)]";
 
 // Regresso do Stripe Checkout (success_url). Esta página NÃO confirma
 // pagamentos nem cria casos: só lê o estado do pedido, gravado pelo webhook
@@ -35,11 +36,11 @@ export default async function RecebidoPage({ searchParams }: { searchParams: Pro
       <>
         <RegistarEvento nome="pagamento_concluido" parametros={{ plano: pedido.plano_escolhido ?? "caso_disponivel" }} />
         <div className={`${CARTAO} text-center`}>
-          <span className="mb-4 inline-flex items-center gap-1.5 rounded-[999px] bg-[var(--color-brand-wash)] px-3 py-1 text-[13px] font-semibold text-[var(--color-brand)]">
-            {pedido.plano_escolhido ? "✓ Pagamento confirmado" : "✓ Caso disponível utilizado"}
-          </span>
-          <h1 className="mb-2 text-[24px] font-bold text-[var(--color-ink)]">Recebemos o seu caso.</h1>
-          <p className="mx-auto mb-6 max-w-[46ch] text-[15px] leading-relaxed text-[var(--color-ink-muted)]">
+          <div className="mb-4 flex justify-center">
+            <Etiqueta tom="concluido">{pedido.plano_escolhido ? "Pagamento confirmado" : "Caso disponível utilizado"}</Etiqueta>
+          </div>
+          <h1 className="mb-2 text-[28px] font-extrabold tracking-[-0.025em] text-[var(--v2-navy)]">Recebemos o seu caso.</h1>
+          <p className={`${TEXTO_SECUNDARIO} mx-auto mb-6 max-w-[46ch]`}>
             Enviámos uma confirmação para o seu e-mail. A DoLado irá analisar as informações enviadas e, antes de
             qualquer envio, poderá entrar em contacto consigo para confirmar os factos ou solicitar informações
             adicionais.
@@ -80,8 +81,8 @@ export default async function RecebidoPage({ searchParams }: { searchParams: Pro
       <>
         <Etapas atual={4} />
         <div className={CARTAO}>
-          <h1 className="mb-2 text-[20px] font-bold text-[var(--color-ink)]">O pagamento não foi concluído</h1>
-          <p className="mb-5 text-[14.5px] leading-relaxed text-[var(--color-ink-muted)]">
+          <h1 className={TITULO}>O pagamento não foi concluído</h1>
+          <p className={`${TEXTO_SECUNDARIO} mb-5`}>
             O seu pedido continua guardado, mas ainda não é um caso. Pode tentar pagar de novo, com o mesmo ou com outro
             método de pagamento.
           </p>
@@ -98,13 +99,13 @@ export default async function RecebidoPage({ searchParams }: { searchParams: Pro
       <>
         <Etapas atual={4} />
         <div className={CARTAO}>
-          <h1 className="mb-2 text-[20px] font-bold text-[var(--color-ink)]">Pagamento em confirmação</h1>
-          <p className="mb-5 text-[14.5px] leading-relaxed text-[var(--color-ink-muted)]">
+          <h1 className={TITULO}>Pagamento em confirmação</h1>
+          <p className={`${TEXTO_SECUNDARIO} mb-5`}>
             O pagamento ainda está a ser confirmado. Não precisa de voltar a pagar. Alguns métodos, como o débito direto
             SEPA, podem demorar alguns dias úteis; assim que o pagamento for confirmado, o seu caso é recebido e avisamos
             por e-mail.
           </p>
-          <Link href="/portal" className="text-[14px] font-medium text-[var(--color-brand)] underline">
+          <Link href="/portal" className={`${LIGACAO} text-[14.5px]`}>
             Ir para o portal
           </Link>
         </div>
@@ -120,8 +121,8 @@ export default async function RecebidoPage({ searchParams }: { searchParams: Pro
     <>
       <Etapas atual={4} />
       <div className={CARTAO}>
-        <h1 className="mb-2 text-[20px] font-bold text-[var(--color-ink)]">Obrigado. Estamos a confirmar o pagamento.</h1>
-        <p className="mb-4 text-[14.5px] leading-relaxed text-[var(--color-ink-muted)]">
+        <h1 className={TITULO}>Obrigado. Estamos a confirmar o pagamento.</h1>
+        <p className={`${TEXTO_SECUNDARIO} mb-4`}>
           Assim que o Stripe confirmar o pagamento, o seu caso é recebido e esta página é atualizada.
         </p>
         {acesso && acesso.creditos > 0 ? (

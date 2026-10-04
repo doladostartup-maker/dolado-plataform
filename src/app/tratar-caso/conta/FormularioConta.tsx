@@ -8,29 +8,27 @@ import {
   verificarCodigo,
   type EstadoConta,
 } from "../actions";
+import { Aviso } from "@/components/portal/Aviso";
+import { SeparadorOu } from "@/components/portal/SeparadorOu";
+import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO as SECUNDARIO, CAMPO, LIGACAO } from "@/components/portal/ui";
 
-const INPUT =
-  "w-full rounded-[var(--radius-input)] border border-[var(--color-hairline-strong)] bg-white px-3.5 py-3 text-[16px] text-[var(--color-ink)] focus:border-[var(--color-brand)] focus:outline-none";
-const LABEL = "mb-1.5 block text-[14px] font-medium text-[var(--color-ink-muted)]";
-const BOTAO =
-  "inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-[15px] font-semibold text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-60";
-const BOTAO_SECUNDARIO =
-  "inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-white px-[18px] py-2.5 text-[15px] font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)] disabled:opacity-60";
+const INPUT = CAMPO;
+const LABEL = "mb-1.5 block text-[14px] font-semibold text-[var(--v2-navy)]";
+const BOTAO = `${BOTAO_PRIMARIO} w-full`;
+const BOTAO_SECUNDARIO = `${SECUNDARIO} w-full`;
 
 const INICIAL: EstadoConta = { erro: null, passo: "conta" };
 
 function Erro({ texto }: { texto: string | null | undefined }) {
   if (!texto) return null;
   return (
-    <p role="alert" className="text-[13.5px] font-medium text-[var(--color-status-danger)]">
-      {texto}
-    </p>
+    <Aviso tom="erro">{texto}</Aviso>
   );
 }
 
 function Info({ texto }: { texto: string | null | undefined }) {
   if (!texto) return null;
-  return <p className="text-[13.5px] text-[var(--color-ink-muted)]">{texto}</p>;
+  return <Aviso tom="info">{texto}</Aviso>;
 }
 
 /** Confirmação do e-mail: código do e-mail (sem sair da página) ou a ligação do mesmo e-mail. */
@@ -41,10 +39,10 @@ function ConfirmarEmail({ email, info }: { email: string; info?: string }) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="mb-1 text-[19px] font-bold text-[var(--color-ink)]">Confirme o seu e-mail</h2>
+        <h2 className="mb-2 text-[24px] font-extrabold tracking-[-0.02em] text-[var(--v2-navy)]">Confirme o seu e-mail</h2>
         <Info texto={reenvio.info ?? info} />
-        <p className="mt-1 text-[14px] leading-relaxed text-[var(--color-ink-muted)]">
-          Enviámos uma mensagem para <strong className="text-[var(--color-ink)]">{email}</strong>. Introduza aqui o
+        <p className="mt-2 text-[14.5px] leading-relaxed text-[var(--v2-muted)]">
+          Enviámos uma mensagem para <strong className="text-[var(--v2-navy)]">{email}</strong>. Introduza aqui o
           código que recebeu ou carregue em “Confirmar o meu e-mail” neste dispositivo. Depois, escolhe a modalidade e
           conclui o pedido.
         </p>
@@ -73,7 +71,7 @@ function ConfirmarEmail({ email, info }: { email: string; info?: string }) {
       <form action={reenviar}>
         <input type="hidden" name="email" value={email} />
         <Erro texto={reenvio.erro} />
-        <button type="submit" disabled={aReenviar} className="text-[13.5px] font-medium text-[var(--color-brand)] underline">
+        <button type="submit" disabled={aReenviar} className={`${LIGACAO} min-h-11 text-[14px] underline`}>
           {aReenviar ? "A enviar…" : "Não recebeu? Enviar de novo"}
         </button>
       </form>
@@ -92,10 +90,10 @@ export function FormularioConta() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h2 className="mb-1 text-[19px] font-bold text-[var(--color-ink)]">
+        <h2 className="mb-2 text-[24px] font-extrabold tracking-[-0.02em] text-[var(--v2-navy)]">
           {modo === "criar" ? "Crie a sua conta" : "Entre na sua conta"}
         </h2>
-        <p className="text-[14px] leading-relaxed text-[var(--color-ink-muted)]">
+        <p className="text-[14.5px] leading-relaxed text-[var(--v2-muted)]">
           O seu pedido já está guardado. Com a conta, acompanha o caso no portal e não precisa de voltar a introduzir
           estes dados depois do pagamento.
         </p>
@@ -105,11 +103,7 @@ export function FormularioConta() {
         Continuar com Google
       </a>
 
-      <div className="flex items-center gap-2 text-xs text-[var(--color-ink-faint)]">
-        <span className="h-px flex-1 bg-[var(--color-hairline)]" />
-        ou com e-mail
-        <span className="h-px flex-1 bg-[var(--color-hairline)]" />
-      </div>
+      <SeparadorOu texto="ou com e-mail" />
 
       {modo === "criar" ? (
         <form action={submeterCriar} className="flex flex-col gap-4">
@@ -132,7 +126,7 @@ export function FormularioConta() {
               required
               className={INPUT}
             />
-            <p className="mt-1 text-[12.5px] text-[var(--color-ink-faint)]">Pelo menos 8 caracteres.</p>
+            <p className="mt-1.5 text-[13px] text-[var(--v2-muted)]">Pelo menos 8 caracteres.</p>
           </div>
           <Erro texto={criar.erro} />
           <button type="submit" disabled={aCriar} className={BOTAO}>
@@ -167,17 +161,17 @@ export function FormularioConta() {
         </form>
       )}
 
-      <p className="text-[14px] text-[var(--color-ink-muted)]">
+      <p className="text-[14.5px] text-[var(--v2-muted)]">
         {modo === "criar" ? "Já tem conta? " : "Ainda não tem conta? "}
         <button
           type="button"
           onClick={() => setModo(modo === "criar" ? "entrar" : "criar")}
-          className="font-medium text-[var(--color-brand)] underline"
+          className={`${LIGACAO} min-h-11 underline`}
         >
           {modo === "criar" ? "Já tenho conta" : "Criar conta"}
         </button>
       </p>
-      <p className="text-[12.5px] leading-relaxed text-[var(--color-ink-faint)]">
+      <p className="border-t border-[var(--v2-line)] pt-4 text-[13px] leading-relaxed text-[var(--v2-muted)]">
         Criar conta não tem custo. O tratamento do caso só começa depois de escolher a modalidade e de o pagamento ser
         confirmado.
       </p>
