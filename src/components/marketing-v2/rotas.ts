@@ -6,5 +6,6 @@ export const ROTAS_V2 = {
   precario: "/precario",
   ajuda: "/perguntas-frequentes",
   sobreNos: "/sobre-nos",
+  transparencia: "/transparencia",
   contacto: "/contacto",
 } as const;

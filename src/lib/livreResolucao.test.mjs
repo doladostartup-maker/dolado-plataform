@@ -137,7 +137,7 @@ describe("textos e páginas legais", () => {
     for (const p of [
       `../app/(legal)/termos/_versoes/v${TERMOS_VERSAO}.tsx`,
       `../app/(legal)/privacidade/_versoes/v${PRIVACIDADE_VERSAO}.tsx`,
-      "../components/landing/Homepage.tsx",
+      "../components/marketing-v2/FooterV2.tsx",
     ]) {
       const f = fonte(p);
       assert.ok(!f.includes("Manchester"), p);

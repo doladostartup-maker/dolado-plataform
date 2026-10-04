@@ -8,7 +8,7 @@ import { FAQAccordionV2 } from "@/components/marketing-v2/FAQAccordionV2";
 import { IconeDocumentoVisto, IconeEscudo, IconeMensagem, IconeSeta } from "@/components/marketing-v2/Icones";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
-import { BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
+import { BOTAO_PRIMARIO, CAMPO, CARTAO, ROTULO_CAMPO, TEXTO } from "@/components/marketing-v2/estilos";
 import { detectarOrigem, track } from "@/lib/analytics";
 import { ROTAS_LEGAIS } from "@/lib/legal";
 import { urlTratarCaso } from "@/lib/site";
@@ -80,7 +80,7 @@ export function AjudaV2() {
             que acontece depois.
           </p>
           <div role="search" className="mt-8">
-            <label htmlFor={idPesquisa} className="mb-2 block text-[14px] font-semibold text-[var(--v2-navy)]">
+            <label htmlFor={idPesquisa} className={ROTULO_CAMPO}>
               Pesquisar nas perguntas
             </label>
             <input
@@ -90,7 +90,7 @@ export function AjudaV2() {
               onChange={(e) => setPesquisa(e.target.value)}
               placeholder="Ex.: cancelar, fatura, autorização"
               autoComplete="off"
-              className="min-h-13 w-full rounded-[12px] border border-[var(--v2-line-strong)] bg-white px-4 py-3 text-[16px] text-[var(--v2-navy)] placeholder:text-[var(--v2-muted)] focus-visible:border-[var(--v2-green)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--v2-green)]"
+              className={CAMPO}
             />
             <p aria-live="polite" className="mt-2 min-h-5 text-[14px] text-[var(--v2-muted)]">
               {aPesquisar && (total === 1 ? "1 pergunta encontrada." : `${total} perguntas encontradas.`)}
