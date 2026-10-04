@@ -14,12 +14,12 @@ export function MensagemTexto({ resultado, autorizadoEm }: { resultado: Resultad
   return (
     <div
       role="status"
-      className={`rounded-[var(--radius-card)] border-l-[3px] px-5 py-4 ${
-        sucesso ? "border-[var(--color-brand)] bg-[var(--color-brand-wash)]" : "border-[var(--color-hairline-strong)] bg-[var(--color-surface-sunken)]"
+      className={`rounded-[14px] border px-4 py-3.5 ${
+        sucesso ? "border-[#CDE9D9] bg-[var(--v2-mint-bg)]" : "border-[var(--v2-line)] bg-[var(--v2-surface)]"
       }`}
     >
-      <p className="mb-1 text-[15px] font-semibold text-[var(--color-ink)]">{m.titulo}</p>
-      <p className="text-[14px] leading-relaxed text-[var(--color-ink)]">
+      <p className="mb-1 text-[15px] font-semibold text-[var(--v2-navy)]">{m.titulo}</p>
+      <p className="text-[14.5px] leading-relaxed text-[var(--v2-navy)]">
         {resultado === "ja_autorizado" && autorizadoEm
           ? `Este texto já foi autorizado em ${formatarDataHora(autorizadoEm)}. A DoLado pode proceder ao envio em seu nome.`
           : m.texto}
@@ -31,7 +31,7 @@ export function MensagemTexto({ resultado, autorizadoEm }: { resultado: Resultad
 /** Texto integral, como texto simples (nunca HTML). */
 export function TextoIntegral({ conteudo }: { conteudo: string }) {
   return (
-    <div className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap break-words rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 text-[14.5px] leading-relaxed text-[var(--color-ink)]">
+    <div className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap break-words rounded-[14px] border border-[var(--v2-line)] bg-white p-5 text-[15px] leading-relaxed text-[var(--v2-navy)]">
       {conteudo}
     </div>
   );

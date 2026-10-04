@@ -61,6 +61,7 @@ O portal (`/portal/*`) aplica o V2 como aplicação de uso recorrente: mesmos to
 | Linha temporal vertical (caso) | `src/components/portal/LinhaTemporal.tsx` |
 | Lista rótulo/valor | `src/components/portal/Dados.tsx` |
 | Ícones do portal (mesmo sistema linear) | `src/components/portal/Icones.tsx` |
+| Páginas de revisão do texto sem login (`/texto/rever`, `/texto/alterar`) e modal de confirmação da compra (`ConfirmarCompra`, que traz o próprio tema e fonte: mesmo aspeto no portal, em `/comprar` e em `/tratar-caso`) | `src/app/texto/`, `src/components/compra/ConfirmarCompra.tsx` |
 | Estado do caso em linguagem humana (rótulo, explicação, próximo passo, se pede ação) e eventos vistos pelo cliente — só apresentação | `src/lib/portal/estadoCaso.ts` (testes em `estadoCaso.test.mjs`) |
 
 Regras do portal: o painel mostra primeiro o que precisa do cliente, depois os casos em curso, depois a Proteção e o plano; uma só ação primária por bloco; estados internos nunca aparecem em bruto; sem emojis nem símbolos (✓ ⚠ ℹ) — usar os ícones; nada depende de hover; cor só com significado.

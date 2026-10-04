@@ -19,10 +19,12 @@ import {
 } from "@/lib/legal";
 import { track } from "@/lib/analytics";
 import { IVA_INCLUIDO, PLANOS, formatarPreco, type PlanoId } from "@/lib/planos";
+import { fonteV2 } from "@/components/marketing-v2/fonte";
+import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAIXA_SELECAO } from "@/components/portal/ui";
 
 export type OfertaConversao = { mensalidade: number; reembolso: number } | null;
 
-const LINK = "font-medium text-[var(--color-brand)] underline";
+const LINK = "font-semibold text-[var(--v2-green)] underline underline-offset-4";
 
 /**
  * Passo obrigatório antes do Stripe Checkout, comum a todos os pontos de
@@ -31,6 +33,9 @@ const LINK = "font-medium text-[var(--color-brand)] underline";
  * desmarcadas e o servidor (confirmarCompra) volta a validá-las.
  * A Política de Privacidade é só disponibilizada (ligação), nunca uma
  * checkbox de aceitação.
+ *
+ * Design System V2: o modal traz o próprio tema (.tema-portal + fonte), para
+ * ter o mesmo aspeto no portal, em /comprar e em /tratar-caso.
  */
 export function ConfirmarCompra({
   plano,
@@ -58,34 +63,34 @@ export function ConfirmarCompra({
   return (
     <div
       onClick={onFechar}
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-[rgba(23,26,33,0.42)] px-4 py-6"
+      className={`tema-portal ${fonteV2.className} fixed inset-0 z-[70] flex items-end justify-center bg-[rgba(11,37,69,0.42)] px-4 py-6 antialiased sm:items-center`}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirmar-compra-titulo"
         onClick={(e) => e.stopPropagation()}
-        className="max-h-full w-full max-w-[520px] overflow-y-auto rounded-[var(--radius-card)] bg-white p-6 text-left shadow-[var(--shadow-md)]"
+        className="max-h-full w-full max-w-[540px] overflow-y-auto rounded-[20px] bg-white p-6 text-left text-[var(--v2-navy)] shadow-[0_24px_48px_-16px_rgba(11,37,69,0.35)] sm:p-7"
       >
-        <h2 id="confirmar-compra-titulo" className="mb-4 text-[17px] font-semibold text-[var(--color-ink)]">
+        <h2 id="confirmar-compra-titulo" className="mb-4 text-[21px] font-extrabold tracking-[-0.02em] text-[var(--v2-navy)]">
           Confirmar compra
         </h2>
 
-        <div className="mb-4 rounded-[var(--radius-input)] border border-[var(--color-hairline)] p-4">
-          <p className="text-[15px] font-semibold text-[var(--color-ink)]">{info.nome}</p>
-          <p className="text-[14px] text-[var(--color-ink)]">
+        <div className="mb-4 rounded-[14px] border border-[var(--v2-line)] bg-[var(--v2-blue-bg)] p-4">
+          <p className="text-[16px] font-bold text-[var(--v2-navy)]">{info.nome}</p>
+          <p className="text-[15px] font-semibold text-[var(--v2-navy)]">
             {formatarPreco(info.precoCentimos)}
             {info.subscricao ? " por mês" : " — pagamento único"} ({IVA_INCLUIDO})
           </p>
-          <p className="mt-1 text-[13px] text-[var(--color-ink-muted)]">
+          <p className="mt-1 text-[13.5px] text-[var(--v2-muted)]">
             {info.subscricao
               ? "Subscrição mensal com renovação automática todos os meses, até a cancelar."
               : "Pagamento único, sem renovação."}
           </p>
-          <p className="mt-2 text-[13px] leading-relaxed text-[var(--color-ink-muted)]">{info.descricaoCurta}</p>
+          <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--v2-muted)]">{info.descricaoCurta}</p>
         </div>
 
-        <div className="mb-4 flex flex-col gap-2 text-[13px] leading-relaxed text-[var(--color-ink-muted)]">
+        <div className="mb-4 flex flex-col gap-2 text-[13.5px] leading-relaxed text-[var(--v2-muted)]">
           {conversao && (
             <p>
               Utilizamos {formatarPreco(conversao.mensalidade)} do seu pagamento Avulso para cobrir o primeiro mês
@@ -109,7 +114,7 @@ export function ConfirmarCompra({
           )}
         </div>
 
-        <div className="mb-4 rounded-[var(--radius-input)] bg-[var(--color-surface-sunken)] p-4 text-[13px] leading-relaxed text-[var(--color-ink)]">
+        <div className="mb-4 rounded-[14px] bg-[var(--v2-surface)] p-4 text-[13.5px] leading-relaxed text-[var(--v2-navy)]">
           <p className="mb-1 font-semibold">Direito de livre resolução</p>
           <p>{RESUMO_LIVRE_RESOLUCAO}</p>
           <p className="mt-2">{COMO_EXERCER_LIVRE_RESOLUCAO}</p>
@@ -124,7 +129,7 @@ export function ConfirmarCompra({
           </p>
         </div>
 
-        <p className="mb-4 text-[13px] text-[var(--color-ink-muted)]">
+        <p className="mb-5 text-[13.5px] text-[var(--v2-muted)]">
           Para saber como tratamos os seus dados, consulte a{" "}
           <Link href={ROTAS_LEGAIS.privacidade} target="_blank" className={LINK}>
             Política de Privacidade
@@ -135,14 +140,14 @@ export function ConfirmarCompra({
         <form
           action={submeter}
           onSubmit={() => track("checkout_iniciado", { plano, fluxo })}
-          className="flex flex-col gap-3"
+          className="flex flex-col gap-4 border-t border-[var(--v2-line)] pt-5"
         >
           <input type="hidden" name="plano" value={plano} />
           <input type="hidden" name="fluxo" value={fluxo} />
           <input type="hidden" name="origem" value={origem} />
           {pedidoId && <input type="hidden" name="pedido_id" value={pedidoId} />}
 
-          <label className="flex items-start gap-2 text-[13.5px] leading-relaxed text-[var(--color-ink)]">
+          <label className="flex items-start gap-3 text-[14.5px] leading-relaxed text-[var(--v2-navy)]">
             <input
               type="checkbox"
               name={CAMPO_ACEITA_TERMOS}
@@ -150,7 +155,7 @@ export function ConfirmarCompra({
               required
               checked={aceitaTermos}
               onChange={(e) => setAceitaTermos(e.target.checked)}
-              className="mt-1"
+              className={CAIXA_SELECAO}
             />
             <span>
               {ACEITACAO_TERMOS.antes}
@@ -161,7 +166,7 @@ export function ConfirmarCompra({
             </span>
           </label>
 
-          <label className="flex items-start gap-2 text-[13.5px] leading-relaxed text-[var(--color-ink)]">
+          <label className="flex items-start gap-3 text-[14.5px] leading-relaxed text-[var(--v2-navy)]">
             <input
               type="checkbox"
               name={CAMPO_INICIO_IMEDIATO}
@@ -169,13 +174,13 @@ export function ConfirmarCompra({
               required
               checked={pedeInicio}
               onChange={(e) => setPedeInicio(e.target.checked)}
-              className="mt-1"
+              className={CAIXA_SELECAO}
             />
             <span>{inicioImediato.texto}</span>
           </label>
 
           {estado.erro && (
-            <p role="alert" className="text-[13px] font-medium text-[var(--color-status-danger)]">
+            <p role="alert" className="rounded-[12px] border border-[#F3C9C4] bg-[#FDEDEB] px-3.5 py-2.5 text-[14px] font-medium text-[var(--v2-erro)]">
               {estado.erro}
             </p>
           )}
@@ -184,14 +189,14 @@ export function ConfirmarCompra({
             <button
               type="button"
               onClick={onFechar}
-              className="min-h-11 flex-1 rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
+              className={`${BOTAO_SECUNDARIO} flex-1`}
             >
               Voltar
             </button>
             <button
               type="submit"
               disabled={!aceitaTermos || !pedeInicio || aSubmeter}
-              className="min-h-11 flex-1 rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-50"
+              className={`${BOTAO_PRIMARIO} flex-1`}
             >
               {aSubmeter ? "A abrir pagamento…" : "Continuar para pagamento"}
             </button>
