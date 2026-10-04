@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { logout } from "@/app/auth/actions";
 import { MenuMovel } from "./_components/MenuMovel";
+import { MARKETING_SITE_URL } from "@/lib/site";
 
 function IconCasos() {
   return (
@@ -140,7 +141,8 @@ function ItemDesactivado({
 
 function Logotipo() {
   return (
-    <Link href="/portal/casos" className="flex items-center px-2">
+    // O logótipo leva sempre à página inicial da DoLado (dolado.pt).
+    <a href={MARKETING_SITE_URL} aria-label="DoLado — página inicial" className="flex items-center px-2">
       <Image
         src="/brand/dolado-logo-horizontal.svg"
         alt="DoLado"
@@ -148,7 +150,7 @@ function Logotipo() {
         height={28}
         priority
       />
-    </Link>
+    </a>
   );
 }
 

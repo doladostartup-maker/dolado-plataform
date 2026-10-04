@@ -49,4 +49,11 @@ describe("desempenho em produção", () => {
   test("limite de pedidos não cresce sem limite", () => {
     assert.match(fonte("./rateLimit.ts"), /registos\.size >= LIMPAR_A_PARTIR_DE\) limparExpirados/);
   });
+
+  test("o logótipo leva sempre à página inicial da DoLado (dolado.pt)", () => {
+    for (const p of ["../components/marketing-v2/Logotipo.tsx", "../app/portal/layout.tsx", "../app/entrar/page.tsx", "../app/texto/layout.tsx", "../app/tratar-caso/layout.tsx"]) {
+      const f = fonte(p);
+      assert.match(f, /href=\{MARKETING_SITE_URL\}[\s\S]{0,260}dolado-logo/, p);
+    }
+  });
 });
