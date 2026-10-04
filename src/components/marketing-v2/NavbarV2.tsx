@@ -19,12 +19,12 @@ const LINKS = [
   { href: ROTAS_V2.ajuda, label: "Ajuda" },
 ];
 
-export function NavbarV2({ eventoCta }: { eventoCta: string }) {
+export function NavbarV2({ eventoCta, parametrosCta }: { eventoCta: string; parametrosCta?: Record<string, string> }) {
   const [aberto, setAberto] = useState(false);
   const [origem] = useState(detectarOrigem);
 
   function tratarCaso() {
-    track(eventoCta);
+    track(eventoCta, parametrosCta);
     window.location.assign(urlTratarCaso(origem));
   }
 

@@ -2,28 +2,30 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import type { Pergunta } from "@/components/landing/AccordionPerguntas";
+import { CTASection } from "@/components/marketing-v2/CTASection";
+import { FAQAccordionV2 } from "@/components/marketing-v2/FAQAccordionV2";
+import { IconeSeta } from "@/components/marketing-v2/Icones";
+import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
+import { BOTAO_PRIMARIO, CARTAO, TEXTO as TEXTO_V2 } from "@/components/marketing-v2/estilos";
 import { track } from "@/lib/analytics";
 import { urlTratarCaso } from "@/lib/site";
-import { AccordionPerguntas, type Pergunta } from "./AccordionPerguntas";
-import { RodapeLegal } from "./RodapeLegal";
-import { SiteHeader } from "./SiteHeader";
 
-// Guia público de mudança de casa (F3 — docs/especificacoes/
-// F3_MUDANCA_CASA_PUBLICA.md). Página estática de aquisição e educação:
-// sem login, sem formulários, sem IA, nada gravado. Os CTAs levam a
-// "Tratar o meu caso" com a origem desta página e, quando faz sentido, o
-// setor pré-preenchido (só valores das listas de src/lib/pedidoCaso.ts).
+// Guia público de mudança de casa no Design System V2 (F3 —
+// docs/especificacoes/F3_MUDANCA_CASA_PUBLICA.md). Página estática de
+// aquisição e educação: sem login, sem formulários, sem IA, nada gravado. O
+// conteúdo é o já publicado; os CTAs levam a "Tratar o meu caso" com a origem
+// desta página e, quando faz sentido, o setor pré-preenchido (só valores das
+// listas de src/lib/pedidoCaso.ts). Medição: mudanca_casa_clique_tratar_caso
+// (local), como antes.
 
 const ORIGEM = "/mudanca-de-casa";
 
 type SetorCaso = "Telecomunicações" | "Energia" | "Água";
 
-const BOTAO_PRIMARIO =
-  "inline-flex min-h-11 items-center justify-center rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)]";
-const LINK =
-  "font-medium text-[var(--color-brand)] underline underline-offset-2 hover:text-[var(--color-brand-hover)]";
-const TEXTO = "text-[15px] leading-relaxed text-[var(--color-ink-muted)]";
-const LISTA = `flex list-disc flex-col gap-1.5 pl-5 ${TEXTO} marker:text-[var(--color-ink-faint)]`;
+const LINK = "font-semibold text-[var(--v2-green)] underline underline-offset-2 hover:text-[var(--v2-green-hover)]";
+const TEXTO = "text-[15.5px] leading-relaxed text-[var(--v2-muted)]";
+const LISTA = `flex list-disc flex-col gap-2 pl-5 ${TEXTO} marker:text-[var(--v2-green)]`;
 
 function hrefTratarCaso(setor?: SetorCaso) {
   const base = urlTratarCaso(ORIGEM);
@@ -40,30 +42,30 @@ function abrirTratarCaso(local: string) {
 
 function Seccao({ id, numero, titulo, intro, children }: { id: string; numero: string; titulo: string; intro?: ReactNode; children: ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-titulo`} className="scroll-mt-24">
-      <p className="mb-1 text-[12px] font-bold uppercase tracking-[0.06em] text-[var(--color-brand)]">{numero}</p>
-      <h2 id={`${id}-titulo`} className="mb-3 text-[clamp(21px,3.6vw,25px)] font-semibold leading-[1.25] tracking-[-0.01em] text-[var(--color-ink)]">
+    <section id={id} aria-labelledby={`${id}-titulo`} className="scroll-mt-28">
+      <p className="mb-2 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]">{numero}</p>
+      <h2 id={`${id}-titulo`} className="mb-3 text-[clamp(26px,3vw,32px)] font-extrabold leading-[1.15] tracking-[-0.02em] text-[var(--v2-navy)]">
         {titulo}
       </h2>
-      {intro && <p className={`${TEXTO} mb-5`}>{intro}</p>}
-      <div className="flex flex-col gap-4">{children}</div>
+      {intro && <p className={`${TEXTO} mb-6 max-w-[620px]`}>{intro}</p>}
+      <div className="flex flex-col gap-5">{children}</div>
     </section>
   );
 }
 
 function Cartao({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
-    <div className="rounded-[14px] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-subtle)] sm:p-6">
-      <h3 className="mb-2.5 text-[17px] font-semibold text-[var(--color-ink)]">{titulo}</h3>
-      <div className="flex flex-col gap-3">{children}</div>
+    <div className={`${CARTAO} p-6 sm:p-7`}>
+      <h3 className="mb-3 text-[19px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{titulo}</h3>
+      <div className="flex flex-col gap-4">{children}</div>
     </div>
   );
 }
 
 function CtaContextual({ pergunta, setor, local }: { pergunta: string; setor?: SetorCaso; local: string }) {
   return (
-    <div className="flex flex-col gap-3 rounded-[12px] bg-[var(--color-brand-wash)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-[14.5px] font-medium leading-snug text-[var(--color-ink)]">{pergunta}</p>
+    <div className="flex flex-col gap-3 rounded-[14px] bg-[var(--v2-mint)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-[15px] font-semibold leading-snug text-[var(--v2-navy)]">{pergunta}</p>
       <a href={hrefTratarCaso(setor)} onClick={() => abrirTratarCaso(local)} className={`${BOTAO_PRIMARIO} flex-none`}>
         Tratar o meu caso
       </a>
@@ -156,46 +158,42 @@ const INDICE = [
   { id: "perguntas", titulo: "Perguntas frequentes" },
 ];
 
-export function MudancaDeCasa() {
+export function MudancaDeCasaV2() {
   return (
-    <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
-      <SiteHeader
-        ctaLabel="Tratar o meu caso"
-        onCtaClick={() => {
-          abrirTratarCaso("cabecalho");
-          window.location.assign(hrefTratarCaso());
-        }}
-      />
-
+    <>
       {/* ===== Introdução ===== */}
-      <section className="mx-auto max-w-[680px] px-4 pt-12 pb-2 text-center sm:px-10 sm:pt-14">
-        <p className="mb-2 text-sm font-bold uppercase tracking-[0.06em] text-[var(--color-brand)]">Guia DoLado · grátis</p>
-        <h1 className="text-[clamp(26px,5vw,34px)] font-semibold leading-[1.2] tracking-[-0.01em] text-[var(--color-ink)]">
-          Mudança de casa: o que precisa de tratar
-        </h1>
-        <p className="mt-3 text-[15.5px] leading-relaxed text-[var(--color-ink-muted)]">
-          Mudar de casa implica tratar de vários contratos e serviços. Use este guia para perceber o que deve preparar,
-          o que deve guardar e quando pode existir um problema que justifique uma reclamação.
-        </p>
-      </section>
+      <SectionV2 size="compact" className="lg:py-20">
+        <div className="max-w-[760px]">
+          <Eyebrow>Guia DoLado · grátis</Eyebrow>
+          <h1 className="mt-5 text-[clamp(32px,3.8vw,48px)] font-extrabold leading-[1.08] tracking-[-0.035em] text-[var(--v2-navy)]">
+            Mudança de casa: o que precisa de tratar
+          </h1>
+          <p className={`${TEXTO_V2} mt-5 text-[17.5px]`}>
+            Mudar de casa implica tratar de vários contratos e serviços. Use este guia para perceber o que deve
+            preparar, o que deve guardar e quando pode existir um problema que justifique uma reclamação.
+          </p>
+        </div>
+      </SectionV2>
 
-      {/* ===== Índice ===== */}
-      <nav aria-label="Nesta página" className="mx-auto max-w-[760px] px-4 pt-6 sm:px-10">
-        <ul className="flex flex-wrap justify-center gap-2">
-          {INDICE.map((s) => (
-            <li key={s.id}>
-              <a
-                href={`#${s.id}`}
-                className="inline-flex min-h-9 items-center rounded-[var(--radius-pill)] border border-[var(--color-hairline)] bg-white px-3.5 text-[13px] font-medium text-[var(--color-ink-muted)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand)]"
-              >
-                {s.titulo}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      {/* ===== Guia ===== */}
+      <SectionV2 tone="soft-blue" className="grid gap-10 lg:grid-cols-[240px_1fr] lg:gap-16">
+        <nav aria-label="Nesta página" className="lg:sticky lg:top-28 lg:self-start">
+          <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]">Nesta página</p>
+          <ul className="flex flex-wrap gap-2 lg:flex-col lg:gap-1">
+            {INDICE.map((s) => (
+              <li key={s.id}>
+                <a
+                  href={`#${s.id}`}
+                  className="inline-flex min-h-10 items-center rounded-full border border-[var(--v2-line)] bg-white px-4 text-[14px] font-medium text-[var(--v2-navy)] hover:border-[var(--v2-green)] hover:text-[var(--v2-green)] lg:w-full lg:rounded-[10px] lg:border-transparent lg:bg-transparent lg:px-3"
+                >
+                  {s.titulo}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-      <div className="mx-auto flex max-w-[720px] flex-col gap-14 px-4 pt-12 pb-14 sm:px-10">
+        <div className="flex min-w-0 max-w-[760px] flex-col gap-16">
         {/* ===== 1. Antes ===== */}
         <Seccao
           id="antes"
@@ -294,23 +292,23 @@ export function MudancaDeCasa() {
           <Cartao titulo="O que tratar na casa nova">
             <ul className={LISTA}>
               <li>
-                <strong className="text-[var(--color-ink)]">Telecomunicações:</strong> confirme a cobertura e a data de
+                <strong className="text-[var(--v2-navy)]">Telecomunicações:</strong> confirme a cobertura e a data de
                 instalação antes de terminar o serviço na casa antiga.
               </li>
               <li>
-                <strong className="text-[var(--color-ink)]">Eletricidade e gás:</strong> escolha o comercializador e
+                <strong className="text-[var(--v2-navy)]">Eletricidade e gás:</strong> escolha o comercializador e
                 indique o CPE e o CUI da casa nova.
               </li>
               <li>
-                <strong className="text-[var(--color-ink)]">Água:</strong> abra contrato com a entidade gestora do novo
+                <strong className="text-[var(--v2-navy)]">Água:</strong> abra contrato com a entidade gestora do novo
                 município ou da nova zona.
               </li>
               <li>
-                <strong className="text-[var(--color-ink)]">Titularidade:</strong> confirme que os contratos ficam em
+                <strong className="text-[var(--v2-navy)]">Titularidade:</strong> confirme que os contratos ficam em
                 nome de quem vai pagar.
               </li>
               <li>
-                <strong className="text-[var(--color-ink)]">Documentação:</strong> alguns fornecedores pedem um
+                <strong className="text-[var(--v2-navy)]">Documentação:</strong> alguns fornecedores pedem um
                 documento que comprove a ocupação da casa, como o contrato de arrendamento ou a escritura. Tenha-o à mão.
               </li>
             </ul>
@@ -377,32 +375,31 @@ export function MudancaDeCasa() {
           </p>
         </Seccao>
 
-        {/* ===== Perguntas ===== */}
-        <section id="perguntas" aria-labelledby="perguntas-titulo" className="scroll-mt-24">
-          <h2 id="perguntas-titulo" className="mb-3 text-[clamp(21px,3.6vw,25px)] font-semibold tracking-[-0.01em] text-[var(--color-ink)]">
-            Perguntas frequentes
-          </h2>
-          <AccordionPerguntas perguntas={PERGUNTAS} />
-        </section>
+        </div>
+      </SectionV2>
 
-        <p className="text-[13px] leading-relaxed text-[var(--color-ink-faint)]">
+      {/* ===== Perguntas ===== */}
+      <SectionV2 id="perguntas" className="grid gap-10 lg:grid-cols-[1fr_1.6fr] lg:gap-16">
+        <SectionHeader eyebrow="Perguntas frequentes" titulo="Dúvidas comuns sobre a mudança." />
+        <div>
+          <FAQAccordionV2 perguntas={PERGUNTAS} />
+          <p className="mt-8 text-[14px] leading-relaxed text-[var(--v2-muted)]">
           Este guia tem informação geral e não substitui as condições do seu contrato nem uma avaliação jurídica do seu
           caso. Os procedimentos podem variar de fornecedor para fornecedor.
         </p>
-      </div>
+        </div>
+      </SectionV2>
 
       {/* ===== CTA final ===== */}
-      <section className="flex flex-col items-center border-t border-[var(--color-hairline)] px-4 py-14 text-center sm:px-10">
-        <h2 className="mb-2 text-[22px] font-semibold tracking-[-0.01em] text-[var(--color-ink)]">Surgiu um problema com a mudança?</h2>
-        <p className="mb-5 max-w-[460px] text-[15px] leading-relaxed text-[var(--color-ink-muted)]">
-          Conte-nos o que aconteceu. A DoLado trata da reclamação junto do fornecedor e acompanha o seu caso.
-        </p>
-        <a href={hrefTratarCaso()} onClick={() => abrirTratarCaso("final")} className={BOTAO_PRIMARIO}>
-          Tratar o meu caso
-        </a>
-      </section>
-
-      <RodapeLegal />
-    </div>
+      <CTASection
+        titulo="Surgiu um problema com a mudança?"
+        texto="Conte-nos o que aconteceu. A DoLado trata da reclamação junto do fornecedor e acompanha o seu caso."
+        acao={
+          <a href={hrefTratarCaso()} onClick={() => abrirTratarCaso("final")} className={`${BOTAO_PRIMARIO} w-full md:w-auto`}>
+            Tratar o meu caso <IconeSeta tamanho={17} />
+          </a>
+        }
+      />
+    </>
   );
 }
