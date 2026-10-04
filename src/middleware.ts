@@ -23,6 +23,9 @@ const PAGINAS_PUBLICAS = [
   "/calculadora-cancelamento",
   "/mudanca-de-casa",
   "/perguntas-frequentes",
+  // Página de teste da nova homepage (noindex), servida em dolado.pt para
+  // os links "/#precario" funcionarem.
+  "/landing-v2",
 ];
 
 // /auth/callback tem de fazer a troca do code PKCE de forma atómica, sem
@@ -60,6 +63,7 @@ const PAGINAS_SO_MARKETING = [
   "/calculadora-cancelamento",
   "/mudanca-de-casa",
   "/perguntas-frequentes",
+  "/landing-v2",
 ];
 
 // Versões dos Termos e da Política de Privacidade (/termos/<versão>,
