@@ -1,6 +1,6 @@
 # DoLado — Design System V2 (páginas públicas)
 
-Documento de referência aprovado por Thiago a 04/10/2026. Nasce da nova direção visual da homepage (página de teste `/landing-v2`) e substitui gradualmente a linguagem visual pública anterior.
+Documento de referência aprovado por Thiago a 04/10/2026. Nasce da nova direção visual da homepage e substitui gradualmente a linguagem visual pública anterior.
 
 > **Âmbito curto:** só páginas públicas. O portal, o backoffice, a autenticação, o checkout/Stripe e os e-mails continuam com o guia de marca anterior ([brand-guide.md](brand-guide.md)). Design não altera comportamento.
 
@@ -28,17 +28,17 @@ Páginas V2:
 
 | Página | Ficheiros | Estado |
 |---|---|---|
-| Homepage (teste) | `/landing-v2` — `src/app/landing-v2/page.tsx`, `src/components/landing-v2/LandingV2.tsx` | noindex |
+| Homepage | `/` — `src/app/page.tsx`, `src/components/homepage-v2/HomepageV2.tsx` (`/landing-v2` redireciona para `/`) | indexada (substituiu a versão V1) |
 | Como Funciona | `/como-funciona` — `src/app/como-funciona/page.tsx`, `src/components/como-funciona-v2/ComoFuncionaV2.tsx` (passos e nota de transparência com o texto já publicado) | indexada (substituiu a versão V1) |
 | Ferramentas Gratuitas | `/ferramentas-gratuitas` — `src/app/ferramentas-gratuitas/page.tsx`, `src/components/ferramentas-v2/FerramentasV2.tsx` (Calculadora, Simulador, Guia de Mudança) | indexada (página nova) |
 | Sobre Nós | `/sobre-nos` — `src/app/sobre-nos/page.tsx`, `src/components/sobre-nos-v2/SobreNosV2.tsx` (todo o texto institucional já publicado) | indexada (substituiu a versão V1) |
 | Ajuda | `/perguntas-frequentes` — `src/app/perguntas-frequentes/page.tsx`, `src/components/ajuda-v2/AjudaV2.tsx` (pesquisa só no browser em `pesquisa.ts`; perguntas de `conteudoPerguntasFrequentes.tsx`) | indexada (substituiu a versão V1) |
 | Contacto | `/contacto` — `src/app/contacto/page.tsx`, `src/components/contacto-v2/ContactoV2.tsx` (mesmo formulário e Server Action `enviarContacto`; aviso "não abre casos" mantido) | indexada (substituiu a versão V1) |
-| Preçário | `/precario` — `src/app/precario/page.tsx`, `src/components/precario-v2/PrecarioV2.tsx`; conteúdo dos planos e destino dos botões em `src/lib/precario.ts`, partilhados com o preçário da homepage (`Precario.tsx`) | noindex enquanto a homepage `/` não migrar; o preçário público continua em `/#precario` |
+| Preçário | `/precario` — `src/app/precario/page.tsx`, `src/components/precario-v2/PrecarioV2.tsx`; conteúdo dos planos e destino dos botões em `src/lib/precario.ts`, `/#precario` (links antigos) leva aqui pela homepage | indexada, com `canonical` |
 
 Uma página V2 nova: `<PaginaV2 eventoCtaNavbar="click_…">` + `SectionV2`/`SectionHeader` + classes de `estilos.ts`. Criar componentes novos (PricingCard, FAQAccordionV2, …) só quando forem usados, em `src/components/marketing-v2/`, e reutilizá-los nas páginas seguintes.
 
-Pendente: quando a homepage V2 substituir `/`: indexar `/precario` e decidir se os links `/#precario` (SiteHeader, portal, `cancel_url` do Stripe, `/criar-conta`, redirect de `/por-que-assinar`) passam para `/precario`.
+Links antigos `/#precario` (portal, `cancel_url` do Stripe, `/criar-conta`, e-mails já enviados) continuam a funcionar: a homepage troca o fragmento por `/precario` no browser. Quando se mexer nesses ficheiros, pode trocar-se o link diretamente para `/precario`. Páginas públicas ainda V1 (com `SiteHeader`): Simulador, Calculadora, Guia de Mudança, Transparência, páginas legais.
 
 ---
 

@@ -154,7 +154,7 @@ describe("fora do portal", () => {
 
   test("não é apresentado como funcionalidade dos planos", () => {
     assert.doesNotMatch(ler("src/lib/planos.ts"), /elegibilidade/i);
-    assert.doesNotMatch(ler("src/components/landing/Precario.tsx"), /elegibilidade/i);
+    assert.doesNotMatch(ler("src/lib/precario.ts"), /elegibilidade/i);
   });
 });
 

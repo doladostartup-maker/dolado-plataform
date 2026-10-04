@@ -17,7 +17,7 @@ const FERRAMENTAS_LINKS: LinkMenu[] = [
 ];
 
 const NAV_LINKS: LinkMenu[] = [
-  { href: "/#precario", label: "Planos" },
+  { href: "/precario", label: "Planos" },
   { href: "/perguntas-frequentes", label: "Perguntas Frequentes" },
 ];
 
