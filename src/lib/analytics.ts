@@ -1,7 +1,7 @@
 "use client";
 
-// Sem gtag (página sem AnalyticsScripts, ou bloqueado pelo Cookiebot por
-// falta de consentimento), não faz nada.
+// Sem gtag (página sem AnalyticsScripts, ou ainda sem consentimento no banner
+// do Cookiebot — ver MedicaoComConsentimento), não faz nada.
 export function track(nome: string, parametros?: Record<string, string | number>) {
   if (typeof window !== "undefined" && typeof window.gtag === "function") {
     if (parametros) window.gtag("event", nome, parametros);
@@ -27,7 +27,8 @@ export async function trackFormSuccess({ email, setor }: { email: string; setor:
   const vals = { form_name: "complaint_form", setor: setor || "not_provided" };
   try {
     const hash = email ? await sha256(email.trim().toLowerCase()) : null;
-    if (hash && typeof window.gtag === "function") {
+    // Conversões melhoradas do Google Ads: só com consentimento de marketing.
+    if (hash && typeof window.gtag === "function" && window.Cookiebot?.consent?.marketing === true) {
       window.gtag("set", "user_data", { sha256_email_address: hash });
     }
   } catch {

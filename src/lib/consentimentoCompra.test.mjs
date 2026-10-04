@@ -230,10 +230,13 @@ describe("pontos de entrada usam a confirmação", () => {
   }
 
   test("preçário de dolado.pt não abre Checkout: leva sempre a portal.dolado.pt/comprar (ou ao Tratar o meu caso)", () => {
-    const precario = fonte("../components/landing/Precario.tsx");
-    assert.equal(/ConfirmarCompra|confirmarCompra|BotaoComprar/.test(precario), false);
-    assert.match(precario, /urlComprar\(plano\)/);
-    assert.match(precario, /urlTratarCaso\("precario"\)/);
+    const destino = fonte("./precario.ts");
+    assert.match(destino, /plano === "avulso" \? urlTratarCaso\(origem\) : urlComprar\(plano\)/);
+    const precarioV2 = fonte("../components/precario-v2/PrecarioV2.tsx");
+    for (const f of [destino, precarioV2]) {
+      assert.equal(/ConfirmarCompra|confirmarCompra|BotaoComprar|stripe/i.test(f), false);
+    }
+    assert.match(precarioV2, /destinoPlano\(plano, "\/precario"\)/);
     const confirmacao = fonte("../app/comprar/CompraConfirmacao.tsx");
     assert.match(confirmacao, /<ConfirmarCompra[\s\S]*origem="landing"/);
   });

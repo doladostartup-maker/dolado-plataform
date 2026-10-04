@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Transparencia } from "@/components/landing/Transparencia";
+import { PaginaV2 } from "@/components/marketing-v2/PaginaV2";
+import { TransparenciaV2 } from "@/components/transparencia-v2/TransparenciaV2";
 
 export const metadata: Metadata = {
   title: "Transparência - DoLado",
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function TransparenciaPage() {
-  return <Transparencia />;
+  return (
+    <PaginaV2 eventoCtaNavbar="click_nav_transparencia">
+      <TransparenciaV2 />
+    </PaginaV2>
+  );
 }

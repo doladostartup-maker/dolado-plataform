@@ -1,5 +1,7 @@
 # DoLado — Guia de Marca (para Claude Design)
 
+> Aplica-se ao portal, backoffice, autenticação, checkout e e-mails. As páginas públicas migram para o [Design System V2](design-system-v2.md) (04/10/2026).
+
 Marca: **Confiança Direta** — papel neutro, teal de resolução, formalidade calma.
 Não é um SaaS de vendas nem uma "app de consumo divertida" — a DoLado lida com prazos legais e pessoas frustradas/ansiosas. A UI comunica competência e confiança calma.
 
