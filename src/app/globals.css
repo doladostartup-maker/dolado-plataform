@@ -109,3 +109,29 @@ body {
   --v2-aviso-bg: #FFF6E5;
   --v2-erro: #B42318;
 }
+
+/* Documentos legais dentro do V2: as versões publicadas dos Termos e da
+   Política (que não se editam) e as páginas legais usam os tokens antigos
+   (--color-*). Aqui apontam para os do V2, sem tocar nos ficheiros. */
+.tema-v2 .documento-legal {
+  --color-ink: var(--v2-navy);
+  --color-ink-muted: var(--v2-muted);
+  --color-ink-faint: var(--v2-muted);
+  --color-brand: var(--v2-green);
+  --color-brand-hover: var(--v2-green-hover);
+  --color-brand-wash: var(--v2-mint);
+  --color-hairline: var(--v2-line);
+  --color-hairline-strong: var(--v2-line-strong);
+  --color-surface: #FFFFFF;
+  --color-surface-sunken: var(--v2-surface);
+  --color-canvas: var(--v2-surface);
+  --color-status-danger: var(--v2-erro);
+}
+.tema-v2 .documento-legal h1 {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.tema-v2 .documento-legal h2 {
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}

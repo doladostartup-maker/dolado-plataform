@@ -9,7 +9,7 @@ Documento de referência aprovado por Thiago a 04/10/2026. Nasce da nova direç�
 | Peça | Onde |
 |---|---|
 | Tokens de cor (`--v2-*`) | `src/app/globals.css`, classe `.tema-v2` |
-| Moldura da página (tokens + fonte Plus Jakarta Sans + NavbarV2 + `<main>` + FooterV2) | `src/components/marketing-v2/PaginaV2.tsx` |
+| Moldura da página (tokens + fonte Plus Jakarta Sans + NavbarV2 + `<main>` + FooterV2; evento do botão da navbar com parâmetros opcionais) | `src/components/marketing-v2/PaginaV2.tsx` |
 | Navbar / Rodapé / Logótipo | `NavbarV2.tsx`, `FooterV2.tsx`, `Logotipo.tsx` |
 | Destinos da navegação (trocar aqui quando uma página migrar ou for criada) | `rotas.ts` (`ROTAS_V2`) |
 | Secção (`tone`: white / soft-blue / soft-green; `size`: compact / default / large), Eyebrow, SectionHeader | `SectionV2.tsx` |
@@ -35,11 +35,15 @@ Páginas V2:
 | Ajuda | `/perguntas-frequentes` — `src/app/perguntas-frequentes/page.tsx`, `src/components/ajuda-v2/AjudaV2.tsx` (pesquisa só no browser em `pesquisa.ts`; perguntas de `conteudoPerguntasFrequentes.tsx`) | indexada (substituiu a versão V1) |
 | Contacto | `/contacto` — `src/app/contacto/page.tsx`, `src/components/contacto-v2/ContactoV2.tsx` (mesmo formulário e Server Action `enviarContacto`; aviso "não abre casos" mantido) | indexada (substituiu a versão V1) |
 | Simulador de Elegibilidade | `/simulador-elegibilidade` — `src/app/simulador-elegibilidade/page.tsx`, `src/components/simulador-v2/SimuladorV2.tsx` (perguntas, resultados, CTA "Tratar o meu caso" e medição iguais; regras em `src/lib/elegibilidade/regras.ts`) | indexada (substituiu a versão V1) |
+| Calculadora de Cancelamento | `/calculadora-cancelamento` — `src/app/calculadora-cancelamento/page.tsx`, `src/components/calculadora-v2/CalculadoraV2.tsx` (campos, validação, resultado, textos e medição iguais; regras em `src/lib/calculadoraCancelamento/regras.ts`) | indexada (substituiu a versão V1) |
+| Guia de Mudança de Casa | `/mudanca-de-casa` — `src/app/mudanca-de-casa/page.tsx`, `src/components/mudanca-casa-v2/MudancaDeCasaV2.tsx` (conteúdo já publicado; CTAs e medição `mudanca_casa_clique_tratar_caso` iguais) | indexada (substituiu a versão V1) |
+| Transparência | `/transparencia` — `src/app/transparencia/page.tsx`, `src/components/transparencia-v2/TransparenciaV2.tsx` (texto já publicado; CTA final novo) | indexada (substituiu a versão V1) |
+| Páginas legais | `/termos`, `/termos/<versão>`, `/privacidade`, `/privacidade/<versão>`, `/livre-resolucao`, `/resolucao-de-litigios` — moldura em `src/app/(legal)/layout.tsx` (PaginaV2). As versões publicadas não se editam: usam os tokens antigos `--color-*`, que `.documento-legal` (`globals.css`) aponta para as cores V2; os pesos dos títulos também são ajustados aí. Versões novas podem usar já as classes V2. | indexadas, como antes |
 | Preçário | `/precario` — `src/app/precario/page.tsx`, `src/components/precario-v2/PrecarioV2.tsx`; conteúdo dos planos e destino dos botões em `src/lib/precario.ts`, `/#precario` (links antigos) leva aqui pela homepage | indexada, com `canonical` |
 
 Uma página V2 nova: `<PaginaV2 eventoCtaNavbar="click_…">` + `SectionV2`/`SectionHeader` + classes de `estilos.ts`. Criar componentes novos (PricingCard, FAQAccordionV2, …) só quando forem usados, em `src/components/marketing-v2/`, e reutilizá-los nas páginas seguintes.
 
-Links antigos `/#precario` (portal, `cancel_url` do Stripe, `/criar-conta`, e-mails já enviados) continuam a funcionar: a homepage troca o fragmento por `/precario` no browser. Quando se mexer nesses ficheiros, pode trocar-se o link diretamente para `/precario`. Páginas públicas ainda V1 (com `SiteHeader`): Calculadora, Guia de Mudança, Transparência, páginas legais.
+Links antigos `/#precario` (portal, `cancel_url` do Stripe, `/criar-conta`, e-mails já enviados) continuam a funcionar: a homepage troca o fragmento por `/precario` no browser. Quando se mexer nesses ficheiros, pode trocar-se o link diretamente para `/precario`. Todas as páginas públicas estão em V2 (04/10/2026); o `SiteHeader` antigo foi removido.
 
 ---
 

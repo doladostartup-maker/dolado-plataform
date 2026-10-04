@@ -1,50 +1,14 @@
-import Image from "next/image";
-import Link from "next/link";
-import { LIVRO_RECLAMACOES_URL, ROTAS_LEGAIS } from "@/lib/legal";
+import { PaginaV2 } from "@/components/marketing-v2/PaginaV2";
 
+// Páginas legais (Termos, Privacidade, Livre resolução, Resolução de
+// litígios) com a moldura do Design System V2: navbar, rodapé (com o Livro
+// de Reclamações e as restantes ligações legais) e tipografia. O texto não
+// muda: as versões publicadas não se editam e usam os tokens antigos, que
+// .documento-legal (globals.css) aponta para as cores V2.
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="px-4 py-6">
-        <Link href="/" aria-label="Página inicial DoLado" className="inline-flex">
-          <Image
-            src="/brand/dolado-logo-horizontal.svg"
-            alt="DoLado"
-            width={110}
-            height={26}
-            priority
-          />
-        </Link>
-      </header>
-
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 pb-16">{children}</main>
-
-      <footer className="flex flex-wrap justify-center gap-x-4 gap-y-2 px-4 py-6 text-xs text-[var(--color-ink-faint)]">
-        <Link href={ROTAS_LEGAIS.termos} className="hover:text-[var(--color-ink-muted)]">
-          Termos e Condições
-        </Link>
-        <span aria-hidden>·</span>
-        <Link href={ROTAS_LEGAIS.livreResolucao} className="hover:text-[var(--color-ink-muted)]">
-          Livre resolução
-        </Link>
-        <span aria-hidden>·</span>
-        <Link href={ROTAS_LEGAIS.privacidade} className="hover:text-[var(--color-ink-muted)]">
-          Política de Privacidade
-        </Link>
-        <span aria-hidden>·</span>
-        <Link href={ROTAS_LEGAIS.resolucaoLitigios} className="hover:text-[var(--color-ink-muted)]">
-          Resolução de litígios
-        </Link>
-        <span aria-hidden>·</span>
-        <a
-          href={LIVRO_RECLAMACOES_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-semibold hover:text-[var(--color-ink-muted)]"
-        >
-          Livro de Reclamações
-        </a>
-      </footer>
-    </div>
+    <PaginaV2 eventoCtaNavbar="click_nav_reclamacao">
+      <div className="documento-legal mx-auto w-full max-w-[760px] px-5 pb-20 pt-10 sm:px-8 sm:pt-14">{children}</div>
+    </PaginaV2>
   );
 }

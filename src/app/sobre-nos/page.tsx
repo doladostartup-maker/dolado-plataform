@@ -9,7 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default function SobreNosPage() {
-  // Sem AnalyticsScripts, como antes da migração.
   return (
     <PaginaV2 eventoCtaNavbar="click_nav_sobre_nos">
       <SobreNosV2 />

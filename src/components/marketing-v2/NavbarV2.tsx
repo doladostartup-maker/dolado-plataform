@@ -9,8 +9,8 @@ import { BOTAO_PRIMARIO } from "./estilos";
 import { Logotipo } from "./Logotipo";
 import { ROTAS_V2 } from "./rotas";
 
-// Navbar do Design System V2 (páginas públicas). Só existe dentro de PaginaV2;
-// o SiteHeader continua nas páginas ainda não migradas.
+// Navbar do Design System V2 (todas as páginas públicas). Só existe dentro de
+// PaginaV2.
 
 const LINKS = [
   { href: ROTAS_V2.comoFunciona, label: "Como funciona" },
@@ -19,12 +19,12 @@ const LINKS = [
   { href: ROTAS_V2.ajuda, label: "Ajuda" },
 ];
 
-export function NavbarV2({ eventoCta }: { eventoCta: string }) {
+export function NavbarV2({ eventoCta, parametrosCta }: { eventoCta: string; parametrosCta?: Record<string, string> }) {
   const [aberto, setAberto] = useState(false);
   const [origem] = useState(detectarOrigem);
 
   function tratarCaso() {
-    track(eventoCta);
+    track(eventoCta, parametrosCta);
     window.location.assign(urlTratarCaso(origem));
   }
 
