@@ -4,6 +4,7 @@
 import { PLANOS_LIVRE_RESOLUCAO, type PedidoLivreResolucao } from "../livreResolucao.ts";
 import { CONTACTO_EMAIL } from "../site.ts";
 import { escaparHtml } from "./textoRevisao.ts";
+import { emailV2, tabelaEmail } from "./molduraEmail.ts";
 
 export const ASSUNTO_CONFIRMACAO_LIVRE_RESOLUCAO = "Recebemos o seu pedido de livre resolução";
 
@@ -17,6 +18,7 @@ function dataHora(iso: string) {
   }).format(new Date(iso));
 }
 
+/** Moldura simples dos avisos internos à DoLado. */
 function moldura(conteudo: string) {
   return `<div style="font-family:Arial,Helvetica,sans-serif; color:#171A21; font-size:15px; line-height:1.6; max-width:560px;">${conteudo}</div>`;
 }
@@ -35,16 +37,17 @@ export function montarHtmlConfirmacaoLivreResolucao(pedido: PedidoLivreResolucao
     ["E-mail", pedido.email],
     ["Plano", PLANOS_LIVRE_RESOLUCAO[pedido.plano]],
     ...(pedido.data_compra ? [["Data da compra", pedido.data_compra]] : []),
-  ]
-    .map(([k, v]) => `<li><strong>${escaparHtml(k)}:</strong> ${escaparHtml(v)}</li>`)
-    .join("");
-  return moldura(`
+  ].map(([k, v]) => [escaparHtml(k), escaparHtml(v)] as [string, string]);
+  return emailV2({
+    titulo: ASSUNTO_CONFIRMACAO_LIVRE_RESOLUCAO,
+    corpo: `
     <p ${P}>Olá,</p>
     <p ${P}>Confirmamos que recebemos o seu pedido de livre resolução, feito através do formulário em dolado.pt/livre-resolucao.</p>
-    <ul style="margin:0 0 16px 0; padding-left:20px;">${linhas}</ul>
+    ${tabelaEmail(linhas)}
     <p ${P}>A DoLado vai analisar o pedido e responder-lhe por e-mail. Se houver lugar a reembolso, este é feito pelo mesmo meio de pagamento que utilizou, no prazo máximo de 14 dias a contar da data em que fomos informados da sua decisão, nos termos da lei.</p>
-    <p ${P}>Se não fez este pedido, responda a este e-mail ou escreva para ${escaparHtml(CONTACTO_EMAIL)}.</p>
-    <p style="margin:0;">A equipa DoLado</p>`);
+    <p ${P}>Se não fez este pedido, responda a este e-mail ou escreva para ${escaparHtml(CONTACTO_EMAIL)}.</p>`,
+    assinatura: "equipa",
+  });
 }
 
 /** Aviso interno à DoLado. */

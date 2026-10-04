@@ -9,6 +9,7 @@
 // devolvido por monitor_alertas_pendentes().
 
 import { escaparHtml, textoParaAssunto } from "./textoSeguro.ts";
+import { P_EMAIL, P_NOTA, botaoEmail, emailV2 } from "./molduraEmail.ts";
 
 export { escaparHtml, textoParaAssunto };
 
@@ -20,32 +21,6 @@ function dataPt(dataIso: string): string {
     timeZone: "UTC",
   });
 }
-
-const TOPO = `<!DOCTYPE html>
-<html lang="pt-PT">
-<head><meta charset="UTF-8"></head>
-<body style="margin:0; padding:0; background-color:#F7F6F2; font-family: 'Inter', Arial, Helvetica, sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7F6F2; padding: 32px 16px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; background-color:#FFFFFF; border-radius:12px; border:1px solid #E4E2DB; overflow:hidden;">
-          <tr>
-            <td style="padding: 32px 32px 0 32px;">
-              <span style="font-family:'Inter', Arial, Helvetica, sans-serif; font-size:20px; font-weight:600; color:#0E6B5C;">DoLado</span>
-            </td>
-          </tr>`;
-
-const RODAPE = `          <tr>
-            <td style="padding: 20px 32px; background-color:#EFEDE7; font-family:'Inter', Arial, Helvetica, sans-serif; font-size:13px; color:#5B6270;">
-              <a href="https://www.dolado.pt" style="color:#0E6B5C; text-decoration:none;">www.dolado.pt</a>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
 
 // ---------------------------------------------------------------------------
 // Monitor de Proteção (Edge Function verificar-monitor-datas)
@@ -106,16 +81,14 @@ export function htmlAlertaMonitor({
     : "Vale a pena confirmar com o fornecedor as condições que se aplicam depois dessa data. No portal pode ver os dados registados e corrigi-los, se for preciso.";
   const link = `${PORTAL_CONTRATOS}/${encodeURIComponent(contratoId)}`;
 
-  return `${TOPO}
-          <tr>
-            <td style="padding: 24px 32px 24px 32px; font-family:'Inter', Arial, Helvetica, sans-serif; color:#171A21; font-size:16px; line-height:1.6;">
-              <p style="margin:0 0 16px 0;">Olá ${escaparHtml(nome)},</p>
-              <p style="margin:0 0 16px 0;">${facto}</p>
-              <p style="margin:0 0 16px 0;">${sugestao}</p>
-              <p style="margin:0 0 24px 0;"><a href="${link}" style="display:inline-block; background-color:#0E6B5C; color:#FFFFFF; text-decoration:none; padding:10px 18px; border-radius:8px; font-weight:600;">Ver o contrato</a></p>
-              <p style="margin:0 0 16px 0; font-size:14px; color:#5B6270;">Está a ter um problema com este contrato? No portal pode pedir à DoLado para tratar do seu caso.</p>
-              <p style="margin:0;">Com os melhores cumprimentos,<br><span style="font-weight:600;">A equipa DoLado</span></p>
-            </td>
-          </tr>
-${RODAPE}`;
+  return emailV2({
+    // O assunto inclui o fornecedor (texto do cliente): escape também aqui.
+    titulo: escaparHtml(assuntoAlertaMonitor(regra, fornecedor, dias)),
+    corpo: `<p ${P_EMAIL}>Olá ${escaparHtml(nome)},</p>
+              <p ${P_EMAIL}>${facto}</p>
+              <p ${P_EMAIL}>${sugestao}</p>
+              ${botaoEmail(link, "Ver o contrato")}
+              <p ${P_NOTA}>Está a ter um problema com este contrato? No portal pode pedir à DoLado para tratar do seu caso.</p>`,
+    assinatura: "equipa",
+  });
 }

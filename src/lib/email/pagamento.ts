@@ -7,6 +7,7 @@ import {
   rotaTermosVersao,
 } from "../legal.ts";
 import { CONTACTO_EMAIL, MARKETING_SITE_URL } from "../site.ts";
+import { LIGACAO_EMAIL, P_EMAIL, botaoEmail, emailV2, tabelaEmail } from "./molduraEmail.ts";
 
 export type PlanoEmail = "avulso" | "protecao" | "caso_protecao";
 
@@ -38,10 +39,10 @@ function formatarData(iso: string) {
   });
 }
 
-const P = 'style="margin:0 0 16px 0;"';
-const LINK = 'style="color:#0E6B5C;"';
-const TD_L = 'style="padding:4px 12px 4px 0; color:#5B6270; font-size:14px; vertical-align:top;"';
-const TD_V = 'style="padding:4px 0; color:#171A21; font-size:14px; font-weight:600;"';
+const P = P_EMAIL;
+const LINK = LIGACAO_EMAIL;
+/** Textos legais e documentos: um pouco mais pequenos do que o corpo. */
+const P_LEGAL = 'style="margin:0 0 16px 0; font-size:14px; line-height:1.6;"';
 
 /**
  * Confirmação da contratação em suporte duradouro: produto, valor, tipo,
@@ -71,9 +72,7 @@ export function montarHtmlBoasVindasPagamento(plano: PlanoEmail, dados: DadosEma
   } else {
     linhas.push(["Tipo", "Pagamento único"]);
   }
-  const tabela = linhas
-    .map(([l, v]) => `<tr><td ${TD_L}>${l}</td><td ${TD_V}>${v}</td></tr>`)
-    .join("");
+  const tabela = tabelaEmail(linhas);
 
   const termosUrl = `${MARKETING_SITE_URL}${consentimento ? rotaTermosVersao(consentimento.termos_versao) : ROTAS_LEGAIS.termos}`;
   const privacidadeUrl = `${MARKETING_SITE_URL}${ROTAS_LEGAIS.privacidade}`;
@@ -81,7 +80,7 @@ export function montarHtmlBoasVindasPagamento(plano: PlanoEmail, dados: DadosEma
   const gestaoUrl = `${portalUrl}${ROTAS_LEGAIS.gestaoSubscricao}`;
 
   const blocoSubscricao = info.subscricao
-    ? `<p ${P}><strong>Renovação e cancelamento.</strong> A subscrição renova-se automaticamente todos os meses${
+    ? `<p ${P_LEGAL}><strong>Renovação e cancelamento.</strong> A subscrição renova-se automaticamente todos os meses${
         valorPagoCentimos !== null && valorPagoCentimos !== info.precoCentimos
           ? ", com os descontos aplicados nas condições do código usado no pagamento"
           : ""
@@ -89,61 +88,22 @@ export function montarHtmlBoasVindasPagamento(plano: PlanoEmail, dados: DadosEma
     : "";
 
   const blocoInicio = consentimento?.pediu_inicio_imediato
-    ? `<p ${P}><strong>Início imediato.</strong> Antes do pagamento, pediu expressamente que a DoLado iniciasse a prestação do serviço de imediato, antes do fim do prazo de 14 dias de livre resolução.</p>`
+    ? `<p ${P_LEGAL}><strong>Início imediato.</strong> Antes do pagamento, pediu expressamente que a DoLado iniciasse a prestação do serviço de imediato, antes do fim do prazo de 14 dias de livre resolução.</p>`
     : "";
 
-  return `<!DOCTYPE html>
-<html lang="pt-PT">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pagamento confirmado — DoLado</title>
-</head>
-<body style="margin:0; padding:0; background-color:#F7F6F2; font-family: 'Inter', Arial, Helvetica, sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7F6F2; padding: 32px 16px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; background-color:#FFFFFF; border-radius:12px; border:1px solid #E4E2DB; overflow:hidden;">
-          <tr>
-            <td style="padding: 32px 32px 0 32px;">
-              <span style="font-family:'Inter', Arial, Helvetica, sans-serif; font-size:20px; font-weight:600; color:#0E6B5C;">DoLado</span>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 24px 32px 8px 32px; font-family:'Inter', Arial, Helvetica, sans-serif; color:#171A21; font-size:16px; line-height:1.6;">
-              <p ${P}>Olá,</p>
+  return emailV2({
+    titulo: "Pagamento confirmado — DoLado",
+    corpo: `<p ${P}>Olá,</p>
               <p ${P}>O seu pagamento foi confirmado. Obrigado por confiar na DoLado. Guarde este e-mail como confirmação da sua contratação.</p>
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px 0;">${tabela}</table>
+              ${tabela}
               <p ${P}>${passo}</p>
-              <p ${P}><a href="${ligacao}" style="display:inline-block; background-color:#0E6B5C; color:#FFFFFF; text-decoration:none; font-weight:600; padding:10px 18px; border-radius:8px;">${botao}</a></p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 32px 8px 32px; font-family:'Inter', Arial, Helvetica, sans-serif; color:#171A21; font-size:14px; line-height:1.6;">
+              ${botaoEmail(ligacao, botao)}
               ${blocoSubscricao}
               ${blocoInicio}
-              <p ${P}><strong>Direito de livre resolução.</strong> ${RESUMO_LIVRE_RESOLUCAO} ${COMO_EXERCER_LIVRE_RESOLUCAO} <a href="${livreResolucaoUrl}" ${LINK}>Saiba mais</a>.</p>
-              <p ${P}>Documentos: <a href="${termosUrl}" ${LINK}>Termos e Condições${consentimento ? ` (versão ${consentimento.termos_versao})` : ""}</a> · <a href="${privacidadeUrl}" ${LINK}>Política de Privacidade</a>.</p>
-              <p ${P}>Para qualquer questão: <a href="mailto:${CONTACTO_EMAIL}" ${LINK}>${CONTACTO_EMAIL}</a>.</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 32px 24px 32px; font-family:'Inter', Arial, Helvetica, sans-serif; color:#171A21; font-size:16px; line-height:1.6;">
-              <p style="margin:0 0 4px 0;">Estamos juntos nisto.</p>
-              <p style="margin:0; font-weight:600;">Thiago<br><span style="font-weight:400; color:#5B6270; font-size:14px;">DoLado</span></p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 20px 32px; background-color:#EFEDE7; font-family:'Inter', Arial, Helvetica, sans-serif; font-size:13px; color:#5B6270;">
-              <a href="https://www.dolado.pt" style="color:#0E6B5C; text-decoration:none;">www.dolado.pt</a>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+              <p ${P_LEGAL}><strong>Direito de livre resolução.</strong> ${RESUMO_LIVRE_RESOLUCAO} ${COMO_EXERCER_LIVRE_RESOLUCAO} <a href="${livreResolucaoUrl}" ${LINK}>Saiba mais</a>.</p>
+              <p ${P_LEGAL}>Documentos: <a href="${termosUrl}" ${LINK}>Termos e Condições${consentimento ? ` (versão ${consentimento.termos_versao})` : ""}</a> · <a href="${privacidadeUrl}" ${LINK}>Política de Privacidade</a>.</p>
+              <p ${P_LEGAL}>Para qualquer questão: <a href="mailto:${CONTACTO_EMAIL}" ${LINK}>${CONTACTO_EMAIL}</a>.</p>`,
+  });
 }
 
 export function montarHtmlNotificacaoNovoPagamento(email: string, plano: PlanoEmail) {

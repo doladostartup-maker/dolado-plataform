@@ -6,6 +6,7 @@
 // escape e no assunto perdem quebras de linha e são encurtados.
 
 import { escaparHtml, textoParaAssunto } from "./textoSeguro.ts";
+import { P_EMAIL, emailV2 } from "./molduraEmail.ts";
 
 export interface CasoNovo {
   id: string;
@@ -30,39 +31,14 @@ function valor(texto: string | null | undefined, quebras = false): string {
 export const ASSUNTO_CONFIRMACAO_CLIENTE = "Recebemos o seu caso";
 
 export function htmlConfirmacaoCliente(nome: string): string {
-  return `<!DOCTYPE html>
-<html lang="pt-PT">
-<head><meta charset="UTF-8"></head>
-<body style="margin:0; padding:0; background-color:#F7F6F2; font-family: 'Inter', Arial, Helvetica, sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7F6F2; padding: 32px 16px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; background-color:#FFFFFF; border-radius:12px; border:1px solid #E4E2DB; overflow:hidden;">
-          <tr>
-            <td style="padding: 32px 32px 0 32px;">
-              <span style="font-family:'Inter', Arial, Helvetica, sans-serif; font-size:20px; font-weight:600; color:#0E6B5C;">DoLado</span>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 24px 32px 24px 32px; font-family:'Inter', Arial, Helvetica, sans-serif; color:#171A21; font-size:16px; line-height:1.6;">
-              <p style="margin:0 0 16px 0;">Olá ${escaparHtml(nome ?? "")},</p>
-              <p style="margin:0 0 16px 0;">Recebemos o seu caso.</p>
-              <p style="margin:0 0 16px 0;">A DoLado irá analisar as informações enviadas e, antes de qualquer envio, poderá entrar em contacto consigo para confirmar os factos ou solicitar informações adicionais.</p>
-              <p style="margin:0 0 4px 0;">Obrigado por confiar na DoLado.</p>
-              <p style="margin:0; font-weight:600;">Thiago<br><span style="font-weight:400; color:#5B6270; font-size:14px;">DoLado</span></p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 20px 32px; background-color:#EFEDE7; font-family:'Inter', Arial, Helvetica, sans-serif; font-size:13px; color:#5B6270;">
-              <a href="https://www.dolado.pt" style="color:#0E6B5C; text-decoration:none;">www.dolado.pt</a>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+  return emailV2({
+    titulo: ASSUNTO_CONFIRMACAO_CLIENTE,
+    corpo: `<p ${P_EMAIL}>Olá ${escaparHtml(nome ?? "")},</p>
+              <p ${P_EMAIL}>Recebemos o seu caso.</p>
+              <p ${P_EMAIL}>A DoLado irá analisar as informações enviadas e, antes de qualquer envio, poderá entrar em contacto consigo para confirmar os factos ou solicitar informações adicionais.</p>
+              <p style="margin:0 0 4px 0;">Obrigado por confiar na DoLado.</p>`,
+    assinatura: "nome",
+  });
 }
 
 export function assuntoNotificacaoAdmin(caso: Pick<CasoNovo, "nome" | "sector">): string {
@@ -91,7 +67,7 @@ export function htmlNotificacaoAdmin(caso: CasoNovo, siteUrl: string): string {
   ${linha("Empresa parceira", caso.empresa_parceira)}
   <p style="margin:16px 0 0 0;"><strong>Descrição:</strong><br>${valor(caso.descricao, true)}</p>
   <p style="margin:20px 0 0 0;">
-    <a href="${escaparHtml(link)}" style="color:#0E6B5C;">Ver caso no backoffice</a>
+    <a href="${escaparHtml(link)}" style="color:#0A7A4F;">Ver caso no backoffice</a>
   </p>
 </body>
 </html>`;
