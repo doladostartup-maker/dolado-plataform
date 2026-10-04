@@ -2,7 +2,7 @@
 
 Documento de referência aprovado por Thiago a 04/10/2026. Nasce da nova direção visual da homepage e substitui gradualmente a linguagem visual pública anterior.
 
-> **Âmbito curto:** páginas públicas e, desde 04/10/2026, o portal do cliente (ver "Portal do cliente" abaixo). O backoffice, a autenticação, o checkout/Stripe e os e-mails continuam com o guia de marca anterior ([brand-guide.md](brand-guide.md)). Design não altera comportamento.
+> **Âmbito curto:** páginas públicas e, desde 04/10/2026, o portal do cliente e as páginas de conta/autenticação (ver "Portal do cliente" abaixo). O backoffice, o fluxo "Tratar o meu caso", o Stripe Checkout e os e-mails continuam com o guia de marca anterior ([brand-guide.md](brand-guide.md)). Design não altera comportamento.
 
 ## Implementação no código
 
@@ -62,6 +62,7 @@ O portal (`/portal/*`) aplica o V2 como aplicação de uso recorrente: mesmos to
 | Lista rótulo/valor | `src/components/portal/Dados.tsx` |
 | Ícones do portal (mesmo sistema linear) | `src/components/portal/Icones.tsx` |
 | Páginas de revisão do texto sem login (`/texto/rever`, `/texto/alterar`) e modal de confirmação da compra (`ConfirmarCompra`, que traz o próprio tema e fonte: mesmo aspeto no portal, em `/comprar` e em `/tratar-caso`) e a página `/comprar` | `src/app/texto/`, `src/components/compra/ConfirmarCompra.tsx`, `src/app/comprar/page.tsx` |
+| Páginas de conta (`/entrar`, `/login`, `/registo`, `/confirmar-email`, `/criar-conta`, `/associar-compra`, `/conta`): moldura com logótipo, cartão central e ligações legais | `src/components/portal/MolduraConta.tsx` |
 | Estado do caso em linguagem humana (rótulo, explicação, próximo passo, se pede ação) e eventos vistos pelo cliente — só apresentação | `src/lib/portal/estadoCaso.ts` (testes em `estadoCaso.test.mjs`) |
 
 Regras do portal: o painel mostra primeiro o que precisa do cliente, depois os casos em curso, depois a Proteção e o plano; uma só ação primária por bloco; estados internos nunca aparecem em bruto; sem emojis nem símbolos (✓ ⚠ ℹ) — usar os ícones; nada depende de hover; cor só com significado.
@@ -91,7 +92,7 @@ Pode também ser usado em páginas públicas de parceiros, campanhas, páginas p
 
 ## 3. O que NÃO está incluído neste momento
 
-Não aplicar automaticamente a: Backoffice, autenticação, checkout, fluxos Stripe, páginas internas, ferramentas operacionais, interfaces de administração, e-mails transacionais.
+Não aplicar automaticamente a: Backoffice, checkout, fluxos Stripe, páginas internas, ferramentas operacionais, interfaces de administração, e-mails transacionais.
 
 Essas áreas podem receber no futuro uma evolução visual própria. Não alterar o produto interno apenas para uniformizar com o site público.
 

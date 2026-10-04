@@ -6,11 +6,14 @@ import { MENSAGENS_ASSOCIACAO, avaliarSessaoParaAssociar, type ResultadoAssociac
 import { CONTACTO_EMAIL } from "@/lib/site";
 import { getStripe } from "@/lib/stripe/client";
 import { associarCompra } from "./actions";
+import { Aviso } from "@/components/portal/Aviso";
+import { MolduraConta } from "@/components/portal/MolduraConta";
+import { BOTAO_PRIMARIO, LIGACAO, TEXTO } from "@/components/portal/ui";
 
 export const metadata = { title: "Associar compra — DoLado", robots: { index: false } };
 
 const SUCESSO: ReadonlySet<string> = new Set(["associada", "ja_associada"]);
-const LINK = "font-medium text-[var(--color-brand)] underline";
+const LINK = LIGACAO;
 
 // Associação de uma compra paga sem conta à conta da sessão. Só leitura
 // aqui (GET): a associação acontece apenas no POST explícito do botão.
@@ -46,46 +49,35 @@ export default async function AssociarCompraPage({
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
-      <div>
-        <p className="mb-1 text-sm font-semibold text-[var(--color-brand)]">A sua compra</p>
-        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">Associar a compra à sua conta</h1>
-      </div>
-
-      {mensagem && (
-        <p
-          role={sucesso ? "status" : "alert"}
-          className={`text-sm leading-relaxed ${sucesso ? "text-[var(--color-ink)]" : "text-[var(--color-status-danger)]"}`}
-        >
-          {mensagem}
-        </p>
-      )}
+    <MolduraConta
+      contexto="A sua compra"
+      titulo="Associar a compra à sua conta"
+      depois={
+        <>
+          <Link href="/portal" className={LINK}>
+            Ir para o portal
+          </Link>{" "}
+          · Precisa de ajuda?{" "}
+          <a href={`mailto:${CONTACTO_EMAIL}`} className={LINK}>
+            {CONTACTO_EMAIL}
+          </a>
+        </>
+      }
+    >
+      {mensagem && <Aviso tom={sucesso ? "sucesso" : "erro"}>{mensagem}</Aviso>}
 
       {podeAssociar && (
         <form action={associarCompra} className="flex flex-col gap-4">
           <input type="hidden" name="session_id" value={sessionId} />
-          <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
-            Esta compra foi paga com o e-mail <strong>{conta.email}</strong>, o mesmo da sua conta. Ao confirmar, a compra
-            passa a estar associada a esta conta.
+          <p className={TEXTO}>
+            Esta compra foi paga com o e-mail <strong>{conta.email}</strong>, o mesmo da sua conta. Ao confirmar, a
+            compra passa a estar associada a esta conta.
           </p>
-          <button
-            type="submit"
-            className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-          >
+          <button type="submit" className={BOTAO_PRIMARIO}>
             Associar esta compra à minha conta
           </button>
         </form>
       )}
-
-      <p className="text-sm text-[var(--color-ink-muted)]">
-        <Link href="/portal" className={LINK}>
-          Ir para o portal
-        </Link>{" "}
-        · Precisa de ajuda?{" "}
-        <a href={`mailto:${CONTACTO_EMAIL}`} className={LINK}>
-          {CONTACTO_EMAIL}
-        </a>
-      </p>
-    </main>
+    </MolduraConta>
   );
 }

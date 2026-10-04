@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { ehDestinoSeguro } from "@/lib/destinoAuth";
+import { Aviso } from "@/components/portal/Aviso";
+import { MolduraConta } from "@/components/portal/MolduraConta";
+import { BOTAO_PRIMARIO, CAMPO, LIGACAO, ROTULO } from "@/components/portal/ui";
 import { registar } from "./actions";
 
 export default async function RegistoPage({
@@ -11,59 +14,37 @@ export default async function RegistoPage({
   const next = ehDestinoSeguro(params.next) ? params.next : null;
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
-      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-        Criar conta
-      </h1>
-
-      {params.erro && (
-        <p className="text-sm text-[var(--color-status-danger)]">{params.erro}</p>
-      )}
+    <MolduraConta
+      titulo="Criar conta"
+      depois={
+        <>
+          Já tem conta?{" "}
+          <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} className={LIGACAO}>
+            Entre
+          </Link>
+        </>
+      }
+    >
+      {params.erro && <Aviso tom="erro">{params.erro}</Aviso>}
 
       <form action={registar} className="flex flex-col gap-4">
         {next && <input type="hidden" name="next" value={next} />}
-        <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+        <label className={ROTULO}>
           Nome
-          <input
-            name="nome"
-            type="text"
-            required
-            className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-hairline-strong)] focus:outline-none"
-          />
+          <input name="nome" type="text" autoComplete="name" required className={CAMPO} />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+        <label className={ROTULO}>
           E-mail
-          <input
-            name="email"
-            type="email"
-            required
-            className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-hairline-strong)] focus:outline-none"
-          />
+          <input name="email" type="email" autoComplete="email" required className={CAMPO} />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+        <label className={ROTULO}>
           Palavra-passe
-          <input
-            name="password"
-            type="password"
-            required
-            minLength={6}
-            className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-hairline-strong)] focus:outline-none"
-          />
+          <input name="password" type="password" autoComplete="new-password" required minLength={6} className={CAMPO} />
         </label>
-        <button
-          type="submit"
-          className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-        >
+        <button type="submit" className={BOTAO_PRIMARIO}>
           Criar conta
         </button>
       </form>
-
-      <p className="text-sm text-[var(--color-ink-muted)]">
-        Já tem conta?{" "}
-        <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} className="text-[var(--color-brand)] underline">
-          Entre
-        </Link>
-      </p>
-    </main>
+    </MolduraConta>
   );
 }

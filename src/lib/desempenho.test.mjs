@@ -51,15 +51,17 @@ describe("desempenho em produção", () => {
   });
 
   test("o logótipo leva sempre à página inicial da DoLado (dolado.pt)", () => {
-    for (const p of ["../components/marketing-v2/Logotipo.tsx", "../app/entrar/page.tsx", "../app/tratar-caso/layout.tsx"]) {
+    for (const p of ["../components/marketing-v2/Logotipo.tsx", "../app/tratar-caso/layout.tsx"]) {
       const f = fonte(p);
       assert.match(f, /href=\{MARKETING_SITE_URL\}[\s\S]{0,260}dolado-logo/, p);
     }
     // O portal e as páginas de revisão do texto usam o mesmo Logotipo V2 (verificado acima).
-    for (const p of ["../app/portal/layout.tsx", "../app/texto/layout.tsx"]) {
+    for (const p of ["../app/portal/layout.tsx", "../app/texto/layout.tsx", "../components/portal/MolduraConta.tsx"]) {
       const f = fonte(p);
       assert.match(f, /import \{ Logotipo \} from "@\/components\/marketing-v2\/Logotipo"/, p);
       assert.match(f, /<Logotipo \/>/, p);
     }
+    // As páginas de conta (/entrar, /login, …) usam a MolduraConta.
+    assert.match(fonte("../app/entrar/page.tsx"), /<MolduraConta/);
   });
 });

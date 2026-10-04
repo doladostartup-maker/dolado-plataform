@@ -1,73 +1,30 @@
-import Image from "next/image";
 import Link from "next/link";
-import { LIVRO_RECLAMACOES_URL, ROTAS_LEGAIS } from "@/lib/legal";
-import { MARKETING_SITE_URL } from "@/lib/site";
+import { MolduraConta } from "@/components/portal/MolduraConta";
+import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, LIGACAO } from "@/components/portal/ui";
 
 export default function EntrarPage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="px-4 py-6">
-        <a href={MARKETING_SITE_URL} aria-label="Página inicial DoLado" className="inline-flex">
-          <Image
-            src="/brand/dolado-logo-horizontal.svg"
-            alt="DoLado"
-            width={110}
-            height={26}
-            priority
-          />
-        </a>
-      </header>
-
-      <main className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center gap-6 px-4 text-center">
-        <a href={MARKETING_SITE_URL} aria-label="Página inicial DoLado" className="inline-flex">
-          <Image
-            src="/brand/dolado-logo-horizontal.svg"
-            alt="DoLado"
-            width={160}
-            height={40}
-            priority
-          />
-        </a>
-        <div className="flex flex-col gap-1">
-          <p className="text-[var(--color-ink-muted)]">
-            Plataforma de acompanhamento de reclamações de consumo.
-          </p>
-          <p className="text-sm text-[var(--color-ink-muted)]">
-            Acesso por e-mail e palavra-passe.
-          </p>
-        </div>
-        <div className="flex gap-4">
-          <Link
-            href="/registo"
-            className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-          >
-            Criar conta
+    <MolduraConta
+      contexto="Área de cliente"
+      titulo="Entre na sua conta"
+      descricao="Acompanhe os seus casos, o que a DoLado está a fazer por si e a sua Proteção."
+      depois={
+        <>
+          Tem um problema para tratar?{" "}
+          <Link href="/tratar-caso" className={LIGACAO}>
+            Comece aqui
           </Link>
-          <Link
-            href="/login"
-            className="rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
-          >
-            Entrar
-          </Link>
-        </div>
-        <p className="text-xs text-[var(--color-ink-faint)]">
-          Acompanhamos casos reais de reclamação em Portugal.
-        </p>
-      </main>
-
-      <footer className="flex flex-wrap justify-center gap-x-4 gap-y-2 px-4 py-6 text-xs text-[var(--color-ink-faint)]">
-        <Link href={`${MARKETING_SITE_URL}${ROTAS_LEGAIS.termos}`} className="hover:text-[var(--color-ink-muted)]">
-          Termos e Condições
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3">
+        <Link href="/login" className={BOTAO_PRIMARIO}>
+          Iniciar sessão
         </Link>
-        <span aria-hidden>·</span>
-        <Link href={`${MARKETING_SITE_URL}${ROTAS_LEGAIS.privacidade}`} className="hover:text-[var(--color-ink-muted)]">
-          Política de Privacidade
+        <Link href="/registo" className={BOTAO_SECUNDARIO}>
+          Criar conta
         </Link>
-        <span aria-hidden>·</span>
-        <a href={LIVRO_RECLAMACOES_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--color-ink-muted)]">
-          Livro de Reclamações
-        </a>
-      </footer>
-    </div>
+      </div>
+    </MolduraConta>
   );
 }
