@@ -13,7 +13,7 @@ Documento de referência aprovado por Thiago a 04/10/2026. Nasce da nova direç�
 | Navbar / Rodapé / Logótipo | `NavbarV2.tsx`, `FooterV2.tsx`, `Logotipo.tsx` |
 | Destinos da navegação (trocar aqui quando uma página migrar ou for criada) | `rotas.ts` (`ROTAS_V2`) |
 | Secção (`tone`: white / soft-blue / soft-green; `size`: compact / default / large), Eyebrow, SectionHeader | `SectionV2.tsx` |
-| Botões (primário, contorno), cartão, contentor, tipografia de H2 e texto | `estilos.ts` (classes) |
+| Botões (primário, contorno), cartão, contentor, tipografia de H2 e texto, campos de formulário (`CAMPO`, `ROTULO_CAMPO`) | `estilos.ts` (classes) |
 | Ícones lineares | `Icones.tsx` |
 | Mockups de interface (dados fictícios, com "Exemplo") | `Mockups.tsx` |
 | Lista com vistos, bloco de fecho (CTA final) | `ListaVistos.tsx`, `CTASection.tsx` |
@@ -33,6 +33,7 @@ Páginas V2:
 | Ferramentas Gratuitas | `/ferramentas-gratuitas` — `src/app/ferramentas-gratuitas/page.tsx`, `src/components/ferramentas-v2/FerramentasV2.tsx` (Calculadora, Simulador, Guia de Mudança) | indexada (página nova) |
 | Sobre Nós | `/sobre-nos` — `src/app/sobre-nos/page.tsx`, `src/components/sobre-nos-v2/SobreNosV2.tsx` (todo o texto institucional já publicado) | indexada (substituiu a versão V1) |
 | Ajuda | `/perguntas-frequentes` — `src/app/perguntas-frequentes/page.tsx`, `src/components/ajuda-v2/AjudaV2.tsx` (pesquisa só no browser em `pesquisa.ts`; perguntas de `conteudoPerguntasFrequentes.tsx`) | indexada (substituiu a versão V1) |
+| Contacto | `/contacto` — `src/app/contacto/page.tsx`, `src/components/contacto-v2/ContactoV2.tsx` (mesmo formulário e Server Action `enviarContacto`; aviso "não abre casos" mantido) | indexada (substituiu a versão V1) |
 | Preçário | `/precario` — `src/app/precario/page.tsx`, `src/components/precario-v2/PrecarioV2.tsx`; conteúdo dos planos e destino dos botões em `src/lib/precario.ts`, partilhados com o preçário da homepage (`Precario.tsx`) | noindex enquanto a homepage `/` não migrar; o preçário público continua em `/#precario` |
 
 Uma página V2 nova: `<PaginaV2 eventoCtaNavbar="click_…">` + `SectionV2`/`SectionHeader` + classes de `estilos.ts`. Criar componentes novos (PricingCard, FAQAccordionV2, …) só quando forem usados, em `src/components/marketing-v2/`, e reutilizá-los nas páginas seguintes.
