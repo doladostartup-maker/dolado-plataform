@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useState, type ReactNode } from "react";
 import { detectarOrigem, track } from "@/lib/analytics";
@@ -20,6 +19,7 @@ import { CTASection } from "@/components/marketing-v2/CTASection";
 import { FeatureCard } from "@/components/marketing-v2/FeatureCard";
 import { FERRAMENTAS } from "@/components/marketing-v2/ferramentas";
 import { ListaVistos } from "@/components/marketing-v2/ListaVistos";
+import { OrigemFundador } from "@/components/marketing-v2/OrigemFundador";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
 import { StepsTimeline, type Passo } from "@/components/marketing-v2/StepsTimeline";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
@@ -188,49 +188,25 @@ export function LandingV2() {
       </SectionV2>
 
       {/* ===== A nossa origem ===== */}
-      <SectionV2 tone="soft-blue" className="grid gap-10 md:grid-cols-[260px_1fr] md:items-center xl:grid-cols-[300px_1fr_300px] lg:gap-12">
-        {/* Fotografia real, já publicada numa versão anterior da homepage. */}
-        <Image
-          src="/landing/founder-thiago.webp"
-          alt="Thiago Pereira, fundador da DoLado"
-          width={300}
-          height={340}
-          className="aspect-[4/5] w-full max-w-[260px] rounded-[18px] object-cover md:max-w-none"
-        />
-        <div className="max-w-[560px]">
-          <SectionHeader eyebrow="A nossa origem" titulo="“Eu próprio já passei por isto.”" />
-          <div className="mt-6 space-y-4 text-[16px] leading-[1.7] text-[var(--v2-muted)]">
-            <p>
-              Tive uma penalização de fidelização de uma operadora depois de aumentos e só mais tarde
-              descobri que poderia ter tido outras opções.
+      <OrigemFundador
+        aside={
+          <aside className="rounded-[18px] bg-[var(--v2-mint)] p-7 md:col-span-2 xl:col-span-1">
+            <span className="text-[var(--v2-green)]">
+              <IconePessoas tamanho={32} strokeWidth={1.6} />
+            </span>
+            <h3 className="mt-4 text-[20px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">
+              Do lado de quem consome.
+            </h3>
+            <p className="mt-3 text-[15px] leading-relaxed text-[var(--v2-muted)]">
+              A DoLado existe para ajudar os consumidores a resolver problemas com empresas e a evitar que
+              voltem a acontecer.
             </p>
-            <p>
-              Percebi que muitas pessoas passam pelo mesmo, não porque não tenham direitos, mas porque nem
-              sempre sabem quais são ou o que devem fazer.
-            </p>
-            <p>
-              Foi por isso que criei a DoLado: para que ninguém seja prejudicado simplesmente por
-              desconhecer as leis, os caminhos ou as responsabilidades.
-            </p>
-          </div>
-          <p className="mt-6 text-[15px] font-semibold text-[var(--v2-navy)]">— Thiago Pereira, fundador da DoLado</p>
-        </div>
-        <aside className="rounded-[18px] bg-[var(--v2-mint)] p-7 md:col-span-2 xl:col-span-1">
-          <span className="text-[var(--v2-green)]">
-            <IconePessoas tamanho={32} strokeWidth={1.6} />
-          </span>
-          <h3 className="mt-4 text-[20px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">
-            Do lado de quem consome.
-          </h3>
-          <p className="mt-3 text-[15px] leading-relaxed text-[var(--v2-muted)]">
-            A DoLado existe para ajudar os consumidores a resolver problemas com empresas e a evitar que
-            voltem a acontecer.
-          </p>
-          <Link href="/sobre-nos" className="mt-5 inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline">
-            Saber mais sobre nós <IconeSeta tamanho={15} />
-          </Link>
-        </aside>
-      </SectionV2>
+            <Link href={ROTAS_V2.sobreNos} className="mt-5 inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline">
+              Saber mais sobre nós <IconeSeta tamanho={15} />
+            </Link>
+          </aside>
+        }
+      />
 
       {/* ===== Tratamento do caso ===== */}
       <SectionV2 className="grid items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">

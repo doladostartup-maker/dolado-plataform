@@ -21,6 +21,7 @@ Documento de referência aprovado por Thiago a 04/10/2026. Nasce da nova direç�
 | Perguntas frequentes (mesmo accordion e mesmo conteúdo de `/perguntas-frequentes`) | `FAQAccordionV2.tsx` |
 | Cartão de ferramenta/funcionalidade (ícone, título, texto, visual, uma ação) | `FeatureCard.tsx` |
 | Ferramentas gratuitas (fonte única: pergunta, texto, visual, CTA, destino) | `ferramentas.tsx` |
+| "A nossa origem" (história e fotografia do fundador; `aside` opcional) | `OrigemFundador.tsx` |
 | Etapas de um processo (`layout`: horizontal para 3–5 etapas; vertical para processos longos, com rótulo de quem age) | `StepsTimeline.tsx` |
 
 Páginas V2:
@@ -30,6 +31,7 @@ Páginas V2:
 | Homepage (teste) | `/landing-v2` — `src/app/landing-v2/page.tsx`, `src/components/landing-v2/LandingV2.tsx` | noindex |
 | Como Funciona | `/como-funciona` — `src/app/como-funciona/page.tsx`, `src/components/como-funciona-v2/ComoFuncionaV2.tsx` (passos e nota de transparência com o texto já publicado) | indexada (substituiu a versão V1) |
 | Ferramentas Gratuitas | `/ferramentas-gratuitas` — `src/app/ferramentas-gratuitas/page.tsx`, `src/components/ferramentas-v2/FerramentasV2.tsx` (Calculadora, Simulador, Guia de Mudança) | indexada (página nova) |
+| Sobre Nós | `/sobre-nos` — `src/app/sobre-nos/page.tsx`, `src/components/sobre-nos-v2/SobreNosV2.tsx` (todo o texto institucional já publicado) | indexada (substituiu a versão V1) |
 | Preçário | `/precario` — `src/app/precario/page.tsx`, `src/components/precario-v2/PrecarioV2.tsx`; conteúdo dos planos e destino dos botões em `src/lib/precario.ts`, partilhados com o preçário da homepage (`Precario.tsx`) | noindex enquanto a homepage `/` não migrar; o preçário público continua em `/#precario` |
 
 Uma página V2 nova: `<PaginaV2 eventoCtaNavbar="click_…">` + `SectionV2`/`SectionHeader` + classes de `estilos.ts`. Criar componentes novos (PricingCard, FAQAccordionV2, …) só quando forem usados, em `src/components/marketing-v2/`, e reutilizá-los nas páginas seguintes.

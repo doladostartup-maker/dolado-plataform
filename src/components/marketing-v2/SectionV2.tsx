@@ -11,6 +11,8 @@ const TONS = {
   "soft-green": "bg-[var(--v2-mint-bg)]",
 } as const;
 
+export type TomSecao = keyof typeof TONS;
+
 // Telemóvel 48–80px; desktop até 96–128px.
 const TAMANHOS = {
   compact: "py-12 sm:py-16",
@@ -26,7 +28,7 @@ export function SectionV2({
   className = "",
   children,
 }: {
-  tone?: keyof typeof TONS;
+  tone?: TomSecao;
   size?: keyof typeof TAMANHOS;
   id?: string;
   /** Esconde o que sair da secção (ex.: visual do hero). */

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { SobreNos } from "@/components/landing/SobreNos";
+import { PaginaV2 } from "@/components/marketing-v2/PaginaV2";
+import { SobreNosV2 } from "@/components/sobre-nos-v2/SobreNosV2";
 
 export const metadata: Metadata = {
   title: "Sobre Nós | DoLado",
@@ -8,5 +9,10 @@ export const metadata: Metadata = {
 };
 
 export default function SobreNosPage() {
-  return <SobreNos />;
+  // Sem AnalyticsScripts, como antes da migração.
+  return (
+    <PaginaV2 eventoCtaNavbar="click_nav_sobre_nos">
+      <SobreNosV2 />
+    </PaginaV2>
+  );
 }
