@@ -62,11 +62,12 @@ export function SectionHeader({
   texto?: ReactNode;
   sobreVerde?: boolean;
 }) {
+  // Num <div>: dentro de uma grelha, o cabeçalho ocupa uma só célula.
   return (
-    <>
+    <div>
       {eyebrow && <Eyebrow sobreVerde={sobreVerde}>{eyebrow}</Eyebrow>}
       <h2 className={`${TITULO_H2} ${eyebrow ? "mt-4" : ""}`}>{titulo}</h2>
       {texto && <p className={`${TEXTO} mt-4 max-w-[620px]`}>{texto}</p>}
-    </>
+    </div>
   );
 }
