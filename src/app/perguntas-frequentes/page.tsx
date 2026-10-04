@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { PerguntasFrequentes } from "@/components/landing/PerguntasFrequentes";
+import { AjudaV2 } from "@/components/ajuda-v2/AjudaV2";
+import { PaginaV2 } from "@/components/marketing-v2/PaginaV2";
 
 export const metadata: Metadata = {
   title: "Perguntas Frequentes - DoLado",
@@ -8,5 +9,10 @@ export const metadata: Metadata = {
 };
 
 export default function PerguntasFrequentesPage() {
-  return <PerguntasFrequentes />;
+  // Sem AnalyticsScripts, como antes da migração.
+  return (
+    <PaginaV2 eventoCtaNavbar="click_nav_perguntas_frequentes">
+      <AjudaV2 />
+    </PaginaV2>
+  );
 }

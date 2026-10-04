@@ -32,6 +32,7 @@ Páginas V2:
 | Como Funciona | `/como-funciona` — `src/app/como-funciona/page.tsx`, `src/components/como-funciona-v2/ComoFuncionaV2.tsx` (passos e nota de transparência com o texto já publicado) | indexada (substituiu a versão V1) |
 | Ferramentas Gratuitas | `/ferramentas-gratuitas` — `src/app/ferramentas-gratuitas/page.tsx`, `src/components/ferramentas-v2/FerramentasV2.tsx` (Calculadora, Simulador, Guia de Mudança) | indexada (página nova) |
 | Sobre Nós | `/sobre-nos` — `src/app/sobre-nos/page.tsx`, `src/components/sobre-nos-v2/SobreNosV2.tsx` (todo o texto institucional já publicado) | indexada (substituiu a versão V1) |
+| Ajuda | `/perguntas-frequentes` — `src/app/perguntas-frequentes/page.tsx`, `src/components/ajuda-v2/AjudaV2.tsx` (pesquisa só no browser em `pesquisa.ts`; perguntas de `conteudoPerguntasFrequentes.tsx`) | indexada (substituiu a versão V1) |
 | Preçário | `/precario` — `src/app/precario/page.tsx`, `src/components/precario-v2/PrecarioV2.tsx`; conteúdo dos planos e destino dos botões em `src/lib/precario.ts`, partilhados com o preçário da homepage (`Precario.tsx`) | noindex enquanto a homepage `/` não migrar; o preçário público continua em `/#precario` |
 
 Uma página V2 nova: `<PaginaV2 eventoCtaNavbar="click_…">` + `SectionV2`/`SectionHeader` + classes de `estilos.ts`. Criar componentes novos (PricingCard, FAQAccordionV2, …) só quando forem usados, em `src/components/marketing-v2/`, e reutilizá-los nas páginas seguintes.
