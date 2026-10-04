@@ -11,7 +11,7 @@ import {
 } from "./Icones";
 import { CARTAO } from "./estilos";
 
-// Composições de interface ilustrativas de /landing-v2. Todos os dados são
+// Composições de interface ilustrativas do Design System V2. Todos os dados são
 // fictícios (sem empresas reais nem logótipos) e cada painel diz "Exemplo".
 
 function Exemplo() {

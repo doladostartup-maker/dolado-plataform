@@ -1,5 +1,6 @@
-// Estilos partilhados só pelos componentes de /landing-v2. As cores vêm das
-// variáveis --v2-* definidas no elemento raiz da página (LandingV2.tsx).
+// Classes do Design System V2 (docs/design/design-system-v2.md). As cores vêm
+// das variáveis --v2-* de .tema-v2 (globals.css), ativas dentro de PaginaV2.
+// Um só CTA primário por secção; o contorno é a ação alternativa.
 
 export const BOTAO_PRIMARIO =
   "inline-flex min-h-12 items-center justify-center gap-2 rounded-[10px] bg-[var(--v2-green)] px-6 text-center text-[15px] font-semibold text-white shadow-[0_1px_2px_rgba(11,37,69,0.12)] transition-colors hover:bg-[var(--v2-green-hover)]";
@@ -8,7 +9,7 @@ export const BOTAO_CONTORNO =
   "inline-flex min-h-12 items-center justify-center gap-2 rounded-[10px] border border-[var(--v2-line-strong)] bg-white px-6 text-center text-[15px] font-semibold text-[var(--v2-navy)] transition-colors hover:border-[var(--v2-green)] hover:text-[var(--v2-green)]";
 
 export const EYEBROW =
-  "inline-flex items-center rounded-full bg-[var(--v2-mint)] px-3 py-1 text-[11.5px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]";
+  "inline-flex items-center rounded-full px-3 py-1 text-[11.5px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]";
 
 export const TITULO_H2 =
   "text-[clamp(28px,3.6vw,40px)] font-extrabold leading-[1.1] tracking-[-0.025em] text-[var(--v2-navy)]";

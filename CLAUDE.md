@@ -94,6 +94,10 @@ O piloto Remax é gratuito (sem receita ainda). Prioridade: **ficar nos tiers gr
 
 **Nota de soberania de dados:** o hosting é 100% europeu (Clever Cloud). A Supabase é uma empresa americana, aceite conscientemente por agora desde que os dados fiquem fisicamente na UE — com DPA assinado e SCCs em vigor. Não sugerir Vercel nem outra alternativa americana de hosting sem confirmar primeiro com Thiago.
 
+## Design System V2 — páginas públicas (04/10/2026)
+
+Regras em **`docs/design/design-system-v2.md`**; componentes em `src/components/marketing-v2/` (`PaginaV2`, `NavbarV2`, `FooterV2`, `SectionV2`/`SectionHeader`/`Eyebrow`, classes em `estilos.ts`, tokens `--v2-*` em `.tema-v2` no `globals.css`). Só páginas públicas: portal, backoffice, autenticação, checkout e e-mails continuam com `docs/design/brand-guide.md`. Primeira página: `/landing-v2` (teste, não indexada). Migração página a página (ordem: Preçário, Como Funciona, Ferramentas Gratuitas, Sobre Nós, Ajuda, Contacto), sem alterar lógica de negócio, preços nem textos legais.
+
 ## Idioma e tom
 
 - Todo o texto visível, incluindo textos públicos, em português europeu clássico e segundo o Acordo Ortográfico de 1990 (ex.: "fatura", "direção", "ação" — não "factura", "direcção", "acção")

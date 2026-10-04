@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { detectarOrigem, track } from "@/lib/analytics";
 import { urlTratarCaso } from "@/lib/site";
 import {
@@ -17,34 +17,19 @@ import {
   IconePessoas,
   IconeSeta,
   IconeVisto,
-} from "./Icones";
-import { PainelCaso, PainelProtecao, VisualFidelizacao, VisualHero, VisualSimulador } from "./Mockups";
-import { NavegacaoV2, RodapeV2 } from "./NavegacaoV2";
-import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, CONTENTOR, EYEBROW, TEXTO, TITULO_H2 } from "./estilos";
+} from "@/components/marketing-v2/Icones";
+import { PainelCaso, PainelProtecao, VisualFidelizacao, VisualHero, VisualSimulador } from "@/components/marketing-v2/Mockups";
+import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
+import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
 
-// Página de teste /landing-v2 — linguagem visual própria, próxima do mockup
-// de 04/10/2026. Tudo o que é visual vive em src/components/landing-v2/; a
-// homepage "/" e os componentes partilhados não são usados nem alterados.
+// Conteúdo da página de teste /landing-v2 — a primeira página do Design
+// System V2 (docs/design/design-system-v2.md). Navbar, rodapé, tokens e
+// secções vêm de src/components/marketing-v2/ (moldura em PaginaV2); a
+// homepage "/" não é alterada.
 //
 // Regras de conteúdo: gratuito só a Calculadora de Cancelamento (fidelização)
 // e o Simulador de Elegibilidade; a comparação de faturas só na Proteção; sem
 // logótipos de terceiros; sem testemunhos inventados.
-
-const CORES = {
-  "--v2-navy": "#0B2545",
-  "--v2-muted": "#55657A",
-  "--v2-line": "#E4EAF1",
-  "--v2-line-strong": "#CBD5E1",
-  "--v2-green": "#0A7A4F",
-  "--v2-green-hover": "#08643F",
-  "--v2-green-dark": "#08583A",
-  "--v2-mint": "#E6F4EC",
-  "--v2-mint-bg": "#F1F9F4",
-  "--v2-blue": "#2563A8",
-  "--v2-blue-soft": "#EEF4FB",
-  "--v2-blue-bg": "#F4F8FC",
-  "--v2-surface": "#F7F9FC",
-} as CSSProperties;
 
 const GARANTIAS: { icone: ReactNode; texto: string }[] = [
   { icone: <IconeEscudo tamanho={20} />, texto: "Simples e seguro" },
@@ -104,7 +89,7 @@ function ListaVistos({ itens }: { itens: string[] }) {
   );
 }
 
-export function LandingV2({ classeFonte }: { classeFonte: string }) {
+export function LandingV2() {
   const [origem] = useState(detectarOrigem);
 
   const tratarCaso = useCallback(
@@ -116,227 +101,213 @@ export function LandingV2({ classeFonte }: { classeFonte: string }) {
   );
 
   return (
-    <div style={CORES} className={`${classeFonte} min-h-screen bg-white text-[var(--v2-navy)] antialiased`}>
-      <NavegacaoV2 onTratarCaso={() => tratarCaso("click_landing_v2_nav")} />
-
+    <>
       {/* ===== Hero ===== */}
-      <section className="overflow-hidden">
-        <div className={`${CONTENTOR} grid items-center gap-12 py-12 sm:py-16 lg:grid-cols-[1.35fr_1fr] lg:gap-12 lg:py-20`}>
-          <div>
-            <span className={EYEBROW}>Do seu lado com as empresas</span>
-            <h1 className="mt-5 text-[clamp(34px,3.7vw,50px)] font-extrabold leading-[1.06] tracking-[-0.035em] text-[var(--v2-navy)]">
-              Tem um problema <br className="hidden sm:inline" />
-              com uma empresa?
-              <br />
-              <span className="font-semibold">A DoLado trata dele por si.</span>
-            </h1>
-            <p className={`${TEXTO} mt-6 max-w-[540px] text-[17.5px]`}>
-              Explique-nos o que aconteceu. Analisamos a sua situação, preparamos a reclamação,
-              mostramos-lhe o texto antes de enviar e acompanhamos o processo consigo.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <button type="button" onClick={() => tratarCaso("click_landing_v2_hero")} className={BOTAO_PRIMARIO}>
-                Tratar do meu caso <IconeSeta tamanho={17} />
-              </button>
-              <Link
-                href="/simulador-elegibilidade"
-                onClick={() => track("click_landing_v2_hero_simulador")}
-                className={BOTAO_CONTORNO}
-              >
-                Ver se a DoLado pode ajudar
-              </Link>
-            </div>
-            <ul className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-7">
-              {GARANTIAS.map((g) => (
-                <li key={g.texto} className="flex items-center gap-2.5 text-[14px] font-medium text-[var(--v2-muted)]">
-                  <span className="text-[var(--v2-navy)]">{g.icone}</span>
-                  {g.texto}
-                </li>
-              ))}
-            </ul>
+      <SectionV2 size="compact" recortar className="grid items-center gap-12 lg:grid-cols-[1.35fr_1fr] lg:gap-12 lg:py-20">
+        <div>
+          <Eyebrow>Do seu lado com as empresas</Eyebrow>
+          <h1 className="mt-5 text-[clamp(34px,3.7vw,50px)] font-extrabold leading-[1.06] tracking-[-0.035em] text-[var(--v2-navy)]">
+            Tem um problema <br className="hidden sm:inline" />
+            com uma empresa?
+            <br />
+            <span className="font-semibold">A DoLado trata dele por si.</span>
+          </h1>
+          <p className={`${TEXTO} mt-6 max-w-[540px] text-[17.5px]`}>
+            Explique-nos o que aconteceu. Analisamos a sua situação, preparamos a reclamação,
+            mostramos-lhe o texto antes de enviar e acompanhamos o processo consigo.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <button type="button" onClick={() => tratarCaso("click_landing_v2_hero")} className={BOTAO_PRIMARIO}>
+              Tratar do meu caso <IconeSeta tamanho={17} />
+            </button>
+            <Link
+              href="/simulador-elegibilidade"
+              onClick={() => track("click_landing_v2_hero_simulador")}
+              className={BOTAO_CONTORNO}
+            >
+              Ver se a DoLado pode ajudar
+            </Link>
           </div>
-          <VisualHero />
+          <ul className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-7">
+            {GARANTIAS.map((g) => (
+              <li key={g.texto} className="flex items-center gap-2.5 text-[14px] font-medium text-[var(--v2-muted)]">
+                <span className="text-[var(--v2-navy)]">{g.icone}</span>
+                {g.texto}
+              </li>
+            ))}
+          </ul>
         </div>
-      </section>
+        <VisualHero />
+      </SectionV2>
 
       {/* ===== Ferramentas gratuitas ===== */}
-      <section id="ferramentas" className="scroll-mt-20 bg-[var(--v2-blue-bg)]">
-        <div className={`${CONTENTOR} py-16 sm:py-20`}>
-          <span className={EYEBROW}>Ferramentas gratuitas</span>
-          <h2 className={`${TITULO_H2} mt-4`}>Ainda não sabe se existe um problema?</h2>
-          <p className={`${TEXTO} mt-4 max-w-[620px]`}>
-            Antes de contratar qualquer serviço, pode usar gratuitamente estas ferramentas da DoLado para
-            perceber melhor a sua situação.
-          </p>
-          <div className="mt-10 grid gap-6 md:grid-cols-2">
-            {[
-              {
-                icone: <IconeCalendario tamanho={30} strokeWidth={1.6} />,
-                titulo: "Não sei quando termina a fidelização",
-                texto:
-                  "Consulte as informações necessárias para perceber quando termina a sua fidelização e quais as condições relevantes.",
-                visual: <VisualFidelizacao />,
-                cta: "Verificar a fidelização grátis",
-                href: "/calculadora-cancelamento",
-                evento: "click_landing_v2_fidelizacao",
-              },
-              {
-                icone: <IconePergunta tamanho={30} strokeWidth={1.6} />,
-                titulo: "Não sei se a DoLado pode tratar do meu caso",
-                texto: "Conte-nos o que aconteceu e veja gratuitamente se a situação pode ser tratada pela DoLado.",
-                visual: <VisualSimulador />,
-                cta: "Verificar o meu caso grátis",
-                href: "/simulador-elegibilidade",
-                evento: "click_landing_v2_simulador",
-              },
-            ].map((f) => (
-              <article key={f.titulo} className={`${CARTAO} flex flex-col p-7 sm:p-9`}>
-                <span className="text-[var(--v2-green)]">{f.icone}</span>
-                <h3 className="mt-5 text-[21px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">{f.titulo}</h3>
-                <p className="mt-3 max-w-[420px] text-[15px] leading-relaxed text-[var(--v2-muted)]">{f.texto}</p>
-                <div className="my-7">{f.visual}</div>
-                <Link
-                  href={f.href}
-                  onClick={() => track(f.evento)}
-                  className={`${BOTAO_CONTORNO} mt-auto self-start`}
-                >
-                  {f.cta} <IconeSeta tamanho={16} />
-                </Link>
-              </article>
-            ))}
-          </div>
-          <p className="mt-6 text-[13.5px] text-[var(--v2-muted)]">Sem conta e sem e-mail. O resultado aparece logo no ecrã.</p>
+      <SectionV2 id="ferramentas" tone="soft-blue">
+        <SectionHeader
+          eyebrow="Ferramentas gratuitas"
+          titulo="Ainda não sabe se existe um problema?"
+          texto="Antes de contratar qualquer serviço, pode usar gratuitamente estas ferramentas da DoLado para perceber melhor a sua situação."
+        />
+        <div className="mt-10 grid gap-6 md:grid-cols-2">
+          {[
+            {
+              icone: <IconeCalendario tamanho={30} strokeWidth={1.6} />,
+              titulo: "Não sei quando termina a fidelização",
+              texto:
+                "Consulte as informações necessárias para perceber quando termina a sua fidelização e quais as condições relevantes.",
+              visual: <VisualFidelizacao />,
+              cta: "Verificar a fidelização grátis",
+              href: "/calculadora-cancelamento",
+              evento: "click_landing_v2_fidelizacao",
+            },
+            {
+              icone: <IconePergunta tamanho={30} strokeWidth={1.6} />,
+              titulo: "Não sei se a DoLado pode tratar do meu caso",
+              texto: "Conte-nos o que aconteceu e veja gratuitamente se a situação pode ser tratada pela DoLado.",
+              visual: <VisualSimulador />,
+              cta: "Verificar o meu caso grátis",
+              href: "/simulador-elegibilidade",
+              evento: "click_landing_v2_simulador",
+            },
+          ].map((f) => (
+            <article key={f.titulo} className={`${CARTAO} flex flex-col p-7 sm:p-9`}>
+              <span className="text-[var(--v2-green)]">{f.icone}</span>
+              <h3 className="mt-5 text-[21px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">{f.titulo}</h3>
+              <p className="mt-3 max-w-[420px] text-[15px] leading-relaxed text-[var(--v2-muted)]">{f.texto}</p>
+              <div className="my-7">{f.visual}</div>
+              <Link
+                href={f.href}
+                onClick={() => track(f.evento)}
+                className={`${BOTAO_CONTORNO} mt-auto self-start`}
+              >
+                {f.cta} <IconeSeta tamanho={16} />
+              </Link>
+            </article>
+          ))}
         </div>
-      </section>
+        <p className="mt-6 text-[13.5px] text-[var(--v2-muted)]">Sem conta e sem e-mail. O resultado aparece logo no ecrã.</p>
+      </SectionV2>
 
       {/* ===== Como funciona ===== */}
-      <section id="como-funciona" className="scroll-mt-20">
-        <div className={`${CONTENTOR} py-16 sm:py-20`}>
-          <span className={EYEBROW}>Como funciona</span>
-          <h2 className={`${TITULO_H2} mt-4`}>Simples, do princípio ao fim.</h2>
-          <ol className="mt-12 grid gap-0 lg:grid-cols-4 lg:gap-8">
-            {PASSOS.map((p, i) => {
-              const ultimo = i === PASSOS.length - 1;
-              return (
-                <li key={p.titulo} className="relative flex gap-5 pb-10 last:pb-0 lg:block lg:pb-0">
-                  {/* Ligação vertical (telemóvel) e seta horizontal (desktop) */}
-                  {!ultimo && (
-                    <>
-                      <span aria-hidden="true" className="absolute left-[15px] top-10 h-[calc(100%-44px)] w-[2px] bg-[var(--v2-mint)] lg:hidden" />
-                      <span aria-hidden="true" className="absolute right-[-26px] top-[22px] hidden text-[var(--v2-line-strong)] lg:block">
-                        <IconeSeta tamanho={20} />
-                      </span>
-                    </>
-                  )}
-                  <div className="flex flex-none items-center gap-4 self-start lg:mb-6">
-                    <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[var(--v2-green)] text-[14px] font-bold text-white">
-                      {i + 1}
+      <SectionV2 id="como-funciona">
+        <SectionHeader eyebrow="Como funciona" titulo="Simples, do princípio ao fim." />
+        <ol className="mt-12 grid gap-0 lg:grid-cols-4 lg:gap-8">
+          {PASSOS.map((p, i) => {
+            const ultimo = i === PASSOS.length - 1;
+            return (
+              <li key={p.titulo} className="relative flex gap-5 pb-10 last:pb-0 lg:block lg:pb-0">
+                {/* Ligação vertical (telemóvel) e seta horizontal (desktop) */}
+                {!ultimo && (
+                  <>
+                    <span aria-hidden="true" className="absolute left-[15px] top-10 h-[calc(100%-44px)] w-[2px] bg-[var(--v2-mint)] lg:hidden" />
+                    <span aria-hidden="true" className="absolute right-[-26px] top-[22px] hidden text-[var(--v2-line-strong)] lg:block">
+                      <IconeSeta tamanho={20} />
                     </span>
-                    <span className="hidden text-[var(--v2-navy)] lg:block">{p.icone}</span>
-                  </div>
-                  <div>
-                    <h3 className="mb-2 text-[17px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{p.titulo}</h3>
-                    <p className="text-[15px] leading-relaxed text-[var(--v2-muted)] lg:pr-4">{p.texto}</p>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
-      </section>
+                  </>
+                )}
+                <div className="flex flex-none items-center gap-4 self-start lg:mb-6">
+                  <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[var(--v2-green)] text-[14px] font-bold text-white">
+                    {i + 1}
+                  </span>
+                  <span className="hidden text-[var(--v2-navy)] lg:block">{p.icone}</span>
+                </div>
+                <div>
+                  <h3 className="mb-2 text-[17px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{p.titulo}</h3>
+                  <p className="text-[15px] leading-relaxed text-[var(--v2-muted)] lg:pr-4">{p.texto}</p>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </SectionV2>
 
       {/* ===== A nossa origem ===== */}
-      <section className="bg-[var(--v2-surface)]">
-        <div className={`${CONTENTOR} grid gap-10 py-16 sm:py-20 md:grid-cols-[260px_1fr] md:items-center xl:grid-cols-[300px_1fr_300px] lg:gap-12`}>
-          {/* Fotografia real, já publicada numa versão anterior da homepage. */}
-          <Image
-            src="/landing/founder-thiago.webp"
-            alt="Thiago Pereira, fundador da DoLado"
-            width={300}
-            height={340}
-            className="aspect-[4/5] w-full max-w-[260px] rounded-[18px] object-cover md:max-w-none"
-          />
-          <div className="max-w-[560px]">
-            <span className={EYEBROW}>A nossa origem</span>
-            <h2 className={`${TITULO_H2} mt-4`}>“Eu próprio já passei por isto.”</h2>
-            <div className="mt-6 space-y-4 text-[16px] leading-[1.7] text-[var(--v2-muted)]">
-              <p>
-                Tive uma penalização de fidelização de uma operadora depois de aumentos e só mais tarde
-                descobri que poderia ter tido outras opções.
-              </p>
-              <p>
-                Percebi que muitas pessoas passam pelo mesmo, não porque não tenham direitos, mas porque nem
-                sempre sabem quais são ou o que devem fazer.
-              </p>
-              <p>
-                Foi por isso que criei a DoLado: para que ninguém seja prejudicado simplesmente por
-                desconhecer as leis, os caminhos ou as responsabilidades.
-              </p>
-            </div>
-            <p className="mt-6 text-[15px] font-semibold text-[var(--v2-navy)]">— Thiago Pereira, fundador da DoLado</p>
-          </div>
-          <aside className="rounded-[18px] bg-[var(--v2-mint)] p-7 md:col-span-2 xl:col-span-1">
-            <span className="text-[var(--v2-green)]">
-              <IconePessoas tamanho={32} strokeWidth={1.6} />
-            </span>
-            <h3 className="mt-4 text-[20px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">
-              Do lado de quem consome.
-            </h3>
-            <p className="mt-3 text-[15px] leading-relaxed text-[var(--v2-muted)]">
-              A DoLado existe para ajudar os consumidores a resolver problemas com empresas e a evitar que
-              voltem a acontecer.
+      <SectionV2 tone="soft-blue" className="grid gap-10 md:grid-cols-[260px_1fr] md:items-center xl:grid-cols-[300px_1fr_300px] lg:gap-12">
+        {/* Fotografia real, já publicada numa versão anterior da homepage. */}
+        <Image
+          src="/landing/founder-thiago.webp"
+          alt="Thiago Pereira, fundador da DoLado"
+          width={300}
+          height={340}
+          className="aspect-[4/5] w-full max-w-[260px] rounded-[18px] object-cover md:max-w-none"
+        />
+        <div className="max-w-[560px]">
+          <SectionHeader eyebrow="A nossa origem" titulo="“Eu próprio já passei por isto.”" />
+          <div className="mt-6 space-y-4 text-[16px] leading-[1.7] text-[var(--v2-muted)]">
+            <p>
+              Tive uma penalização de fidelização de uma operadora depois de aumentos e só mais tarde
+              descobri que poderia ter tido outras opções.
             </p>
-            <Link href="/sobre-nos" className="mt-5 inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline">
-              Saber mais sobre nós <IconeSeta tamanho={15} />
-            </Link>
-          </aside>
+            <p>
+              Percebi que muitas pessoas passam pelo mesmo, não porque não tenham direitos, mas porque nem
+              sempre sabem quais são ou o que devem fazer.
+            </p>
+            <p>
+              Foi por isso que criei a DoLado: para que ninguém seja prejudicado simplesmente por
+              desconhecer as leis, os caminhos ou as responsabilidades.
+            </p>
+          </div>
+          <p className="mt-6 text-[15px] font-semibold text-[var(--v2-navy)]">— Thiago Pereira, fundador da DoLado</p>
         </div>
-      </section>
+        <aside className="rounded-[18px] bg-[var(--v2-mint)] p-7 md:col-span-2 xl:col-span-1">
+          <span className="text-[var(--v2-green)]">
+            <IconePessoas tamanho={32} strokeWidth={1.6} />
+          </span>
+          <h3 className="mt-4 text-[20px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">
+            Do lado de quem consome.
+          </h3>
+          <p className="mt-3 text-[15px] leading-relaxed text-[var(--v2-muted)]">
+            A DoLado existe para ajudar os consumidores a resolver problemas com empresas e a evitar que
+            voltem a acontecer.
+          </p>
+          <Link href="/sobre-nos" className="mt-5 inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline">
+            Saber mais sobre nós <IconeSeta tamanho={15} />
+          </Link>
+        </aside>
+      </SectionV2>
 
       {/* ===== Tratamento do caso ===== */}
-      <section>
-        <div className={`${CONTENTOR} grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-[1.1fr_1fr] lg:gap-16`}>
-          <div>
-            <span className={EYEBROW}>Tratamento do seu caso</span>
-            <h2 className={`${TITULO_H2} mt-4`}>
-              Encontrou um problema?
-              <br />
-              A DoLado trata dele consigo.
-            </h2>
-            <p className={`${TEXTO} mt-5 max-w-[520px]`}>
-              Preparamos a reclamação, mostramos-lhe o texto antes do envio e acompanhamos o processo consigo.
-            </p>
-            <div className="mt-7">
-              <ListaVistos itens={TRATAMENTO} />
-            </div>
-            <Link href="/#precario" onClick={() => track("click_landing_v2_precos")} className={`${BOTAO_PRIMARIO} mt-9`}>
-              Ver preços e tratar do meu caso <IconeSeta tamanho={17} />
-            </Link>
+      <SectionV2 className="grid items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+        <div>
+          <SectionHeader
+            eyebrow="Tratamento do seu caso"
+            titulo={
+              <>
+                Encontrou um problema?
+                <br />
+                A DoLado trata dele consigo.
+              </>
+            }
+          />
+          <p className={`${TEXTO} mt-5 max-w-[520px]`}>
+            Preparamos a reclamação, mostramos-lhe o texto antes do envio e acompanhamos o processo consigo.
+          </p>
+          <div className="mt-7">
+            <ListaVistos itens={TRATAMENTO} />
           </div>
-          <PainelCaso />
+          <Link href="/#precario" onClick={() => track("click_landing_v2_precos")} className={`${BOTAO_PRIMARIO} mt-9`}>
+            Ver preços e tratar do meu caso <IconeSeta tamanho={17} />
+          </Link>
         </div>
-      </section>
+        <PainelCaso />
+      </SectionV2>
 
       {/* ===== Proteção ===== */}
-      <section className="bg-[var(--v2-mint-bg)]">
-        <div className={`${CONTENTOR} grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-[1.1fr_1fr] lg:gap-16`}>
-          <div>
-            <span className={`${EYEBROW} bg-white`}>Depois de resolver o problema</span>
-            <h2 className={`${TITULO_H2} mt-4`}>Podemos continuar atentos por si.</h2>
-            <p className={`${TEXTO} mt-5 max-w-[540px]`}>
-              Com a Proteção DoLado, acompanhamos as informações relevantes que nos disponibiliza e avisamos
-              quando identificamos algo que merece a sua atenção.
-            </p>
-            <div className="mt-7">
-              <ListaVistos itens={PROTECAO} />
-            </div>
-            <Link href="/#precario" onClick={() => track("click_landing_v2_protecao")} className={`${BOTAO_PRIMARIO} mt-9`}>
-              Conhecer a Proteção <IconeSeta tamanho={17} />
-            </Link>
+      <SectionV2 tone="soft-green" className="grid items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+        <div>
+          <SectionHeader sobreVerde eyebrow="Depois de resolver o problema" titulo="Podemos continuar atentos por si." />
+          <p className={`${TEXTO} mt-5 max-w-[540px]`}>
+            Com a Proteção DoLado, acompanhamos as informações relevantes que nos disponibiliza e avisamos
+            quando identificamos algo que merece a sua atenção.
+          </p>
+          <div className="mt-7">
+            <ListaVistos itens={PROTECAO} />
           </div>
-          <PainelProtecao />
+          <Link href="/#precario" onClick={() => track("click_landing_v2_protecao")} className={`${BOTAO_PRIMARIO} mt-9`}>
+            Conhecer a Proteção <IconeSeta tamanho={17} />
+          </Link>
         </div>
-      </section>
+        <PainelProtecao />
+      </SectionV2>
 
       {/*
         Prova social: sem testemunhos reais aprovados no projeto, a secção não
@@ -352,8 +323,7 @@ export function LandingV2({ classeFonte }: { classeFonte: string }) {
       <section className="px-5 py-16 sm:px-8 sm:py-20">
         <div className="mx-auto flex max-w-[1200px] flex-col items-start gap-8 rounded-[24px] bg-[linear-gradient(120deg,var(--v2-mint)_0%,var(--v2-blue-soft)_100%)] px-7 py-10 sm:px-12 sm:py-12 md:flex-row md:items-center md:justify-between">
           <div>
-            <span className={`${EYEBROW} bg-white`}>Não sabe por onde começar?</span>
-            <h2 className={`${TITULO_H2} mt-4`}>Conte-nos o que aconteceu.</h2>
+            <SectionHeader sobreVerde eyebrow="Não sabe por onde começar?" titulo="Conte-nos o que aconteceu." />
             <p className={`${TEXTO} mt-3`}>Se houver alguma coisa que possamos tratar, mostramos-lhe o próximo passo.</p>
           </div>
           <Link
@@ -365,8 +335,6 @@ export function LandingV2({ classeFonte }: { classeFonte: string }) {
           </Link>
         </div>
       </section>
-
-      <RodapeV2 />
-    </div>
+    </>
   );
 }

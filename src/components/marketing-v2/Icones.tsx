@@ -1,6 +1,7 @@
 import type { ReactNode, SVGProps } from "react";
 
-// Ícones lineares da página de teste /landing-v2 (traço 1.8, cantos redondos).
+// Ícones do Design System V2: um só sistema, lineares (traço 1.8, cantos
+// redondos). Não misturar com emojis, ícones preenchidos nem ilustrações.
 
 type Props = SVGProps<SVGSVGElement> & { tamanho?: number };
 
