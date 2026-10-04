@@ -18,7 +18,8 @@ export const PRIVACIDADE_EMAIL = "privacidade@dolado.pt";
 // ATENÇÃO — sede em processo de alteração: MORADA_SEDE é a morada legal
 // atualmente registada. Só trocar quando a nova sede estiver oficialmente
 // registada (checklist em CLAUDE.md, "Pendência da nova sede"). A mudança de
-// sede pode alterar a entidade RAL de referência (ENTIDADES_RAL em legal.ts).
+// sede não altera ENTIDADES_RAL: o centro competente depende do local de
+// celebração do contrato, não da sede da DoLado.
 export const ENTIDADE_LEGAL = "Competent Domain - Consultoria em Informática Unipessoal Lda";
 export const NIPC = "515609773";
 export const MORADA_SEDE = "Rua Cidade de Manchester, n.º 35, r/c, 1170-099 Lisboa";

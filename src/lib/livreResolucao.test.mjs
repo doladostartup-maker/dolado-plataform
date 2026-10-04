@@ -13,6 +13,7 @@ import { montarHtmlAvisoLivreResolucao, montarHtmlConfirmacaoLivreResolucao } fr
 import {
   COMO_EXERCER_LIVRE_RESOLUCAO,
   ENTIDADES_RAL,
+  LISTA_OFICIAL_RAL_URL,
   LIVRO_RECLAMACOES_URL,
   MODELO_FORMULARIO_LIVRE_RESOLUCAO,
   PRIVACIDADE_VERSAO,
@@ -116,6 +117,14 @@ describe("textos e páginas legais", () => {
     assert.ok(ENTIDADES_RAL.some((e) => e.nome.startsWith("CNIACC") && e.site === "https://www.cniacc.pt"));
     assert.ok(ENTIDADES_RAL.some((e) => e.nome.startsWith("CACCL")));
     for (const e of ENTIDADES_RAL) assert.match(e.site, /^https:\/\//);
+  });
+
+  test("RAL: todos os centros de competência genérica da lista oficial da DGC, sem os especializados", () => {
+    const siglas = ENTIDADES_RAL.map((e) => e.nome.split(" — ")[0]).sort();
+    assert.deepEqual(siglas, ["CACC RAM", "CACCL", "CACRC", "CAUAL", "CIAB", "CICAP", "CIMAAL", "CIMARA", "CNIACC", "TRIAVE"]);
+    // O domínio antigo do CAUAL (www.arbitragem.autonoma.pt) deixou de responder.
+    assert.equal(ENTIDADES_RAL.find((e) => e.nome.startsWith("CAUAL")).site, "https://arbitragem.grupoautonoma.pt");
+    assert.ok(!LISTA_OFICIAL_RAL_URL.endsWith(".aspx"), "a página .aspx antiga redireciona para a homepage da DGC");
   });
 
   test("versões em vigor estão registadas nas páginas versionadas", () => {

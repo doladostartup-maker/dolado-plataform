@@ -122,60 +122,83 @@ export const MODELO_FORMULARIO_LIVRE_RESOLUCAO = [
 /** Livro de Reclamações Eletrónico (DL 156/2005, na redação do DL 74/2017). */
 export const LIVRO_RECLAMACOES_URL = "https://www.livroreclamacoes.pt/Inicio/";
 
-/** Lista oficial e atualizada das entidades RAL (Direção-Geral do Consumidor). */
+/**
+ * Lista oficial das entidades RAL publicada pela Direção-Geral do Consumidor
+ * (Lei 144/2015, art. 17.º, n.º 2). A página antiga
+ * (…/ral-mapa-e-lista-de-entidades.aspx) passou a redirecionar para a
+ * homepage da DGC; esta página é a que liga ao mapa e à lista.
+ */
 export const LISTA_OFICIAL_RAL_URL =
-  "https://www.consumidor.gov.pt/parceiros/sistema-de-defesa-do-consumidor/entidades-de-resolucao-alternativa-de-litigios-de-consumo/ral-mapa-e-lista-de-entidades.aspx";
+  "https://www.consumidor.gov.pt/parceiros/sistema-de-defesa-do-consumidor/entidades-de-resolucao-alternativa-de-litigios-de-consumo";
 
 export type EntidadeRal = { nome: string; site: string; ambito: string };
 
 /**
- * Centros de arbitragem de conflitos de consumo de competência genérica
- * (Lei 144/2015, art. 18.º). A DoLado presta o serviço online em todo o
- * território nacional, por isso indica todas as entidades competentes
- * (orientação da ASAE) — a competente em cada caso depende do local de
- * celebração do contrato; sem centro territorial, o CNIACC. Validar contra a
- * lista oficial (LISTA_OFICIAL_RAL_URL) sempre que for revista.
+ * Entidades RAL de competência genérica (Lei 144/2015, art. 18.º; DL 102/2017).
+ * A DoLado presta o serviço online a consumidores em todo o território
+ * nacional e, nos litígios de reduzido valor, fica sujeita à arbitragem
+ * necessária se o consumidor a escolher (Lei 24/96, art. 14.º, n.º 2) — por
+ * isso indica todos os centros de competência genérica, regionais e nacionais.
+ * Ficam de fora os de competência especializada (CIMPAS — seguros; Provedor
+ * da APAVT — viagens), que não abrangem o serviço da DoLado.
+ *
+ * Validado a 04/10/2026 contra a lista e o mapa oficiais da DGC
+ * (LISTA_OFICIAL_RAL_URL; mapa "atualizado em ago/2025"): a competente é,
+ * em regra, a do local de celebração do contrato; sem centro regional, o
+ * CNIACC (competência residual). O CAUAL tem competência genérica nacional,
+ * não exclusiva de consumo. Rever sempre que a DGC atualizar a lista.
  */
 export const ENTIDADES_RAL: readonly EntidadeRal[] = [
   {
-    nome: "CACCL — Centro de Arbitragem de Conflitos de Consumo de Lisboa",
-    site: "https://www.centroarbitragemlisboa.pt",
-    ambito: "Área Metropolitana de Lisboa",
-  },
-  {
-    nome: "CICAP — Centro de Informação de Consumo e Arbitragem do Porto",
-    site: "https://www.cicap.pt",
-    ambito: "Área do Porto",
-  },
-  {
-    nome: "CACRC — Centro de Arbitragem de Conflitos de Consumo da Região de Coimbra",
-    site: "https://www.cacrc.pt",
-    ambito: "Região de Coimbra",
+    nome: "CIAB — Centro de Informação, Mediação e Arbitragem de Consumo (Tribunal Arbitral de Consumo)",
+    site: "https://www.ciab.pt",
+    ambito: "Contratos celebrados nos municípios das regiões de Braga e Viana do Castelo indicados pelo centro",
   },
   {
     nome: "TRIAVE — Centro de Arbitragem de Conflitos de Consumo do Ave, Tâmega e Sousa",
     site: "https://www.triave.pt",
-    ambito: "Ave, Tâmega e Sousa",
+    ambito: "Contratos celebrados nos municípios do Ave, Tâmega e Sousa indicados pelo centro",
   },
   {
-    nome: "CIAB — Centro de Informação, Mediação e Arbitragem de Consumo (Tribunal Arbitral de Consumo)",
-    site: "https://www.ciab.pt",
-    ambito: "Braga e Viana do Castelo",
+    nome: "CICAP — Centro de Informação de Consumo e Arbitragem do Porto",
+    site: "https://www.cicap.pt",
+    ambito: "Contratos celebrados na Área Metropolitana do Porto",
+  },
+  {
+    nome: "CACRC — Centro de Arbitragem de Conflitos de Consumo da Região de Coimbra",
+    site: "https://www.cacrc.pt",
+    ambito: "Contratos celebrados nos municípios da Região de Coimbra indicados pelo centro",
+  },
+  {
+    nome: "CACCL — Centro de Arbitragem de Conflitos de Consumo de Lisboa",
+    site: "https://www.centroarbitragemlisboa.pt",
+    ambito: "Contratos celebrados na Área Metropolitana de Lisboa",
   },
   {
     nome: "CIMAAL — Centro de Informação, Mediação e Arbitragem de Conflitos de Consumo do Algarve",
     site: "https://www.consumidoronline.pt",
-    ambito: "Algarve",
+    ambito: "Contratos celebrados no distrito de Faro",
   },
   {
-    nome: "CAUAL — Centro de Arbitragem da Universidade Autónoma de Lisboa",
-    site: "https://www.arbitragem.autonoma.pt",
-    ambito: "Nos termos do seu regulamento",
+    nome: "CACC RAM — Centro de Arbitragem de Conflitos de Consumo da Região Autónoma da Madeira",
+    site: "https://www.madeira.gov.pt/cacc",
+    ambito: "Contratos celebrados na Região Autónoma da Madeira",
+  },
+  {
+    nome: "CIMARA — Centro de Informação, Mediação e Arbitragem de Consumo da Região Açores",
+    site: "https://ocimara.pt",
+    ambito: "Contratos celebrados na Região Autónoma dos Açores",
   },
   {
     nome: "CNIACC — Centro Nacional de Informação e Arbitragem de Conflitos de Consumo",
     site: "https://www.cniacc.pt",
-    ambito: "Zonas do território nacional sem centro de arbitragem territorialmente competente",
+    ambito:
+      "Todo o território nacional, nas zonas não abrangidas por um centro de arbitragem de competência regional (competência residual)",
+  },
+  {
+    nome: "CAUAL — Centro de Arbitragem da Universidade Autónoma de Lisboa",
+    site: "https://arbitragem.grupoautonoma.pt",
+    ambito: "Todo o território nacional; competência genérica, não exclusiva de conflitos de consumo",
   },
 ];
 
@@ -187,6 +210,6 @@ export const REVISAO_JURIDICA_PENDENTE = [
   "Resumo e forma de exercício da livre resolução (RESUMO_LIVRE_RESOLUCAO, COMO_EXERCER_LIVRE_RESOLUCAO, /livre-resolucao)",
   "Termos e Condições versão 2026-10-01b — em especial: cancelamento, início da prestação e livre resolução; limitações de responsabilidade; RAL e lei aplicável",
   "Política de Privacidade versão 2026-10-01c — prazos de conservação (secção 6), bases jurídicas e descrição do Simulador de Elegibilidade público",
-  "Lista de entidades RAL (ENTIDADES_RAL) e respetiva competência territorial",
+  "Entidades RAL (ENTIDADES_RAL) — lista confirmada contra a DGC a 04/10/2026; falta validar: competência territorial nos contratos celebrados online (local de celebração vs. residência do consumidor), a nota sobre arbitragem necessária em /resolucao-de-litigios e se o CAUAL está abrangido por essa arbitragem necessária",
   "Função online de livre resolução (/livre-resolucao) e modelo de formulário",
 ] as const;
