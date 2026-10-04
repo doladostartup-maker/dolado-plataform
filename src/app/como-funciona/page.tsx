@@ -9,8 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default function ComoFuncionaPage() {
-  // Sem AnalyticsScripts, como antes da migração (a página nunca carregou
-  // medição nem o banner de cookies).
   return (
     <PaginaV2 eventoCtaNavbar="click_nav_como_funciona">
       <ComoFuncionaV2 />
