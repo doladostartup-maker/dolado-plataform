@@ -19,12 +19,14 @@ Documento de referência aprovado por Thiago a 04/10/2026. Nasce da nova direç�
 | Lista com vistos, bloco de fecho (CTA final) | `ListaVistos.tsx`, `CTASection.tsx` |
 | Cartão de plano por necessidade (preços sempre de `src/lib/planos.ts`; alinhamento por subgrid com `GRELHA_PLANOS`) | `PricingCard.tsx` |
 | Perguntas frequentes (mesmo accordion e mesmo conteúdo de `/perguntas-frequentes`) | `FAQAccordionV2.tsx` |
+| Etapas de um processo (`layout`: horizontal para 3–5 etapas; vertical para processos longos, com rótulo de quem age) | `StepsTimeline.tsx` |
 
 Páginas V2:
 
 | Página | Ficheiros | Estado |
 |---|---|---|
 | Homepage (teste) | `/landing-v2` — `src/app/landing-v2/page.tsx`, `src/components/landing-v2/LandingV2.tsx` | noindex |
+| Como Funciona | `/como-funciona` — `src/app/como-funciona/page.tsx`, `src/components/como-funciona-v2/ComoFuncionaV2.tsx` (passos e nota de transparência com o texto já publicado) | indexada (substituiu a versão V1) |
 | Preçário | `/precario` — `src/app/precario/page.tsx`, `src/components/precario-v2/PrecarioV2.tsx`; conteúdo dos planos e destino dos botões em `src/lib/precario.ts`, partilhados com o preçário da homepage (`Precario.tsx`) | noindex enquanto a homepage `/` não migrar; o preçário público continua em `/#precario` |
 
 Uma página V2 nova: `<PaginaV2 eventoCtaNavbar="click_…">` + `SectionV2`/`SectionHeader` + classes de `estilos.ts`. Criar componentes novos (PricingCard, FAQAccordionV2, …) só quando forem usados, em `src/components/marketing-v2/`, e reutilizá-los nas páginas seguintes.

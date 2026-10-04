@@ -21,6 +21,7 @@ import { PainelCaso, PainelProtecao, VisualFidelizacao, VisualHero, VisualSimula
 import { CTASection } from "@/components/marketing-v2/CTASection";
 import { ListaVistos } from "@/components/marketing-v2/ListaVistos";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
+import { StepsTimeline, type Passo } from "@/components/marketing-v2/StepsTimeline";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
 
@@ -39,7 +40,7 @@ const GARANTIAS: { icone: ReactNode; texto: string }[] = [
   { icone: <IconePessoas tamanho={20} />, texto: "Acompanhamos o processo" },
 ];
 
-const PASSOS: { icone: ReactNode; titulo: string; texto: string }[] = [
+const PASSOS: Passo[] = [
   {
     icone: <IconeFormulario tamanho={34} strokeWidth={1.5} />,
     titulo: "Conte-nos o que aconteceu",
@@ -177,34 +178,15 @@ export function LandingV2() {
       {/* ===== Como funciona ===== */}
       <SectionV2 id="como-funciona">
         <SectionHeader eyebrow="Como funciona" titulo="Simples, do princípio ao fim." />
-        <ol className="mt-12 grid gap-0 lg:grid-cols-4 lg:gap-8">
-          {PASSOS.map((p, i) => {
-            const ultimo = i === PASSOS.length - 1;
-            return (
-              <li key={p.titulo} className="relative flex gap-5 pb-10 last:pb-0 lg:block lg:pb-0">
-                {/* Ligação vertical (telemóvel) e seta horizontal (desktop) */}
-                {!ultimo && (
-                  <>
-                    <span aria-hidden="true" className="absolute left-[15px] top-10 h-[calc(100%-44px)] w-[2px] bg-[var(--v2-mint)] lg:hidden" />
-                    <span aria-hidden="true" className="absolute right-[-26px] top-[22px] hidden text-[var(--v2-line-strong)] lg:block">
-                      <IconeSeta tamanho={20} />
-                    </span>
-                  </>
-                )}
-                <div className="flex flex-none items-center gap-4 self-start lg:mb-6">
-                  <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[var(--v2-green)] text-[14px] font-bold text-white">
-                    {i + 1}
-                  </span>
-                  <span className="hidden text-[var(--v2-navy)] lg:block">{p.icone}</span>
-                </div>
-                <div>
-                  <h3 className="mb-2 text-[17px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{p.titulo}</h3>
-                  <p className="text-[15px] leading-relaxed text-[var(--v2-muted)] lg:pr-4">{p.texto}</p>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
+        <div className="mt-12">
+          <StepsTimeline passos={PASSOS} />
+        </div>
+        <Link
+          href={ROTAS_V2.comoFunciona}
+          className="mt-10 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
+        >
+          Ver todos os passos <IconeSeta tamanho={15} />
+        </Link>
       </SectionV2>
 
       {/* ===== A nossa origem ===== */}
