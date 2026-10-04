@@ -44,12 +44,12 @@ const TEXTO_RESULTADO: Record<ResultadoSimulador, { titulo: string; texto?: stri
   positivo: {
     titulo: "Pelas suas respostas, o seu caso parece enquadrar-se no tipo de situações que a DoLado trata.",
     texto: "Conte-nos o que aconteceu. A DoLado organiza o caso, prepara a reclamação e acompanha o processo consigo.",
-    cta: "Tratar o meu caso",
+    cta: "Tratar do meu caso",
   },
   incerto: {
     titulo: "Pelas suas respostas, não conseguimos determinar com segurança se este caso se enquadra no serviço da DoLado.",
     texto: "Se quiser avançar, conte-nos o que aconteceu no formulário do caso. No fim, escolhe a modalidade antes de pagar.",
-    cta: "Tratar o meu caso",
+    cta: "Tratar do meu caso",
   },
   negativo: {
     titulo: "Pelas suas respostas, este caso pode não se enquadrar no serviço atual da DoLado.",

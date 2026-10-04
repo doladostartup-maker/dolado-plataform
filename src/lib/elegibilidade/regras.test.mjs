@@ -122,13 +122,13 @@ describe("simulador público, sem conta e sem gravação", () => {
 
   test("positivo e incerto usam o mesmo CTA, sem prometer análise gratuita", () => {
     assert.doesNotMatch(componente, /Explicar o meu caso/);
-    assert.equal(componente.match(/cta: "Tratar o meu caso"/g)?.length, 2);
+    assert.equal(componente.match(/cta: "Tratar do meu caso"/g)?.length, 2);
     assert.doesNotMatch(componente, /\banalis|análise|\brevis|equipa|48 horas|responderemos|entraremos em contacto/i);
   });
 
-  test("resultado com nota indicativa e CTA para Tratar o meu caso", () => {
+  test("resultado com nota indicativa e CTA para Tratar do meu caso", () => {
     assert.match(componente, /Este resultado é apenas indicativo e baseia-se nas respostas fornecidas\./);
-    assert.match(componente, /Tratar o meu caso/);
+    assert.match(componente, /cta: "Tratar do meu caso"/);
     assert.match(componente, /urlTratarCaso/);
   });
 
