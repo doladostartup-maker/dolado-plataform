@@ -50,7 +50,7 @@ const ANTES_DE_DECIDIR: { icone: ReactNode; titulo: string; texto: ReactNode }[]
       <>
         Nos casos legalmente aplicáveis, dispõe de {PRAZO_LIVRE_RESOLUCAO_DIAS} dias para exercer o direito de
         livre resolução.{" "}
-        <Link
+        <Link prefetch={false}
           href={ROTAS_LEGAIS.livreResolucao}
           className="font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
         >
@@ -148,7 +148,7 @@ export function PrecarioV2() {
       <SectionV2 className="grid gap-10 lg:grid-cols-[1fr_1.6fr] lg:gap-16">
         <div>
           <SectionHeader eyebrow="Perguntas frequentes" titulo="Planos e pagamentos." />
-          <Link
+          <Link prefetch={false}
             href="/perguntas-frequentes"
             className="mt-6 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
           >
@@ -164,7 +164,7 @@ export function PrecarioV2() {
         titulo="Veja primeiro se a DoLado pode ajudar."
         texto="É gratuito, sem conta e sem e-mail."
         acao={
-          <Link
+          <Link prefetch={false}
             href="/simulador-elegibilidade"
             onClick={() => track("click_precario_v2_simulador")}
             className={`${BOTAO_PRIMARIO} w-full md:w-auto`}

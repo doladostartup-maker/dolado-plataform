@@ -57,7 +57,7 @@ export function FooterV2() {
                       {l.label}
                     </a>
                   ) : (
-                    <Link href={l.href} className="text-[14px] text-[var(--v2-muted)] hover:text-[var(--v2-green)]">
+                    <Link prefetch={false} href={l.href} className="text-[14px] text-[var(--v2-muted)] hover:text-[var(--v2-green)]">
                       {l.label}
                     </Link>
                   )}

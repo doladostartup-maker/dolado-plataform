@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Sem otimização de imagens no servidor (/_next/image + sharp). Incidente de
+  // 04/10/2026: na instância pico, redimensionar a fotografia do fundador
+  // (1023×1537) para uma largura ainda sem cache bloqueava o processo Node
+  // inteiro (15–30 s por pedido, 503) — e qualquer visitante ou bot podia
+  // pedir larguras novas. As imagens são SVG ou ficheiros já no tamanho certo.
+  images: { unoptimized: true },
   experimental: {
     // Uploads do backoffice (anexos e comprovativos) por Server Action: os
     // buckets aceitam até 20 MB; o limite por omissão (1 MB) cortava PDFs.

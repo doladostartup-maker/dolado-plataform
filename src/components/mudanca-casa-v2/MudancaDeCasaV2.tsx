@@ -208,7 +208,7 @@ export function MudancaDeCasaV2() {
               <li>Veja até quando vai a fidelização: costuma aparecer na fatura mensal.</li>
               <li>
                 Se pensa cancelar, peça ao operador o valor dos encargos. Pode também fazer uma estimativa na{" "}
-                <Link href="/calculadora-cancelamento" className={LINK}>
+                <Link prefetch={false} href="/calculadora-cancelamento" className={LINK}>
                   Calculadora de Cancelamento
                 </Link>
                 .
@@ -368,7 +368,7 @@ export function MudancaDeCasaV2() {
           <p className={TEXTO}>
             Em &quot;Tratar o meu caso&quot; descreve o que aconteceu, cria a sua conta e escolhe a modalidade. Se ainda
             não sabe se a DoLado pode ajudar, experimente o{" "}
-            <Link href="/simulador-elegibilidade" className={LINK}>
+            <Link prefetch={false} href="/simulador-elegibilidade" className={LINK}>
               Simulador de Elegibilidade
             </Link>
             .

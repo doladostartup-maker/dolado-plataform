@@ -137,7 +137,7 @@ export function AjudaV2() {
               <p className="text-[17px] font-bold text-[var(--v2-navy)]">Não encontrámos perguntas com estes termos.</p>
               <p className="mt-2 text-[15px] leading-relaxed text-[var(--v2-muted)]">
                 Experimente outras palavras ou{" "}
-                <Link href={ROTAS_V2.contacto} className={LINK}>
+                <Link prefetch={false} href={ROTAS_V2.contacto} className={LINK}>
                   fale connosco
                 </Link>
                 .
@@ -156,7 +156,7 @@ export function AjudaV2() {
               <span className="text-[var(--v2-green)]">{a.icone}</span>
               <h3 className="mt-4 text-[19px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{a.titulo}</h3>
               <p className="mt-2 text-[15px] leading-relaxed text-[var(--v2-muted)]">{a.texto}</p>
-              <Link href={a.href} className={`${LINK} mt-4 inline-flex items-center gap-1.5 text-[15px]`}>
+              <Link prefetch={false} href={a.href} className={`${LINK} mt-4 inline-flex items-center gap-1.5 text-[15px]`}>
                 {a.cta} <IconeSeta tamanho={15} />
               </Link>
             </li>

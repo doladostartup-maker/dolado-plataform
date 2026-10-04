@@ -223,7 +223,7 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
             </p>
             <p className="mt-3">
               Pode exercê-lo online, na página{" "}
-              <Link href={ROTAS_LEGAIS.livreResolucao} className={LINK}>
+              <Link prefetch={false} href={ROTAS_LEGAIS.livreResolucao} className={LINK}>
                 Livre resolução
               </Link>
               , onde encontra também o modelo de formulário e a explicação completa.
@@ -274,7 +274,7 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
               {PRIVACIDADE_EMAIL}
             </a>
             . Saiba mais na{" "}
-            <Link href="/privacidade" className={LINK}>
+            <Link prefetch={false} href="/privacidade" className={LINK}>
               Política de Privacidade
             </Link>
             .
@@ -291,7 +291,7 @@ export const CATEGORIAS_PERGUNTAS: CategoriaPerguntas[] = [
             e, com a sua autorização, a reclamação inclui os dados estritamente necessários para
             a formalizar junto da empresa visada. Não vendemos nem partilhamos dados para fins de
             marketing de terceiros. A lista completa está na{" "}
-            <Link href="/privacidade" className={LINK}>
+            <Link prefetch={false} href="/privacidade" className={LINK}>
               Política de Privacidade
             </Link>
             .

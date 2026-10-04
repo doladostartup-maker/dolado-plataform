@@ -7,8 +7,17 @@ const LIMITE_POR_JANELA = 5;
 
 const registos = new Map<string, { contagem: number; expiraEm: number }>();
 
+// Os registos expirados são apagados quando o mapa cresce, para a memória do
+// processo não crescer sem limite com IPs que já não voltam.
+const LIMPAR_A_PARTIR_DE = 1_000;
+
+function limparExpirados(agora: number) {
+  for (const [ip, r] of registos) if (r.expiraEm < agora) registos.delete(ip);
+}
+
 export function excedeuLimiteTaxa(ip: string): boolean {
   const agora = Date.now();
+  if (registos.size >= LIMPAR_A_PARTIR_DE) limparExpirados(agora);
   const registo = registos.get(ip);
 
   if (!registo || registo.expiraEm < agora) {

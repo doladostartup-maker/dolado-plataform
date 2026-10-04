@@ -10,7 +10,8 @@ import { Logotipo } from "./Logotipo";
 import { ROTAS_V2 } from "./rotas";
 
 // Navbar do Design System V2 (todas as páginas públicas). Só existe dentro de
-// PaginaV2.
+// PaginaV2. Prefetch: só os 4 links principais (navegação mais provável);
+// logótipo e "Iniciar sessão" (portal, outro domínio) sem prefetch.
 
 const LINKS = [
   { href: ROTAS_V2.comoFunciona, label: "Como funciona" },
@@ -40,9 +41,9 @@ export function NavbarV2({ eventoCta, parametrosCta }: { eventoCta: string; para
           ))}
         </nav>
         <div className="hidden items-center gap-6 lg:flex">
-          <Link href="/entrar" className="text-[14px] font-semibold text-[var(--v2-navy)] hover:text-[var(--v2-green)]">
+          <a href={ROTAS_V2.entrar} className="text-[14px] font-semibold text-[var(--v2-navy)] hover:text-[var(--v2-green)]">
             Iniciar sessão
-          </Link>
+          </a>
           <button type="button" onClick={tratarCaso} className={`${BOTAO_PRIMARIO} min-h-10 px-5 text-[14px]`}>
             Tratar do meu caso <IconeSeta tamanho={16} />
           </button>
@@ -71,9 +72,9 @@ export function NavbarV2({ eventoCta, parametrosCta }: { eventoCta: string; para
                 {l.label}
               </Link>
             ))}
-            <Link href="/entrar" className="flex min-h-12 items-center text-[16px] font-semibold text-[var(--v2-navy)]">
+            <a href={ROTAS_V2.entrar} className="flex min-h-12 items-center text-[16px] font-semibold text-[var(--v2-navy)]">
               Iniciar sessão
-            </Link>
+            </a>
           </nav>
           <button
             type="button"
