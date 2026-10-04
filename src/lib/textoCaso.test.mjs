@@ -108,6 +108,17 @@ describe("3. abrir o link (GET) nunca muda nada", () => {
     });
   }
 
+  test("as páginas dizem que abrir o link não decidiu nada", () => {
+    assert.match(fonte("../app/texto/rever/[token]/page.tsx"), /Abrir este link não\s+autorizou nada/);
+    assert.match(fonte("../app/texto/alterar/[token]/page.tsx"), /O pedido só fica registado quando selecionar/);
+  });
+
+  test("a função de leitura do link é STABLE (o Postgres recusa escritas nela)", () => {
+    const sql = fonte("../../supabase/migrations/20261001180000_textos_caso_revisao_autorizacao.sql");
+    const corpo = sql.slice(sql.indexOf("create or replace function public.texto_consultar_link"));
+    assert.match(corpo.slice(0, 200), /\bstable\b/);
+  });
+
   test("consultarLink só chama a função de leitura", () => {
     const f = fonte("./textoCasoServidor.ts");
     const corpo = f.slice(f.indexOf("export async function consultarLink"));
