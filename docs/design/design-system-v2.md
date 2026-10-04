@@ -35,11 +35,12 @@ Páginas V2:
 | Ajuda | `/perguntas-frequentes` — `src/app/perguntas-frequentes/page.tsx`, `src/components/ajuda-v2/AjudaV2.tsx` (pesquisa só no browser em `pesquisa.ts`; perguntas de `conteudoPerguntasFrequentes.tsx`) | indexada (substituiu a versão V1) |
 | Contacto | `/contacto` — `src/app/contacto/page.tsx`, `src/components/contacto-v2/ContactoV2.tsx` (mesmo formulário e Server Action `enviarContacto`; aviso "não abre casos" mantido) | indexada (substituiu a versão V1) |
 | Simulador de Elegibilidade | `/simulador-elegibilidade` — `src/app/simulador-elegibilidade/page.tsx`, `src/components/simulador-v2/SimuladorV2.tsx` (perguntas, resultados, CTA "Tratar o meu caso" e medição iguais; regras em `src/lib/elegibilidade/regras.ts`) | indexada (substituiu a versão V1) |
+| Calculadora de Cancelamento | `/calculadora-cancelamento` — `src/app/calculadora-cancelamento/page.tsx`, `src/components/calculadora-v2/CalculadoraV2.tsx` (campos, validação, resultado, textos e medição iguais; regras em `src/lib/calculadoraCancelamento/regras.ts`) | indexada (substituiu a versão V1) |
 | Preçário | `/precario` — `src/app/precario/page.tsx`, `src/components/precario-v2/PrecarioV2.tsx`; conteúdo dos planos e destino dos botões em `src/lib/precario.ts`, `/#precario` (links antigos) leva aqui pela homepage | indexada, com `canonical` |
 
 Uma página V2 nova: `<PaginaV2 eventoCtaNavbar="click_…">` + `SectionV2`/`SectionHeader` + classes de `estilos.ts`. Criar componentes novos (PricingCard, FAQAccordionV2, …) só quando forem usados, em `src/components/marketing-v2/`, e reutilizá-los nas páginas seguintes.
 
-Links antigos `/#precario` (portal, `cancel_url` do Stripe, `/criar-conta`, e-mails já enviados) continuam a funcionar: a homepage troca o fragmento por `/precario` no browser. Quando se mexer nesses ficheiros, pode trocar-se o link diretamente para `/precario`. Páginas públicas ainda V1 (com `SiteHeader`): Calculadora, Guia de Mudança, Transparência, páginas legais.
+Links antigos `/#precario` (portal, `cancel_url` do Stripe, `/criar-conta`, e-mails já enviados) continuam a funcionar: a homepage troca o fragmento por `/precario` no browser. Quando se mexer nesses ficheiros, pode trocar-se o link diretamente para `/precario`. Páginas públicas ainda V1 (com `SiteHeader`): Guia de Mudança, Transparência, páginas legais.
 
 ---
 
