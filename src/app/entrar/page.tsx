@@ -7,7 +7,7 @@ export default function EntrarPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="px-4 py-6">
-        <Link href="/" aria-label="Página inicial DoLado" className="inline-flex">
+        <a href={MARKETING_SITE_URL} aria-label="Página inicial DoLado" className="inline-flex">
           <Image
             src="/brand/dolado-logo-horizontal.svg"
             alt="DoLado"
@@ -15,17 +15,19 @@ export default function EntrarPage() {
             height={26}
             priority
           />
-        </Link>
+        </a>
       </header>
 
       <main className="mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center gap-6 px-4 text-center">
-        <Image
-          src="/brand/dolado-logo-horizontal.svg"
-          alt="DoLado"
-          width={160}
-          height={40}
-          priority
-        />
+        <a href={MARKETING_SITE_URL} aria-label="Página inicial DoLado" className="inline-flex">
+          <Image
+            src="/brand/dolado-logo-horizontal.svg"
+            alt="DoLado"
+            width={160}
+            height={40}
+            priority
+          />
+        </a>
         <div className="flex flex-col gap-1">
           <p className="text-[var(--color-ink-muted)]">
             Plataforma de acompanhamento de reclamações de consumo.
