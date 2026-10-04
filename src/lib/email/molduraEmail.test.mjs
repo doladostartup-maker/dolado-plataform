@@ -38,7 +38,7 @@ test("todos os e-mails ao cliente usam a moldura V2 (nenhum com as cores antigas
     "./achadoMonitor.ts",
     "./compraSemConta.ts",
     "./livreResolucao.ts",
-    "../../app/backoffice/avisos/actions.ts",
+    "./avisoSetorial.ts",
     "../../../supabase/functions/_shared/emailAlertas.ts",
     "../../../supabase/functions/_shared/emailNovoCaso.ts",
     "../../../supabase/templates/confirmacao.html",

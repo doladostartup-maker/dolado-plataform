@@ -1,4 +1,6 @@
+// O nome vem do caso (preenchido pelo cliente): passa por escape.
 import { P_EMAIL, caixaEmail, emailV2 } from "./molduraEmail.ts";
+import { escaparHtml } from "./textoRevisao.ts";
 
 const P = P_EMAIL;
 const P_LISTA = 'style="margin:0 0 4px 0;"';
@@ -6,7 +8,7 @@ const P_LISTA = 'style="margin:0 0 4px 0;"';
 export function montarHtmlBoasVindas(nome: string) {
   return emailV2({
     titulo: "Recebemos a sua submissão — DoLado",
-    corpo: `<p ${P}>Olá ${nome},</p>
+    corpo: `<p ${P}>Olá ${escaparHtml(nome ?? "")},</p>
               <p ${P}>Obrigado por confiar na DoLado com a sua reclamação.</p>
               <p ${P}>Já recebemos a sua submissão e está aqui comigo para ser tratada pessoalmente. Não é um formulário que desaparece numa caixa infinita. Eu vou rever o seu caso, contactar o operador com a sua autorização e acompanhar até à resolução.</p>
               ${caixaEmail(`<p style="margin:0 0 8px 0; font-weight:700;">O que acontece agora:</p>

@@ -5,22 +5,10 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CONTACTO_EMAIL } from "@/lib/site";
-import { LIGACAO_EMAIL, P_EMAIL, caixaEmail, emailV2 } from "@/lib/email/molduraEmail";
+import { montarHtmlAvisoSetorial } from "@/lib/email/avisoSetorial";
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL;
-
-function htmlAvisoSetorial(nome: string, setor: string, titulo: string, descricao: string) {
-  return emailV2({
-    titulo: "Aviso sobre o seu setor — DoLado",
-    corpo: `<p ${P_EMAIL}>Olá ${nome},</p>
-              <p ${P_EMAIL}>Publicámos um aviso sobre ${setor}:</p>
-              ${caixaEmail(`<p style="margin:0 0 8px 0; font-weight:700;">${titulo}</p>
-                    <p style="margin:0;">${descricao.replace(/\n/g, "<br>")}</p>`)}
-              <p ${P_EMAIL}>Se tiver perguntas, responda a este e-mail ou visite <a href="https://www.dolado.pt/contacto" ${LIGACAO_EMAIL}>dolado.pt/contacto</a>.</p>`,
-    assinatura: "equipa",
-  });
-}
 
 async function enviarEmailBrevo(destino: { email: string; nome: string }, assunto: string, html: string) {
   const resposta = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -89,7 +77,7 @@ export async function enviarAvisoSectorial(formData: FormData) {
       await enviarEmailBrevo(
         { email: destinatario.email, nome: nomeExibido },
         `[Aviso DoLado] Novidade no setor de ${setor}`,
-        htmlAvisoSetorial(nomeExibido, setor, titulo, descricao),
+        montarHtmlAvisoSetorial(nomeExibido, setor, titulo, descricao),
       );
       enviados += 1;
     } catch (erro) {
