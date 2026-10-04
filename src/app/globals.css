@@ -88,10 +88,12 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Design System V2 — só páginas públicas (docs/design/design-system-v2.md).
-   Ativo dentro de .tema-v2 (PaginaV2); nunca no portal, backoffice,
-   autenticação, checkout nem e-mails. */
-.tema-v2 {
+/* Design System V2 (docs/design/design-system-v2.md). Ativo dentro de
+   .tema-v2 (PaginaV2, páginas públicas) e de .tema-portal (portal do
+   cliente, desde 04/10/2026); nunca no backoffice, autenticação, checkout
+   nem e-mails. */
+.tema-v2,
+.tema-portal {
   --v2-navy: #0B2545;
   --v2-muted: #55657A;
   --v2-line: #E4EAF1;
@@ -134,4 +136,43 @@ body {
 .tema-v2 .documento-legal h2 {
   font-weight: 700;
   letter-spacing: -0.015em;
+}
+
+/* Portal do cliente no V2: os componentes do portal que ainda usam os tokens
+   antigos (--color-*, --radius-*, --shadow-*) passam a ver os valores V2,
+   sem mexer na lógica de cada ficheiro. Componentes novos usam as classes de
+   src/components/portal/ui.ts. */
+.tema-portal {
+  --color-canvas: #F7F9FC;
+  --color-surface: #FFFFFF;
+  --color-surface-sunken: #F1F5F9;
+  --color-ink: var(--v2-navy);
+  --color-ink-muted: var(--v2-muted);
+  --color-ink-faint: #66768A;
+  --color-hairline: var(--v2-line);
+  --color-hairline-strong: var(--v2-line-strong);
+  --color-brand: var(--v2-green);
+  --color-brand-hover: var(--v2-green-hover);
+  --color-brand-wash: var(--v2-mint-bg);
+
+  --color-status-pending: var(--v2-blue);
+  --color-status-pending-wash: var(--v2-blue-soft);
+  --color-status-urgent: var(--v2-aviso);
+  --color-status-urgent-wash: var(--v2-aviso-bg);
+  --color-status-danger: var(--v2-erro);
+  --color-status-danger-wash: #FDEDEB;
+  --color-status-success: var(--v2-green);
+  --color-status-success-wash: var(--v2-mint);
+
+  --radius-input: 12px;
+  --radius-button: 10px;
+  --radius-card: 16px;
+  --radius-panel: 20px;
+
+  --shadow-subtle: 0 1px 2px rgba(11, 37, 69, 0.04);
+  --shadow-md: 0 12px 32px -12px rgba(11, 37, 69, 0.22);
+}
+.tema-portal :focus-visible {
+  outline: 2px solid var(--v2-green);
+  outline-offset: 2px;
 }

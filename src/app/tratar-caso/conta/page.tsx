@@ -15,7 +15,7 @@ export default async function ContaPedidoPage() {
   return (
     <>
       <Etapas atual={2} />
-      <div className="rounded-[16px] bg-white p-6 shadow-[var(--shadow-subtle)] sm:p-8">
+      <div className="rounded-[16px] border border-[var(--v2-line)] bg-white p-5 sm:p-8">
         <FormularioConta />
       </div>
     </>

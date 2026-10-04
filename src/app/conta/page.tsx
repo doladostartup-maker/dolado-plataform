@@ -1,61 +1,37 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { logout } from "@/app/auth/actions";
+import { Dado, ListaDados } from "@/components/portal/Dados";
+import { MolduraConta } from "@/components/portal/MolduraConta";
+import { BOTAO_FANTASMA, BOTAO_PRIMARIO, BOTAO_SECUNDARIO } from "@/components/portal/ui";
 
 export default async function ContaPage() {
   const { supabase, user } = await requireUser();
 
-  const { data: perfil } = await supabase
-    .from("utilizadores")
-    .select("nome, role")
-    .eq("id", user.id)
-    .single();
+  const { data: perfil } = await supabase.from("utilizadores").select("nome, role").eq("id", user.id).single();
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4">
-      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-        A sua conta
-      </h1>
-      <dl className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 text-sm shadow-[var(--shadow-subtle)]">
-        <div>
-          <dt className="text-[var(--color-ink-muted)]">E-mail</dt>
-          <dd className="text-[var(--color-ink)]">{user.email}</dd>
-        </div>
-        <div>
-          <dt className="text-[var(--color-ink-muted)]">Nome</dt>
-          <dd className="text-[var(--color-ink)]">{perfil?.nome ?? "—"}</dd>
-        </div>
-        <div>
-          <dt className="text-[var(--color-ink-muted)]">Perfil</dt>
-          <dd className="text-[var(--color-ink)]">{perfil?.role ?? "cliente"}</dd>
-        </div>
-      </dl>
-      {perfil?.role === "admin" && (
-        <Link
-          href="/backoffice/casos"
-          className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-center text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-        >
-          Ir para o backoffice
+    <MolduraConta titulo="A sua conta">
+      <ListaDados>
+        <Dado rotulo="E-mail">{user.email}</Dado>
+        <Dado rotulo="Nome">{perfil?.nome ?? "—"}</Dado>
+        <Dado rotulo="Perfil">{perfil?.role ?? "cliente"}</Dado>
+      </ListaDados>
+      <div className="flex flex-col gap-3">
+        {perfil?.role === "admin" && (
+          <Link href="/backoffice/casos" className={BOTAO_PRIMARIO}>
+            Ir para o backoffice
+          </Link>
+        )}
+        <Link href="/portal/casos" className={perfil?.role === "admin" ? BOTAO_SECUNDARIO : BOTAO_PRIMARIO}>
+          Ver os meus casos
         </Link>
-      )}
-      <Link
-        href="/portal/casos"
-        className={
-          perfil?.role === "admin"
-            ? "rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-[18px] py-[10px] text-center text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
-            : "rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-center text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-        }
-      >
-        Ver os meus casos
-      </Link>
-      <form action={logout}>
-        <button
-          type="submit"
-          className="w-full rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
-        >
-          Terminar sessão
-        </button>
-      </form>
-    </main>
+        <form action={logout}>
+          <button type="submit" className={`${BOTAO_FANTASMA} w-full`}>
+            Terminar sessão
+          </button>
+        </form>
+      </div>
+    </MolduraConta>
   );
 }

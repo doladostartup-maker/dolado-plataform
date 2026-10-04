@@ -1,16 +1,13 @@
 import { ESTADO_TEXTO_CLIENTE, MAX_PEDIDO_ALTERACOES, ehResultadoAcaoTexto, type EstadoTexto } from "@/lib/textoCaso";
 import { MensagemTexto, TextoIntegral, formatarDataHora } from "@/app/texto/_components/Mensagem";
+import { Etiqueta } from "@/components/portal/Etiqueta";
+import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAMPO, CARTAO, CARTAO_ACAO, METADADOS, TEXTO, TITULO_SECCAO } from "@/components/portal/ui";
 import { autorizarTextoNoPortal, pedirAlteracoesNoPortal } from "../texto-actions";
 
 // Texto em curso (ainda não enviado), visto pelo cliente autenticado. O
 // texto já enviado aparece à parte, em ReclamacaoEnviada. Mesmas regras que os
 // links do e-mail (mesmas funções da base de dados). O RLS nunca devolve
 // rascunhos ao cliente.
-
-const BOTAO =
-  "min-h-11 rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)]";
-const BOTAO_SEC =
-  "min-h-11 rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]";
 
 export function TextoCliente({
   casoId,
@@ -22,50 +19,51 @@ export function TextoCliente({
   resultado?: string;
 }) {
   if (!texto) return null;
+  const aRever = texto.estado === "aguardando_aprovacao";
   return (
-    <section id="texto" className="flex flex-col gap-4 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-subtle)]">
+    <section id="texto" aria-labelledby="texto-titulo" className={`${aRever ? CARTAO_ACAO : CARTAO} flex scroll-mt-24 flex-col gap-4`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-[15px] font-semibold text-[var(--color-ink)]">Texto da reclamação</h2>
-        <span className="rounded-[var(--radius-pill)] bg-[var(--color-surface-sunken)] px-2.5 py-1 text-[12px] font-semibold text-[var(--color-ink)]">
-          {ESTADO_TEXTO_CLIENTE[texto.estado]}
-        </span>
+        <h2 id="texto-titulo" className={TITULO_SECCAO}>
+          {aRever ? "Reveja o texto da reclamação" : "Texto da reclamação"}
+        </h2>
+        <Etiqueta tom={aRever ? "acao" : texto.estado === "autorizado" ? "concluido" : "curso"}>{ESTADO_TEXTO_CLIENTE[texto.estado]}</Etiqueta>
       </div>
 
       {ehResultadoAcaoTexto(resultado) && <MensagemTexto resultado={resultado} autorizadoEm={texto.autorizado_em} />}
 
-      {texto.estado === "aguardando_aprovacao" && (
-        <p className="text-[14px] leading-relaxed text-[var(--color-ink)]">
+      {aRever && (
+        <p className={TEXTO}>
           Este é exatamente o texto que a DoLado vai enviar em seu nome. Reveja-o e autorize o envio, ou peça alterações.
         </p>
       )}
+      {texto.estado === "alteracoes_solicitadas" && (
+        <p className={TEXTO}>Recebemos o seu pedido. Vamos preparar uma nova versão e mostrar-lha antes de qualquer envio.</p>
+      )}
       <TextoIntegral conteudo={texto.conteudo} />
 
-      {texto.estado === "aguardando_aprovacao" && (
-        <div className="flex flex-col gap-4">
-          <form action={autorizarTextoNoPortal.bind(null, casoId, texto.id)} className="flex flex-col gap-2">
-            <p className="text-[13.5px] text-[var(--color-ink)]">
+      {aRever && (
+        <div className="flex flex-col gap-4 border-t border-[var(--v2-line)] pt-4">
+          <form action={autorizarTextoNoPortal.bind(null, casoId, texto.id)} className="flex flex-col gap-3">
+            <p className="text-[14.5px] leading-relaxed text-[var(--v2-navy)]">
               Ao autorizar, confirma que reviu este texto e autoriza a DoLado a enviá-lo em seu nome.
             </p>
             <div>
-              <button type="submit" className={BOTAO}>
-                Autorizo o envio
+              <button type="submit" className={`${BOTAO_PRIMARIO} w-full sm:w-auto`}>
+                Autorizar envio
               </button>
             </div>
           </form>
-          <details>
-            <summary className="cursor-pointer text-sm font-semibold text-[var(--color-brand)]">Pedir alterações</summary>
-            <form action={pedirAlteracoesNoPortal.bind(null, casoId, texto.id)} className="mt-2 flex flex-col gap-2">
-              <textarea
-                name="mensagem"
-                required
-                rows={5}
-                maxLength={MAX_PEDIDO_ALTERACOES}
-                aria-label="O que gostaria de alterar?"
-                placeholder="O que gostaria de alterar?"
-                className="w-full rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)]"
-              />
+          <details className="group">
+            <summary className={`${BOTAO_SECUNDARIO} w-full cursor-pointer list-none sm:w-auto [&::-webkit-details-marker]:hidden`}>
+              Pedir alterações
+            </summary>
+            <form action={pedirAlteracoesNoPortal.bind(null, casoId, texto.id)} className="mt-3 flex flex-col gap-3">
+              <label className="flex flex-col gap-1.5 text-[14px] font-semibold text-[var(--v2-navy)]">
+                O que gostaria de alterar?
+                <textarea name="mensagem" required rows={5} maxLength={MAX_PEDIDO_ALTERACOES} className={CAMPO} />
+              </label>
               <div>
-                <button type="submit" className={BOTAO_SEC}>
+                <button type="submit" className={`${BOTAO_SECUNDARIO} w-full sm:w-auto`}>
                   Enviar pedido de alterações
                 </button>
               </div>
@@ -75,7 +73,7 @@ export function TextoCliente({
       )}
 
       {texto.estado === "autorizado" && texto.autorizado_em && (
-        <p className="text-[13.5px] text-[var(--color-ink-muted)]">Autorizou o envio em {formatarDataHora(texto.autorizado_em)}.</p>
+        <p className={METADADOS}>Autorizou o envio em {formatarDataHora(texto.autorizado_em)}.</p>
       )}
     </section>
   );

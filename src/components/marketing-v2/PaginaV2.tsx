@@ -1,7 +1,7 @@
-import { Plus_Jakarta_Sans } from "next/font/google";
 import type { ReactNode } from "react";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import { FooterV2 } from "./FooterV2";
+import { fonteV2 as fonte } from "./fonte";
 import { NavbarV2 } from "./NavbarV2";
 
 // Moldura de qualquer página pública V2: tokens (.tema-v2 em globals.css),
@@ -11,9 +11,6 @@ import { NavbarV2 } from "./NavbarV2";
 // via (legal)/layout.tsx) carregam AnalyticsScripts uma única vez, por esta
 // moldura — nunca página a página. GTM, GA4 e Google Ads só são inseridos
 // depois do consentimento no banner do Cookiebot (MedicaoComConsentimento).
-
-// Fonte só das páginas V2 (alojada pelo next/font no próprio site).
-const fonte = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
 
 export function PaginaV2({
   eventoCtaNavbar,

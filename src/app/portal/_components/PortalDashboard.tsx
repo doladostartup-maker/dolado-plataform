@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ConfirmarCompra } from "@/components/compra/ConfirmarCompra";
 import type { ResumoPlano } from "@/lib/acesso";
 import {
@@ -13,8 +13,45 @@ import {
   textoCasosDisponiveis,
 } from "@/lib/planos";
 import { MARKETING_SITE_URL } from "@/lib/site";
+import type { TomEstado } from "@/lib/portal/estadoCaso";
+import { EstadoVazio } from "@/components/portal/EstadoVazio";
+import { Etiqueta } from "@/components/portal/Etiqueta";
+import { Dado, ListaDados } from "@/components/portal/Dados";
+import { TituloSeccao } from "@/components/portal/Cabecalho";
+import { IconeCalendario, IconeCirculoVisto, IconeEscudo, IconeMais, IconePasta, IconeSeta, IconeSino } from "@/components/portal/Icones";
+import {
+  BOTAO_PRIMARIO,
+  BOTAO_SECUNDARIO,
+  CARTAO,
+  CARTAO_ACAO,
+  CARTAO_DESTAQUE,
+  CARTAO_LIGACAO,
+  LIGACAO,
+  METADADOS,
+  TEXTO_SECUNDARIO,
+  TITULO_CARTAO,
+  TITULO_PAGINA,
+} from "@/components/portal/ui";
 
 type OfertaConversao = { mensalidade: number; reembolso: number } | null;
+
+/** Algo que precisa do cliente (calculado no servidor). */
+export type ItemAtencao = { id: string; titulo: string; texto: string; href: string; cta: string };
+
+export type ResumoCaso = {
+  id: string;
+  empresa: string;
+  problema: string | null;
+  setor: string | null;
+  rotulo: string;
+  tom: TomEstado;
+  proximoPasso: string | null;
+  requerAcao: boolean;
+  concluido: boolean;
+  abertoEm: string;
+};
+
+export type ResumoProtecao = { servicos: number; proximoEvento: string | null };
 
 // Escolher uma opção abre a confirmação da compra (ConfirmarCompra); só essa
 // envia o identificador do plano à Server Action. O Price ID e o acesso são
@@ -70,42 +107,30 @@ function OSeuPlano({
   }
 
   return (
-    <section
-      aria-labelledby="o-seu-plano"
-      data-plano={resumo.plano}
-      className="rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-[22px] shadow-[var(--shadow-subtle)]"
-    >
-      <p id="o-seu-plano" className="text-[12px] font-semibold uppercase tracking-wide text-[var(--color-ink-faint)]">
-        O seu plano
-      </p>
-      <p className="mb-3 text-[17px] font-semibold text-[var(--color-ink)]">{nomeDoPlano(resumo)}</p>
-      <dl className="grid gap-x-6 gap-y-2 text-[13px] sm:grid-cols-2">
-        {linhas.map((l) => (
-          <div key={l.label}>
-            <dt className="text-[var(--color-ink-muted)]">{l.label}</dt>
-            <dd className="font-medium text-[var(--color-ink)]">{l.valor}</dd>
-          </div>
-        ))}
-      </dl>
-      {pagamentoPendente && (
-        <p className="mt-3 text-[13px] text-[var(--color-ink-muted)]">
-          Tem um pagamento em confirmação. Não precisa de voltar a pagar.
-        </p>
+    <section aria-labelledby="o-seu-plano" data-plano={resumo.plano} className={`${CARTAO} flex flex-col gap-4`}>
+      <div className="flex flex-col gap-1">
+        <h2 id="o-seu-plano" className="text-[13px] font-bold uppercase tracking-[0.08em] text-[var(--v2-muted)]">
+          O seu plano
+        </h2>
+        <p className={TITULO_CARTAO}>{nomeDoPlano(resumo)}</p>
+      </div>
+      {linhas.length > 0 && (
+        <ListaDados>
+          {linhas.map((l) => (
+            <Dado key={l.label} rotulo={l.label}>
+              {l.valor}
+            </Dado>
+          ))}
+        </ListaDados>
       )}
+      {pagamentoPendente && <p className={METADADOS}>Tem um pagamento em confirmação. Não precisa de voltar a pagar.</p>}
       {!semSubscricao && (
-        <Link
-          href="/portal/subscricao"
-          className="mt-4 inline-flex min-h-11 items-center rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
-        >
+        <Link href="/portal/subscricao" className={`${BOTAO_SECUNDARIO} self-start`}>
           Gerir subscrição
         </Link>
       )}
       {semSubscricao && !pagamentoPendente && (
-        <button
-          type="button"
-          onClick={onEscolherSubscricao}
-          className="mt-4 min-h-11 rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
-        >
+        <button type="button" onClick={onEscolherSubscricao} className={`${BOTAO_SECUNDARIO} self-start`}>
           Ver subscrições
         </button>
       )}
@@ -113,37 +138,35 @@ function OSeuPlano({
   );
 }
 
-type Card = {
-  slug: string;
-  titulo: string;
-  descricao: string;
-  href: string;
-  sempreActivo?: boolean;
-};
-
-const CARDS: Card[] = [
-  {
-    slug: "casos",
-    titulo: "📋 A sua reclamação",
-    descricao: "Abra um novo caso ou acompanhe os que já tem em curso.",
-    href: "/portal/casos",
-    sempreActivo: true,
-  },
-  {
-    slug: "contratos",
-    titulo: "🛡️ Os meus serviços",
-    descricao: "Carregue uma fatura: acompanhamos a evolução do serviço mês a mês. Com o contrato, verificamos também as condições contratadas.",
-    href: "/portal/contratos",
-  },
-  {
-    slug: "sectorial",
-    titulo: "📢 Sectorial",
-    descricao: "Avisamos quando o seu operador anunciar subida de preços no setor.",
-    href: "/portal/perfil",
-  },
-];
+function CartaoCaso({ caso }: { caso: ResumoCaso }) {
+  return (
+    <li>
+      <Link href={`/portal/casos/${caso.id}`} className={`${CARTAO_LIGACAO} flex flex-col gap-2`}>
+        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+          <div className="min-w-0">
+            <p className={`${TITULO_CARTAO} break-words`}>{caso.empresa}</p>
+            <p className={METADADOS}>
+              {[caso.setor, caso.problema].filter(Boolean).join(" · ") || `Aberto a ${formatarData(caso.abertoEm)}`}
+            </p>
+          </div>
+          <Etiqueta tom={caso.tom}>{caso.rotulo}</Etiqueta>
+        </div>
+        {caso.proximoPasso && (
+          <p className={TEXTO_SECUNDARIO}>
+            <span className="font-semibold text-[var(--v2-navy)]">Próximo passo: </span>
+            {caso.proximoPasso}
+          </p>
+        )}
+      </Link>
+    </li>
+  );
+}
 
 export function PortalDashboard({
+  primeiroNome,
+  atencao,
+  casos,
+  protecao,
   resumo,
   temProtecao,
   temPlanoStripe,
@@ -152,6 +175,12 @@ export function PortalDashboard({
   conversaoCasoProtecao,
   bloqueadoInicial,
 }: {
+  primeiroNome: string | null;
+  /** O que precisa do cliente, já calculado no servidor. */
+  atencao: ItemAtencao[];
+  casos: ResumoCaso[];
+  /** null = sem Proteção ativa. */
+  protecao: ResumoProtecao | null;
   /** Calculado no servidor (src/lib/acesso.ts) — aqui só decide o que mostrar. */
   resumo: ResumoPlano;
   temProtecao: boolean;
@@ -165,83 +194,201 @@ export function PortalDashboard({
   const [modalAberto, setModalAberto] = useState(Boolean(bloqueadoInicial));
   const [aConfirmar, setAConfirmar] = useState<"protecao" | "caso_protecao" | null>(null);
 
+  // Fechar o modal com Escape (teclado).
+  useEffect(() => {
+    if (!modalAberto) return;
+    const fechar = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setModalAberto(false);
+    };
+    document.addEventListener("keydown", fechar);
+    return () => document.removeEventListener("keydown", fechar);
+  }, [modalAberto]);
+
   const assinante = temProtecao;
   // Conta com plano Stripe pode aderir daqui (com conversão do Avulso, se
   // tiver um elegível); sem nenhuma compra vê os planos.
   const podeSubscreverAqui = temPlanoStripe && !pagamentoPendente;
 
-  return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-        O seu painel
-      </h1>
+  const emCurso = casos.filter((c) => !c.concluido);
+  const concluidos = casos.length - emCurso.length;
+  // A ação já aparece em "Precisa da sua atenção": aqui por ordem de abertura.
+  const casosVisiveis = emCurso.slice(0, 3);
 
-      {/* Contas sem nenhuma compra não veem este bloco. */}
-      {temPlanoStripe && (
-        <OSeuPlano
-          resumo={resumo}
-          pagamentoPendente={pagamentoPendente}
-          onEscolherSubscricao={() => setModalAberto(true)}
-        />
+  return (
+    <div className="flex flex-col gap-10">
+      <header className="flex flex-col gap-2">
+        <h1 className={TITULO_PAGINA}>{primeiroNome ? `Olá, ${primeiroNome}` : "O seu painel"}</h1>
+        <p className={TEXTO_SECUNDARIO}>
+          {atencao.length > 0
+            ? atencao.length === 1
+              ? "Há 1 assunto que precisa da sua atenção."
+              : `Há ${atencao.length} assuntos que precisam da sua atenção.`
+            : emCurso.length > 0
+              ? "Nada precisa da sua atenção neste momento. A DoLado está a tratar dos seus casos."
+              : "Nada precisa da sua atenção neste momento."}
+        </p>
+      </header>
+
+      {/* 1. O que precisa do cliente */}
+      {atencao.length > 0 && (
+        <section aria-labelledby="atencao" className="flex flex-col gap-3">
+          <TituloSeccao id="atencao" titulo="Precisa da sua atenção" />
+          <ul className="flex flex-col gap-3">
+            {atencao.map((a, n) => (
+              <li key={a.id} className={`${CARTAO_ACAO} flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between`}>
+                <div className="flex min-w-0 gap-3">
+                  <span aria-hidden className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--v2-mint)] text-[var(--v2-green)]">
+                    <IconeSino tamanho={18} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className={`${TITULO_CARTAO} break-words`}>{a.titulo}</p>
+                    <p className={TEXTO_SECUNDARIO}>{a.texto}</p>
+                  </div>
+                </div>
+                {/* Uma só ação principal: a primeira; as seguintes são secundárias. */}
+                <Link href={a.href} className={`${n === 0 ? BOTAO_PRIMARIO : BOTAO_SECUNDARIO} shrink-0`}>
+                  {a.cta}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {CARDS.map((card) => {
-          const activo = card.sempreActivo || assinante;
-
-          const conteudo = (
-            <>
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="text-[14.5px] font-semibold text-[var(--color-ink)]">{card.titulo}</p>
-                {!activo && (
-                  <span className="shrink-0 rounded-[var(--radius-pill)] bg-[var(--color-surface-sunken)] px-2 py-0.5 text-[10px] font-semibold text-[var(--color-ink-faint)]">
-                    Incluído na Proteção
-                  </span>
-                )}
-              </div>
-              <p className="text-[13px] leading-relaxed text-[var(--color-ink-muted)]">
-                {card.descricao}
-              </p>
-            </>
-          );
-
-          const className = `rounded-[var(--radius-card)] border p-[22px] text-left transition ${
-            activo
-              ? "border-[var(--color-hairline)] bg-[var(--color-surface)] shadow-[var(--shadow-subtle)] hover:border-[var(--color-brand)] hover:shadow-[var(--shadow-md)]"
-              : "border-[var(--color-hairline)] bg-[var(--color-surface)] opacity-50 hover:opacity-70"
-          }`;
-
-          if (activo) {
-            return (
-              <Link key={card.slug} href={card.href} className={className}>
-                {conteudo}
+      {/* 2. Casos em curso */}
+      <section aria-labelledby="casos-em-curso" className="flex flex-col gap-3">
+        <TituloSeccao
+          id="casos-em-curso"
+          titulo="Os seus casos"
+          acao={
+            casos.length > 0 ? (
+              <Link href="/portal/casos" className={`${LIGACAO} min-h-11 text-[14.5px]`}>
+                Ver todos
+                <IconeSeta tamanho={16} />
               </Link>
-            );
+            ) : undefined
           }
+        />
+        {casosVisiveis.length > 0 ? (
+          <ul className="flex flex-col gap-3">
+            {casosVisiveis.map((c) => (
+              <CartaoCaso key={c.id} caso={c} />
+            ))}
+          </ul>
+        ) : (
+          <EstadoVazio
+            icone={casos.length > 0 ? <IconeCirculoVisto tamanho={20} /> : <IconePasta tamanho={20} />}
+            titulo={casos.length > 0 ? "Sem casos em curso" : "Ainda não tem casos"}
+            acao={
+              <Link href="/portal/casos/novo" className={BOTAO_PRIMARIO}>
+                <IconeMais tamanho={18} />
+                Abrir novo caso
+              </Link>
+            }
+          >
+            {casos.length > 0
+              ? `Não tem nenhum problema em tratamento neste momento${concluidos > 0 ? ` (${concluidos === 1 ? "1 caso concluído" : `${concluidos} casos concluídos`})` : ""}. Se surgir outro, estamos aqui.`
+              : "Quando tiver um problema com uma empresa de telecomunicações, energia ou água, a DoLado trata dele consigo."}
+          </EstadoVazio>
+        )}
+        {emCurso.length > casosVisiveis.length && (
+          <p className={METADADOS}>
+            E mais {emCurso.length - casosVisiveis.length} em curso em{" "}
+            <Link href="/portal/casos" className="font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline">
+              Os meus casos
+            </Link>
+            .
+          </p>
+        )}
+      </section>
 
-          return (
-            <button
-              key={card.slug}
-              type="button"
-              onClick={() => setModalAberto(true)}
-              className={className}
-            >
-              {conteudo}
-            </button>
-          );
-        })}
-      </div>
+      {/* 3. Proteção e plano */}
+      <section aria-labelledby="protecao" className="flex flex-col gap-3">
+        <TituloSeccao id="protecao" titulo="Proteção" />
+        <div className="grid gap-4 lg:grid-cols-[1.25fr_1fr]">
+          {protecao ? (
+            <div className={`${CARTAO_DESTAQUE} flex flex-col gap-4`}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-2 text-[var(--v2-green)]">
+                  <IconeEscudo tamanho={22} />
+                  <span className={TITULO_CARTAO}>A DoLado está atenta por si</span>
+                </span>
+                <Etiqueta tom="concluido">Proteção ativa</Etiqueta>
+              </div>
+              {protecao.servicos > 0 ? (
+                <ListaDados>
+                  <Dado rotulo="Serviços acompanhados">
+                    {protecao.servicos === 1 ? "1 serviço" : `${protecao.servicos} serviços`}
+                  </Dado>
+                  <Dado rotulo="Próxima data importante">
+                    {protecao.proximoEvento ? (
+                      <span className="inline-flex items-start gap-2">
+                        <IconeCalendario tamanho={18} className="mt-0.5 shrink-0 text-[var(--v2-muted)]" />
+                        <span>{protecao.proximoEvento}</span>
+                      </span>
+                    ) : (
+                      "Sem datas por acompanhar"
+                    )}
+                  </Dado>
+                </ListaDados>
+              ) : (
+                <p className={TEXTO_SECUNDARIO}>
+                  Ainda não acompanhamos nenhum serviço. Basta uma fatura para começarmos a detetar alterações e a
+                  avisá-lo antes do fim da fidelização ou de promoções.
+                </p>
+              )}
+              <div className="flex flex-wrap gap-3">
+                <Link href="/portal/contratos" className={protecao.servicos > 0 ? BOTAO_SECUNDARIO : BOTAO_PRIMARIO}>
+                  {protecao.servicos > 0 ? "Ver os meus serviços" : "Adicionar uma fatura"}
+                </Link>
+                <Link href="/portal/perfil#avisos" className={`${LIGACAO} min-h-11 text-[14.5px]`}>
+                  Avisos do setor
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className={`${CARTAO} flex flex-col gap-4`}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-2 text-[var(--v2-muted)]">
+                  <IconeEscudo tamanho={22} />
+                  <span className={TITULO_CARTAO}>Prevenir antes de ser um problema</span>
+                </span>
+                <Etiqueta tom="neutro">Proteção inativa</Etiqueta>
+              </div>
+              <p className={TEXTO_SECUNDARIO}>
+                Com a Proteção, a DoLado acompanha as suas faturas, avisa-o antes do fim de promoções e de períodos de
+                fidelização e informa-o de alterações relevantes no seu setor.
+              </p>
+              <button type="button" onClick={() => setModalAberto(true)} className={`${BOTAO_SECUNDARIO} self-start`}>
+                Conhecer a Proteção
+              </button>
+            </div>
+          )}
+
+          {/* Contas sem nenhuma compra não veem este bloco. */}
+          {temPlanoStripe && (
+            <OSeuPlano
+              resumo={resumo}
+              pagamentoPendente={pagamentoPendente}
+              onEscolherSubscricao={() => setModalAberto(true)}
+            />
+          )}
+        </div>
+      </section>
 
       {!assinante && modalAberto && (
         <div
           onClick={() => setModalAberto(false)}
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-[rgba(23,26,33,0.42)] px-4"
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-[rgba(11,37,69,0.42)] px-4 py-6 sm:items-center"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[460px] rounded-[var(--radius-card)] bg-white p-6 shadow-[var(--shadow-md)]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-protecao-titulo"
+            className="max-h-full w-full max-w-[480px] overflow-y-auto rounded-[20px] bg-white p-6 shadow-[var(--shadow-md)]"
           >
-            <h2 className="mb-3 text-[17px] font-semibold text-[var(--color-ink)]">
+            <h2 id="modal-protecao-titulo" className="mb-3 text-[19px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">
               {pagamentoPendente
                 ? "O seu pagamento está em confirmação"
                 : podeSubscreverAqui
@@ -261,7 +408,7 @@ export function PortalDashboard({
                   return (
                     <div
                       key={opcao.plano}
-                      className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] p-4"
+                      className="rounded-[14px] border border-[var(--v2-line)] p-4"
                     >
                       <p className="text-[14px] font-semibold text-[var(--color-ink)]">
                         {PLANOS[opcao.plano].nome} — {precoComUnidade(opcao.plano)}
@@ -290,7 +437,7 @@ export function PortalDashboard({
                           setModalAberto(false);
                           setAConfirmar(opcao.plano);
                         }}
-                        className="w-full rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-60"
+                        className={`${BOTAO_PRIMARIO} w-full`}
                       >
                         {opcao.cta}
                       </button>
@@ -306,11 +453,11 @@ export function PortalDashboard({
               </p>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
               {!pagamentoPendente && !podeSubscreverAqui && (
                 <Link
-                  href={`${MARKETING_SITE_URL}/#precario`}
-                  className="flex-1 rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-center text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)]"
+                  href={`${MARKETING_SITE_URL}/precario`}
+                  className={`${BOTAO_PRIMARIO} flex-1`}
                 >
                   Ver planos
                 </Link>
@@ -318,7 +465,7 @@ export function PortalDashboard({
               <button
                 type="button"
                 onClick={() => setModalAberto(false)}
-                className="flex-1 rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
+                className={`${BOTAO_SECUNDARIO} flex-1`}
               >
                 {pagamentoPendente || podeSubscreverAqui ? "Fechar" : "Cancelar"}
               </button>

@@ -41,6 +41,10 @@ import { UploadDocumento } from "../_components/UploadDocumento";
 import { HistoricoServico, type PeriodoHistorico } from "../_components/HistoricoServico";
 import { BotaoSubmeter } from "../_components/BotaoSubmeter";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CARTAO, TITULO_SECCAO } from "../_components/estilos";
+import { Aviso } from "@/components/portal/Aviso";
+import { CabecalhoPagina } from "@/components/portal/Cabecalho";
+import { BOTAO_DESTRUTIVO, CAIXA_SELECAO, CARTAO_ACAO, CARTAO_DESTAQUE, LIGACAO, LIGACAO_DISCRETA, TEXTO_SECUNDARIO } from "@/components/portal/ui";
+import { SIMBOLO } from "../_components/HistoricoServico";
 
 // Serviço acompanhado. Funciona só com faturas (histórico e padrão
 // observado) e fica mais completo com o contrato (contratado × faturado,
@@ -124,14 +128,14 @@ function Origem({ c }: { c: Campo }) {
   const partes = [ROTULO_ORIGEM[c.origem] ?? c.origem];
   if (c.pagina) partes.push(`página ${c.pagina}`);
   if (c.origem !== "cliente" && c.confirmado_cliente_em) partes.push(`confirmado por si em ${formatarDataPt(c.confirmado_cliente_em)}`);
-  return <span className="text-[12.5px] text-[var(--color-ink-faint)]">{partes.join(" · ")}</span>;
+  return <span className="text-[13px] text-[var(--v2-muted)]">{partes.join(" · ")}</span>;
 }
 
 function Linha({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-0.5 border-b border-[var(--color-hairline)] py-2.5 last:border-b-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
-      <dt className="text-sm text-[var(--color-ink-muted)]">{rotulo}</dt>
-      <dd className="flex flex-col text-[15px] text-[var(--color-ink)] sm:items-end sm:text-right">{children}</dd>
+    <div className="flex flex-col gap-0.5 border-b border-[var(--v2-line)] py-3 last:border-b-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+      <dt className="text-[14px] text-[var(--v2-muted)]">{rotulo}</dt>
+      <dd className="flex min-w-0 flex-col break-words text-[15px] text-[var(--v2-navy)] sm:items-end sm:text-right">{children}</dd>
     </div>
   );
 }
@@ -325,39 +329,35 @@ export default async function ServicoPage({
   return (
     <div className="flex max-w-3xl flex-col gap-6">
       {/* ===== Cabeçalho ===== */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="break-words text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">{fornecedor ?? "Fornecedor por confirmar"}</h1>
-          <p className="text-sm text-[var(--color-ink-faint)]">{ROTULO_SETOR[contrato.setor as SetorContratoMonitor] ?? contrato.setor}</p>
-        </div>
-        <Link href="/portal/contratos" className="inline-flex min-h-11 items-center text-sm text-[var(--color-ink-muted)] underline sm:min-h-0">
-          Voltar aos serviços
-        </Link>
-      </div>
+      <CabecalhoPagina
+        voltar={{ href: "/portal/contratos", texto: "Proteção" }}
+        contexto={ROTULO_SETOR[contrato.setor as SetorContratoMonitor] ?? contrato.setor}
+        titulo={fornecedor ?? "Fornecedor por confirmar"}
+      />
 
-      {query.documento && MENSAGEM[query.documento] && <p className="text-sm text-[var(--color-ink-muted)]">{MENSAGEM[query.documento]}</p>}
-      {query.aviso === "repetido" && <p className="text-sm text-[var(--color-ink-muted)]">Esta fatura já estava registada neste serviço: não criámos outro mês.</p>}
+      {query.documento && MENSAGEM[query.documento] && (
+        <Aviso tom={query.documento === "processado" ? "sucesso" : "info"}>{MENSAGEM[query.documento]}</Aviso>
+      )}
+      {query.aviso === "repetido" && <Aviso tom="info">Esta fatura já estava registada neste serviço: não criámos outro mês.</Aviso>}
       {query.associado && (
-        <p className="text-sm text-[var(--color-status-success)]">
-          {query.associado === "novo_servico" ? "✓ Criámos um serviço novo para este documento." : "✓ Documento associado a este serviço."}
-        </p>
+        <Aviso tom="sucesso">
+          {query.associado === "novo_servico" ? "Criámos um serviço novo para este documento." : "Documento associado a este serviço."}
+        </Aviso>
       )}
-      {query.fatura === "confirmada" && <p className="text-sm text-[var(--color-status-success)]">✓ Fatura confirmada.</p>}
-      {query.fatura === "contestada" && (
-        <p className="text-sm text-[var(--color-ink-muted)]">Obrigado. A DoLado vai verificar os valores desta fatura.</p>
-      )}
-      {query.guardado && <p className="text-sm text-[var(--color-status-success)]">✓ Dados guardados.</p>}
-      {query.erro && <p className="text-sm text-[var(--color-status-danger)]">{query.erro}</p>}
+      {query.fatura === "confirmada" && <Aviso tom="sucesso">Fatura confirmada.</Aviso>}
+      {query.fatura === "contestada" && <Aviso tom="info">Obrigado. A DoLado vai verificar os valores desta fatura.</Aviso>}
+      {query.guardado && <Aviso tom="sucesso">Dados guardados.</Aviso>}
+      {query.erro && <Aviso tom="erro">{query.erro}</Aviso>}
 
       {/* ===== Identidade por resolver (primeiro, antes de tudo o resto) ===== */}
       {(porAssociar ?? []).map((d) => (
-        <div key={d.id} role="alert" className={`${CARTAO} flex flex-col gap-2 border-[var(--color-status-urgent)]`}>
-          <p className="text-sm font-semibold text-[var(--color-ink)]">
+        <div key={d.id} role="alert" className={`${CARTAO_ACAO} flex flex-col gap-2`}>
+          <p className="text-[16px] font-bold text-[var(--v2-navy)]">
             {d.associacao_estado === "conflito"
               ? `${d.tipo === "contrato" ? "Um contrato" : "Uma fatura"} que carregou parece pertencer a outro serviço ou cliente.`
               : `Não conseguimos confirmar que ${d.tipo === "contrato" ? "o contrato" : "a fatura"} que carregou pertence a este serviço.`}
           </p>
-          <p className="text-sm text-[var(--color-ink-muted)]">Não alterámos o acompanhamento deste serviço.</p>
+          <p className={TEXTO_SECUNDARIO}>Não alterámos o acompanhamento deste serviço.</p>
           <Link href={`/portal/contratos/documentos/${d.id}`} className={`${BOTAO_PRIMARIO} self-start`}>
             Rever dados
           </Link>
@@ -369,7 +369,7 @@ export default async function ServicoPage({
       ))}
 
       {/* ===== 1. Resumo ===== */}
-      <section className={`${CARTAO} flex flex-col gap-3`}>
+      <section className={`${CARTAO_DESTAQUE} flex flex-col gap-3`}>
         <h2 className={TITULO_SECCAO}>Resumo</h2>
         <dl className="flex flex-col">
           {temContrato ? (
@@ -388,7 +388,7 @@ export default async function ServicoPage({
           {ultima && (
             <Linha rotulo="Última fatura">
               {formatarEurosCents(ultima.totalCents)}
-              <span className="text-[12.5px] text-[var(--color-ink-faint)]">{mesAno(dataReferencia(ultima))}</span>
+              <span className="text-[13px] text-[var(--v2-muted)]">{mesAno(dataReferencia(ultima))}</span>
             </Linha>
           )}
           <Linha rotulo="Fidelização">
@@ -398,35 +398,40 @@ export default async function ServicoPage({
                 <Origem c={fimFidelizacao} />
               </>
             ) : (
-              <span className="text-sm text-[var(--color-ink-muted)]">
+              <span className="text-[14px] text-[var(--v2-muted)]">
                 {ordenadas.length ? "Não conseguimos determinar através das faturas disponíveis." : "Por indicar"}
               </span>
             )}
           </Linha>
           {ultimoResultado.length > 0 && (
             <Linha rotulo="Último resultado">
-              {ultimoResultado.map((r, n) => (
-                <span key={n} className="text-sm">
-                  {r.severidade === "ok" ? "✓" : r.severidade === "info" ? "ℹ" : "⚠"} {r.texto}
-                </span>
-              ))}
+              {ultimoResultado.map((r, n) => {
+                const s = SIMBOLO[r.severidade];
+                return (
+                  <span key={n} className="inline-flex items-start gap-1.5 text-[14.5px] sm:justify-end">
+                    <s.Icone tamanho={17} className={`mt-0.5 shrink-0 ${s.cor}`} />
+                    <span className="sr-only">{s.rotulo}: </span>
+                    {r.texto}
+                  </span>
+                );
+              })}
             </Linha>
           )}
           {!temContrato && (
             <Linha rotulo="Contrato">
-              <span className="text-sm text-[var(--color-ink-muted)]">Não adicionado</span>
-              <a href="#adicionar-contrato" className="text-sm font-medium text-[var(--color-brand)] underline">
+              <span className="text-[14px] text-[var(--v2-muted)]">Não adicionado</span>
+              <a href="#adicionar-contrato" className={`${LIGACAO} text-[14px]`}>
                 Adicionar contrato
               </a>
             </Linha>
           )}
         </dl>
-        <p className="text-sm text-[var(--color-ink-muted)]">{textoProximaData(proximaData(contrato, hoje))}</p>
+        <p className="text-[14.5px] font-semibold text-[var(--v2-navy)]">{textoProximaData(proximaData(contrato, hoje))}</p>
       </section>
 
       {/* ===== Fatura nova: resumo para confirmar (sem campo a campo) ===== */}
       {porConfirmarFatura && cUltima && (
-        <section className={`${CARTAO} flex flex-col gap-3 border-[var(--color-brand)]`}>
+        <section className={`${CARTAO_ACAO} flex flex-col gap-3`}>
           {docUltima?.estado === "a_rever" ? (
             <p className="text-sm text-[var(--color-ink-muted)]">
               Lemos a fatura de {mesAnoTexto(dataReferencia(porConfirmarFatura))}. Alguns valores vão ser verificados pela DoLado antes de os usarmos.
@@ -447,7 +452,7 @@ export default async function ServicoPage({
                 <BotaoSubmeter name="acao" value="confirmar" className={BOTAO_PRIMARIO}>
                   Confirmar fatura
                 </BotaoSubmeter>
-                <BotaoSubmeter name="acao" value="contestar" aDecorrer="A enviar…" className="text-sm text-[var(--color-ink-muted)] underline">
+                <BotaoSubmeter name="acao" value="contestar" aDecorrer="A enviar…" className={`${LIGACAO_DISCRETA} min-h-11 text-[14px]`}>
                   Os valores não estão corretos
                 </BotaoSubmeter>
               </form>
@@ -458,7 +463,7 @@ export default async function ServicoPage({
 
       {/* ===== Dados lidos por confirmar ===== */}
       {camposPorConfirmar.length > 0 && (
-        <section className={`${CARTAO} flex flex-col gap-4 border-[var(--color-brand)]`}>
+        <section className={`${CARTAO_ACAO} flex flex-col gap-4`}>
           <div>
             <h2 className={TITULO_SECCAO}>{propostasDoContrato ? "Encontrámos estes dados no contrato" : "Encontrámos estes dados no documento"}</h2>
             <p className="text-sm text-[var(--color-ink-muted)]">Reveja cada valor e confirme no fim. Só começamos a usá-los depois de confirmar.</p>
@@ -485,18 +490,21 @@ export default async function ServicoPage({
         </div>
         <HistoricoServico
           periodos={periodos}
-          vazio={<p className="text-sm text-[var(--color-ink-muted)]">Adicione uma fatura: começamos a acompanhar a evolução deste serviço.</p>}
+          vazio={<p className={TEXTO_SECUNDARIO}>Ainda não há faturas deste serviço. Adicione uma: começamos a comparar cada mês e assinalamos o que mudar.</p>}
         />
       </section>
 
       {/* ===== 3. Situações comunicadas pela DoLado ===== */}
       {(achados ?? []).length > 0 && (
-        <section className={`${CARTAO} flex flex-col gap-3`}>
+        <section className={`${CARTAO} flex flex-col gap-4 border-[#F2DDB8]`}>
           <h2 className={TITULO_SECCAO}>Situações que merecem ser verificadas</h2>
           {achados!.map((a) => (
-            <div key={a.id} className="flex flex-col gap-1">
-              <p className="text-sm text-[var(--color-ink)]">{a.texto_cliente}</p>
-              <span className="text-[12.5px] text-[var(--color-ink-faint)]">{formatarDataPt(a.comunicado_em)}</span>
+            <div key={a.id} className="flex gap-2.5 rounded-[12px] bg-[var(--v2-aviso-bg)] p-3.5">
+              <SIMBOLO.atencao.Icone tamanho={18} className={`mt-0.5 shrink-0 ${SIMBOLO.atencao.cor}`} />
+              <div className="flex flex-col gap-0.5">
+                <p className="text-[14.5px] leading-relaxed text-[var(--v2-navy)]">{a.texto_cliente}</p>
+                <span className="text-[13px] text-[var(--v2-muted)]">Comunicado a {formatarDataPt(a.comunicado_em)}</span>
+              </div>
             </div>
           ))}
           <a href={hrefCaso} className={`${BOTAO_PRIMARIO} self-start`}>
@@ -522,7 +530,7 @@ export default async function ServicoPage({
           </dl>
           {(versoes ?? []).length > 1 && (
             <div className="flex flex-col gap-1 pt-1">
-              <p className="text-sm font-medium text-[var(--color-ink)]">Alterações do contrato</p>
+              <p className="text-[14.5px] font-semibold text-[var(--v2-navy)]">Alterações do contrato</p>
               {versoes!.map((v) => (
                 <p key={v.id} className="text-[13px] text-[var(--color-ink-muted)]">
                   {v.valido_desde ? `Desde ${formatarDataPt(v.valido_desde)}` : "Condições iniciais"}
@@ -534,7 +542,7 @@ export default async function ServicoPage({
             </div>
           )}
           <details open={Boolean(query.editar)} className="pt-1">
-            <summary className="cursor-pointer text-sm font-medium text-[var(--color-brand)]">Corrigir ou acrescentar condições</summary>
+            <summary className={`${LIGACAO} min-h-11 cursor-pointer text-[14.5px]`}>Corrigir ou acrescentar condições</summary>
             <form action={corrigirContrato} className="mt-4 flex flex-col gap-4">
               <input type="hidden" name="contrato_id" value={contrato.id} />
               <CamposContrato valores={{ ...contrato, mensalidade_cents: condicao("mensalidade_cents") ? contrato.mensalidade_cents : null }} />
@@ -550,12 +558,12 @@ export default async function ServicoPage({
       ) : (
         <section id="adicionar-contrato" className={`${CARTAO} flex scroll-mt-24 flex-col gap-3`}>
           <h2 className={TITULO_SECCAO}>Tem o contrato?</h2>
-          <p className="text-sm text-[var(--color-ink-muted)]">
+          <p className={TEXTO_SECUNDARIO}>
             Adicione-o para desbloquear as comparações com as condições contratadas: preço, promoções, serviços e fidelização.
           </p>
           <UploadDocumento contratoId={contrato.id} tipoInicial="contrato" />
           <details className="pt-1">
-            <summary className="cursor-pointer text-sm font-medium text-[var(--color-brand)]">Prefere indicar as condições à mão?</summary>
+            <summary className={`${LIGACAO} min-h-11 cursor-pointer text-[14.5px]`}>Prefere indicar as condições à mão?</summary>
             <form action={corrigirContrato} className="mt-4 flex flex-col gap-4">
               <input type="hidden" name="contrato_id" value={contrato.id} />
               <CamposContrato valores={{ ...contrato, mensalidade_cents: null }} />
@@ -609,12 +617,12 @@ export default async function ServicoPage({
                   href={`/api/monitor/documentos/${d.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[var(--color-ink)] underline decoration-[var(--color-hairline-strong)] underline-offset-2 hover:text-[var(--color-brand)]"
+                  className="font-medium text-[var(--v2-navy)] underline decoration-[var(--v2-line-strong)] underline-offset-4 hover:text-[var(--v2-green)]"
                 >
                   {d.tipo === "contrato" ? "Contrato" : "Fatura"} · {formatarDataPt(d.created_at)}
                   {d.nome_ficheiro && <span className="text-[var(--color-ink-faint)]"> · {d.nome_ficheiro}</span>}
                 </a>
-                <span className="text-[12.5px] text-[var(--color-ink-faint)]">
+                <span className="text-[13px] text-[var(--v2-muted)]">
                   {emCurso(d.etapa)
                     ? "Em análise"
                     : d.estado === "processado"
@@ -629,10 +637,10 @@ export default async function ServicoPage({
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-[var(--color-ink-muted)]">Ainda não carregou documentos deste serviço.</p>
+          <p className={TEXTO_SECUNDARIO}>Ainda não carregou documentos deste serviço.</p>
         )}
         <details>
-          <summary className="cursor-pointer text-sm font-medium text-[var(--color-brand)]">Adicionar fatura ou contrato</summary>
+          <summary className={`${BOTAO_SECUNDARIO} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}>Adicionar fatura ou contrato</summary>
           <div className="mt-4">
             <UploadDocumento contratoId={contrato.id} />
           </div>
@@ -640,24 +648,29 @@ export default async function ServicoPage({
       </section>
 
       {/* ===== Ações ===== */}
-      <section className="flex flex-col gap-3">
-        <p className="text-sm text-[var(--color-ink-muted)]">Está a ter um problema com este serviço?</p>
-        <a href={hrefCaso} className={`${BOTAO_SECUNDARIO} self-start`}>
+      <section className={`${CARTAO_DESTAQUE} flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`}>
+        <div>
+          <p className="text-[16px] font-bold text-[var(--v2-navy)]">Está a ter um problema com este serviço?</p>
+          <p className={TEXTO_SECUNDARIO}>A DoLado trata dele consigo, do início ao fim.</p>
+        </div>
+        <a href={hrefCaso} className={`${BOTAO_SECUNDARIO} shrink-0`}>
           Tratar o meu caso
         </a>
       </section>
 
-      <details className="text-sm">
-        <summary className="cursor-pointer text-[var(--color-status-danger)]">Deixar de acompanhar este serviço</summary>
-        <form action={deixarDeAcompanhar} className="mt-3 flex flex-col gap-3">
+      <details className="rounded-[16px] border border-[var(--v2-line)] bg-white px-5 py-1 text-[14.5px]">
+        <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-[var(--v2-muted)] hover:text-[var(--v2-erro)]">
+          Deixar de acompanhar este serviço
+        </summary>
+        <form action={deixarDeAcompanhar} className="flex flex-col gap-3 pb-4 pt-2">
           <input type="hidden" name="contrato_id" value={contrato.id} />
-          <p className="text-[var(--color-ink-muted)]">
+          <p className="text-[var(--v2-muted)]">
             Deixamos de enviar avisos e apagamos os documentos e os dados deste serviço. Esta ação não pode ser desfeita.
           </p>
-          <label className="flex items-center gap-2 text-[var(--color-ink)]">
-            <input type="checkbox" name="confirmar" value="sim" required /> Quero deixar de acompanhar e apagar os dados
+          <label className="flex items-start gap-3 text-[var(--v2-navy)]">
+            <input type="checkbox" name="confirmar" value="sim" required className={CAIXA_SELECAO} /> Quero deixar de acompanhar e apagar os dados
           </label>
-          <button type="submit" className="self-start text-[var(--color-status-danger)] underline">
+          <button type="submit" className={`${BOTAO_DESTRUTIVO} self-start`}>
             Deixar de acompanhar
           </button>
         </form>

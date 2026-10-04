@@ -1,33 +1,32 @@
 <!DOCTYPE html>
 <html lang="pt-PT">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0; padding:0; background-color:#F7F6F2; font-family:'Inter', Arial, Helvetica, sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7F6F2; padding:32px 16px;">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="color-scheme" content="light"><title>Confirme o seu e-mail — DoLado</title></head>
+<body style="margin:0; padding:0; background-color:#F4F8FC; font-family:'Plus Jakarta Sans', 'Segoe UI', Arial, Helvetica, sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F8FC; padding:32px 12px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; background-color:#FFFFFF; border-radius:12px; border:1px solid #E4E2DB;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
           <tr>
-            <td style="padding:32px 32px 0 32px;">
-              <span style="font-size:20px; font-weight:600; color:#0E6B5C;">DoLado</span>
+            <td style="padding:0 8px 20px 8px;">
+              <a href="https://dolado.pt" style="text-decoration:none;"><img src="https://dolado.pt/brand/dolado-logo-icone.png" width="30" height="30" alt="" style="display:inline-block; vertical-align:middle; border:0;"><span style="display:inline-block; vertical-align:middle; margin-left:8px; font-size:19px; font-weight:800; letter-spacing:-0.02em; color:#0B2545;">DoLado</span></a>
             </td>
           </tr>
           <tr>
-            <td style="padding:24px 32px 8px 32px; color:#171A21; font-size:16px; line-height:1.6;">
+            <td style="background-color:#FFFFFF; border:1px solid #E4EAF1; border-radius:16px; padding:32px 32px 16px 32px; color:#0B2545; font-size:16px; line-height:1.6;">
               <p style="margin:0 0 16px 0;">Olá,</p>
-              <p style="margin:0 0 24px 0;">Para concluir a criação da sua conta na DoLado, confirme o seu endereço de e-mail.</p>
-              <p style="margin:0 0 24px 0;">
-                <a href="{{ .ConfirmationURL }}" style="display:inline-block; background-color:#0E6B5C; color:#FFFFFF; text-decoration:none; font-weight:600; padding:10px 18px; border-radius:8px;">Confirmar o meu e-mail</a>
-              </p>
+              <p style="margin:0 0 16px 0;">Para concluir a criação da sua conta na DoLado, confirme o seu endereço de e-mail.</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px 0;"><tr><td style="border-radius:10px; background-color:#0A7A4F;"><a href="{{ .ConfirmationURL }}" style="display:inline-block; padding:13px 22px; font-size:15px; font-weight:700; color:#FFFFFF; text-decoration:none; border-radius:10px;">Confirmar o meu e-mail</a></td></tr></table>
               {{ with .Data }}{{ if .mostrar_codigo }}
               <p style="margin:0 0 8px 0;">Também pode introduzir este código na página onde criou a conta:</p>
-              <p style="margin:0 0 24px 0; font-size:30px; font-weight:700; letter-spacing:6px; color:#0E6B5C;">{{ $.Token }}</p>
+              <p style="margin:0 0 24px 0; padding:12px 16px; background-color:#F1F9F4; border-radius:12px; font-size:30px; font-weight:800; letter-spacing:6px; color:#08583A; text-align:center;">{{ $.Token }}</p>
               {{ end }}{{ end }}
-              <p style="margin:0 0 16px 0; font-size:14px; color:#5B6270;">Abra a ligação de preferência neste mesmo dispositivo e navegador. A ligação é válida durante um período limitado. Se não criou uma conta na DoLado, pode ignorar este e-mail.</p>
+              <p style="margin:0 0 16px 0; font-size:14px; color:#55657A;">Abra a ligação de preferência neste mesmo dispositivo e navegador. A ligação é válida durante um período limitado. Se não criou uma conta na DoLado, pode ignorar este e-mail.</p>
             </td>
           </tr>
           <tr>
-            <td style="padding:20px 32px; background-color:#EFEDE7; font-size:13px; color:#5B6270; border-radius:0 0 12px 12px;">
-              <a href="https://www.dolado.pt" style="color:#0E6B5C; text-decoration:none;">www.dolado.pt</a> · Dúvidas: <a href="mailto:contacto@dolado.pt" style="color:#0E6B5C; text-decoration:none;">contacto@dolado.pt</a>
+            <td style="padding:20px 8px 0 8px; font-size:13px; line-height:1.6; color:#55657A;">
+              <span style="font-weight:700; color:#0B2545;">DoLado</span> · Do lado dos consumidores.<br>
+              <a href="https://dolado.pt" style="color:#0A7A4F; text-decoration:none;">dolado.pt</a> · Dúvidas: <a href="mailto:contacto@dolado.pt" style="color:#0A7A4F; text-decoration:none;">contacto@dolado.pt</a>
             </td>
           </tr>
         </table>

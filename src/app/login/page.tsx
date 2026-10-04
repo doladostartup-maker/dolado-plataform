@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { ehDestinoSeguro } from "@/lib/destinoAuth";
+import { Aviso } from "@/components/portal/Aviso";
+import { MolduraConta, SeparadorOu } from "@/components/portal/MolduraConta";
+import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAMPO, LIGACAO, ROTULO } from "@/components/portal/ui";
 import { login } from "./actions";
 
 export default async function LoginPage({
@@ -11,69 +14,47 @@ export default async function LoginPage({
   const next = ehDestinoSeguro(params.next) ? params.next : null;
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
-      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-        Entrar
-      </h1>
-
-      {params.info && (
-        <p className="text-sm text-[var(--color-status-pending)]">{params.info}</p>
-      )}
-      {params.erro && (
-        <p className="text-sm text-[var(--color-status-danger)]">{params.erro}</p>
-      )}
+    <MolduraConta
+      titulo="Iniciar sessão"
+      depois={
+        <>
+          Não tem conta?{" "}
+          <Link href={next ? `/registo?next=${encodeURIComponent(next)}` : "/registo"} className={LIGACAO}>
+            Registe-se
+          </Link>
+          {" "}· Para tratar um caso,{" "}
+          <Link href="/tratar-caso" className={LIGACAO}>
+            comece aqui
+          </Link>
+        </>
+      }
+    >
+      {params.info && <Aviso tom="info">{params.info}</Aviso>}
+      {params.erro && <Aviso tom="erro">{params.erro}</Aviso>}
 
       <form action={login} className="flex flex-col gap-4">
         {next && <input type="hidden" name="next" value={next} />}
-        <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+        <label className={ROTULO}>
           E-mail
-          <input
-            name="email"
-            type="email"
-            required
-            className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-hairline-strong)] focus:outline-none"
-          />
+          <input name="email" type="email" autoComplete="email" required className={CAMPO} />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+        <label className={ROTULO}>
           Palavra-passe
-          <input
-            name="password"
-            type="password"
-            required
-            className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-hairline-strong)] focus:outline-none"
-          />
+          <input name="password" type="password" autoComplete="current-password" required className={CAMPO} />
         </label>
-        <button
-          type="submit"
-          className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-        >
+        <button type="submit" className={BOTAO_PRIMARIO}>
           Entrar
         </button>
       </form>
 
-      <div className="flex items-center gap-2 text-xs text-[var(--color-ink-faint)]">
-        <span className="h-px flex-1 bg-[var(--color-hairline)]" />
-        ou
-        <span className="h-px flex-1 bg-[var(--color-hairline)]" />
-      </div>
+      <SeparadorOu />
 
       <a
         href={next ? `/auth/login/google?next=${encodeURIComponent(next)}` : "/auth/login/google"}
-        className="block w-full rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-[18px] py-[10px] text-center text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
+        className={BOTAO_SECUNDARIO}
       >
         Entrar com Google
       </a>
-
-      <p className="text-sm text-[var(--color-ink-muted)]">
-        Não tem conta?{" "}
-        <Link href={next ? `/registo?next=${encodeURIComponent(next)}` : "/registo"} className="text-[var(--color-brand)] underline">
-          Registe-se
-        </Link>
-        {" "}· Para tratar um caso,{" "}
-        <Link href="/tratar-caso" className="text-[var(--color-brand)] underline">
-          comece aqui
-        </Link>
-      </p>
-    </main>
+    </MolduraConta>
   );
 }

@@ -5,11 +5,7 @@ import { useFormStatus } from "react-dom";
 import { MAX_MOTIVO_TEXTO, MOTIVOS_CANCELAMENTO } from "@/lib/gestaoSubscricao";
 import { DIAS_CASOS_GUARDADOS, MESES_ALERTAS_GUARDADOS } from "@/lib/acesso";
 import { cancelarSubscricao } from "../actions";
-
-const BOTAO_PRIMARIO =
-  "min-h-11 rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-60";
-const BOTAO_SECUNDARIO =
-  "min-h-11 rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)] disabled:opacity-60";
+import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAIXA_SELECAO, CAMPO } from "@/components/portal/ui";
 
 function BotaoConfirmar() {
   const { pending } = useFormStatus();
@@ -47,7 +43,7 @@ export function CancelarSubscricao({
   return (
     <form
       action={cancelarSubscricao}
-      className="flex flex-col gap-4 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5"
+      className="flex flex-col gap-4 rounded-[14px] bg-[var(--v2-surface)] p-5"
     >
       <fieldset className={passo === "motivo" ? "flex flex-col gap-3" : "hidden"}>
         <legend className="mb-1 text-[15px] font-semibold text-[var(--color-ink)]">
@@ -57,18 +53,18 @@ export function CancelarSubscricao({
           A resposta é opcional e não afeta o cancelamento.
         </p>
         {MOTIVOS_CANCELAMENTO.map((m) => (
-          <label key={m.codigo} className="flex items-center gap-2 text-sm text-[var(--color-ink)]">
-            <input type="radio" name="motivo" value={m.codigo} />
+          <label key={m.codigo} className="flex min-h-11 items-center gap-3 text-[15px] text-[var(--v2-navy)]">
+            <input type="radio" name="motivo" value={m.codigo} className={CAIXA_SELECAO} />
             {m.texto}
           </label>
         ))}
-        <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+        <label className="flex flex-col gap-1.5 text-[14px] font-semibold text-[var(--v2-navy)]">
           Comentário (opcional)
           <textarea
             name="comentario"
             maxLength={MAX_MOTIVO_TEXTO}
             rows={3}
-            className="w-full rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)] focus:border-[var(--color-hairline-strong)] focus:outline-none"
+            className={CAMPO}
           />
         </label>
         <div className="flex flex-wrap gap-3">

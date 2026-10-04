@@ -17,13 +17,23 @@ import { createClient } from "@/lib/supabase/server";
 import { usarCasoDisponivel } from "../actions";
 import { Etapas } from "../_components/Etapas";
 import { RegistarEvento } from "../_components/RegistarEvento";
+import { Aviso } from "@/components/portal/Aviso";
+import {
+  BOTAO_PRIMARIO,
+  BOTAO_SECUNDARIO as SECUNDARIO,
+  CARTAO,
+  CARTAO_ACAO,
+  CARTAO_INFO,
+  EYEBROW,
+  LIGACAO,
+  METADADOS,
+  TEXTO_SECUNDARIO,
+  TITULO_CARTAO,
+  TITULO_PAGINA,
+} from "@/components/portal/ui";
 
-const BOTAO =
-  "inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-[14px] font-semibold text-white hover:bg-[var(--color-brand-hover)]";
-const BOTAO_SECUNDARIO =
-  "inline-flex min-h-11 w-full items-center justify-center rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-white px-[18px] py-2.5 text-[14px] font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]";
-const CAIXA_INFO =
-  "rounded-[var(--radius-card)] border-l-[3px] border-[var(--color-brand)] bg-[var(--color-brand-wash)] px-5 py-4 text-[13.5px] leading-relaxed text-[var(--color-ink)]";
+const BOTAO = `${BOTAO_PRIMARIO} w-full`;
+const BOTAO_SECUNDARIO = `${SECUNDARIO} w-full`;
 
 const CTA: Record<ModalidadeCaso, string> = {
   avulso: "Escolher Avulso",
@@ -95,38 +105,38 @@ export default async function ModalidadePage({
 
       <div className="flex flex-col gap-5">
         <div>
-          <h1 className="mb-1 text-[22px] font-bold text-[var(--color-ink)]">Como quer que a DoLado trate o seu caso?</h1>
-          <p className="text-[14px] leading-relaxed text-[var(--color-ink-muted)]">
+          <h1 className={`${TITULO_PAGINA} mb-2`}>Como quer que a DoLado trate o seu caso?</h1>
+          <p className={TEXTO_SECUNDARIO}>
             O seu pedido está guardado. Só começamos a tratar o caso depois de o pagamento ser confirmado.
           </p>
         </div>
 
-        <div className="rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-white p-5 text-[14px]">
-          <p className="mb-1 text-[12px] font-semibold uppercase tracking-wide text-[var(--color-brand)]">O seu pedido</p>
-          <p className="font-semibold text-[var(--color-ink)]">
+        <div className={`${CARTAO_INFO} flex flex-col gap-1`}>
+          <p className={`${EYEBROW} mb-1`}>O seu pedido</p>
+          <p className={TITULO_CARTAO}>
             {pedido.empresa} · {pedido.sector}
           </p>
-          <p className="text-[var(--color-ink-muted)]">{pedido.problema_tipo}</p>
-          {pedido.descricao && <p className="mt-2 line-clamp-3 text-[13.5px] text-[var(--color-ink-muted)]">{pedido.descricao}</p>}
-          <Link href="/tratar-caso" className="mt-2 inline-block text-[13px] font-medium text-[var(--color-brand)] underline">
+          <p className={TEXTO_SECUNDARIO}>{pedido.problema_tipo}</p>
+          {pedido.descricao && <p className={`${METADADOS} mt-1 line-clamp-3`}>{pedido.descricao}</p>}
+          <Link href="/tratar-caso" className={`${LIGACAO} mt-1 self-start text-[14px]`}>
             Alterar o pedido
           </Link>
         </div>
 
         {params.cancelado === "1" && (
-          <div className={CAIXA_INFO}>
+          <Aviso tom="info">
             O pagamento não foi concluído e nada foi cobrado. O seu pedido continua guardado: pode escolher a modalidade e
             pagar quando quiser.
-          </div>
+          </Aviso>
         )}
         {params.erro === "sem-casos" && (
-          <div className={CAIXA_INFO}>Não tem casos disponíveis neste momento. Escolha uma das modalidades abaixo.</div>
+          <Aviso tom="info">Não tem casos disponíveis neste momento. Escolha uma das modalidades abaixo.</Aviso>
         )}
 
         {opcoes.usarCasoDisponivel ? (
-          <div className="rounded-[var(--radius-card)] border-2 border-[var(--color-brand)] bg-white p-5 shadow-[var(--shadow-md)]">
-            <p className="text-[15px] font-semibold text-[var(--color-ink)]">Usar um dos seus casos disponíveis</p>
-            <p className="mb-4 mt-1 text-[13.5px] leading-relaxed text-[var(--color-ink-muted)]">
+          <div className={CARTAO_ACAO}>
+            <p className={TITULO_CARTAO}>Usar um dos seus casos disponíveis</p>
+            <p className={`${TEXTO_SECUNDARIO} mb-4 mt-1`}>
               {textoCasosDisponiveis(acesso.creditos)} na sua conta. Este pedido usa um deles, sem novo pagamento.
             </p>
             <form action={usarCasoDisponivel}>
@@ -144,18 +154,14 @@ export default async function ModalidadePage({
               return (
                 <div
                   key={id}
-                  className={`flex flex-col rounded-[var(--radius-card)] bg-white p-5 ${
-                    destaque
-                      ? "border-2 border-[var(--color-brand)] shadow-[var(--shadow-md)]"
-                      : "border border-[var(--color-hairline)] shadow-[var(--shadow-subtle)]"
-                  }`}
+                  className={`flex flex-col ${destaque ? CARTAO_ACAO : CARTAO}`}
                 >
-                  <p className="text-[15px] font-semibold text-[var(--color-ink)]">{plano.nome}</p>
-                  <p className="mt-1 text-[20px] font-semibold text-[var(--color-ink)]">{precoComUnidade(id)}</p>
-                  <p className="mb-3 text-[12px] text-[var(--color-ink-faint)]">
+                  <p className={TITULO_CARTAO}>{plano.nome}</p>
+                  <p className="mt-1 text-[24px] font-extrabold tracking-[-0.02em] text-[var(--v2-navy)]">{precoComUnidade(id)}</p>
+                  <p className={`${METADADOS} mb-3`}>
                     {plano.subscricao ? `Subscrição mensal · ${IVA_INCLUIDO}` : `Pagamento único · ${IVA_INCLUIDO}`}
                   </p>
-                  <p className="mb-4 text-[13px] leading-relaxed text-[var(--color-ink-muted)]">{plano.descricaoCurta}</p>
+                  <p className={`${TEXTO_SECUNDARIO} mb-5`}>{plano.descricaoCurta}</p>
                   <BotaoComprar
                     plano={id}
                     fluxo="pedido_caso"
@@ -173,7 +179,7 @@ export default async function ModalidadePage({
         )}
 
         {acesso.temProtecao && !opcoes.usarCasoDisponivel && (
-          <p className="text-[13px] leading-relaxed text-[var(--color-ink-muted)]">
+          <p className={METADADOS}>
             A sua subscrição atual não tem casos disponíveis neste momento. Pode tratar este caso com um caso{" "}
             {PLANOS.avulso.nome}.
           </p>

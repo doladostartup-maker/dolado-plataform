@@ -1,5 +1,6 @@
 import { ROTULO_SETOR, SETORES_CONTRATO } from "@/lib/monitor/contratos";
 import { INPUT_CLASS } from "./estilos";
+import { AJUDA_CAMPO, ROTULO } from "@/components/portal/ui";
 
 // Campos do contrato que o cliente pode indicar ou corrigir (formulário
 // "Adicionar contrato" e "Corrigir dados"). Valores em euros escritos como
@@ -28,10 +29,10 @@ export type ValoresContrato = {
 
 function Campo({ label, ajuda, children }: { label: string; ajuda?: string; children: React.ReactNode }) {
   return (
-    <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+    <label className={ROTULO}>
       {label}
       {children}
-      {ajuda && <span className="text-[12.5px] text-[var(--color-ink-faint)]">{ajuda}</span>}
+      {ajuda && <span className={AJUDA_CAMPO}>{ajuda}</span>}
     </label>
   );
 }
@@ -43,7 +44,7 @@ function euros(cents: number | null | undefined) {
 export function CamposContrato({ valores = {}, setorObrigatorio = false }: { valores?: ValoresContrato; setorObrigatorio?: boolean }) {
   const setores = SETORES_CONTRATO.filter((s) => s !== "nao_indicado" || !setorObrigatorio);
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-5 sm:grid-cols-2">
       <Campo label="Fornecedor">
         <input name="fornecedor" required={setorObrigatorio} defaultValue={valores.fornecedor ?? ""} placeholder="ex.: MEO, NOS, Vodafone, EDP, Galp…" className={INPUT_CLASS} />
       </Campo>

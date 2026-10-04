@@ -10,6 +10,7 @@ import { IVA_INCLUIDO, PLANOS, precoComUnidade } from "@/lib/planos";
 import { MARKETING_SITE_URL } from "@/lib/site";
 import { createClient } from "@/lib/supabase/client";
 import { guardarPedido, type EstadoPedidoForm } from "../actions";
+import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAMPO } from "@/components/portal/ui";
 
 // Formulário "Tratar o meu caso". Guarda um PEDIDO (pedidos_caso), nunca um
 // caso: o caso só existe depois de escolhida a modalidade e confirmado o
@@ -20,34 +21,21 @@ const NOMES_PASSO = ["Empresa", "Problema", "Contexto", "Documentos", "Os seus d
 const TIPOS_ANEXO_ACEITOS = "application/pdf,image/jpeg,image/png,image/heic,image/heif";
 const TAMANHO_MAXIMO_ANEXO = 10 * 1024 * 1024;
 
-// Cores exactas do modelo aprovado — não usar os tokens globais de estado
-// (que têm um vermelho diferente), só dentro deste componente.
+// Cores do Design System V2 (mesmos valores dos tokens --v2-* de
+// globals.css), só dentro deste componente.
 const COR = {
-  brand: "#0E6B5C",
-  brandHover: "#0A5348",
-  brandWash: "#E3F0EC",
+  brand: "#0A7A4F",
+  brandHover: "#08643F",
+  brandWash: "#F1F9F4",
   erro: "#B42318",
-  erroWash: "#FDECEA",
-  sucesso: "#1E8E5A",
-  sucessoWash: "#E4F5EC",
-  ink: "#171A21",
-  inkMuted: "#5B6270",
-  hairline: "#E4E2DB",
-  hairlineStrong: "#CFCCC2",
-  surfaceSunken: "#EFEDE7",
+  ink: "#0B2545",
+  inkMuted: "#55657A",
+  hairline: "#E4EAF1",
+  hairlineStrong: "#CBD5E1",
+  surfaceSunken: "#F7F9FC",
 };
 
-const INPUT_BASE: React.CSSProperties = {
-  width: "100%",
-  borderRadius: 6,
-  border: `1px solid ${COR.hairlineStrong}`,
-  backgroundColor: "#FFFFFF",
-  padding: "12px 14px",
-  fontSize: 16,
-  color: COR.ink,
-};
-
-const LABEL_CLASS = "mb-1.5 block text-[14px] font-medium" as const;
+const LABEL_CLASS = "mb-1.5 block text-[14px] font-semibold" as const;
 
 function Campo({
   label,
@@ -62,7 +50,7 @@ function Campo({
 }) {
   return (
     <div className="mb-4">
-      <label htmlFor={htmlFor} className={LABEL_CLASS} style={{ color: COR.inkMuted }}>
+      <label htmlFor={htmlFor} className={LABEL_CLASS} style={{ color: COR.ink }}>
         {label}
       </label>
       {children}
@@ -88,7 +76,8 @@ function BotaoEscolha({
     <button
       type="button"
       onClick={onClick}
-      className="min-h-11 w-full rounded-[8px] border px-4 py-3 text-left text-[15px] font-medium transition"
+      aria-pressed={selecionado}
+      className="min-h-12 w-full rounded-[12px] border px-4 py-3 text-left text-[15px] font-semibold transition-colors"
       style={
         selecionado
           ? { borderColor: COR.brand, backgroundColor: COR.brandWash, color: COR.brandHover }
@@ -99,27 +88,6 @@ function BotaoEscolha({
     </button>
   );
 }
-
-const BOTAO_PRIMARIO_STYLE: React.CSSProperties = {
-  backgroundColor: COR.brand,
-  color: "#FFFFFF",
-  padding: "13px 22px",
-  borderRadius: 8,
-  fontWeight: 600,
-  fontSize: 15,
-  minHeight: 44,
-};
-
-const BOTAO_SECUNDARIO_STYLE: React.CSSProperties = {
-  backgroundColor: "#FFFFFF",
-  color: COR.ink,
-  padding: "13px 22px",
-  borderRadius: 8,
-  fontWeight: 600,
-  fontSize: 15,
-  minHeight: 44,
-  border: `1px solid ${COR.hairline}`,
-};
 
 type ErrosPasso = Partial<
   Record<"sector" | "empresa" | "problemaTipo" | "momentoCliente" | "nome" | "telefone" | "autorizacao", string>
@@ -253,9 +221,9 @@ export function FormularioCaso({
   }
 
   return (
-    <div className="rounded-[16px] bg-white p-6 shadow-[0_1px_2px_rgba(23,26,33,0.06),0_1px_1px_rgba(23,26,33,0.04)] sm:p-8">
+    <div className="rounded-[16px] border border-[var(--v2-line)] bg-white p-5 sm:p-8">
       <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h1 className="text-[22px] font-bold" style={{ color: COR.ink }}>
+        <h1 className="text-[26px] font-extrabold tracking-[-0.025em] sm:text-[30px]" style={{ color: COR.ink }}>
           Tratar o meu caso
         </h1>
         <span className="text-[13px]" style={{ color: COR.inkMuted }}>
@@ -265,8 +233,8 @@ export function FormularioCaso({
 
       {/* Transparência: o pagamento é no fim, mas os preços estão à vista desde o início. */}
       <div
-        className="mb-6 rounded-[8px] border-l-[3px] px-4 py-3 text-[14px] leading-relaxed"
-        style={{ backgroundColor: COR.surfaceSunken, borderLeftColor: COR.brand, color: COR.inkMuted }}
+        className="mb-6 rounded-[14px] border border-[#D6E4F5] bg-[var(--v2-blue-bg)] px-4 py-3.5 text-[14px] leading-relaxed"
+        style={{ color: COR.inkMuted }}
       >
         <p style={{ color: COR.ink }} className="font-medium">
           No final, escolhe como quer que a DoLado trate o seu caso.
@@ -274,7 +242,7 @@ export function FormularioCaso({
         <p>
           {PLANOS.avulso.nome}: {precoComUnidade("avulso")} · {PLANOS.caso_protecao.nome}: {precoComUnidade("caso_protecao")}{" "}
           ({IVA_INCLUIDO}). Só paga depois de rever a modalidade escolhida.{" "}
-          <Link href={`${MARKETING_SITE_URL}/#precario`} target="_blank" rel="noopener" style={{ color: COR.brand }} className="underline">
+          <Link href={`${MARKETING_SITE_URL}/precario`} target="_blank" rel="noopener" prefetch={false} style={{ color: COR.brand }} className="font-semibold underline underline-offset-4">
             Ver preçário
           </Link>
         </p>
@@ -286,7 +254,7 @@ export function FormularioCaso({
           style={{ width: `${(step / 5) * 100}%`, backgroundColor: COR.brand }}
         />
       </div>
-      <div className="mb-5 text-[12px] font-semibold uppercase tracking-wide" style={{ color: COR.brand }}>
+      <div className="mb-5 text-[12px] font-bold uppercase tracking-[0.08em]" style={{ color: COR.brand }}>
         Passo {step} de 5 · {NOMES_PASSO[step - 1]}
       </div>
 
@@ -309,7 +277,7 @@ export function FormularioCaso({
 
         {step === 1 && (
           <section>
-            <h3 className="mb-4 text-[19px] font-bold" style={{ color: COR.ink }}>
+            <h3 className="mb-4 text-[20px] font-bold tracking-[-0.01em]" style={{ color: COR.ink }}>
               Com que tipo de empresa é o problema?
             </h3>
             <div className="mb-5 flex flex-col gap-2.5">
@@ -325,14 +293,14 @@ export function FormularioCaso({
             <Campo label="Qual é a empresa?" htmlFor="empresa-field" erro={erros.empresa}>
               <input
                 id="empresa-field"
-                style={INPUT_BASE}
+                className={CAMPO}
                 value={empresa}
                 onChange={(e) => setEmpresa(e.target.value)}
                 placeholder="Ex.: MEO, NOS, Vodafone, EDP, Galp…"
               />
             </Campo>
             <div className="mt-3 flex justify-end">
-              <button type="button" onClick={continuarPasso1} style={BOTAO_PRIMARIO_STYLE}>
+              <button type="button" onClick={continuarPasso1} className={BOTAO_PRIMARIO}>
                 Continuar
               </button>
             </div>
@@ -341,7 +309,7 @@ export function FormularioCaso({
 
         {step === 2 && (
           <section>
-            <h3 className="mb-4 text-[19px] font-bold" style={{ color: COR.ink }}>
+            <h3 className="mb-4 text-[20px] font-bold tracking-[-0.01em]" style={{ color: COR.ink }}>
               O que aconteceu?
             </h3>
             <div className="mb-2 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -359,17 +327,17 @@ export function FormularioCaso({
                 id="descricao-field"
                 rows={4}
                 maxLength={500}
-                style={INPUT_BASE}
+                className={CAMPO}
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
                 placeholder="Por exemplo: em agosto a mensalidade subiu de 35 € para 42 € e não recebi nenhum aviso."
               />
             </Campo>
             <div className="mt-3 flex justify-between gap-3">
-              <button type="button" onClick={() => irPara(1)} style={BOTAO_SECUNDARIO_STYLE}>
+              <button type="button" onClick={() => irPara(1)} className={BOTAO_SECUNDARIO}>
                 ← Voltar
               </button>
-              <button type="button" onClick={continuarPasso2} style={BOTAO_PRIMARIO_STYLE}>
+              <button type="button" onClick={continuarPasso2} className={BOTAO_PRIMARIO}>
                 Continuar
               </button>
             </div>
@@ -378,7 +346,7 @@ export function FormularioCaso({
 
         {step === 3 && (
           <section>
-            <h3 className="mb-1 text-[19px] font-bold" style={{ color: COR.ink }}>
+            <h3 className="mb-1 text-[20px] font-bold tracking-[-0.01em]" style={{ color: COR.ink }}>
               Já reclamou junto da empresa?
             </h3>
             <p className="mb-4 text-[14px]" style={{ color: COR.inkMuted }}>
@@ -395,10 +363,10 @@ export function FormularioCaso({
               </p>
             )}
             <div className="mt-3 flex justify-between gap-3">
-              <button type="button" onClick={() => irPara(2)} style={BOTAO_SECUNDARIO_STYLE}>
+              <button type="button" onClick={() => irPara(2)} className={BOTAO_SECUNDARIO}>
                 ← Voltar
               </button>
-              <button type="button" onClick={continuarPasso3} style={BOTAO_PRIMARIO_STYLE}>
+              <button type="button" onClick={continuarPasso3} className={BOTAO_PRIMARIO}>
                 Continuar
               </button>
             </div>
@@ -407,7 +375,7 @@ export function FormularioCaso({
 
         {step === 4 && (
           <section>
-            <h3 className="mb-1 text-[19px] font-bold" style={{ color: COR.ink }}>
+            <h3 className="mb-1 text-[20px] font-bold tracking-[-0.01em]" style={{ color: COR.ink }}>
               Tem algum documento?
             </h3>
             <p className="mb-4 text-[14px]" style={{ color: COR.inkMuted }}>
@@ -419,7 +387,7 @@ export function FormularioCaso({
                 type="button"
                 onClick={() => inputFicheiroRef.current?.click()}
                 disabled={aCarregarAnexo}
-                className="min-h-11 flex w-full flex-col items-center gap-1 rounded-[8px] border border-dashed px-4 py-6 text-center disabled:cursor-not-allowed disabled:opacity-60"
+                className="min-h-11 flex w-full flex-col items-center gap-1 rounded-[14px] border-2 border-dashed px-4 py-7 text-center transition-colors hover:border-[var(--v2-green)] disabled:cursor-not-allowed disabled:opacity-60"
                 style={{ borderColor: COR.hairlineStrong }}
               >
                 <span className="text-[15px] font-medium" style={{ color: COR.ink }}>
@@ -442,7 +410,7 @@ export function FormularioCaso({
             />
             {anexo && (
               <div
-                className="flex items-center justify-between gap-3 rounded-[6px] border px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-[12px] border px-4 py-3"
                 style={{ borderColor: COR.hairline, backgroundColor: COR.surfaceSunken }}
               >
                 <span className="truncate text-[14px]" style={{ color: COR.ink }}>
@@ -460,10 +428,10 @@ export function FormularioCaso({
             )}
 
             <div className="mt-4 flex justify-between gap-3">
-              <button type="button" onClick={() => irPara(3)} style={BOTAO_SECUNDARIO_STYLE}>
+              <button type="button" onClick={() => irPara(3)} className={BOTAO_SECUNDARIO}>
                 ← Voltar
               </button>
-              <button type="button" onClick={() => irPara(5)} style={BOTAO_PRIMARIO_STYLE}>
+              <button type="button" onClick={() => irPara(5)} className={BOTAO_PRIMARIO}>
                 Continuar
               </button>
             </div>
@@ -472,7 +440,7 @@ export function FormularioCaso({
 
         {step === 5 && (
           <section>
-            <h3 className="mb-1 text-[19px] font-bold" style={{ color: COR.ink }}>
+            <h3 className="mb-1 text-[20px] font-bold tracking-[-0.01em]" style={{ color: COR.ink }}>
               Como falamos consigo?
             </h3>
             <p className="mb-4 text-[14px]" style={{ color: COR.inkMuted }}>
@@ -485,7 +453,7 @@ export function FormularioCaso({
               <input
                 id="nome-field"
                 name="nome"
-                style={INPUT_BASE}
+                className={CAMPO}
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
               />
@@ -496,7 +464,7 @@ export function FormularioCaso({
                 id="telefone-field-guiado"
                 type="tel"
                 name="telefone"
-                style={INPUT_BASE}
+                className={CAMPO}
                 value={telefone}
                 onChange={(e) => setTelefone(e.target.value)}
               />
@@ -515,7 +483,7 @@ export function FormularioCaso({
                 <span>
                   Peço à DoLado que analise esta reclamação e confirmo que a informação é verdadeira.
                   Li a{" "}
-                  <Link href="/privacidade" target="_blank" rel="noopener" style={{ color: COR.brand }} className="underline">
+                  <Link href="/privacidade" target="_blank" rel="noopener" style={{ color: COR.brand }} className="font-semibold underline underline-offset-4">
                     Política de Privacidade
                   </Link>
                   . Nada é enviado à empresa sem a minha autorização expressa.
@@ -548,10 +516,10 @@ export function FormularioCaso({
             )}
 
             <div className="mt-2 flex justify-between gap-3">
-              <button type="button" onClick={() => irPara(4)} disabled={pending} style={BOTAO_SECUNDARIO_STYLE}>
+              <button type="button" onClick={() => irPara(4)} disabled={pending} className={BOTAO_SECUNDARIO}>
                 ← Voltar
               </button>
-              <button type="submit" disabled={pending} style={BOTAO_PRIMARIO_STYLE}>
+              <button type="submit" disabled={pending} className={BOTAO_PRIMARIO}>
                 {pending ? "A guardar…" : "Continuar"}
               </button>
             </div>

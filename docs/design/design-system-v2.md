@@ -2,7 +2,7 @@
 
 Documento de referência aprovado por Thiago a 04/10/2026. Nasce da nova direção visual da homepage e substitui gradualmente a linguagem visual pública anterior.
 
-> **Âmbito curto:** só páginas públicas. O portal, o backoffice, a autenticação, o checkout/Stripe e os e-mails continuam com o guia de marca anterior ([brand-guide.md](brand-guide.md)). Design não altera comportamento.
+> **Âmbito curto:** páginas públicas e, desde 04/10/2026, o portal do cliente, as páginas de conta/autenticação e o fluxo "Tratar o meu caso" (ver "Portal do cliente" abaixo). Os e-mails transacionais ao cliente também (ver a linha "E-mails" na tabela abaixo). O backoffice e o Stripe Checkout (página alojada pelo Stripe) continuam com o guia de marca anterior ([brand-guide.md](brand-guide.md)). Design não altera comportamento.
 
 ## Implementação no código
 
@@ -45,6 +45,30 @@ Uma página V2 nova: `<PaginaV2 eventoCtaNavbar="click_…">` + `SectionV2`/`Sec
 
 Links antigos `/#precario` (portal, `cancel_url` do Stripe, `/criar-conta`, e-mails já enviados) continuam a funcionar: a homepage troca o fragmento por `/precario` no browser. Quando se mexer nesses ficheiros, pode trocar-se o link diretamente para `/precario`. Todas as páginas públicas estão em V2 (04/10/2026); o `SiteHeader` antigo foi removido.
 
+### Portal do cliente (04/10/2026)
+
+O portal (`/portal/*`) aplica o V2 como aplicação de uso recorrente: mesmos tokens, fonte e ícones, componentes mais compactos (botões de 44px, títulos de página ~30px, cartões de 16px de raio, sem sombra). Não usa `PaginaV2` nem as secções de marketing.
+
+| Peça | Onde |
+|---|---|
+| Tokens: `.tema-portal` (layout do portal) ativa os `--v2-*` e traduz os tokens antigos (`--color-*`, `--radius-*`, `--shadow-*`) para os V2 — componentes do portal ainda não migrados ficam coerentes sem mudar lógica | `src/app/globals.css` |
+| Moldura: barra lateral (computador) / cabeçalho com menu (telemóvel), `Logotipo` V2, fonte de `marketing-v2/fonte.ts`, ligação "Saltar para o conteúdo" | `src/app/portal/layout.tsx`, `_components/NavegacaoPortal.tsx`, `_components/MenuMovel.tsx` |
+| Classes: botões (primário, secundário, fantasma, destrutivo), ligações, cartões (normal, destaque, ação, informativo, sucesso, ligação), tipografia, campos | `src/components/portal/ui.ts` |
+| Cabeçalho de página (voltar, contexto, título, estado, uma ação) e título de secção | `src/components/portal/Cabecalho.tsx` |
+| Avisos de retorno (info, sucesso, atenção, erro) | `src/components/portal/Aviso.tsx` |
+| Badge de estado (ação, em curso, espera, concluído, neutro) | `src/components/portal/Etiqueta.tsx` |
+| Estado vazio útil (o que significa + próxima ação) | `src/components/portal/EstadoVazio.tsx` |
+| Linha temporal vertical (caso) | `src/components/portal/LinhaTemporal.tsx` |
+| Lista rótulo/valor | `src/components/portal/Dados.tsx` |
+| Ícones do portal (mesmo sistema linear) | `src/components/portal/Icones.tsx` |
+| Páginas de revisão do texto sem login (`/texto/rever`, `/texto/alterar`) e modal de confirmação da compra (`ConfirmarCompra`, que traz o próprio tema e fonte: mesmo aspeto no portal, em `/comprar` e em `/tratar-caso`) e a página `/comprar` | `src/app/texto/`, `src/components/compra/ConfirmarCompra.tsx`, `src/app/comprar/page.tsx` |
+| Páginas de conta (`/entrar`, `/login`, `/registo`, `/confirmar-email`, `/criar-conta`, `/associar-compra`, `/conta`): moldura com logótipo, cartão central e ligações legais | `src/components/portal/MolduraConta.tsx` |
+| Fluxo "Tratar o meu caso" (`/tratar-caso`, `/conta`, `/modalidade`, `/recebido`): layout com `.tema-portal` e Logotipo V2, indicador de etapas, formulário guiado com as cores V2 e as classes partilhadas | `src/app/tratar-caso/` |
+| E-mails transacionais ao cliente: moldura V2 (`emailV2`, `botaoEmail`, `caixaEmail`, `tabelaEmail`; logótipo em PNG `public/brand/dolado-logo-icone.png`, sem fontes externas). O ficheiro existe em duas cópias iguais (a das Edge Functions em `supabase/functions/_shared/molduraEmail.ts`); o teste falha se divergirem. O template de confirmação da Supabase (`supabase/templates/confirmacao.html`) segue o mesmo desenho e tem de ser colado no Dashboard. Os avisos internos ao admin ficam em HTML simples | `src/lib/email/molduraEmail.ts` |
+| Estado do caso em linguagem humana (rótulo, explicação, próximo passo, se pede ação) e eventos vistos pelo cliente — só apresentação | `src/lib/portal/estadoCaso.ts` (testes em `estadoCaso.test.mjs`) |
+
+Regras do portal: o painel mostra primeiro o que precisa do cliente, depois os casos em curso, depois a Proteção e o plano; uma só ação primária por bloco; estados internos nunca aparecem em bruto; sem emojis nem símbolos (✓ ⚠ ℹ) — usar os ícones; nada depende de hover; cor só com significado.
+
 ---
 
 ## 1. Objetivo
@@ -70,7 +94,7 @@ Pode também ser usado em páginas públicas de parceiros, campanhas, páginas p
 
 ## 3. O que NÃO está incluído neste momento
 
-Não aplicar automaticamente a: Portal do cliente, Backoffice, autenticação, checkout, fluxos Stripe, páginas internas, ferramentas operacionais, interfaces de administração, e-mails transacionais.
+Não aplicar automaticamente a: Backoffice, Stripe Checkout, páginas internas, ferramentas operacionais, interfaces de administração.
 
 Essas áreas podem receber no futuro uma evolução visual própria. Não alterar o produto interno apenas para uniformizar com o site público.
 

@@ -7,7 +7,12 @@ import { emCurso } from "@/lib/monitor/processamento";
 import { listaFornecedores } from "@/lib/monitor/servidor";
 import { ProgressoDocumento } from "./_components/ProgressoDocumento";
 import { UploadDocumento } from "./_components/UploadDocumento";
-import { CARTAO, TITULO_SECCAO } from "./_components/estilos";
+import { Aviso, type TomAviso } from "@/components/portal/Aviso";
+import { CabecalhoPagina, TituloSeccao } from "@/components/portal/Cabecalho";
+import { EstadoVazio } from "@/components/portal/EstadoVazio";
+import { Etiqueta } from "@/components/portal/Etiqueta";
+import { IconeCalendario, IconeEscudo, IconeFatura, IconeSeta } from "@/components/portal/Icones";
+import { BOTAO_PRIMARIO, CARTAO, CARTAO_ACAO, CARTAO_LIGACAO, LIGACAO, METADADOS, TEXTO_SECUNDARIO, TITULO_CARTAO } from "@/components/portal/ui";
 
 function hojeLisboa() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(new Date());
@@ -87,96 +92,152 @@ export default async function ContratosPage({
   const chaveMensagem = params.removido ? "removido" : params.aviso ?? params.documento;
   const mensagem = chaveMensagem ? MENSAGENS[chaveMensagem] : undefined;
 
+  const servicos = contratos ?? [];
+  const proximas = servicos
+    .map((c) => ({ c, p: proximaData(c, hoje) }))
+    .filter((x) => x.p)
+    .sort((a, b) => a.p!.dias - b.p!.dias);
+  const tomMensagem: Record<"ok" | "info" | "erro", TomAviso> = { ok: "sucesso", info: "info", erro: "erro" };
+
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">Os meus serviços</h1>
-        <p className="max-w-[62ch] text-sm leading-relaxed text-[var(--color-ink-muted)]">
-          Basta uma fatura para começar: acompanhamos a evolução de cada serviço mês a mês e assinalamos alterações. Com o
-          contrato, verificamos também se o que é faturado corresponde ao que foi contratado e avisamo-lo por e-mail antes do
-          fim da fidelização e das promoções.
-        </p>
-      </div>
+    <div className="flex flex-col gap-8">
+      <CabecalhoPagina
+        titulo="Proteção"
+        estado={<Etiqueta tom="concluido">Proteção ativa</Etiqueta>}
+        descricao="A DoLado acompanha as faturas dos seus serviços, assinala o que muda e avisa-o por e-mail antes do fim da fidelização e das promoções — para detetar um problema cedo e o tratar, se for preciso."
+      />
 
-      {mensagem && (
-        <p className={`text-sm ${mensagem.tom === "ok" ? "text-[var(--color-status-success)]" : "text-[var(--color-ink-muted)]"}`}>{mensagem.texto}</p>
-      )}
-      {params.erro && <p className="text-sm text-[var(--color-status-danger)]">{params.erro}</p>}
+      {mensagem && <Aviso tom={tomMensagem[mensagem.tom]}>{mensagem.texto}</Aviso>}
+      {params.erro && <Aviso tom="erro">{params.erro}</Aviso>}
 
-      {(porAssociar ?? []).map((d) => (
-        <div key={d.id} role="alert" className={`${CARTAO} flex max-w-xl flex-col gap-2 border-[var(--color-status-urgent)]`}>
-          <p className="text-sm font-semibold text-[var(--color-ink)]">
-            {d.associacao_estado === "conflito"
-              ? `${d.tipo === "contrato" ? "Um contrato" : "Uma fatura"} que carregou parece pertencer a outro serviço ou cliente.`
-              : `Não conseguimos confirmar a que serviço pertence ${d.tipo === "contrato" ? "o contrato" : "a fatura"} que carregou.`}
-          </p>
-          <Link href={`/portal/contratos/documentos/${d.id}`} className="self-start text-sm font-medium text-[var(--color-brand)] underline">
-            Rever dados
-          </Link>
-        </div>
-      ))}
-
-      {(contratos ?? []).length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {(contratos ?? []).map((c) => {
-            const pendentes = pendentesPorContrato.get(c.id) ?? 0;
-            return (
-              <Link key={c.id} href={`/portal/contratos/${c.id}`} className={`${CARTAO} flex flex-col gap-1.5 transition hover:border-[var(--color-brand)]`}>
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-[15px] font-semibold text-[var(--color-ink)]">{nomeComercial(c.fornecedor, fornecedores) ?? "Fornecedor por confirmar"}</p>
-                  {pendentes > 0 && (
-                    <span className="shrink-0 rounded-[var(--radius-pill)] bg-[var(--color-brand-wash)] px-2 py-0.5 text-[11px] font-semibold text-[var(--color-brand)]">
-                      {pendentes === 1 ? "1 dado por confirmar" : `${pendentes} dados por confirmar`}
-                    </span>
-                  )}
-                </div>
-                <p className="text-[13px] text-[var(--color-ink-faint)]">
-                  {ROTULO_SETOR[c.setor as SetorContratoMonitor] ?? c.setor}
-                  {referencia.has(c.id) ? ` · ${referencia.get(c.id)}` : ""} · {comContrato.has(c.id) ? "Com contrato" : "Contrato não adicionado"}
+      {(porAssociar ?? []).length > 0 && (
+        <section aria-labelledby="atencao-protecao" className="flex flex-col gap-3">
+          <TituloSeccao id="atencao-protecao" titulo="Precisa da sua atenção" />
+          {(porAssociar ?? []).map((d) => (
+            <div key={d.id} className={`${CARTAO_ACAO} flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`}>
+              <div className="min-w-0">
+                <p className={TITULO_CARTAO}>
+                  {d.associacao_estado === "conflito"
+                    ? `${d.tipo === "contrato" ? "Um contrato" : "Uma fatura"} que carregou parece pertencer a outro serviço ou cliente.`
+                    : `Não conseguimos confirmar a que serviço pertence ${d.tipo === "contrato" ? "o contrato" : "a fatura"} que carregou.`}
                 </p>
-                {ultimaFatura.has(c.id) && (
-                  <p className="text-sm text-[var(--color-ink)]">
-                    Última fatura: {formatarEurosCents(ultimaFatura.get(c.id)!.totalCents)}{" "}
-                    <span className="text-[var(--color-ink-faint)]">({mesAnoTexto(ultimaFatura.get(c.id)!.data || null)})</span>
-                  </p>
-                )}
-                <p className="text-sm text-[var(--color-ink-muted)]">{textoProximaData(proximaData(c, hoje))}</p>
+                <p className={TEXTO_SECUNDARIO}>Não alterámos nada até decidir.</p>
+              </div>
+              <Link href={`/portal/contratos/documentos/${d.id}`} className={`${BOTAO_PRIMARIO} shrink-0`}>
+                Rever dados
               </Link>
-            );
-          })}
-        </div>
+            </div>
+          ))}
+        </section>
       )}
 
       {emAnalise.map((d) => (
-        <div key={d.id} className="max-w-xl">
+        <div key={d.id} className="max-w-2xl">
           <ProgressoDocumento documentoId={d.id} inicial={d} />
         </div>
       ))}
 
       {aVerificar.length > 0 && (
-        <p className="text-sm text-[var(--color-ink-muted)]">
+        <Aviso tom="info">
           {aVerificar.length === 1 ? "1 documento está" : `${aVerificar.length} documentos estão`} a ser verificados pela DoLado.
           Os dados aparecem aqui quando estiverem prontos.
-        </p>
+        </Aviso>
       )}
 
-      <div id="acrescentar" className={`${CARTAO} max-w-xl scroll-mt-24`}>
-        <h2 className={`${TITULO_SECCAO} mb-1`}>{(contratos ?? []).length ? "Adicionar fatura ou contrato" : "Adicione a sua fatura"}</h2>
-        <p className="mb-4 text-sm text-[var(--color-ink-muted)]">
-          {(contratos ?? []).length
-            ? "Se o documento for de um serviço que já acompanhamos (mesmo titular e mesma conta ou número de serviço), juntamo-lo a esse serviço. Se não tivermos a certeza, perguntamos."
-            : "Começamos a acompanhar a evolução deste serviço. O contrato é opcional: pode adicioná-lo mais tarde."}
-        </p>
-        <UploadDocumento />
-      </div>
+      <section aria-labelledby="servicos" className="flex flex-col gap-3">
+        <TituloSeccao
+          id="servicos"
+          titulo="Os serviços que acompanhamos"
+          descricao={
+            proximas[0]
+              ? `Próxima data importante: ${nomeComercial(proximas[0].c.fornecedor, fornecedores) ?? "serviço"} — ${textoProximaData(proximas[0].p).toLowerCase()}.`
+              : undefined
+          }
+          acao={
+            servicos.length > 0 ? (
+              <a href="#acrescentar" className={`${LIGACAO} min-h-11 text-[14.5px]`}>
+                Adicionar fatura ou contrato
+              </a>
+            ) : undefined
+          }
+        />
+        {servicos.length > 0 ? (
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {servicos.map((c) => {
+              const pendentes = pendentesPorContrato.get(c.id) ?? 0;
+              const fatura = ultimaFatura.get(c.id);
+              const proxima = proximaData(c, hoje);
+              return (
+                <li key={c.id}>
+                  <Link href={`/portal/contratos/${c.id}`} className={`${CARTAO_LIGACAO} flex h-full flex-col gap-3`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className={`${TITULO_CARTAO} break-words`}>{nomeComercial(c.fornecedor, fornecedores) ?? "Fornecedor por confirmar"}</p>
+                        <p className={METADADOS}>
+                          {ROTULO_SETOR[c.setor as SetorContratoMonitor] ?? c.setor}
+                          {referencia.has(c.id) ? ` · ${referencia.get(c.id)}` : ""}
+                        </p>
+                      </div>
+                      {pendentes > 0 && (
+                        <Etiqueta tom="acao">{pendentes === 1 ? "1 dado por confirmar" : `${pendentes} dados por confirmar`}</Etiqueta>
+                      )}
+                    </div>
+                    <ul className="flex flex-col gap-1.5 text-[14px] text-[var(--v2-navy)]">
+                      <li className="flex items-start gap-2">
+                        <IconeCalendario tamanho={17} className="mt-0.5 shrink-0 text-[var(--v2-muted)]" />
+                        <span className={proxima ? undefined : "text-[var(--v2-muted)]"}>{textoProximaData(proxima)}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <IconeFatura tamanho={17} className="mt-0.5 shrink-0 text-[var(--v2-muted)]" />
+                        {fatura ? (
+                          <span>
+                            Última fatura: {formatarEurosCents(fatura.totalCents)}{" "}
+                            <span className="text-[var(--v2-muted)]">({mesAnoTexto(fatura.data || null)})</span>
+                          </span>
+                        ) : (
+                          <span className="text-[var(--v2-muted)]">Sem faturas carregadas</span>
+                        )}
+                      </li>
+                    </ul>
+                    <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+                      <span className={METADADOS}>{comContrato.has(c.id) ? "Com contrato" : "Contrato não adicionado"}</span>
+                      <span className="inline-flex items-center gap-1 text-[14px] font-semibold text-[var(--v2-green)]">
+                        Ver serviço
+                        <IconeSeta tamanho={16} />
+                      </span>
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <EstadoVazio icone={<IconeEscudo tamanho={20} />} titulo="Ainda não acompanhamos nenhum serviço">
+            Basta uma fatura para começar. A partir daí, comparamos cada mês com os anteriores e avisamo-lo se algo mudar.
+          </EstadoVazio>
+        )}
+      </section>
 
-      <p className="text-sm text-[var(--color-ink-muted)]">
-        Não tem o documento à mão?{" "}
-        <Link href="/portal/contratos/novo" className="font-medium text-[var(--color-brand)] underline">
-          Indique os dados do serviço
-        </Link>
-        .
-      </p>
+      <section id="acrescentar" aria-labelledby="acrescentar-titulo" className={`${CARTAO} flex max-w-2xl scroll-mt-24 flex-col gap-4`}>
+        <div className="flex flex-col gap-1">
+          <h2 id="acrescentar-titulo" className="text-[18px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">
+            {servicos.length ? "Adicionar fatura ou contrato" : "Adicione a sua fatura"}
+          </h2>
+          <p className={TEXTO_SECUNDARIO}>
+            {servicos.length
+              ? "Se o documento for de um serviço que já acompanhamos (mesmo titular e mesma conta ou número de serviço), juntamo-lo a esse serviço. Se não tivermos a certeza, perguntamos."
+              : "Começamos a acompanhar a evolução deste serviço. O contrato é opcional: pode adicioná-lo mais tarde."}
+          </p>
+        </div>
+        <UploadDocumento />
+        <p className={`${TEXTO_SECUNDARIO} border-t border-[var(--v2-line)] pt-4`}>
+          Não tem o documento à mão?{" "}
+          <Link href="/portal/contratos/novo" className={LIGACAO}>
+            Indique os dados do serviço
+          </Link>
+          .
+        </p>
+      </section>
     </div>
   );
 }

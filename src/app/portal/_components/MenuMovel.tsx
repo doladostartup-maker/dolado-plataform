@@ -31,7 +31,7 @@ export function MenuMovel({ children }: { children: React.ReactNode }) {
         aria-controls={idPainel}
         aria-label={aberto ? "Fechar menu" : "Abrir menu"}
         onClick={() => setAberto((v) => !v)}
-        className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-button)] text-[var(--color-ink)] hover:bg-[var(--color-surface-sunken)]"
+        className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-[10px] text-[var(--v2-navy)] hover:bg-[var(--v2-surface)]"
       >
         <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
           {aberto ? (
@@ -46,7 +46,7 @@ export function MenuMovel({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-x-0 bottom-0 top-16 z-40">
           <div
             aria-hidden="true"
-            className="absolute inset-0 bg-[var(--color-ink)]/30"
+            className="absolute inset-0 bg-[rgba(11,37,69,0.35)]"
             onClick={() => setAberto(false)}
           />
           <div
@@ -55,7 +55,7 @@ export function MenuMovel({ children }: { children: React.ReactNode }) {
             onClick={(e) => {
               if ((e.target as Element).closest("a")) setAberto(false);
             }}
-            className="relative flex max-h-full flex-col overflow-y-auto border-b border-[var(--color-hairline)] bg-[var(--color-surface)] px-4 py-4 shadow-[var(--shadow-md)]"
+            className="relative flex max-h-full flex-col overflow-y-auto rounded-b-[16px] border-b border-[var(--v2-line)] bg-white px-4 pb-4 pt-4 shadow-[var(--shadow-md)]"
           >
             {children}
           </div>

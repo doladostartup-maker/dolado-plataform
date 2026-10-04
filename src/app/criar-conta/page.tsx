@@ -6,6 +6,9 @@ import { getStripe } from "@/lib/stripe/client";
 import { contaExisteComEmail } from "@/lib/compra/servidor";
 import { MENSAGEM_EMAIL_COM_CONTA, avaliarSessaoParaCriarConta } from "@/lib/stripe/criarConta";
 import { criarContaComPagamento } from "./actions";
+import { Aviso } from "@/components/portal/Aviso";
+import { MolduraConta } from "@/components/portal/MolduraConta";
+import { BOTAO_PRIMARIO, CAMPO, ROTULO, TEXTO } from "@/components/portal/ui";
 
 export default async function CriarContaPage({
   searchParams,
@@ -41,19 +44,12 @@ export default async function CriarContaPage({
     if (avaliacao.motivo === "email_com_conta") {
       const associar = `/associar-compra?session_id=${encodeURIComponent(params.session_id)}`;
       return (
-        <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
-          <div>
-            <p className="mb-1 text-sm font-semibold text-[var(--color-brand)]">Pagamento recebido</p>
-            <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">Associar a compra</h1>
-          </div>
-          <p className="text-sm leading-relaxed text-[var(--color-ink)]">{MENSAGEM_EMAIL_COM_CONTA}</p>
-          <Link
-            href={`/login?next=${encodeURIComponent(associar)}`}
-            className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-center text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-          >
+        <MolduraConta contexto="Pagamento recebido" titulo="Associar a compra">
+          <p className={TEXTO}>{MENSAGEM_EMAIL_COM_CONTA}</p>
+          <Link href={`/login?next=${encodeURIComponent(associar)}`} className={BOTAO_PRIMARIO}>
             Iniciar sessão
           </Link>
-        </main>
+        </MolduraConta>
       );
     }
     redirect(`/login?info=${encodeURIComponent("Esta compra já tem uma conta associada. Inicie sessão.")}`);
@@ -61,67 +57,39 @@ export default async function CriarContaPage({
   const { pagamentoConfirmado } = avaliacao;
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
-      <div>
-        <p className="mb-1 text-sm font-semibold text-[var(--color-brand)]">
-          {pagamentoConfirmado ? "Pagamento confirmado" : "Pagamento em confirmação"}
-        </p>
-        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-          Criar a sua conta
-        </h1>
-      </div>
-
+    <MolduraConta
+      contexto={pagamentoConfirmado ? "Pagamento confirmado" : "Pagamento em confirmação"}
+      titulo="Criar a sua conta"
+    >
       {!pagamentoConfirmado && (
-        <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
-          Alguns métodos de pagamento, como o débito direto SEPA, podem demorar alguns dias úteis a
-          ser confirmados. Pode criar já a sua conta e não precisa de voltar a pagar: assim que o
-          pagamento for confirmado, o acesso é ativado automaticamente e avisamos por e-mail.
-        </p>
+        <Aviso tom="info">
+          Alguns métodos de pagamento, como o débito direto SEPA, podem demorar alguns dias úteis a ser confirmados.
+          Pode criar já a sua conta e não precisa de voltar a pagar: assim que o pagamento for confirmado, o acesso é
+          ativado automaticamente e avisamos por e-mail.
+        </Aviso>
       )}
 
-      {params.erro && (
-        <p className="text-sm text-[var(--color-status-danger)]">{params.erro}</p>
-      )}
+      {params.erro && <Aviso tom="erro">{params.erro}</Aviso>}
 
       <form action={criarContaComPagamento} className="flex flex-col gap-4">
         <input type="hidden" name="session_id" value={params.session_id} />
 
-        <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+        <label className={ROTULO}>
           Nome
-          <input
-            name="nome"
-            type="text"
-            required
-            className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-hairline-strong)] focus:outline-none"
-          />
+          <input name="nome" type="text" required className={CAMPO} />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+        <label className={ROTULO}>
           E-mail
-          <input
-            type="email"
-            value={avaliacao.email}
-            readOnly
-            disabled
-            className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface-sunken)] px-3 py-2 text-[var(--color-ink-muted)]"
-          />
+          <input type="email" value={avaliacao.email} readOnly disabled className={`${CAMPO} text-[var(--v2-muted)]`} />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+        <label className={ROTULO}>
           Palavra-passe
-          <input
-            name="password"
-            type="password"
-            required
-            minLength={6}
-            className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-hairline-strong)] focus:outline-none"
-          />
+          <input name="password" type="password" required minLength={6} className={CAMPO} />
         </label>
-        <button
-          type="submit"
-          className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-        >
+        <button type="submit" className={BOTAO_PRIMARIO}>
           Criar conta e aceder ao portal
         </button>
       </form>
-    </main>
+    </MolduraConta>
   );
 }

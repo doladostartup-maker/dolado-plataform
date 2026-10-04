@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { PASSOS, situacaoDocumento, type SituacaoDocumento } from "@/lib/monitor/processamento";
 import { descartarDocumentoRepetido, tentarNovamenteDocumento } from "../actions";
 import { BOTAO_PRIMARIO } from "./estilos";
+import { IconeVisto } from "@/components/portal/Icones";
 
 // Acompanha a leitura de um documento pelas etapas reais gravadas pelo
 // servidor (documentos_monitor.etapa). Lê diretamente da Supabase (RLS: só
@@ -134,7 +135,7 @@ export function ProgressoDocumento({
   const passoAtual = situacao?.tipo === "em_curso" ? situacao.passo : situacao?.tipo === "pronto" ? PASSOS.length : 0;
 
   return (
-    <div role="status" aria-live="polite" className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-[var(--color-brand)] bg-[var(--color-brand-wash)] px-4 py-4">
+    <div role="status" aria-live="polite" className="flex flex-col gap-3 rounded-[16px] border border-[#CDE9D9] bg-[var(--v2-mint-bg)] p-5">
       <div className="flex items-baseline justify-between gap-3">
         <p className="text-sm font-semibold text-[var(--color-ink)]">A analisar o documento</p>
         <p className="text-[12.5px] text-[var(--color-ink-muted)]">
@@ -149,7 +150,7 @@ export function ProgressoDocumento({
             <li key={p.etapa} className={`flex items-center gap-2.5 text-sm ${feito || atual ? "text-[var(--color-ink)]" : "text-[var(--color-ink-faint)]"}`}>
               <span aria-hidden className="inline-flex h-5 w-5 shrink-0 items-center justify-center">
                 {feito ? (
-                  <span className="text-[var(--color-status-success)]">✓</span>
+                  <IconeVisto tamanho={18} className="text-[var(--v2-green)]" />
                 ) : atual ? (
                   <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[var(--color-brand)]" />
                 ) : (
