@@ -101,7 +101,6 @@ describe("checkout: o browser só escolhe o plano, o servidor escolhe o preço",
   });
 
   test("o preçário envia só o PlanoId (para /comprar e daí pela confirmação), sem Price IDs nem chaves", () => {
-    const precario = fonte("../components/landing/Precario.tsx");
     const precarioV2 = fonte("../components/precario-v2/PrecarioV2.tsx");
     const destino = fonte("./precario.ts");
     assert.match(destino, /urlComprar\(plano\)/);
@@ -111,19 +110,18 @@ describe("checkout: o browser só escolhe o plano, o servidor escolhe o preço",
     assert.match(confirmacao, /<ConfirmarCompra/);
     const modal = fonte("../components/compra/ConfirmarCompra.tsx");
     assert.match(modal, /name="plano" value=\{plano\}/);
-    for (const f of [precario, precarioV2, destino, comprar, confirmacao, modal]) assert.equal(/price_|sk_(live|test)_|whsec_/.test(f), false);
+    for (const f of [precarioV2, destino, comprar, confirmacao, modal]) assert.equal(/price_|sk_(live|test)_|whsec_/.test(f), false);
   });
 });
 
 describe("preçário público", () => {
-  // O que cada plano inclui vive em src/lib/precario.ts, partilhado pelo
-  // preçário da homepage e pela página V2 /precario.
+  // O preçário é a página /precario (PrecarioV2); o que cada plano inclui
+  // vive em src/lib/precario.ts.
   const conteudo = fonte("./precario.ts");
-  const precario = fonte("../components/landing/Precario.tsx") + conteudo;
   const precarioV2 = fonte("../components/precario-v2/PrecarioV2.tsx");
+  const precario = precarioV2 + conteudo;
 
   test("mostra os três planos, IVA incluído e preços da configuração central", () => {
-    assert.match(precario, /ORDEM_PLANOS\.map/);
     assert.match(precario, /formatarPreco\(plano\.precoCentimos\)/);
     assert.match(precario, /\$\{IVA_INCLUIDO\}/);
     assert.equal(IVA_INCLUIDO, "IVA incluído");
@@ -131,7 +129,7 @@ describe("preçário público", () => {
   });
 
   test("CTAs oficiais", () => {
-    for (const cta of ["Aderir à Proteção", "Escolher Caso + Proteção", "Tratar o meu caso"]) {
+    for (const cta of ["Aderir à Proteção", "Escolher Caso + Proteção", "Tratar do meu caso"]) {
       assert.ok(precario.includes(cta), cta);
     }
   });
@@ -144,7 +142,7 @@ describe("preçário público", () => {
   });
 
   test("CTAs utilizáveis em mobile", () => {
-    assert.match(precario, /min-h-11 w-full/);
+    assert.match(precarioV2, /\$\{destaque \? BOTAO_PRIMARIO : BOTAO_CONTORNO\} w-full/);
   });
 
   test("/precario (V2): mesmos planos, preços e conteúdo, organizados por necessidade", () => {
@@ -158,9 +156,12 @@ describe("preçário público", () => {
     }
   });
 
-  test("a homepage usa o preçário partilhado", () => {
-    const home = fonte("../components/landing/Homepage.tsx");
-    assert.match(home, /<Precario \/>/);
+  test("a homepage leva ao preçário e mantém os links antigos /#precario", () => {
+    const home = fonte("../components/homepage-v2/HomepageV2.tsx");
+    assert.match(home, /href=\{ROTAS_V2\.precario\}/);
+    assert.match(home, /window\.location\.hash === "#precario"\) window\.location\.replace\(ROTAS_V2\.precario\)/);
+    assert.match(home, /addEventListener\("hashchange", irParaPrecario\)/);
+    assert.match(fonte("../components/marketing-v2/rotas.ts"), /precario: "\/precario"/);
     assert.equal(home.includes("Assinatura Mensal"), false);
   });
 });

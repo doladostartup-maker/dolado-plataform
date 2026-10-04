@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
+import { IconeSeta } from "@/components/marketing-v2/Icones";
+import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
+import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CAMPO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
 import { track } from "@/lib/analytics";
 import {
   DURACAO_MAXIMA_MESES,
@@ -15,13 +18,12 @@ import {
   type ResultadoCalculadora,
 } from "@/lib/calculadoraCancelamento/regras";
 import { urlTratarCaso } from "@/lib/site";
-import { RodapeLegal } from "./RodapeLegal";
-import { SiteHeader } from "./SiteHeader";
 
-// Calculadora pública: formulário → estimativa do encargo máximo de um
-// cancelamento antecipado (telecomunicações). Tudo acontece no browser —
-// nada é gravado, enviado ou associado a uma conta. Regras em
-// src/lib/calculadoraCancelamento/regras.ts.
+// Calculadora pública no Design System V2: formulário → estimativa do encargo
+// máximo de um cancelamento antecipado (telecomunicações). Tudo acontece no
+// browser — nada é gravado, enviado ou associado a uma conta. Regras em
+// src/lib/calculadoraCancelamento/regras.ts; campos, textos, resultado e
+// medição iguais aos da versão anterior.
 
 const ORIGEM = "/calculadora-cancelamento";
 
@@ -35,15 +37,9 @@ const DADOS_VAZIOS: DadosCalculadora = {
   equipamento: "",
 };
 
-const BOTAO_PRIMARIO =
-  "inline-flex min-h-11 items-center justify-center rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)]";
-const BOTAO_SECUNDARIO =
-  "inline-flex min-h-11 items-center justify-center rounded-[var(--radius-button)] border border-[var(--color-hairline)] px-[18px] py-2.5 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]";
-const INPUT =
-  "min-h-11 w-full rounded-[8px] border border-[var(--color-hairline-strong)] bg-[var(--color-surface)] px-3 py-2 text-[15px] text-[var(--color-ink)] focus:border-[var(--color-brand)] focus:outline-none";
-const ROTULO = "text-[15px] font-semibold text-[var(--color-ink)]";
-const AJUDA = "text-[13.5px] leading-relaxed text-[var(--color-ink-muted)]";
-const ERRO = "text-[13px] font-medium text-[var(--color-status-danger)]";
+const ROTULO = "text-[15.5px] font-bold text-[var(--v2-navy)]";
+const AJUDA = "text-[14px] leading-relaxed text-[var(--v2-muted)]";
+const ERRO = "text-[14px] font-medium text-[var(--v2-erro)]";
 
 const NOTA_AMBITO =
   "Esta calculadora estima o encargo máximo de um cancelamento antecipado por iniciativa do cliente, quando não exista um motivo legal ou contratual que permita cancelar sem encargos.";
@@ -112,10 +108,10 @@ function Escolha<T extends string>({
               type="button"
               aria-pressed={selecionada}
               onClick={() => onEscolher(o.valor)}
-              className={`min-h-11 flex-1 rounded-[8px] border px-4 py-2.5 text-left text-[15px] font-medium transition ${
+              className={`min-h-12 flex-1 rounded-[12px] border px-4 py-3 text-left text-[15.5px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--v2-green)] ${
                 selecionada
-                  ? "border-[var(--color-brand)] bg-[var(--color-brand-wash)] text-[var(--color-brand)]"
-                  : "border-[var(--color-hairline-strong)] bg-[var(--color-surface)] text-[var(--color-ink)] hover:border-[var(--color-brand)]"
+                  ? "border-[var(--v2-green)] bg-[var(--v2-mint)] text-[var(--v2-green-dark)]"
+                  : "border-[var(--v2-line-strong)] bg-white text-[var(--v2-navy)] hover:border-[var(--v2-green)]"
               }`}
             >
               {o.texto}
@@ -136,9 +132,9 @@ type ResultadoValido = Exclude<ResultadoCalculadora, { ok: false }>;
 
 function LinhaTempo({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-[var(--color-hairline)] py-2 last:border-b-0">
-      <dt className="text-[14px] text-[var(--color-ink-muted)]">{rotulo}</dt>
-      <dd className="text-right text-[14px] font-medium text-[var(--color-ink)]">{valor}</dd>
+    <div className="flex items-baseline justify-between gap-4 border-b border-[var(--v2-line)] py-2 last:border-b-0">
+      <dt className="text-[14px] text-[var(--v2-muted)]">{rotulo}</dt>
+      <dd className="text-right text-[14px] font-medium text-[var(--v2-navy)]">{valor}</dd>
     </div>
   );
 }
@@ -148,22 +144,22 @@ function Resultado({ resultado, mensalidade, onRecomecar }: { resultado: Resulta
 
   return (
     <div aria-live="polite" className="flex flex-col gap-4">
-      <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--color-brand)]">Resultado</p>
+      <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]">Resultado</p>
 
-      <h2 className="text-[19px] font-semibold leading-snug text-[var(--color-ink)]">
+      <h2 className="text-[22px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">
         Estimativa máxima do encargo de cancelamento:{" "}
-        <span className="whitespace-nowrap text-[var(--color-brand)]">{formatarEuros(resultado.resultadoCentimos)}</span>
+        <span className="whitespace-nowrap text-[var(--v2-green)]">{formatarEuros(resultado.resultadoCentimos)}</span>
       </h2>
 
       {resultado.estado === "terminada" && (
-        <p className="text-[14.5px] leading-relaxed text-[var(--color-ink-muted)]">
+        <p className="text-[14.5px] leading-relaxed text-[var(--v2-muted)]">
           Com base nas datas introduzidas, a fidelização terminou a {formatarData(tempo.dataFim)}: já não existe
           período de fidelização em curso.
         </p>
       )}
 
       {resultado.estado === "calculado" && (
-        <ul className="flex flex-col gap-1.5 text-[14.5px] leading-relaxed text-[var(--color-ink)]">
+        <ul className="flex flex-col gap-1.5 text-[14.5px] leading-relaxed text-[var(--v2-navy)]">
           <li>
             Vantagem proporcional ainda por recuperar:{" "}
             <strong>{formatarEuros(resultado.vantagemProporcionalCentimos)}</strong>
@@ -186,7 +182,7 @@ function Resultado({ resultado, mensalidade, onRecomecar }: { resultado: Resulta
       )}
 
       {resultado.estado === "calculado" && (
-        <dl className="rounded-[10px] bg-[var(--color-canvas)] px-4 py-1">
+        <dl className="rounded-[10px] bg-[var(--v2-surface)] px-4 py-1">
           <LinhaTempo rotulo="Tempo já decorrido" valor={textoDuracao(tempo.decorrido)} />
           <LinhaTempo rotulo="Tempo de fidelização em falta" valor={textoDuracao(tempo.emFalta)} />
           <LinhaTempo rotulo="Mensalidades em falta (estimativa)" valor={String(tempo.mensalidadesEmFalta)} />
@@ -195,7 +191,7 @@ function Resultado({ resultado, mensalidade, onRecomecar }: { resultado: Resulta
       )}
 
       {resultado.equipamento && (
-        <p className="rounded-[var(--radius-card)] border-l-[3px] border-[var(--color-status-urgent)] bg-[var(--color-surface-sunken)] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--color-ink)]">
+        <p className="rounded-[12px] border-l-[3px] border-[var(--v2-aviso)] bg-[var(--v2-aviso-bg)] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--v2-navy)]">
           Indicou que recebeu equipamento subsidiado. Podem existir regras e encargos específicos relacionados com o
           equipamento, que não estão incluídos neste valor: o resultado não corresponde ao custo total do cancelamento.
         </p>
@@ -207,14 +203,14 @@ function Resultado({ resultado, mensalidade, onRecomecar }: { resultado: Resulta
           onClick={() => track("click_nav_reclamacao")}
           className={BOTAO_PRIMARIO}
         >
-          Tratar o meu caso
+          Tratar o meu caso <IconeSeta tamanho={17} />
         </a>
-        <button type="button" onClick={onRecomecar} className={BOTAO_SECUNDARIO}>
+        <button type="button" onClick={onRecomecar} className={BOTAO_CONTORNO}>
           Calcular de novo
         </button>
       </div>
 
-      <ul className="flex list-disc flex-col gap-1 border-t border-[var(--color-hairline)] pt-3 pl-4 text-[12.5px] leading-relaxed text-[var(--color-ink-faint)]">
+      <ul className="flex list-disc flex-col gap-1 border-t border-[var(--v2-line)] pt-3 pl-4 text-[12.5px] leading-relaxed text-[var(--v2-muted)]">
         <li>Este valor é uma estimativa e depende dos dados que introduziu.</li>
         <li>Podem existir outras condições contratuais ou legais que esta calculadora não considera.</li>
         <li>O equipamento subsidiado pode ter regras próprias, não incluídas neste cálculo.</li>
@@ -273,7 +269,7 @@ function Calculadora() {
           max={hoje}
           value={dados.dataInicio}
           onChange={(e) => alterar("dataInicio", e.target.value)}
-          className={INPUT}
+          className={CAMPO}
         />
       </Campo>
 
@@ -287,7 +283,7 @@ function Calculadora() {
           step={1}
           value={dados.duracaoMeses}
           onChange={(e) => alterar("duracaoMeses", e.target.value)}
-          className={INPUT}
+          className={CAMPO}
         />
       </Campo>
 
@@ -325,7 +321,7 @@ function Calculadora() {
           placeholder="Ex.: 29,99"
           value={dados.mensalidade}
           onChange={(e) => alterar("mensalidade", e.target.value)}
-          className={INPUT}
+          className={CAMPO}
         />
       </Campo>
 
@@ -342,7 +338,7 @@ function Calculadora() {
           placeholder="Ex.: 120,00"
           value={dados.vantagem}
           onChange={(e) => alterar("vantagem", e.target.value)}
-          className={INPUT}
+          className={CAMPO}
         />
       </Campo>
 
@@ -358,7 +354,7 @@ function Calculadora() {
         erro={erros.equipamento}
       />
 
-      <p className="rounded-[var(--radius-card)] border-l-[3px] border-[var(--color-brand)] bg-[var(--color-brand-wash)] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--color-ink)]">
+      <p className="rounded-[12px] border-l-[3px] border-[var(--v2-green)] bg-[var(--v2-mint)] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--v2-navy)]">
         {NOTA_AMBITO}
       </p>
 
@@ -368,70 +364,67 @@ function Calculadora() {
         </p>
       )}
 
-      <button type="submit" className={`${BOTAO_PRIMARIO} self-start`}>
+      <button type="submit" className={`${BOTAO_PRIMARIO} self-start px-8`}>
         Calcular
       </button>
     </form>
   );
 }
 
-export function CalculadoraCancelamentoPublica() {
+const COMO_FUNCIONA: { titulo: string; texto: string }[] = [
+  {
+    titulo: "Como é feito o cálculo.",
+    texto:
+      "Nos contratos com fidelização iniciada ou renovada a partir de 14 de novembro de 2022, o encargo corresponde ao menor de dois valores: a parte da vantagem ainda por recuperar, proporcional ao tempo de fidelização em falta, e uma percentagem das mensalidades em falta (50% no primeiro ano e 30% no segundo; 30% numa refidelização sem nova instalação). Nos contratos anteriores, conta a vantagem proporcional ao tempo em falta e, numa refidelização sem nova instalação, também o limite de 30% das mensalidades em falta.",
+  },
+  {
+    titulo: "O que não é.",
+    texto:
+      "Não avalia se pode cancelar sem encargos, não inclui encargos com equipamento e não é uma avaliação jurídica do seu caso.",
+  },
+  {
+    titulo: "Os seus dados.",
+    texto:
+      "O cálculo é feito apenas no seu navegador: não guardamos os valores que introduz nem os associamos a si.",
+  },
+  {
+    titulo: "Se decidir avançar.",
+    texto: "Em “Tratar o meu caso” descreve o que aconteceu, cria a sua conta e escolhe a modalidade. Só paga no fim.",
+  },
+];
+
+export function CalculadoraV2() {
   return (
-    <div className="min-h-screen bg-[var(--color-canvas)] text-[var(--color-ink)]">
-      <SiteHeader
-        ctaLabel="Tratar o meu caso"
-        onCtaClick={() => {
-          track("click_nav_reclamacao");
-          window.location.assign(urlTratarCaso(ORIGEM));
-        }}
-      />
-
-      <section className="mx-auto max-w-[600px] px-4 pt-12 pb-2 text-center sm:px-10 sm:pt-14">
-        <p className="mb-2 text-sm font-bold uppercase tracking-[0.06em] text-[var(--color-brand)]">
-          Grátis · sem conta · telecomunicações
-        </p>
-        <h1 className="text-[clamp(26px,5vw,30px)] font-semibold leading-[1.2] tracking-[-0.01em] text-[var(--color-ink)]">
-          Calculadora de Cancelamento
-        </h1>
-        <p className="mt-3 text-[15px] leading-relaxed text-[var(--color-ink-muted)]">
-          Estime quanto lhe pode ser cobrado se cancelar antecipadamente um contrato de telecomunicações com
-          fidelização. O resultado aparece logo, sem pedir e-mail nem criar conta.
-        </p>
-      </section>
-
-      <section className="mx-auto max-w-[560px] px-4 pt-7 pb-12 sm:px-10">
-        <div className="rounded-[14px] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-subtle)] sm:p-8">
+    <>
+      {/* ===== Hero + calculadora ===== */}
+      <SectionV2 size="compact" className="grid items-start gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:py-20">
+        <div className="lg:sticky lg:top-28 lg:pt-6">
+          <Eyebrow>Grátis · sem conta · telecomunicações</Eyebrow>
+          <h1 className="mt-5 text-[clamp(32px,3.8vw,48px)] font-extrabold leading-[1.08] tracking-[-0.035em] text-[var(--v2-navy)]">
+            Calculadora de Cancelamento
+          </h1>
+          <p className={`${TEXTO} mt-5 text-[17.5px]`}>
+            Estime quanto lhe pode ser cobrado se cancelar antecipadamente um contrato de telecomunicações com
+            fidelização. O resultado aparece logo, sem pedir e-mail nem criar conta.
+          </p>
+        </div>
+        <div className={`${CARTAO} p-6 sm:p-8`}>
           <Calculadora />
         </div>
-      </section>
+      </SectionV2>
 
-      <section className="mx-auto max-w-[560px] px-4 pb-16 sm:px-10">
-        <h2 className="mb-3 text-[17px] font-semibold text-[var(--color-ink)]">Como funciona</h2>
-        <ul className="flex flex-col gap-2 text-[14.5px] leading-relaxed text-[var(--color-ink-muted)]">
-          <li>
-            <strong className="text-[var(--color-ink)]">Como é feito o cálculo.</strong> Nos contratos com
-            fidelização iniciada ou renovada a partir de 14 de novembro de 2022, o encargo corresponde ao menor de
-            dois valores: a parte da vantagem ainda por recuperar, proporcional ao tempo de fidelização em falta, e
-            uma percentagem das mensalidades em falta (50% no primeiro ano e 30% no segundo; 30% numa refidelização
-            sem nova instalação). Nos contratos anteriores, conta a vantagem proporcional ao tempo em falta e, numa
-            refidelização sem nova instalação, também o limite de 30% das mensalidades em falta.
-          </li>
-          <li>
-            <strong className="text-[var(--color-ink)]">O que não é.</strong> Não avalia se pode cancelar sem
-            encargos, não inclui encargos com equipamento e não é uma avaliação jurídica do seu caso.
-          </li>
-          <li>
-            <strong className="text-[var(--color-ink)]">Os seus dados.</strong> O cálculo é feito apenas no seu
-            navegador: não guardamos os valores que introduz nem os associamos a si.
-          </li>
-          <li>
-            <strong className="text-[var(--color-ink)]">Se decidir avançar.</strong> Em &quot;Tratar o meu
-            caso&quot; descreve o que aconteceu, cria a sua conta e escolhe a modalidade. Só paga no fim.
-          </li>
+      {/* ===== Como funciona ===== */}
+      <SectionV2 tone="soft-blue">
+        <SectionHeader eyebrow="Como funciona" titulo="O que precisa de saber sobre a calculadora." />
+        <ul className="mt-10 grid gap-8 md:grid-cols-2 md:gap-x-12">
+          {COMO_FUNCIONA.map((c) => (
+            <li key={c.titulo}>
+              <h3 className="text-[18px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{c.titulo}</h3>
+              <p className="mt-2 text-[15.5px] leading-relaxed text-[var(--v2-muted)]">{c.texto}</p>
+            </li>
+          ))}
         </ul>
-      </section>
-
-      <RodapeLegal />
-    </div>
+      </SectionV2>
+    </>
   );
 }
