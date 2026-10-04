@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, useCallback, useState, type ReactNode } from "react";
 import { enviarContacto, type EstadoContacto } from "@/app/actions/contacto";
 import { IconeDocumentoVisto, IconeEscudo, IconeFormulario, IconeSeta } from "@/components/marketing-v2/Icones";
+import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_PRIMARIO, CAMPO, CARTAO, ROTULO_CAMPO, TEXTO } from "@/components/marketing-v2/estilos";
 import { detectarOrigem, track } from "@/lib/analytics";
@@ -46,9 +47,9 @@ export function ContactoV2() {
       titulo: "Já tem um caso aberto?",
       texto: "Acompanhe o estado, o texto da reclamação e os comprovativos na sua área de cliente.",
       acao: (
-        <Link href="/entrar" className={`${LINK} inline-flex items-center gap-1.5`}>
+        <a href={ROTAS_V2.entrar} className={`${LINK} inline-flex items-center gap-1.5`}>
           Iniciar sessão <IconeSeta tamanho={15} />
-        </Link>
+        </a>
       ),
     },
     {
@@ -64,7 +65,7 @@ export function ContactoV2() {
         </>
       ),
       acao: (
-        <Link href={ROTAS_LEGAIS.privacidade} className={`${LINK} inline-flex items-center gap-1.5`}>
+        <Link prefetch={false} href={ROTAS_LEGAIS.privacidade} className={`${LINK} inline-flex items-center gap-1.5`}>
           Política de Privacidade <IconeSeta tamanho={15} />
         </Link>
       ),
@@ -118,7 +119,7 @@ export function ContactoV2() {
                   {CONTACTO_EMAIL}
                 </a>
                 . Reclamações sobre a própria DoLado: veja também a página{" "}
-                <Link href={ROTAS_LEGAIS.resolucaoLitigios} className={LINK}>
+                <Link prefetch={false} href={ROTAS_LEGAIS.resolucaoLitigios} className={LINK}>
                   Resolução de litígios
                 </Link>
                 .

@@ -57,7 +57,7 @@ export function FerramentasV2() {
               texto={f.texto}
               visual={f.visual}
               acao={
-                <Link href={f.href} onClick={() => track(`click_ferramentas_${f.id}`)} className={`${BOTAO_CONTORNO} w-full`}>
+                <Link prefetch={false} href={f.href} onClick={() => track(`click_ferramentas_${f.id}`)} className={`${BOTAO_CONTORNO} w-full`}>
                   {f.cta} <IconeSeta tamanho={16} />
                 </Link>
               }

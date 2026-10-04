@@ -130,7 +130,7 @@ export function HomepageV2() {
             <button type="button" onClick={() => tratarCaso("click_hero_reclamacao")} className={BOTAO_PRIMARIO}>
               Tratar do meu caso <IconeSeta tamanho={17} />
             </button>
-            <Link
+            <Link prefetch={false}
               href="/simulador-elegibilidade"
               onClick={() => track("click_hero_simulador")}
               className={BOTAO_CONTORNO}
@@ -169,7 +169,7 @@ export function HomepageV2() {
               texto={f.texto}
               visual={f.visual}
               acao={
-                <Link
+                <Link prefetch={false}
                   href={f.href}
                   onClick={() => track(EVENTOS_FERRAMENTAS[f.id as keyof typeof EVENTOS_FERRAMENTAS])}
                   className={BOTAO_CONTORNO}
@@ -182,7 +182,7 @@ export function HomepageV2() {
         </div>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[13.5px] text-[var(--v2-muted)]">Sem conta e sem e-mail. O resultado aparece logo no ecrã.</p>
-          <Link
+          <Link prefetch={false}
             href={ROTAS_V2.ferramentas}
             className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
           >
@@ -197,7 +197,7 @@ export function HomepageV2() {
         <div className="mt-12">
           <StepsTimeline passos={PASSOS} />
         </div>
-        <Link
+        <Link prefetch={false}
           href={ROTAS_V2.comoFunciona}
           className="mt-10 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
         >
@@ -219,7 +219,7 @@ export function HomepageV2() {
               A DoLado existe para ajudar os consumidores a resolver problemas com empresas e a evitar que
               voltem a acontecer.
             </p>
-            <Link href={ROTAS_V2.sobreNos} className="mt-5 inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline">
+            <Link prefetch={false} href={ROTAS_V2.sobreNos} className="mt-5 inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline">
               Saber mais sobre nós <IconeSeta tamanho={15} />
             </Link>
           </aside>
@@ -245,7 +245,7 @@ export function HomepageV2() {
           <div className="mt-7">
             <ListaVistos itens={TRATAMENTO} />
           </div>
-          <Link href={ROTAS_V2.precario} onClick={() => track("click_home_precos")} className={`${BOTAO_PRIMARIO} mt-9`}>
+          <Link prefetch={false} href={ROTAS_V2.precario} onClick={() => track("click_home_precos")} className={`${BOTAO_PRIMARIO} mt-9`}>
             Ver preços e tratar do meu caso <IconeSeta tamanho={17} />
           </Link>
           <p className="mt-8 max-w-[520px] border-l-[3px] border-[var(--v2-green)] pl-4 text-[14px] leading-relaxed text-[var(--v2-muted)]">
@@ -267,7 +267,7 @@ export function HomepageV2() {
           <div className="mt-7">
             <ListaVistos itens={PROTECAO} />
           </div>
-          <Link href={ROTAS_V2.precario} onClick={() => track("click_home_protecao")} className={`${BOTAO_PRIMARIO} mt-9`}>
+          <Link prefetch={false} href={ROTAS_V2.precario} onClick={() => track("click_home_protecao")} className={`${BOTAO_PRIMARIO} mt-9`}>
             Conhecer a Proteção <IconeSeta tamanho={17} />
           </Link>
         </div>
@@ -288,7 +288,7 @@ export function HomepageV2() {
       <SectionV2 className="grid gap-10 lg:grid-cols-[1fr_1.6fr] lg:gap-16">
         <div>
           <SectionHeader eyebrow="Perguntas frequentes" titulo="Tudo o que precisa de saber antes de começar." />
-          <Link
+          <Link prefetch={false}
             href={ROTAS_V2.ajuda}
             className="mt-6 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
           >
@@ -304,7 +304,7 @@ export function HomepageV2() {
         titulo="Conte-nos o que aconteceu."
         texto="Se houver alguma coisa que possamos tratar, mostramos-lhe o próximo passo."
         acao={
-          <Link
+          <Link prefetch={false}
             href="/simulador-elegibilidade"
             onClick={() => track("click_home_cta_final")}
             className={`${BOTAO_PRIMARIO} w-full md:w-auto`}

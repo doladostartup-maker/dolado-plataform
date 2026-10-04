@@ -5,6 +5,8 @@ import { SectionHeader, SectionV2, type TomSecao } from "./SectionV2";
 // "A nossa origem": a história do fundador, na primeira pessoa. Texto e
 // fotografia reais (a fotografia já foi publicada numa versão anterior da
 // homepage) — mudar só com o Thiago. Usado na homepage V2 e em Sobre Nós.
+// Ficheiro já redimensionado (600 px, 2× a largura máxima mostrada): as
+// imagens não são otimizadas no servidor (images.unoptimized, next.config.ts).
 export function OrigemFundador({ tone = "soft-blue", aside }: { tone?: TomSecao; aside?: ReactNode }) {
   return (
     <SectionV2
@@ -14,7 +16,7 @@ export function OrigemFundador({ tone = "soft-blue", aside }: { tone?: TomSecao;
       }`}
     >
       <Image
-        src="/landing/founder-thiago.webp"
+        src="/landing/founder-thiago-600.webp"
         alt="Thiago Pereira, fundador da DoLado"
         width={300}
         height={340}

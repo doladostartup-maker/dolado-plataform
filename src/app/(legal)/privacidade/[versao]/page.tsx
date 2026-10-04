@@ -25,7 +25,7 @@ export default async function PrivacidadeVersaoPage({ params }: { params: Promis
       {versao !== PRIVACIDADE_VERSAO && (
         <div className="mt-4 rounded-lg border-l-[3px] border-[var(--color-brand)] bg-[var(--color-surface-sunken)] p-4 text-sm text-[var(--color-ink-muted)]">
           Está a consultar a versão de {versao} da Política de Privacidade, que já não está em vigor.{" "}
-          <Link href={ROTAS_LEGAIS.privacidade} className="text-[var(--color-brand)] underline">
+          <Link prefetch={false} href={ROTAS_LEGAIS.privacidade} className="text-[var(--color-brand)] underline">
             Ver a versão em vigor
           </Link>
           .

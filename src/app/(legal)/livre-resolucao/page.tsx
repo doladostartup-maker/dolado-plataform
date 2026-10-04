@@ -127,7 +127,7 @@ export default function LivreResolucaoPage() {
 
       <p className={P}>
         Mais informação nos{" "}
-        <Link href={`${ROTAS_LEGAIS.termos}#livre-resolucao`} className={LINK}>
+        <Link prefetch={false} href={`${ROTAS_LEGAIS.termos}#livre-resolucao`} className={LINK}>
           Termos e Condições
         </Link>
         .

@@ -100,7 +100,7 @@ export function ComoFuncionaV2() {
             <button type="button" onClick={() => tratarCaso("click_hero_como_funciona")} className={BOTAO_PRIMARIO}>
               Tratar do meu caso <IconeSeta tamanho={17} />
             </button>
-            <Link
+            <Link prefetch={false}
               href="/simulador-elegibilidade"
               onClick={() => track("click_como_funciona_simulador")}
               className={BOTAO_CONTORNO}
@@ -140,7 +140,7 @@ export function ComoFuncionaV2() {
       <SectionV2 className="grid gap-10 lg:grid-cols-[1fr_1.6fr] lg:gap-16">
         <div>
           <SectionHeader eyebrow="Perguntas frequentes" titulo="Antes e depois do envio." />
-          <Link
+          <Link prefetch={false}
             href="/perguntas-frequentes"
             className="mt-6 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
           >
