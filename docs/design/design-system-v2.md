@@ -16,11 +16,20 @@ Documento de referência aprovado por Thiago a 04/10/2026. Nasce da nova direç�
 | Botões (primário, contorno), cartão, contentor, tipografia de H2 e texto | `estilos.ts` (classes) |
 | Ícones lineares | `Icones.tsx` |
 | Mockups de interface (dados fictícios, com "Exemplo") | `Mockups.tsx` |
-| Primeira página V2 | `/landing-v2` (`src/app/landing-v2/page.tsx` + `src/components/landing-v2/LandingV2.tsx`) |
+| Lista com vistos, bloco de fecho (CTA final) | `ListaVistos.tsx`, `CTASection.tsx` |
+| Cartão de plano por necessidade (preços sempre de `src/lib/planos.ts`; alinhamento por subgrid com `GRELHA_PLANOS`) | `PricingCard.tsx` |
+| Perguntas frequentes (mesmo accordion e mesmo conteúdo de `/perguntas-frequentes`) | `FAQAccordionV2.tsx` |
+
+Páginas V2:
+
+| Página | Ficheiros | Estado |
+|---|---|---|
+| Homepage (teste) | `/landing-v2` — `src/app/landing-v2/page.tsx`, `src/components/landing-v2/LandingV2.tsx` | noindex |
+| Preçário | `/precario` — `src/app/precario/page.tsx`, `src/components/precario-v2/PrecarioV2.tsx`; conteúdo dos planos e destino dos botões em `src/lib/precario.ts`, partilhados com o preçário da homepage (`Precario.tsx`) | noindex enquanto a homepage `/` não migrar; o preçário público continua em `/#precario` |
 
 Uma página V2 nova: `<PaginaV2 eventoCtaNavbar="click_…">` + `SectionV2`/`SectionHeader` + classes de `estilos.ts`. Criar componentes novos (PricingCard, FAQAccordionV2, …) só quando forem usados, em `src/components/marketing-v2/`, e reutilizá-los nas páginas seguintes.
 
-Pendente: "Ferramentas gratuitas" aponta para `/landing-v2#ferramentas` até existir página própria (`ROTAS_V2.ferramentas`); "Preçário" aponta para `/#precario`.
+Pendente: "Ferramentas gratuitas" aponta para `/landing-v2#ferramentas` até existir página própria (`ROTAS_V2.ferramentas`). Quando a homepage V2 substituir `/`: indexar `/precario` e decidir se os links `/#precario` (SiteHeader, portal, `cancel_url` do Stripe, `/criar-conta`, redirect de `/por-que-assinar`) passam para `/precario`.
 
 ---
 

@@ -1,71 +1,19 @@
 "use client";
 
 import { track } from "@/lib/analytics";
-import { urlComprar, urlTratarCaso } from "@/lib/site";
-import {
-  IVA_INCLUIDO,
-  LIMITE_CASOS_ACUMULADOS,
-  ORDEM_PLANOS,
-  PLANOS,
-  formatarPreco,
-  type PlanoId,
-} from "@/lib/planos";
+import { IVA_INCLUIDO, ORDEM_PLANOS, PLANOS, formatarPreco, type PlanoId } from "@/lib/planos";
+import { CONTEUDO_PLANOS, NOTA_CONVERSAO_AVULSO, destinoPlano, type ConteudoPlano } from "@/lib/precario";
 
-// Preçário público. Nomes, preços e Price IDs vêm de src/lib/planos.ts. Nas
-// subscrições, o botão leva a portal.dolado.pt/comprar: dolado.pt não vê a
-// sessão (cookies host-only do portal), e é lá que se decide se quem compra
-// já tem conta (mesmo Customer, nunca uma segunda subscrição desligada da
-// conta) antes da confirmação da compra (Termos, início imediato, livre
-// resolução). O Avulso leva a "Tratar o meu caso" (caso primeiro, pagamento
-// no fim).
-// Só se listam funcionalidades de proteção já disponíveis na plataforma,
-// descritas pelo benefício (como na secção de funcionalidades da homepage,
-// FuncionalidadesProtecao.tsx) e nunca pelos nomes internos.
+// Preçário público da homepage. Nomes e preços vêm de src/lib/planos.ts; o
+// que cada plano inclui e o destino dos botões, de src/lib/precario.ts
+// (partilhado com a página V2 /precario).
 
-const FUNCIONALIDADES_PROTECAO = [
-  "Comparação de faturas mês a mês, para identificar alterações",
-  "Avisos antes do fim de promoções",
-  "Avisos antes do fim de períodos de fidelização",
-  "Alertas sobre alterações relevantes no seu setor",
-];
-
-type Cartao = {
-  resumo: string;
-  inclui: string[];
-  naoInclui?: string;
-  cta: string;
-  destaque?: boolean;
-};
+type Cartao = ConteudoPlano & { cta: string; destaque?: boolean };
 
 const CARTOES: Record<PlanoId, Cartao> = {
-  protecao: {
-    resumo:
-      "Para quem quer identificar alterações importantes e antecipar problemas, antes de perder dinheiro ou a oportunidade de agir.",
-    inclui: FUNCIONALIDADES_PROTECAO,
-    naoInclui: "Não inclui o tratamento de casos.",
-    cta: "Aderir à Proteção",
-  },
-  caso_protecao: {
-    resumo: "Tratamos dos problemas quando surgem e ajudamos a identificar outros antes que lhe causem prejuízo.",
-    inclui: [
-      "Tudo o que está incluído na Proteção",
-      "1 novo caso por mês",
-      `Casos não utilizados acumulam até ao limite de ${LIMITE_CASOS_ACUMULADOS}`,
-      "Sem período de carência",
-    ],
-    cta: "Escolher Caso + Proteção",
-    destaque: true,
-  },
-  avulso: {
-    resumo: "Para tratar um único problema, com pagamento único e sem aderir a uma subscrição.",
-    inclui: [
-      "Tratamento de 1 caso",
-      "Acompanhamento desse caso ao longo do processo",
-      "Acesso ao histórico do caso na área de cliente",
-    ],
-    naoInclui: "Não inclui as funcionalidades da Proteção.",
-    cta: "Tratar o meu caso",
-  },
+  protecao: { ...CONTEUDO_PLANOS.protecao, cta: "Aderir à Proteção" },
+  caso_protecao: { ...CONTEUDO_PLANOS.caso_protecao, cta: "Escolher Caso + Proteção", destaque: true },
+  avulso: { ...CONTEUDO_PLANOS.avulso, cta: "Tratar o meu caso" },
 };
 
 const BOTAO_PRIMARIO =
@@ -76,9 +24,7 @@ const BOTAO_SECUNDARIO =
 export function Precario() {
   const escolher = (plano: PlanoId) => {
     track(`click_precario_${plano}`);
-    // Avulso é o tratamento de um caso: começa pela descrição do caso e só
-    // no fim se escolhe e paga a modalidade ("Tratar o meu caso").
-    window.location.assign(plano === "avulso" ? urlTratarCaso("precario") : urlComprar(plano));
+    window.location.assign(destinoPlano(plano, "precario"));
   };
 
   return (
@@ -141,8 +87,7 @@ export function Precario() {
       </div>
 
       <p className="mt-6 max-w-[70ch] text-[13px] leading-relaxed text-[var(--color-ink-muted)]">
-        Comprou um caso Avulso e ainda não o usou? Se aderir depois a uma subscrição, parte do valor já pago
-        cobre o primeiro mês e o restante é reembolsado para o método de pagamento original.
+        {NOTA_CONVERSAO_AVULSO}
       </p>
     </section>
   );

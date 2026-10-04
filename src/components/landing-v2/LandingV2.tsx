@@ -16,9 +16,11 @@ import {
   IconePergunta,
   IconePessoas,
   IconeSeta,
-  IconeVisto,
 } from "@/components/marketing-v2/Icones";
 import { PainelCaso, PainelProtecao, VisualFidelizacao, VisualHero, VisualSimulador } from "@/components/marketing-v2/Mockups";
+import { CTASection } from "@/components/marketing-v2/CTASection";
+import { ListaVistos } from "@/components/marketing-v2/ListaVistos";
+import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
 
@@ -73,21 +75,6 @@ const PROTECAO = [
   "Datas importantes de fidelização",
   "Situações que possam justificar uma análise mais atenta",
 ];
-
-function ListaVistos({ itens }: { itens: string[] }) {
-  return (
-    <ul className="space-y-3.5">
-      {itens.map((t) => (
-        <li key={t} className="flex items-start gap-3 text-[15.5px] text-[var(--v2-navy)]">
-          <span className="mt-[1px] flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-[var(--v2-green)] text-white">
-            <IconeVisto tamanho={13} strokeWidth={2.8} />
-          </span>
-          {t}
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 export function LandingV2() {
   const [origem] = useState(detectarOrigem);
@@ -284,7 +271,7 @@ export function LandingV2() {
           <div className="mt-7">
             <ListaVistos itens={TRATAMENTO} />
           </div>
-          <Link href="/#precario" onClick={() => track("click_landing_v2_precos")} className={`${BOTAO_PRIMARIO} mt-9`}>
+          <Link href={ROTAS_V2.precario} onClick={() => track("click_landing_v2_precos")} className={`${BOTAO_PRIMARIO} mt-9`}>
             Ver preços e tratar do meu caso <IconeSeta tamanho={17} />
           </Link>
         </div>
@@ -302,7 +289,7 @@ export function LandingV2() {
           <div className="mt-7">
             <ListaVistos itens={PROTECAO} />
           </div>
-          <Link href="/#precario" onClick={() => track("click_landing_v2_protecao")} className={`${BOTAO_PRIMARIO} mt-9`}>
+          <Link href={ROTAS_V2.precario} onClick={() => track("click_landing_v2_protecao")} className={`${BOTAO_PRIMARIO} mt-9`}>
             Conhecer a Proteção <IconeSeta tamanho={17} />
           </Link>
         </div>
@@ -320,21 +307,20 @@ export function LandingV2() {
       */}
 
       {/* ===== CTA final ===== */}
-      <section className="px-5 py-16 sm:px-8 sm:py-20">
-        <div className="mx-auto flex max-w-[1200px] flex-col items-start gap-8 rounded-[24px] bg-[linear-gradient(120deg,var(--v2-mint)_0%,var(--v2-blue-soft)_100%)] px-7 py-10 sm:px-12 sm:py-12 md:flex-row md:items-center md:justify-between">
-          <div>
-            <SectionHeader sobreVerde eyebrow="Não sabe por onde começar?" titulo="Conte-nos o que aconteceu." />
-            <p className={`${TEXTO} mt-3`}>Se houver alguma coisa que possamos tratar, mostramos-lhe o próximo passo.</p>
-          </div>
+      <CTASection
+        eyebrow="Não sabe por onde começar?"
+        titulo="Conte-nos o que aconteceu."
+        texto="Se houver alguma coisa que possamos tratar, mostramos-lhe o próximo passo."
+        acao={
           <Link
             href="/simulador-elegibilidade"
             onClick={() => track("click_landing_v2_cta_final")}
-            className={`${BOTAO_PRIMARIO} w-full flex-none md:w-auto`}
+            className={`${BOTAO_PRIMARIO} w-full md:w-auto`}
           >
             Ver se a DoLado pode ajudar <IconeSeta tamanho={17} />
           </Link>
-        </div>
-      </section>
+        }
+      />
     </>
   );
 }

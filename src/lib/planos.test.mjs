@@ -102,19 +102,25 @@ describe("checkout: o browser só escolhe o plano, o servidor escolhe o preço",
 
   test("o preçário envia só o PlanoId (para /comprar e daí pela confirmação), sem Price IDs nem chaves", () => {
     const precario = fonte("../components/landing/Precario.tsx");
-    assert.match(precario, /urlComprar\(plano\)/);
+    const precarioV2 = fonte("../components/precario-v2/PrecarioV2.tsx");
+    const destino = fonte("./precario.ts");
+    assert.match(destino, /urlComprar\(plano\)/);
     const comprar = fonte("../app/comprar/page.tsx");
     assert.match(comprar, /ehPlanoId\(plano\)/);
     const confirmacao = fonte("../app/comprar/CompraConfirmacao.tsx");
     assert.match(confirmacao, /<ConfirmarCompra/);
     const modal = fonte("../components/compra/ConfirmarCompra.tsx");
     assert.match(modal, /name="plano" value=\{plano\}/);
-    for (const f of [precario, comprar, confirmacao, modal]) assert.equal(/price_|sk_(live|test)_|whsec_/.test(f), false);
+    for (const f of [precario, precarioV2, destino, comprar, confirmacao, modal]) assert.equal(/price_|sk_(live|test)_|whsec_/.test(f), false);
   });
 });
 
 describe("preçário público", () => {
-  const precario = fonte("../components/landing/Precario.tsx");
+  // O que cada plano inclui vive em src/lib/precario.ts, partilhado pelo
+  // preçário da homepage e pela página V2 /precario.
+  const conteudo = fonte("./precario.ts");
+  const precario = fonte("../components/landing/Precario.tsx") + conteudo;
+  const precarioV2 = fonte("../components/precario-v2/PrecarioV2.tsx");
 
   test("mostra os três planos, IVA incluído e preços da configuração central", () => {
     assert.match(precario, /ORDEM_PLANOS\.map/);
@@ -139,6 +145,17 @@ describe("preçário público", () => {
 
   test("CTAs utilizáveis em mobile", () => {
     assert.match(precario, /min-h-11 w-full/);
+  });
+
+  test("/precario (V2): mesmos planos, preços e conteúdo, organizados por necessidade", () => {
+    for (const id of ["avulso", "caso_protecao", "protecao"]) assert.match(precarioV2, new RegExp(`plano: "${id}"`));
+    assert.match(precarioV2, /CONTEUDO_PLANOS\[id\]/);
+    assert.match(precarioV2, /formatarPreco\(plano\.precoCentimos\)/);
+    assert.match(precarioV2, /\$\{IVA_INCLUIDO\}/);
+    assert.equal(/\+ ?IVA|\d+,\d{2} ?€/.test(precarioV2), false);
+    for (const n of ["Tenho um problema agora.", "Tenho um problema e quero continuar protegido.", "Não tenho um problema agora, mas quero acompanhamento."]) {
+      assert.ok(precarioV2.includes(n), n);
+    }
   });
 
   test("a homepage usa o preçário partilhado", () => {

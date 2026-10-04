@@ -96,7 +96,7 @@ O piloto Remax é gratuito (sem receita ainda). Prioridade: **ficar nos tiers gr
 
 ## Design System V2 — páginas públicas (04/10/2026)
 
-Regras em **`docs/design/design-system-v2.md`**; componentes em `src/components/marketing-v2/` (`PaginaV2`, `NavbarV2`, `FooterV2`, `SectionV2`/`SectionHeader`/`Eyebrow`, classes em `estilos.ts`, tokens `--v2-*` em `.tema-v2` no `globals.css`). Só páginas públicas: portal, backoffice, autenticação, checkout e e-mails continuam com `docs/design/brand-guide.md`. Primeira página: `/landing-v2` (teste, não indexada). Migração página a página (ordem: Preçário, Como Funciona, Ferramentas Gratuitas, Sobre Nós, Ajuda, Contacto), sem alterar lógica de negócio, preços nem textos legais.
+Regras em **`docs/design/design-system-v2.md`**; componentes em `src/components/marketing-v2/` (`PaginaV2`, `NavbarV2`, `FooterV2`, `SectionV2`/`SectionHeader`/`Eyebrow`, classes em `estilos.ts`, tokens `--v2-*` em `.tema-v2` no `globals.css`). Só páginas públicas: portal, backoffice, autenticação, checkout e e-mails continuam com `docs/design/brand-guide.md`. Páginas V2: `/landing-v2` (teste) e `/precario` (por necessidade; conteúdo dos planos em `src/lib/precario.ts`, partilhado com o preçário da homepage), ambas não indexadas enquanto `/` não migrar. Migração página a página (ordem: Preçário, Como Funciona, Ferramentas Gratuitas, Sobre Nós, Ajuda, Contacto), sem alterar lógica de negócio, preços nem textos legais.
 
 ## Idioma e tom
 
