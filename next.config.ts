@@ -18,7 +18,9 @@ const nextConfig: NextConfig = {
       // "Porquê subscrever" (02/10/2026): página órfã desde que "Planos" passou
       // a apontar para o preçário, com um alerta grátis que nenhuma rotina
       // enviava. Os alertas de fidelização são da Proteção (/portal/contratos).
-      { source: "/por-que-assinar", destination: "/#precario", permanent: true },
+      { source: "/por-que-assinar", destination: "/precario", permanent: true },
+      // Página de teste da homepage V2 (04/10/2026): passou a ser a homepage "/".
+      { source: "/landing-v2", destination: "/", permanent: false },
       // Monitor de Proteção (PR B): alertas de fidelização, de promoção e
       // comparador de faturas passaram a "Os meus contratos".
       { source: "/portal/alertas/:caminho*", destination: "/portal/contratos", permanent: true },

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { PERGUNTAS_HOMEPAGE } from "@/components/landing/conteudoPerguntasFrequentes";
 import { detectarOrigem, track } from "@/lib/analytics";
 import { urlTratarCaso } from "@/lib/site";
 import {
@@ -16,6 +17,7 @@ import {
 } from "@/components/marketing-v2/Icones";
 import { PainelCaso, PainelProtecao, VisualHero } from "@/components/marketing-v2/Mockups";
 import { CTASection } from "@/components/marketing-v2/CTASection";
+import { FAQAccordionV2 } from "@/components/marketing-v2/FAQAccordionV2";
 import { FeatureCard } from "@/components/marketing-v2/FeatureCard";
 import { FERRAMENTAS } from "@/components/marketing-v2/ferramentas";
 import { ListaVistos } from "@/components/marketing-v2/ListaVistos";
@@ -25,10 +27,11 @@ import { StepsTimeline, type Passo } from "@/components/marketing-v2/StepsTimeli
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_CONTORNO, BOTAO_PRIMARIO, TEXTO } from "@/components/marketing-v2/estilos";
 
-// Conteúdo da página de teste /landing-v2 — a primeira página do Design
-// System V2 (docs/design/design-system-v2.md). Navbar, rodapé, tokens e
-// secções vêm de src/components/marketing-v2/ (moldura em PaginaV2); a
-// homepage "/" não é alterada.
+// Homepage "/" no Design System V2 (docs/design/design-system-v2.md). Navbar,
+// rodapé, tokens e secções vêm de src/components/marketing-v2/ (moldura em
+// PaginaV2). Os eventos de medição mantêm os nomes da homepage anterior
+// quando a ação é a mesma (click_nav_reclamacao, click_hero_reclamacao,
+// click_hero_simulador).
 //
 // Regras de conteúdo: gratuito só a Calculadora de Cancelamento (fidelização)
 // e o Simulador de Elegibilidade; a comparação de faturas só na Proteção; sem
@@ -37,8 +40,8 @@ import { BOTAO_CONTORNO, BOTAO_PRIMARIO, TEXTO } from "@/components/marketing-v2
 // Na homepage, as duas ferramentas de "existe um problema?"; o Guia de
 // Mudança fica na página de ferramentas gratuitas.
 const EVENTOS_FERRAMENTAS = {
-  calculadora: "click_landing_v2_fidelizacao",
-  simulador: "click_landing_v2_simulador",
+  calculadora: "click_home_calculadora",
+  simulador: "click_home_simulador",
 } as const;
 
 const GARANTIAS: { icone: ReactNode; texto: string }[] = [
@@ -84,8 +87,20 @@ const PROTECAO = [
   "Situações que possam justificar uma análise mais atenta",
 ];
 
-export function LandingV2() {
+export function HomepageV2() {
   const [origem] = useState(detectarOrigem);
+
+  // O preçário saiu da homepage para /precario. Os links antigos para
+  // "/#precario" (portal, regresso do Stripe, /criar-conta, e-mails já
+  // enviados) continuam a funcionar: o fragmento só existe no browser.
+  useEffect(() => {
+    const irParaPrecario = () => {
+      if (window.location.hash === "#precario") window.location.replace(ROTAS_V2.precario);
+    };
+    irParaPrecario();
+    window.addEventListener("hashchange", irParaPrecario);
+    return () => window.removeEventListener("hashchange", irParaPrecario);
+  }, []);
 
   const tratarCaso = useCallback(
     (evento: string) => {
@@ -112,12 +127,12 @@ export function LandingV2() {
             mostramos-lhe o texto antes de enviar e acompanhamos o processo consigo.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <button type="button" onClick={() => tratarCaso("click_landing_v2_hero")} className={BOTAO_PRIMARIO}>
+            <button type="button" onClick={() => tratarCaso("click_hero_reclamacao")} className={BOTAO_PRIMARIO}>
               Tratar do meu caso <IconeSeta tamanho={17} />
             </button>
             <Link
               href="/simulador-elegibilidade"
-              onClick={() => track("click_landing_v2_hero_simulador")}
+              onClick={() => track("click_hero_simulador")}
               className={BOTAO_CONTORNO}
             >
               Ver se a DoLado pode ajudar
@@ -131,6 +146,9 @@ export function LandingV2() {
               </li>
             ))}
           </ul>
+          <p className="mt-4 text-[14px] text-[var(--v2-muted)]">
+            Resposta ao primeiro contacto no prazo máximo de 48 horas úteis.
+          </p>
         </div>
         <VisualHero />
       </SectionV2>
@@ -227,9 +245,13 @@ export function LandingV2() {
           <div className="mt-7">
             <ListaVistos itens={TRATAMENTO} />
           </div>
-          <Link href={ROTAS_V2.precario} onClick={() => track("click_landing_v2_precos")} className={`${BOTAO_PRIMARIO} mt-9`}>
+          <Link href={ROTAS_V2.precario} onClick={() => track("click_home_precos")} className={`${BOTAO_PRIMARIO} mt-9`}>
             Ver preços e tratar do meu caso <IconeSeta tamanho={17} />
           </Link>
+          <p className="mt-8 max-w-[520px] border-l-[3px] border-[var(--v2-green)] pl-4 text-[14px] leading-relaxed text-[var(--v2-muted)]">
+            Não garantimos resolver — garantimos que a reclamação chega bem feita, com a lei certa citada. A DoLado
+            presta apoio administrativo, nunca aconselhamento jurídico individualizado.
+          </p>
         </div>
         <PainelCaso />
       </SectionV2>
@@ -245,7 +267,7 @@ export function LandingV2() {
           <div className="mt-7">
             <ListaVistos itens={PROTECAO} />
           </div>
-          <Link href={ROTAS_V2.precario} onClick={() => track("click_landing_v2_protecao")} className={`${BOTAO_PRIMARIO} mt-9`}>
+          <Link href={ROTAS_V2.precario} onClick={() => track("click_home_protecao")} className={`${BOTAO_PRIMARIO} mt-9`}>
             Conhecer a Proteção <IconeSeta tamanho={17} />
           </Link>
         </div>
@@ -262,6 +284,20 @@ export function LandingV2() {
         logótipos de empresas, que não podem ser usados.
       */}
 
+      {/* ===== Perguntas frequentes ===== */}
+      <SectionV2 className="grid gap-10 lg:grid-cols-[1fr_1.6fr] lg:gap-16">
+        <div>
+          <SectionHeader eyebrow="Perguntas frequentes" titulo="Tudo o que precisa de saber antes de começar." />
+          <Link
+            href={ROTAS_V2.ajuda}
+            className="mt-6 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
+          >
+            Ver todas as perguntas <IconeSeta tamanho={15} />
+          </Link>
+        </div>
+        <FAQAccordionV2 perguntas={PERGUNTAS_HOMEPAGE} />
+      </SectionV2>
+
       {/* ===== CTA final ===== */}
       <CTASection
         eyebrow="Não sabe por onde começar?"
@@ -270,7 +306,7 @@ export function LandingV2() {
         acao={
           <Link
             href="/simulador-elegibilidade"
-            onClick={() => track("click_landing_v2_cta_final")}
+            onClick={() => track("click_home_cta_final")}
             className={`${BOTAO_PRIMARIO} w-full md:w-auto`}
           >
             Ver se a DoLado pode ajudar <IconeSeta tamanho={17} />
