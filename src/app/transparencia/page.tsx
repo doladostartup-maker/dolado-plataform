@@ -9,7 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default function TransparenciaPage() {
-  // Sem AnalyticsScripts, como antes da migração.
   return (
     <PaginaV2 eventoCtaNavbar="click_nav_transparencia">
       <TransparenciaV2 />

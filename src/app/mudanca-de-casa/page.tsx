@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import { PaginaV2 } from "@/components/marketing-v2/PaginaV2";
 import { MudancaDeCasaV2 } from "@/components/mudanca-casa-v2/MudancaDeCasaV2";
 import { MARKETING_SITE_URL } from "@/lib/site";
@@ -13,11 +12,8 @@ export const metadata: Metadata = {
 
 export default function MudancaDeCasaPage() {
   return (
-    <>
-      <AnalyticsScripts />
-      <PaginaV2 eventoCtaNavbar="mudanca_casa_clique_tratar_caso" parametrosCtaNavbar={{ local: "cabecalho" }}>
-        <MudancaDeCasaV2 />
-      </PaginaV2>
-    </>
+    <PaginaV2 eventoCtaNavbar="mudanca_casa_clique_tratar_caso" parametrosCtaNavbar={{ local: "cabecalho" }}>
+      <MudancaDeCasaV2 />
+    </PaginaV2>
   );
 }
