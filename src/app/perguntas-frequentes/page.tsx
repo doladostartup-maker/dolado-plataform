@@ -9,7 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default function PerguntasFrequentesPage() {
-  // Sem AnalyticsScripts, como antes da migração.
   return (
     <PaginaV2 eventoCtaNavbar="click_nav_perguntas_frequentes">
       <AjudaV2 />
