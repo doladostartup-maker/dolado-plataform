@@ -210,6 +210,5 @@ export const REVISAO_JURIDICA_PENDENTE = [
   "Resumo e forma de exercício da livre resolução (RESUMO_LIVRE_RESOLUCAO, COMO_EXERCER_LIVRE_RESOLUCAO, /livre-resolucao)",
   "Termos e Condições versão 2026-10-01b — em especial: cancelamento, início da prestação e livre resolução; limitações de responsabilidade; RAL e lei aplicável",
   "Política de Privacidade versão 2026-10-01c — prazos de conservação (secção 6), bases jurídicas e descrição do Simulador de Elegibilidade público",
-  "Entidades RAL (ENTIDADES_RAL) — lista confirmada contra a DGC a 04/10/2026; falta validar: competência territorial nos contratos celebrados online (local de celebração vs. residência do consumidor), a nota sobre arbitragem necessária em /resolucao-de-litigios e se o CAUAL está abrangido por essa arbitragem necessária",
   "Função online de livre resolução (/livre-resolucao) e modelo de formulário",
 ] as const;

@@ -16,7 +16,7 @@ const LINK = "text-[var(--color-brand)] underline";
 // redação do DL 74/2017; Lei 144/2015, art. 18.º). Não confundir com as
 // reclamações que a DoLado trata em nome dos clientes. Entidades em
 // src/lib/legal.ts (ENTIDADES_RAL), confirmadas contra a lista oficial da DGC
-// a 04/10/2026; pontos por validar em REVISAO_JURIDICA_PENDENTE.
+// a 04/10/2026.
 export default function ResolucaoLitigiosPage() {
   return (
     <article className="flex flex-col gap-6 pt-4">
