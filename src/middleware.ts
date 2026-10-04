@@ -24,6 +24,7 @@ const PAGINAS_PUBLICAS = [
   "/mudanca-de-casa",
   "/perguntas-frequentes",
   "/precario",
+  "/ferramentas-gratuitas",
   // Página de teste da nova homepage (noindex), servida em dolado.pt para
   // os links "/#precario" funcionarem.
   "/landing-v2",
@@ -65,6 +66,7 @@ const PAGINAS_SO_MARKETING = [
   "/mudanca-de-casa",
   "/perguntas-frequentes",
   "/precario",
+  "/ferramentas-gratuitas",
   "/landing-v2",
 ];
 

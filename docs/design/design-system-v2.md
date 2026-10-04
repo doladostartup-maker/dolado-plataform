@@ -19,6 +19,8 @@ Documento de referência aprovado por Thiago a 04/10/2026. Nasce da nova direç�
 | Lista com vistos, bloco de fecho (CTA final) | `ListaVistos.tsx`, `CTASection.tsx` |
 | Cartão de plano por necessidade (preços sempre de `src/lib/planos.ts`; alinhamento por subgrid com `GRELHA_PLANOS`) | `PricingCard.tsx` |
 | Perguntas frequentes (mesmo accordion e mesmo conteúdo de `/perguntas-frequentes`) | `FAQAccordionV2.tsx` |
+| Cartão de ferramenta/funcionalidade (ícone, título, texto, visual, uma ação) | `FeatureCard.tsx` |
+| Ferramentas gratuitas (fonte única: pergunta, texto, visual, CTA, destino) | `ferramentas.tsx` |
 | Etapas de um processo (`layout`: horizontal para 3–5 etapas; vertical para processos longos, com rótulo de quem age) | `StepsTimeline.tsx` |
 
 Páginas V2:
@@ -27,11 +29,12 @@ Páginas V2:
 |---|---|---|
 | Homepage (teste) | `/landing-v2` — `src/app/landing-v2/page.tsx`, `src/components/landing-v2/LandingV2.tsx` | noindex |
 | Como Funciona | `/como-funciona` — `src/app/como-funciona/page.tsx`, `src/components/como-funciona-v2/ComoFuncionaV2.tsx` (passos e nota de transparência com o texto já publicado) | indexada (substituiu a versão V1) |
+| Ferramentas Gratuitas | `/ferramentas-gratuitas` — `src/app/ferramentas-gratuitas/page.tsx`, `src/components/ferramentas-v2/FerramentasV2.tsx` (Calculadora, Simulador, Guia de Mudança) | indexada (página nova) |
 | Preçário | `/precario` — `src/app/precario/page.tsx`, `src/components/precario-v2/PrecarioV2.tsx`; conteúdo dos planos e destino dos botões em `src/lib/precario.ts`, partilhados com o preçário da homepage (`Precario.tsx`) | noindex enquanto a homepage `/` não migrar; o preçário público continua em `/#precario` |
 
 Uma página V2 nova: `<PaginaV2 eventoCtaNavbar="click_…">` + `SectionV2`/`SectionHeader` + classes de `estilos.ts`. Criar componentes novos (PricingCard, FAQAccordionV2, …) só quando forem usados, em `src/components/marketing-v2/`, e reutilizá-los nas páginas seguintes.
 
-Pendente: "Ferramentas gratuitas" aponta para `/landing-v2#ferramentas` até existir página própria (`ROTAS_V2.ferramentas`). Quando a homepage V2 substituir `/`: indexar `/precario` e decidir se os links `/#precario` (SiteHeader, portal, `cancel_url` do Stripe, `/criar-conta`, redirect de `/por-que-assinar`) passam para `/precario`.
+Pendente: quando a homepage V2 substituir `/`: indexar `/precario` e decidir se os links `/#precario` (SiteHeader, portal, `cancel_url` do Stripe, `/criar-conta`, redirect de `/por-que-assinar`) passam para `/precario`.
 
 ---
 
@@ -242,7 +245,7 @@ Hero simples, StepsTimeline, explicações mais detalhadas, mockup de acompanham
 
 Só funcionalidades gratuitas. Atualmente:
 
-1. "Quando termina a minha fidelização?" (Calculadora de Cancelamento)
+1. "Quanto custa cancelar antes do fim da fidelização?" (Calculadora de Cancelamento — estima o encargo máximo de um cancelamento antecipado em telecomunicações; não calcula a data de fim)
 2. "A DoLado pode tratar do meu caso?" (Simulador de Elegibilidade)
 3. "Vou mudar de casa. O que tenho de tratar?" (Guia de Mudança)
 
@@ -340,7 +343,7 @@ Uma ação principal clara por página: Homepage → "Tratar do meu caso"; Ferra
 
 ## 55. CTAs consistentes
 
-"Tratar do meu caso", "Ver se a DoLado pode ajudar", "Conhecer a Proteção", "Ver preços", "Verificar a fidelização grátis", "Ver Guia de Mudança". Evitar dezenas de versões para a mesma ação.
+"Tratar do meu caso", "Ver se a DoLado pode ajudar", "Conhecer a Proteção", "Ver preços", "Calcular o encargo grátis", "Ver Guia de Mudança". Evitar dezenas de versões para a mesma ação.
 
 ## 56. Core da DoLado
 

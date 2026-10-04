@@ -6,24 +6,24 @@ import { useCallback, useState, type ReactNode } from "react";
 import { detectarOrigem, track } from "@/lib/analytics";
 import { urlTratarCaso } from "@/lib/site";
 import {
-  IconeCalendario,
   IconeCirculoVisto,
   IconeDocumentoVisto,
   IconeEscudo,
   IconeFormulario,
   IconeLupaDocumento,
   IconeMensagem,
-  IconePergunta,
   IconePessoas,
   IconeSeta,
 } from "@/components/marketing-v2/Icones";
-import { PainelCaso, PainelProtecao, VisualFidelizacao, VisualHero, VisualSimulador } from "@/components/marketing-v2/Mockups";
+import { PainelCaso, PainelProtecao, VisualHero } from "@/components/marketing-v2/Mockups";
 import { CTASection } from "@/components/marketing-v2/CTASection";
+import { FeatureCard } from "@/components/marketing-v2/FeatureCard";
+import { FERRAMENTAS } from "@/components/marketing-v2/ferramentas";
 import { ListaVistos } from "@/components/marketing-v2/ListaVistos";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
 import { StepsTimeline, type Passo } from "@/components/marketing-v2/StepsTimeline";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
-import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
+import { BOTAO_CONTORNO, BOTAO_PRIMARIO, TEXTO } from "@/components/marketing-v2/estilos";
 
 // Conteúdo da página de teste /landing-v2 — a primeira página do Design
 // System V2 (docs/design/design-system-v2.md). Navbar, rodapé, tokens e
@@ -33,6 +33,13 @@ import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/mark
 // Regras de conteúdo: gratuito só a Calculadora de Cancelamento (fidelização)
 // e o Simulador de Elegibilidade; a comparação de faturas só na Proteção; sem
 // logótipos de terceiros; sem testemunhos inventados.
+
+// Na homepage, as duas ferramentas de "existe um problema?"; o Guia de
+// Mudança fica na página de ferramentas gratuitas.
+const EVENTOS_FERRAMENTAS = {
+  calculadora: "click_landing_v2_fidelizacao",
+  simulador: "click_landing_v2_simulador",
+} as const;
 
 const GARANTIAS: { icone: ReactNode; texto: string }[] = [
   { icone: <IconeEscudo tamanho={20} />, texto: "Simples e seguro" },
@@ -136,43 +143,34 @@ export function LandingV2() {
           texto="Antes de contratar qualquer serviço, pode usar gratuitamente estas ferramentas da DoLado para perceber melhor a sua situação."
         />
         <div className="mt-10 grid gap-6 md:grid-cols-2">
-          {[
-            {
-              icone: <IconeCalendario tamanho={30} strokeWidth={1.6} />,
-              titulo: "Não sei quando termina a fidelização",
-              texto:
-                "Consulte as informações necessárias para perceber quando termina a sua fidelização e quais as condições relevantes.",
-              visual: <VisualFidelizacao />,
-              cta: "Verificar a fidelização grátis",
-              href: "/calculadora-cancelamento",
-              evento: "click_landing_v2_fidelizacao",
-            },
-            {
-              icone: <IconePergunta tamanho={30} strokeWidth={1.6} />,
-              titulo: "Não sei se a DoLado pode tratar do meu caso",
-              texto: "Conte-nos o que aconteceu e veja gratuitamente se a situação pode ser tratada pela DoLado.",
-              visual: <VisualSimulador />,
-              cta: "Verificar o meu caso grátis",
-              href: "/simulador-elegibilidade",
-              evento: "click_landing_v2_simulador",
-            },
-          ].map((f) => (
-            <article key={f.titulo} className={`${CARTAO} flex flex-col p-7 sm:p-9`}>
-              <span className="text-[var(--v2-green)]">{f.icone}</span>
-              <h3 className="mt-5 text-[21px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">{f.titulo}</h3>
-              <p className="mt-3 max-w-[420px] text-[15px] leading-relaxed text-[var(--v2-muted)]">{f.texto}</p>
-              <div className="my-7">{f.visual}</div>
-              <Link
-                href={f.href}
-                onClick={() => track(f.evento)}
-                className={`${BOTAO_CONTORNO} mt-auto self-start`}
-              >
-                {f.cta} <IconeSeta tamanho={16} />
-              </Link>
-            </article>
+          {FERRAMENTAS.filter((f) => f.id in EVENTOS_FERRAMENTAS).map((f) => (
+            <FeatureCard
+              key={f.id}
+              icone={f.icone}
+              titulo={f.titulo}
+              texto={f.texto}
+              visual={f.visual}
+              acao={
+                <Link
+                  href={f.href}
+                  onClick={() => track(EVENTOS_FERRAMENTAS[f.id as keyof typeof EVENTOS_FERRAMENTAS])}
+                  className={BOTAO_CONTORNO}
+                >
+                  {f.cta} <IconeSeta tamanho={16} />
+                </Link>
+              }
+            />
           ))}
         </div>
-        <p className="mt-6 text-[13.5px] text-[var(--v2-muted)]">Sem conta e sem e-mail. O resultado aparece logo no ecrã.</p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[13.5px] text-[var(--v2-muted)]">Sem conta e sem e-mail. O resultado aparece logo no ecrã.</p>
+          <Link
+            href={ROTAS_V2.ferramentas}
+            className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
+          >
+            Ver todas as ferramentas gratuitas <IconeSeta tamanho={15} />
+          </Link>
+        </div>
       </SectionV2>
 
       {/* ===== Como funciona ===== */}
