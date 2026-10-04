@@ -107,7 +107,7 @@ describe("pré-preenchimento de Tratar o meu caso", () => {
 });
 
 describe("simulador público, sem conta e sem gravação", () => {
-  const componente = ler("src/components/landing/SimuladorElegibilidadePublico.tsx");
+  const componente = ler("src/components/simulador-v2/SimuladorV2.tsx");
   const pagina = ler("src/app/simulador-elegibilidade/page.tsx");
 
   test("não pede e-mail, nome nem telefone, nem tem campos de texto", () => {
