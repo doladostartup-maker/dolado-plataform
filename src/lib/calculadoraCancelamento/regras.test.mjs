@@ -274,7 +274,7 @@ describe("garantias", () => {
   });
 
   test("a página corre só no browser: sem Supabase, sem IA, sem pedidos de rede", () => {
-    const fonte = ler("src/components/landing/CalculadoraCancelamentoPublica.tsx") + ler("src/lib/calculadoraCancelamento/regras.ts");
+    const fonte = ler("src/components/calculadora-v2/CalculadoraV2.tsx") + ler("src/lib/calculadoraCancelamento/regras.ts");
     for (const proibido of ["supabase", "anthropic", "fetch(", "localStorage", "\"use server\""]) {
       assert.ok(!fonte.toLowerCase().includes(proibido.toLowerCase()), proibido);
     }

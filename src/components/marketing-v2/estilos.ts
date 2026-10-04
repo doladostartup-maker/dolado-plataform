@@ -20,3 +20,8 @@ export const CARTAO =
   "rounded-[18px] border border-[var(--v2-line)] bg-white shadow-[0_1px_2px_rgba(11,37,69,0.04),0_8px_24px_-12px_rgba(11,37,69,0.10)]";
 
 export const CONTENTOR = "mx-auto max-w-[1200px] px-5 sm:px-8";
+
+export const CAMPO =
+  "w-full rounded-[12px] border border-[var(--v2-line-strong)] bg-white px-4 py-3 text-[16px] text-[var(--v2-navy)] placeholder:text-[var(--v2-muted)] focus-visible:border-[var(--v2-green)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--v2-green)]";
+
+export const ROTULO_CAMPO = "mb-2 block text-[14px] font-semibold text-[var(--v2-navy)]";

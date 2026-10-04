@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Contacto } from "@/components/landing/Contacto";
+import { ContactoV2 } from "@/components/contacto-v2/ContactoV2";
+import { PaginaV2 } from "@/components/marketing-v2/PaginaV2";
 
 export const metadata: Metadata = {
   title: "Contacto - DoLado",
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function ContactoPage() {
-  return <Contacto />;
+  return (
+    <PaginaV2 eventoCtaNavbar="click_nav_contacto">
+      <ContactoV2 />
+    </PaginaV2>
+  );
 }

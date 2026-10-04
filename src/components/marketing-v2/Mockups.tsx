@@ -89,7 +89,7 @@ export function VisualHero() {
   );
 }
 
-/** Ferramenta 1: a data de fim da fidelização. */
+/** Ferramenta 1: Calculadora de Cancelamento (estimativa do encargo máximo). */
 export function VisualFidelizacao() {
   return (
     <div aria-hidden="true" className="relative h-[170px]">
@@ -106,8 +106,8 @@ export function VisualFidelizacao() {
           <IconeCalendario tamanho={22} />
         </span>
         <div>
-          <p className="text-[12px] text-[var(--v2-muted)]">Fidelização termina em</p>
-          <p className="text-[15px] font-bold text-[var(--v2-navy)]">14/03/2027</p>
+          <p className="text-[12px] text-[var(--v2-muted)]">Calculada com os dados do contrato</p>
+          <p className="text-[15px] font-bold text-[var(--v2-navy)]">Encargo máximo estimado</p>
         </div>
       </div>
     </div>
@@ -140,6 +140,26 @@ export function VisualSimulador() {
             <IconeVisto tamanho={12} strokeWidth={2.6} />
           </span>
           {r.texto}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Ferramenta 3: os quatro momentos do Guia de Mudança de Casa. */
+export function VisualMudanca() {
+  const momentos = ["Antes da mudança", "No dia da saída", "Na casa nova", "Depois da mudança"];
+  return (
+    <div aria-hidden="true" className="mx-auto flex h-[170px] max-w-[320px] flex-col justify-center gap-2">
+      {momentos.map((m, i) => (
+        <div
+          key={m}
+          className="flex items-center gap-3 rounded-[12px] border border-[var(--v2-line)] bg-white px-4 py-2.5 text-[13.5px] font-semibold text-[var(--v2-navy)]"
+        >
+          <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-[var(--v2-mint)] text-[12px] font-bold text-[var(--v2-green-dark)]">
+            {i + 1}
+          </span>
+          {m}
         </div>
       ))}
     </div>

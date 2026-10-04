@@ -19,6 +19,7 @@ const COLUNAS_RODAPE: { titulo: string; links: { href: string; label: string; ex
     titulo: "DoLado",
     links: [
       { href: ROTAS_V2.sobreNos, label: "Sobre nós" },
+      { href: ROTAS_V2.transparencia, label: "Transparência" },
       { href: ROTAS_V2.ajuda, label: "Ajuda" },
       { href: ROTAS_V2.contacto, label: "Contacto" },
     ],
