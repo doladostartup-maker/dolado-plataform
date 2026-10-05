@@ -13,7 +13,7 @@ export const PASSOS = [
   { etapa: "recebido", texto: "Ficheiro recebido" },
   { etapa: "a_verificar", texto: "A verificar o ficheiro" },
   { etapa: "a_ler", texto: "A identificar datas, preços e condições" },
-  { etapa: "a_registar", texto: "A preparar o resumo" },
+  { etapa: "a_registar", texto: "A preparar o resultado da verificação" },
 ] as const;
 
 // Uma leitura normal demora menos de 30 s; a chamada à Claude API tem um

@@ -10,7 +10,6 @@ import {
   formatarDataPt,
   formatarEurosCents,
   formatarValorCampo,
-  proximaData,
   setorTratarCaso,
   textoProximaData,
   valorParaEdicao,
@@ -32,6 +31,8 @@ import {
 import type { CampoContrato, LinhaFatura } from "@/lib/monitor/extracaoFatura";
 import { emCurso } from "@/lib/monitor/processamento";
 import { apresentarFornecedor } from "@/lib/monitor/servidor";
+import { carregarProtecao } from "@/lib/monitor/protecaoCliente";
+import { dataExtenso } from "@/lib/monitor/resultadoProtecao";
 import { corrigirContrato, deixarDeAcompanhar, responderFatura } from "../actions";
 import { CamposContrato } from "../_components/CamposContrato";
 import { ConfirmarDados, type CampoPorConfirmar } from "../_components/ConfirmarDados";
@@ -39,17 +40,21 @@ import { ProgressoDocumento } from "../_components/ProgressoDocumento";
 import { CustoSaida } from "../_components/CustoSaida";
 import { UploadDocumento } from "../_components/UploadDocumento";
 import { HistoricoServico, type PeriodoHistorico } from "../_components/HistoricoServico";
+import { ListaAtentos, ListaVerificacoes, ResultadoAtual, SituacaoEncontrada, TituloBloco, plural } from "../_components/ResultadoProtecao";
 import { BotaoSubmeter } from "../_components/BotaoSubmeter";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CARTAO, TITULO_SECCAO } from "../_components/estilos";
 import { Aviso } from "@/components/portal/Aviso";
 import { CabecalhoPagina } from "@/components/portal/Cabecalho";
+import { IconeCalendario, IconeInfo } from "@/components/portal/Icones";
 import { BOTAO_DESTRUTIVO, CAIXA_SELECAO, CARTAO_ACAO, CARTAO_DESTAQUE, LIGACAO, LIGACAO_DISCRETA, TEXTO_SECUNDARIO } from "@/components/portal/ui";
-import { SIMBOLO } from "../_components/HistoricoServico";
 
 // Serviço acompanhado. Funciona só com faturas (histórico e padrão
 // observado) e fica mais completo com o contrato (contratado × faturado,
-// promoções, fidelização, custo de saída). Ordem: resumo → mês a mês →
-// situações → condições do contrato → padrões observados → documentos.
+// promoções, fidelização, custo de saída). Ordem: resultado (o que a DoLado
+// verificou e encontrou) → situações → confirmações → o que verificámos →
+// o que estamos a acompanhar → mês a mês → condições do contrato → custo de
+// saída → padrões observados → documentos. Regras do resultado em
+// src/lib/monitor/resultadoProtecao.ts.
 //
 // Sem contrato nunca se fala de "contratado": os valores das faturas são
 // observados. Uma fatura nunca altera as condições do contrato.
@@ -93,8 +98,9 @@ const CAMPOS_COMERCIAIS = new Set<CampoContrato>([
 // Informação contratual que a própria fatura pode indicar (nível 2).
 const LIDOS_DA_FATURA: CampoContrato[] = ["data_fim_fidelizacao", "cessacao_operador_cents", "cessacao_operador_data"];
 
+// "processado" não precisa de mensagem: o resultado da verificação é o
+// próprio topo da página.
 const MENSAGEM: Record<string, string> = {
-  processado: "Lemos o documento.",
   pendente: "Recebemos o documento. Ainda não o conseguimos ler automaticamente: a DoLado vai verificá-lo.",
   a_rever: "Lemos o documento, mas alguns dados precisam de ser verificados pela DoLado.",
 };
@@ -168,6 +174,7 @@ export default async function ServicoPage({
     { data: achados },
     { data: versoes },
     { data: porAssociar },
+    { servicos: resultados },
   ] = await Promise.all([
     supabase
       .from("contratos_campos")
@@ -205,7 +212,10 @@ export default async function ServicoPage({
       .eq("associacao_sugerida", id)
       .is("contrato_id", null)
       .in("associacao_estado", ["possivel", "conflito"]),
+    carregarProtecao(supabase, user.id, id),
   ]);
+  const resultado = resultados[0];
+  if (!resultado) notFound();
 
   const hoje = hojeLisboa();
   const lista = (campos ?? []) as Campo[];
@@ -270,6 +280,20 @@ export default async function ServicoPage({
       };
     })
     .concat(
+      resultado.historico
+        .filter((h) => h.tipo === "aviso")
+        .map((h, i) => ({
+          id: `aviso-${i}`,
+          titulo: `Aviso por e-mail a ${formatarDataPt(h.data.slice(0, 10))}`,
+          totalCents: null,
+          itens: [{ severidade: "info" as const, texto: h.texto }],
+          explicacao: null,
+          emVerificacao: false,
+          nota: true,
+          data: h.data.slice(0, 10),
+        })),
+    )
+    .concat(
       docsContrato.map((d) => ({
         id: d.id,
         titulo: `Contrato adicionado a ${formatarDataPt(d.created_at)}`,
@@ -282,12 +306,6 @@ export default async function ServicoPage({
       })),
     )
     .sort((a, b) => (a.data < b.data ? 1 : -1));
-  const ultimoResultado: { severidade: Severidade; texto: string }[] = ultima
-    ? [
-        ...(ultima.linha.em_verificacao ? [{ severidade: "info" as const, texto: "Em verificação pela DoLado" }] : []),
-        ...itensDe(ultima.id),
-      ].slice(0, 2)
-    : [];
   const cUltima = ultima ? componentesFatura(ultima) : null;
 
   // Resumo da última fatura por confirmar (só o essencial).
@@ -323,7 +341,6 @@ export default async function ServicoPage({
   const camposCondicoes = [...grupos.values()].filter((iguais) => CAMPOS_COMERCIAIS.has(iguais[0].campo)).map((iguais) => iguais[0].id);
   const propostasDoContrato = porConfirmar.some((c) => c.origem === "contrato");
 
-  const fimFidelizacao = atuais.get("data_fim_fidelizacao");
   const vistoEmFaturas = LIDOS_DA_FATURA.map((c) => atuais.get(c)).filter((c): c is Campo => !!c && c.origem === "fatura");
 
   return (
@@ -368,107 +385,37 @@ export default async function ServicoPage({
         <ProgressoDocumento key={d.id} documentoId={d.id} contratoAtual={contrato.id} inicial={d} />
       ))}
 
-      {/* ===== 1. Resumo ===== */}
-      <section className={`${CARTAO_DESTAQUE} flex flex-col gap-3`}>
-        <h2 className={TITULO_SECCAO}>Resumo</h2>
-        <dl className="flex flex-col">
-          {temContrato ? (
-            <>
-              <Linha rotulo="Estado">{contrato.estado === "terminado" ? "Terminado" : "Ativo"}</Linha>
-              {mensalidadeContratada != null && <Linha rotulo="Mensalidade contratada">{formatarEurosCents(mensalidadeContratada)}</Linha>}
-            </>
-          ) : (
-            <>
-              <Linha rotulo="Acompanhamento iniciado">{mesAno(padrao.inicio ?? contrato.created_at)}</Linha>
-              {padrao.mensalidadeHabitualCents != null && (
-                <Linha rotulo="Mensalidade habitual observada">{formatarEurosCents(padrao.mensalidadeHabitualCents)}</Linha>
-              )}
-            </>
-          )}
-          {ultima && (
-            <Linha rotulo="Última fatura">
-              {formatarEurosCents(ultima.totalCents)}
-              <span className="text-[13px] text-[var(--v2-muted)]">{mesAno(dataReferencia(ultima))}</span>
-            </Linha>
-          )}
-          <Linha rotulo="Fidelização">
-            {fimFidelizacao ? (
-              <>
-                até {formatarDataPt(String(fimFidelizacao.valor))}
-                <Origem c={fimFidelizacao} />
-              </>
-            ) : (
-              <span className="text-[14px] text-[var(--v2-muted)]">
-                {ordenadas.length ? "Não conseguimos determinar através das faturas disponíveis." : "Por indicar"}
-              </span>
-            )}
-          </Linha>
-          {ultimoResultado.length > 0 && (
-            <Linha rotulo="Último resultado">
-              {ultimoResultado.map((r, n) => {
-                const s = SIMBOLO[r.severidade];
-                return (
-                  <span key={n} className="inline-flex items-start gap-1.5 text-[14.5px] sm:justify-end">
-                    <s.Icone tamanho={17} className={`mt-0.5 shrink-0 ${s.cor}`} />
-                    <span className="sr-only">{s.rotulo}: </span>
-                    {r.texto}
-                  </span>
-                );
-              })}
-            </Linha>
-          )}
-          {!temContrato && (
-            <Linha rotulo="Contrato">
-              <span className="text-[14px] text-[var(--v2-muted)]">Não adicionado</span>
-              <a href="#adicionar-contrato" className={`${LIGACAO} text-[14px]`}>
-                Adicionar contrato
-              </a>
-            </Linha>
-          )}
-        </dl>
-        <p className="text-[14.5px] font-semibold text-[var(--v2-navy)]">{textoProximaData(proximaData(contrato, hoje))}</p>
-      </section>
+      {/* ===== 1. Resultado: o que a DoLado verificou e encontrou ===== */}
+      <ResultadoAtual
+        id="resultado"
+        estado={resultado.estado}
+        eyebrow={query.documento === "processado" ? "Verificação concluída" : undefined}
+        titulo={resultado.titulo}
+        conclusao={resultado.conclusao}
+        texto={resultado.texto}
+        ultimaVerificacao={resultado.ultimaVerificacao}
+        documentoVerificado={resultado.documentoVerificado}
+        hoje={hoje}
+        trabalho={{
+          verificamos: resultado.verificacoes.length ? plural(resultado.verificacoes.length, "ponto importante", "pontos importantes") : null,
+          encontramos: resultado.encontramos,
+          atentos: resultado.atentos.length ? plural(resultado.atentos.length, "situação importante", "situações importantes") : null,
+        }}
+      />
 
-      {/* ===== Fatura nova: resumo para confirmar (sem campo a campo) ===== */}
-      {porConfirmarFatura && cUltima && (
-        <section className={`${CARTAO_ACAO} flex flex-col gap-3`}>
-          {docUltima?.estado === "a_rever" ? (
-            <p className="text-sm text-[var(--color-ink-muted)]">
-              Lemos a fatura de {mesAnoTexto(dataReferencia(porConfirmarFatura))}. Alguns valores vão ser verificados pela DoLado antes de os usarmos.
-            </p>
-          ) : (
-            <>
-              <h2 className={TITULO_SECCAO}>Encontrámos estes dados na fatura de {mesAnoTexto(dataReferencia(porConfirmarFatura))}</h2>
-              <dl className="flex flex-col">
-                {cUltima.mensalidadeCents != null && <Linha rotulo="Mensalidade">{formatarEurosCents(cUltima.mensalidadeCents)}</Linha>}
-                {cUltima.descontoCents > 0 && <Linha rotulo="Desconto">−{formatarEurosCents(cUltima.descontoCents)}</Linha>}
-                {cUltima.consumosCents > 0 && <Linha rotulo="Consumo adicional">{formatarEurosCents(cUltima.consumosCents)}</Linha>}
-                {cUltima.pontuaisCents > 0 && <Linha rotulo="Cobranças pontuais">{formatarEurosCents(cUltima.pontuaisCents)}</Linha>}
-                <Linha rotulo="Total">{formatarEurosCents(porConfirmarFatura.totalCents)}</Linha>
-              </dl>
-              <form action={responderFatura} className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <input type="hidden" name="fatura_id" value={porConfirmarFatura.id} />
-                <input type="hidden" name="contrato_id" value={contrato.id} />
-                <BotaoSubmeter name="acao" value="confirmar" className={BOTAO_PRIMARIO}>
-                  Confirmar fatura
-                </BotaoSubmeter>
-                <BotaoSubmeter name="acao" value="contestar" aDecorrer="A enviar…" className={`${LIGACAO_DISCRETA} min-h-11 text-[14px]`}>
-                  Os valores não estão corretos
-                </BotaoSubmeter>
-              </form>
-            </>
-          )}
-        </section>
-      )}
+      {/* ===== 2. Situações encontradas (revistas pela DoLado) ===== */}
+      {resultado.situacoes.map((s) => (
+        <SituacaoEncontrada key={s.id} s={s} setor={contrato.setor} hoje={hoje} />
+      ))}
 
       {/* ===== Dados lidos por confirmar ===== */}
       {camposPorConfirmar.length > 0 && (
-        <section className={`${CARTAO_ACAO} flex flex-col gap-4`}>
+        <section id="confirmar" className={`${CARTAO_ACAO} flex scroll-mt-24 flex-col gap-4`}>
           <div>
             <h2 className={TITULO_SECCAO}>{propostasDoContrato ? "Encontrámos estes dados no contrato" : "Encontrámos estes dados no documento"}</h2>
-            <p className="text-sm text-[var(--color-ink-muted)]">Reveja cada valor e confirme no fim. Só começamos a usá-los depois de confirmar.</p>
+            <p className={TEXTO_SECUNDARIO}>Reveja cada valor e confirme no fim. Só começamos a usá-los depois de confirmar.</p>
             {propostasDoContrato && ordenadas.length > 0 && (
-              <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
+              <p className={`${TEXTO_SECUNDARIO} mt-1`}>
                 Encontrámos {ordenadas.length === 1 ? "1 fatura anterior" : `${ordenadas.length} faturas anteriores`}. Depois de confirmar, vamos
                 compará-{ordenadas.length === 1 ? "la" : "las"} com as condições do contrato.
               </p>
@@ -478,42 +425,105 @@ export default async function ServicoPage({
         </section>
       )}
 
-      {/* ===== 2. Acompanhamento mês a mês ===== */}
+      {/* ===== 3. O que verificámos ===== */}
+      {resultado.verificacoes.length > 0 && (
+        <section aria-labelledby="verificamos" className={`${CARTAO} flex flex-col gap-4`}>
+          <TituloBloco
+            id="verificamos"
+            descricao={resultado.documentoVerificado ? `O que encontrámos na última verificação (${resultado.documentoVerificado}).` : undefined}
+          >
+            O que verificámos
+          </TituloBloco>
+          <ListaVerificacoes verificacoes={resultado.verificacoes} />
+          {resultado.lacunas.length > 0 && (
+            <ul className="flex flex-col gap-1.5 border-t border-[var(--v2-line)] pt-4">
+              {resultado.lacunas.map((l) => (
+                <li key={l} className="flex items-start gap-2 text-[14.5px] leading-relaxed text-[var(--v2-muted)]">
+                  <IconeInfo tamanho={17} className="mt-0.5 shrink-0 text-[var(--v2-blue)]" />
+                  <span>
+                    {l}
+                    {!temContrato && " O contrato ajuda-nos a confirmar."}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {/* Fatura nova: confirmar os valores lidos (opcional, sem campo a campo). */}
+          {porConfirmarFatura && cUltima && (
+            <div className="border-t border-[var(--v2-line)] pt-4">
+              {docUltima?.estado === "a_rever" ? (
+                <p className={TEXTO_SECUNDARIO}>
+                  Alguns valores da fatura de {mesAnoTexto(dataReferencia(porConfirmarFatura))} vão ser verificados pela DoLado antes de os usarmos.
+                </p>
+              ) : (
+                <form action={responderFatura} className="flex flex-col gap-3">
+                  <input type="hidden" name="fatura_id" value={porConfirmarFatura.id} />
+                  <input type="hidden" name="contrato_id" value={contrato.id} />
+                  <p className="text-[14.5px] text-[var(--v2-navy)]">
+                    Os valores da fatura de {mesAnoTexto(dataReferencia(porConfirmarFatura))}
+                    {porConfirmarFatura.totalCents != null ? ` (total de ${formatarEurosCents(porConfirmarFatura.totalCents)})` : ""} estão corretos?
+                  </p>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <BotaoSubmeter name="acao" value="confirmar" className={BOTAO_SECUNDARIO}>
+                      Sim, estão corretos
+                    </BotaoSubmeter>
+                    <BotaoSubmeter name="acao" value="contestar" aDecorrer="A enviar…" className={`${LIGACAO_DISCRETA} min-h-11 text-[14px]`}>
+                      Os valores não estão corretos
+                    </BotaoSubmeter>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ===== 4. Estamos atentos a ===== */}
+      {(resultado.atentos.length > 0 || resultado.seguinte) && (
+        <section aria-labelledby="atentos" className={`${CARTAO} flex flex-col gap-4`}>
+          <TituloBloco id="atentos">Estamos atentos a</TituloBloco>
+          {resultado.atentos.length > 0 && <ListaAtentos atentos={resultado.atentos} />}
+          {resultado.proxima && (
+            <p className="flex items-start gap-2 text-[14.5px] font-semibold text-[var(--v2-navy)]">
+              <IconeCalendario tamanho={18} className="mt-0.5 shrink-0 text-[var(--v2-muted)]" />
+              <span>
+                Próxima data importante: {textoProximaData(resultado.proxima).toLowerCase()}, a {dataExtenso(resultado.proxima.data, hoje)}.
+              </span>
+            </p>
+          )}
+          {resultado.seguinte && (
+            <p className={`${TEXTO_SECUNDARIO} border-t border-[var(--v2-line)] pt-4`}>
+              {resultado.seguinte}
+              {!temContrato && (
+                <>
+                  {" "}
+                  <a href="#adicionar-contrato" className={LIGACAO}>
+                    Adicionar contrato
+                  </a>
+                </>
+              )}
+            </p>
+          )}
+        </section>
+      )}
+
+      {/* ===== 5. Mês a mês ===== */}
       <section className={`${CARTAO} flex flex-col gap-3`}>
         <div>
-          <h2 className={TITULO_SECCAO}>Acompanhamento mês a mês</h2>
-          <p className="text-sm text-[var(--color-ink-muted)]">
+          <h2 className={TITULO_SECCAO}>Mês a mês</h2>
+          <p className={TEXTO_SECUNDARIO}>
             {temContrato
-              ? "Comparamos cada fatura com as condições do contrato e com as faturas anteriores."
-              : "Estamos a acompanhar as suas faturas e a comparar cada mês com os anteriores."}
+              ? "O que verificámos em cada fatura, face às condições do contrato e às faturas anteriores."
+              : "O que verificámos em cada fatura, face às faturas anteriores."}
           </p>
         </div>
         <HistoricoServico
           periodos={periodos}
-          vazio={<p className={TEXTO_SECUNDARIO}>Ainda não há faturas deste serviço. Adicione uma: começamos a comparar cada mês e assinalamos o que mudar.</p>}
+          vazio={<p className={TEXTO_SECUNDARIO}>Ainda não há faturas deste serviço. Adicione uma: verificamos a situação atual e passamos a comparar cada mês.</p>}
         />
       </section>
 
-      {/* ===== 3. Situações comunicadas pela DoLado ===== */}
-      {(achados ?? []).length > 0 && (
-        <section className={`${CARTAO} flex flex-col gap-4 border-[#F2DDB8]`}>
-          <h2 className={TITULO_SECCAO}>Situações que merecem ser verificadas</h2>
-          {achados!.map((a) => (
-            <div key={a.id} className="flex gap-2.5 rounded-[12px] bg-[var(--v2-aviso-bg)] p-3.5">
-              <SIMBOLO.atencao.Icone tamanho={18} className={`mt-0.5 shrink-0 ${SIMBOLO.atencao.cor}`} />
-              <div className="flex flex-col gap-0.5">
-                <p className="text-[14.5px] leading-relaxed text-[var(--v2-navy)]">{a.texto_cliente}</p>
-                <span className="text-[13px] text-[var(--v2-muted)]">Comunicado a {formatarDataPt(a.comunicado_em)}</span>
-              </div>
-            </div>
-          ))}
-          <a href={hrefCaso} className={`${BOTAO_PRIMARIO} self-start`}>
-            Tratar o meu caso
-          </a>
-        </section>
-      )}
-
-      {/* ===== 4. Condições do contrato ===== */}
+      {/* ===== 6. Condições do contrato ===== */}
       {temContrato ? (
         <section className={`${CARTAO} flex flex-col gap-3`}>
           <h2 className={TITULO_SECCAO}>Condições do contrato</h2>
@@ -577,7 +587,7 @@ export default async function ServicoPage({
 
       {temContrato && <CustoSaida contrato={contrato} origens={Object.fromEntries([...atuais].map(([campo, c]) => [campo, c.origem]))} hoje={hoje} />}
 
-      {/* ===== 5. Padrões observados nas faturas ===== */}
+      {/* ===== 7. Padrões observados nas faturas ===== */}
       {ordenadas.length >= 2 && (
         <section className={`${CARTAO} flex flex-col gap-2`}>
           <h2 className={TITULO_SECCAO}>Padrões observados nas faturas</h2>
@@ -606,7 +616,7 @@ export default async function ServicoPage({
         </section>
       )}
 
-      {/* ===== 6. Documentos ===== */}
+      {/* ===== 8. Documentos ===== */}
       <section className={`${CARTAO} flex flex-col gap-4`}>
         <h2 className={TITULO_SECCAO}>Documentos</h2>
         {docs.length > 0 ? (

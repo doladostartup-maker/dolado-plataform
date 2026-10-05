@@ -19,7 +19,7 @@ import { EstadoVazio } from "@/components/portal/EstadoVazio";
 import { Etiqueta } from "@/components/portal/Etiqueta";
 import { Dado, ListaDados } from "@/components/portal/Dados";
 import { TituloSeccao } from "@/components/portal/Cabecalho";
-import { IconeCalendario, IconeCirculoVisto, IconeEscudo, IconeMais, IconePasta, IconeSeta, IconeSino } from "@/components/portal/Icones";
+import { IconeAlerta, IconeCalendario, IconeCirculoVisto, IconeEscudo, IconeInfo, IconeMais, IconePasta, IconeSeta, IconeSino } from "@/components/portal/Icones";
 import {
   BOTAO_PRIMARIO,
   BOTAO_SECUNDARIO,
@@ -52,7 +52,12 @@ export type ResumoCaso = {
   abertoEm: string;
 };
 
-export type ResumoProtecao = { servicos: number; proximoEvento: string | null };
+export type ResumoProtecao = {
+  servicos: number;
+  proximoEvento: string | null;
+  /** Resultado atual (src/lib/monitor/resultadoProtecao.ts). null = ainda sem serviços. */
+  resultado: { titulo: string; texto: string; tom: "ok" | "info" | "atencao"; ultimaVerificacao: string | null } | null;
+};
 
 // Escolher uma opção abre a confirmação da compra (ConfirmarCompra); só essa
 // envia o identificador do plano à Server Action. O Price ID e o acesso são
@@ -322,6 +327,24 @@ export function PortalDashboard({
                 </span>
                 <Etiqueta tom="concluido">Proteção ativa</Etiqueta>
               </div>
+              {protecao.resultado && (
+                <div className="flex items-start gap-2.5">
+                  {protecao.resultado.tom === "atencao" ? (
+                    <IconeAlerta tamanho={20} className="mt-0.5 shrink-0 text-[var(--v2-aviso)]" />
+                  ) : protecao.resultado.tom === "info" ? (
+                    <IconeInfo tamanho={20} className="mt-0.5 shrink-0 text-[var(--v2-blue)]" />
+                  ) : (
+                    <IconeCirculoVisto tamanho={20} className="mt-0.5 shrink-0 text-[var(--v2-green)]" />
+                  )}
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-[16px] font-bold text-[var(--v2-navy)]">{protecao.resultado.titulo}</p>
+                    <p className={TEXTO_SECUNDARIO}>{protecao.resultado.texto}</p>
+                    {protecao.resultado.ultimaVerificacao && (
+                      <p className={METADADOS}>Última verificação: {protecao.resultado.ultimaVerificacao}</p>
+                    )}
+                  </div>
+                </div>
+              )}
               {protecao.servicos > 0 ? (
                 <ListaDados>
                   <Dado rotulo="Serviços acompanhados">
@@ -340,13 +363,13 @@ export function PortalDashboard({
                 </ListaDados>
               ) : (
                 <p className={TEXTO_SECUNDARIO}>
-                  Ainda não acompanhamos nenhum serviço. Basta uma fatura para começarmos a detetar alterações e a
-                  avisá-lo antes do fim da fidelização ou de promoções.
+                  Ainda não acompanhamos nenhum serviço. Adicione uma fatura ou o contrato: verificamos já a sua situação
+                  atual e, a partir daí, ficamos atentos por si.
                 </p>
               )}
               <div className="flex flex-wrap gap-3">
                 <Link href="/portal/contratos" className={protecao.servicos > 0 ? BOTAO_SECUNDARIO : BOTAO_PRIMARIO}>
-                  {protecao.servicos > 0 ? "Ver os meus serviços" : "Adicionar uma fatura"}
+                  {protecao.servicos > 0 ? "Ver a Proteção" : "Adicionar uma fatura"}
                 </Link>
                 <Link href="/portal/perfil#avisos" className={`${LIGACAO} min-h-11 text-[14.5px]`}>
                   Avisos do setor
