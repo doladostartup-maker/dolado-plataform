@@ -5,7 +5,7 @@ Documento interno (art. 28.º e 30.º do RGPD). Fonte única desta informação 
 em `src/lib/legal.ts`) tem de ficar coerente com esta matriz: se um fornecedor, uma finalidade ou um
 mecanismo de transferência mudar, rever a Política (nova versão — as publicadas não se editam).
 
-- **Última revisão:** 02/10/2026 (Política de Privacidade `2026-10-02e` — Monitor de Proteção).
+- **Última revisão:** 05/10/2026 (Política de Privacidade `2026-10-05` — proposta do texto da reclamação pela IA).
 - **Fontes:** código e configuração do repositório, API da Supabase (região do projeto), `CLAUDE.md`
   e confirmação de Thiago (01/10/2026) de que os DPA estão obtidos.
 - **"A validar"** = não se confirma pelo repositório; confirmar no DPA / conta do fornecedor e
@@ -22,7 +22,7 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 | Supabase | Base de dados, autenticação, armazenamento de documentos, funções agendadas | Subcontratante | UE — AWS `eu-west-3` (Paris) | Possíveis (empresa dos EUA) | SCCs (segundo o `CLAUDE.md`) — confirmar no DPA | Obtido |
 | Clever Cloud | Alojamento e execução da aplicação Next.js | Subcontratante | UE — `par` (Paris) | Não previstas — a validar subcontratantes ulteriores | Não aplicável, salvo o que o DPA indicar | Obtido |
 | Brevo | E-mail transacional | Subcontratante | UE (sede em França) | Não previstas — a validar subcontratantes ulteriores | A validar no DPA | Obtido |
-| Anthropic | Claude API (leitura de faturas e contratos no Monitor de Proteção) | Subcontratante | A validar | Possíveis | A validar no DPA (SCCs, se aplicável) | Obtido |
+| Anthropic | Claude API (leitura de faturas e contratos no Monitor de Proteção; primeira proposta do texto da reclamação) | Subcontratante | A validar | Possíveis | A validar no DPA (SCCs, se aplicável) | Obtido |
 | Stripe | Pagamentos, subscrições, faturação, reembolsos | Subcontratante; responsável autónomo para finalidades próprias | A validar (entidade contratante) | Possíveis | A validar no DPA (SCCs / DPF) | Obtido |
 | Google | GA4, Tag Manager, Google Ads (com consentimento); início de sessão com Google | Subcontratante na medição; responsável autónomo para fins próprios e no início de sessão | A validar | Possíveis | A validar no DPA (SCCs / DPF) | Obtido |
 | Cookiebot (Usercentrics) | Gestão do consentimento de cookies | Subcontratante | A validar | A validar | A validar | **Por confirmar** |
@@ -95,17 +95,28 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
   chamada, sem histórico nem ferramentas. Comparações e regras em código; revisão humana antes de comunicar
   qualquer situação detetada. Sem decisões automatizadas com efeitos jurídicos (secção 4 da Política;
   regras em "Uso de IA" no `CLAUDE.md`).
-- **Categorias de dados:** o documento submetido pelo cliente (PDF ou imagem, enviado em base64), que
-  pode conter nome, morada, NIF, número de cliente e dados de consumo. A DoLado não acrescenta nome,
-  e-mail nem telefone da conta.
-- **Natureza do tratamento:** análise do documento e devolução de dados extraídos.
+  Desde a Política `2026-10-05`: **primeira proposta do texto da reclamação** (`src/lib/rascunhoIA/`), uma
+  chamada por geração, sem histórico nem ferramentas, sempre revista por uma pessoa da DoLado antes de ser
+  mostrada ao cliente; fundamentação só com regras da base jurídica da DoLado (`regras_juridicas`). Só
+  corre com `RASCUNHO_IA_ATIVO=1`.
+- **Categorias de dados:**
+  - Monitor: o documento submetido pelo cliente (PDF ou imagem, por URL assinada de curta duração), que
+    pode conter nome, morada, NIF, número de cliente e dados de consumo. A DoLado não acrescenta nome,
+    e-mail nem telefone da conta.
+  - Proposta do texto: setor, empresa visada, tipo de problema, descrição do cliente (com e-mails,
+    telefones, números longos, IBAN, códigos postais e o nome do cliente retirados por regras — melhor
+    esforço, não é anonimização), contacto anterior com a empresa, data do pedido e, se existir no
+    Monitor um serviço da mesma empresa, as condições registadas e os valores das faturas recentes. Nunca:
+    nome, e-mail, telefone, NIF, referências de cliente/contrato, CPE/CUI, notas internas, anexos do caso.
+- **Natureza do tratamento:** análise do documento e devolução de dados extraídos; redação de uma
+  proposta de texto a partir dos dados do caso e das regras jurídicas enviadas.
 - **Localização:** **a validar** (o código chama `api.anthropic.com`, sem região definida).
 - **Transferências internacionais:** possíveis (empresa dos EUA).
 - **Mecanismo:** a validar no DPA (SCCs, se aplicável).
 - **DPA:** obtido.
 - **A validar:** prazo de conservação das entradas/saídas pela Anthropic, segundo o DPA/termos comerciais.
-- **Estado:** `ANTHROPIC_API_KEY` ainda por configurar (previsto 01/10/2026). Sem chave, não há envio de
-  dados (fallback manual).
+- **Estado:** `ANTHROPIC_API_KEY` configurada na Clever Cloud a 03/10/2026 (Monitor). A proposta do texto
+  só corre com `RASCUNHO_IA_ATIVO=1`. Sem chave ou desligada, não há envio de dados (fallback manual).
 
 ### Stripe
 
