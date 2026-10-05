@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ROTULO_ACHADO } from "@/lib/monitor/achados";
+import { ESTADOS_ACHADO_POR_DECIDIR, ROTULO_ACHADO } from "@/lib/monitor/achados";
 
 const ESTADO: Record<string, string> = {
   detetado: "Por rever",
@@ -22,7 +22,7 @@ export default async function AchadosPage({ searchParams }: { searchParams: Prom
     .select("id, tipo, estado, created_at, contrato_id, utilizador_id")
     .order("created_at", { ascending: true })
     .limit(200);
-  if (!params.todos) consulta = consulta.in("estado", ["detetado", "em_revisao", "confirmado"]);
+  if (!params.todos) consulta = consulta.in("estado", ESTADOS_ACHADO_POR_DECIDIR);
   const { data: achados } = await consulta;
 
   const contratos = [...new Set((achados ?? []).map((a) => a.contrato_id))];

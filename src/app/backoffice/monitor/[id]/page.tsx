@@ -8,6 +8,7 @@ import { criarContratoParaDocumento, definirCampoAdmin, marcarDocumento, reproce
 import { BotaoAcao } from "../_components/BotaoAcao";
 import { AlterarTipoDocumento } from "../_components/AlterarTipoDocumento";
 import { ROTULO_TIPO_DOCUMENTO, sugestaoTipoDocumento } from "@/lib/monitor/tipoDocumento";
+import { ROTULO_SITUACAO_ADMIN, situacaoDocumentoAdmin } from "@/lib/monitor/processamento";
 
 const MOTIVO: Record<string, string> = {
   api_nao_configurada: "A ANTHROPIC_API_KEY não está configurada no servidor (Clever Cloud). O documento fica pendente até haver chave.",
@@ -22,6 +23,10 @@ const MOTIVO: Record<string, string> = {
   nao_e_contrato: "A leitura indica que o documento não é um contrato.",
   erro_inesperado: "Erro inesperado no processamento.",
 };
+
+function situacaoAgora(doc: { estado: string; etapa: string | null; etapa_atualizada_em: string | null }) {
+  return situacaoDocumentoAdmin(doc, Date.now());
+}
 
 const INPUT =
   "rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)]";
@@ -42,6 +47,7 @@ export default async function DocumentoMonitorPage({
 
   const { data: doc } = await admin.from("documentos_monitor").select("*").eq("id", id).maybeSingle();
   if (!doc) notFound();
+  const situacao = situacaoAgora(doc);
 
   const [{ data: conta }, { data: extracoes }, { data: contrato }, { data: campos }, { data: alteracoesTipo }] = await Promise.all([
     admin.from("utilizadores").select("nome, email").eq("id", doc.utilizador_id).maybeSingle(),
@@ -83,7 +89,13 @@ export default async function DocumentoMonitorPage({
           }`}
         >
           <p className="font-medium">
-            {query.resultado === "processado" ? "✓ Documento lido." : `O documento ficou ${query.resultado === "pendente" ? "pendente" : "por rever"}.`}
+            {query.resultado === "processado"
+              ? "✓ Documento lido."
+              : query.resultado === "em_leitura"
+                ? "A leitura automática deste documento ainda está a decorrer. Volte a tentar daqui a alguns minutos."
+                : query.resultado === "repetido"
+                  ? "Documento repetido: o ficheiro já foi apagado e não é lido de novo."
+                  : `O documento ficou ${query.resultado === "pendente" ? "pendente" : query.resultado === "ilegivel" ? "ilegível" : "por rever"}.`}
           </p>
           {query.motivo && <p>{MOTIVO[query.motivo] ?? query.motivo}</p>}
           {query.detalhe && <p className="mt-1 break-words text-[12px] text-[var(--color-ink-faint)]">{MOTIVO[query.detalhe] ?? query.detalhe}</p>}
@@ -104,7 +116,10 @@ export default async function DocumentoMonitorPage({
           {doc.tipo !== doc.tipo_indicado && " (alterado na revisão)"}
         </dd>
         <dt className="text-[var(--color-ink-muted)]">Estado</dt>
-        <dd>{doc.estado}</dd>
+        <dd>
+          {situacao ? ROTULO_SITUACAO_ADMIN[situacao] : doc.estado}
+          <span className="text-[12px] text-[var(--color-ink-faint)]"> · {doc.estado} / {doc.etapa ?? "sem etapa"}</span>
+        </dd>
         <dt className="text-[var(--color-ink-muted)]">Ficheiro</dt>
         <dd>
           {/* Ligação assinada gerada no clique (rota /api/monitor/documentos). */}

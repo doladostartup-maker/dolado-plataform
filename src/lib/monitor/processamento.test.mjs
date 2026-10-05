@@ -5,11 +5,15 @@ import { describe, test } from "node:test";
 import {
   LIMITE_SEM_AVANCO_MS,
   PASSOS,
+  SITUACOES_ADMIN_COM_ACAO,
+  etapaDepoisDaLeitura,
   falhaTransitoria,
   indicePasso,
   parado,
   situacaoDocumento,
+  situacaoDocumentoAdmin,
 } from "./processamento.ts";
+import { ESTADOS_ACHADO_POR_DECIDIR } from "./achados.ts";
 import { encontrarFornecedor, nomeComercial, normalizarNomeEmpresa } from "./fornecedores.ts";
 
 const AGORA = Date.parse("2026-10-03T18:00:00Z");
@@ -122,5 +126,95 @@ describe("nome comercial dos fornecedores (sem IA)", () => {
     for (const nome of ["MEO", "NOS", "Vodafone", "NOWO", "DIGI", "EDP", "Galp", "Endesa", "Iberdrola", "Goldenergy", "EPAL"]) {
       assert.match(sql, new RegExp(`\\('${nome}',`));
     }
+  });
+});
+
+// Backoffice do Monitor: "Documentos por tratar" × "Situações por decidir".
+// Os dois contadores medem coisas diferentes (documento → leitura → situação
+// → revisão) e não têm de coincidir; cada um tem de vir do estado certo.
+describe("backoffice: documentos por tratar", () => {
+  const admin = (extra) => situacaoDocumentoAdmin(doc(extra), AGORA);
+  const contaPorTratar = (extra) => SITUACOES_ADMIN_COM_ACAO.includes(admin(extra));
+
+  test("recebido e ainda não lido: em leitura automática, sem ação (não conta como por tratar)", () => {
+    for (const etapa of ["recebido", "a_verificar", "a_ler", "a_registar"]) {
+      assert.equal(admin({ etapa }), "em_leitura");
+      assert.equal(contaPorTratar({ etapa }), false);
+    }
+  });
+  test("leitura sem avanço há mais de 3 minutos: parada, conta como por tratar", () => {
+    assert.equal(admin({ etapa: "a_ler", etapa_atualizada_em: ha(LIMITE_SEM_AVANCO_MS + 1000) }), "leitura_parada");
+    assert.equal(contaPorTratar({ etapa: "a_ler", etapa_atualizada_em: ha(LIMITE_SEM_AVANCO_MS + 1000) }), true);
+  });
+  test("leitura concluída sem nada a rever: não conta", () => {
+    assert.equal(admin({ etapa: "concluido", estado: "processado", contrato_id: "c1" }), null);
+    assert.equal(admin({ etapa: "concluido", estado: "ilegivel" }), null);
+  });
+  test("leitura concluída com dados a verificar: por rever", () => {
+    assert.equal(admin({ etapa: "concluido", estado: "a_rever", contrato_id: "c1" }), "por_rever");
+    assert.equal(contaPorTratar({ etapa: "concluido", estado: "a_rever" }), true);
+  });
+  test("erro no processamento: falhou, conta e distingue-se de 'por processar'", () => {
+    assert.equal(admin({ etapa: "falhou", estado: "pendente" }), "falhou");
+    assert.equal(contaPorTratar({ etapa: "falhou" }), true);
+  });
+  test("leitura terminada sem resultado (sem chave, orçamento) ou documento antigo sem etapa: por processar à mão", () => {
+    assert.equal(admin({ etapa: "concluido", estado: "pendente" }), "por_processar");
+    assert.equal(admin({ etapa: null, estado: "pendente" }), "por_processar");
+  });
+  test("documento repetido nunca conta (ficheiro já apagado), mesmo com estado 'pendente' por omissão", () => {
+    assert.equal(admin({ etapa: "repetido", estado: "pendente" }), null);
+    assert.equal(admin({ etapa: "repetido", estado: "a_rever", contrato_id: "c1" }), null);
+  });
+  test("contrato e fatura seguem as mesmas regras (o tipo não muda a contagem)", () => {
+    assert.equal(situacaoDocumentoAdmin({ ...doc({ etapa: "falhou" }), tipo: "contrato" }, AGORA), "falhou");
+    assert.equal(situacaoDocumentoAdmin({ ...doc({ etapa: "falhou" }), tipo: "fatura" }, AGORA), "falhou");
+  });
+});
+
+describe("etapa final depois de uma leitura (segundo plano e 'Ler de novo')", () => {
+  test("lido: concluído, com ou sem dados a rever", () => {
+    assert.equal(etapaDepoisDaLeitura({ estado: "processado" }), "concluido");
+    assert.equal(etapaDepoisDaLeitura({ estado: "a_rever", motivo: "validacao" }), "concluido");
+  });
+  test("falha transitória: falhou (o cliente pode tentar de novo)", () => {
+    assert.equal(etapaDepoisDaLeitura({ estado: "pendente", motivo: "erro_api" }), "falhou");
+  });
+  test("sem chave ou orçamento: concluído, fica 'pendente' para a DoLado", () => {
+    assert.equal(etapaDepoisDaLeitura({ estado: "pendente", motivo: "orcamento_atingido" }), "concluido");
+  });
+  test("mesma fatura já registada: repetido", () => {
+    assert.equal(etapaDepoisDaLeitura({ estado: "processado", repetido: true }), "repetido");
+  });
+  test("reprocessar um documento que falhou deixa de o mostrar ao cliente como 'não concluído'", () => {
+    const depois = { etapa: etapaDepoisDaLeitura({ estado: "processado" }), etapa_atualizada_em: ha(0), estado: "processado", contrato_id: "c1" };
+    assert.equal(situacaoDocumento(depois, AGORA).tipo, "pronto");
+    assert.equal(situacaoDocumentoAdmin(depois, AGORA), null);
+  });
+  test("o backoffice atualiza a etapa ao reprocessar e ao marcar à mão", () => {
+    const servidor = fonte("./servidor.ts");
+    const acoes = fonte("../../app/backoffice/monitor/actions.ts");
+    assert.match(acoes, /reprocessarDocumentoAdmin\(/);
+    assert.match(acoes, /marcarDocumentoAdmin\(/);
+    assert.doesNotMatch(acoes, /update\(\{ estado \}\)|update\(\{ estado: "pendente" \}\)/);
+    assert.match(servidor, /export async function marcarDocumentoAdmin[\s\S]*?etapa: "concluido"/);
+    assert.match(servidor, /export async function reprocessarDocumentoAdmin[\s\S]*?processarDocumentoNaRevisao\(doc\.id\)/);
+    assert.match(servidor, /export async function processarDocumentoNaRevisao[\s\S]*?etapaDepoisDaLeitura\(r\)/);
+  });
+  test("o painel conta os documentos pela situação, não só pelo estado", () => {
+    const pagina = fonte("../../app/backoffice/monitor/page.tsx");
+    assert.match(pagina, /situacaoDocumentoAdmin\(/);
+    assert.match(pagina, /SITUACOES_ADMIN_COM_ACAO/);
+  });
+});
+
+describe("backoffice: situações por decidir", () => {
+  test("por rever, em revisão e confirmadas ainda por comunicar contam; decididas não", () => {
+    assert.deepEqual([...ESTADOS_ACHADO_POR_DECIDIR], ["detetado", "em_revisao", "confirmado"]);
+    for (const decidido of ["comunicado", "descartado", "obsoleto"]) assert.ok(!ESTADOS_ACHADO_POR_DECIDIR.includes(decidido));
+  });
+  test("o contador e a lista usam a mesma definição", () => {
+    assert.match(fonte("../../app/backoffice/monitor/page.tsx"), /\.in\("estado", ESTADOS_ACHADO_POR_DECIDIR\)/);
+    assert.match(fonte("../../app/backoffice/monitor/achados/page.tsx"), /\.in\("estado", ESTADOS_ACHADO_POR_DECIDIR\)/);
   });
 });

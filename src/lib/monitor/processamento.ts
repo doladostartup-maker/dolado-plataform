@@ -76,3 +76,58 @@ export function situacaoDocumento(
 export function falhaTransitoria(motivo: string | null | undefined) {
   return motivo === "erro_api" || motivo === "erro_inesperado" || motivo === "ficheiro_nao_encontrado";
 }
+
+/** Etapa final depois de uma leitura (segundo plano ou "Ler de novo" no backoffice). */
+export function etapaDepoisDaLeitura(r: { estado: string; motivo?: string | null; repetido?: boolean }): EtapaDocumento {
+  if (r.repetido) return "repetido";
+  return r.estado === "pendente" && falhaTransitoria(r.motivo) ? "falhou" : "concluido";
+}
+
+// ---------------------------------------------------------------------------
+// Backoffice: o que cada documento pede à DoLado
+// ---------------------------------------------------------------------------
+// "estado" diz o resultado da leitura; "etapa" diz onde o processamento está.
+// Um documento "pendente" pode estar só à espera da leitura automática (sem
+// ação possível), ter falhado ou precisar de tratamento à mão — o backoffice
+// separa estes casos em vez de os mostrar todos como "por processar".
+
+export type SituacaoAdmin =
+  /** Leitura automática a decorrer: nada a fazer (ainda). */
+  | "em_leitura"
+  /** Sem avanço há mais de LIMITE_SEM_AVANCO_MS (ex.: servidor reiniciado). */
+  | "leitura_parada"
+  /** Falha na leitura (API, ficheiro, erro inesperado). */
+  | "falhou"
+  /** Leitura terminada sem resultado (sem chave, orçamento): tratar à mão. */
+  | "por_processar"
+  /** Lido, com campos a verificar pela DoLado. */
+  | "por_rever";
+
+export const ROTULO_SITUACAO_ADMIN: Record<SituacaoAdmin, string> = {
+  em_leitura: "Em leitura automática",
+  leitura_parada: "Leitura parada",
+  falhou: "Falhou a leitura",
+  por_processar: "Por processar à mão",
+  por_rever: "Por rever",
+};
+
+/** Situações que pedem uma ação da DoLado (as restantes resolvem-se sozinhas). */
+export const SITUACOES_ADMIN_COM_ACAO: SituacaoAdmin[] = ["leitura_parada", "falhou", "por_processar", "por_rever"];
+
+/**
+ * null = o documento não conta no backoffice: lido sem nada a rever,
+ * ilegível, ou repetido (o ficheiro já foi apagado e a linha só existe até o
+ * cliente ver o aviso).
+ */
+export function situacaoDocumentoAdmin(
+  doc: { estado: string; etapa: string | null; etapa_atualizada_em: string | null },
+  agoraMs: number,
+): SituacaoAdmin | null {
+  if (doc.etapa === "repetido") return null;
+  if (doc.estado === "a_rever") return "por_rever";
+  if (doc.estado !== "pendente") return null;
+  if (parado(doc.etapa, doc.etapa_atualizada_em, agoraMs)) return "leitura_parada";
+  if (emCurso(doc.etapa)) return "em_leitura";
+  if (doc.etapa === "falhou") return "falhou";
+  return "por_processar";
+}
