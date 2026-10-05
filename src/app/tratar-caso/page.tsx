@@ -1,5 +1,6 @@
+import { obterAcesso } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { MOMENTOS, PROBLEMAS, SETORES } from "@/lib/pedidoCaso";
+import { entradaDoPedido, MOMENTOS, PROBLEMAS, SETORES } from "@/lib/pedidoCaso";
 import { Etapas } from "./_components/Etapas";
 import { FormularioCaso } from "./_components/FormularioCaso";
 
@@ -14,6 +15,10 @@ export default async function TratarCasoPage({
   const params = await searchParams;
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub as string | undefined;
+  // Com sessão, o aviso inicial segue o acesso real da conta (mesma regra da
+  // modalidade): quem tem casos disponíveis não é avisado de um pagamento.
+  const acesso = userId ? await obterAcesso(supabase, userId) : null;
   const origem = typeof params.origem === "string" && params.origem ? params.origem.slice(0, 200) : "/";
   const inicial = {
     sector: typeof params.setor === "string" && SETORES.includes(params.setor) ? params.setor : "",
@@ -24,7 +29,13 @@ export default async function TratarCasoPage({
   return (
     <>
       <Etapas atual={1} />
-      <FormularioCaso origem={origem} comSessao={!!data?.claims?.sub} inicial={inicial} />
+      <FormularioCaso
+        origem={origem}
+        comSessao={!!userId}
+        inicial={inicial}
+        entrada={entradaDoPedido(acesso)}
+        casosDisponiveis={acesso?.creditos ?? 0}
+      />
     </>
   );
 }

@@ -159,6 +159,23 @@ export function opcoesDoPedido(acesso: { creditos: number; temProtecao: boolean 
   };
 }
 
+/**
+ * O que o formulário "Tratar o meu caso" anuncia antes de o pedido ser
+ * guardado. Deriva sempre de opcoesDoPedido (a mesma regra da modalidade),
+ * para o início do fluxo nunca prometer outra coisa que o fim:
+ * - "usar_caso": a conta tem casos disponíveis — sem novo pagamento;
+ * - "so_avulso": subscrição de proteção ativa sem casos disponíveis — só Avulso;
+ * - "escolher": sem sessão ou sem direito a caso — Avulso ou Caso + Proteção.
+ */
+export type EntradaPedido = "usar_caso" | "so_avulso" | "escolher";
+
+export function entradaDoPedido(acesso: { creditos: number; temProtecao: boolean } | null): EntradaPedido {
+  if (!acesso) return "escolher";
+  const opcoes = opcoesDoPedido(acesso);
+  if (opcoes.usarCasoDisponivel) return "usar_caso";
+  return opcoes.modalidades.includes("caso_protecao") ? "escolher" : "so_avulso";
+}
+
 /** id do pedido lido da metadata Stripe (só formato UUID). */
 export function pedidoDaMetadata(metadata: Record<string, string> | null | undefined) {
   const id = metadata?.pedido_id;
