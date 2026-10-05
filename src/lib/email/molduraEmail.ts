@@ -72,16 +72,27 @@ export type AssinaturaEmail = keyof typeof ASSINATURAS;
  * E-mail completo: logótipo, conteúdo, assinatura e rodapé. `titulo` e
  * `corpo` já seguros (escape feito por quem chama). `assinatura`: uma das
  * assinaturas comuns, ou null quando o texto já fecha com a assinatura.
+ * Opcionais, também já seguros: `preheader` (texto de pré-visualização na
+ * caixa de entrada, escondido no e-mail) e `rodape` (porque recebe o e-mail
+ * e onde alterar as preferências, por cima da identificação da DoLado).
  */
 export function emailV2({
   titulo,
   corpo,
   assinatura = "thiago",
+  preheader,
+  rodape,
 }: {
   titulo: string;
   corpo: string;
   assinatura?: AssinaturaEmail | null;
+  preheader?: string;
+  rodape?: string;
 }): string {
+  const previa = preheader
+    ? `<div style="display:none; max-height:0; max-width:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:${COR_EMAIL.azulFundo}; opacity:0;">${preheader}</div>\n  `
+    : "";
+  const motivo = rodape ? `${rodape}<br><br>` : "";
   const fecho = assinatura ? `<tr><td style="padding:0 32px 32px 32px; font-family:${FONTE}; color:${COR_EMAIL.navy}; font-size:16px; line-height:1.6;">${ASSINATURAS[assinatura]}</td></tr>` : "";
   return `<!DOCTYPE html>
 <html lang="pt-PT">
@@ -92,7 +103,7 @@ export function emailV2({
 <title>${titulo}</title>
 </head>
 <body style="margin:0; padding:0; background-color:${COR_EMAIL.azulFundo}; font-family:${FONTE};">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${COR_EMAIL.azulFundo}; padding:32px 12px;">
+  ${previa}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${COR_EMAIL.azulFundo}; padding:32px 12px;">
     <tr>
       <td align="center">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
@@ -111,7 +122,7 @@ export function emailV2({
           </tr>
           <tr>
             <td style="padding:20px 8px 0 8px; font-family:${FONTE}; font-size:13px; line-height:1.6; color:${COR_EMAIL.muted};">
-              <span style="font-weight:700; color:${COR_EMAIL.navy};">DoLado</span> · Do lado dos consumidores.<br>
+              ${motivo}<span style="font-weight:700; color:${COR_EMAIL.navy};">DoLado</span> · Do lado dos consumidores.<br>
               <a href="${SITE_EMAIL}" style="color:${COR_EMAIL.verde}; text-decoration:none;">dolado.pt</a> · <a href="mailto:${CONTACTO_EMAIL_MOLDURA}" style="color:${COR_EMAIL.verde}; text-decoration:none;">${CONTACTO_EMAIL_MOLDURA}</a>
             </td>
           </tr>
