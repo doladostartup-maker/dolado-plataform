@@ -30,6 +30,16 @@ test("moldura: sem fontes externas, sem scripts, com rodapé e contacto", () => 
   assert.match(html, /lang="pt-PT"/);
 });
 
+test("moldura: pré-visualização e motivo no rodapé só quando pedidos", () => {
+  const simples = emailV2({ titulo: "T", corpo: "<p>x</p>" });
+  assert.equal(/display:none/.test(simples), false);
+  assert.equal(simples.includes("<br><br><span"), false);
+  const completo = emailV2({ titulo: "T", corpo: "<p>x</p>", preheader: "Resumo curto", rodape: "Recebe este e-mail porque…" });
+  assert.match(completo, /<div style="display:none;[^"]*mso-hide:all;[^"]*">Resumo curto<\/div>/);
+  assert.ok(completo.indexOf("Resumo curto") < completo.indexOf("<p>x</p>"));
+  assert.ok(completo.indexOf("Recebe este e-mail porque…") < completo.indexOf("Do lado dos consumidores."));
+});
+
 test("todos os e-mails ao cliente usam a moldura V2 (nenhum com as cores antigas)", () => {
   for (const p of [
     "./pagamento.ts",
