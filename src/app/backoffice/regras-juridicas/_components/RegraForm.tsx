@@ -1,10 +1,8 @@
 import { PROBLEMAS } from "@/lib/pedidoCaso";
 import { SETORES_REGRAS, type RegraJuridica } from "@/lib/rascunhoIA/regras";
 
-const INPUT =
-  "w-full rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)]";
-const ROTULO = "flex flex-col gap-1 text-[13px] font-medium text-[var(--color-ink)]";
-const AJUDA = "text-[12px] font-normal text-[var(--color-ink-faint)]";
+import { BotaoSubmeter } from "@/components/backoffice/BotaoSubmeter";
+import { AJUDA_CAMPO as AJUDA, BOTAO_PRIMARIO, CAIXA_SELECAO, CAMPO as INPUT, CAMPO_TEXTO_LONGO, LINHA_SELECAO, ROTULO } from "@/components/backoffice/ui";
 
 export function RegraForm({
   action,
@@ -17,10 +15,7 @@ export function RegraForm({
 }) {
   const v = valores ?? {};
   return (
-    <form
-      action={action}
-      className="flex flex-col gap-4 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5"
-    >
+    <form action={action} className="flex flex-col gap-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className={ROTULO}>
           Código
@@ -72,12 +67,12 @@ export function RegraForm({
       </div>
       <label className={ROTULO}>
         Texto/resumo jurídico aprovado
-        <textarea name="resumo" required defaultValue={v.resumo ?? ""} rows={6} maxLength={4000} className={INPUT} />
+        <textarea name="resumo" required defaultValue={v.resumo ?? ""} rows={6} maxLength={4000} className={CAMPO_TEXTO_LONGO} />
         <span className={AJUDA}>É exatamente isto que a IA recebe. Sem conclusões sobre casos concretos.</span>
       </label>
       <label className={ROTULO}>
         Condições de aplicabilidade
-        <textarea name="condicoes_aplicabilidade" defaultValue={v.condicoes_aplicabilidade ?? ""} rows={3} maxLength={2000} className={INPUT} />
+        <textarea name="condicoes_aplicabilidade" defaultValue={v.condicoes_aplicabilidade ?? ""} rows={3} maxLength={2000} className={CAMPO_TEXTO_LONGO} />
         <span className={AJUDA}>Factos que têm de estar verificados para a regra poder ser citada.</span>
       </label>
       <label className={ROTULO}>
@@ -98,17 +93,14 @@ export function RegraForm({
           <input name="revista_em" type="date" defaultValue={v.revista_em ?? ""} className={INPUT} />
         </label>
       </div>
-      <label className="flex items-start gap-2 text-sm text-[var(--color-ink)]">
-        <input type="checkbox" name="ativa" defaultChecked={v.ativa ?? false} className="mt-1" />
-        Ativa — pode ser enviada à IA (exige a data da última revisão).
+      <label className={`${LINHA_SELECAO} rounded-[12px] bg-[var(--v2-surface)] p-3`}>
+        <input type="checkbox" name="ativa" defaultChecked={v.ativa ?? false} className={CAIXA_SELECAO} />
+        <span>
+          <span className="font-semibold">Ativa</span> — pode ser enviada à IA (exige a data da última revisão).
+        </span>
       </label>
-      <div>
-        <button
-          type="submit"
-          className="rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-        >
-          {submitLabel}
-        </button>
+      <div className="border-t border-[var(--v2-line)] pt-4">
+        <BotaoSubmeter className={BOTAO_PRIMARIO}>{submitLabel}</BotaoSubmeter>
       </div>
     </form>
   );

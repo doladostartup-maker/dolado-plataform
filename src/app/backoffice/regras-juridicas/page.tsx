@@ -3,6 +3,13 @@ import { requireAdmin } from "@/lib/auth";
 import type { RegraJuridica } from "@/lib/rascunhoIA/regras";
 import { criarRegra } from "./actions";
 import { RegraForm } from "./_components/RegraForm";
+import { CabecalhoPagina } from "@/components/backoffice/Cabecalho";
+import { Seccao } from "@/components/backoffice/Blocos";
+import { Etiqueta } from "@/components/backoffice/Estado";
+import { IconeBalanca, IconeMais } from "@/components/backoffice/Icones";
+import { Aviso } from "@/components/portal/Aviso";
+import { EstadoVazio } from "@/components/portal/EstadoVazio";
+import { BOTAO_PRIMARIO, LIGACAO, TABELA, TABELA_MOLDURA, TABELA_TD, TABELA_TH, TABELA_TR } from "@/components/backoffice/ui";
 
 export default async function RegrasJuridicasPage({
   searchParams,
@@ -19,30 +26,37 @@ export default async function RegrasJuridicasPage({
     .order("codigo");
   const regras = (data ?? []) as RegraJuridica[];
 
+  const porRever = regras.filter((r) => r.ativa && !r.revista_em).length;
+
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
-      <div>
-        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">Base jurídica</h1>
-        <p className="text-sm text-[var(--color-ink-muted)]">
-          Regras que a IA pode usar na sugestão do texto da reclamação. A IA só recebe regras ativas, revistas e em vigor, do setor e
-          da categoria do caso — e não pode citar mais nenhuma. As regras não se apagam: desative-as.
-        </p>
-      </div>
+    <div className="flex flex-col gap-6">
+      <CabecalhoPagina
+        contexto="Conteúdos"
+        titulo="Base jurídica"
+        descricao="Regras que a IA pode usar na sugestão do texto da reclamação. A IA só recebe regras ativas, revistas e em vigor, do setor e da categoria do caso — e não pode citar mais nenhuma. As regras não se apagam: desative-as."
+        acoes={
+          <a href="#nova-regra" className={BOTAO_PRIMARIO}>
+            <IconeMais tamanho={17} />
+            Nova regra
+          </a>
+        }
+      />
 
-      {params.ok && <p className="text-sm text-[var(--color-status-success)]">{params.ok}</p>}
-      {params.erro && <p className="text-sm text-[var(--color-status-danger)]">{params.erro}</p>}
+      {params.ok && <Aviso tom="sucesso">{params.ok}</Aviso>}
+      {params.erro && <Aviso tom="erro">{params.erro}</Aviso>}
+      {porRever > 0 && <Aviso tom="atencao">{porRever} regra(s) ativa(s) sem data de revisão: não são enviadas à IA.</Aviso>}
 
-      <div className="overflow-x-auto rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] shadow-[var(--shadow-subtle)]">
-        {regras.length === 0 ? (
-          <p className="p-4 text-sm text-[var(--color-ink-muted)]">
-            Ainda não há regras. Sem regras, a sugestão da IA descreve os factos e o pedido, sem fundamentação legal.
-          </p>
-        ) : (
-          <table className="w-full text-left text-sm">
-            <thead className="bg-[var(--color-surface-sunken)]">
+      {regras.length === 0 ? (
+        <EstadoVazio icone={<IconeBalanca tamanho={20} />} titulo="Ainda não há regras.">
+          Sem regras, a sugestão da IA descreve os factos e o pedido, sem fundamentação legal.
+        </EstadoVazio>
+      ) : (
+        <div className={TABELA_MOLDURA}>
+          <table className={TABELA}>
+            <thead>
               <tr>
                 {["Código", "Setor / categoria", "Diploma", "Revista", "Estado"].map((h) => (
-                  <th key={h} className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
+                  <th key={h} scope="col" className={TABELA_TH}>
                     {h}
                   </th>
                 ))}
@@ -50,38 +64,37 @@ export default async function RegrasJuridicasPage({
             </thead>
             <tbody>
               {regras.map((r) => (
-                <tr key={r.id} className="border-t border-[var(--color-hairline)]">
-                  <td className="px-3 py-2">
-                    <Link href={`/backoffice/regras-juridicas/${r.id}`} prefetch={false} className="font-medium text-[var(--color-brand)] underline">
+                <tr key={r.id} className={TABELA_TR}>
+                  <td className={TABELA_TD}>
+                    <Link href={`/backoffice/regras-juridicas/${r.id}`} prefetch={false} className={`${LIGACAO} font-mono text-[13px]`}>
                       {r.codigo}
                     </Link>
-                    <p className="text-[12px] text-[var(--color-ink-muted)]">{r.titulo}</p>
+                    <p className="text-[12.5px] text-[var(--v2-muted)]">{r.titulo}</p>
                   </td>
-                  <td className="px-3 py-2 text-[13px]">
+                  <td className={`${TABELA_TD} text-[13px]`}>
                     {r.setor ?? "Todos"} · {r.categoria ?? "Todas"}
                   </td>
-                  <td className="px-3 py-2 text-[13px]">
+                  <td className={`${TABELA_TD} text-[13px]`}>
                     {r.diploma}
                     {r.artigo ? `, ${r.artigo}` : ""}
                   </td>
-                  <td className="px-3 py-2 text-[13px]">{r.revista_em ?? "—"}</td>
-                  <td className="px-3 py-2 text-[13px]">
-                    {r.ativa ? "Ativa" : "Inativa"}
-                    {r.revogada_em ? ` · revogada em ${r.revogada_em}` : ""}
+                  <td className={`${TABELA_TD} whitespace-nowrap text-[13px]`}>{r.revista_em ?? "—"}</td>
+                  <td className={TABELA_TD}>
+                    <Etiqueta tom={r.revogada_em ? "bloqueado" : r.ativa ? "sucesso" : "neutro"}>
+                      {r.ativa ? "Ativa" : "Inativa"}
+                      {r.revogada_em ? ` · revogada em ${r.revogada_em}` : ""}
+                    </Etiqueta>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        )}
-      </div>
-
-      <details>
-        <summary className="cursor-pointer text-[var(--text-subheading)] font-medium text-[var(--color-ink)]">Nova regra</summary>
-        <div className="mt-3">
-          <RegraForm action={criarRegra} submitLabel="Criar regra" />
         </div>
-      </details>
+      )}
+
+      <Seccao id="nova-regra" titulo="Nova regra" descricao="Só com texto aprovado pela DoLado e pela advogada.">
+        <RegraForm action={criarRegra} submitLabel="Criar regra" />
+      </Seccao>
     </div>
   );
 }

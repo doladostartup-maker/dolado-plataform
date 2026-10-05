@@ -2,7 +2,7 @@
 
 Documento de referência aprovado por Thiago a 04/10/2026. Nasce da nova direção visual da homepage e substitui gradualmente a linguagem visual pública anterior.
 
-> **Âmbito curto:** páginas públicas e, desde 04/10/2026, o portal do cliente, as páginas de conta/autenticação e o fluxo "Tratar o meu caso" (ver "Portal do cliente" abaixo). Os e-mails transacionais ao cliente também (ver a linha "E-mails" na tabela abaixo). O backoffice e o Stripe Checkout (página alojada pelo Stripe) continuam com o guia de marca anterior ([brand-guide.md](brand-guide.md)). Design não altera comportamento.
+> **Âmbito curto:** páginas públicas e, desde 04/10/2026, o portal do cliente, as páginas de conta/autenticação e o fluxo "Tratar o meu caso" (ver "Portal do cliente" abaixo). Os e-mails transacionais ao cliente também (ver a linha "E-mails" na tabela abaixo). Desde 05/10/2026, também o backoffice (ver "Backoffice" abaixo). Só o Stripe Checkout (página alojada pelo Stripe) continua com o guia de marca anterior ([brand-guide.md](brand-guide.md)). Design não altera comportamento.
 
 ## Implementação no código
 
@@ -68,6 +68,25 @@ O portal (`/portal/*`) aplica o V2 como aplicação de uso recorrente: mesmos to
 | Proteção (`/portal/contratos`): resultado do trabalho da DoLado (resultado atual, situação encontrada com antes/agora/diferença e "Tratar este problema", o que verificámos, estamos atentos a, "O que já fizemos por si"); textos e regras em `src/lib/monitor/resultadoProtecao.ts` — só apresentação | `src/app/portal/contratos/_components/ResultadoProtecao.tsx` |
 | Estado do caso em linguagem humana (rótulo, explicação, próximo passo, se pede ação) e eventos vistos pelo cliente — só apresentação | `src/lib/portal/estadoCaso.ts` (testes em `estadoCaso.test.mjs`) |
 
+### Backoffice (05/10/2026)
+
+O backoffice (`/backoffice/*`) aplica o V2 como ferramenta de trabalho interna: mesma marca, fonte, tokens e ícones; mais denso do que o portal (botões de 40px, texto de 14px, tabelas compactas, conteúdo até 1280px). A pergunta que organiza tudo é "o que precisa da minha atenção agora?".
+
+| Peça | Onde |
+|---|---|
+| Tokens: `.tema-backoffice` (layout do backoffice) ativa os `--v2-*` e traduz os tokens antigos, como o `.tema-portal` | `src/app/globals.css` |
+| Moldura: barra lateral com filas e contagens (computador) / cabeçalho com menu (telemóvel, `MenuMovel` partilhado com o portal) | `src/app/backoffice/layout.tsx`, `src/components/backoffice/Navegacao.tsx`, `src/components/navegacao/MenuMovel.tsx` |
+| Classes: botões (primário, secundário, terciário, destrutivo, pequeno), ligações, painéis, tipografia, campos, tabelas | `src/components/backoffice/ui.ts` |
+| Cabeçalho de página (voltar, contexto, título, estado, metadados, ações) e título de secção com contagem | `src/components/backoffice/Cabecalho.tsx` |
+| Secção de trabalho, lista rótulo/valor, histórico (só leitura), cartão de fila, métrica secundária | `src/components/backoffice/Blocos.tsx` |
+| Estados: 8 tons (ação, erro, aviso, bloqueado, em curso, informação, sucesso, neutro), sempre com texto e, nos críticos, ícone; estado do caso; indicador de prazo; indicador de texto sugerido pela IA ("Por rever" tracejado / "Revista") | `src/components/backoffice/Estado.tsx` |
+| Confirmação de ações com impacto no cliente ou irreversíveis (valida o formulário, abre o diálogo, submete a mesma Server Action) e botão com estado "a decorrer" | `ConfirmarAcao.tsx`, `BotaoSubmeter.tsx` |
+| Tabela de casos (cartões em telemóvel) | `src/components/backoffice/TabelaCasos.tsx` |
+| Triagem — estado, próxima ação (de quem se espera), prazos (1.ª resposta 48h úteis, resposta da empresa 15 dias úteis, fim da fidelização 15 dias) e prioridade — só apresentação | `src/lib/backoffice/triagem.ts` (testes em `triagem.test.mjs`); leituras partilhadas em `src/lib/backoffice/filas.ts` |
+| Avisos e estados vazios: os do portal | `src/components/portal/Aviso.tsx`, `EstadoVazio.tsx` |
+
+Regras do backoffice: `/backoffice` ("Hoje") mostra primeiro os casos em que o próximo passo é da DoLado, depois prazos de casos em espera e as outras filas; métricas são secundárias. Uma ação principal por bloco, que depende do estado (ex.: "Rever sugestão da IA", "Enviar texto ao cliente", "Enviar reclamação"). No detalhe do caso, a versão em vigor do texto e o seu percurso (preparada → revista → enviada ao cliente → autorizada → enviada à empresa) estão sempre visíveis; versões anteriores ficam recolhidas e marcadas como "não estão em vigor". Texto sugerido pela IA nunca aparece como decisão: é "Rascunho automático (IA)" / "Sugestão IA · Por rever" até uma pessoa o marcar como revisto. Ações com impacto no cliente (enviar ao cliente, reenviar, registar envio, comunicar situação, enviar aviso setorial, registar decisão do cliente) e irreversíveis (apagar anexo, nova versão que invalida a autorização) pedem confirmação; operações triviais não. Sem emojis nem símbolos — usar os ícones.
+
 Regras do portal: o painel mostra primeiro o que precisa do cliente, depois os casos em curso, depois a Proteção e o plano; uma só ação primária por bloco; estados internos nunca aparecem em bruto; sem emojis nem símbolos (✓ ⚠ ℹ) — usar os ícones; nada depende de hover; cor só com significado. Na Proteção, o protagonista é o trabalho feito ("Verificámos", "Encontrámos", "Estamos atentos a", "Última verificação"), não os documentos nem métricas: sem pontuações, percentagens, estrelas, semáforos nem gráficos de dashboard.
 
 ---
@@ -95,7 +114,7 @@ Pode também ser usado em páginas públicas de parceiros, campanhas, páginas p
 
 ## 3. O que NÃO está incluído neste momento
 
-Não aplicar automaticamente a: Backoffice, Stripe Checkout, páginas internas, ferramentas operacionais, interfaces de administração.
+Não aplicar automaticamente a: Stripe Checkout, páginas internas, ferramentas operacionais e interfaces de administração novas sem as adaptar (o backoffice tem a sua adaptação própria desde 05/10/2026 — ver "Backoffice").
 
 Essas áreas podem receber no futuro uma evolução visual própria. Não alterar o produto interno apenas para uniformizar com o site público.
 

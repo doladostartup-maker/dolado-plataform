@@ -1,8 +1,13 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { estadoReembolsoPt, formatarEuros, NOME_PLANO, type PlanoDestino } from "@/lib/stripe/conversao";
 import { resolverIntervencao } from "../actions";
+import { CabecalhoPagina } from "@/components/backoffice/Cabecalho";
+import { Dado, ListaDados, Seccao } from "@/components/backoffice/Blocos";
+import { BotaoSubmeter } from "@/components/backoffice/BotaoSubmeter";
+import { Etiqueta } from "@/components/backoffice/Estado";
+import { Aviso } from "@/components/portal/Aviso";
+import { BOTAO_PRIMARIO, CAMPO, CODIGO, LIGACAO, ROTULO } from "@/components/backoffice/ui";
 
 // Os ids vêm da nossa base de dados (gravados pelo webhook), não do browser.
 const STRIPE_DASHBOARD = "https://dashboard.stripe.com";
@@ -34,22 +39,13 @@ type Conversao = {
 };
 
 function data(valor: string | null) {
-  return valor ? new Date(valor).toLocaleString("pt-PT") : "—";
-}
-
-function Campo({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-[180px_1fr] gap-3 border-t border-[var(--color-hairline)] py-2 text-sm first:border-t-0">
-      <dt className="text-[var(--color-ink-muted)]">{rotulo}</dt>
-      <dd className="break-all text-[var(--color-ink)]">{children}</dd>
-    </div>
-  );
+  return valor ? new Date(valor).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon" }) : "—";
 }
 
 function LigacaoStripe({ caminho, id }: { caminho: string; id: string | null }) {
   if (!id) return <>—</>;
   return (
-    <a href={`${STRIPE_DASHBOARD}/${caminho}/${id}`} target="_blank" rel="noreferrer" className="text-[var(--color-brand)] underline">
+    <a href={`${STRIPE_DASHBOARD}/${caminho}/${id}`} target="_blank" rel="noreferrer" className={`${LIGACAO} break-all font-mono text-[12.5px]`}>
       {id}
     </a>
   );
@@ -84,97 +80,101 @@ export default async function ConversaoDetalhePage({
   const avulso = um(c.stripe_payments);
 
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
-      <Link href="/backoffice/conversoes" className="text-sm text-[var(--color-ink-muted)] underline">
-        ← Conversões com intervenção
-      </Link>
-      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-        Conversão para {NOME_PLANO[c.plano_destino]}
-      </h1>
+    <div className="flex flex-col gap-5">
+      <CabecalhoPagina
+        voltar={{ href: "/backoffice/conversoes", texto: "Conversões com intervenção" }}
+        contexto="Pagamentos · conversão"
+        titulo={`Conversão para ${NOME_PLANO[c.plano_destino]}`}
+        estado={
+          c.requer_intervencao ? (
+            <Etiqueta tom="erro">Requer intervenção</Etiqueta>
+          ) : c.intervencao_resolvida_em ? (
+            <Etiqueta tom="sucesso">Resolvida</Etiqueta>
+          ) : (
+            <Etiqueta tom="neutro">{c.estado}</Etiqueta>
+          )
+        }
+        meta={avulso?.email ?? undefined}
+      />
 
-      {c.requer_intervencao && (
-        <div className="rounded-[var(--radius-card)] border-l-[3px] border-[var(--color-status-danger)] bg-[var(--color-surface-sunken)] px-5 py-4 text-sm text-[var(--color-ink)]">
-          <p className="mb-1 font-semibold text-[var(--color-status-danger)]">Requer intervenção</p>
-          <p className="text-[var(--color-ink-muted)]">Motivo: {c.intervencao_motivo ?? "—"}</p>
-        </div>
-      )}
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
+        <Seccao titulo="Detalhe">
+          <ListaDados>
+            <Dado rotulo="Cliente">
+              {um(c.cliente)?.nome ?? "—"}
+              <span className="block text-[12.5px] text-[var(--v2-muted)]">{avulso?.email ?? "—"}</span>
+            </Dado>
+            <Dado rotulo="Avulso pago">
+              {formatarEuros(c.valor_avulso_centimos)} em {data(avulso?.created_at ?? null)}
+            </Dado>
+            <Dado rotulo="1.ª mensalidade coberta">{formatarEuros(c.valor_primeira_mensalidade_centimos)}</Dado>
+            <Dado rotulo="Reembolso devido">
+              <strong>{formatarEuros(c.refund_montante_centimos)}</strong>
+            </Dado>
+            <Dado rotulo="Estado do reembolso">
+              {estadoReembolsoPt(c.refund_estado) ?? "não criado"}
+              {c.refund_atualizado_em && <span className="block text-[12.5px] text-[var(--v2-muted)]">atualizado em {data(c.refund_atualizado_em)}</span>}
+            </Dado>
+            <Dado rotulo="Refund">
+              <span className={CODIGO}>{c.refund_id ?? "—"}</span>
+            </Dado>
+            <Dado rotulo="Pagamento Avulso">
+              <LigacaoStripe caminho="payments" id={c.payment_intent_id} />
+            </Dado>
+            <Dado rotulo="Subscrição">
+              <LigacaoStripe caminho="subscriptions" id={c.stripe_subscription_id} />
+            </Dado>
+            <Dado rotulo="Checkout do Avulso">
+              <span className={CODIGO}>{avulso?.stripe_session_id ?? "—"}</span>
+            </Dado>
+            <Dado rotulo="Checkout da adesão">
+              <span className={CODIGO}>{c.checkout_session_id ?? "—"}</span>
+            </Dado>
+            <Dado rotulo="Convertida em">{data(c.convertido_em)}</Dado>
+          </ListaDados>
+        </Seccao>
 
-      <dl className="rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-5 py-3 shadow-[var(--shadow-subtle)]">
-        <Campo rotulo="Cliente">
-          {um(c.cliente)?.nome ?? "—"}
-          <span className="block text-[12px] text-[var(--color-ink-faint)]">{avulso?.email ?? "—"}</span>
-        </Campo>
-        <Campo rotulo="Avulso pago">
-          {formatarEuros(c.valor_avulso_centimos)} em {data(avulso?.created_at ?? null)}
-        </Campo>
-        <Campo rotulo="1.ª mensalidade coberta">{formatarEuros(c.valor_primeira_mensalidade_centimos)}</Campo>
-        <Campo rotulo="Reembolso devido">{formatarEuros(c.refund_montante_centimos)}</Campo>
-        <Campo rotulo="Estado do reembolso">
-          {estadoReembolsoPt(c.refund_estado) ?? "não criado"}
-          {c.refund_atualizado_em && (
-            <span className="block text-[12px] text-[var(--color-ink-faint)]">atualizado em {data(c.refund_atualizado_em)}</span>
-          )}
-        </Campo>
-        <Campo rotulo="Refund">{c.refund_id ?? "—"}</Campo>
-        <Campo rotulo="Pagamento Avulso">
-          <LigacaoStripe caminho="payments" id={c.payment_intent_id} />
-        </Campo>
-        <Campo rotulo="Subscrição">
-          <LigacaoStripe caminho="subscriptions" id={c.stripe_subscription_id} />
-        </Campo>
-        <Campo rotulo="Checkout do Avulso">{avulso?.stripe_session_id ?? "—"}</Campo>
-        <Campo rotulo="Checkout da adesão">{c.checkout_session_id ?? "—"}</Campo>
-        <Campo rotulo="Convertida em">{data(c.convertido_em)}</Campo>
-      </dl>
-
-      {c.requer_intervencao ? (
-        <section className="flex flex-col gap-4 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-subtle)]">
-          <div className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
-            <p className="mb-2 font-semibold text-[var(--color-ink)]">Como resolver</p>
-            <ol className="list-decimal pl-5">
+        {c.requer_intervencao ? (
+          <Seccao titulo="Resolver" destaque descricao={`Motivo: ${c.intervencao_motivo ?? "—"}`}>
+            <ol className="list-decimal pl-5 text-[14px] leading-relaxed text-[var(--v2-navy)]">
               <li>Abra o pagamento Avulso no Stripe e confirme se já existe algum reembolso.</li>
               <li>
-                Se não existir nenhum reembolso concluído, crie um de{" "}
-                <strong>{formatarEuros(c.refund_montante_centimos)}</strong> nesse pagamento.
+                Se não existir nenhum reembolso concluído, crie um de <strong>{formatarEuros(c.refund_montante_centimos)}</strong> nesse pagamento.
               </li>
               <li>Se o método de pagamento original não aceitar o reembolso, contacte o cliente.</li>
               <li>Registe abaixo o que foi feito. A subscrição não é alterada por esta página.</li>
             </ol>
-          </div>
-          {erro && <p className="text-sm text-[var(--color-status-danger)]">{erro}</p>}
-          <form action={resolverIntervencao.bind(null, c.id)} className="flex flex-col gap-3">
-            <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
-              O que foi feito
-              <textarea
-                name="nota"
-                required
-                rows={3}
-                placeholder="Ex.: reembolso de 10,00 € criado manualmente no Stripe (re_…) em 02/10."
-                className="rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-hairline-strong)] focus:outline-none"
-              />
-            </label>
-            <button
-              type="submit"
-              className="self-start rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)]"
-            >
-              Marcar como resolvida
-            </button>
-          </form>
-        </section>
-      ) : (
-        c.intervencao_resolvida_em && (
-          <section className="rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 text-sm shadow-[var(--shadow-subtle)]">
-            <p className="mb-1 font-semibold text-[var(--color-status-success)]">
-              Resolvida em {data(c.intervencao_resolvida_em)}
-              {um(c.resolvida_por)?.nome ? ` por ${um(c.resolvida_por)?.nome}` : ""}
-            </p>
-            <p className="whitespace-pre-wrap text-[var(--color-ink-muted)]">{c.intervencao_nota}</p>
-            {c.intervencao_motivo && (
-              <p className="mt-2 text-[12px] text-[var(--color-ink-faint)]">Motivo original: {c.intervencao_motivo}</p>
-            )}
-          </section>
-        )
-      )}
+            {erro && <Aviso tom="erro">{erro}</Aviso>}
+            <form action={resolverIntervencao.bind(null, c.id)} className="flex flex-col gap-3">
+              <label className={ROTULO}>
+                O que foi feito
+                <textarea
+                  name="nota"
+                  required
+                  rows={3}
+                  placeholder="Ex.: reembolso de 10,00 € criado manualmente no Stripe (re_…) em 02/10."
+                  className={CAMPO}
+                />
+              </label>
+              <div>
+                <BotaoSubmeter className={BOTAO_PRIMARIO}>Marcar como resolvida</BotaoSubmeter>
+              </div>
+            </form>
+          </Seccao>
+        ) : (
+          c.intervencao_resolvida_em && (
+            <Seccao titulo="Resolução">
+              <Aviso
+                tom="sucesso"
+                titulo={`Resolvida em ${data(c.intervencao_resolvida_em)}${um(c.resolvida_por)?.nome ? ` por ${um(c.resolvida_por)?.nome}` : ""}`}
+              >
+                <p className="whitespace-pre-wrap">{c.intervencao_nota}</p>
+              </Aviso>
+              {c.intervencao_motivo && <p className="text-[12.5px] text-[var(--v2-muted)]">Motivo original: {c.intervencao_motivo}</p>}
+            </Seccao>
+          )
+        )}
+      </div>
     </div>
   );
 }

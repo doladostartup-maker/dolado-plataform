@@ -2,14 +2,20 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ROTULO_ACHADO } from "@/lib/monitor/achados";
+import type { TomBackoffice } from "@/lib/backoffice/triagem";
+import { CabecalhoPagina } from "@/components/backoffice/Cabecalho";
+import { Etiqueta } from "@/components/backoffice/Estado";
+import { IconeCirculoVisto } from "@/components/backoffice/Icones";
+import { EstadoVazio } from "@/components/portal/EstadoVazio";
+import { BOTAO_PEQUENO, BOTAO_SECUNDARIO, TABELA, TABELA_MOLDURA, TABELA_TD, TABELA_TH, TABELA_TR } from "@/components/backoffice/ui";
 
-const ESTADO: Record<string, string> = {
-  detetado: "Por rever",
-  em_revisao: "Em revisão",
-  confirmado: "Confirmado",
-  comunicado: "Comunicado",
-  descartado: "Descartado",
-  obsoleto: "Já não se verifica (reanálise)",
+const ESTADO: Record<string, { rotulo: string; tom: TomBackoffice }> = {
+  detetado: { rotulo: "Por rever", tom: "acao" },
+  em_revisao: { rotulo: "Em revisão", tom: "curso" },
+  confirmado: { rotulo: "Confirmado", tom: "aviso" },
+  comunicado: { rotulo: "Comunicado", tom: "sucesso" },
+  descartado: { rotulo: "Descartado", tom: "neutro" },
+  obsoleto: { rotulo: "Já não se verifica (reanálise)", tom: "neutro" },
 };
 
 export default async function AchadosPage({ searchParams }: { searchParams: Promise<{ todos?: string }> }) {
@@ -31,53 +37,70 @@ export default async function AchadosPage({ searchParams }: { searchParams: Prom
     : { data: [] };
   const fornecedor = new Map((dadosContratos ?? []).map((c) => [c.id, c.fornecedor]));
 
+  const separador = (ativo: boolean) =>
+    `-mb-px flex min-h-10 items-center border-b-2 px-3 text-[14px] font-semibold ${
+      ativo ? "border-[var(--v2-green)] text-[var(--v2-navy)]" : "border-transparent text-[var(--v2-muted)] hover:text-[var(--v2-navy)]"
+    }`;
+
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">Situações detetadas</h1>
-        <Link href="/backoffice/monitor" className="text-sm text-[var(--color-ink-muted)] underline">
-          Monitor
+    <div className="flex flex-col gap-5">
+      <CabecalhoPagina
+        contexto="Proteção"
+        titulo="Situações detetadas"
+        descricao="Resultados das regras sobre as faturas. Nada chega ao cliente sem revisão: confirme os factos, ajuste o texto e comunique, ou descarte com o motivo."
+      />
+
+      <nav aria-label="Filtro das situações" className="flex gap-1 border-b border-[var(--v2-line)]">
+        <Link href="/backoffice/monitor/achados" prefetch={false} aria-current={!params.todos ? "page" : undefined} className={separador(!params.todos)}>
+          Por decidir
         </Link>
-      </div>
-      <p className="text-sm text-[var(--color-ink-muted)]">
-        Resultados das regras sobre as faturas. Nada chega ao cliente sem revisão: confirme os factos, ajuste o texto e
-        comunique, ou descarte com o motivo.{" "}
-        <Link href={params.todos ? "/backoffice/monitor/achados" : "/backoffice/monitor/achados?todos=1"} className="text-[var(--color-brand)] underline">
-          {params.todos ? "Só por decidir" : "Ver todos"}
+        <Link href="/backoffice/monitor/achados?todos=1" prefetch={false} aria-current={params.todos ? "page" : undefined} className={separador(!!params.todos)}>
+          Todas
         </Link>
-      </p>
+      </nav>
 
       {achados && achados.length > 0 ? (
-        <div className="overflow-x-auto rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] shadow-[var(--shadow-subtle)]">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-[var(--color-surface-sunken)]">
+        <div className={TABELA_MOLDURA}>
+          <table className={TABELA}>
+            <thead>
               <tr>
-                <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Situação</th>
-                <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Fornecedor</th>
-                <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Estado</th>
-                <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Detetada em</th>
-                <th className="px-3 py-2" />
+                <th scope="col" className={TABELA_TH}>Situação</th>
+                <th scope="col" className={TABELA_TH}>Fornecedor</th>
+                <th scope="col" className={TABELA_TH}>Estado</th>
+                <th scope="col" className={TABELA_TH}>Detetada em</th>
+                <th scope="col" className={TABELA_TH}>
+                  <span className="sr-only">Ação</span>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {achados.map((a) => (
-                <tr key={a.id} className="border-t border-[var(--color-hairline)]">
-                  <td className="px-3 py-2 text-[var(--color-ink)]">{ROTULO_ACHADO[a.tipo] ?? a.tipo}</td>
-                  <td className="px-3 py-2 text-[var(--color-ink)]">{fornecedor.get(a.contrato_id) ?? "—"}</td>
-                  <td className="px-3 py-2 text-[var(--color-ink-muted)]">{ESTADO[a.estado] ?? a.estado}</td>
-                  <td className="px-3 py-2 text-[var(--color-ink-muted)]">{new Date(a.created_at).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon" })}</td>
-                  <td className="px-3 py-2">
-                    <Link href={`/backoffice/monitor/achados/${a.id}`} className="text-[var(--color-brand)] underline">
-                      Rever
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+              {achados.map((a) => {
+                const e = ESTADO[a.estado] ?? { rotulo: a.estado, tom: "neutro" as TomBackoffice };
+                return (
+                  <tr key={a.id} className={TABELA_TR}>
+                    <td className={`${TABELA_TD} font-semibold`}>{ROTULO_ACHADO[a.tipo] ?? a.tipo}</td>
+                    <td className={TABELA_TD}>{fornecedor.get(a.contrato_id) ?? "—"}</td>
+                    <td className={TABELA_TD}>
+                      <Etiqueta tom={e.tom}>{e.rotulo}</Etiqueta>
+                    </td>
+                    <td className={`${TABELA_TD} whitespace-nowrap text-[13px] text-[var(--v2-muted)]`}>
+                      {new Date(a.created_at).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon" })}
+                    </td>
+                    <td className={`${TABELA_TD} text-right`}>
+                      <Link href={`/backoffice/monitor/achados/${a.id}`} prefetch={false} className={`${BOTAO_SECUNDARIO} ${BOTAO_PEQUENO}`}>
+                        {["detetado", "em_revisao", "confirmado"].includes(a.estado) ? "Rever" : "Ver"}
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       ) : (
-        <p className="text-sm text-[var(--color-ink-muted)]">Sem situações por decidir.</p>
+        <EstadoVazio icone={<IconeCirculoVisto tamanho={20} />} titulo="Sem situações por decidir.">
+          As situações novas aparecem aqui depois de cada fatura analisada.
+        </EstadoVazio>
       )}
     </div>
   );

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Etiqueta } from "@/components/backoffice/Estado";
+import { BOTAO_SECUNDARIO, BOTAO_PEQUENO } from "@/components/backoffice/ui";
 
 export function EnviarBoasVindas({
   casoId,
@@ -40,38 +42,23 @@ export function EnviarBoasVindas({
     ? new Date(enviadoEm).toLocaleString("pt-PT", {
         dateStyle: "medium",
         timeStyle: "short",
+        timeZone: "Europe/Lisbon",
       })
     : null;
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-3">
-        {enviadoEm ? (
-          <>
-            <span className="inline-flex items-center rounded-[var(--radius-pill)] bg-[var(--color-status-success-wash)] px-[10px] py-[4px] text-[13px] font-medium text-[var(--color-status-success)]">
-              Enviado em {dataFormatada}
-            </span>
-            <button
-              type="button"
-              onClick={enviar}
-              disabled={aEnviar}
-              className="rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {aEnviar ? "A enviar…" : "Reenviar"}
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            onClick={enviar}
-            disabled={aEnviar}
-            className="rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {aEnviar ? "A enviar…" : "Enviar e-mail de boas-vindas"}
-          </button>
-        )}
+      <div className="flex flex-wrap items-center gap-2">
+        {enviadoEm ? <Etiqueta tom="sucesso">Enviado em {dataFormatada}</Etiqueta> : <Etiqueta tom="neutro">Ainda não enviado</Etiqueta>}
+        <button type="button" onClick={enviar} disabled={aEnviar} aria-busy={aEnviar} className={`${BOTAO_SECUNDARIO} ${BOTAO_PEQUENO}`}>
+          {aEnviar ? "A enviar…" : enviadoEm ? "Reenviar" : "Enviar e-mail de boas-vindas"}
+        </button>
       </div>
-      {erro && <p className="text-sm text-[var(--color-status-danger)]">{erro}</p>}
+      {erro && (
+        <p role="alert" className="text-[13px] text-[var(--v2-erro)]">
+          {erro}
+        </p>
+      )}
     </div>
   );
 }

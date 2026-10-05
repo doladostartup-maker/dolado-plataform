@@ -5,6 +5,21 @@ import { gastoApiUsd, tetoOrcamentoUsd } from "@/lib/monitor/servidor";
 import { estadoOrcamento } from "@/lib/monitor/custos";
 import { MODELO_DOCUMENTOS } from "@/lib/claude";
 import { ROTULO_TIPO_DOCUMENTO } from "@/lib/monitor/tipoDocumento";
+import { CabecalhoPagina, TituloSeccao } from "@/components/backoffice/Cabecalho";
+import { Metrica } from "@/components/backoffice/Blocos";
+import { Etiqueta } from "@/components/backoffice/Estado";
+import { IconeCirculoVisto } from "@/components/backoffice/Icones";
+import { Aviso } from "@/components/portal/Aviso";
+import { EstadoVazio } from "@/components/portal/EstadoVazio";
+import {
+  BOTAO_PEQUENO,
+  BOTAO_SECUNDARIO,
+  TABELA,
+  TABELA_MOLDURA,
+  TABELA_TD,
+  TABELA_TH,
+  TABELA_TR,
+} from "@/components/backoffice/ui";
 
 const ESTADO: Record<string, string> = { pendente: "Por processar", a_rever: "Por rever" };
 
@@ -33,71 +48,70 @@ export default async function MonitorBackofficePage() {
   const teto = tetoOrcamentoUsd();
   const orcamento = estadoOrcamento(gasto, teto);
 
+  const semChave = !process.env.ANTHROPIC_API_KEY;
+
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
-      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">Monitor de Proteção</h1>
+    <div className="flex flex-col gap-6">
+      <CabecalhoPagina
+        contexto="Proteção"
+        titulo="Documentos por tratar"
+        descricao="Documentos carregados pelos clientes que ficaram pendentes ou por rever. A leitura automática nunca decide sozinha: os casos duvidosos ficam aqui."
+        acoes={
+          <Link href="/backoffice/monitor/achados" prefetch={false} className={BOTAO_SECUNDARIO}>
+            Situações detetadas
+            {!!achados && <span className="rounded-full bg-[var(--v2-navy)] px-1.5 text-[12px] font-bold text-white">{achados}</span>}
+          </Link>
+        }
+      />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-4">
-          <p className="text-[13px] text-[var(--color-ink-muted)]">Claude API (estimado)</p>
-          <p className={`text-lg font-semibold ${orcamento.bloqueado ? "text-[var(--color-status-danger)]" : "text-[var(--color-ink)]"}`}>
-            {gasto.toFixed(4)} / {teto} USD
-          </p>
-          <p className="text-[12px] text-[var(--color-ink-faint)]">
-            {orcamento.percentagem.toFixed(1)}% · {chamadas ?? 0} chamadas · {MODELO_DOCUMENTOS}
-            {!process.env.ANTHROPIC_API_KEY && " · chave por configurar"}
-          </p>
-        </div>
-        <div className="rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-4">
-          <p className="text-[13px] text-[var(--color-ink-muted)]">Contratos acompanhados</p>
-          <p className="text-lg font-semibold text-[var(--color-ink)]">{contratos ?? 0}</p>
-        </div>
-        <div className="rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-4">
-          <p className="text-[13px] text-[var(--color-ink-muted)]">Valores em conflito (cliente decide)</p>
-          <p className="text-lg font-semibold text-[var(--color-ink)]">{conflitos ?? 0}</p>
-        </div>
-      </div>
+      {orcamento.bloqueado && (
+        <Aviso tom="erro" titulo="Orçamento da Claude API atingido.">
+          Nenhum documento é lido automaticamente até o teto (ANTHROPIC_ORCAMENTO_USD) ser aumentado. Os documentos ficam pendentes, sem erro para o cliente.
+        </Aviso>
+      )}
+      {semChave && (
+        <Aviso tom="atencao" titulo="Chave da Claude API por configurar neste ambiente.">
+          Os documentos ficam pendentes até haver chave.
+        </Aviso>
+      )}
 
-      <Link
-        href="/backoffice/monitor/achados"
-        className="flex items-center justify-between rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-4 hover:border-[var(--color-brand)]"
-      >
-        <span className="text-sm font-medium text-[var(--color-ink)]">Situações detetadas nas faturas, por rever</span>
-        <span className={`text-lg font-semibold ${achados ? "text-[var(--color-status-danger)]" : "text-[var(--color-ink)]"}`}>{achados ?? 0}</span>
-      </Link>
-
-      <h2 className="text-[var(--text-subheading)] font-medium text-[var(--color-ink)]">Documentos por tratar</h2>
       {documentos && documentos.length > 0 ? (
-        <div className="overflow-x-auto rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] shadow-[var(--shadow-subtle)]">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-[var(--color-surface-sunken)]">
+        <div className={TABELA_MOLDURA}>
+          <table className={TABELA}>
+            <thead>
               <tr>
-                <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Cliente</th>
-                <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Documento</th>
-                <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Estado</th>
-                <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">Recebido em</th>
-                <th className="px-3 py-2" />
+                <th scope="col" className={TABELA_TH}>Cliente</th>
+                <th scope="col" className={TABELA_TH}>Documento</th>
+                <th scope="col" className={TABELA_TH}>Estado</th>
+                <th scope="col" className={TABELA_TH}>Recebido em</th>
+                <th scope="col" className={TABELA_TH}>
+                  <span className="sr-only">Ação</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {documentos.map((d) => {
                 const c = conta.get(d.utilizador_id);
                 return (
-                  <tr key={d.id} className="border-t border-[var(--color-hairline)]">
-                    <td className="px-3 py-2 text-[var(--color-ink)]">
-                      {c?.nome ?? "—"}
-                      <span className="block text-[12px] text-[var(--color-ink-faint)]">{c?.email}</span>
+                  <tr key={d.id} className={TABELA_TR}>
+                    <td className={TABELA_TD}>
+                      <span className="block font-semibold">{c?.nome ?? "—"}</span>
+                      <span className="block text-[12.5px] text-[var(--v2-muted)]">{c?.email}</span>
                     </td>
-                    <td className="px-3 py-2 text-[var(--color-ink)]">
+                    <td className={TABELA_TD}>
                       {ROTULO_TIPO_DOCUMENTO[d.tipo] ?? d.tipo}
                       {d.tipo !== d.tipo_indicado && (
-                        <span className="block text-[12px] text-[var(--color-ink-faint)]">enviado como {ROTULO_TIPO_DOCUMENTO[d.tipo_indicado]?.toLowerCase()}</span>
+                        <span className="block text-[12.5px] text-[var(--v2-muted)]">enviado como {ROTULO_TIPO_DOCUMENTO[d.tipo_indicado]?.toLowerCase()}</span>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-[var(--color-ink-muted)]">{ESTADO[d.estado] ?? d.estado}</td>
-                    <td className="px-3 py-2 text-[var(--color-ink-muted)]">{new Date(d.created_at).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon" })}</td>
-                    <td className="px-3 py-2">
-                      <Link href={`/backoffice/monitor/${d.id}`} className="text-[var(--color-brand)] underline">
+                    <td className={TABELA_TD}>
+                      <Etiqueta tom={d.estado === "a_rever" ? "acao" : "aviso"}>{ESTADO[d.estado] ?? d.estado}</Etiqueta>
+                    </td>
+                    <td className={`${TABELA_TD} whitespace-nowrap text-[13px] text-[var(--v2-muted)]`}>
+                      {new Date(d.created_at).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon" })}
+                    </td>
+                    <td className={`${TABELA_TD} text-right`}>
+                      <Link href={`/backoffice/monitor/${d.id}`} prefetch={false} className={`${BOTAO_SECUNDARIO} ${BOTAO_PEQUENO}`}>
                         Rever
                       </Link>
                     </td>
@@ -108,8 +122,24 @@ export default async function MonitorBackofficePage() {
           </table>
         </div>
       ) : (
-        <p className="text-sm text-[var(--color-ink-muted)]">Sem documentos por tratar.</p>
+        <EstadoVazio icone={<IconeCirculoVisto tamanho={20} />} titulo="Sem documentos por tratar.">
+          Todos os documentos foram lidos ou revistos.
+        </EstadoVazio>
       )}
+
+      <section aria-labelledby="indicadores" className="flex flex-col gap-3">
+        <TituloSeccao id="indicadores" titulo="Indicadores" />
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Metrica
+            rotulo="Claude API (estimado)"
+            valor={`${gasto.toFixed(4)} / ${teto} USD`}
+            tom={orcamento.bloqueado ? "erro" : "normal"}
+            detalhe={`${orcamento.percentagem.toFixed(1)}% · ${chamadas ?? 0} chamadas · ${MODELO_DOCUMENTOS}`}
+          />
+          <Metrica rotulo="Serviços acompanhados" valor={contratos ?? 0} />
+          <Metrica rotulo="Valores em conflito" valor={conflitos ?? 0} detalhe="O cliente decide" />
+        </div>
+      </section>
     </div>
   );
 }

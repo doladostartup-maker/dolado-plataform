@@ -1,3 +1,16 @@
+import { ESTADOS_CASO, estadoCaso } from "@/lib/backoffice/triagem";
+import { MOMENTOS, PROBLEMAS, SETORES } from "@/lib/pedidoCaso";
+import { BotaoSubmeter } from "@/components/backoffice/BotaoSubmeter";
+import {
+  AJUDA_CAMPO,
+  BOTAO_PRIMARIO,
+  CAIXA_SELECAO,
+  CAMPO,
+  CAMPO_TEXTO_LONGO,
+  LINHA_SELECAO,
+  ROTULO,
+} from "@/components/backoffice/ui";
+
 type CasoFormValues = {
   nome?: string;
   email?: string;
@@ -28,33 +41,28 @@ function paraDatetimeLocal(iso: string | null | undefined): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-const STATUSES = [
-  "Novo",
-  "Em investigação",
-  "Aguardando operador",
-  "Aguardando decisão cliente",
-  "Resolvido",
-  "Bloqueado",
-];
-
-const INPUT_CLASS =
-  "w-full rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-hairline-strong)] focus:outline-none";
-
-function Campo({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Campo({ label, ajuda, children, largo }: { label: string; ajuda?: string; children: React.ReactNode; largo?: boolean }) {
   return (
-    <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+    <label className={`${ROTULO} ${largo ? "sm:col-span-2" : ""}`}>
       {label}
       {children}
+      {ajuda && <span className={AJUDA_CAMPO}>{ajuda}</span>}
     </label>
   );
 }
 
+function Grupo({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+  return (
+    <fieldset className="flex flex-col gap-3 border-t border-[var(--v2-line)] pt-4 first:border-t-0 first:pt-0">
+      <legend className="float-left mb-1 w-full text-[13px] font-bold uppercase tracking-[0.06em] text-[var(--v2-muted)]">{titulo}</legend>
+      <div className="grid gap-3 sm:grid-cols-2">{children}</div>
+    </fieldset>
+  );
+}
+
+// Formulário de criar/editar caso. Os nomes dos campos e os valores
+// gravados não mudam (a Server Action lê-os tal como antes); só a
+// apresentação, agrupada por tema e com rótulos reais.
 export function CasoForm({
   action,
   valores = {},
@@ -65,183 +73,115 @@ export function CasoForm({
   submitLabel: string;
 }) {
   return (
-    <form action={action} className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-4">
+    <form action={action} className="flex flex-col gap-5">
+      <Grupo titulo="Cliente">
         <Campo label="Nome">
-          <input name="nome" defaultValue={valores.nome ?? ""} required className={INPUT_CLASS} />
+          <input name="nome" defaultValue={valores.nome ?? ""} required className={CAMPO} />
         </Campo>
         <Campo label="E-mail">
-          <input
-            name="email"
-            type="email"
-            defaultValue={valores.email ?? ""}
-            required
-            className={INPUT_CLASS}
-          />
+          <input name="email" type="email" defaultValue={valores.email ?? ""} required className={CAMPO} />
         </Campo>
         <Campo label="Telefone">
-          <input
-            name="telefone"
-            defaultValue={valores.telefone ?? ""}
-            className={INPUT_CLASS}
-          />
+          <input name="telefone" type="tel" defaultValue={valores.telefone ?? ""} className={CAMPO} />
         </Campo>
-        <Campo label="Empresa parceira">
-          <input
-            name="empresa_parceira"
-            defaultValue={valores.empresa_parceira ?? ""}
-            className={INPUT_CLASS}
-          />
+        <Campo label="Empresa parceira" ajuda="Ex.: parceiro que encaminhou o cliente.">
+          <input name="empresa_parceira" defaultValue={valores.empresa_parceira ?? ""} className={CAMPO} />
+        </Campo>
+      </Grupo>
+
+      <Grupo titulo="Problema">
+        <Campo label="Empresa reclamada" ajuda="Campo “Empresa” do formulário guiado.">
+          <input name="empresa" defaultValue={valores.empresa ?? ""} className={CAMPO} />
         </Campo>
         <Campo label="Setor">
-          <select name="sector" defaultValue={valores.sector ?? ""} className={INPUT_CLASS}>
-            <option value="">—</option>
-            <option value="Telecomunicações">Telecomunicações</option>
-            <option value="Energia">Energia</option>
-            <option value="Água">Água</option>
-          </select>
-        </Campo>
-        <Campo label="Tipo de problema">
-          <input
-            name="tipo_problema"
-            defaultValue={valores.tipo_problema ?? ""}
-            className={INPUT_CLASS}
-          />
-        </Campo>
-        <Campo label="Empresa (formulário guiado)">
-          <input
-            name="empresa"
-            defaultValue={valores.empresa ?? ""}
-            className={INPUT_CLASS}
-          />
-        </Campo>
-        <Campo label="O que aconteceu (formulário guiado)">
-          <select name="problema_tipo" defaultValue={valores.problema_tipo ?? ""} className={INPUT_CLASS}>
-            <option value="">—</option>
-            <option value="Aumento de mensalidade">Aumento de mensalidade</option>
-            <option value="Cobrança indevida">Cobrança indevida</option>
-            <option value="Fidelização ou penalização">Fidelização ou penalização</option>
-            <option value="Corte ou falha de serviço">Corte ou falha de serviço</option>
-            <option value="Cancelamento recusado">Cancelamento recusado</option>
-            <option value="Outro">Outro</option>
-          </select>
-        </Campo>
-        <Campo label="Já reclamou junto da empresa?">
-          <select name="momento_cliente" defaultValue={valores.momento_cliente ?? ""} className={INPUT_CLASS}>
-            <option value="">—</option>
-            <option value="Sim, e não me responderam">Sim, e não me responderam</option>
-            <option value="Sim, mas a resposta não resolveu">Sim, mas a resposta não resolveu</option>
-            <option value="Ainda não reclamei">Ainda não reclamei</option>
-          </select>
-        </Campo>
-        <Campo label="Estado">
-          <select
-            name="status"
-            defaultValue={valores.status ?? "Novo"}
-            className={INPUT_CLASS}
-          >
-            {STATUSES.map((s) => (
+          <select name="sector" defaultValue={valores.sector ?? ""} className={CAMPO}>
+            <option value="">Sem setor</option>
+            {SETORES.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
             ))}
           </select>
         </Campo>
+        <Campo label="O que aconteceu" ajuda="Categoria do formulário guiado.">
+          <select name="problema_tipo" defaultValue={valores.problema_tipo ?? ""} className={CAMPO}>
+            <option value="">Sem categoria</option>
+            {PROBLEMAS.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        <Campo label="Tipo de problema" ajuda="Texto livre (casos antigos).">
+          <input name="tipo_problema" defaultValue={valores.tipo_problema ?? ""} className={CAMPO} />
+        </Campo>
+        <Campo label="Já reclamou junto da empresa?">
+          <select name="momento_cliente" defaultValue={valores.momento_cliente ?? ""} className={CAMPO}>
+            <option value="">Sem resposta</option>
+            {MOMENTOS.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        <Campo label="Fim da fidelização">
+          <input type="date" name="data_fim_fidelidade" defaultValue={valores.data_fim_fidelidade ?? ""} className={CAMPO} />
+        </Campo>
+        <Campo label="Descrição" largo>
+          <textarea name="descricao" defaultValue={valores.descricao ?? ""} rows={5} className={CAMPO_TEXTO_LONGO} />
+        </Campo>
+      </Grupo>
+
+      <Grupo titulo="Estado e prazos">
+        <Campo label="Estado" ajuda="Alteração manual: não envia e-mails nem mexe no texto.">
+          <select name="status" defaultValue={valores.status ?? "Novo"} className={CAMPO}>
+            {ESTADOS_CASO.map((s) => (
+              <option key={s} value={s}>
+                {estadoCaso(s).rotulo}
+              </option>
+            ))}
+          </select>
+        </Campo>
         <Campo label="Tipo (A/B/C)">
-          <select
-            name="tipo_abc"
-            defaultValue={valores.tipo_abc ?? ""}
-            className={INPUT_CLASS}
-          >
-            <option value="">—</option>
+          <select name="tipo_abc" defaultValue={valores.tipo_abc ?? ""} className={CAMPO}>
+            <option value="">Sem tipo</option>
             <option value="A">A</option>
             <option value="B">B</option>
             <option value="C">C</option>
           </select>
         </Campo>
-        <Campo label="Fim de fidelidade">
-          <input
-            type="date"
-            name="data_fim_fidelidade"
-            defaultValue={valores.data_fim_fidelidade ?? ""}
-            className={INPUT_CLASS}
-          />
+        <Campo label="Data de envio da reclamação" ajuda="Conta o prazo de 15 dias úteis para a resposta da empresa.">
+          <input type="date" name="data_envio_reclamacao" defaultValue={valores.data_envio_reclamacao ?? ""} className={CAMPO} />
         </Campo>
-        <Campo label="Data de envio da reclamação">
-          <input
-            type="date"
-            name="data_envio_reclamacao"
-            defaultValue={valores.data_envio_reclamacao ?? ""}
-            className={INPUT_CLASS}
-          />
+        <Campo label="Primeira resposta ao cliente" ajuda="Prazo: 48 horas úteis desde a criação.">
+          <input type="datetime-local" name="primeira_resposta_em" defaultValue={paraDatetimeLocal(valores.primeira_resposta_em)} className={CAMPO} />
         </Campo>
-        <Campo label="Primeira resposta">
-          <input
-            type="datetime-local"
-            name="primeira_resposta_em"
-            defaultValue={paraDatetimeLocal(valores.primeira_resposta_em)}
-            className={INPUT_CLASS}
-          />
-        </Campo>
+      </Grupo>
+
+      <Grupo titulo="Interno">
         <Campo label="Minutos">
-          <input
-            type="number"
-            name="minutos"
-            defaultValue={valores.minutos ?? ""}
-            className={INPUT_CLASS}
-          />
+          <input type="number" name="minutos" defaultValue={valores.minutos ?? ""} className={CAMPO} />
         </Campo>
         <Campo label="Valor indicado (€)">
-          <input
-            type="number"
-            step="0.01"
-            name="valor_indicado"
-            defaultValue={valores.valor_indicado ?? ""}
-            className={INPUT_CLASS}
-          />
+          <input type="number" step="0.01" name="valor_indicado" defaultValue={valores.valor_indicado ?? ""} className={CAMPO} />
         </Campo>
-        <label className="flex items-center gap-2 self-end pb-2 text-sm text-[var(--color-ink)]">
-          <input
-            type="checkbox"
-            name="disposicao_pagar"
-            defaultChecked={valores.disposicao_pagar ?? false}
-          />
+        <label className={`${LINHA_SELECAO} sm:col-span-2`}>
+          <input type="checkbox" name="disposicao_pagar" defaultChecked={valores.disposicao_pagar ?? false} className={CAIXA_SELECAO} />
           Disposto a pagar
         </label>
+        <Campo label="Link do dossiê" ajuda="O cliente vê-o no portal quando preenchido." largo>
+          <input type="url" name="dossie_url" defaultValue={valores.dossie_url ?? ""} placeholder="https://…" className={CAMPO} />
+        </Campo>
+        <Campo label="Notas internas" ajuda="Nunca visíveis para o cliente." largo>
+          <textarea name="notas" defaultValue={valores.notas ?? ""} rows={4} className={CAMPO_TEXTO_LONGO} />
+        </Campo>
+      </Grupo>
+
+      <div className="flex flex-wrap gap-2 border-t border-[var(--v2-line)] pt-4">
+        <BotaoSubmeter className={BOTAO_PRIMARIO}>{submitLabel}</BotaoSubmeter>
       </div>
-
-      <Campo label="Descrição">
-        <textarea
-          name="descricao"
-          defaultValue={valores.descricao ?? ""}
-          rows={4}
-          className={INPUT_CLASS}
-        />
-      </Campo>
-      <Campo label="Notas internas">
-        <textarea
-          name="notas"
-          defaultValue={valores.notas ?? ""}
-          rows={4}
-          className={INPUT_CLASS}
-        />
-      </Campo>
-      <Campo label="Link do dossiê">
-        <input
-          type="url"
-          name="dossie_url"
-          defaultValue={valores.dossie_url ?? ""}
-          placeholder="https://…"
-          className={INPUT_CLASS}
-        />
-      </Campo>
-
-      <button
-        type="submit"
-        className="self-start rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-      >
-        {submitLabel}
-      </button>
     </form>
   );
 }

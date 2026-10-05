@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { ConfirmarAcao } from "@/components/backoffice/ConfirmarAcao";
+import { BOTAO_PRIMARIO, BOTAO_TERCIARIO, CAMPO, CAMPO_TEXTO_LONGO, ROTULO, AJUDA_CAMPO } from "@/components/backoffice/ui";
 
 const SETORES = ["Telecomunicações", "Energia", "Água"];
-
-const INPUT_CLASS =
-  "w-full rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-ink)] placeholder:text-[var(--color-ink-faint)] focus:border-[var(--color-hairline-strong)] focus:outline-none";
 
 export function AvisoSetorialForm({
   action,
@@ -20,79 +19,59 @@ export function AvisoSetorialForm({
   const [mostrarPreview, setMostrarPreview] = useState(false);
 
   const numDestinatarios = contagens[setor] ?? 0;
+  const clientes = `${numDestinatarios} cliente${numDestinatarios === 1 ? "" : "s"}`;
 
   return (
-    <form
-      action={action}
-      className="flex flex-col gap-4 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-subtle)]"
-    >
-      <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+    <form action={action} className="flex flex-col gap-4">
+      <label className={`${ROTULO} max-w-xs`}>
         Setor
-        <select
-          name="setor"
-          value={setor}
-          onChange={(e) => setSetor(e.target.value)}
-          className={INPUT_CLASS}
-        >
+        <select name="setor" value={setor} onChange={(e) => setSetor(e.target.value)} className={CAMPO}>
           {SETORES.map((s) => (
             <option key={s} value={s}>
-              {s}
+              {s} ({contagens[s] ?? 0})
             </option>
           ))}
         </select>
+        <span className={AJUDA_CAMPO}>Entre parênteses: clientes com Proteção ativa que subscreveram o setor.</span>
       </label>
 
-      <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+      <label className={ROTULO}>
         Título
-        <input
-          name="titulo"
-          value={titulo}
-          onChange={(e) => setTitulo(e.target.value)}
-          required
-          className={INPUT_CLASS}
-        />
+        <input name="titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} required className={CAMPO} />
       </label>
 
-      <label className="flex flex-col gap-1 text-sm text-[var(--color-ink-muted)]">
+      <label className={ROTULO}>
         Descrição
-        <textarea
-          name="descricao"
-          rows={5}
-          value={descricao}
-          onChange={(e) => setDescricao(e.target.value)}
-          required
-          className={INPUT_CLASS}
-        />
+        <textarea name="descricao" rows={6} value={descricao} onChange={(e) => setDescricao(e.target.value)} required className={CAMPO_TEXTO_LONGO} />
       </label>
 
-      <button
-        type="button"
-        onClick={() => setMostrarPreview((v) => !v)}
-        className="self-start text-sm font-medium text-[var(--color-brand)] underline"
-      >
-        {mostrarPreview ? "Esconder pré-visualização" : "Como vai aparecer no e-mail?"}
-      </button>
+      <div>
+        <button type="button" aria-expanded={mostrarPreview} onClick={() => setMostrarPreview((v) => !v)} className={BOTAO_TERCIARIO}>
+          {mostrarPreview ? "Esconder pré-visualização" : "Como vai aparecer no e-mail?"}
+        </button>
+      </div>
 
       {mostrarPreview && (
-        <div className="rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-canvas)] p-4 text-sm">
-          <p className="mb-2 text-[13px] text-[var(--color-ink-faint)]">
-            Assunto: [Aviso DoLado] Novidade no setor de {setor}
-          </p>
-          <div className="rounded-[8px] border-l-[3px] border-[var(--color-brand)] bg-[var(--color-surface-sunken)] p-3">
-            <p className="mb-1 font-semibold text-[var(--color-ink)]">{titulo || "(sem título)"}</p>
-            <p className="whitespace-pre-line text-[var(--color-ink-muted)]">
-              {descricao || "(sem descrição)"}
-            </p>
+        <div className="rounded-[12px] border border-[var(--v2-line)] bg-[var(--v2-surface)] p-4 text-[14px]">
+          <p className="mb-2 text-[12.5px] text-[var(--v2-muted)]">Assunto: [Aviso DoLado] Novidade no setor de {setor}</p>
+          <div className="rounded-[10px] border-l-[3px] border-[var(--v2-green)] bg-white p-3">
+            <p className="mb-1 font-semibold">{titulo || "(sem título)"}</p>
+            <p className="whitespace-pre-line text-[var(--v2-muted)]">{descricao || "(sem descrição)"}</p>
           </div>
         </div>
       )}
 
-      <button
-        type="submit"
-        className="self-start rounded-[var(--radius-button)] bg-[var(--color-brand)] px-[18px] py-[10px] text-sm font-medium text-white hover:bg-[var(--color-brand-hover)]"
-      >
-        Enviar aviso a {numDestinatarios} cliente{numDestinatarios === 1 ? "" : "s"}
-      </button>
+      <div className="border-t border-[var(--v2-line)] pt-4">
+        <ConfirmarAcao
+          className={BOTAO_PRIMARIO}
+          titulo={`Enviar o aviso a ${clientes}?`}
+          descricao={`Todos os clientes com Proteção ativa que subscreveram o setor ${setor} recebem este e-mail. O envio não pode ser anulado.`}
+          confirmar="Enviar aviso"
+          aDecorrer="A enviar…"
+        >
+          Enviar aviso a {clientes}
+        </ConfirmarAcao>
+      </div>
     </form>
   );
 }
