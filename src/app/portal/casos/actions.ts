@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
+import { agendarRascunhoIA } from "@/lib/rascunhoIA/servidor";
 
 export async function criarCasoCliente(formData: FormData) {
   const supabase = await createClient();
@@ -67,6 +68,8 @@ export async function criarCasoCliente(formData: FormData) {
     await admin.from("case_credit_grants").update({ caso_id: data.id }).eq("origem", consumido);
   }
 
+  // Sugestão do texto pela IA: depois da resposta, nunca bloqueia o caso.
+  agendarRascunhoIA(data.id);
   redirect(`/portal/casos/${data.id}`);
 }
 

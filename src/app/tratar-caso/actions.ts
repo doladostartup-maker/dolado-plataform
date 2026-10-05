@@ -9,6 +9,7 @@ import { requireUser } from "@/lib/auth";
 import { dadosContaNova, guardarDestinoPosLogin, urlCallbackAuth } from "@/lib/authServidor";
 import { DESTINO_PEDIDO_POR_PAGAR } from "@/lib/destinoAuth";
 import { excedeuLimiteTaxa } from "@/lib/rateLimit";
+import { agendarRascunhoIA } from "@/lib/rascunhoIA/servidor";
 import { lerDadosPedido, pedidoPorPagar, validEmail } from "@/lib/pedidoCaso";
 import {
   converterPedidoEmCaso,
@@ -220,5 +221,7 @@ export async function usarCasoDisponivel(formData: FormData) {
   // Atómico: só cria o caso se gastar um caso disponível (pago).
   const casoId = await converterPedidoEmCaso(pedido.id, user.id).catch(() => null);
   if (!casoId) redirect(`${MODALIDADE}?pedido=${pedido.id}&erro=sem-casos`);
+  // Sugestão do texto pela IA: depois da resposta, nunca bloqueia o caso.
+  agendarRascunhoIA(casoId);
   redirect(recebido);
 }
