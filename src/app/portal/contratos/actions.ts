@@ -10,6 +10,7 @@ import { excedeuLimiteTaxa } from "@/lib/rateLimit";
 import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 import { MIME_ACEITES, type MimeAceite } from "@/lib/monitor/claudeDocumentos";
 import {
+  apagarServicoAcompanhado,
   cancelarDocumentoPorAssociar,
   concluirAssociacao,
   processarDocumentoEmSegundoPlano,
@@ -366,23 +367,19 @@ export async function responderFatura(formData: FormData) {
   irPara(`/portal/contratos/${contratoId}`, { fatura: acao === "confirmar" ? "confirmada" : "contestada" });
 }
 
-// Deixar de acompanhar: apaga o contrato, os documentos (ficheiros primeiro)
-// e toda a informação associada. Irreversível — a página pede confirmação.
+// Deixar de acompanhar: apaga o serviço e toda a informação associada (base
+// de dados primeiro, numa só operação; ficheiros depois). Irreversível — a
+// página pede confirmação. Ficar sem serviços acompanhados é válido.
 export async function deixarDeAcompanhar(formData: FormData) {
-  const { contrato } = await contratoDoCliente(String(formData.get("contrato_id") ?? ""));
+  const { user, contrato } = await contratoDoCliente(String(formData.get("contrato_id") ?? ""));
   if (formData.get("confirmar") !== "sim") redirect(`/portal/contratos/${contrato.id}`);
 
-  const admin = createAdminClient();
-  const { data: docs } = await admin.from("documentos_monitor").select("bucket, storage_path").eq("contrato_id", contrato.id);
-  const porBucket = new Map<string, string[]>();
-  for (const d of docs ?? []) porBucket.set(d.bucket, [...(porBucket.get(d.bucket) ?? []), d.storage_path]);
-  for (const [bucket, caminhos] of porBucket) {
-    const { error } = await admin.storage.from(bucket).remove(caminhos);
-    if (error) irPara(`/portal/contratos/${contrato.id}`, { erro: MSG_ERRO_GUARDAR });
+  const r = await apagarServicoAcompanhado(contrato.id, user.id);
+  if (!r.ok) {
+    if (r.erro === "nao_encontrado") redirect("/portal/contratos");
+    irPara(`/portal/contratos/${contrato.id}`, { erro: MSG_ERRO_GUARDAR });
   }
-  const { error } = await admin.from("contratos_monitorizados").delete().eq("id", contrato.id);
-  if (error) irPara(`/portal/contratos/${contrato.id}`, { erro: MSG_ERRO_GUARDAR });
 
   revalidatePath("/portal/contratos");
-  irPara("/portal/contratos", { removido: "1" });
+  irPara("/portal/contratos", { removido: r.restantes === 0 ? "ultimo" : "1" });
 }
