@@ -6,7 +6,7 @@ import { criarUploadAssinado } from "@/app/actions/formulario-guiado";
 import { track } from "@/lib/analytics";
 import { TEXTO_CONSENTIMENTO_COMUNICACOES } from "@/lib/legal";
 import { MOMENTOS, PROBLEMAS, SETORES, validNome, validTelemovel, type EntradaPedido } from "@/lib/pedidoCaso";
-import { IVA_INCLUIDO, PLANOS, precoComUnidade, textoCasosDisponiveis } from "@/lib/planos";
+import { CASO_EXTRA, IVA_INCLUIDO, PLANOS, TEXTO_BENEFICIO_SUBSCRITOR, formatarPreco, precoComUnidade, textoCasosDisponiveis } from "@/lib/planos";
 import { MARKETING_SITE_URL } from "@/lib/site";
 import { createClient } from "@/lib/supabase/client";
 import { guardarPedido, type EstadoPedidoForm } from "../actions";
@@ -247,6 +247,17 @@ export function FormularioCaso({
               Tem {textoCasosDisponiveis(casosDisponiveis)} na sua conta.
             </p>
             <p>No final, este pedido usa um deles, sem novo pagamento.</p>
+          </>
+        ) : entrada === "caso_extra" ? (
+          <>
+            <p style={{ color: COR.ink }} className="font-medium">
+              Já utilizou o caso incluído neste mês na sua subscrição.
+            </p>
+            <p>
+              No final, pode tratar este caso como {CASO_EXTRA.nome} ({TEXTO_BENEFICIO_SUBSCRITOR}):{" "}
+              <s>{formatarPreco(CASO_EXTRA.precoReferenciaCentimos)}</s> {formatarPreco(CASO_EXTRA.precoCentimos)} ({IVA_INCLUIDO}).
+              A sua subscrição continua ativa e não é alterada. Só paga depois de rever o pedido.
+            </p>
           </>
         ) : entrada === "so_avulso" ? (
           <>

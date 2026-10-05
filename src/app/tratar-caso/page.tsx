@@ -1,6 +1,7 @@
 import { obterAcesso } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { entradaDoPedido, MOMENTOS, PROBLEMAS, SETORES } from "@/lib/pedidoCaso";
+import { casoExtraConfigurado } from "@/lib/stripe/planos";
 import { Etapas } from "./_components/Etapas";
 import { FormularioCaso } from "./_components/FormularioCaso";
 
@@ -33,7 +34,7 @@ export default async function TratarCasoPage({
         origem={origem}
         comSessao={!!userId}
         inicial={inicial}
-        entrada={entradaDoPedido(acesso)}
+        entrada={entradaDoPedido(acesso, casoExtraConfigurado())}
         casosDisponiveis={acesso?.creditos ?? 0}
       />
     </>

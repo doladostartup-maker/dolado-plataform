@@ -18,6 +18,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { rascunhoIAAtivo } from "@/lib/rascunhoIA/servidor";
 import type { GeracaoIA } from "../_components/RascunhoIA";
 
+// casos.origem_credito: caso disponível gasto para abrir o caso. A compra
+// única (Avulso / Caso Extra) fica ligada ao caso em case_credit_grants.caso_id.
+const ORIGEM_COMERCIAL: Record<string, string> = {
+  subscricao: "Caso incluído na subscrição",
+  caso_extra: "Caso Extra (subscritor)",
+  avulso: "Avulso",
+};
+
 export default async function CasoDetalhePage({
   params,
   searchParams,
@@ -108,6 +116,7 @@ export default async function CasoDetalhePage({
         <p className="text-[var(--text-caption)] text-[var(--color-ink-faint)]">
           Criado em {criadoEm}
           {caso.origem && ` · origem: ${caso.origem}`}
+          {` · origem comercial: ${ORIGEM_COMERCIAL[caso.origem_credito as string] ?? "sem registo"}`}
           {caso.consentimento_alertas && " · marcou a caixa opcional de comunicações"}
         </p>
       </div>

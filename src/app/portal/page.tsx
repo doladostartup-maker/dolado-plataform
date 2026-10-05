@@ -1,6 +1,7 @@
 import { BotaoComprar } from "@/components/compra/BotaoComprar";
 import { avisoDoPortal, estadoReembolsoCliente, resumoPlanoPortal } from "@/lib/acesso";
 import { obterAcesso, requireUser } from "@/lib/auth";
+import { casosDoMes } from "@/lib/casoExtra";
 import { obterResumoCobranca } from "@/lib/stripe/proximaCobranca";
 import {
   escolherAvulsoParaConversao,
@@ -312,6 +313,7 @@ export default async function PortalIndex({
         casos={resumosCasos}
         protecao={protecao}
         resumo={resumo}
+        casosDoMes={casosDoMes(acesso)}
         cobranca={cobranca}
         temProtecao={acesso.temProtecao}
         temPlanoStripe={acesso.temPlanoStripe}

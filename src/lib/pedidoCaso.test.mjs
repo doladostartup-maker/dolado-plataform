@@ -96,6 +96,7 @@ describe("modalidades oferecidas (opcoesDoPedido)", () => {
   test("conta sem compras: Avulso e Caso + Proteção, nada de graça", () => {
     assert.deepEqual(opcoesDoPedido({ creditos: 0, temProtecao: false }), {
       usarCasoDisponivel: false,
+      casoExtra: false,
       modalidades: ["avulso", "caso_protecao"],
     });
   });
@@ -165,7 +166,7 @@ describe("direito a caso no fluxo Tratar o meu caso (acesso → opções)", () =
   test("a página do formulário lê o acesso da conta e usa a mesma regra (sem lógica própria)", () => {
     const pagina = readFileSync(new URL("../app/tratar-caso/page.tsx", import.meta.url), "utf8");
     assert.match(pagina, /obterAcesso\(/);
-    assert.match(pagina, /entradaDoPedido\(acesso\)/);
+    assert.match(pagina, /entradaDoPedido\(acesso, casoExtraConfigurado\(\)\)/);
     assert.doesNotMatch(pagina, /case_credits/);
   });
   test("o botão da área de contratos leva ao mesmo fluxo", () => {

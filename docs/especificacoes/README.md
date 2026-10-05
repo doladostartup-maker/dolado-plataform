@@ -10,6 +10,7 @@ Este pacote contém a proposta de produto e arquitetura para transformar F1 + F2
 - `F3_MUDANCA_CASA_PUBLICA.md` — página pública e estática de mudança de casa
 - `F4_MONITOR_CUSTO_SAIDA.md` — calculadora pública + monitor privado
 - `CLAUDE_API_MONITORIZACAO.md` — uso da Claude API, modelo, custos e segurança
+- `CASO_EXTRA.md` — Caso Extra para subscritores (créditos, ordem de consumo, Checkout, webhook, cancelamento)
 
 ## Ordem recomendada de leitura
 

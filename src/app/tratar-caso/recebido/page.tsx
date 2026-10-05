@@ -35,6 +35,13 @@ export default async function RecebidoPage({ searchParams }: { searchParams: Pro
     return (
       <>
         <RegistarEvento nome="pagamento_concluido" parametros={{ plano: pedido.plano_escolhido ?? "caso_disponivel" }} />
+        {pedido.plano_escolhido === "caso_extra" && (
+          <>
+            {/* O webhook deu o Caso Extra e este pedido já o usou (modo vinculado). */}
+            <RegistarEvento nome="extra_case_purchased" />
+            <RegistarEvento nome="extra_case_used" />
+          </>
+        )}
         <div className={`${CARTAO} text-center`}>
           <div className="mb-4 flex justify-center">
             <Etiqueta tom="concluido">{pedido.plano_escolhido ? "Pagamento confirmado" : "Caso disponível utilizado"}</Etiqueta>

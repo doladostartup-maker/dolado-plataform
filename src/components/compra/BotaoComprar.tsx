@@ -30,7 +30,7 @@ export function BotaoComprar({
       <button
         type="button"
         onClick={() => {
-          if (pedidoId) track("modalidade_escolhida", { plano });
+          if (pedidoId) track("modalidade_escolhida", { plano: fluxo === "caso_extra" ? "caso_extra" : plano });
           setAberto(true);
         }}
         className={className}

@@ -18,7 +18,7 @@ import {
   consentimentoInicioImediato,
 } from "@/lib/legal";
 import { track } from "@/lib/analytics";
-import { IVA_INCLUIDO, PLANOS, formatarPreco, type PlanoId } from "@/lib/planos";
+import { CASO_EXTRA, IVA_INCLUIDO, PLANOS, TEXTO_BENEFICIO_SUBSCRITOR, formatarPreco, type PlanoId } from "@/lib/planos";
 import { fonteV2 } from "@/components/marketing-v2/fonte";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAIXA_SELECAO } from "@/components/portal/ui";
 
@@ -57,7 +57,10 @@ export function ConfirmarCompra({
   const [estado, submeter, aSubmeter] = useActionState<EstadoCompra, FormData>(confirmarCompra, { erro: null });
   const [aceitaTermos, setAceitaTermos] = useState(false);
   const [pedeInicio, setPedeInicio] = useState(false);
-  const info = PLANOS[plano];
+  // Caso Extra: plano "avulso" (tratamento de 1 caso, pagamento único) com o
+  // preço de subscritor. O servidor confirma o direito e escolhe o preço.
+  const casoExtra = fluxo === "caso_extra";
+  const info = casoExtra ? { ...PLANOS.avulso, ...CASO_EXTRA } : PLANOS[plano];
   const inicioImediato = consentimentoInicioImediato(plano);
 
   return (
@@ -78,7 +81,16 @@ export function ConfirmarCompra({
 
         <div className="mb-4 rounded-[14px] border border-[var(--v2-line)] bg-[var(--v2-blue-bg)] p-4">
           <p className="text-[16px] font-bold text-[var(--v2-navy)]">{info.nome}</p>
+          {casoExtra && <p className="text-[13.5px] font-semibold text-[var(--v2-green-dark)]">{TEXTO_BENEFICIO_SUBSCRITOR}</p>}
           <p className="text-[15px] font-semibold text-[var(--v2-navy)]">
+            {casoExtra && (
+              <>
+                <span className="font-normal text-[var(--v2-muted)] line-through">
+                  <span className="sr-only">Preço normal: </span>
+                  {formatarPreco(CASO_EXTRA.precoReferenciaCentimos)}
+                </span>{" "}
+              </>
+            )}
             {formatarPreco(info.precoCentimos)}
             {info.subscricao ? " por mês" : " — pagamento único"} ({IVA_INCLUIDO})
           </p>
@@ -105,7 +117,10 @@ export function ConfirmarCompra({
               efeitos no fim do período já pago.
             </p>
           )}
-          {!conversao && (
+          {casoExtra && (
+            <p>O desconto de subscritor já está aplicado no preço e não acumula com códigos promocionais.</p>
+          )}
+          {!conversao && !casoExtra && (
             <p>
               {info.subscricao
                 ? "Se tiver um código promocional, pode aplicá-lo no passo de pagamento. Mesmo com desconto ou com valor de 0 €, a subscrição renova-se todos os meses, ao preço do plano ou nas condições do código aplicado, até a cancelar."
@@ -139,7 +154,10 @@ export function ConfirmarCompra({
 
         <form
           action={submeter}
-          onSubmit={() => track("checkout_iniciado", { plano, fluxo })}
+          onSubmit={() => {
+            track("checkout_iniciado", { plano, fluxo });
+            if (casoExtra) track("extra_case_checkout_started");
+          }}
           className="flex flex-col gap-4 border-t border-[var(--v2-line)] pt-5"
         >
           <input type="hidden" name="plano" value={plano} />

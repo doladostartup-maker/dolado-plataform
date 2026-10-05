@@ -36,6 +36,27 @@ describe("15. e-mail pós-pagamento", () => {
     assert.equal(/\bemail\b/.test(html.replace(/<[^>]+>/g, "")), false); // sempre "e-mail"
   });
 
+  test("Caso Extra: pagamento confirmado, 1 Caso Extra, subscrição não alterada, sem criar conta", () => {
+    const html = montarHtmlBoasVindasPagamento("caso_extra", { ...base, valorPagoCentimos: 1199, renovacao: null });
+    const texto = html.replace(/<[^>]+>/g, " ");
+    for (const esperado of [
+      "O seu pagamento foi confirmado",
+      "Caso Extra (Benefício de subscritor — 20% de desconto)",
+      "11,99 € (IVA incluído)",
+      "Pagamento único",
+      "Tem 1 Caso Extra na sua conta",
+      "Continua ativa e não foi alterada",
+      "https://portal.dolado.pt/portal/casos",
+      "Ver os meus casos",
+      "Direito de livre resolução",
+    ]) {
+      assert.ok(html.includes(esperado), esperado);
+    }
+    for (const proibido of ["Avulso", "criar-conta", "Criar a minha conta", "palavra-passe", "Renovação e cancelamento"]) {
+      assert.equal(texto.includes(proibido), false, proibido);
+    }
+  });
+
   test("Avulso: pagamento único, sem renovação nem Gestão de Subscrição", () => {
     const html = montarHtmlBoasVindasPagamento("avulso", { ...base, valorPagoCentimos: 1499, renovacao: null });
     assert.ok(html.includes("Pagamento único"));

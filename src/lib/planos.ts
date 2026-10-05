@@ -68,6 +68,29 @@ export const PLANOS: Record<PlanoId, Plano> = {
   },
 };
 
+/**
+ * Caso Extra — benefício de subscritor do Caso + Proteção que já usou o caso
+ * incluído no ciclo. Não é um plano nem aparece no preçário: é uma compra
+ * única que só acrescenta 1 caso disponível (não muda o plano, a subscrição
+ * nem o Customer Stripe). Quem decide se a conta tem direito é sempre o
+ * servidor (src/lib/casoExtra.ts + app/actions/stripe.ts); o preço cobrado é
+ * o do Price ID, escolhido no servidor (src/lib/stripe/planos.ts).
+ * O Avulso continua a ser o produto para quem não tem subscrição.
+ */
+export const CASO_EXTRA = {
+  nome: "Caso Extra",
+  precoCentimos: 1199,
+  /** Preço normal (Avulso) — só para mostrar o desconto. */
+  precoReferenciaCentimos: PLANOS.avulso.precoCentimos,
+  descontoPercentagem: 20,
+  descricaoCurta:
+    "Tratamento de mais 1 caso, com pagamento único. A sua subscrição continua ativa e não é alterada.",
+  /** Price ID oficial (11,99 €, pagamento único; produto "Caso Extra", criado no Stripe a 05/10/2026). */
+  stripePriceId: "price_1UNGPnBtJL9VeDPfJUIG2ZvK",
+} as const;
+
+export const TEXTO_BENEFICIO_SUBSCRITOR = `Benefício de subscritor — ${CASO_EXTRA.descontoPercentagem}% de desconto`;
+
 /** Ordem de apresentação no preçário. */
 export const ORDEM_PLANOS: readonly PlanoId[] = ["protecao", "caso_protecao", "avulso"];
 

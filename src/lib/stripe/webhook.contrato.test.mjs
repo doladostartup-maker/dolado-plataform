@@ -613,6 +613,113 @@ describe("contrato Stripe ↔ Supabase real", { skip: !ATIVO && "corre com npm r
     assert.equal(stripe.reembolsos.length, 1, "só o reembolso da conversão do cenário 8");
   });
 
+  // 14 ------------------------------------------------------------------------
+  test("14. Caso Extra: pedido pago com o Customer da conta; plano intacto; produto, caso e origem nas tabelas reais; não congela", async () => {
+    const U12 = await criarUtilizador("u12@contrato.test");
+    subscricao("sub_c12", "cus_c12", PRECO_CASO_PROTECAO);
+    await enviar(
+      evento(
+        "checkout.session.completed",
+        sessao("cs_c12", {
+          mode: "subscription",
+          customer: "cus_c12",
+          subscription: "sub_c12",
+          invoice: "in_c12",
+          amount_total: 799,
+          customer_details: { email: "u12@contrato.test" },
+          metadata: { plano: "assinatura", upgrade: "false", user_id: U12 },
+        }),
+      ),
+    );
+    // Usa o caso incluído do mês.
+    assert.equal(await rpc("consumir_credito_caso", { p_user_id: U12 }), "subscricao");
+    const antes = await uma("user_access", { user_id: U12 });
+    assert.equal(antes.case_credits, 0);
+
+    const { data: pedido, error } = await admin
+      .from("pedidos_caso")
+      .insert({
+        user_id: U12,
+        estado: "aguarda_pagamento",
+        nome: "Cliente Contrato",
+        sector: "Energia",
+        empresa: "EDP",
+        problema_tipo: "Cobrança indevida",
+        momento_cliente: "Ainda não reclamei",
+        autorizacao: true,
+        pedido_confirmado_em: new Date().toISOString(),
+        plano_escolhido: "caso_extra",
+        checkout_session_id: "cs_x12",
+      })
+      .select("id")
+      .single();
+    assert.equal(error, null, error?.message);
+
+    const extra = sessao("cs_x12", {
+      mode: "payment",
+      customer: "cus_c12",
+      payment_intent: "pi_x12",
+      amount_total: 1199,
+      customer_details: { email: "u12@contrato.test" },
+      metadata: { plano: "caso_extra", tipo: "extra_case", user_id: U12, pedido_id: pedido.id, stripe_subscription_id: "sub_c12" },
+    });
+    const evt = evento("checkout.session.completed", extra);
+    await enviar(evt);
+    assert.equal(resultados.get(evt.id), "pagamento_confirmado_caso_criado");
+
+    const p = await uma("pedidos_caso", { id: pedido.id });
+    assert.equal(p.estado, "convertido");
+    const g = await uma("case_credit_grants", { origem: "checkout:cs_x12" });
+    assert.equal(g.produto, "caso_extra");
+    assert.equal(g.estado, "consumido");
+    assert.equal(g.caso_id, p.caso_id);
+    assert.equal((await uma("casos", { id: p.caso_id })).origem_credito, "caso_extra");
+    const pagamento = await uma("stripe_payments", { stripe_session_id: "cs_x12" });
+    assert.equal(pagamento.plano, "caso_extra");
+    assert.equal(pagamento.user_id, U12);
+    const depois = await uma("user_access", { user_id: U12 });
+    for (const campo of ["subscription_plan", "subscription_status", "stripe_subscription_id", "stripe_customer_id", "stripe_price_id"]) {
+      assert.equal(depois[campo], antes[campo], `${campo} não muda`);
+    }
+    assert.equal(depois.case_credits, 0);
+    const confirmacao = emails.filter((e) => e.destinatario === "u12@contrato.test" && e.html.includes("Caso Extra"));
+    assert.equal(confirmacao.length, 1);
+    assert.equal(confirmacao[0].html.includes("criar-conta"), false);
+
+    // Reenvio (mesmo evento e outro id): nada a dobrar.
+    assert.equal((await processarEventoStripe(evt, deps)).corpo.duplicado, true);
+    await enviar(evento("checkout.session.completed", extra));
+    assert.equal(await contar("case_credit_grants", { user_id: U12, produto: "caso_extra" }), 1);
+    assert.equal(await contar("casos", { utilizador_id: U12 }), 1);
+
+    // Segundo Caso Extra por usar + renovação + fim da subscrição.
+    await enviar(
+      evento(
+        "checkout.session.completed",
+        sessao("cs_x12b", {
+          mode: "payment",
+          customer: "cus_c12",
+          payment_intent: "pi_x12b",
+          amount_total: 1199,
+          customer_details: { email: "u12@contrato.test" },
+          metadata: { plano: "caso_extra", tipo: "extra_case", user_id: U12, stripe_subscription_id: "sub_c12" },
+        }),
+      ),
+    );
+    await enviar(evento("invoice.paid", fatura("in_c12b", "cus_c12", "sub_c12", "subscription_cycle")));
+    let ua = await uma("user_access", { user_id: U12 });
+    assert.equal(ua.case_credits, 2, "o caso mensal chega apesar do Caso Extra por usar");
+    assert.equal(ua.avulso_credits, 1);
+    const sub = stripe.subs.get("sub_c12");
+    sub.status = "canceled";
+    await enviar(evento("customer.subscription.deleted", { ...sub }));
+    ua = await uma("user_access", { user_id: U12 });
+    assert.equal(ua.subscription_plan, "none");
+    assert.equal(ua.case_credits, 1, "o Caso Extra pago fica");
+    assert.equal((await uma("case_credit_freezes", { stripe_subscription_id: "sub_c12" })).quantidade, 1, "só o caso mensal congela");
+    assert.equal((await uma("case_credit_grants", { origem: "checkout:cs_x12b" })).estado, "disponivel");
+  });
+
   test("permissões: anon e clientes autenticados não executam as funções novas nem leem as tabelas", async () => {
     const { createClient } = await import("@supabase/supabase-js");
     assert.ok(process.env.CONTRATO_ANON_KEY, "chave anon local em falta");
