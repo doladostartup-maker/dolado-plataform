@@ -60,9 +60,9 @@ Variáveis de ambiente a configurar no Clever Cloud durante a Fase 1: `SUPABASE_
 
 - **contacto@dolado.pt** — contacto institucional geral: página Contacto, Termos, footer, questões comerciais, reclamações sobre a própria DoLado, e Reply-To dos e-mails transacionais.
 - **privacidade@dolado.pt** — privacidade/RGPD: Política de Privacidade, exercício de direitos (acesso, retificação, apagamento, oposição, limitação, portabilidade), perguntas frequentes sobre dados pessoais. Nunca usar como contacto geral.
-- **thiago.pereira@dolado.pt não é usado como contacto público.** Continua como destino interno de notificações ao admin (`ADMIN_EMAIL`) e é hoje o remetente Brevo (`BREVO_SENDER_EMAIL`).
+- **thiago.pereira@dolado.pt não é usado como contacto público.** Continua só como destino interno de notificações ao admin (`ADMIN_EMAIL`); **nunca como remetente** (decisão de Thiago, 05/10/2026).
 - No código, usar sempre as constantes `CONTACTO_EMAIL` / `PRIVACIDADE_EMAIL` de `src/lib/site.ts` (nas Edge Functions, que não importam de `src/`, a constante está repetida no próprio ficheiro).
-- Estado: e-mails criados; publicação no site, documentos legais, perguntas frequentes e Reply-To dos e-mails concluída nesta alteração. **Pendente (fora do código):** verificar `contacto@dolado.pt` como remetente na Brevo e trocar `BREVO_SENDER_EMAIL` no Clever Cloud, nos secrets da Supabase e em `.env.local` — até lá, os clientes continuam a ver o e-mail pessoal como remetente.
+- Estado: e-mails criados; publicação no site, documentos legais, perguntas frequentes e Reply-To dos e-mails concluída. **Remetente:** `contacto@dolado.pt` (ativo na Brevo, domínio `dolado.pt` autenticado) em `BREVO_SENDER_EMAIL` no Clever Cloud, nos secrets da Supabase e em `.env.local` — confirmado a 05/10/2026.
 
 ## Segurança da base de dados (auditoria RLS: 30/09/2026)
 
