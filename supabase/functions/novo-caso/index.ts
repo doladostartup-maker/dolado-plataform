@@ -11,7 +11,7 @@
 // Secrets necessários (configurar com `supabase secrets set`):
 //   NOVO_CASO_WEBHOOK_SECRET — segredo partilhado com o Vault (ver a migração)
 //   BREVO_API_KEY       — API key da Brevo
-//   BREVO_SENDER_EMAIL  — remetente autorizado na Brevo (ex.: thiago.pereira@dolado.pt)
+//   BREVO_SENDER_EMAIL  — remetente autorizado na Brevo (contacto@dolado.pt)
 //   ADMIN_EMAIL         — opcional, por omissão thiago.pereira@dolado.pt
 //   SITE_URL            — opcional, por omissão https://portal.dolado.pt
 //
