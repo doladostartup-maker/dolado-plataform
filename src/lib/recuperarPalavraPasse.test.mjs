@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 import {
+  INTERVALO_PEDIDOS_MS,
   MSG_LIGACAO,
+  MSG_PEDIDO_RECENTE,
   MSG_PEDIDO_RECUPERACAO,
   ROTA_RECUPERAR,
   ROTA_REDEFINIR,
@@ -11,6 +13,7 @@ import {
   emailComFormatoValido,
   estadoLigacaoDoErro,
   estadoLigacaoValido,
+  pedidoRecuperacaoPermitido,
   tokenRecuperacaoComFormatoValido,
   urlRedefinir,
   validarNovaPalavraPasse,
@@ -80,8 +83,20 @@ describe("não revela se o e-mail tem conta", () => {
     assert.doesNotMatch(pedir, /console\.[a-z]+\([^)]*email/);
     assert.match(MSG_PEDIDO_RECUPERACAO, /^Se existir uma conta associada a este endereço/);
   });
+  test("pedidos repetidos: no máximo um por minuto para cada endereço, decidido por este servidor", () => {
+    const t0 = 1_000_000;
+    assert.equal(pedidoRecuperacaoPermitido("repetido@exemplo.pt", t0), true);
+    assert.equal(pedidoRecuperacaoPermitido("repetido@exemplo.pt", t0 + 5_000), false);
+    assert.equal(pedidoRecuperacaoPermitido("outro@exemplo.pt", t0 + 5_000), true);
+    assert.equal(pedidoRecuperacaoPermitido("repetido@exemplo.pt", t0 + INTERVALO_PEDIDOS_MS), true);
+    // A verificação vem antes da Supabase e do limite por IP; o aviso não fala de contas.
+    assert.ok(pedir.indexOf("pedidoRecuperacaoPermitido(email)") < pedir.indexOf("resetPasswordForEmail("));
+    assert.match(pedir, /redirect\(`\$\{ROTA_RECUPERAR\}\?enviado=1&recente=1`\)/);
+    assert.doesNotMatch(MSG_PEDIDO_RECENTE, /conta/);
+    assert.match(MSG_LIGACAO.expirada.texto, /só a do e-mail mais recente funciona/);
+  });
   test("o e-mail nunca vai no URL", () => {
-    assert.doesNotMatch(pedir, /enviado=1&|email=\$\{/);
+    assert.doesNotMatch(pedir, /email=\$\{|enviado=1&(?!recente=1`)/);
   });
 });
 

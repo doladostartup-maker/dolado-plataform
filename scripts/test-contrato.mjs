@@ -56,6 +56,8 @@ const r = spawnSync(
       NEXT_PUBLIC_SUPABASE_URL: url,
       SUPABASE_SECRET_KEY: chave,
       CONTRATO_ANON_KEY: ambiente.ANON_KEY ?? "",
+      // Caixa de correio local (e-mails da Auth, ex.: recuperação da palavra-passe).
+      CONTRATO_MAILPIT_URL: ambiente.MAILPIT_URL ?? ambiente.INBUCKET_URL ?? "",
       NEXT_PUBLIC_SITE_URL: "https://portal.dolado.test",
       ADMIN_EMAIL: "admin@dolado.test",
       BREVO_SENDER_EMAIL: "",
