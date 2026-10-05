@@ -6,6 +6,7 @@ import { describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { avisoDoPortal, calcularAcesso, casosGuardados, estadoReembolsoCliente, resumoPlanoPortal } from "./acesso.ts";
 import {
+  CASO_EXTRA,
   IVA_INCLUIDO,
   LIMITE_CASOS_ACUMULADOS,
   ORDEM_PLANOS,
@@ -202,8 +203,8 @@ describe("sem textos nem preços antigos no código ativo", () => {
     });
   }
 
-  test("só os três Price IDs oficiais aparecem no código", () => {
-    const oficiais = new Set(Object.values(PLANOS).map((p) => p.stripePriceId));
+  test("só os Price IDs oficiais (três planos + Caso Extra) aparecem no código", () => {
+    const oficiais = new Set([...Object.values(PLANOS).map((p) => p.stripePriceId), CASO_EXTRA.stripePriceId]);
     const encontrados = new Set(ficheiros.flatMap(([, c]) => c.match(/price_[A-Za-z0-9]{10,}/g) ?? []));
     for (const id of encontrados) assert.ok(oficiais.has(id), `Price ID desconhecido: ${id}`);
   });

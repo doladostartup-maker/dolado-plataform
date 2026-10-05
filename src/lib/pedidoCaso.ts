@@ -11,6 +11,9 @@
 // o hash). Quando há sessão, o pedido passa a pertencer à conta. Daí em
 // diante só essa conta o pode usar.
 
+import type { Acesso } from "./acesso.ts";
+import { elegivelCasoExtra } from "./casoExtra.ts";
+
 export const COOKIE_PEDIDO = "dolado_pedido";
 /** Validade do pedido não pago e do cookie (igual a pedidos_caso.expira_em). */
 export const DIAS_VALIDADE_PEDIDO = 30;
@@ -150,12 +153,22 @@ export function pedidoPorPagar(estado: EstadoPedido) {
 /**
  * Modalidades a mostrar para o pedido, a partir do acesso real da conta.
  * - Com casos disponíveis: pode usar um (sem novo pagamento).
- * - Com subscrição de proteção ativa: não abre outra (só Avulso).
+ * - Caso + Proteção ativo sem casos disponíveis: Caso Extra (benefício de
+ *   subscritor), quando está configurado — nunca o Avulso ao lado, que
+ *   custaria mais pelo mesmo. Sem Caso Extra configurado: Avulso, como antes.
+ * - Outra subscrição de proteção ativa (Proteção): não abre outra (só Avulso).
+ * A mesma regra (direitoCasoExtra) é verificada de novo no servidor ao abrir
+ * o Checkout.
  */
-export function opcoesDoPedido(acesso: { creditos: number; temProtecao: boolean }) {
+export function opcoesDoPedido(
+  acesso: Pick<Acesso, "creditos" | "temProtecao" | "plano" | "estadoSubscricao">,
+  casoExtraConfigurado = false,
+) {
+  const casoExtra = casoExtraConfigurado && elegivelCasoExtra(acesso);
   return {
     usarCasoDisponivel: acesso.creditos > 0,
-    modalidades: (acesso.temProtecao ? ["avulso"] : ["avulso", "caso_protecao"]) as ModalidadeCaso[],
+    casoExtra,
+    modalidades: (casoExtra ? [] : acesso.temProtecao ? ["avulso"] : ["avulso", "caso_protecao"]) as ModalidadeCaso[],
   };
 }
 
@@ -164,15 +177,20 @@ export function opcoesDoPedido(acesso: { creditos: number; temProtecao: boolean 
  * guardado. Deriva sempre de opcoesDoPedido (a mesma regra da modalidade),
  * para o início do fluxo nunca prometer outra coisa que o fim:
  * - "usar_caso": a conta tem casos disponíveis — sem novo pagamento;
+ * - "caso_extra": já usou o caso incluído no Caso + Proteção — Caso Extra;
  * - "so_avulso": subscrição de proteção ativa sem casos disponíveis — só Avulso;
  * - "escolher": sem sessão ou sem direito a caso — Avulso ou Caso + Proteção.
  */
-export type EntradaPedido = "usar_caso" | "so_avulso" | "escolher";
+export type EntradaPedido = "usar_caso" | "caso_extra" | "so_avulso" | "escolher";
 
-export function entradaDoPedido(acesso: { creditos: number; temProtecao: boolean } | null): EntradaPedido {
+export function entradaDoPedido(
+  acesso: Pick<Acesso, "creditos" | "temProtecao" | "plano" | "estadoSubscricao"> | null,
+  casoExtraConfigurado = false,
+): EntradaPedido {
   if (!acesso) return "escolher";
-  const opcoes = opcoesDoPedido(acesso);
+  const opcoes = opcoesDoPedido(acesso, casoExtraConfigurado);
   if (opcoes.usarCasoDisponivel) return "usar_caso";
+  if (opcoes.casoExtra) return "caso_extra";
   return opcoes.modalidades.includes("caso_protecao") ? "escolher" : "so_avulso";
 }
 

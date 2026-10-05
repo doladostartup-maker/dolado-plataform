@@ -1,5 +1,5 @@
 // Extensões .ts explícitas: o módulo é testado diretamente com `node --test`.
-import { IVA_INCLUIDO, PLANOS, formatarPreco, precoComUnidade } from "../planos.ts";
+import { CASO_EXTRA, IVA_INCLUIDO, PLANOS, TEXTO_BENEFICIO_SUBSCRITOR, formatarPreco, precoComUnidade } from "../planos.ts";
 import {
   COMO_EXERCER_LIVRE_RESOLUCAO,
   RESUMO_LIVRE_RESOLUCAO,
@@ -9,7 +9,15 @@ import {
 import { CONTACTO_EMAIL, MARKETING_SITE_URL } from "../site.ts";
 import { LIGACAO_EMAIL, P_EMAIL, botaoEmail, emailV2, tabelaEmail } from "./molduraEmail.ts";
 
-export type PlanoEmail = "avulso" | "protecao" | "caso_protecao";
+export type PlanoEmail = "avulso" | "protecao" | "caso_protecao" | "caso_extra";
+
+/** Nome, preço e tipo do produto (o Caso Extra não é um plano de PLANOS). */
+function produtoDoEmail(plano: PlanoEmail) {
+  if (plano === "caso_extra") {
+    return { nome: CASO_EXTRA.nome, precoCentimos: CASO_EXTRA.precoCentimos, subscricao: false };
+  }
+  return PLANOS[plano];
+}
 
 export type DadosEmailPagamento = {
   /** /criar-conta?session_id=… quando a conta ainda não existe; /entrar quando já existe. */
@@ -52,26 +60,38 @@ const P_LEGAL = 'style="margin:0 0 16px 0; font-size:14px; line-height:1.6;"';
  */
 export function montarHtmlBoasVindasPagamento(plano: PlanoEmail, dados: DadosEmailPagamento) {
   const { contaExiste, associarCompra = false, ligacao, valorPagoCentimos, renovacao, consentimento, portalUrl } = dados;
-  const info = PLANOS[plano];
+  const info = produtoDoEmail(plano);
+  const casoExtra = plano === "caso_extra";
   const nomePlano = info.nome;
-  const passo = contaExiste
-    ? "Já pode iniciar sessão no portal: o seu acesso já está ativo."
-    : associarCompra
-      ? "Já existe uma conta na DoLado com este e-mail. Falta só um passo: inicie sessão e associe esta compra à sua conta."
-      : plano === "protecao"
-        ? "Falta só um passo: crie a sua palavra-passe para aceder ao portal."
-        : "Falta só um passo: crie a sua palavra-passe para aceder ao portal e abrir o seu caso.";
-  const botao = contaExiste ? "Iniciar sessão" : associarCompra ? "Associar a compra" : "Criar a minha conta";
+  // O Caso Extra é sempre comprado com sessão iniciada (contaExiste).
+  const passo = casoExtra
+    ? "Tem 1 Caso Extra na sua conta. Se pagou um caso que já tinha descrito, esse caso segue para tratamento; acompanhe-o em Os meus casos."
+    : contaExiste
+      ? "Já pode iniciar sessão no portal: o seu acesso já está ativo."
+      : associarCompra
+        ? "Já existe uma conta na DoLado com este e-mail. Falta só um passo: inicie sessão e associe esta compra à sua conta."
+        : plano === "protecao"
+          ? "Falta só um passo: crie a sua palavra-passe para aceder ao portal."
+          : "Falta só um passo: crie a sua palavra-passe para aceder ao portal e abrir o seu caso.";
+  const botao = casoExtra
+    ? "Ver os meus casos"
+    : contaExiste
+      ? "Iniciar sessão"
+      : associarCompra
+        ? "Associar a compra"
+        : "Criar a minha conta";
+  const destinoBotao = casoExtra ? `${portalUrl}/portal/casos` : ligacao;
 
-  const linhas: [string, string][] = [["Produto", nomePlano]];
+  const linhas: [string, string][] = [["Produto", casoExtra ? `${nomePlano} (${TEXTO_BENEFICIO_SUBSCRITOR})` : nomePlano]];
   if (valorPagoCentimos !== null) linhas.push(["Valor pago", `${formatarPreco(valorPagoCentimos)} (${IVA_INCLUIDO})`]);
   if (info.subscricao) {
     linhas.push(["Tipo", "Subscrição mensal com renovação automática"]);
-    linhas.push(["Preço do plano", `${precoComUnidade(plano)} (${IVA_INCLUIDO})`]);
+    linhas.push(["Preço do plano", `${precoComUnidade(plano as "protecao" | "caso_protecao")} (${IVA_INCLUIDO})`]);
     if (renovacao) linhas.push(["Próxima renovação", formatarData(renovacao)]);
   } else {
     linhas.push(["Tipo", "Pagamento único"]);
   }
+  if (casoExtra) linhas.push(["A sua subscrição", "Continua ativa e não foi alterada"]);
   const tabela = tabelaEmail(linhas);
 
   const termosUrl = `${MARKETING_SITE_URL}${consentimento ? rotaTermosVersao(consentimento.termos_versao) : ROTAS_LEGAIS.termos}`;
@@ -97,7 +117,7 @@ export function montarHtmlBoasVindasPagamento(plano: PlanoEmail, dados: DadosEma
               <p ${P}>O seu pagamento foi confirmado. Obrigado por confiar na DoLado. Guarde este e-mail como confirmação da sua contratação.</p>
               ${tabela}
               <p ${P}>${passo}</p>
-              ${botaoEmail(ligacao, botao)}
+              ${botaoEmail(destinoBotao, botao)}
               ${blocoSubscricao}
               ${blocoInicio}
               <p ${P_LEGAL}><strong>Direito de livre resolução.</strong> ${RESUMO_LIVRE_RESOLUCAO} ${COMO_EXERCER_LIVRE_RESOLUCAO} <a href="${livreResolucaoUrl}" ${LINK}>Saiba mais</a>.</p>
@@ -107,7 +127,7 @@ export function montarHtmlBoasVindasPagamento(plano: PlanoEmail, dados: DadosEma
 }
 
 export function montarHtmlNotificacaoNovoPagamento(email: string, plano: PlanoEmail) {
-  const nomePlano = PLANOS[plano].nome;
+  const nomePlano = produtoDoEmail(plano).nome;
 
   return `<!DOCTYPE html>
 <html lang="pt-PT">

@@ -25,7 +25,10 @@ import {
   type PedidoCompra,
   type RegistoConsentimento,
 } from "@/lib/consentimentoCompra";
-import { PRECO_AVULSO_ID, precoDoPlano } from "@/lib/stripe/planos";
+import { PRECO_AVULSO_ID, PRECO_CASO_EXTRA_ID, casoExtraConfigurado, planoDoPreco, precoDoPlano } from "@/lib/stripe/planos";
+import { parametrosCheckoutCasoExtra } from "@/lib/stripe/casoExtra";
+import { idDe } from "@/lib/stripe/webhook";
+import { direitoCasoExtra, subscricaoStripeConfirmaCasoExtra } from "@/lib/casoExtra";
 import { DIAS_VALIDADE_PEDIDO, pedidoPorPagar } from "@/lib/pedidoCaso";
 import { pedidoDaConta } from "@/lib/pedidoCasoServidor";
 
@@ -34,7 +37,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!;
 // Única porta de entrada para abrir uma Stripe Checkout Session.
 //
 // Todos os pontos de compra (preçário, painel, novo caso, tentar pagar de
-// novo, conversão do Avulso, cupões incluídos) passam pelo modal de
+// novo, conversão do Avulso, Caso Extra, cupões incluídos) passam pelo modal de
 // confirmação, que chama `confirmarCompra`. Aqui:
 //   1. valida as checkboxes obrigatórias no servidor (lerPedidoCompra);
 //   2. grava o registo de prova em consentimentos_compra;
@@ -327,6 +330,72 @@ async function adesao(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Desti
 }
 
 /**
+ * Caso Extra para um pedido de caso: só para subscritores do Caso + Proteção
+ * sem casos disponíveis. Tudo é decidido aqui, nunca pelo browser:
+ *   1. sessão e posse do pedido (já validadas em checkoutPedidoCaso);
+ *   2. direito ao Caso Extra pelo acesso gravado pelo webhook;
+ *   3. confirmação na subscrição Stripe (ativa, Caso + Proteção, do Customer
+ *      da conta) — um estado desatualizado na base de dados não dá desconto;
+ *   4. Price ID do Caso Extra escolhido aqui; Customer da conta (nunca outro).
+ * Sem direito, volta à modalidade com um aviso — nunca cobra o Avulso no
+ * lugar dele. O caso disponível só é dado pelo webhook, depois de o Stripe
+ * confirmar o pagamento; a subscrição não é tocada.
+ */
+async function compraCasoExtra(pedido: PedidoCompra, ctx: ContextoPedido): Promise<Destino> {
+  const indisponivel = {
+    destino: `/tratar-caso/modalidade?pedido=${encodeURIComponent(ctx.pedidoId)}&erro=caso-extra-indisponivel`,
+  };
+  if (!casoExtraConfigurado()) return indisponivel;
+
+  const { supabase, user } = await requireUser();
+  const acesso = await obterAcesso(supabase, user.id);
+  if (!direitoCasoExtra(acesso).ok) return indisponivel;
+
+  const { data: conta } = await createAdminClient()
+    .from("user_access")
+    .select("stripe_customer_id, stripe_subscription_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const customerId = (conta?.stripe_customer_id as string | null | undefined) ?? null;
+  const subscriptionId = (conta?.stripe_subscription_id as string | null | undefined) ?? null;
+  if (!customerId || !subscriptionId) return indisponivel;
+
+  const sub = await getStripe().subscriptions.retrieve(subscriptionId).catch(() => null);
+  const confirmada = subscricaoStripeConfirmaCasoExtra(
+    sub && {
+      status: sub.status,
+      customerId: idDe(sub.customer),
+      plano: planoDoPreco(sub.items?.data?.[0]?.price?.id ?? null),
+    },
+    customerId,
+  );
+  if (!confirmada) return indisponivel;
+
+  const registo = montarRegistoConsentimento({
+    plano: pedido.plano,
+    tipo: "caso_extra",
+    origem: pedido.origem,
+    userId: user.id,
+    email: user.email ?? null,
+  });
+  const { url, sessionId } = await abrirCheckoutComConsentimento(
+    registo,
+    dependenciasCheckout((metadata) =>
+      parametrosCheckoutCasoExtra({
+        precoId: PRECO_CASO_EXTRA_ID,
+        customerId,
+        userId: user.id,
+        subscriptionId,
+        pedidoId: ctx.pedidoId,
+        siteUrl: SITE_URL,
+        metadataConsentimento: metadata,
+      }),
+    ),
+  );
+  return { destino: url ?? indisponivel.destino, sessionId };
+}
+
+/**
  * Modalidade escolhida para um pedido de caso ("Tratar o meu caso"). Exige
  * sessão e a posse do pedido (validada aqui, nunca pelo browser). Um pedido
  * tem no máximo um checkout aberto: o anterior é expirado; se o anterior já
@@ -360,13 +429,18 @@ async function checkoutPedidoCaso(pedido: PedidoCompra): Promise<Destino> {
   }
 
   const ctx = { pedidoId: p.id };
-  const r = pedido.plano === "avulso" ? await compraAvulsoComConta(pedido, ctx) : await adesao(pedido, ctx);
+  const r =
+    pedido.fluxo === "caso_extra"
+      ? await compraCasoExtra(pedido, ctx)
+      : pedido.plano === "avulso"
+        ? await compraAvulsoComConta(pedido, ctx)
+        : await adesao(pedido, ctx);
   if (r.sessionId) {
     await admin
       .from("pedidos_caso")
       .update({
         estado: "aguarda_pagamento",
-        plano_escolhido: pedido.plano,
+        plano_escolhido: pedido.fluxo === "caso_extra" ? "caso_extra" : pedido.plano,
         checkout_session_id: r.sessionId,
         // Um pagamento SEPA pode demorar dias: o pedido não expira entretanto.
         expira_em: new Date(Date.now() + DIAS_VALIDADE_PEDIDO * 24 * 3600 * 1000).toISOString(),
@@ -402,7 +476,7 @@ export async function confirmarCompra(_anterior: EstadoCompra, formData: FormDat
             ? await adesao(pedido)
             : pedido.fluxo === "avulso_conta"
               ? await compraAvulsoComConta(pedido)
-              : pedido.fluxo === "pedido_caso"
+              : pedido.fluxo === "pedido_caso" || pedido.fluxo === "caso_extra"
                 ? await checkoutPedidoCaso(pedido)
                 : await adesao(pedido);
     destino = r.destino;

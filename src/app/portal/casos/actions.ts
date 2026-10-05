@@ -38,7 +38,8 @@ export async function criarCasoCliente(formData: FormData) {
 
   // Abrir um caso gasta sempre 1 caso disponível (pago): de forma atómica
   // (dois pedidos em paralelo não gastam o mesmo) e só depois cria o caso.
-  // Gasta primeiro um caso da subscrição; só depois um Avulso. Devolve o que
+  // Gasta primeiro um caso da subscrição; só depois uma compra única (Avulso
+  // ou Caso Extra, a mais antiga). Devolve o que
   // gastou, para o devolver exatamente se a criação falhar.
   // O RLS não deixa o cliente criar casos diretamente, por isso o insert é
   // feito aqui com service_role — os dados vêm deste formulário e o dono é
@@ -51,9 +52,17 @@ export async function criarCasoCliente(formData: FormData) {
     redirect("/portal/casos/novo");
   }
 
+  // Origem comercial do caso (backoffice): caso incluído na subscrição ou a
+  // compra única gasta (Avulso ou Caso Extra).
+  let origemCredito = "subscricao";
+  if (consumido.startsWith("checkout:")) {
+    const { data: compra } = await admin.from("case_credit_grants").select("produto").eq("origem", consumido).maybeSingle();
+    origemCredito = (compra?.produto as string | undefined) ?? "avulso";
+  }
+
   const { data, error } = await admin
     .from("casos")
-    .insert({ ...dados, status: "Novo" })
+    .insert({ ...dados, status: "Novo", origem_credito: origemCredito })
     .select("id")
     .single();
 
@@ -63,7 +72,7 @@ export async function criarCasoCliente(formData: FormData) {
     redirect(`/portal/casos/novo?erro=${encodeURIComponent("Não foi possível criar o caso. Tente novamente.")}`);
   }
 
-  // Auditoria: o caso aberto com um Avulso fica ligado a essa compra.
+  // Auditoria: o caso aberto com uma compra única fica ligado a essa compra.
   if (consumido.startsWith("checkout:")) {
     await admin.from("case_credit_grants").update({ caso_id: data.id }).eq("origem", consumido);
   }

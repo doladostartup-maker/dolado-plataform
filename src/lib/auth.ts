@@ -81,7 +81,7 @@ export async function requireUser() {
 export async function obterAcesso(supabase: SupabaseServer, userId: string): Promise<Acesso> {
   const { data } = await supabase
     .from("user_access")
-    .select("subscription_plan, subscription_status, case_credits, current_period_end, cancel_at_period_end")
+    .select("subscription_plan, subscription_status, case_credits, avulso_credits, current_period_end, cancel_at_period_end")
     .eq("user_id", userId)
     .maybeSingle();
 

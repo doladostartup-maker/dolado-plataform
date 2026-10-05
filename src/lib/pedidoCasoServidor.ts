@@ -26,7 +26,7 @@ export type PedidoCaso = {
   empresa: string;
   problema_tipo: string;
   descricao: string | null;
-  plano_escolhido: "avulso" | "caso_protecao" | null;
+  plano_escolhido: "avulso" | "caso_protecao" | "caso_extra" | null;
   checkout_session_id: string | null;
   caso_id: string | null;
 };

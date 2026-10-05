@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { obterAcesso, requireUser } from "@/lib/auth";
+import { casosDoMes, elegivelCasoExtra } from "@/lib/casoExtra";
+import { casoExtraConfigurado } from "@/lib/stripe/planos";
+import { CasosDoMes } from "@/components/portal/CasoExtra";
 import { estadoCasoCliente, type EstadoTextoRelevante } from "@/lib/portal/estadoCaso";
 import { CabecalhoPagina, TituloSeccao } from "@/components/portal/Cabecalho";
 import { EstadoVazio } from "@/components/portal/EstadoVazio";
@@ -14,7 +17,8 @@ function formatarData(iso: string) {
 export default async function MeusCasosPage() {
   const { supabase, user } = await requireUser();
 
-  const [{ data: casos }, { data: pedidos }, { data: textos }] = await Promise.all([
+  const [acesso, { data: casos }, { data: pedidos }, { data: textos }] = await Promise.all([
+    obterAcesso(supabase, user.id),
     supabase
       .from("casos")
       .select("id, empresa_parceira, empresa, sector, tipo_problema, problema_tipo, status, data_fim_fidelidade, created_at")
@@ -36,6 +40,11 @@ export default async function MeusCasosPage() {
       .in("estado", ["aguardando_aprovacao", "alteracoes_solicitadas", "autorizado"])
       .order("versao", { ascending: false }),
   ]);
+  // Caso + Proteção: utilização do caso incluído e, se já foi usado, o Caso
+  // Extra (só leitura do acesso gravado pelo webhook; o servidor volta a
+  // decidir ao abrir o Checkout).
+  const mes = casosDoMes(acesso);
+  const ofertaCasoExtra = casoExtraConfigurado() && elegivelCasoExtra(acesso);
   const textoDoCaso = new Map<string, EstadoTextoRelevante>();
   for (const t of textos ?? []) if (!textoDoCaso.has(t.caso_id)) textoDoCaso.set(t.caso_id, t.estado as EstadoTextoRelevante);
 
@@ -83,6 +92,8 @@ export default async function MeusCasosPage() {
           ) : undefined
         }
       />
+
+      {mes && <CasosDoMes casos={mes} oferta={ofertaCasoExtra} />}
 
       {(pedidos ?? []).length > 0 && (
         <section aria-labelledby="pedidos" className="flex flex-col gap-3">

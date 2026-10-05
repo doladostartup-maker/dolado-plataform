@@ -229,8 +229,10 @@ reset role;
 update public.user_access set stripe_subscription_id = 'sub_u3_nova' where user_id = '00000000-0000-4000-c000-000000000003';
 set local role service_role;
 select is(testes.saldo('00000000-0000-4000-c000-000000000003'), '2/1', 'restaurar: antes, 1 Avulso + 1 caso do novo ciclo');
-select is(public.restaurar_creditos_caso('sub_u3_nova', now() + interval '5 days', 4), 2, 'restaurar: só até ao limite de 4');
-select is(testes.saldo('00000000-0000-4000-c000-000000000003'), '4/1', 'restaurar: avulso_credits inalterado; só voltam casos da subscrição');
+-- Desde 20261005190000_caso_extra: o limite de 4 conta só os casos da
+-- subscrição (1 do novo ciclo + 3 congelados = 4); o Avulso fica à parte.
+select is(public.restaurar_creditos_caso('sub_u3_nova', now() + interval '5 days', 4), 3, 'restaurar: os 3 congelados voltam (limite de 4 só nos casos da subscrição)');
+select is(testes.saldo('00000000-0000-4000-c000-000000000003'), '5/1', 'restaurar: avulso_credits inalterado; só voltam casos da subscrição');
 
 -- ===========================================================================
 -- 11. Constraints
@@ -250,7 +252,7 @@ select is(testes.tenta($$update public.conversoes_avulso set estado = 'anulada' 
 select is(testes.tenta($$update public.conversoes_avulso set estado = 'anulada', anulada_em = now(), anulada_motivo = 'caso do Avulso indisponível (consumido)' where id = '1a000000-0000-4000-c000-000000000006'$$), 'ok:1', '11: conversão anulada com data e motivo');
 
 -- ===========================================================================
--- 12. Limite de 4 (regra inalterada)
+-- 12. Limite de 4 (casos da subscrição)
 -- ===========================================================================
 set local role service_role;
 select public.conceder_credito_caso('00000000-0000-4000-c000-000000000009', 'invoice:u9_' || i, 4) from generate_series(1, 6) i;
@@ -260,7 +262,82 @@ select is(testes.saldo('00000000-0000-4000-c000-000000000009'), '5/1', '12: Avul
 select public.conceder_credito_caso('00000000-0000-4000-c000-000000000009', 'invoice:u9_7', 4);
 select is(testes.saldo('00000000-0000-4000-c000-000000000009'), '5/1', '12: acima do limite, o caso mensal não sobe nem retira');
 
--- Invariante final: avulso_credits = compras Avulso disponíveis, em todas as contas.
+-- ===========================================================================
+-- 13. Caso Extra (20261005190000_caso_extra)
+-- ===========================================================================
+reset role;
+insert into auth.users (id, email, aud, role, raw_user_meta_data)
+select ('00000000-0000-4000-c000-0000000000e' || i)::uuid, 'ue' || i || '@teste.invalid', 'authenticated', 'authenticated',
+       json_build_object('nome', 'UE' || i)::jsonb
+  from generate_series(1, 4) i;
+insert into public.user_access (user_id, subscription_plan, subscription_status, stripe_subscription_id)
+select ('00000000-0000-4000-c000-0000000000e' || i)::uuid, 'caso_protecao', 'active', 'sub_ue' || i
+  from generate_series(1, 4) i;
+
+select ok(not has_function_privilege('authenticated', 'public.conceder_credito_caso(uuid, text, int, text)', 'EXECUTE'), '13: conceder_credito_caso não executável por authenticated');
+select ok(not has_function_privilege('anon', 'public.conceder_credito_caso(uuid, text, int, text)', 'EXECUTE'), '13: conceder_credito_caso não executável por anon');
+select ok(has_function_privilege('service_role', 'public.conceder_credito_caso(uuid, text, int, text)', 'EXECUTE'), '13: conceder_credito_caso executável pelo servidor');
+select ok(not exists (select 1 from pg_proc where proname = 'conceder_credito_caso' and pronargs = 3), '13: assinatura antiga removida (sem sobrecarga ambígua)');
+
+-- Compra: exatamente 1 caso, como compra única (produto caso_extra), idempotente.
+set local role service_role;
+select is(public.conceder_credito_caso('00000000-0000-4000-c000-0000000000e1', 'checkout:cs_extra_e1', null, 'caso_extra'), true, '13: Caso Extra credita');
+select is(public.conceder_credito_caso('00000000-0000-4000-c000-0000000000e1', 'checkout:cs_extra_e1', null, 'caso_extra'), false, '13: o mesmo checkout não credita duas vezes');
+select is(testes.saldo('00000000-0000-4000-c000-0000000000e1'), '1/1', '13: 1 caso, contado como compra única');
+select is((select produto || '/' || estado from public.case_credit_grants where origem = 'checkout:cs_extra_e1'), 'caso_extra/disponivel', '13: produto e estado auditáveis');
+select public.conceder_credito_caso('00000000-0000-4000-c000-0000000000e4', 'checkout:cs_avulso_e4', null);
+select is((select produto from public.case_credit_grants where origem = 'checkout:cs_avulso_e4'), 'avulso', '13: sem produto, uma compra única é Avulso (compatível com o código anterior)');
+select public.conceder_credito_caso('00000000-0000-4000-c000-0000000000e1', 'invoice:ue1_1', 4, 'caso_extra');
+select is((select produto from public.case_credit_grants where origem = 'invoice:ue1_1'), null, '13: casos da subscrição nunca têm produto');
+select is(testes.tenta($$select public.conceder_credito_caso('00000000-0000-4000-c000-0000000000e1', 'checkout:cs_outro', null, 'gratis')$$), 'erro:P0001', '13: produto desconhecido recusado');
+
+-- Ordem de consumo: subscrição, depois a compra única mais antiga.
+select is(public.consumir_credito_caso('00000000-0000-4000-c000-0000000000e1'), 'subscricao', '13: primeiro o caso mensal');
+select is(public.consumir_credito_caso('00000000-0000-4000-c000-0000000000e1'), 'checkout:cs_extra_e1', '13: depois o Caso Extra');
+select is((select caso_id is null and estado = 'consumido' from public.case_credit_grants where origem = 'checkout:cs_extra_e1'), true, '13: consumido (sem caso: consumo direto, fora de um pedido)');
+select is(public.consumir_credito_caso('00000000-0000-4000-c000-0000000000e1'), null, '13: sem casos, nada');
+
+-- Renovação: um Caso Extra por usar nunca impede o caso mensal.
+select public.conceder_credito_caso('00000000-0000-4000-c000-0000000000e2', 'invoice:ue2_' || i, 4) from generate_series(1, 3) i;
+select public.conceder_credito_caso('00000000-0000-4000-c000-0000000000e2', 'checkout:cs_extra_e2', null, 'caso_extra');
+select is(testes.saldo('00000000-0000-4000-c000-0000000000e2'), '4/1', '13: 3 casos mensais + 1 Caso Extra');
+select is(public.conceder_credito_caso('00000000-0000-4000-c000-0000000000e2', 'invoice:ue2_4', 4), true, '13: renovação credita');
+select is(testes.saldo('00000000-0000-4000-c000-0000000000e2'), '5/1', '13: o caso mensal chega, apesar do Caso Extra por usar');
+select public.conceder_credito_caso('00000000-0000-4000-c000-0000000000e2', 'invoice:ue2_5', 4);
+select is(testes.saldo('00000000-0000-4000-c000-0000000000e2'), '5/1', '13: os casos mensais continuam limitados a 4');
+
+-- Fim da subscrição: o Caso Extra pago não congela nem desaparece.
+select is(public.congelar_creditos_caso('sub_ue2', now(), 90), 4, '13: congela só os 4 casos mensais');
+select is(testes.saldo('00000000-0000-4000-c000-0000000000e2'), '1/1', '13: fica o Caso Extra');
+select is(testes.estado('checkout:cs_extra_e2'), 'disponivel', '13: o Caso Extra continua disponível');
+
+-- Pedido pago com um Caso Extra: gasta ESSE Caso Extra e o caso fica com a origem comercial.
+reset role;
+insert into public.pedidos_caso (id, user_id, nome, sector, empresa, problema_tipo, momento_cliente, autorizacao, pedido_confirmado_em) values
+  ('20000000-0000-4000-c000-0000000000e3', '00000000-0000-4000-c000-0000000000e3', 'UE3', 'Energia', 'EDP', 'Cobrança indevida', 'Ainda não reclamei', true, now()),
+  ('20000000-0000-4000-c000-0000000000e4', '00000000-0000-4000-c000-0000000000e3', 'UE3', 'Água', 'EPAL', 'Outro', 'Ainda não reclamei', true, now());
+set local role service_role;
+select public.conceder_credito_caso('00000000-0000-4000-c000-0000000000e3', 'invoice:ue3_1', 4);
+select public.conceder_credito_caso('00000000-0000-4000-c000-0000000000e3', 'checkout:cs_extra_e3', null, 'caso_extra');
+select isnt(public.converter_pedido_em_caso('20000000-0000-4000-c000-0000000000e3', '00000000-0000-4000-c000-0000000000e3', 'checkout:cs_extra_e3'), null, '13: pedido convertido com o Caso Extra');
+select is((select c.origem_credito from public.casos c join public.pedidos_caso p on p.caso_id = c.id where p.id = '20000000-0000-4000-c000-0000000000e3'), 'caso_extra', '13: caso com origem comercial Caso Extra');
+select is((select estado from public.case_credit_grants where origem = 'checkout:cs_extra_e3'), 'consumido', '13: Caso Extra consumido');
+select is((select g.caso_id from public.case_credit_grants g where g.origem = 'checkout:cs_extra_e3'), (select caso_id from public.pedidos_caso where id = '20000000-0000-4000-c000-0000000000e3'), '13: Caso Extra ligado ao caso em que foi usado');
+select is(testes.saldo('00000000-0000-4000-c000-0000000000e3'), '1/0', '13: o caso mensal fica por usar');
+select isnt(public.converter_pedido_em_caso('20000000-0000-4000-c000-0000000000e4', '00000000-0000-4000-c000-0000000000e3'), null, '13: segundo pedido com o caso mensal');
+select is((select c.origem_credito from public.casos c join public.pedidos_caso p on p.caso_id = c.id where p.id = '20000000-0000-4000-c000-0000000000e4'), 'subscricao', '13: caso com origem comercial subscrição');
+
+-- Valores novos aceites; valores inventados recusados.
+reset role;
+select is(testes.tenta($$insert into public.case_credit_grants (origem, user_id, quantidade, estado) values ('checkout:cs_sem_produto', '00000000-0000-4000-c000-0000000000e4', 1, 'disponivel')$$), 'erro:23514', '13: compra única sem produto rejeitada');
+select is(testes.tenta($$insert into public.case_credit_grants (origem, user_id, quantidade, produto) values ('invoice:com_produto', '00000000-0000-4000-c000-0000000000e4', 1, 'caso_extra')$$), 'erro:23514', '13: caso da subscrição com produto rejeitado');
+select is(testes.tenta($$insert into public.stripe_payments (user_id, stripe_session_id, email, plano) values ('00000000-0000-4000-c000-0000000000e4', 'cs_extra_pag', 'ue4@teste.invalid', 'caso_extra')$$), 'ok:1', '13: pagamento com plano caso_extra');
+select is(testes.tenta($$insert into public.stripe_payments (user_id, stripe_session_id, email, plano) values ('00000000-0000-4000-c000-0000000000e4', 'cs_inventado', 'ue4@teste.invalid', 'gratis')$$), 'erro:23514', '13: plano de pagamento inventado rejeitado');
+select is(testes.tenta($$update public.pedidos_caso set plano_escolhido = 'caso_extra' where id = '20000000-0000-4000-c000-0000000000e3'$$), 'ok:1', '13: pedido com modalidade caso_extra');
+select is(testes.tenta($$update public.casos set origem_credito = 'oferta' where utilizador_id = '00000000-0000-4000-c000-0000000000e3'$$), 'erro:23514', '13: origem comercial inventada rejeitada');
+select ok(pg_get_constraintdef((select oid from pg_constraint where conname = 'consentimentos_compra_tipo_compra_check')) like '%caso_extra%', '13: consentimento com tipo de compra caso_extra');
+
+-- Invariante final: avulso_credits = compras únicas (Avulso + Caso Extra) disponíveis, em todas as contas.
 reset role;
 select is(
   (select count(*) from public.user_access a

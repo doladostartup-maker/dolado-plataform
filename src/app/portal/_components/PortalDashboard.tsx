@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ConfirmarCompra } from "@/components/compra/ConfirmarCompra";
 import { linhasDaCobranca, type ResumoCobranca } from "@/lib/proximaCobranca";
 import type { ResumoPlano } from "@/lib/acesso";
+import { textoUtilizacaoMes, type CasosDoMes } from "@/lib/casoExtra";
 import {
   IVA_INCLUIDO,
   LIMITE_CASOS_ACUMULADOS,
@@ -91,11 +92,13 @@ function nomeDoPlano(resumo: ResumoPlano) {
 
 function OSeuPlano({
   resumo,
+  casosDoMes,
   cobranca,
   pagamentoPendente,
   onEscolherSubscricao,
 }: {
   resumo: ResumoPlano;
+  casosDoMes: CasosDoMes | null;
   cobranca: ResumoCobranca | null;
   pagamentoPendente: boolean;
   onEscolherSubscricao: () => void;
@@ -108,6 +111,10 @@ function OSeuPlano({
     if (resumo.estado) linhas.push({ label: "Estado da subscrição", valor: resumo.estado });
     if (resumo.renovacao) linhas.push({ label: "Próxima renovação", valor: formatarData(resumo.renovacao) });
     if (resumo.fimAgendado) linhas.push({ label: "Proteção ativa até", valor: formatarData(resumo.fimAgendado) });
+  }
+  if (casosDoMes) {
+    linhas.push({ label: "Casos deste mês", valor: textoUtilizacaoMes(casosDoMes) });
+    if (casosDoMes.proximoCasoEm) linhas.push({ label: "Próximo caso incluído", valor: formatarData(casosDoMes.proximoCasoEm) });
   }
   if (resumo.casosDisponiveis !== null) {
     linhas.push({ label: "Casos disponíveis", valor: textoCasosDisponiveis(resumo.casosDisponiveis) });
@@ -133,6 +140,14 @@ function OSeuPlano({
         </ListaDados>
       )}
       {pagamentoPendente && <p className={METADADOS}>Tem um pagamento em confirmação. Não precisa de voltar a pagar.</p>}
+      {casosDoMes?.utilizado && resumo.casosDisponiveis === 0 && (
+        <p className={METADADOS}>
+          Já utilizou o caso incluído neste mês.{" "}
+          <Link href="/portal/casos" className={LIGACAO}>
+            Ver opções para outro caso
+          </Link>
+        </p>
+      )}
       {!semSubscricao && (
         <Link href="/portal/subscricao" className={`${BOTAO_SECUNDARIO} self-start`}>
           Gerir subscrição
@@ -177,6 +192,7 @@ export function PortalDashboard({
   casos,
   protecao,
   resumo,
+  casosDoMes = null,
   cobranca,
   temProtecao,
   temPlanoStripe,
@@ -193,6 +209,8 @@ export function PortalDashboard({
   protecao: ResumoProtecao | null;
   /** Calculado no servidor (src/lib/acesso.ts) — aqui só decide o que mostrar. */
   resumo: ResumoPlano;
+  /** Caso + Proteção: utilização do caso incluído (src/lib/casoExtra.ts). */
+  casosDoMes?: CasosDoMes | null;
   /** Próxima cobrança com os descontos do Stripe (null = sem renovação ou sem dados). */
   cobranca: ResumoCobranca | null;
   temProtecao: boolean;
@@ -399,6 +417,7 @@ export function PortalDashboard({
           {temPlanoStripe && (
             <OSeuPlano
               resumo={resumo}
+              casosDoMes={casosDoMes}
               cobranca={cobranca}
               pagamentoPendente={pagamentoPendente}
               onEscolherSubscricao={() => setModalAberto(true)}

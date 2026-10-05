@@ -37,17 +37,21 @@ export type OrigemCompra = (typeof ORIGENS_COMPRA)[number];
  * "adesao": subscrição com sessão iniciada (com conversão do Avulso, se houver).
  * "pedido_caso": modalidade escolhida para um pedido de caso já preenchido
  * ("Tratar o meu caso"), com sessão iniciada — Avulso ou Caso + Proteção.
+ * "caso_extra": Caso Extra para um pedido de caso, com sessão iniciada — só
+ * subscritores do Caso + Proteção sem casos disponíveis (validado no
+ * servidor). Envia plano "avulso" (tratamento de 1 caso, pagamento único);
+ * o preço é o do Caso Extra, decidido no servidor.
  */
-export const FLUXOS_COMPRA = ["publico", "avulso_conta", "adesao", "pedido_caso"] as const;
+export const FLUXOS_COMPRA = ["publico", "avulso_conta", "adesao", "pedido_caso", "caso_extra"] as const;
 export type FluxoCompra = (typeof FLUXOS_COMPRA)[number];
 
-export type TipoCompra = "avulso" | "subscricao" | "conversao_avulso";
+export type TipoCompra = "avulso" | "subscricao" | "conversao_avulso" | "caso_extra";
 
 export type PedidoCompra = {
   plano: PlanoId;
   fluxo: FluxoCompra;
   origem: OrigemCompra;
-  /** Só no fluxo "pedido_caso": o pedido a pagar (a posse é validada no servidor). */
+  /** Só nos fluxos "pedido_caso" e "caso_extra": o pedido a pagar (a posse é validada no servidor). */
   pedidoId?: string;
 };
 
@@ -80,8 +84,11 @@ export function lerPedidoCompra(
   if (fluxo === "adesao" && plano === "avulso") return { ok: false, erro: "dados_invalidos" };
   // Pedido de caso: só modalidades que tratam um caso, e sempre com o pedido.
   const pedidoId = ler("pedido_id");
-  if (fluxo === "pedido_caso") {
-    if (plano === "protecao" || origem !== "tratar_caso") return { ok: false, erro: "dados_invalidos" };
+  const comPedido = fluxo === "pedido_caso" || fluxo === "caso_extra";
+  if (fluxo === "pedido_caso" && plano === "protecao") return { ok: false, erro: "dados_invalidos" };
+  if (fluxo === "caso_extra" && plano !== "avulso") return { ok: false, erro: "dados_invalidos" };
+  if (comPedido) {
+    if (origem !== "tratar_caso") return { ok: false, erro: "dados_invalidos" };
     if (typeof pedidoId !== "string" || !UUID_PEDIDO.test(pedidoId)) return { ok: false, erro: "dados_invalidos" };
   } else if (origem === "tratar_caso") {
     return { ok: false, erro: "dados_invalidos" };
@@ -96,7 +103,7 @@ export function lerPedidoCompra(
       plano,
       fluxo: fluxo as FluxoCompra,
       origem: origem as OrigemCompra,
-      ...(fluxo === "pedido_caso" ? { pedidoId: pedidoId as string } : {}),
+      ...(comPedido ? { pedidoId: pedidoId as string } : {}),
     },
   };
 }

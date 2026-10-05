@@ -191,8 +191,8 @@ describe("nenhum fluxo abre o Checkout sem consentimento (código das ações)",
     assert.match(corpo, /if \(!lido\.ok\) return/);
   });
 
-  test("os 4 fluxos (Avulso, subscrição, conversão, público) passam por abrirCheckoutComConsentimento", () => {
-    assert.equal((acoes.match(/abrirCheckoutComConsentimento\(/g) ?? []).length, 4);
+  test("os 5 fluxos (Avulso, subscrição, conversão, público, Caso Extra) passam por abrirCheckoutComConsentimento", () => {
+    assert.equal((acoes.match(/abrirCheckoutComConsentimento\(/g) ?? []).length, 5);
   });
 
   test("metadata do consentimento também vai para a subscrição e para o pagamento", () => {

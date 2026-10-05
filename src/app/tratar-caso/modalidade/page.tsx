@@ -4,7 +4,10 @@ import { BotaoComprar } from "@/components/compra/BotaoComprar";
 import { obterAcesso } from "@/lib/auth";
 import { opcoesDoPedido, pedidoPorPagar, type ModalidadeCaso } from "@/lib/pedidoCaso";
 import { pedidoDaConta } from "@/lib/pedidoCasoServidor";
-import { IVA_INCLUIDO, PLANOS, precoComUnidade, textoCasosDisponiveis } from "@/lib/planos";
+import { CASO_EXTRA, IVA_INCLUIDO, PLANOS, precoComUnidade, textoCasosDisponiveis } from "@/lib/planos";
+import { casosDoMes } from "@/lib/casoExtra";
+import { casoExtraConfigurado } from "@/lib/stripe/planos";
+import { CTA_CASO_EXTRA, PrecoCasoExtra, textoProximoCaso } from "@/components/portal/CasoExtra";
 import {
   escolherAvulsoParaConversao,
   sessoesAvulsoDisponiveis,
@@ -73,7 +76,8 @@ export default async function ModalidadePage({
   }
 
   const acesso = await obterAcesso(supabase, userId);
-  const opcoes = opcoesDoPedido(acesso);
+  const opcoes = opcoesDoPedido(acesso, casoExtraConfigurado());
+  const mes = casosDoMes(acesso);
 
   // O que um Avulso pago cobre no Caso + Proteção (regra existente de conversão).
   let conversao: { mensalidade: number; reembolso: number } | null = null;
@@ -132,6 +136,12 @@ export default async function ModalidadePage({
         {params.erro === "sem-casos" && (
           <Aviso tom="info">Não tem casos disponíveis neste momento. Escolha uma das modalidades abaixo.</Aviso>
         )}
+        {params.erro === "caso-extra-indisponivel" && (
+          <Aviso tom="info">
+            Não foi possível confirmar o benefício de subscritor neste momento, por isso nada foi cobrado. O seu pedido
+            continua guardado: tente novamente dentro de alguns minutos ou veja abaixo as opções disponíveis.
+          </Aviso>
+        )}
 
         {opcoes.usarCasoDisponivel ? (
           <div className={CARTAO_ACAO}>
@@ -145,6 +155,35 @@ export default async function ModalidadePage({
                 Usar um caso disponível
               </button>
             </form>
+          </div>
+        ) : opcoes.casoExtra ? (
+          <div className={`${CARTAO_ACAO} flex flex-col gap-4`}>
+            <RegistarEvento nome="extra_case_offer_viewed" parametros={{ local: "modalidade" }} />
+            <div className="flex flex-col gap-1">
+              <p className={TITULO_CARTAO}>Já utilizou o seu caso incluído neste mês</p>
+              {mes && textoProximoCaso(mes) && <p className={TEXTO_SECUNDARIO}>{textoProximoCaso(mes)}</p>}
+            </div>
+            <div className="flex flex-col gap-1">
+              <p className="text-[15px] font-semibold text-[var(--v2-navy)]">Tem um problema que não pode esperar?</p>
+              <p className={TEXTO_SECUNDARIO}>
+                Como subscritor DoLado, pode tratar este caso como {CASO_EXTRA.nome}, com{" "}
+                {CASO_EXTRA.descontoPercentagem}% de desconto.
+              </p>
+            </div>
+            <PrecoCasoExtra />
+            <BotaoComprar
+              plano="avulso"
+              fluxo="caso_extra"
+              origem="tratar_caso"
+              pedidoId={pedido.id}
+              className={BOTAO}
+            >
+              {CTA_CASO_EXTRA}
+            </BotaoComprar>
+            <p className={METADADOS}>
+              A sua subscrição {PLANOS.caso_protecao.nome} continua ativa e não é alterada: o {CASO_EXTRA.nome} só
+              acrescenta o tratamento deste caso.
+            </p>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
@@ -178,7 +217,7 @@ export default async function ModalidadePage({
           </div>
         )}
 
-        {acesso.temProtecao && !opcoes.usarCasoDisponivel && (
+        {acesso.temProtecao && !opcoes.usarCasoDisponivel && !opcoes.casoExtra && (
           <p className={METADADOS}>
             A sua subscrição atual não tem casos disponíveis neste momento. Pode tratar este caso com um caso{" "}
             {PLANOS.avulso.nome}.

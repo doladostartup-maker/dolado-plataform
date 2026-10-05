@@ -27,6 +27,8 @@ export type LinhaAcesso = {
   subscription_plan: string | null;
   subscription_status: string | null;
   case_credits: number | null;
+  /** Parte de case_credits que vem de compras únicas por usar (Avulso ou Caso Extra). */
+  avulso_credits?: number | null;
   current_period_end?: string | null;
   cancel_at_period_end?: boolean | null;
 };
@@ -37,6 +39,10 @@ export type Acesso = {
   plano: PlanoSubscricao;
   estadoSubscricao: string | null;
   creditos: number;
+  /** Casos comprados à parte (Avulso ou Caso Extra) ainda por usar — incluídos em `creditos`. */
+  casosComprados: number;
+  /** Casos incluídos na subscrição ainda por usar (creditos - casosComprados). */
+  casosSubscricao: number;
   /** Funcionalidades de proteção desbloqueadas. */
   temProtecao: boolean;
   /** Pode abrir um caso novo no portal agora (tem casos disponíveis). */
@@ -69,6 +75,8 @@ export function calcularAcesso(linha: LinhaAcesso | null): Acesso {
       plano: "none",
       estadoSubscricao: null,
       creditos: 0,
+      casosComprados: 0,
+      casosSubscricao: 0,
       temProtecao: false,
       podeCriarCaso: false,
       casoConsomeCredito: true,
@@ -79,11 +87,14 @@ export function calcularAcesso(linha: LinhaAcesso | null): Acesso {
 
   const plano = lerPlano(linha.subscription_plan);
   const creditos = Math.max(0, linha.case_credits ?? 0);
+  const casosComprados = Math.min(creditos, Math.max(0, linha.avulso_credits ?? 0));
   return {
     temPlanoStripe: true,
     plano,
     estadoSubscricao: linha.subscription_status,
     creditos,
+    casosComprados,
+    casosSubscricao: creditos - casosComprados,
     temProtecao: plano !== "none" && estadoComAcesso(linha.subscription_status),
     podeCriarCaso: creditos > 0,
     casoConsomeCredito: true,

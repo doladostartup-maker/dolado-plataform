@@ -11,6 +11,13 @@ import { pedidoDaMetadata } from "../pedidoCaso.ts";
 // - Proteção: funcionalidades de proteção, sem créditos de caso.
 // - Caso + Proteção: proteção + 1 crédito por ciclo pago (máx. 4).
 // - Avulso (pagamento único): +1 crédito de caso, sem proteção.
+// - Caso Extra (pagamento único, metadata.plano = "caso_extra", só com conta):
+//   +1 crédito de caso para um subscritor que já usou o caso do mês. Mesma
+//   via do Avulso (checkout:<sessão>, produto caso_extra): não mexe no plano,
+//   na subscrição nem no Customer; não congela; nunca é convertido. O direito
+//   ao desconto foi validado no servidor ao abrir o Checkout; aqui, com o
+//   pagamento confirmado, dá-se sempre o caso pago (mesmo que a subscrição
+//   tenha terminado entretanto — um pagamento feito não desaparece).
 //
 // Regras:
 // - Só pagamento confirmado dá acesso ou créditos: checkout pago (ou
@@ -67,7 +74,9 @@ import { pedidoDaMetadata } from "../pedidoCaso.ts";
 //   subscricoes_duplicadas "por_rever" e o admin é avisado; não se cancela
 //   nem se reembolsa nada automaticamente.
 
-export type Plano = "avulso" | "protecao" | "caso_protecao";
+export type Plano = "avulso" | "protecao" | "caso_protecao" | "caso_extra";
+/** Compra única que dá 1 caso disponível (case_credit_grants.produto). */
+export type ProdutoCompraUnica = "avulso" | "caso_extra";
 export type EstadoPagamento =
   | "concluido"
   | "pendente"
@@ -84,7 +93,7 @@ export type DadosPagamento = {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   email: string;
-  plano: "avulso" | "assinatura";
+  plano: "avulso" | "assinatura" | "caso_extra";
   valor_total_centimos: number | null;
   moeda: string;
   codigo_desconto: string | null;
@@ -212,8 +221,12 @@ export interface DependenciasWebhook {
   atualizarSubscricaoNasContas(subscriptionId: string, dados: AtualizacaoSubscricaoNaConta): Promise<number>;
   /** Garante a linha em user_access (sem plano) e liga o customer. */
   garantirConta(userId: string, customerId: string | null): Promise<void>;
-  /** +1 crédito uma única vez por origem; maximo limita o saldo. true se creditou. */
-  concederCreditoCaso(userId: string, origem: string, maximo: number | null): Promise<boolean>;
+  /**
+   * +1 crédito uma única vez por origem. Casos da subscrição (invoice:%):
+   * maximo limita só os casos da subscrição. Compras únicas (checkout:%):
+   * produto avulso ou caso_extra, sem limite. true se creditou.
+   */
+  concederCreditoCaso(userId: string, origem: string, maximo: number | null, produto?: ProdutoCompraUnica): Promise<boolean>;
   /**
    * Retira do saldo o caso de uma compra Avulso (origem checkout:<sessão>)
    * se ainda estiver por usar. "retirado" se saiu agora; o estado atual
@@ -405,6 +418,8 @@ function dadosNaConta(
 
 type DadosSessao = {
   tipo: "avulso" | "subscricao";
+  /** Pagamento único do Caso Extra (benefício de subscritor). */
+  casoExtra: boolean;
   email: string;
   /** Conta indicada pelo servidor ao criar o checkout (compra com sessão iniciada). */
   userId: string | null;
@@ -423,10 +438,15 @@ function lerSessao(session: Stripe.Checkout.Session): DadosSessao | null | "inco
   // um metadata de subscrição numa sessão de pagamento único não dá acesso.
   const tipo =
     session.mode === "payment" ? "avulso" : session.mode === "subscription" ? "subscricao" : null;
-  if (!tipo || (tipo === "avulso") !== (plano === "avulso")) return "incoerente";
+  const casoExtra = plano === "caso_extra";
+  if (!tipo || (tipo === "avulso") !== (plano === "avulso" || casoExtra)) return "incoerente";
+  // O Caso Extra é sempre comprado com sessão iniciada: sem conta indicada
+  // pelo servidor, não é uma sessão deste fluxo (nunca vai para "criar conta").
+  if (casoExtra && !session.metadata?.user_id) return "incoerente";
 
   return {
     tipo,
+    casoExtra,
     email,
     userId: session.metadata?.user_id ?? null,
     ehUpgrade: session.metadata?.upgrade === "true",
@@ -447,7 +467,7 @@ function dadosPagamento(
     stripe_customer_id: s.customerId,
     stripe_subscription_id: s.subscriptionId,
     email: s.email,
-    plano: s.tipo === "avulso" ? "avulso" : "assinatura",
+    plano: s.casoExtra ? "caso_extra" : s.tipo === "avulso" ? "avulso" : "assinatura",
     valor_total_centimos: session.amount_total,
     moeda: session.currency ?? "eur",
     codigo_desconto: idDe(cupao),
@@ -493,8 +513,11 @@ export async function aplicarCompraConfirmadaNaConta(
   await deps.garantirConta(userId, idDe(session.customer));
 
   if (session.mode === "payment") {
-    await deps.concederCreditoCaso(userId, `checkout:${session.id}`, null);
-    return "avulso";
+    // Avulso ou Caso Extra: 1 caso disponível, idempotente por sessão. O plano
+    // e a subscrição da conta não são tocados.
+    const produto: ProdutoCompraUnica = session.metadata?.plano === "caso_extra" ? "caso_extra" : "avulso";
+    await deps.concederCreditoCaso(userId, `checkout:${session.id}`, null, produto);
+    return produto;
   }
 
   const subscriptionId = idDe(session.subscription);
@@ -678,7 +701,7 @@ async function confirmarCompra(
     else planoAplicado = aplicado ?? planoAplicado;
   }
   // Nome do plano para o e-mail — pode vir só do price.
-  let plano: Plano | null = planoAplicado ?? (s.tipo === "avulso" ? "avulso" : null);
+  let plano: Plano | null = planoAplicado ?? (s.casoExtra ? "caso_extra" : s.tipo === "avulso" ? "avulso" : null);
   if (!plano && s.subscriptionId) {
     // Compra de raiz: ainda sem conta, mas o e-mail precisa do nome do plano.
     plano = deps.planoDoPreco((await deps.obterSubscricaoStripe(s.subscriptionId)).price_id);
@@ -698,7 +721,7 @@ async function confirmarCompra(
   const pedidoId = pedidoDaMetadata(session.metadata);
   let casoDoPedido: string | null = null;
   if (pedidoId && contas.length > 0) {
-    // Pago com Avulso: o pedido gasta o caso desta compra (vinculado).
+    // Pago com Avulso ou Caso Extra: o pedido gasta o caso desta compra (vinculado).
     const origemAvulso = session.mode === "payment" ? `checkout:${session.id}` : null;
     casoDoPedido = planoAplicado ? await deps.converterPedidoEmCaso(pedidoId, contas[0], origemAvulso) : null;
     if (!casoDoPedido && estadoAnterior !== "concluido") {
@@ -723,7 +746,7 @@ async function confirmarCompra(
   const consentimento = await ligarConsentimentoDaSessao(session, s, contas, deps);
   if (estadoAnterior !== "concluido" && plano) {
     const renovacao =
-      plano !== "avulso" && s.subscriptionId
+      s.tipo === "subscricao" && s.subscriptionId
         ? (await deps.obterSubscricaoStripe(s.subscriptionId)).current_period_end
         : null;
     await deps.enviarEmailPagamentoConfirmado({

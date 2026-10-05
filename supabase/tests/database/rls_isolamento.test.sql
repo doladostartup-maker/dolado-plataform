@@ -112,9 +112,9 @@ insert into public.user_access (user_id, nivel_acesso, subscription_plan, subscr
 insert into public.stripe_webhook_events (event_id, tipo) values ('evt_teste', 'invoice.paid');
 insert into public.conversoes_avulso (id, stripe_payment_id, user_id, plano_destino, valor_avulso_centimos, valor_primeira_mensalidade_centimos, refund_montante_centimos) values
   ('1a000000-0000-4000-a000-00000000000a', '16000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'protecao', 1499, 499, 1000);
-insert into public.case_credit_grants (origem, user_id, quantidade, estado) values
-  ('checkout:cs_teste_a', '00000000-0000-4000-a000-00000000000a', 1, 'disponivel'),
-  ('invoice:in_teste_b', '00000000-0000-4000-a000-00000000000b', 1, null);
+insert into public.case_credit_grants (origem, user_id, quantidade, estado, produto) values
+  ('checkout:cs_teste_a', '00000000-0000-4000-a000-00000000000a', 1, 'disponivel', 'avulso'),
+  ('invoice:in_teste_b', '00000000-0000-4000-a000-00000000000b', 1, null, null);
 insert into public.stripe_subscriptions (stripe_subscription_id, stripe_customer_id, status) values
   ('sub_teste_b', 'cus_teste_b', 'active');
 
@@ -453,8 +453,11 @@ select is(public.restaurar_creditos_caso('sub_nova_b', now() + interval '91 days
 reset role;
 update public.user_access set case_credits = 3 where user_id = '00000000-0000-4000-a000-00000000000b';
 set local role service_role;
-select is(public.restaurar_creditos_caso('sub_nova_b', now(), 4), 1, 'restaurar: respeita o limite de 4');
-select is((select case_credits from public.user_access where user_id = '00000000-0000-4000-a000-00000000000b'), 4, 'restaurar: saldo final 4');
+-- B tem 3 casos, 1 deles Avulso (avulso_credits = 1): 2 da subscrição + 2
+-- congelados. Desde 20261005190000_caso_extra, o limite de 4 conta só os
+-- casos da subscrição — o Avulso pago fica à parte.
+select is(public.restaurar_creditos_caso('sub_nova_b', now(), 4), 2, 'restaurar: respeita o limite de 4 nos casos da subscrição');
+select is((select case_credits || '/' || avulso_credits from public.user_access where user_id = '00000000-0000-4000-a000-00000000000b'), '5/1', 'restaurar: 4 casos da subscrição + 1 Avulso');
 reset role;
 -- Repõe B como em 2c para as verificações seguintes.
 update public.user_access

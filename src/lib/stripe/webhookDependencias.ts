@@ -265,11 +265,12 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
       }
     },
 
-    async concederCreditoCaso(userId, origem, maximo) {
+    async concederCreditoCaso(userId, origem, maximo, produto) {
       const { data, error } = await admin.rpc("conceder_credito_caso", {
         p_user_id: userId,
         p_origem: origem,
         p_maximo: maximo,
+        ...(produto ? { p_produto: produto } : {}),
       });
       falhar("conceder_credito_caso", error);
       return data === true;
@@ -286,7 +287,7 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
 
     async avulsoDoPagamento(paymentIntentId) {
       const stripe = getStripe();
-      // Só o Avulso é pago em modo "payment".
+      // Só as compras únicas (Avulso e Caso Extra) são pagas em modo "payment".
       const sessoes = await stripe.checkout.sessions.list({ payment_intent: paymentIntentId, limit: 1 });
       const sessao = sessoes.data[0];
       if (!sessao || sessao.mode !== "payment") return null;
@@ -296,7 +297,7 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
         .eq("stripe_session_id", sessao.id)
         .maybeSingle();
       falhar("stripe_payments.select", error);
-      if (data && data.plano !== "avulso") return null;
+      if (data && data.plano !== "avulso" && data.plano !== "caso_extra") return null;
 
       const pagamento = await stripe.paymentIntents.retrieve(paymentIntentId, { expand: ["latest_charge"] });
       const cobranca = pagamento.latest_charge;

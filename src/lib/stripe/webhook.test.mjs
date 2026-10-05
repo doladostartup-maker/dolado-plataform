@@ -185,7 +185,10 @@ function criarDependencias(estado) {
       if (!c.stripe_customer_id) c.stripe_customer_id = customerId;
       estado.contas.set(userId, c);
     },
-    async concederCreditoCaso(userId, origem, maximo) {
+    // Mesmas regras que a função SQL conceder_credito_caso (20261005190000):
+    // compras únicas (Avulso / Caso Extra) sem limite; o limite dos casos
+    // mensais conta só os casos da subscrição.
+    async concederCreditoCaso(userId, origem, maximo, produto) {
       if (estado.falharCreditoUmaVez) {
         estado.falharCreditoUmaVez = false;
         throw Object.assign(new Error("falha simulada"), { code: "08006" });
@@ -197,12 +200,14 @@ function criarDependencias(estado) {
       estado.creditosPorConta.set(origem, userId);
       const c = estado.contas.get(userId);
       if (avulso) {
-        estado.avulsos.set(origem, { user_id: userId, estado: "disponivel" });
+        estado.avulsos.set(origem, { user_id: userId, estado: "disponivel", produto: produto ?? "avulso" });
         c.case_credits += 1;
         c.avulso_credits += 1;
         return true;
       }
-      c.case_credits = maximo == null ? c.case_credits + 1 : Math.max(c.case_credits, Math.min(c.case_credits + 1, maximo));
+      const subscricao = c.case_credits - c.avulso_credits;
+      const novo = maximo == null ? subscricao + 1 : Math.max(subscricao, Math.min(subscricao + 1, maximo));
+      c.case_credits = c.avulso_credits + novo;
       return true;
     },
     // Mesmas regras que as funções SQL congelar_/restaurar_creditos_caso.
@@ -228,9 +233,10 @@ function criarDependencias(estado) {
         if (validos.length === 0) continue;
         const soma = validos.reduce((a, f) => a + f.quantidade, 0);
         for (const f of validos) f.restaurado_em = em;
-        const novo = Math.max(c.case_credits, Math.min(c.case_credits + soma, maximo));
-        total += novo - c.case_credits;
-        c.case_credits = novo;
+        const subscricao = c.case_credits - c.avulso_credits;
+        const novo = Math.max(subscricao, Math.min(subscricao + soma, maximo));
+        total += novo - subscricao;
+        c.case_credits = c.avulso_credits + novo;
       }
       return total;
     },
@@ -343,9 +349,12 @@ function criarDependencias(estado) {
       if (!p || p.user_id !== userId) return null;
       if (p.estado === "convertido") return p.caso_id;
       if (p.estado === "cancelado") return null;
-      if (!consumirCredito(estado, userId, origemAvulso)) return null;
+      const consumo = consumirCredito(estado, userId, origemAvulso);
+      if (!consumo) return null;
       const casoId = `caso_${estado.casos.length + 1}`;
-      estado.casos.push({ id: casoId, utilizador_id: userId, pedido_id: pedidoId, status: "Novo" });
+      const origemCredito = consumo === "subscricao" ? "subscricao" : estado.avulsos.get(consumo).produto;
+      if (consumo !== "subscricao") estado.avulsos.get(consumo).caso_id = casoId;
+      estado.casos.push({ id: casoId, utilizador_id: userId, pedido_id: pedidoId, status: "Novo", origem_credito: origemCredito });
       Object.assign(p, { estado: "convertido", caso_id: casoId });
       return casoId;
     },
@@ -1794,5 +1803,173 @@ describe("compra sem conta e subscrições duplicadas", () => {
     assert.equal(conta().stripe_subscription_id, SUB);
     assert.equal(conta().subscription_plan, "caso_protecao");
     assert.equal(estado.duplicadas.size, 0);
+  });
+});
+
+describe("Caso Extra (subscritor do Caso + Proteção que já usou o caso do mês)", () => {
+  const PEDIDO = "20000000-0000-4000-a000-0000000000e1";
+  const subscritorSemCasos = (extra = {}) => {
+    comConta({
+      subscription_plan: "caso_protecao",
+      subscription_status: "active",
+      stripe_subscription_id: SUB,
+      stripe_price_id: PRECO_CASO_PROTECAO,
+      ...extra,
+    });
+    estado.stripeSubscricao = snapshot("active");
+  };
+  const sessaoCasoExtra = (extra = {}, metadata = {}) =>
+    sessaoAvulso({
+      id: "cs_extra",
+      amount_total: 1199,
+      metadata: { plano: "caso_extra", tipo: "extra_case", user_id: USER, stripe_subscription_id: SUB, ...metadata },
+      ...extra,
+    });
+  const novoPedido = () =>
+    estado.pedidos.set(PEDIDO, { id: PEDIDO, user_id: USER, estado: "aguarda_pagamento", caso_id: null });
+
+  test("3. compra confirmada: exatamente 1 caso a mais; plano, subscrição e Customer intactos", async () => {
+    subscritorSemCasos();
+    const antes = { ...conta() };
+    const r = await processarEventoStripe(evento("checkout.session.completed", sessaoCasoExtra()), deps);
+    assert.equal(r.status, 200);
+    assert.equal(conta().case_credits, 1);
+    assert.equal(conta().avulso_credits, 1, "conta como compra única por usar (não congela, fora do limite de 4)");
+    assert.deepEqual(estado.avulsos.get("checkout:cs_extra"), { user_id: USER, estado: "disponivel", produto: "caso_extra" });
+    for (const campo of ["subscription_plan", "subscription_status", "stripe_subscription_id", "stripe_customer_id", "stripe_price_id"]) {
+      assert.equal(conta()[campo], antes[campo], `${campo} não muda`);
+    }
+    const pagamento = estado.pagamentos.get("cs_extra");
+    assert.equal(pagamento.plano, "caso_extra");
+    assert.equal(pagamento.estado, "concluido");
+    assert.equal(pagamento.user_id, USER);
+    assert.equal(pagamento.stripe_subscription_id, null, "o fim da subscrição não marca este pagamento como cancelado");
+    assert.equal(estado.emails.length, 1);
+    assert.equal(estado.emails[0].plano, "caso_extra");
+    assert.equal(estado.emails[0].contaExiste, true, "nunca o e-mail de criar conta");
+    assert.equal(estado.comprasSemConta.size, 0);
+    assert.equal(ultimoLog().resultado, "pagamento_confirmado");
+  });
+
+  test("4. webhook recebido duas vezes (mesmo evento e reenvio com outro id): 1 só caso e 1 só e-mail", async () => {
+    subscritorSemCasos();
+    const e = evento("checkout.session.completed", sessaoCasoExtra());
+    await processarEventoStripe(e, deps);
+    assert.equal((await processarEventoStripe(e, deps)).corpo.duplicado, true);
+    await processarEventoStripe(evento("checkout.session.completed", sessaoCasoExtra()), deps);
+    await aplicarCompraConfirmadaNaConta(sessaoCasoExtra(), USER, deps);
+    assert.equal(conta().case_credits, 1);
+    assert.equal(estado.creditosConcedidos.size, 1);
+    assert.equal(estado.emails.length, 1);
+  });
+
+  test("6/7. pedido preenchido antes do pagamento: passa a caso com este Caso Extra, que fica consumido e ligado ao caso", async () => {
+    subscritorSemCasos();
+    novoPedido();
+    await processarEventoStripe(evento("checkout.session.completed", sessaoCasoExtra({}, { pedido_id: PEDIDO })), deps);
+    assert.equal(estado.pedidos.get(PEDIDO).estado, "convertido");
+    assert.equal(estado.casos.length, 1);
+    assert.equal(estado.casos[0].origem_credito, "caso_extra");
+    const compra = estado.avulsos.get("checkout:cs_extra");
+    assert.equal(compra.estado, "consumido");
+    assert.equal(compra.caso_id, estado.casos[0].id);
+    assert.equal(conta().case_credits, 0);
+    assert.equal(ultimoLog().resultado, "pagamento_confirmado_caso_criado");
+  });
+
+  test("renovação entre o Checkout e o webhook: o pedido gasta o Caso Extra pago, o caso mensal fica", async () => {
+    subscritorSemCasos();
+    novoPedido();
+    await processarEventoStripe(evento("invoice.paid", fatura("in_renovacao")), deps);
+    assert.equal(conta().case_credits, 1);
+    await processarEventoStripe(evento("checkout.session.completed", sessaoCasoExtra({}, { pedido_id: PEDIDO })), deps);
+    assert.equal(estado.avulsos.get("checkout:cs_extra").estado, "consumido");
+    assert.equal(conta().case_credits, 1);
+    assert.equal(conta().avulso_credits, 0, "sobra o caso mensal, não o Caso Extra");
+  });
+
+  test("ordem de consumo: primeiro o caso mensal, depois o Caso Extra", async () => {
+    subscritorSemCasos();
+    await processarEventoStripe(evento("checkout.session.completed", sessaoCasoExtra()), deps);
+    await processarEventoStripe(evento("invoice.paid", fatura("in_2")), deps);
+    assert.equal(conta().case_credits, 2);
+    assert.equal(consumirCredito(estado, USER), "subscricao");
+    assert.equal(estado.avulsos.get("checkout:cs_extra").estado, "disponivel");
+    assert.equal(consumirCredito(estado, USER), "checkout:cs_extra");
+    assert.equal(consumirCredito(estado, USER), null);
+  });
+
+  test("8. renovação depois de um Caso Extra usado: o novo caso mensal chega normalmente", async () => {
+    subscritorSemCasos();
+    await processarEventoStripe(evento("checkout.session.completed", sessaoCasoExtra()), deps);
+    consumirCredito(estado, USER);
+    assert.equal(conta().case_credits, 0);
+    await processarEventoStripe(evento("invoice.paid", fatura("in_proximo")), deps);
+    assert.equal(conta().case_credits, 1);
+    assert.equal(conta().avulso_credits, 0);
+    assert.equal(ultimoLog().resultado, "acesso_e_credito");
+  });
+
+  test("8b. Caso Extra por usar nunca impede o caso mensal (limite de 4 só nos casos da subscrição)", async () => {
+    subscritorSemCasos({ case_credits: 3 });
+    await processarEventoStripe(evento("checkout.session.completed", sessaoCasoExtra()), deps);
+    assert.equal(conta().case_credits, 4);
+    await processarEventoStripe(evento("invoice.paid", fatura("in_quarto")), deps);
+    assert.equal(conta().case_credits, 5, "4 casos da subscrição + 1 Caso Extra");
+    await processarEventoStripe(evento("invoice.paid", fatura("in_quinto")), deps);
+    assert.equal(conta().case_credits, 5, "os casos da subscrição continuam limitados a 4");
+  });
+
+  test("9. compra um Caso Extra e cancela a subscrição: o Caso Extra pago não desaparece nem congela", async () => {
+    subscritorSemCasos({ case_credits: 2 });
+    await processarEventoStripe(evento("checkout.session.completed", sessaoCasoExtra()), deps);
+    assert.equal(conta().case_credits, 3);
+    await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled")), deps);
+    assert.equal(conta().subscription_plan, "none");
+    assert.equal(conta().case_credits, 1, "fica o Caso Extra");
+    assert.equal(conta().avulso_credits, 1);
+    assert.equal(estado.congelamentos[0].quantidade, 2, "só os casos da subscrição congelam");
+    assert.equal(estado.avulsos.get("checkout:cs_extra").estado, "disponivel");
+    assert.equal(estado.pagamentos.get("cs_extra").estado, "concluido");
+  });
+
+  test("pagamento confirmado já depois do fim da subscrição: o caso pago é dado na mesma", async () => {
+    subscritorSemCasos({ subscription_plan: "none", subscription_status: "canceled" });
+    await processarEventoStripe(evento("checkout.session.completed", sessaoCasoExtra()), deps);
+    assert.equal(conta().case_credits, 1);
+    assert.equal(conta().subscription_plan, "none", "não reativa nada");
+  });
+
+  test("reembolso total do Caso Extra por usar: o caso sai; pagamento fica reembolsado", async () => {
+    subscritorSemCasos();
+    await processarEventoStripe(evento("checkout.session.completed", sessaoCasoExtra()), deps);
+    estado.stripeAvulsos.set("pi_extra", { sessionId: "cs_extra", totalmenteReembolsado: true });
+    await processarEventoStripe(evento("refund.updated", { id: "re_extra", status: "succeeded", payment_intent: "pi_extra", metadata: {} }), deps);
+    assert.equal(conta().case_credits, 0);
+    assert.equal(estado.avulsos.get("checkout:cs_extra").estado, "reembolsado");
+    assert.equal(estado.pagamentos.get("cs_extra").estado, "reembolsado");
+  });
+
+  test("10. sessão incoerente: Caso Extra em modo subscrição ou sem conta indicada pelo servidor — ignorada", async () => {
+    subscritorSemCasos();
+    await processarEventoStripe(
+      evento("checkout.session.completed", sessaoCasoExtra({ mode: "subscription", subscription: SUB })),
+      deps,
+    );
+    assert.equal(ultimoLog().resultado, "ignorado_modo_incoerente");
+    await processarEventoStripe(evento("checkout.session.completed", sessaoCasoExtra({}, { user_id: undefined })), deps);
+    assert.equal(ultimoLog().resultado, "ignorado_modo_incoerente");
+    assert.equal(conta().case_credits, 0);
+    assert.equal(estado.pagamentos.size, 0);
+    assert.equal(estado.comprasSemConta.size, 0, "nunca vai para o fluxo de criar conta");
+    assert.equal(estado.emails.length, 0);
+  });
+
+  test("Avulso normal continua a ser registado como Avulso", async () => {
+    comConta();
+    await processarEventoStripe(evento("checkout.session.completed", sessaoAvulso({ metadata: { plano: "avulso", user_id: USER } })), deps);
+    assert.equal(estado.avulsos.get("checkout:cs_avulso").produto, "avulso");
+    assert.equal(estado.pagamentos.get("cs_avulso").plano, "avulso");
+    assert.equal(estado.emails[0].plano, "avulso");
   });
 });
