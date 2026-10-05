@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { gastoApiUsd, tetoOrcamentoUsd } from "@/lib/monitor/servidor";
 import { estadoOrcamento } from "@/lib/monitor/custos";
 import { MODELO_DOCUMENTOS } from "@/lib/claude";
+import { ROTULO_TIPO_DOCUMENTO } from "@/lib/monitor/tipoDocumento";
 
 const ESTADO: Record<string, string> = { pendente: "Por processar", a_rever: "Por rever" };
 
@@ -15,7 +16,7 @@ export default async function MonitorBackofficePage() {
     gastoApiUsd(admin),
     admin
       .from("documentos_monitor")
-      .select("id, utilizador_id, tipo, estado, created_at, contrato_id")
+      .select("id, utilizador_id, tipo, tipo_indicado, estado, created_at, contrato_id")
       .in("estado", ["pendente", "a_rever"])
       .is("desativado_em", null)
       .order("created_at", { ascending: true }),
@@ -87,7 +88,12 @@ export default async function MonitorBackofficePage() {
                       {c?.nome ?? "—"}
                       <span className="block text-[12px] text-[var(--color-ink-faint)]">{c?.email}</span>
                     </td>
-                    <td className="px-3 py-2 text-[var(--color-ink)]">{d.tipo === "contrato" ? "Contrato" : "Fatura"}</td>
+                    <td className="px-3 py-2 text-[var(--color-ink)]">
+                      {ROTULO_TIPO_DOCUMENTO[d.tipo] ?? d.tipo}
+                      {d.tipo !== d.tipo_indicado && (
+                        <span className="block text-[12px] text-[var(--color-ink-faint)]">enviado como {ROTULO_TIPO_DOCUMENTO[d.tipo_indicado]?.toLowerCase()}</span>
+                      )}
+                    </td>
                     <td className="px-3 py-2 text-[var(--color-ink-muted)]">{ESTADO[d.estado] ?? d.estado}</td>
                     <td className="px-3 py-2 text-[var(--color-ink-muted)]">{new Date(d.created_at).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon" })}</td>
                     <td className="px-3 py-2">

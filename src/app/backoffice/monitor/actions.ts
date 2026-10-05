@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
-import { processarDocumento } from "@/lib/monitor/servidor";
+import { alterarTipoDocumento as alterarTipo, processarDocumentoNaRevisao } from "@/lib/monitor/servidor";
+import { MSG_ERRO_ALTERAR_TIPO } from "@/lib/monitor/tipoDocumento";
 import { SETORES_CONTRATO, lerEurosParaCents, lerMeses } from "@/lib/monitor/contratos";
 import { dataValida, type CampoContrato } from "@/lib/monitor/extracaoFatura";
 
@@ -32,11 +33,11 @@ const TIPO_CAMPO: Partial<Record<CampoContrato, "texto" | "data" | "euros" | "me
 };
 
 async function documento(id: string) {
-  await requireAdmin();
+  const { user } = await requireAdmin();
   const admin = createAdminClient();
   const { data: doc } = await admin.from("documentos_monitor").select("id, utilizador_id, contrato_id, estado").eq("id", id).maybeSingle();
   if (!doc) redirect("/backoffice/monitor");
-  return { admin, doc };
+  return { admin, doc, user };
 }
 
 function voltar(id: string, params: Record<string, string>): never {
@@ -46,9 +47,26 @@ function voltar(id: string, params: Record<string, string>): never {
 export async function reprocessarDocumento(formData: FormData) {
   const { admin, doc } = await documento(String(formData.get("documento_id") ?? ""));
   await admin.from("documentos_monitor").update({ estado: "pendente" }).eq("id", doc.id);
-  const r = await processarDocumento(doc.id);
+  const r = await processarDocumentoNaRevisao(doc.id);
   revalidatePath("/backoffice/monitor");
   voltar(doc.id, { resultado: r.estado, ...(r.motivo ? { motivo: r.motivo } : {}), ...(r.detalhe ? { detalhe: r.detalhe } : {}) });
+}
+
+// O revisor corrige o tipo (ex.: contrato enviado como fatura) e o mesmo
+// ficheiro é lido de novo com o pipeline do tipo novo. A confirmação é pedida
+// no ecrã antes de submeter; a auditoria fica em documentos_tipo_alteracoes.
+export async function alterarTipoDocumento(formData: FormData) {
+  const { doc, user } = await documento(String(formData.get("documento_id") ?? ""));
+  const r = await alterarTipo({ documentoId: doc.id, novoTipo: String(formData.get("tipo") ?? ""), por: user.id });
+  revalidatePath("/backoffice/monitor");
+  if (!r.ok) voltar(doc.id, { erro: MSG_ERRO_ALTERAR_TIPO[r.erro] });
+  const p = r.processamento;
+  voltar(doc.id, {
+    tipo_alterado: "1",
+    resultado: p.estado,
+    ...(p.motivo ? { motivo: p.motivo } : {}),
+    ...(p.detalhe ? { detalhe: p.detalhe } : {}),
+  });
 }
 
 export async function marcarDocumento(formData: FormData) {
