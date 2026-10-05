@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ConfirmarCompra } from "@/components/compra/ConfirmarCompra";
+import { linhasDaCobranca, type ResumoCobranca } from "@/lib/proximaCobranca";
 import type { ResumoPlano } from "@/lib/acesso";
 import {
   IVA_INCLUIDO,
@@ -85,10 +86,12 @@ function nomeDoPlano(resumo: ResumoPlano) {
 
 function OSeuPlano({
   resumo,
+  cobranca,
   pagamentoPendente,
   onEscolherSubscricao,
 }: {
   resumo: ResumoPlano;
+  cobranca: ResumoCobranca | null;
   pagamentoPendente: boolean;
   onEscolherSubscricao: () => void;
 }) {
@@ -96,6 +99,7 @@ function OSeuPlano({
   const linhas: { label: string; valor: string }[] = [];
   if (!semSubscricao) {
     linhas.push({ label: "Preço", valor: `${precoComUnidade(resumo.plano as "protecao" | "caso_protecao")} (${IVA_INCLUIDO})` });
+    if (cobranca) linhas.push(...linhasDaCobranca(cobranca));
     if (resumo.estado) linhas.push({ label: "Estado da subscrição", valor: resumo.estado });
     if (resumo.renovacao) linhas.push({ label: "Próxima renovação", valor: formatarData(resumo.renovacao) });
     if (resumo.fimAgendado) linhas.push({ label: "Proteção ativa até", valor: formatarData(resumo.fimAgendado) });
@@ -168,6 +172,7 @@ export function PortalDashboard({
   casos,
   protecao,
   resumo,
+  cobranca,
   temProtecao,
   temPlanoStripe,
   pagamentoPendente,
@@ -183,6 +188,8 @@ export function PortalDashboard({
   protecao: ResumoProtecao | null;
   /** Calculado no servidor (src/lib/acesso.ts) — aqui só decide o que mostrar. */
   resumo: ResumoPlano;
+  /** Próxima cobrança com os descontos do Stripe (null = sem renovação ou sem dados). */
+  cobranca: ResumoCobranca | null;
   temProtecao: boolean;
   temPlanoStripe: boolean;
   pagamentoPendente: boolean;
@@ -369,6 +376,7 @@ export function PortalDashboard({
           {temPlanoStripe && (
             <OSeuPlano
               resumo={resumo}
+              cobranca={cobranca}
               pagamentoPendente={pagamentoPendente}
               onEscolherSubscricao={() => setModalAberto(true)}
             />

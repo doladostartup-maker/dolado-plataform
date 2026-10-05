@@ -2,8 +2,8 @@ import Link from "next/link";
 import { casosGuardados, resumoPlanoPortal, type CongelamentoCasos } from "@/lib/acesso";
 import { obterAcesso, requireUser } from "@/lib/auth";
 import { IVA_INCLUIDO, PLANOS, formatarPreco, textoCasosDisponiveis } from "@/lib/planos";
-import { resumirCobranca, textoDesconto, textoProximaCobranca } from "@/lib/proximaCobranca";
-import { obterDadosCobranca } from "@/lib/stripe/proximaCobranca";
+import { linhasDaCobranca } from "@/lib/proximaCobranca";
+import { obterResumoCobranca } from "@/lib/stripe/proximaCobranca";
 import { PRAZO_LIVRE_RESOLUCAO_DIAS, ROTAS_LEGAIS } from "@/lib/legal";
 import { CONTACTO_EMAIL, MARKETING_SITE_URL } from "@/lib/site";
 import { manterSubscricao } from "./actions";
@@ -37,13 +37,12 @@ export default async function GestaoSubscricaoPage({
   const params = await searchParams;
   const { supabase, user } = await requireUser();
 
-  const [acesso, { data: congelamentos }, { data: conta }] = await Promise.all([
+  const [acesso, { data: congelamentos }] = await Promise.all([
     obterAcesso(supabase, user.id),
     supabase
       .from("case_credit_freezes")
       .select("quantidade, expira_em, restaurado_em")
       .eq("user_id", user.id),
-    supabase.from("user_access").select("stripe_subscription_id").eq("user_id", user.id).maybeSingle(),
   ]);
   const resumo = resumoPlanoPortal(acesso);
   const guardados = casosGuardados((congelamentos ?? []) as CongelamentoCasos[]);
@@ -52,30 +51,14 @@ export default async function GestaoSubscricaoPage({
 
   // Valor efetivo da próxima cobrança, com os descontos em vigor no Stripe.
   // Só quando há renovação (com cancelamento agendado não há próxima cobrança).
-  const dadosCobranca =
-    plano && resumo.renovacao && conta?.stripe_subscription_id
-      ? await obterDadosCobranca(conta.stripe_subscription_id, plano.precoCentimos, resumo.renovacao)
-      : null;
-  const cobranca = dadosCobranca ? resumirCobranca(dadosCobranca) : null;
+  const cobranca = await obterResumoCobranca(supabase, user.id, resumo);
 
   const linhas: { label: string; valor: string }[] = [];
   if (plano) {
     linhas.push({ label: "Plano atual", valor: plano.nome });
     if (resumo.estado) linhas.push({ label: "Estado da subscrição", valor: resumo.estado });
     linhas.push({ label: "Preço do plano", valor: `${formatarPreco(plano.precoCentimos)}/mês (${IVA_INCLUIDO})` });
-    if (cobranca && cobranca.descontosAplicaveis.length > 0) {
-      linhas.push({
-        label: cobranca.descontosAplicaveis.length === 1 ? "Desconto" : "Descontos",
-        valor: cobranca.descontosAplicaveis.map(textoDesconto).join("; "),
-      });
-    }
-    if (cobranca) linhas.push({ label: "Próxima cobrança", valor: textoProximaCobranca(cobranca) });
-    if (cobranca?.mudaEm) {
-      linhas.push({
-        label: "Depois do desconto",
-        valor: `${formatarPreco(plano.precoCentimos)}/mês a partir de ${formatarData(cobranca.mudaEm)}`,
-      });
-    }
+    if (cobranca) linhas.push(...linhasDaCobranca(cobranca));
     if (resumo.renovacao) linhas.push({ label: "Próxima renovação", valor: formatarData(resumo.renovacao) });
     if (resumo.fimAgendado) linhas.push({ label: "A Proteção termina em", valor: formatarData(resumo.fimAgendado) });
   } else {

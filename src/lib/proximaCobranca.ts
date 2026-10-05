@@ -14,7 +14,7 @@
 // fosse a cobrança).
 //
 // Sem imports de runtime: os testes correm com `node --test`. Quem chama o
-// Stripe é app/portal/subscricao/page.tsx.
+// Stripe é src/lib/stripe/proximaCobranca.ts (Gestão de Subscrição e painel).
 
 import type Stripe from "stripe";
 import { formatarPreco } from "./planos.ts";
@@ -113,6 +113,29 @@ export function textoProximaCobranca(resumo: ResumoCobranca) {
   return vitalicio
     ? `${valor} — sem cobrança prevista, desconto de 100% vitalício ativo`
     : `${valor} — sem cobrança prevista`;
+}
+
+/**
+ * Linhas a mostrar a seguir ao preço do plano (Gestão de Subscrição e painel
+ * do portal): desconto(s), próxima cobrança e, num desconto temporário, o
+ * valor depois de ele terminar.
+ */
+export function linhasDaCobranca(resumo: ResumoCobranca): { label: string; valor: string }[] {
+  const linhas: { label: string; valor: string }[] = [];
+  if (resumo.descontosAplicaveis.length > 0) {
+    linhas.push({
+      label: resumo.descontosAplicaveis.length === 1 ? "Desconto" : "Descontos",
+      valor: resumo.descontosAplicaveis.map(textoDesconto).join("; "),
+    });
+  }
+  linhas.push({ label: "Próxima cobrança", valor: textoProximaCobranca(resumo) });
+  if (resumo.mudaEm) {
+    linhas.push({
+      label: "Depois do desconto",
+      valor: `${formatarPreco(resumo.precoBaseCentimos)}/mês a partir de ${formatarData(resumo.mudaEm)}`,
+    });
+  }
+  return linhas;
 }
 
 // ---------------------------------------------------------------------------

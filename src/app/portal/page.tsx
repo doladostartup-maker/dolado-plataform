@@ -1,6 +1,7 @@
 import { BotaoComprar } from "@/components/compra/BotaoComprar";
 import { avisoDoPortal, estadoReembolsoCliente, resumoPlanoPortal } from "@/lib/acesso";
 import { obterAcesso, requireUser } from "@/lib/auth";
+import { obterResumoCobranca } from "@/lib/stripe/proximaCobranca";
 import {
   escolherAvulsoParaConversao,
   mensagemConversao,
@@ -78,6 +79,9 @@ export default async function PortalIndex({
 
   // Plano apresentado: só estado real gravado pelo webhook.
   const resumo = resumoPlanoPortal(acesso);
+  // Valor efetivo da próxima cobrança, com os descontos em vigor no Stripe.
+  // Arranca já e só é esperado no fim, em paralelo com as leituras abaixo.
+  const cobrancaPromessa = obterResumoCobranca(supabase, user.id, resumo);
 
   const aviso = avisoDoPortal({
     regressoDoCheckout: params.upgraded === "true",
@@ -221,6 +225,8 @@ export default async function PortalIndex({
     }
   }
 
+  const cobranca = await cobrancaPromessa;
+
   return (
     <div className="flex flex-col gap-6">
       {aviso === "plano_ativo" && (resumo.plano === "protecao" || resumo.plano === "caso_protecao") && (
@@ -303,6 +309,7 @@ export default async function PortalIndex({
         casos={resumosCasos}
         protecao={protecao}
         resumo={resumo}
+        cobranca={cobranca}
         temProtecao={acesso.temProtecao}
         temPlanoStripe={acesso.temPlanoStripe}
         pagamentoPendente={aviso === "pagamento_pendente"}

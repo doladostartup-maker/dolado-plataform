@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import {
   descontosDaSubscricao,
+  linhasDaCobranca,
   resumirCobranca,
   textoDesconto,
   textoProximaCobranca,
@@ -133,5 +134,28 @@ describe("desconto expirado", () => {
     ]);
     assert.equal(r.descontosAplicaveis.length, 1);
     assert.equal(r.valorProximaCobrancaCentimos, 719);
+  });
+});
+
+describe("linhas mostradas (Gestão de Subscrição e painel)", () => {
+  test("100% vitalício", () => {
+    const r = cobrancaCom([discount({ percent_off: 100, duration: "forever" })], 0);
+    assert.deepEqual(linhasDaCobranca(r), [
+      { label: "Desconto", valor: "100% vitalício" },
+      { label: "Próxima cobrança", valor: "0,00 € — sem cobrança prevista, desconto de 100% vitalício ativo" },
+    ]);
+  });
+
+  test("desconto temporário indica o valor depois de terminar", () => {
+    const r = cobrancaCom([discount({ percent_off: 50, duration: "repeating", end: "2027-01-05T10:00:00.000Z" })]);
+    assert.deepEqual(linhasDaCobranca(r), [
+      { label: "Desconto", valor: "50% até 5 de janeiro de 2027" },
+      { label: "Próxima cobrança", valor: "3,99 €" },
+      { label: "Depois do desconto", valor: "7,99 €/mês a partir de 5 de janeiro de 2027" },
+    ]);
+  });
+
+  test("sem desconto: só a próxima cobrança", () => {
+    assert.deepEqual(linhasDaCobranca(cobrancaCom([], 799)), [{ label: "Próxima cobrança", valor: "7,99 €" }]);
   });
 });
