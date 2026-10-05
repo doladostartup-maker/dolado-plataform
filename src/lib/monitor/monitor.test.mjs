@@ -580,6 +580,20 @@ describe("schemas aceites pela Claude API (structured outputs)", async () => {
     assert.ok(contarUnioes(SCHEMA_CONTRATO) <= 16, `contrato: ${contarUnioes(SCHEMA_CONTRATO)}`);
   });
 
+  // Gramática compilada (structured outputs): a API recusou o contrato_v4,
+  // com 79 propriedades em objetos ("The compiled grammar is too large"); a
+  // fatura_v3, com 53, é aceite. Limite prudente abaixo do que já falhou.
+  function contarPropriedades(no) {
+    if (!no || typeof no !== "object") return 0;
+    const n = no.properties ? Object.keys(no.properties).length : 0;
+    return n + Object.values(no).reduce((total, v) => total + contarPropriedades(v), 0);
+  }
+
+  test("nenhum dos schemas tem uma gramática do tamanho da que a API recusou", () => {
+    assert.ok(contarPropriedades(SCHEMA_FATURA) <= 60, `fatura: ${contarPropriedades(SCHEMA_FATURA)}`);
+    assert.ok(contarPropriedades(SCHEMA_CONTRATO) <= 60, `contrato: ${contarPropriedades(SCHEMA_CONTRATO)}`);
+  });
+
   const c = (valor, confianca = "high", pagina = 1, evidencia = "texto") => ({ valor, confianca, pagina, evidencia });
 
   test("fatura no formato v2 (tudo texto, vazio = em falta, página 0) é validada como antes", () => {
@@ -618,6 +632,34 @@ describe("schemas aceites pela Claude API (structured outputs)", async () => {
     assert.equal(porCampo.cessacao_operador_cents.evidencia, null);
     assert.equal(porCampo.referencia_contrato, undefined);
     assert.deepEqual(r.identificacao, []);
+  });
+
+  test("contrato no formato v5 (lista de campos): em falta = não encontrado, repetido = ambíguo", () => {
+    const campo = (nome, ...args) => ({ campo: nome, ...c(...args) });
+    const r = validarExtracaoContrato({
+      tipo_documento: "contrato",
+      setor: "telecomunicacoes",
+      campos: [
+        campo("fornecedor", "NOS"),
+        campo("data_inicio", "2025-03-01"),
+        campo("data_fim_fidelizacao", "2027-02-28"),
+        campo("mensalidade", "39.99"),
+        campo("mensalidade", "44.99"),
+        campo("desconto_promocao", "10.00"),
+        campo("campo_inventado", "x"),
+      ],
+      identificacao: { titular: "", nif_titular: "", numero_cliente: "123", referencia_conta: "", numero_contrato: "", numero_servico: "" },
+    });
+    assert.equal(r.ok, true);
+    assert.equal(r.precisaRevisao, true);
+    const porCampo = Object.fromEntries(r.propostas.map((p) => [p.campo, p.valor]));
+    assert.equal(porCampo.fornecedor, "NOS");
+    assert.equal(porCampo.data_inicio, "2025-03-01");
+    assert.equal(porCampo.data_fim_fidelizacao, "2027-02-28");
+    assert.equal(porCampo.desconto_promocao_cents, 1000);
+    assert.equal(porCampo.mensalidade_cents, undefined);
+    assert.equal(porCampo.data_assinatura, undefined);
+    assert.equal(r.identificacao.length, 1);
   });
 
   test("contrato no formato v3", () => {
