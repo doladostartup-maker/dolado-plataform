@@ -20,6 +20,11 @@ function hojeLisboa() {
 
 const MENSAGENS: Record<string, { texto: string; tom: "ok" | "info" | "erro" }> = {
   removido: { texto: "Deixámos de acompanhar o serviço e apagámos os documentos e os dados associados.", tom: "ok" },
+  ultimo: {
+    texto:
+      "Deixou de acompanhar este serviço e apagámos os documentos e os dados associados. Neste momento não tem serviços acompanhados — pode adicionar um novo quando quiser. A sua Proteção continua ativa.",
+    tom: "ok",
+  },
   cancelado: { texto: "O documento foi apagado. Nada foi alterado nos seus serviços.", tom: "ok" },
   repetido: { texto: "Este documento já tinha sido carregado.", tom: "info" },
   pendente: {
@@ -89,7 +94,7 @@ export default async function ContratosPage({
   for (const c of porConfirmar ?? []) pendentesPorContrato.set(c.contrato_id, (pendentesPorContrato.get(c.contrato_id) ?? 0) + 1);
 
   const hoje = hojeLisboa();
-  const chaveMensagem = params.removido ? "removido" : params.aviso ?? params.documento;
+  const chaveMensagem = params.removido ? (params.removido === "ultimo" ? "ultimo" : "removido") : params.aviso ?? params.documento;
   const mensagem = chaveMensagem ? MENSAGENS[chaveMensagem] : undefined;
 
   const servicos = contratos ?? [];

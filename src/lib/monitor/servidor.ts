@@ -1104,6 +1104,64 @@ export async function cancelarDocumentoPorAssociar(documentoId: string, utilizad
   return true;
 }
 
+export type ResultadoApagarServico =
+  | { ok: true; restantes: number; ficheirosPorApagar: number }
+  | { ok: false; erro: "nao_encontrado" | "falhou" };
+
+/**
+ * "Deixar de acompanhar": apaga o serviço e, por cascata, documentos,
+ * faturas, eventos, achados, identificadores e alertas reservados — num só
+ * DELETE (atómico). Só depois apaga os ficheiros: se o Storage falhar, ficam
+ * ficheiros sem registo, apagados pela limpeza de órfãos
+ * (monitor_ficheiros_orfaos, 24 horas). Nunca o contrário — apagar ficheiros
+ * e depois falhar a base de dados deixava o serviço visível sem documentos.
+ * Não toca em user_access, casos nem Stripe. Só depois de a Server Action
+ * validar sessão e Proteção.
+ */
+export async function apagarServicoAcompanhado(contratoId: string, utilizadorId: string): Promise<ResultadoApagarServico> {
+  const admin = createAdminClient();
+  const { data: docs, error: erroDocs } = await admin
+    .from("documentos_monitor")
+    .select("bucket, storage_path")
+    .eq("contrato_id", contratoId)
+    .eq("utilizador_id", utilizadorId);
+  if (erroDocs) return { ok: false, erro: "falhou" };
+
+  const { data: apagado, error } = await admin
+    .from("contratos_monitorizados")
+    .delete()
+    .eq("id", contratoId)
+    .eq("utilizador_id", utilizadorId)
+    .select("id")
+    .maybeSingle();
+  if (error) {
+    console.error("[monitor] apagar serviço falhou", contratoId, error.message);
+    return { ok: false, erro: "falhou" };
+  }
+  if (!apagado) return { ok: false, erro: "nao_encontrado" };
+
+  const porBucket = new Map<string, string[]>();
+  for (const d of docs ?? []) {
+    const bucket = d.bucket ?? BUCKET_MONITOR;
+    porBucket.set(bucket, [...(porBucket.get(bucket) ?? []), d.storage_path]);
+  }
+  let ficheirosPorApagar = 0;
+  for (const [bucket, caminhos] of porBucket) {
+    const { error: erroStorage } = await admin.storage.from(bucket).remove(caminhos);
+    if (erroStorage) {
+      ficheirosPorApagar += caminhos.length;
+      console.error("[monitor] ficheiros do serviço apagado ficam para a limpeza de órfãos", contratoId, erroStorage.message);
+    }
+  }
+
+  const { count } = await admin
+    .from("contratos_monitorizados")
+    .select("id", { count: "exact", head: true })
+    .eq("utilizador_id", utilizadorId)
+    .is("desativado_em", null);
+  return { ok: true, restantes: count ?? 0, ficheirosPorApagar };
+}
+
 /** Resposta do cliente ao resumo de uma fatura: confirmar ou indicar que os valores não estão certos. */
 export async function registarRespostaFatura(faturaId: string, utilizadorId: string, acao: "confirmar" | "contestar"): Promise<boolean> {
   const admin = createAdminClient();
