@@ -5,8 +5,8 @@ import Link from "next/link";
 import { criarUploadAssinado } from "@/app/actions/formulario-guiado";
 import { track } from "@/lib/analytics";
 import { TEXTO_CONSENTIMENTO_COMUNICACOES } from "@/lib/legal";
-import { MOMENTOS, PROBLEMAS, SETORES, validNome, validTelemovel } from "@/lib/pedidoCaso";
-import { IVA_INCLUIDO, PLANOS, precoComUnidade } from "@/lib/planos";
+import { MOMENTOS, PROBLEMAS, SETORES, validNome, validTelemovel, type EntradaPedido } from "@/lib/pedidoCaso";
+import { IVA_INCLUIDO, PLANOS, precoComUnidade, textoCasosDisponiveis } from "@/lib/planos";
 import { MARKETING_SITE_URL } from "@/lib/site";
 import { createClient } from "@/lib/supabase/client";
 import { guardarPedido, type EstadoPedidoForm } from "../actions";
@@ -101,11 +101,16 @@ export function FormularioCaso({
   origem,
   comSessao,
   inicial,
+  entrada = "escolher",
+  casosDisponiveis = 0,
 }: {
   origem: string;
   comSessao: boolean;
   /** Pré-preenchimento vindo do Simulador de Elegibilidade (já validado na página). */
   inicial?: ValoresIniciais;
+  /** O que a conta pode fazer no fim (entradaDoPedido, calculado no servidor). */
+  entrada?: EntradaPedido;
+  casosDisponiveis?: number;
 }) {
   const [state, formAction, pending] = useActionState(guardarPedido, ESTADO_INICIAL);
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
@@ -231,21 +236,42 @@ export function FormularioCaso({
         </span>
       </div>
 
-      {/* Transparência: o pagamento é no fim, mas os preços estão à vista desde o início. */}
+      {/* Transparência: o que acontece no fim, segundo o acesso real da conta; quando há pagamento, os preços estão à vista desde o início. */}
       <div
         className="mb-6 rounded-[14px] border border-[#D6E4F5] bg-[var(--v2-blue-bg)] px-4 py-3.5 text-[14px] leading-relaxed"
         style={{ color: COR.inkMuted }}
       >
-        <p style={{ color: COR.ink }} className="font-medium">
-          No final, escolhe como quer que a DoLado trate o seu caso.
-        </p>
-        <p>
-          {PLANOS.avulso.nome}: {precoComUnidade("avulso")} · {PLANOS.caso_protecao.nome}: {precoComUnidade("caso_protecao")}{" "}
-          ({IVA_INCLUIDO}). Só paga depois de rever a modalidade escolhida.{" "}
-          <Link href={`${MARKETING_SITE_URL}/precario`} target="_blank" rel="noopener" prefetch={false} style={{ color: COR.brand }} className="font-semibold underline underline-offset-4">
-            Ver preçário
-          </Link>
-        </p>
+        {entrada === "usar_caso" ? (
+          <>
+            <p style={{ color: COR.ink }} className="font-medium">
+              Tem {textoCasosDisponiveis(casosDisponiveis)} na sua conta.
+            </p>
+            <p>No final, este pedido usa um deles, sem novo pagamento.</p>
+          </>
+        ) : entrada === "so_avulso" ? (
+          <>
+            <p style={{ color: COR.ink }} className="font-medium">
+              A sua subscrição não tem casos disponíveis neste momento.
+            </p>
+            <p>
+              No final, pode tratar este caso com um caso {PLANOS.avulso.nome}: {precoComUnidade("avulso")} ({IVA_INCLUIDO}).
+              Só paga depois de rever a modalidade.
+            </p>
+          </>
+        ) : (
+          <>
+            <p style={{ color: COR.ink }} className="font-medium">
+              No final, escolhe como quer que a DoLado trate o seu caso.
+            </p>
+            <p>
+              {PLANOS.avulso.nome}: {precoComUnidade("avulso")} · {PLANOS.caso_protecao.nome}: {precoComUnidade("caso_protecao")}{" "}
+              ({IVA_INCLUIDO}). Só paga depois de rever a modalidade escolhida.{" "}
+              <Link href={`${MARKETING_SITE_URL}/precario`} target="_blank" rel="noopener" prefetch={false} style={{ color: COR.brand }} className="font-semibold underline underline-offset-4">
+                Ver preçário
+              </Link>
+            </p>
+          </>
+        )}
       </div>
 
       <div className="mb-6 h-1.5 overflow-hidden rounded-[999px]" style={{ backgroundColor: COR.hairline }}>

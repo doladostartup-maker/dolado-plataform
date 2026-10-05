@@ -5,11 +5,13 @@ import { describe, test } from "node:test";
 import {
   destinoSeguro,
   lerDadosPedido,
+  entradaDoPedido,
   opcoesDoPedido,
   pedidoDaMetadata,
   pedidoPorPagar,
   posseDoPedido,
 } from "./pedidoCaso.ts";
+import { calcularAcesso } from "./acesso.ts";
 
 const A = "00000000-0000-4000-a000-00000000000a";
 const B = "00000000-0000-4000-a000-00000000000b";
@@ -102,6 +104,73 @@ describe("modalidades oferecidas (opcoesDoPedido)", () => {
   });
   test("com proteção ativa (sem casos): não abre segunda subscrição, só Avulso", () => {
     assert.deepEqual(opcoesDoPedido({ creditos: 0, temProtecao: true }).modalidades, ["avulso"]);
+  });
+});
+
+// Direito a um caso: vem sempre de user_access (calcularAcesso). O caso
+// incluído no Caso + Proteção é o crédito concedido pelo webhook em cada
+// ciclo pago (case_credits); abrir um caso gasta-o. Não há outra contagem.
+describe("direito a caso no fluxo Tratar o meu caso (acesso → opções)", () => {
+  const linha = (extra) => ({
+    subscription_plan: "caso_protecao",
+    subscription_status: "active",
+    case_credits: 0,
+    avulso_credits: 0,
+    ...extra,
+  });
+  const fluxo = (l) => {
+    const acesso = calcularAcesso(l);
+    return { opcoes: opcoesDoPedido(acesso), entrada: entradaDoPedido(acesso) };
+  };
+
+  test("Caso + Proteção ativa, caso do ciclo por usar: usa-o, sem pagamento", () => {
+    const { opcoes, entrada } = fluxo(linha({ case_credits: 1 }));
+    assert.equal(opcoes.usarCasoDisponivel, true);
+    assert.equal(entrada, "usar_caso");
+  });
+  test("Caso + Proteção ativa, caso do ciclo já usado: só Avulso, nunca segunda subscrição", () => {
+    const { opcoes, entrada } = fluxo(linha({ case_credits: 0 }));
+    assert.equal(opcoes.usarCasoDisponivel, false);
+    assert.deepEqual(opcoes.modalidades, ["avulso"]);
+    assert.equal(entrada, "so_avulso");
+  });
+  test("Proteção ativa (não inclui casos): só Avulso", () => {
+    const { opcoes, entrada } = fluxo(linha({ subscription_plan: "protecao", case_credits: 0 }));
+    assert.equal(opcoes.usarCasoDisponivel, false);
+    assert.deepEqual(opcoes.modalidades, ["avulso"]);
+    assert.equal(entrada, "so_avulso");
+  });
+  test("Avulso por usar (sem subscrição): usa-o, sem pagamento", () => {
+    const { opcoes, entrada } = fluxo(
+      linha({ subscription_plan: "none", subscription_status: null, case_credits: 1, avulso_credits: 1 }),
+    );
+    assert.equal(opcoes.usarCasoDisponivel, true);
+    assert.equal(entrada, "usar_caso");
+  });
+  test("Proteção ativa com um Avulso comprado à parte: usa-o, sem pagamento", () => {
+    const { entrada } = fluxo(linha({ subscription_plan: "protecao", case_credits: 1, avulso_credits: 1 }));
+    assert.equal(entrada, "usar_caso");
+  });
+  test("sem subscrição e sem casos: escolhe Avulso ou Caso + Proteção e paga", () => {
+    for (const l of [null, linha({ subscription_plan: "none", subscription_status: null })]) {
+      const { opcoes, entrada } = fluxo(l);
+      assert.equal(opcoes.usarCasoDisponivel, false);
+      assert.deepEqual(opcoes.modalidades, ["avulso", "caso_protecao"]);
+      assert.equal(entrada, "escolher");
+    }
+  });
+  test("sem sessão: o formulário anuncia a escolha com pagamento", () => {
+    assert.equal(entradaDoPedido(null), "escolher");
+  });
+  test("a página do formulário lê o acesso da conta e usa a mesma regra (sem lógica própria)", () => {
+    const pagina = readFileSync(new URL("../app/tratar-caso/page.tsx", import.meta.url), "utf8");
+    assert.match(pagina, /obterAcesso\(/);
+    assert.match(pagina, /entradaDoPedido\(acesso\)/);
+    assert.doesNotMatch(pagina, /case_credits/);
+  });
+  test("o botão da área de contratos leva ao mesmo fluxo", () => {
+    const contrato = readFileSync(new URL("../app/portal/contratos/[id]/page.tsx", import.meta.url), "utf8");
+    assert.match(contrato, /urlTratarCaso\(/);
   });
 });
 
