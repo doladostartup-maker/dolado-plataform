@@ -19,7 +19,7 @@ export default async function ContaPage() {
       </ListaDados>
       <div className="flex flex-col gap-3">
         {perfil?.role === "admin" && (
-          <Link href="/backoffice/casos" className={BOTAO_PRIMARIO}>
+          <Link href="/backoffice" className={BOTAO_PRIMARIO}>
             Ir para o backoffice
           </Link>
         )}

@@ -17,7 +17,7 @@ export const VALIDADE_DESTINO_GOOGLE_S = 10 * 60;
 export const VALIDADE_DESTINO_CONFIRMACAO_S = 24 * 60 * 60;
 
 export const DESTINO_POS_LOGIN = "/portal/casos";
-export const DESTINO_POS_LOGIN_ADMIN = "/backoffice/casos";
+export const DESTINO_POS_LOGIN_ADMIN = "/backoffice";
 export const DESTINO_PEDIDO_POR_PAGAR = "/tratar-caso/modalidade";
 
 /** Só caminhos relativos deste site (nunca "//outro.site" nem URLs absolutas — evita open redirect). */
