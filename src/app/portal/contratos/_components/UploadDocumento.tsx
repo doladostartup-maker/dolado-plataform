@@ -214,11 +214,12 @@ export function UploadDocumento({ contratoId, tipoInicial = "fatura" }: { contra
       )}
 
       <button type="button" onClick={analisar} disabled={estado.fase !== "carregado"} className={`${BOTAO_PRIMARIO} w-full sm:w-auto sm:self-start`}>
-        {estado.fase === "a-registar" ? "A enviar…" : tipo === "fatura" ? "Analisar a fatura" : "Analisar o contrato"}
+        {estado.fase === "a-registar" ? "A enviar…" : tipo === "fatura" ? "Verificar a fatura" : "Verificar o contrato"}
       </button>
       <p className="text-[13px] leading-relaxed text-[var(--v2-muted)]">
-        Lemos as datas e os valores do documento e pedimos-lhe que os confirme antes de começarmos a acompanhar. Envie
-        apenas o necessário e, se possível, oculte dados de outras pessoas.
+        Verificamos o documento e mostramos-lhe logo o resultado: o que encontrámos e o que vamos acompanhar. As condições
+        lidas de um contrato só são usadas depois de as confirmar. Envie apenas o necessário e, se possível, oculte dados
+        de outras pessoas.
       </p>
     </div>
   );

@@ -27,11 +27,14 @@ export function ProgressoDocumento({
   documentoId,
   inicial,
   contratoAtual,
+  compacto = false,
 }: {
   documentoId: string;
   inicial?: Linha;
   /** Contrato da página em que o progresso é mostrado (para só atualizar em vez de navegar). */
   contratoAtual?: string;
+  /** Sem título próprio (quando já está dentro do bloco "Estamos a verificar por si"). */
+  compacto?: boolean;
 }) {
   const router = useRouter();
   const [linha, setLinha] = useState<Linha | null>(inicial ?? null);
@@ -137,8 +140,17 @@ export function ProgressoDocumento({
   return (
     <div role="status" aria-live="polite" className="flex flex-col gap-3 rounded-[16px] border border-[#CDE9D9] bg-[var(--v2-mint-bg)] p-5">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-sm font-semibold text-[var(--color-ink)]">A analisar o documento</p>
-        <p className="text-[12.5px] text-[var(--color-ink-muted)]">
+        {compacto ? (
+          <p className="text-sm font-semibold text-[var(--v2-navy)]">A verificar o documento</p>
+        ) : (
+          <div className="flex flex-col gap-0.5">
+            <p className="text-[16px] font-bold text-[var(--v2-navy)]">Estamos a verificar por si</p>
+            <p className="text-[14px] leading-relaxed text-[var(--v2-muted)]">
+              Estamos a analisar o documento e a identificar as condições que merecem acompanhamento.
+            </p>
+          </div>
+        )}
+        <p className="shrink-0 text-[12.5px] text-[var(--color-ink-muted)]">
           Etapa {Math.min(passoAtual + 1, PASSOS.length)} de {PASSOS.length}
         </p>
       </div>
@@ -164,8 +176,8 @@ export function ProgressoDocumento({
         })}
       </ol>
       <p className="text-[12.5px] leading-relaxed text-[var(--color-ink-muted)]">
-        Normalmente demora menos de meio minuto. Pode continuar a usar a DoLado: a análise prossegue e o resultado aparece
-        no serviço quando estiver pronto.
+        Normalmente demora menos de meio minuto. No fim, mostramos-lhe o que verificámos, o que encontrámos e o que vamos
+        acompanhar. Pode continuar a usar a DoLado: a verificação prossegue e o resultado fica no serviço.
       </p>
     </div>
   );

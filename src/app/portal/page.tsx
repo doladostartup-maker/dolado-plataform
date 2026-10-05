@@ -12,9 +12,9 @@ import {
   type PlanoDestino,
 } from "@/lib/stripe/conversao";
 import { PLANOS } from "@/lib/planos";
-import { proximaData, textoProximaData } from "@/lib/monitor/contratos";
-import { nomeComercial } from "@/lib/monitor/fornecedores";
-import { listaFornecedores } from "@/lib/monitor/servidor";
+import { textoProximaData } from "@/lib/monitor/contratos";
+import { carregarProtecao, hojeLisboa } from "@/lib/monitor/protecaoCliente";
+import { dataExtenso } from "@/lib/monitor/resultadoProtecao";
 import { estadoCasoCliente, type EstadoTextoRelevante } from "@/lib/portal/estadoCaso";
 import { Aviso } from "@/components/portal/Aviso";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO } from "@/components/portal/ui";
@@ -25,10 +25,6 @@ const MENSAGENS_ERRO: Record<string, string> = {
     "Não encontrámos nenhum pagamento Avulso associado à sua conta.",
   "conversao-indisponivel": "Não foi possível iniciar a adesão. Atualize a página e tente novamente.",
 };
-
-function hojeLisboa() {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(new Date());
-}
 
 const TRINTA_DIAS_MS = 30 * 24 * 3600 * 1000;
 
@@ -177,34 +173,41 @@ export default async function PortalIndex({
 
   let protecao: ResumoProtecao | null = null;
   if (acesso.temProtecao) {
-    const [{ data: servicos }, { data: porConfirmar }, { data: porAssociar }, fornecedores] = await Promise.all([
-      supabase
-        .from("contratos_monitorizados")
-        .select("id, fornecedor, data_fim_fidelizacao, data_fim_promocao")
-        .eq("utilizador_id", user.id)
-        .is("desativado_em", null),
-      supabase.from("contratos_campos").select("contrato_id").eq("utilizador_id", user.id).in("estado", ["proposto", "em_conflito"]),
+    const [{ servicos, geral }, { data: porAssociar }] = await Promise.all([
+      carregarProtecao(supabase, user.id),
       supabase
         .from("documentos_monitor")
         .select("id")
         .eq("utilizador_id", user.id)
         .is("contrato_id", null)
         .in("associacao_estado", ["possivel", "conflito"]),
-      listaFornecedores(),
     ]);
     const hoje = hojeLisboa();
-    const proximas = (servicos ?? [])
-      .map((s) => ({ s, p: proximaData(s, hoje) }))
-      .filter((x) => x.p)
-      .sort((a, b) => a.p!.dias - b.p!.dias);
-    const proxima = proximas[0];
+    const proxima = geral.proxima;
     protecao = {
-      servicos: (servicos ?? []).length,
-      proximoEvento: proxima
-        ? `${nomeComercial(proxima.s.fornecedor, fornecedores) ?? "Serviço"}: ${textoProximaData(proxima.p).toLowerCase()}`
-        : null,
+      servicos: servicos.length,
+      proximoEvento: proxima ? `${proxima.servico}: ${textoProximaData(proxima.proxima).toLowerCase()}` : null,
+      resultado:
+        servicos.length > 0
+          ? {
+              titulo: geral.titulo,
+              texto: geral.texto,
+              tom: geral.estado === "encontramos" ? "atencao" : geral.estado === "verificado" ? "ok" : "info",
+              ultimaVerificacao: geral.ultimaVerificacao ? dataExtenso(geral.ultimaVerificacao, hoje) : null,
+            }
+          : null,
     };
-    const servicosPorConfirmar = new Set((porConfirmar ?? []).map((c) => c.contrato_id)).size;
+    // O que a DoLado encontrou (revisto e comunicado) vem primeiro.
+    for (const s of geral.situacoes) {
+      atencao.push({
+        id: `protecao-situacao-${s.id}`,
+        titulo: `Encontrámos algo que merece a sua atenção · ${s.servicoNome}`,
+        texto: s.resumo ?? "A DoLado reviu uma situação num dos seus serviços. Veja o que encontrámos e o que pode fazer.",
+        href: `/portal/contratos/${s.servicoId}#resultado`,
+        cta: "Ver o que encontrámos",
+      });
+    }
+    const servicosPorConfirmar = servicos.filter((s) => s.confirmar).length;
     if (servicosPorConfirmar > 0) {
       atencao.push({
         id: "protecao-confirmar",
