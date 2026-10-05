@@ -2,6 +2,8 @@ import Link from "next/link";
 import { casosGuardados, resumoPlanoPortal, type CongelamentoCasos } from "@/lib/acesso";
 import { obterAcesso, requireUser } from "@/lib/auth";
 import { IVA_INCLUIDO, PLANOS, formatarPreco, textoCasosDisponiveis } from "@/lib/planos";
+import { linhasDaCobranca } from "@/lib/proximaCobranca";
+import { obterResumoCobranca } from "@/lib/stripe/proximaCobranca";
 import { PRAZO_LIVRE_RESOLUCAO_DIAS, ROTAS_LEGAIS } from "@/lib/legal";
 import { CONTACTO_EMAIL, MARKETING_SITE_URL } from "@/lib/site";
 import { manterSubscricao } from "./actions";
@@ -45,13 +47,18 @@ export default async function GestaoSubscricaoPage({
   const resumo = resumoPlanoPortal(acesso);
   const guardados = casosGuardados((congelamentos ?? []) as CongelamentoCasos[]);
   const comSubscricao = resumo.plano !== "sem_plano";
+  const plano = comSubscricao ? PLANOS[resumo.plano as "protecao" | "caso_protecao"] : null;
+
+  // Valor efetivo da próxima cobrança, com os descontos em vigor no Stripe.
+  // Só quando há renovação (com cancelamento agendado não há próxima cobrança).
+  const cobranca = await obterResumoCobranca(supabase, user.id, resumo);
 
   const linhas: { label: string; valor: string }[] = [];
-  if (comSubscricao) {
-    const plano = PLANOS[resumo.plano as "protecao" | "caso_protecao"];
+  if (plano) {
     linhas.push({ label: "Plano atual", valor: plano.nome });
     if (resumo.estado) linhas.push({ label: "Estado da subscrição", valor: resumo.estado });
-    linhas.push({ label: "Valor", valor: `${formatarPreco(plano.precoCentimos)} por mês (${IVA_INCLUIDO})` });
+    linhas.push({ label: "Preço do plano", valor: `${formatarPreco(plano.precoCentimos)}/mês (${IVA_INCLUIDO})` });
+    if (cobranca) linhas.push(...linhasDaCobranca(cobranca));
     if (resumo.renovacao) linhas.push({ label: "Próxima renovação", valor: formatarData(resumo.renovacao) });
     if (resumo.fimAgendado) linhas.push({ label: "A Proteção termina em", valor: formatarData(resumo.fimAgendado) });
   } else {
@@ -84,7 +91,7 @@ export default async function GestaoSubscricaoPage({
       <section aria-labelledby="plano" className={`${CARTAO} flex flex-col gap-5`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id="plano" className={TITULO_CARTAO}>
-            {comSubscricao ? PLANOS[resumo.plano as "protecao" | "caso_protecao"].nome : "Sem subscrição ativa"}
+            {plano ? plano.nome : "Sem subscrição ativa"}
           </h2>
           {comSubscricao && (
             <Etiqueta tom={resumo.fimAgendado ? "espera" : acesso.temProtecao ? "concluido" : "neutro"}>
