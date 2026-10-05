@@ -44,6 +44,7 @@ import {
   type TipoIdentificador,
 } from "./identificacao";
 import { VERSAO_REGRA_CESSACAO, compararCessacao, textoCessacaoDivergente } from "./custoSaida";
+import { erroAlterarTipo, lerTipoDocumento, type ErroAlterarTipo } from "./tipoDocumento";
 import {
   PROMPT_FATURA,
   PROMPT_FATURA_VERSAO,
@@ -936,6 +937,53 @@ export async function reiniciarProcessamento(documentoId: string, limiteParadoIs
     .select("id")
     .maybeSingle();
   return !!parado;
+}
+
+// ---------------------------------------------------------------------------
+// Alteração do tipo de um documento (revisão da DoLado)
+// ---------------------------------------------------------------------------
+// O pipeline segue documentos_monitor.tipo; o revisor corrige o tipo quando o
+// cliente escolheu o errado (ex.: contrato enviado como fatura). A função SQL
+// põe de parte a leitura antiga e o que dela foi registado e grava a
+// auditoria; depois o documento é lido de novo com o pipeline do tipo novo
+// (o mesmo ficheiro, sem novo upload). Nunca chamada pela IA: só pela Server
+// Action do backoffice, depois de requireAdmin().
+
+export type ResultadoAlterarTipo =
+  | { ok: true; tipoAnterior: string; processamento: ResultadoProcessamento }
+  | { ok: false; erro: ErroAlterarTipo };
+
+export async function alterarTipoDocumento(a: { documentoId: string; novoTipo: string; por: string }): Promise<ResultadoAlterarTipo> {
+  const novoTipo = lerTipoDocumento(a.novoTipo);
+  if (!novoTipo) return { ok: false, erro: "tipo_invalido" };
+  const admin = createAdminClient();
+
+  const { data, error } = await admin.rpc("monitor_documento_alterar_tipo", { p_documento: a.documentoId, p_tipo: novoTipo, p_por: a.por });
+  if (error) {
+    const erro = erroAlterarTipo(error);
+    if (erro === "erro") console.error(`[monitor] falha ao alterar o tipo do documento ${a.documentoId}:`, error.message);
+    return { ok: false, erro };
+  }
+  const alteracao = data as { tipo_anterior: string; contrato_id: string | null; fatura_removida: boolean };
+
+  // A fatura posta de parte deixa de contar no histórico das outras.
+  if (alteracao.fatura_removida && alteracao.contrato_id) await recalcularAcompanhamento(admin, alteracao.contrato_id);
+
+  const processamento = await processarDocumentoNaRevisao(a.documentoId);
+  return { ok: true, tipoAnterior: alteracao.tipo_anterior, processamento };
+}
+
+/**
+ * Leitura pedida no backoffice ("Ler de novo", alteração do tipo): o mesmo
+ * pipeline do upload, a correr no próprio pedido. No fim, a etapa fica
+ * concluída (ou "falhou", para o cliente poder tentar de novo) — sem isto o
+ * documento ficava em "a_registar" e parecia parado no portal.
+ */
+export async function processarDocumentoNaRevisao(documentoId: string): Promise<ResultadoProcessamento> {
+  const r = await processarDocumento(documentoId);
+  const transitoria = r.estado === "pendente" && falhaTransitoria(r.motivo);
+  await marcarEtapa(createAdminClient(), documentoId, transitoria ? "falhou" : "concluido");
+  return r;
 }
 
 // ---------------------------------------------------------------------------

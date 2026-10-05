@@ -199,6 +199,8 @@ select is(
                            -- 20261004090000: só service_role (ou trigger), search_path fixo
                            'monitor_valor_contratual', 'monitor_versao_sincronizar', 'monitor_versao_nova',
                            'monitor_eventos_substituir', 'faturas_monitor_atualizar_verificacao',
+                           -- 20261005100000: só service_role; testes em monitor_tipo_documento.test.sql
+                           'monitor_documento_alterar_tipo',
                            -- compras sem conta / associação (só service_role; testes em compras_sem_conta.test.sql)
                            'conta_existe_com_email', 'registar_compra_sem_conta', 'reclamar_compra_sem_conta',
                            'compras_sem_conta_pendentes', 'reservar_lembrete_compra', 'compras_sem_conta_resolver_ao_ligar')), 0::bigint,
