@@ -1,5 +1,7 @@
 # Política de Privacidade 2026-10-05 — alterações para validação
 
+**Validada pela advogada** — confirmado por Thiago a 05/10/2026.
+
 Versão em vigor: **2026-10-03** (validada pela advogada; confirmado por Thiago a 05/10/2026).
 Nova versão: **2026-10-05** (`src/app/(legal)/privacidade/_versoes/v2026-10-05.tsx`).
 
