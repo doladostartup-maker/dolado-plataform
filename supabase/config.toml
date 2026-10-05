@@ -23,3 +23,20 @@ verify_jwt = false
 [auth.email.template.confirmation]
 subject = "Confirme o seu e-mail na DoLado"
 content_path = "./supabase/templates/confirmacao.html"
+
+# E-mail "Reset password" (recuperação da palavra-passe, /recuperar-palavra-passe).
+# Fonte única: supabase/templates/recuperacao.html. A ligação é
+# {{ .RedirectTo }}?token_hash={{ .TokenHash }}, com RedirectTo =
+# <NEXT_PUBLIC_SITE_URL>/redefinir-palavra-passe (enviado pelo servidor):
+# abre a página da DoLado sem gastar o token (só o POST do formulário o
+# valida) e funciona noutro dispositivo ou navegador — ao contrário do
+# {{ .ConfirmationURL }} por omissão (fluxo PKCE, só no mesmo navegador).
+# O URL tem de estar autorizado em Authentication → URL Configuration →
+# Redirect URLs; se não estiver, a Supabase usa o "Site URL"
+# (https://portal.dolado.pt) e o middleware encaminha ?token_hash= da raiz
+# para /redefinir-palavra-passe.
+# Em produção, colar o mesmo assunto e HTML no Dashboard (Authentication →
+# Emails → Templates → Reset Password) sempre que o template mudar.
+[auth.email.template.recovery]
+subject = "Defina uma nova palavra-passe na DoLado"
+content_path = "./supabase/templates/recuperacao.html"

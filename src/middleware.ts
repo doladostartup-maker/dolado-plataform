@@ -15,6 +15,8 @@ const PAGINAS_PUBLICAS = [
   "/registo",
   "/criar-conta",
   "/confirmar-email",
+  "/recuperar-palavra-passe",
+  "/redefinir-palavra-passe",
   "/como-funciona",
   "/transparencia",
   "/sobre-nos",
@@ -110,6 +112,11 @@ export async function middleware(request: NextRequest) {
     // perder no redirecionamento para /entrar.
     if (request.nextUrl.searchParams.has("code")) {
       return NextResponse.redirect(new URL(`/auth/callback${search}`, process.env.NEXT_PUBLIC_SITE_URL ?? request.url));
+    }
+    // Ligação de recuperação da palavra-passe com o redirectTo não autorizado
+    // (a Supabase usa então o "Site URL"): segue para a página certa.
+    if (request.nextUrl.searchParams.has("token_hash")) {
+      return NextResponse.redirect(new URL(`/redefinir-palavra-passe${search}`, process.env.NEXT_PUBLIC_SITE_URL ?? request.url));
     }
     return NextResponse.redirect(new URL("/entrar", request.url));
   }
