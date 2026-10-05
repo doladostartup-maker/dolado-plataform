@@ -4,6 +4,7 @@ import {
   montarHtmlNotificacaoNovoPagamento,
 } from "@/lib/email/pagamento";
 import { CONTACTO_EMAIL } from "@/lib/site";
+import { agendarRascunhoIA } from "@/lib/rascunhoIA/servidor";
 import type Stripe from "stripe";
 import { getStripe as stripeReal } from "@/lib/stripe/client";
 import { planoDoPreco } from "@/lib/stripe/planos";
@@ -642,6 +643,9 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
         p_origem_avulso: origemAvulso,
       });
       falhar("converter_pedido_em_caso", error);
+      // Sugestão do texto pela IA: depois da resposta ao Stripe, idempotente
+      // (um reenvio do evento não gera outra), nunca bloqueia o webhook.
+      agendarRascunhoIA(data as string | null);
       return (data as string | null) ?? null;
     },
 

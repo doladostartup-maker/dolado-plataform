@@ -1,10 +1,17 @@
 import { CANAIS_ENVIO, ESTADO_TEXTO_EQUIPA, EVENTOS_CASO, type EstadoTexto } from "@/lib/textoCaso";
+import { ROTULO_SUGESTAO_POR_REVER, ROTULO_SUGESTAO_REVISTA } from "@/lib/rascunhoIA/apresentacao";
 import { enviarTextoParaRevisao, guardarTexto, registarEnvioTexto } from "../texto-actions";
+import { guardarTextoRevisto } from "../rascunho-ia-actions";
+import { DetalhesSugestao, PainelRascunhoIA, type GeracaoIA } from "./RascunhoIA";
 
 // Texto para envio (equipa). A autorização do cliente aparece só para
 // leitura: não há — nem a base de dados aceita — forma de a criar ou editar
 // aqui. "Registar envio" só passa na base de dados com a versão atual
 // autorizada.
+//
+// Sugestão da IA: uma versão de origem "ia" mostra "Sugestão IA · Por rever"
+// e só pode ser enviada ao cliente depois de "Guardar e marcar como revisto"
+// (a base de dados recusa o envio antes disso).
 
 export type VersaoTexto = {
   id: string;
@@ -18,6 +25,9 @@ export type VersaoTexto = {
   alteracoes_solicitadas_em: string | null;
   enviado_em: string | null;
   substituido_em: string | null;
+  origem: "equipa" | "ia";
+  rascunho_ia_id: string | null;
+  revisto_em: string | null;
 };
 export type AutorizacaoTexto = { texto_id: string; autorizado_em: string; metodo: string; conteudo_sha256: string };
 export type PedidoAlteracao = { texto_id: string; mensagem: string; created_at: string; metodo: string };
@@ -38,17 +48,50 @@ function dataHora(iso: string | null) {
   return iso ? new Date(iso).toLocaleString("pt-PT", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Lisbon" }) : "—";
 }
 
-function EditorTexto({ casoId, inicial, rotulo, aviso }: { casoId: string; inicial: string; rotulo: string; aviso?: string }) {
+function EditorTexto({
+  casoId,
+  inicial,
+  rotulo,
+  aviso,
+  sugestaoPorRever = false,
+}: {
+  casoId: string;
+  inicial: string;
+  rotulo: string;
+  aviso?: string;
+  sugestaoPorRever?: boolean;
+}) {
   return (
     <form action={guardarTexto.bind(null, casoId)} className="flex flex-col gap-2">
       {aviso && <p className="text-[13px] text-[var(--color-status-urgent)]">{aviso}</p>}
-      <textarea name="conteudo" defaultValue={inicial} rows={14} required className={TEXTAREA} />
-      <div>
+      <textarea name="conteudo" defaultValue={inicial} rows={sugestaoPorRever ? 20 : 14} required className={TEXTAREA} />
+      <div className="flex flex-wrap gap-3">
         <button type="submit" className={BOTAO_SEC}>
           {rotulo}
         </button>
+        {sugestaoPorRever && (
+          <button type="submit" formAction={guardarTextoRevisto.bind(null, casoId)} className={BOTAO}>
+            Guardar e marcar como revisto
+          </button>
+        )}
       </div>
     </form>
+  );
+}
+
+function SeloOrigem({ versao }: { versao: VersaoTexto }) {
+  if (versao.origem !== "ia") return null;
+  const porRever = !versao.revisto_em;
+  return (
+    <span
+      className={`ml-2 rounded-[var(--radius-pill)] px-2 py-0.5 text-[11px] font-semibold ${
+        porRever
+          ? "bg-[var(--color-status-urgent-wash)] text-[var(--color-status-urgent)]"
+          : "bg-[var(--color-status-success-wash)] text-[var(--color-status-success)]"
+      }`}
+    >
+      {porRever ? ROTULO_SUGESTAO_POR_REVER : `${ROTULO_SUGESTAO_REVISTA} ${dataHora(versao.revisto_em)}`}
+    </span>
   );
 }
 
@@ -60,6 +103,9 @@ export function TextoCaso({
   pedidos,
   envios,
   eventos,
+  geracoes,
+  iaAtiva,
+  agora,
   ok,
   erro,
 }: {
@@ -70,6 +116,9 @@ export function TextoCaso({
   pedidos: PedidoAlteracao[];
   envios: EnvioTexto[];
   eventos: EventoCaso[];
+  geracoes: GeracaoIA[];
+  iaAtiva: boolean;
+  agora: number;
   ok?: string;
   erro?: string;
 }) {
@@ -77,6 +126,10 @@ export function TextoCaso({
   const autorizacao = atual ? autorizacoes.find((a) => a.texto_id === atual.id) : undefined;
   const pedidosAtual = atual ? pedidos.filter((p) => p.texto_id === atual.id) : [];
   const envio = atual ? envios.find((e) => e.texto_id === atual.id) : undefined;
+  const sugestaoPorRever = !!atual && atual.origem === "ia" && !atual.revisto_em && atual.estado === "rascunho";
+  const geracaoAtual = atual?.rascunho_ia_id ? geracoes.find((g) => g.id === atual.rascunho_ia_id) : undefined;
+  const aplicadas = new Set(versoes.flatMap((v) => (v.rascunho_ia_id ? [v.rascunho_ia_id] : [])));
+  const podeGerar = !atual || atual.estado === "rascunho" || atual.estado === "alteracoes_solicitadas";
 
   return (
     <section id="texto" className="flex flex-col gap-4">
@@ -84,6 +137,8 @@ export function TextoCaso({
       {ok && <p className="text-sm text-[var(--color-status-success)]">{ok}</p>}
       {erro && <p className="text-sm text-[var(--color-status-danger)]">{erro}</p>}
       {!temEmail && <p className="text-sm text-[var(--color-status-danger)]">Este caso não tem e-mail: não é possível enviar o texto para revisão.</p>}
+
+      <PainelRascunhoIA casoId={casoId} ativa={iaAtiva} podeGerar={podeGerar} geracoes={geracoes} aplicadas={aplicadas} agora={agora} />
 
       {!atual && (
         <div className={CAIXA}>
@@ -96,6 +151,7 @@ export function TextoCaso({
         <div className={CAIXA}>
           <p className="text-sm font-semibold text-[var(--color-ink)]">
             Versão {atual.versao} · {ESTADO_TEXTO_EQUIPA[atual.estado]}
+            <SeloOrigem versao={atual} />
           </p>
           <p className="text-[12px] text-[var(--color-ink-faint)]">
             Criada {dataHora(atual.created_at)} · SHA-256 {atual.conteudo_sha256.slice(0, 12)}…
@@ -103,11 +159,21 @@ export function TextoCaso({
 
           {atual.estado === "rascunho" && (
             <>
-              <EditorTexto casoId={casoId} inicial={atual.conteudo} rotulo="Guardar rascunho" />
+              {sugestaoPorRever && (
+                <p className="text-[13px] text-[var(--color-ink)]">
+                  Texto sugerido pela IA, ainda não validado pela DoLado. Confirme os factos, preencha os marcadores e verifique
+                  a fundamentação. Só depois de “Guardar e marcar como revisto” pode ser enviado ao cliente.
+                </p>
+              )}
+              <EditorTexto casoId={casoId} inicial={atual.conteudo} rotulo="Guardar rascunho" sugestaoPorRever={sugestaoPorRever} />
+              {geracaoAtual && <DetalhesSugestao geracao={geracaoAtual} />}
               <form action={enviarTextoParaRevisao.bind(null, casoId, atual.id)}>
-                <button type="submit" className={BOTAO} disabled={!temEmail}>
+                <button type="submit" className={BOTAO} disabled={!temEmail || sugestaoPorRever}>
                   Enviar ao cliente para revisão
                 </button>
+                {sugestaoPorRever && (
+                  <p className="mt-1 text-[12px] text-[var(--color-ink-faint)]">Disponível depois de marcar a sugestão como revista.</p>
+                )}
               </form>
             </>
           )}

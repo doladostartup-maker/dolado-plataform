@@ -15,6 +15,8 @@ import {
 } from "../_components/TextoCaso";
 import { EnviosCaso, type ComprovativoEquipa, type EnvioEquipa } from "../_components/EnviosCaso";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { rascunhoIAAtivo } from "@/lib/rascunhoIA/servidor";
+import type { GeracaoIA } from "../_components/RascunhoIA";
 
 export default async function CasoDetalhePage({
   params,
@@ -44,10 +46,10 @@ export default async function CasoDetalhePage({
     .order("created_at", { ascending: false });
 
   // Texto para envio: leitura com a sessão do admin (RLS: só SELECT).
-  const [versoes, autorizacoes, pedidos, envios, eventos] = await Promise.all([
+  const [versoes, autorizacoes, pedidos, envios, eventos, geracoes] = await Promise.all([
     supabase
       .from("casos_textos")
-      .select("id, versao, conteudo, conteudo_sha256, estado, created_at, enviado_para_revisao_em, autorizado_em, alteracoes_solicitadas_em, enviado_em, substituido_em")
+      .select("id, versao, conteudo, conteudo_sha256, estado, created_at, enviado_para_revisao_em, autorizado_em, alteracoes_solicitadas_em, enviado_em, substituido_em, origem, rascunho_ia_id, revisto_em")
       .eq("caso_id", id)
       .order("versao", { ascending: false }),
     supabase.from("casos_textos_autorizacoes").select("texto_id, autorizado_em, metodo, conteudo_sha256").eq("caso_id", id),
@@ -58,6 +60,13 @@ export default async function CasoDetalhePage({
       .eq("caso_id", id)
       .order("enviado_em"),
     supabase.from("casos_eventos").select("tipo, versao, ator, created_at").eq("caso_id", id).order("created_at"),
+    // Sugestões da IA (só o admin lê — RLS).
+    supabase
+      .from("casos_rascunhos_ia")
+      .select("id, estado, origem, erro, erro_detalhe, modelo, created_at, concluido_em, confianca, resposta, regras_enviadas")
+      .eq("caso_id", id)
+      .order("created_at", { ascending: false })
+      .limit(10),
   ]);
 
   // Comprovativos: com a service role (o layout já exigiu admin) para ler a
@@ -84,6 +93,7 @@ export default async function CasoDetalhePage({
   const recusar = decidirCaso.bind(null, id, "recusou");
   const carregarComId = carregarAnexo.bind(null, id);
 
+  const agora = new Date().getTime();
   const criadoEm = new Date(caso.created_at).toLocaleString("pt-PT", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -139,6 +149,9 @@ export default async function CasoDetalhePage({
         pedidos={(pedidos.data ?? []) as PedidoAlteracao[]}
         envios={(envios.data ?? []) as EnvioTexto[]}
         eventos={(eventos.data ?? []) as EventoCaso[]}
+        geracoes={(geracoes.data ?? []) as GeracaoIA[]}
+        iaAtiva={rascunhoIAAtivo()}
+        agora={agora}
         ok={query.texto_ok}
         erro={query.texto_erro}
       />
