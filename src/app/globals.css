@@ -89,11 +89,12 @@ body {
 }
 
 /* Design System V2 (docs/design/design-system-v2.md). Ativo dentro de
-   .tema-v2 (PaginaV2, páginas públicas) e de .tema-portal (portal do
-   cliente, desde 04/10/2026); nunca no backoffice, autenticação, checkout
-   nem e-mails. */
+   .tema-v2 (PaginaV2, páginas públicas), de .tema-portal (portal do
+   cliente, desde 04/10/2026) e de .tema-backoffice (backoffice, desde
+   05/10/2026); nunca no Stripe Checkout. */
 .tema-v2,
-.tema-portal {
+.tema-portal,
+.tema-backoffice {
   --v2-navy: #0B2545;
   --v2-muted: #55657A;
   --v2-line: #E4EAF1;
@@ -138,11 +139,12 @@ body {
   letter-spacing: -0.015em;
 }
 
-/* Portal do cliente no V2: os componentes do portal que ainda usam os tokens
+/* Portal do cliente e backoffice no V2: componentes que ainda usem os tokens
    antigos (--color-*, --radius-*, --shadow-*) passam a ver os valores V2,
    sem mexer na lógica de cada ficheiro. Componentes novos usam as classes de
-   src/components/portal/ui.ts. */
-.tema-portal {
+   src/components/portal/ui.ts e src/components/backoffice/ui.ts. */
+.tema-portal,
+.tema-backoffice {
   --color-canvas: #F7F9FC;
   --color-surface: #FFFFFF;
   --color-surface-sunken: #F1F5F9;
@@ -172,7 +174,8 @@ body {
   --shadow-subtle: 0 1px 2px rgba(11, 37, 69, 0.04);
   --shadow-md: 0 12px 32px -12px rgba(11, 37, 69, 0.22);
 }
-.tema-portal :focus-visible {
+.tema-portal :focus-visible,
+.tema-backoffice :focus-visible {
   outline: 2px solid var(--v2-green);
   outline-offset: 2px;
 }

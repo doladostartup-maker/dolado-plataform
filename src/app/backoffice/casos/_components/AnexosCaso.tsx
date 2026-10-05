@@ -1,3 +1,7 @@
+import { ConfirmarAcao } from "@/components/backoffice/ConfirmarAcao";
+import { IconeClipe, IconeLixo } from "@/components/backoffice/Icones";
+import { BOTAO_DESTRUTIVO, BOTAO_PEQUENO, BOTAO_SECUNDARIO, CAMPO_FICHEIRO, LIGACAO, ROTULO, AJUDA_CAMPO } from "@/components/backoffice/ui";
+
 type Anexo = {
   id: string;
   nome_ficheiro: string;
@@ -13,6 +17,12 @@ function formatarTamanho(bytes: number | null) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function data(iso: string) {
+  return new Date(iso).toLocaleDateString("pt-PT", { timeZone: "Europe/Lisbon" });
+}
+
+// Anexos do caso (DocumentCard): abrir, apagar (com confirmação — não se
+// recupera) e carregar.
 export function AnexosCaso({
   anexos,
   carregarAction,
@@ -22,55 +32,57 @@ export function AnexosCaso({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-sm font-semibold text-[var(--color-ink-muted)]">Anexos</h2>
-
       {anexos.length === 0 ? (
-        <p className="text-sm text-[var(--color-ink-faint)]">Sem anexos.</p>
+        <p className="text-[14px] text-[var(--v2-muted)]">Sem anexos.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {anexos.map((anexo) => (
             <li
               key={anexo.id}
-              className="flex items-center justify-between gap-3 rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-4 py-2.5"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-[var(--v2-line)] bg-white px-3.5 py-2.5"
             >
-              <a
-                href={`/api/anexos/${anexo.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="truncate text-sm font-medium text-[var(--color-brand)] underline"
-              >
-                {anexo.nome_ficheiro}
-              </a>
-              <div className="flex flex-none items-center gap-3">
-                <span className="text-[var(--text-caption)] text-[var(--color-ink-faint)]">
-                  {formatarTamanho(anexo.tamanho_bytes)}
+              <span className="flex min-w-0 items-center gap-2.5">
+                <span aria-hidden className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-[var(--v2-surface)] text-[var(--v2-muted)]">
+                  <IconeClipe tamanho={16} />
                 </span>
-                <form action={anexo.apagarAction}>
-                  <button
-                    type="submit"
-                    className="text-[var(--text-caption)] text-[var(--color-status-danger)] hover:underline"
-                  >
-                    Apagar
-                  </button>
-                </form>
-              </div>
+                <span className="flex min-w-0 flex-col">
+                  <a href={`/api/anexos/${anexo.id}`} target="_blank" rel="noopener noreferrer" className={`${LIGACAO} truncate text-[14px]`}>
+                    {anexo.nome_ficheiro}
+                  </a>
+                  <span className="text-[12.5px] text-[var(--v2-muted)]">
+                    {[formatarTamanho(anexo.tamanho_bytes), `carregado a ${data(anexo.created_at)}`].filter(Boolean).join(" · ")}
+                  </span>
+                </span>
+              </span>
+              <form action={anexo.apagarAction}>
+                <ConfirmarAcao
+                  className={`${BOTAO_DESTRUTIVO} ${BOTAO_PEQUENO}`}
+                  titulo="Apagar este anexo?"
+                  descricao={
+                    <>
+                      O ficheiro <strong className="text-[var(--v2-navy)]">{anexo.nome_ficheiro}</strong> é apagado de forma permanente e não pode ser recuperado.
+                    </>
+                  }
+                  confirmar="Apagar anexo"
+                  destrutiva
+                  aDecorrer="A apagar…"
+                >
+                  <IconeLixo tamanho={15} />
+                  Apagar
+                </ConfirmarAcao>
+              </form>
             </li>
           ))}
         </ul>
       )}
 
-      <form action={carregarAction} className="flex items-center gap-3">
-        <input
-          type="file"
-          name="ficheiro"
-          required
-          accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx"
-          className="text-sm text-[var(--color-ink-muted)] file:mr-3 file:rounded-[var(--radius-button)] file:border file:border-[var(--color-hairline)] file:bg-[var(--color-surface)] file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-[var(--color-ink)]"
-        />
-        <button
-          type="submit"
-          className="rounded-[var(--radius-button)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-[14px] py-[8px] text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-hairline-strong)]"
-        >
+      <form action={carregarAction} className="flex flex-col gap-2 rounded-[12px] border border-dashed border-[var(--v2-line-strong)] p-3.5 sm:flex-row sm:items-end">
+        <label className={`${ROTULO} flex-1`}>
+          Carregar anexo
+          <input type="file" name="ficheiro" required accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx" className={CAMPO_FICHEIRO} />
+          <span className={AJUDA_CAMPO}>PDF, imagem, Word ou Excel.</span>
+        </label>
+        <button type="submit" className={BOTAO_SECUNDARIO}>
           Carregar
         </button>
       </form>

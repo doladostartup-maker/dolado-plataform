@@ -1,15 +1,26 @@
 import { requireAdmin } from "@/lib/auth";
 import { resolverSubscricaoDuplicada } from "./actions";
+import { CabecalhoPagina, TituloSeccao } from "@/components/backoffice/Cabecalho";
+import { BotaoSubmeter } from "@/components/backoffice/BotaoSubmeter";
+import { IconeCirculoVisto } from "@/components/backoffice/Icones";
+import { Aviso } from "@/components/portal/Aviso";
+import { EstadoVazio } from "@/components/portal/EstadoVazio";
+import {
+  BOTAO_PEQUENO,
+  BOTAO_SECUNDARIO,
+  CAMPO,
+  CODIGO,
+  TABELA,
+  TABELA_MOLDURA,
+  TABELA_TD,
+  TABELA_TH,
+  TABELA_TR,
+} from "@/components/backoffice/ui";
 
 // Estado operacional das compras: pagas sem conta associada (lembretes a 1
 // e 3 dias) e subscrições duplicadas por rever. Nada aqui cancela ou
 // reembolsa — isso é decidido e feito no Stripe Dashboard; aqui só se
 // regista a resolução.
-
-const TH = "px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]";
-const TD = "px-3 py-2 align-top text-[var(--color-ink)]";
-const CAIXA =
-  "overflow-x-auto rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] shadow-[var(--shadow-subtle)]";
 
 function data(iso: string | null) {
   return iso ? new Date(iso).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon" }) : "—";
@@ -55,59 +66,60 @@ export default async function ComprasBackofficePage({
   ]);
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">Compras por rever</h1>
-        <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
-          Cancelamentos e reembolsos são sempre decididos e feitos à mão no Stripe Dashboard.
-        </p>
-      </div>
-      {params.erro && <p className="text-sm text-[var(--color-status-danger)]">{params.erro}</p>}
-      {params.resolvida && <p className="text-sm text-[var(--color-ink)]">Resolução registada.</p>}
+    <div className="flex flex-col gap-7">
+      <CabecalhoPagina
+        contexto="Pagamentos"
+        titulo="Compras por rever"
+        descricao="Subscrições duplicadas e compras pagas sem conta. Cancelamentos e reembolsos são sempre decididos e feitos à mão no Stripe Dashboard; aqui só se regista a resolução."
+      />
+      {params.erro && <Aviso tom="erro">{params.erro}</Aviso>}
+      {params.resolvida && <Aviso tom="sucesso">Resolução registada.</Aviso>}
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-[15px] font-semibold text-[var(--color-ink)]">Subscrições duplicadas</h2>
+      <section aria-labelledby="duplicadas" className="flex flex-col gap-3">
+        <TituloSeccao
+          id="duplicadas"
+          titulo="Subscrições duplicadas"
+          contagem={(duplicadas ?? []).length}
+          descricao="A segunda subscrição não foi aplicada. Resolva no Stripe e registe o que foi feito."
+        />
         {(duplicadas ?? []).length === 0 ? (
-          <p className="text-sm text-[var(--color-ink-muted)]">Nenhuma por rever.</p>
+          <EstadoVazio icone={<IconeCirculoVisto tamanho={20} />} titulo="Nenhuma por rever." />
         ) : (
-          <div className={CAIXA}>
-            <table className="w-full text-left text-sm">
-              <thead className="bg-[var(--color-surface-sunken)]">
+          <div className={TABELA_MOLDURA}>
+            <table className={TABELA}>
+              <thead>
                 <tr>
-                  <th className={TH}>Conta</th>
-                  <th className={TH}>Subscrição existente</th>
-                  <th className={TH}>Nova subscrição</th>
-                  <th className={TH}>Detetada</th>
-                  <th className={TH}>Resolução</th>
+                  <th scope="col" className={TABELA_TH}>Conta</th>
+                  <th scope="col" className={TABELA_TH}>Subscrição existente</th>
+                  <th scope="col" className={TABELA_TH}>Nova subscrição</th>
+                  <th scope="col" className={TABELA_TH}>Detetada</th>
+                  <th scope="col" className={TABELA_TH}>Resolução</th>
                 </tr>
               </thead>
               <tbody>
                 {(duplicadas as Duplicada[]).map((d) => (
-                  <tr key={d.nova_subscription_id} className="border-t border-[var(--color-hairline)]">
-                    <td className={TD}>{d.user_id ?? "—"}</td>
-                    <td className={TD}>{d.subscricao_existente_id}</td>
-                    <td className={TD}>
-                      {d.nova_subscription_id}
-                      {d.stripe_session_id && (
-                        <span className="block text-[12px] text-[var(--color-ink-faint)]">{d.stripe_session_id}</span>
-                      )}
+                  <tr key={d.nova_subscription_id} className={TABELA_TR}>
+                    <td className={TABELA_TD}>
+                      <span className={CODIGO}>{d.user_id ?? "—"}</span>
                     </td>
-                    <td className={TD}>
+                    <td className={TABELA_TD}>
+                      <span className={CODIGO}>{d.subscricao_existente_id}</span>
+                    </td>
+                    <td className={TABELA_TD}>
+                      <span className={CODIGO}>{d.nova_subscription_id}</span>
+                      {d.stripe_session_id && <span className={`${CODIGO} block`}>{d.stripe_session_id}</span>}
+                    </td>
+                    <td className={`${TABELA_TD} text-[13px]`}>
                       {data(d.detetado_em)}
-                      <span className="block text-[12px] text-[var(--color-ink-faint)]">{d.origem}</span>
+                      <span className="block text-[12.5px] text-[var(--v2-muted)]">{d.origem}</span>
                     </td>
-                    <td className={TD}>
-                      <form action={resolverSubscricaoDuplicada.bind(null, d.nova_subscription_id)} className="flex flex-col gap-2">
-                        <textarea
-                          name="nota"
-                          required
-                          rows={2}
-                          placeholder="O que foi feito no Stripe"
-                          className="min-w-[220px] rounded-[var(--radius-input)] border border-[var(--color-hairline)] px-2 py-1 text-[13px]"
-                        />
-                        <button type="submit" className="self-start text-[13px] text-[var(--color-brand)] underline">
-                          Marcar como resolvida
-                        </button>
+                    <td className={TABELA_TD}>
+                      <form action={resolverSubscricaoDuplicada.bind(null, d.nova_subscription_id)} className="flex min-w-[240px] flex-col gap-2">
+                        <label className="flex flex-col gap-1 text-[12.5px] font-semibold">
+                          O que foi feito no Stripe
+                          <textarea name="nota" required rows={2} className={CAMPO} />
+                        </label>
+                        <BotaoSubmeter className={`${BOTAO_SECUNDARIO} ${BOTAO_PEQUENO} self-start`}>Marcar como resolvida</BotaoSubmeter>
                       </form>
                     </td>
                   </tr>
@@ -118,33 +130,38 @@ export default async function ComprasBackofficePage({
         )}
       </section>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-[15px] font-semibold text-[var(--color-ink)]">Compras pagas sem conta</h2>
+      <section aria-labelledby="sem-conta" className="flex flex-col gap-3">
+        <TituloSeccao
+          id="sem-conta"
+          titulo="Compras pagas sem conta"
+          contagem={(semConta ?? []).length}
+          descricao="O cliente recebe lembretes a 1 e 3 dias para criar conta ou associar a compra."
+        />
         {(semConta ?? []).length === 0 ? (
-          <p className="text-sm text-[var(--color-ink-muted)]">Nenhuma.</p>
+          <EstadoVazio icone={<IconeCirculoVisto tamanho={20} />} titulo="Nenhuma." />
         ) : (
-          <div className={CAIXA}>
-            <table className="w-full text-left text-sm">
-              <thead className="bg-[var(--color-surface-sunken)]">
+          <div className={TABELA_MOLDURA}>
+            <table className={TABELA}>
+              <thead>
                 <tr>
-                  <th className={TH}>E-mail</th>
-                  <th className={TH}>Plano</th>
-                  <th className={TH}>Confirmada</th>
-                  <th className={TH}>Lembrete 1 dia</th>
-                  <th className={TH}>Lembrete 3 dias</th>
+                  <th scope="col" className={TABELA_TH}>E-mail</th>
+                  <th scope="col" className={TABELA_TH}>Plano</th>
+                  <th scope="col" className={TABELA_TH}>Confirmada</th>
+                  <th scope="col" className={TABELA_TH}>Lembrete 1 dia</th>
+                  <th scope="col" className={TABELA_TH}>Lembrete 3 dias</th>
                 </tr>
               </thead>
               <tbody>
                 {(semConta as SemConta[]).map((c) => (
-                  <tr key={c.stripe_session_id} className="border-t border-[var(--color-hairline)]">
-                    <td className={TD}>
-                      {c.email}
-                      <span className="block text-[12px] text-[var(--color-ink-faint)]">{c.stripe_session_id}</span>
+                  <tr key={c.stripe_session_id} className={TABELA_TR}>
+                    <td className={TABELA_TD}>
+                      <span className="block font-semibold">{c.email}</span>
+                      <span className={`${CODIGO} block`}>{c.stripe_session_id}</span>
                     </td>
-                    <td className={TD}>{c.plano}</td>
-                    <td className={TD}>{data(c.confirmado_em)}</td>
-                    <td className={TD}>{data(c.lembrete_1d_em)}</td>
-                    <td className={TD}>{data(c.lembrete_3d_em)}</td>
+                    <td className={TABELA_TD}>{c.plano}</td>
+                    <td className={`${TABELA_TD} text-[13px]`}>{data(c.confirmado_em)}</td>
+                    <td className={`${TABELA_TD} text-[13px]`}>{data(c.lembrete_1d_em)}</td>
+                    <td className={`${TABELA_TD} text-[13px]`}>{data(c.lembrete_3d_em)}</td>
                   </tr>
                 ))}
               </tbody>

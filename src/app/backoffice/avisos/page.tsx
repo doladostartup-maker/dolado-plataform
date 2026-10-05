@@ -2,6 +2,12 @@ import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarAvisoSectorial } from "./actions";
 import { AvisoSetorialForm } from "./_components/AvisoSetorialForm";
+import { CabecalhoPagina, TituloSeccao } from "@/components/backoffice/Cabecalho";
+import { Seccao } from "@/components/backoffice/Blocos";
+import { IconeMegafone } from "@/components/backoffice/Icones";
+import { Aviso } from "@/components/portal/Aviso";
+import { EstadoVazio } from "@/components/portal/EstadoVazio";
+import { TABELA, TABELA_MOLDURA, TABELA_TD, TABELA_TH, TABELA_TR } from "@/components/backoffice/ui";
 
 const SETORES = ["Telecomunicações", "Energia", "Água"];
 
@@ -30,63 +36,57 @@ export default async function AvisosSetoriaisPage({
     .limit(20);
 
   return (
-    <div className="flex max-w-2xl flex-col gap-6">
-      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-        Avisos Sectoriais
-      </h1>
-      <p className="text-sm text-[var(--color-ink-muted)]">
-        Envia um aviso por e-mail a todos os clientes com Proteção ativa que subscreveram o setor escolhido.
-      </p>
+    <div className="flex flex-col gap-6">
+      <CabecalhoPagina
+        contexto="Conteúdos"
+        titulo="Avisos setoriais"
+        descricao="Envia um aviso por e-mail a todos os clientes com Proteção ativa que subscreveram o setor escolhido."
+      />
 
       {params.enviado && (
-        <p className="text-sm text-[var(--color-status-success)]">
-          ✓ Aviso enviado a {params.enviado} cliente{params.enviado === "1" ? "" : "s"}.
-        </p>
+        <Aviso tom="sucesso">
+          Aviso enviado a {params.enviado} cliente{params.enviado === "1" ? "" : "s"}.
+        </Aviso>
       )}
-      {params.erro && <p className="text-sm text-[var(--color-status-danger)]">{params.erro}</p>}
+      {params.erro && <Aviso tom="erro">{params.erro}</Aviso>}
 
-      <AvisoSetorialForm action={enviarAvisoSectorial} contagens={contagens} />
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <Seccao titulo="Novo aviso">
+          <AvisoSetorialForm action={enviarAvisoSectorial} contagens={contagens} />
+        </Seccao>
 
-      <div className="flex flex-col gap-3">
-        <h2 className="text-[var(--text-subheading)] font-medium text-[var(--color-ink)]">
-          Avisos recentes
-        </h2>
-        {avisos && avisos.length > 0 ? (
-          <div className="overflow-x-auto rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] shadow-[var(--shadow-subtle)]">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-[var(--color-surface-sunken)]">
-                <tr>
-                  <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
-                    Setor
-                  </th>
-                  <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
-                    Título
-                  </th>
-                  <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
-                    Destinatários
-                  </th>
-                  <th className="px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]">
-                    Enviado em
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {avisos.map((aviso) => (
-                  <tr key={aviso.id} className="border-t border-[var(--color-hairline)]">
-                    <td className="px-3 py-2 text-[var(--color-ink)]">{aviso.setor}</td>
-                    <td className="px-3 py-2 text-[var(--color-ink)]">{aviso.titulo}</td>
-                    <td className="px-3 py-2 text-[var(--color-ink)]">{aviso.destinatarios_count}</td>
-                    <td className="px-3 py-2 text-[var(--color-ink-muted)]">
-                      {new Date(aviso.enviado_em).toLocaleString("pt-PT")}
-                    </td>
+        <section aria-labelledby="recentes" className="flex flex-col gap-3">
+          <TituloSeccao id="recentes" titulo="Avisos recentes" />
+          {avisos && avisos.length > 0 ? (
+            <div className={TABELA_MOLDURA}>
+              <table className={TABELA}>
+                <thead>
+                  <tr>
+                    <th scope="col" className={TABELA_TH}>Aviso</th>
+                    <th scope="col" className={`${TABELA_TH} text-right`}>Destinatários</th>
+                    <th scope="col" className={`${TABELA_TH} text-right`}>Enviado em</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-sm text-[var(--color-ink-muted)]">Ainda não foi enviado nenhum aviso.</p>
-        )}
+                </thead>
+                <tbody>
+                  {avisos.map((aviso) => (
+                    <tr key={aviso.id} className={TABELA_TR}>
+                      <td className={TABELA_TD}>
+                        <span className="block font-semibold">{aviso.titulo}</span>
+                        <span className="block text-[12.5px] text-[var(--v2-muted)]">{aviso.setor}</span>
+                      </td>
+                      <td className={`${TABELA_TD} text-right tabular-nums`}>{aviso.destinatarios_count}</td>
+                      <td className={`${TABELA_TD} whitespace-nowrap text-right text-[13px] text-[var(--v2-muted)]`}>
+                        {new Date(aviso.enviado_em).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon" })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EstadoVazio icone={<IconeMegafone tamanho={20} />} titulo="Ainda não foi enviado nenhum aviso." />
+          )}
+        </section>
       </div>
     </div>
   );

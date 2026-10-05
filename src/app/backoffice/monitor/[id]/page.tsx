@@ -1,13 +1,26 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ROTULO_CAMPO, ROTULO_ORIGEM, ROTULO_SETOR, SETORES_CONTRATO, formatarValorCampo } from "@/lib/monitor/contratos";
 import type { CampoContrato } from "@/lib/monitor/extracaoFatura";
 import { criarContratoParaDocumento, definirCampoAdmin, marcarDocumento, reprocessarDocumento } from "../actions";
-import { BotaoAcao } from "../_components/BotaoAcao";
 import { AlterarTipoDocumento } from "../_components/AlterarTipoDocumento";
 import { ROTULO_TIPO_DOCUMENTO, sugestaoTipoDocumento } from "@/lib/monitor/tipoDocumento";
+import type { TomBackoffice } from "@/lib/backoffice/triagem";
+import { CabecalhoPagina } from "@/components/backoffice/Cabecalho";
+import { Dado, Historico, ListaDados, Seccao } from "@/components/backoffice/Blocos";
+import { BotaoSubmeter } from "@/components/backoffice/BotaoSubmeter";
+import { Etiqueta } from "@/components/backoffice/Estado";
+import { Aviso } from "@/components/portal/Aviso";
+import {
+  AJUDA_CAMPO,
+  BOTAO_PRIMARIO,
+  BOTAO_SECUNDARIO,
+  BOTAO_TERCIARIO,
+  CAMPO,
+  LIGACAO,
+  ROTULO,
+} from "@/components/backoffice/ui";
 
 const MOTIVO: Record<string, string> = {
   api_nao_configurada: "A ANTHROPIC_API_KEY não está configurada no servidor (Clever Cloud). O documento fica pendente até haver chave.",
@@ -23,10 +36,16 @@ const MOTIVO: Record<string, string> = {
   erro_inesperado: "Erro inesperado no processamento.",
 };
 
-const INPUT =
-  "rounded-[var(--radius-input)] border border-[var(--color-hairline)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)]";
-const BOTAO =
-  "rounded-[var(--radius-button)] border border-[var(--color-hairline-strong)] px-3 py-1.5 text-sm font-medium text-[var(--color-ink)] hover:border-[var(--color-brand)]";
+const ESTADO_DOC: Record<string, { rotulo: string; tom: TomBackoffice }> = {
+  pendente: { rotulo: "Por processar", tom: "aviso" },
+  a_rever: { rotulo: "Por rever", tom: "acao" },
+  processado: { rotulo: "Lido", tom: "sucesso" },
+  ilegivel: { rotulo: "Ilegível", tom: "erro" },
+};
+
+function dataHora(iso: string) {
+  return new Date(iso).toLocaleString("pt-PT", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Lisbon" });
+}
 
 export default async function DocumentoMonitorPage({
   params,
@@ -65,169 +84,208 @@ export default async function DocumentoMonitorPage({
   const sugestao = sugestaoTipoDocumento(doc, extracoes ?? []);
   const rotuloTipo = (t: string) => ROTULO_TIPO_DOCUMENTO[t] ?? t;
 
+  const estadoDoc = ESTADO_DOC[doc.estado] ?? { rotulo: doc.estado, tom: "neutro" as TomBackoffice };
+  const porTratar = doc.estado === "pendente" || doc.estado === "a_rever";
+
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">{rotuloTipo(doc.tipo)} carregad{doc.tipo === "fatura" ? "a" : "o"}</h1>
-        <Link href="/backoffice/monitor" className="text-sm text-[var(--color-ink-muted)] underline">
-          Voltar
-        </Link>
-      </div>
+    <div className="flex flex-col gap-5">
+      <CabecalhoPagina
+        voltar={{ href: "/backoffice/monitor", texto: "Documentos por tratar" }}
+        contexto="Proteção · documento"
+        titulo={`${rotuloTipo(doc.tipo)} carregad${doc.tipo === "fatura" ? "a" : "o"}`}
+        estado={<Etiqueta tom={estadoDoc.tom}>{estadoDoc.rotulo}</Etiqueta>}
+        meta={
+          <>
+            {conta?.nome ?? "—"} · {conta?.email} · recebido em {dataHora(doc.created_at)}
+          </>
+        }
+      />
 
       {query.resultado && (
-        <div
-          className={`rounded-[10px] border px-4 py-3 text-sm ${
-            query.resultado === "processado"
-              ? "border-[var(--color-status-success)] text-[var(--color-status-success)]"
-              : "border-[var(--color-status-danger)] text-[var(--color-ink)]"
-          }`}
+        <Aviso
+          tom={query.resultado === "processado" ? "sucesso" : "atencao"}
+          titulo={query.resultado === "processado" ? "Documento lido." : `O documento ficou ${query.resultado === "pendente" ? "pendente" : "por rever"}.`}
         >
-          <p className="font-medium">
-            {query.resultado === "processado" ? "✓ Documento lido." : `O documento ficou ${query.resultado === "pendente" ? "pendente" : "por rever"}.`}
-          </p>
           {query.motivo && <p>{MOTIVO[query.motivo] ?? query.motivo}</p>}
-          {query.detalhe && <p className="mt-1 break-words text-[12px] text-[var(--color-ink-faint)]">{MOTIVO[query.detalhe] ?? query.detalhe}</p>}
+          {query.detalhe && <p className="mt-1 break-words text-[12.5px]">{MOTIVO[query.detalhe] ?? query.detalhe}</p>}
+        </Aviso>
+      )}
+      {query.tipo_alterado && (
+        <Aviso tom="sucesso">Tipo alterado para {rotuloTipo(doc.tipo)}. A nova análise foi pedida com o pipeline deste tipo.</Aviso>
+      )}
+      {query.guardado && <Aviso tom="sucesso">Guardado.</Aviso>}
+      {query.erro && <Aviso tom="erro">{query.erro}</Aviso>}
+
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="flex min-w-0 flex-col gap-5">
+          <Seccao
+            titulo="Revisão do documento"
+            destaque={porTratar}
+            descricao="Abra o ficheiro, confirme a leitura e decida. Marcar como revisto ou ilegível tira o documento da fila."
+          >
+            {sugestao && (
+              <Aviso tom="info" titulo={sugestao.texto}>
+                Sugestão da leitura automática. O tipo só muda se o alterar abaixo.
+              </Aviso>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <form action={marcarDocumento}>
+                <input type="hidden" name="documento_id" value={doc.id} />
+                <input type="hidden" name="estado" value="processado" />
+                <BotaoSubmeter className={porTratar ? BOTAO_PRIMARIO : BOTAO_SECUNDARIO}>Marcar como revisto</BotaoSubmeter>
+              </form>
+              <form action={reprocessarDocumento}>
+                <input type="hidden" name="documento_id" value={doc.id} />
+                <BotaoSubmeter className={BOTAO_SECUNDARIO} aDecorrer="A ler… pode demorar até um minuto">
+                  Ler de novo
+                </BotaoSubmeter>
+              </form>
+              <form action={marcarDocumento}>
+                <input type="hidden" name="documento_id" value={doc.id} />
+                <input type="hidden" name="estado" value="ilegivel" />
+                <BotaoSubmeter className={BOTAO_TERCIARIO}>Marcar como ilegível</BotaoSubmeter>
+              </form>
+            </div>
+            <div className="border-t border-[var(--v2-line)] pt-4">
+              <AlterarTipoDocumento documentoId={doc.id} tipoAtual={doc.tipo} sugerido={sugestao?.tipo ?? null} className={BOTAO_SECUNDARIO} inputClassName={CAMPO} />
+            </div>
+          </Seccao>
+
+          {!contrato && (
+            <Seccao titulo="Serviço" descricao="O documento ainda não está associado a nenhum serviço acompanhado.">
+              <form action={criarContratoParaDocumento} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
+                <input type="hidden" name="documento_id" value={doc.id} />
+                <label className={ROTULO}>
+                  Setor
+                  <select name="setor" className={CAMPO} defaultValue="telecomunicacoes">
+                    {SETORES_CONTRATO.map((s) => (
+                      <option key={s} value={s}>
+                        {ROTULO_SETOR[s]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className={ROTULO}>
+                  Fornecedor
+                  <input name="fornecedor" className={CAMPO} />
+                </label>
+                <BotaoSubmeter className={BOTAO_SECUNDARIO}>Criar serviço para este documento</BotaoSubmeter>
+              </form>
+            </Seccao>
+          )}
+
+          {contrato && (
+            <Seccao titulo="Valores do serviço" descricao="Valores atuais, propostos e em conflito, com a origem de cada um.">
+              {(campos ?? []).length === 0 ? (
+                <p className="text-[14px] text-[var(--v2-muted)]">Sem valores registados.</p>
+              ) : (
+                <ListaDados>
+                  {(campos ?? []).map((c) => (
+                    <Dado key={c.id} rotulo={ROTULO_CAMPO[c.campo as CampoContrato]}>
+                      <span className="flex flex-wrap items-center gap-2">
+                        {formatarValorCampo(c.campo as CampoContrato, c.valor)}
+                        <Etiqueta tom={c.estado === "em_conflito" ? "aviso" : c.estado === "proposto" ? "info" : "neutro"}>{c.estado}</Etiqueta>
+                        <span className="text-[12.5px] text-[var(--v2-muted)]">
+                          {ROTULO_ORIGEM[c.origem] ?? c.origem}
+                          {c.confianca ? ` · ${c.confianca}` : ""}
+                        </span>
+                      </span>
+                    </Dado>
+                  ))}
+                </ListaDados>
+              )}
+              <form action={definirCampoAdmin} className="flex flex-col gap-3 rounded-[12px] bg-[var(--v2-surface)] p-3.5">
+                <input type="hidden" name="documento_id" value={doc.id} />
+                <p className="text-[14px] font-bold">Corrigir um valor (origem: DoLado)</p>
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
+                  <label className={ROTULO}>
+                    Campo
+                    <select name="campo" className={CAMPO}>
+                      {(Object.keys(ROTULO_CAMPO) as CampoContrato[]).map((c) => (
+                        <option key={c} value={c}>
+                          {ROTULO_CAMPO[c]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className={ROTULO}>
+                    Valor
+                    <input name="valor" placeholder="AAAA-MM-DD ou 42,99" className={CAMPO} />
+                  </label>
+                  <BotaoSubmeter className={BOTAO_SECUNDARIO}>Definir valor</BotaoSubmeter>
+                </div>
+                <p className={AJUDA_CAMPO}>
+                  Um valor definido aqui passa a ser o atual e fica marcado como corrigido pela DoLado. Não use para concluir sobre o cumprimento da lei ou do
+                  contrato.
+                </p>
+              </form>
+            </Seccao>
+          )}
+
+          <Seccao titulo="Leituras" descricao="Resultados da leitura automática, da mais recente para a mais antiga.">
+            {(extracoes ?? []).length === 0 && <p className="text-[14px] text-[var(--v2-muted)]">Sem leituras.</p>}
+            {(extracoes ?? []).map((e) => (
+              <details key={e.id} className="rounded-[12px] border border-[var(--v2-line)]">
+                <summary className="flex min-h-10 cursor-pointer flex-wrap items-center gap-x-2 px-4 py-2 text-[13.5px]">
+                  <span className="font-semibold">{dataHora(e.created_at)}</span>
+                  <Etiqueta tom={e.estado === "invalidada" ? "neutro" : e.erro ? "erro" : "info"}>{e.estado === "invalidada" ? "posta de parte" : e.estado}</Etiqueta>
+                  <span className="text-[var(--v2-muted)]">
+                    {e.modelo} · {e.schema_versao}
+                    {e.erro ? ` · ${e.erro}` : ""}
+                  </span>
+                </summary>
+                <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words border-t border-[var(--v2-line)] bg-[var(--v2-surface)] p-4 font-mono text-[12px] text-[var(--v2-navy)]">
+                  {JSON.stringify(e.resultado, null, 2)}
+                </pre>
+              </details>
+            ))}
+          </Seccao>
         </div>
-      )}
-      {query.tipo_alterado && <p className="text-sm text-[var(--color-status-success)]">✓ Tipo alterado para {rotuloTipo(doc.tipo)}. A nova análise foi pedida com o pipeline deste tipo.</p>}
-      {query.guardado && <p className="text-sm text-[var(--color-status-success)]">✓ Guardado.</p>}
-      {query.erro && <p className="text-sm text-[var(--color-status-danger)]">{query.erro}</p>}
 
-      <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[max-content_1fr]">
-        <dt className="text-[var(--color-ink-muted)]">Cliente</dt>
-        <dd>{conta?.nome ?? "—"} · {conta?.email}</dd>
-        <dt className="text-[var(--color-ink-muted)]">Tipo indicado pelo cliente</dt>
-        <dd>{rotuloTipo(doc.tipo_indicado)}</dd>
-        <dt className="text-[var(--color-ink-muted)]">Tipo usado pelo sistema</dt>
-        <dd className={doc.tipo !== doc.tipo_indicado ? "font-medium" : undefined}>
-          {rotuloTipo(doc.tipo)}
-          {doc.tipo !== doc.tipo_indicado && " (alterado na revisão)"}
-        </dd>
-        <dt className="text-[var(--color-ink-muted)]">Estado</dt>
-        <dd>{doc.estado}</dd>
-        <dt className="text-[var(--color-ink-muted)]">Ficheiro</dt>
-        <dd>
-          {/* Ligação assinada gerada no clique (rota /api/monitor/documentos). */}
-          <a href={`/api/monitor/documentos/${doc.id}`} target="_blank" rel="noopener noreferrer" className="text-[var(--color-brand)] underline">
-            Abrir ({doc.mime_type}, {Math.round((doc.tamanho_bytes ?? 0) / 1024)} KB)
-          </a>
-        </dd>
-        <dt className="text-[var(--color-ink-muted)]">Contrato</dt>
-        <dd>{contrato ? `${contrato.fornecedor ?? "sem fornecedor"} · ${ROTULO_SETOR[contrato.setor as keyof typeof ROTULO_SETOR]} · ${contrato.estado}` : "por associar"}</dd>
-      </dl>
-
-      {sugestao && (
-        <div className="rounded-[10px] border border-[var(--color-hairline-strong)] px-4 py-3 text-sm text-[var(--color-ink)]">
-          <p className="font-medium">{sugestao.texto}</p>
-          <p className="text-[12.5px] text-[var(--color-ink-faint)]">Sugestão da leitura automática. O tipo só muda se o alterar abaixo.</p>
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2">
-        <AlterarTipoDocumento documentoId={doc.id} tipoAtual={doc.tipo} sugerido={sugestao?.tipo ?? null} className={BOTAO} inputClassName={INPUT} />
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <form action={reprocessarDocumento}>
-          <input type="hidden" name="documento_id" value={doc.id} />
-          <BotaoAcao className={BOTAO} aDecorrer="A ler… pode demorar até um minuto">
-            Ler de novo
-          </BotaoAcao>
-        </form>
-        <form action={marcarDocumento}>
-          <input type="hidden" name="documento_id" value={doc.id} />
-          <input type="hidden" name="estado" value="processado" />
-          <button className={BOTAO}>Marcar como revisto</button>
-        </form>
-        <form action={marcarDocumento}>
-          <input type="hidden" name="documento_id" value={doc.id} />
-          <input type="hidden" name="estado" value="ilegivel" />
-          <button className={BOTAO}>Marcar como ilegível</button>
-        </form>
-      </div>
-
-      {!contrato && (
-        <form action={criarContratoParaDocumento} className="flex flex-wrap items-end gap-2">
-          <input type="hidden" name="documento_id" value={doc.id} />
-          <select name="setor" className={INPUT} defaultValue="telecomunicacoes">
-            {SETORES_CONTRATO.map((s) => (
-              <option key={s} value={s}>
-                {ROTULO_SETOR[s]}
-              </option>
-            ))}
-          </select>
-          <input name="fornecedor" placeholder="Fornecedor" className={INPUT} />
-          <button className={BOTAO}>Criar contrato para este documento</button>
-        </form>
-      )}
-
-      {contrato && (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-[var(--text-subheading)] font-medium text-[var(--color-ink)]">Valores do contrato</h2>
-          <ul className="flex flex-col gap-1 text-sm">
-            {(campos ?? []).map((c) => (
-              <li key={c.id}>
-                <strong>{ROTULO_CAMPO[c.campo as CampoContrato]}:</strong> {formatarValorCampo(c.campo as CampoContrato, c.valor)}{" "}
-                <span className="text-[var(--color-ink-faint)]">
-                  ({c.estado} · {ROTULO_ORIGEM[c.origem] ?? c.origem}
-                  {c.confianca ? ` · ${c.confianca}` : ""})
+        <aside aria-label="Dados do documento" className="flex flex-col gap-5 xl:sticky xl:top-6">
+          <Seccao titulo="Documento">
+            <ListaDados>
+              <Dado rotulo="Cliente">
+                {conta?.nome ?? "—"}
+                <span className="block text-[12.5px] text-[var(--v2-muted)]">{conta?.email}</span>
+              </Dado>
+              <Dado rotulo="Tipo indicado pelo cliente">{rotuloTipo(doc.tipo_indicado)}</Dado>
+              <Dado rotulo="Tipo usado pelo sistema">
+                <span className={doc.tipo !== doc.tipo_indicado ? "font-semibold" : undefined}>
+                  {rotuloTipo(doc.tipo)}
+                  {doc.tipo !== doc.tipo_indicado && " (alterado na revisão)"}
                 </span>
-              </li>
-            ))}
-          </ul>
-          <form action={definirCampoAdmin} className="flex flex-wrap items-end gap-2">
-            <input type="hidden" name="documento_id" value={doc.id} />
-            <select name="campo" className={INPUT}>
-              {(Object.keys(ROTULO_CAMPO) as CampoContrato[]).map((c) => (
-                <option key={c} value={c}>
-                  {ROTULO_CAMPO[c]}
-                </option>
-              ))}
-            </select>
-            <input name="valor" placeholder="Valor (AAAA-MM-DD ou 42,99)" className={INPUT} />
-            <button className={BOTAO}>Definir (origem: DoLado)</button>
-          </form>
-          <p className="text-[12.5px] text-[var(--color-ink-faint)]">
-            Um valor definido aqui passa a ser o atual e fica marcado como corrigido pela DoLado. Não use para concluir sobre
-            o cumprimento da lei ou do contrato.
-          </p>
-        </section>
-      )}
+              </Dado>
+              <Dado rotulo="Estado">{doc.estado}</Dado>
+              <Dado rotulo="Ficheiro">
+                {/* Ligação assinada gerada no clique (rota /api/monitor/documentos). */}
+                <a href={`/api/monitor/documentos/${doc.id}`} target="_blank" rel="noopener noreferrer" className={LIGACAO}>
+                  Abrir ({doc.mime_type}, {Math.round((doc.tamanho_bytes ?? 0) / 1024)} KB)
+                </a>
+              </Dado>
+              <Dado rotulo="Serviço">
+                {contrato ? `${contrato.fornecedor ?? "sem fornecedor"} · ${ROTULO_SETOR[contrato.setor as keyof typeof ROTULO_SETOR]} · ${contrato.estado}` : "por associar"}
+              </Dado>
+            </ListaDados>
+          </Seccao>
 
-      {(alteracoesTipo ?? []).length > 0 && (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-[var(--text-subheading)] font-medium text-[var(--color-ink)]">Alterações do tipo</h2>
-          <ul className="flex flex-col gap-1 text-sm">
-            {(alteracoesTipo ?? []).map((a) => (
-              <li key={a.id}>
-                {new Date(a.created_at).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon" })} · {rotuloTipo(a.tipo_anterior)} → {rotuloTipo(a.tipo_novo)} ·{" "}
-                {revisor.get(a.alterado_por) ?? a.alterado_por}
-                <span className="text-[var(--color-ink-faint)]">
-                  {" "}
-                  ({a.leituras_invalidadas} leitura(s) posta(s) de parte
-                  {a.fatura_removida ? " · fatura registada retirada" : ""}
-                  {a.valores_retirados ? ` · ${a.valores_retirados} valor(es) retirado(s)` : ""})
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-[var(--text-subheading)] font-medium text-[var(--color-ink)]">Leituras</h2>
-        {(extracoes ?? []).length === 0 && <p className="text-sm text-[var(--color-ink-muted)]">Sem leituras.</p>}
-        {(extracoes ?? []).map((e) => (
-          <details key={e.id} className="rounded-[10px] border border-[var(--color-hairline)] p-3 text-sm">
-            <summary className="cursor-pointer">
-              {new Date(e.created_at).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon" })} · {e.estado === "invalidada" ? "posta de parte" : e.estado} · {e.modelo} ·{" "}
-              {e.schema_versao}
-              {e.erro ? ` · ${e.erro}` : ""}
-            </summary>
-            <pre className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap break-words text-[12px]">{JSON.stringify(e.resultado, null, 2)}</pre>
-          </details>
-        ))}
-      </section>
+          {(alteracoesTipo ?? []).length > 0 && (
+            <Seccao titulo="Alterações do tipo">
+              <Historico
+                eventos={(alteracoesTipo ?? []).map((a) => ({
+                  id: a.id,
+                  quando: dataHora(a.created_at),
+                  ator: revisor.get(a.alterado_por) ?? a.alterado_por,
+                  titulo: `${rotuloTipo(a.tipo_anterior)} → ${rotuloTipo(a.tipo_novo)}`,
+                  detalhe: `${a.leituras_invalidadas} leitura(s) posta(s) de parte${a.fatura_removida ? " · fatura registada retirada" : ""}${
+                    a.valores_retirados ? ` · ${a.valores_retirados} valor(es) retirado(s)` : ""
+                  }`,
+                }))}
+              />
+            </Seccao>
+          )}
+        </aside>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,20 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { estadoReembolsoPt, formatarEuros, NOME_PLANO, type PlanoDestino } from "@/lib/stripe/conversao";
+import { CabecalhoPagina, TituloSeccao } from "@/components/backoffice/Cabecalho";
+import { IconeCirculoVisto } from "@/components/backoffice/Icones";
+import { Aviso } from "@/components/portal/Aviso";
+import { EstadoVazio } from "@/components/portal/EstadoVazio";
+import {
+  BOTAO_PEQUENO,
+  BOTAO_SECUNDARIO,
+  BOTAO_TERCIARIO,
+  TABELA,
+  TABELA_MOLDURA,
+  TABELA_TD,
+  TABELA_TH,
+  TABELA_TR,
+} from "@/components/backoffice/ui";
 
 // Conversões Avulso → assinatura cujo reembolso parcial falhou ou foi
 // recusado pelo Stripe. A subscrição do cliente continua ativa; o reembolso
@@ -17,8 +31,6 @@ type Linha = {
   stripe_payments: { email: string } | { email: string }[] | null;
 };
 
-const TH = "px-3 py-2 text-[13px] font-semibold text-[var(--color-ink-muted)]";
-
 function emailDe(l: Linha) {
   const p = Array.isArray(l.stripe_payments) ? l.stripe_payments[0] : l.stripe_payments;
   return p?.email ?? "—";
@@ -26,35 +38,39 @@ function emailDe(l: Linha) {
 
 function Tabela({ linhas, resolvidas }: { linhas: Linha[]; resolvidas?: boolean }) {
   return (
-    <div className="overflow-x-auto rounded-[var(--radius-card)] border border-[var(--color-hairline)] bg-[var(--color-surface)] shadow-[var(--shadow-subtle)]">
-      <table className="w-full text-left text-sm">
-        <thead className="bg-[var(--color-surface-sunken)]">
+    <div className={TABELA_MOLDURA}>
+      <table className={TABELA}>
+        <thead>
           <tr>
-            <th className={TH}>Cliente</th>
-            <th className={TH}>Plano</th>
-            <th className={TH}>Reembolso</th>
-            <th className={TH}>{resolvidas ? "Resolvida em" : "Motivo"}</th>
-            <th className={TH} />
+            <th scope="col" className={TABELA_TH}>Cliente</th>
+            <th scope="col" className={TABELA_TH}>Plano</th>
+            <th scope="col" className={TABELA_TH}>Reembolso</th>
+            <th scope="col" className={TABELA_TH}>{resolvidas ? "Resolvida em" : "Motivo"}</th>
+            <th scope="col" className={TABELA_TH}>
+              <span className="sr-only">Ação</span>
+            </th>
           </tr>
         </thead>
         <tbody>
           {linhas.map((l) => (
-            <tr key={l.id} className="border-t border-[var(--color-hairline)]">
-              <td className="px-3 py-2 text-[var(--color-ink)]">{emailDe(l)}</td>
-              <td className="px-3 py-2 text-[var(--color-ink)]">{NOME_PLANO[l.plano_destino]}</td>
-              <td className="px-3 py-2 text-[var(--color-ink)]">
-                {formatarEuros(l.refund_montante_centimos)}
-                <span className="block text-[12px] text-[var(--color-ink-faint)]">
+            <tr key={l.id} className={TABELA_TR}>
+              <td className={`${TABELA_TD} font-semibold`}>{emailDe(l)}</td>
+              <td className={TABELA_TD}>{NOME_PLANO[l.plano_destino]}</td>
+              <td className={TABELA_TD}>
+                <span className="tabular-nums">{formatarEuros(l.refund_montante_centimos)}</span>
+                <span className="block text-[12.5px] text-[var(--v2-muted)]">
                   {l.refund_estado ? `Stripe: ${estadoReembolsoPt(l.refund_estado)}` : "Sem reembolso criado"}
                 </span>
               </td>
-              <td className="px-3 py-2 text-[var(--color-ink-muted)]">
-                {resolvidas
-                  ? new Date(l.intervencao_resolvida_em!).toLocaleString("pt-PT")
-                  : (l.intervencao_motivo ?? "—")}
+              <td className={`${TABELA_TD} text-[13px] text-[var(--v2-muted)]`}>
+                {resolvidas ? new Date(l.intervencao_resolvida_em!).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon" }) : (l.intervencao_motivo ?? "—")}
               </td>
-              <td className="px-3 py-2">
-                <Link href={`/backoffice/conversoes/${l.id}`} className="text-[var(--color-brand)] underline">
+              <td className={`${TABELA_TD} text-right`}>
+                <Link
+                  href={`/backoffice/conversoes/${l.id}`}
+                  prefetch={false}
+                  className={`${resolvidas ? BOTAO_TERCIARIO : BOTAO_SECUNDARIO} ${BOTAO_PEQUENO}`}
+                >
                   {resolvidas ? "Ver" : "Resolver"}
                 </Link>
               </td>
@@ -97,48 +113,46 @@ export default async function ConversoesPage({
   ]);
 
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
-      <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-        Conversões com intervenção
-      </h1>
-      <p className="text-sm text-[var(--color-ink-muted)]">
-        Conversões de um Avulso numa subscrição cujo reembolso parcial falhou ou foi recusado pelo
-        Stripe. A subscrição do cliente continua ativa e nenhum reembolso é repetido
-        automaticamente: resolva no Stripe e registe aqui o que foi feito.
-      </p>
+    <div className="flex flex-col gap-7">
+      <CabecalhoPagina
+        contexto="Pagamentos"
+        titulo="Conversões com intervenção"
+        descricao="Conversões de um Avulso numa subscrição cujo reembolso parcial falhou ou foi recusado pelo Stripe. A subscrição do cliente continua ativa e nenhum reembolso é repetido automaticamente: resolva no Stripe e registe aqui o que foi feito."
+      />
 
-      {params.resolvida && (
-        <p className="text-sm text-[var(--color-status-success)]">✓ Conversão marcada como resolvida.</p>
-      )}
+      {params.resolvida && <Aviso tom="sucesso">Conversão marcada como resolvida.</Aviso>}
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-[15px] font-semibold text-[var(--color-ink)]">Por resolver</h2>
+      <section aria-labelledby="por-resolver" className="flex flex-col gap-3">
+        <TituloSeccao id="por-resolver" titulo="Por resolver" contagem={porResolver?.length ?? 0} />
         {porResolver && porResolver.length > 0 ? (
           <Tabela linhas={porResolver as unknown as Linha[]} />
         ) : (
-          <p className="text-sm text-[var(--color-ink-muted)]">Sem conversões por resolver de momento.</p>
+          <EstadoVazio icone={<IconeCirculoVisto tamanho={20} />} titulo="Sem conversões por resolver de momento." />
         )}
       </section>
 
       {resolvidas && resolvidas.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-[15px] font-semibold text-[var(--color-ink)]">Resolvidas recentemente</h2>
+        <section aria-labelledby="resolvidas" className="flex flex-col gap-3">
+          <TituloSeccao id="resolvidas" titulo="Resolvidas recentemente" />
           <Tabela linhas={resolvidas as unknown as Linha[]} resolvidas />
         </section>
       )}
 
       {anuladas && anuladas.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-[15px] font-semibold text-[var(--color-ink)]">Anuladas automaticamente</h2>
-          <p className="text-sm text-[var(--color-ink-muted)]">
-            O caso do Avulso já não estava disponível quando o pagamento foi confirmado: a subscrição foi cancelada
-            no Stripe, sem reembolso nem casos. Não é preciso fazer nada.
-          </p>
-          <ul className="flex flex-col gap-1 text-sm text-[var(--color-ink)]">
+        <section aria-labelledby="anuladas" className="flex flex-col gap-3">
+          <TituloSeccao
+            id="anuladas"
+            titulo="Anuladas automaticamente"
+            descricao="O caso do Avulso já não estava disponível quando o pagamento foi confirmado: a subscrição foi cancelada no Stripe, sem reembolso nem casos. Não é preciso fazer nada."
+          />
+          <ul className="flex flex-col divide-y divide-[var(--v2-line)] rounded-[14px] border border-[var(--v2-line)] bg-white">
             {(anuladas as unknown as (Linha & { anulada_em: string; anulada_motivo: string | null })[]).map((l) => (
-              <li key={l.id}>
-                {emailDe(l)} · {NOME_PLANO[l.plano_destino]} · {new Date(l.anulada_em).toLocaleString("pt-PT")}
-                <span className="block text-[12px] text-[var(--color-ink-faint)]">{l.anulada_motivo ?? "—"}</span>
+              <li key={l.id} className="flex flex-col gap-0.5 px-4 py-3 text-[14px]">
+                <span>
+                  <span className="font-semibold">{emailDe(l)}</span> · {NOME_PLANO[l.plano_destino]} ·{" "}
+                  {new Date(l.anulada_em).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon" })}
+                </span>
+                <span className="text-[12.5px] text-[var(--v2-muted)]">{l.anulada_motivo ?? "—"}</span>
               </li>
             ))}
           </ul>

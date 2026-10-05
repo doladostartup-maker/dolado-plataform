@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { Logotipo } from "@/components/marketing-v2/Logotipo";
 import { fonteV2 } from "@/components/marketing-v2/fonte";
-import { MenuMovel } from "./_components/MenuMovel";
+import { MenuMovel } from "@/components/navegacao/MenuMovel";
 import { NavegacaoPortal } from "./_components/NavegacaoPortal";
 
 // Portal do cliente no Design System V2 (.tema-portal em globals.css): a

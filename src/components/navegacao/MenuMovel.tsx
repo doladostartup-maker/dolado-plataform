@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 
-// Botão e painel de navegação do portal abaixo de `md`. A navegação em si
+// Botão e painel de navegação (portal e backoffice) abaixo de `md`. A navegação em si
 // (links e "Terminar sessão") vem do layout como children, para ser a mesma
 // da barra lateral.
 export function MenuMovel({ children }: { children: React.ReactNode }) {

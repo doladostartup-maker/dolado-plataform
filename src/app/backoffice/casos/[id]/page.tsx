@@ -1,4 +1,13 @@
 import { notFound } from "next/navigation";
+import { EVENTOS_CASO } from "@/lib/textoCaso";
+import { prazosCaso, proximaAcao } from "@/lib/backoffice/triagem";
+import { CabecalhoPagina } from "@/components/backoffice/Cabecalho";
+import { Dado, Historico, ListaDados, Seccao, type EventoHistorico } from "@/components/backoffice/Blocos";
+import { ConfirmarAcao } from "@/components/backoffice/ConfirmarAcao";
+import { EstadoCaso, Etiqueta, IndicadorPrazo } from "@/components/backoffice/Estado";
+import { dataCurta } from "@/components/backoffice/TabelaCasos";
+import { Aviso } from "@/components/portal/Aviso";
+import { BLOCO_LEITURA, BOTAO_DESTRUTIVO, BOTAO_PRIMARIO, BOTAO_SECUNDARIO, EYEBROW, LIGACAO } from "@/components/backoffice/ui";
 import { createClient } from "@/lib/supabase/server";
 import { actualizarCaso, decidirCaso } from "../actions";
 import { carregarAnexo, apagarAnexo } from "../anexos-actions";
@@ -7,6 +16,7 @@ import { EnviarBoasVindas } from "../_components/EnviarBoasVindas";
 import { AnexosCaso } from "../_components/AnexosCaso";
 import {
   TextoCaso,
+  dataHora,
   type AutorizacaoTexto,
   type EnvioTexto,
   type EventoCaso,
@@ -25,6 +35,8 @@ const ORIGEM_COMERCIAL: Record<string, string> = {
   caso_extra: "Caso Extra (subscritor)",
   avulso: "Avulso",
 };
+
+const ATOR: Record<string, string> = { cliente: "pelo cliente", equipa: "pela DoLado", sistema: "automático" };
 
 export default async function CasoDetalhePage({
   params,
@@ -102,74 +114,226 @@ export default async function CasoDetalhePage({
   const carregarComId = carregarAnexo.bind(null, id);
 
   const agora = new Date().getTime();
-  const criadoEm = new Date(caso.created_at).toLocaleString("pt-PT", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+  const criadoEm = dataHora(caso.created_at);
+
+  // Apresentação: estado, próxima ação e prazos (sem efeitos).
+  const versoesTexto = (versoes.data ?? []) as VersaoTexto[];
+  const atual = versoesTexto[0];
+  const triagem = {
+    ...caso,
+    texto: atual ? { estado: atual.estado, origem: atual.origem, revisto_em: atual.revisto_em, versao: atual.versao } : null,
+  };
+  const acao = proximaAcao(triagem);
+  const prazos = prazosCaso(triagem);
+  const problema = caso.problema_tipo || caso.tipo_problema || "Sem categoria";
+  const aguardaDecisao = caso.status === "Aguardando decisão cliente";
+
+  const historico: EventoHistorico[] = [
+    { id: "criado", quando: criadoEm, titulo: "Caso criado", detalhe: caso.origem ? `Origem: ${caso.origem}` : undefined },
+    ...((eventos.data ?? []) as EventoCaso[]).map((e, i) => ({
+      id: `${i}-${e.created_at}`,
+      quando: dataHora(e.created_at),
+      titulo: `${EVENTOS_CASO[e.tipo] ?? e.tipo}${e.versao ? ` (versão ${e.versao})` : ""}`,
+      ator: ATOR[e.ator] ?? e.ator,
+    })),
+  ];
+
+  const ANCORAS = [
+    ["contexto", "Problema"],
+    ["texto", "Reclamação"],
+    ["envio", "Envio"],
+    ["documentos", "Documentos"],
+    ["dados", "Dados do caso"],
+    ["historico", "Histórico"],
+  ] as const;
 
   return (
-    <div className="flex max-w-2xl flex-col gap-6">
-      <div>
-        <h1 className="text-[var(--text-heading)] font-semibold text-[var(--color-ink)]">
-          {caso.nome}
-        </h1>
-        <p className="text-[var(--text-caption)] text-[var(--color-ink-faint)]">
-          Criado em {criadoEm}
-          {caso.origem && ` · origem: ${caso.origem}`}
-          {` · origem comercial: ${ORIGEM_COMERCIAL[caso.origem_credito as string] ?? "sem registo"}`}
-          {caso.consentimento_alertas && " · marcou a caixa opcional de comunicações"}
-        </p>
-      </div>
+    <div className="flex flex-col gap-5">
+      <CabecalhoPagina
+        voltar={{ href: "/backoffice/casos", texto: "Casos" }}
+        contexto={`${caso.sector ?? "Sem setor"} · ${problema}`}
+        titulo={caso.nome}
+        estado={<EstadoCaso status={caso.status} />}
+        meta={
+          <>
+            Contra <strong className="font-semibold text-[var(--v2-navy)]">{caso.empresa || "empresa por indicar"}</strong> · criado em {criadoEm} ·{" "}
+            origem comercial: {ORIGEM_COMERCIAL[caso.origem_credito as string] ?? "sem registo"}
+          </>
+        }
+        acoes={
+          acao.interna &&
+          acao.ancora && (
+            <a href={`#${acao.ancora}`} className={BOTAO_PRIMARIO}>
+              {acao.rotulo}
+            </a>
+          )
+        }
+      />
 
-      {query.guardado && (
-        <p className="text-sm text-[var(--color-status-success)]">Alterações guardadas.</p>
+      {query.guardado && <Aviso tom="sucesso">Alterações guardadas.</Aviso>}
+      {query.erro && (
+        <Aviso tom="erro" titulo="Não foi possível guardar.">
+          {query.erro}
+        </Aviso>
       )}
-      {query.erro && <p className="text-sm text-[var(--color-status-danger)]">{query.erro}</p>}
 
-      <div className="flex gap-3">
-        <form action={aceitar}>
-          <button
-            type="submit"
-            className="rounded-[var(--radius-button)] border border-[var(--color-status-success)] bg-[var(--color-surface)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-status-success)] hover:bg-[var(--color-status-success-wash)]"
-          >
-            Cliente aceitou oferta
-          </button>
-        </form>
-        <form action={recusar}>
-          <button
-            type="submit"
-            className="rounded-[var(--radius-button)] border border-[var(--color-status-danger)] bg-[var(--color-surface)] px-[18px] py-[10px] text-sm font-medium text-[var(--color-status-danger)] hover:bg-[var(--color-status-danger-wash)]"
-          >
-            Cliente recusou oferta
-          </button>
-        </form>
+      {/* Próxima ação (ActionPanel) e prazos. */}
+      <div
+        className={`grid gap-4 rounded-[14px] border p-4 sm:p-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] ${
+          acao.interna ? "border-[var(--v2-green)] bg-white shadow-[0_0_0_3px_var(--v2-mint)]" : "border-[var(--v2-line)] bg-white"
+        }`}
+      >
+        <div className="flex flex-col gap-1.5">
+          <p className={EYEBROW}>{acao.interna ? "Próxima ação da DoLado" : acao.aguarda ? "A aguardar" : "Estado"}</p>
+          <div>
+            <Etiqueta tom={acao.tom}>{acao.rotulo}</Etiqueta>
+          </div>
+          <p className="text-[14px] text-[var(--v2-muted)]">{acao.descricao}</p>
+        </div>
+        <div className="flex flex-col gap-2">
+          <p className={EYEBROW}>Prazos</p>
+          {prazos.length === 0 ? (
+            <p className="text-[14px] text-[var(--v2-muted)]">Sem prazos a decorrer.</p>
+          ) : (
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {prazos.map((p) => (
+                <li key={p.tipo}>
+                  <IndicadorPrazo prazo={p} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
-      <EnviarBoasVindas
-        casoId={id}
-        enviadoEmInicial={caso.email_boas_vindas_enviado_em ?? null}
-      />
+      {/* Navegação interna */}
+      <nav aria-label="Secções do caso" className="-mx-1 flex gap-1 overflow-x-auto px-1">
+        {ANCORAS.map(([ancora, texto]) => (
+          <a
+            key={ancora}
+            href={`#${ancora}`}
+            className="inline-flex min-h-9 shrink-0 items-center rounded-full border border-[var(--v2-line)] bg-white px-3 text-[13px] font-semibold text-[var(--v2-muted)] hover:border-[var(--v2-green)] hover:text-[var(--v2-navy)]"
+          >
+            {texto}
+          </a>
+        ))}
+      </nav>
 
-      <TextoCaso
-        casoId={id}
-        temEmail={!!caso.email}
-        versoes={(versoes.data ?? []) as VersaoTexto[]}
-        autorizacoes={(autorizacoes.data ?? []) as AutorizacaoTexto[]}
-        pedidos={(pedidos.data ?? []) as PedidoAlteracao[]}
-        envios={(envios.data ?? []) as EnvioTexto[]}
-        eventos={(eventos.data ?? []) as EventoCaso[]}
-        geracoes={(geracoes.data ?? []) as GeracaoIA[]}
-        iaAtiva={rascunhoIAAtivo()}
-        agora={agora}
-        ok={query.texto_ok}
-        erro={query.texto_erro}
-      />
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex min-w-0 flex-col gap-5">
+          <Seccao id="contexto" titulo="Problema" descricao="O que o cliente submeteu.">
+            {caso.descricao ? (
+              <div className={`${BLOCO_LEITURA} whitespace-pre-wrap`}>{caso.descricao}</div>
+            ) : (
+              <p className="text-[14px] text-[var(--v2-muted)]">Sem descrição.</p>
+            )}
+            <ListaDados colunas={2}>
+              <Dado rotulo="Empresa reclamada">{caso.empresa || "—"}</Dado>
+              <Dado rotulo="Setor">{caso.sector ?? "—"}</Dado>
+              <Dado rotulo="O que aconteceu">{caso.problema_tipo || "—"}</Dado>
+              <Dado rotulo="Tipo de problema">{caso.tipo_problema || "—"}</Dado>
+              <Dado rotulo="Já reclamou?">{caso.momento_cliente || "—"}</Dado>
+              <Dado rotulo="Fim da fidelização">{caso.data_fim_fidelidade ? dataCurta(caso.data_fim_fidelidade) : "—"}</Dado>
+              <Dado rotulo="Valor indicado">{caso.valor_indicado != null ? `${caso.valor_indicado} €` : "—"}</Dado>
+              <Dado rotulo="Disposto a pagar">{caso.disposicao_pagar ? "Sim" : "Não"}</Dado>
+            </ListaDados>
+          </Seccao>
 
-      <EnviosCaso casoId={id} envios={enviosEquipa} comprovativos={(comprovativos ?? []) as ComprovativoEquipa[]} />
+          <TextoCaso
+            casoId={id}
+            temEmail={!!caso.email}
+            versoes={versoesTexto}
+            autorizacoes={(autorizacoes.data ?? []) as AutorizacaoTexto[]}
+            pedidos={(pedidos.data ?? []) as PedidoAlteracao[]}
+            envios={(envios.data ?? []) as EnvioTexto[]}
+            geracoes={(geracoes.data ?? []) as GeracaoIA[]}
+            iaAtiva={rascunhoIAAtivo()}
+            agora={agora}
+            ok={query.texto_ok}
+            erro={query.texto_erro}
+            destaque={acao.interna && acao.ancora === "texto"}
+          />
 
-      <AnexosCaso anexos={anexos} carregarAction={carregarComId} />
+          <EnviosCaso casoId={id} envios={enviosEquipa} comprovativos={(comprovativos ?? []) as ComprovativoEquipa[]} />
 
-      <CasoForm action={actualizarComId} valores={caso} submitLabel="Guardar alterações" />
+          <Seccao id="documentos" titulo="Documentos" descricao="Anexos do caso e dossiê.">
+            <AnexosCaso anexos={anexos} carregarAction={carregarComId} />
+            <div className="flex flex-wrap items-center gap-2 border-t border-[var(--v2-line)] pt-3 text-[14px]">
+              <span className="font-semibold">Dossiê:</span>
+              {caso.dossie_url ? (
+                <a href={caso.dossie_url} target="_blank" rel="noopener noreferrer" className={LIGACAO}>
+                  Abrir o dossiê
+                </a>
+              ) : (
+                <span className="text-[var(--v2-muted)]">ainda sem link — preencha em “Dados do caso”.</span>
+              )}
+            </div>
+          </Seccao>
+
+          <Seccao id="dados" titulo="Dados do caso" descricao="Editar todos os campos do caso.">
+            <CasoForm action={actualizarComId} valores={caso} submitLabel="Guardar alterações" />
+          </Seccao>
+
+          <Seccao id="historico" titulo="Histórico" descricao="Eventos registados no caso, do mais antigo ao mais recente. Só leitura.">
+            <Historico eventos={historico} />
+          </Seccao>
+        </div>
+
+        <aside aria-label="Resumo do caso" className="flex flex-col gap-5 xl:sticky xl:top-6">
+          <Seccao titulo="Cliente">
+            <ListaDados>
+              <Dado rotulo="Nome">{caso.nome}</Dado>
+              <Dado rotulo="E-mail">
+                {caso.email ? (
+                  <a href={`mailto:${caso.email}`} className={`${LIGACAO} break-all`}>
+                    {caso.email}
+                  </a>
+                ) : (
+                  <span className="text-[var(--v2-erro)]">Sem e-mail</span>
+                )}
+              </Dado>
+              <Dado rotulo="Telefone">{caso.telefone || "—"}</Dado>
+              <Dado rotulo="Parceiro">{caso.empresa_parceira || "—"}</Dado>
+              <Dado rotulo="Comunicações">{caso.consentimento_alertas ? "Marcou a caixa opcional" : "Sem autorização"}</Dado>
+            </ListaDados>
+            <div className="flex flex-col gap-1.5 border-t border-[var(--v2-line)] pt-3">
+              <p className="text-[13px] font-semibold">E-mail de boas-vindas</p>
+              <EnviarBoasVindas casoId={id} enviadoEmInicial={caso.email_boas_vindas_enviado_em ?? null} />
+            </div>
+          </Seccao>
+
+          <Seccao
+            id="decisao"
+            titulo="Decisão do cliente"
+            descricao="Registar a resposta do cliente à oferta da empresa."
+            destaque={aguardaDecisao}
+          >
+            <div className="flex flex-col gap-2">
+              <form action={aceitar}>
+                <ConfirmarAcao
+                  className={`${aguardaDecisao ? BOTAO_PRIMARIO : BOTAO_SECUNDARIO} w-full`}
+                  titulo="O cliente aceitou a oferta?"
+                  descricao="O caso passa a “Resolvido”, tipo A."
+                  confirmar="Registar: aceitou"
+                >
+                  Cliente aceitou oferta
+                </ConfirmarAcao>
+              </form>
+              <form action={recusar}>
+                <ConfirmarAcao
+                  className={`${BOTAO_DESTRUTIVO} w-full`}
+                  titulo="O cliente recusou a oferta?"
+                  descricao="O caso passa a “Bloqueado / escalada”, tipo B."
+                  confirmar="Registar: recusou"
+                  destrutiva
+                >
+                  Cliente recusou oferta
+                </ConfirmarAcao>
+              </form>
+            </div>
+          </Seccao>
+        </aside>
+      </div>
     </div>
   );
 }
