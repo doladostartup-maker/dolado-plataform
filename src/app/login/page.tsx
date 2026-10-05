@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ehDestinoSeguro } from "@/lib/destinoAuth";
+import { MSG_PALAVRA_PASSE_ALTERADA, ROTA_RECUPERAR } from "@/lib/recuperarPalavraPasse";
 import { Aviso } from "@/components/portal/Aviso";
 import { MolduraConta, SeparadorOu } from "@/components/portal/MolduraConta";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAMPO, LIGACAO, ROTULO } from "@/components/portal/ui";
@@ -8,7 +9,7 @@ import { login } from "./actions";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string; info?: string; next?: string }>;
+  searchParams: Promise<{ erro?: string; info?: string; next?: string; alterada?: string }>;
 }) {
   const params = await searchParams;
   const next = ehDestinoSeguro(params.next) ? params.next : null;
@@ -29,6 +30,7 @@ export default async function LoginPage({
         </>
       }
     >
+      {params.alterada === "1" && <Aviso tom="sucesso">{MSG_PALAVRA_PASSE_ALTERADA}</Aviso>}
       {params.info && <Aviso tom="info">{params.info}</Aviso>}
       {params.erro && <Aviso tom="erro">{params.erro}</Aviso>}
 
@@ -42,6 +44,9 @@ export default async function LoginPage({
           Palavra-passe
           <input name="password" type="password" autoComplete="current-password" required className={CAMPO} />
         </label>
+        <Link href={ROTA_RECUPERAR} prefetch={false} className={`${LIGACAO} -mt-1 self-start text-[14px]`}>
+          Esqueceu-se da palavra-passe?
+        </Link>
         <button type="submit" className={BOTAO_PRIMARIO}>
           Entrar
         </button>
