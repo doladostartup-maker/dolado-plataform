@@ -47,6 +47,62 @@ describe("recuperação da palavra-passe (Supabase Auth real)", { skip: !ATIVO &
     return data.properties.hashed_token;
   }
 
+  // Percurso real: resetPasswordForEmail com o cliente PKCE (como a Server
+  // Action) → e-mail do template supabase/templates/recuperacao.html no
+  // Mailpit → token_hash da ligação → verifyOtp noutro cliente (outro
+  // dispositivo). O token de um pedido PKCE tem o prefixo pkce_.
+  async function ligacaoDoEmail(email, depoisDe) {
+    const base = process.env.CONTRATO_MAILPIT_URL;
+    for (let i = 0; i < 50; i++) {
+      const r = await fetch(`${base}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}`);
+      const { messages = [] } = await r.json();
+      const nova = messages.find((m) => new Date(m.Created).getTime() >= depoisDe);
+      if (nova) {
+        const msg = await (await fetch(`${base}/api/v1/message/${nova.ID}`)).json();
+        assert.equal(msg.Subject, "Defina uma nova palavra-passe na DoLado");
+        const href = msg.HTML.match(/href="([^"]*token_hash=[^"]*)"/)?.[1];
+        assert.ok(href, "ligação com token_hash no e-mail");
+        return new URL(href.replaceAll("&amp;", "&"));
+      }
+      await new Promise((ok) => setTimeout(ok, 200));
+    }
+    throw new Error("e-mail de recuperação não chegou ao Mailpit");
+  }
+
+  async function pedirPeloCliente(email) {
+    const desde = Date.now() - 1000;
+    const { error } = await novoCliente().auth.resetPasswordForEmail(email, {
+      redirectTo: "https://portal.dolado.test/redefinir-palavra-passe",
+    });
+    assert.equal(error, null, error?.message);
+    return ligacaoDoEmail(email, desde);
+  }
+
+  test("e-mail real: a ligação do template abre a sessão de recuperação noutro dispositivo", { skip: !process.env.CONTRATO_MAILPIT_URL && "sem Mailpit" }, async () => {
+    const email = await contaComPalavraPasse("antiga123A");
+    const ligacao = await pedirPeloCliente(email);
+    const token = ligacao.searchParams.get("token_hash");
+    assert.ok(regras.tokenRecuperacaoComFormatoValido(token), `formato: ${token?.slice(0, 8)}…`);
+
+    const outroDispositivo = novoCliente();
+    const { error } = await outroDispositivo.auth.verifyOtp({ type: "recovery", token_hash: token });
+    assert.equal(error, null, error?.message);
+    assert.equal((await outroDispositivo.auth.updateUser({ password: "novaSenha2026" })).error, null);
+    assert.equal((await novoCliente().auth.signInWithPassword({ email, password: "novaSenha2026" })).error, null);
+  });
+
+  test("e-mail real: depois de um segundo pedido, só a ligação do e-mail mais recente funciona", { skip: !process.env.CONTRATO_MAILPIT_URL && "sem Mailpit" }, async () => {
+    const email = await contaComPalavraPasse("antiga123A");
+    const primeira = (await pedirPeloCliente(email)).searchParams.get("token_hash");
+    await new Promise((ok) => setTimeout(ok, 1100)); // limite local: 1 e-mail por segundo por conta
+    const segunda = (await pedirPeloCliente(email)).searchParams.get("token_hash");
+
+    const antiga = await novoCliente().auth.verifyOtp({ type: "recovery", token_hash: primeira });
+    assert.ok(antiga.error, "a ligação do primeiro e-mail deixa de servir");
+    assert.equal(regras.estadoLigacaoDoErro(antiga.error.code, antiga.error.message), "expirada");
+    assert.equal((await novoCliente().auth.verifyOtp({ type: "recovery", token_hash: segunda })).error, null);
+  });
+
   test("pedido para um e-mail sem conta: sem erro (a Supabase não revela se a conta existe)", async () => {
     const { error } = await novoCliente().auth.resetPasswordForEmail(`inexistente-${randomUUID()}@contrato.test`, {
       redirectTo: "https://portal.dolado.test/redefinir-palavra-passe",

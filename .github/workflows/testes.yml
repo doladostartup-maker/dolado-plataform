@@ -43,8 +43,9 @@ jobs:
         with:
           version: 2.117.0
       - run: npm ci
-      # Só a base de dados, a API (PostgREST) e a Auth: arranque mais rápido.
-      - run: supabase start -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,realtime,postgres-meta
+      # Só a base de dados, a API (PostgREST), a Auth e o Mailpit (e-mails da
+      # Auth, lidos pelo teste da recuperação da palavra-passe).
+      - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,postgres-meta
       # pgTAP (RLS, privilégios, funções SQL) primeiro, com a base acabada de
       # criar: rls_isolamento conta linhas e precisa da base vazia.
       - run: supabase test db

@@ -40,3 +40,8 @@ content_path = "./supabase/templates/confirmacao.html"
 [auth.email.template.recovery]
 subject = "Defina uma nova palavra-passe na DoLado"
 content_path = "./supabase/templates/recuperacao.html"
+
+# Stack local: os testes de contrato enviam vários e-mails da Auth (Mailpit)
+# por execução; o limite local por omissão é 2 por hora.
+[auth.rate_limit]
+email_sent = 100

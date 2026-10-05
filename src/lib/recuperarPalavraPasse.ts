@@ -18,6 +18,34 @@ export const ROTA_REDEFINIR = "/redefinir-palavra-passe";
 export const MSG_PEDIDO_RECUPERACAO =
   "Se existir uma conta associada a este endereço, receberá um e-mail com instruções para definir uma nova palavra-passe.";
 
+/**
+ * Novo pedido para o mesmo endereço antes de passar 1 minuto. Mostrado para
+ * qualquer endereço (com ou sem conta): a decisão é deste servidor, não da
+ * Supabase — o limite da Supabase (1 por minuto) só existe para contas
+ * reais e por isso nunca é mostrado.
+ */
+export const MSG_PEDIDO_RECENTE =
+  "Já pediu uma ligação para este endereço há menos de um minuto. Use a ligação desse e-mail ou aguarde um minuto antes de pedir outra.";
+
+/** Cada novo pedido substitui a ligação anterior: só a mais recente funciona. */
+export const INTERVALO_PEDIDOS_MS = 60 * 1000;
+
+const ultimoPedido = new Map<string, number>();
+
+/**
+ * Regista um pedido de recuperação para o endereço (já normalizado) e diz se
+ * pode seguir para a Supabase. Em memória, por processo — como rateLimit.ts.
+ */
+export function pedidoRecuperacaoPermitido(email: string, agora = Date.now()): boolean {
+  if (ultimoPedido.size >= 1_000) {
+    for (const [e, t] of ultimoPedido) if (agora - t >= INTERVALO_PEDIDOS_MS) ultimoPedido.delete(e);
+  }
+  const anterior = ultimoPedido.get(email);
+  if (anterior !== undefined && agora - anterior < INTERVALO_PEDIDOS_MS) return false;
+  ultimoPedido.set(email, agora);
+  return true;
+}
+
 export const MSG_PALAVRA_PASSE_ALTERADA =
   "A sua palavra-passe foi alterada. Inicie sessão com a nova palavra-passe.";
 
@@ -68,7 +96,8 @@ export function estadoLigacaoDoErro(codigo: string | undefined, mensagem: string
 export const MSG_LIGACAO: Record<EstadoLigacao, { titulo: string; texto: string }> = {
   expirada: {
     titulo: "Esta ligação expirou ou já não é válida.",
-    texto: "Por segurança, cada ligação só pode ser usada uma vez e é válida durante um período limitado. Peça uma nova ligação.",
+    texto:
+      "Por segurança, cada ligação só pode ser usada uma vez e é válida durante um período limitado. Se pediu mais do que uma, só a do e-mail mais recente funciona. Peça uma nova ligação.",
   },
   invalida: {
     titulo: "Esta ligação não é válida.",
