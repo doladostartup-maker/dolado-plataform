@@ -201,6 +201,8 @@ select is(
                            'monitor_eventos_substituir', 'faturas_monitor_atualizar_verificacao',
                            -- 20261005100000: só service_role; testes em monitor_tipo_documento.test.sql
                            'monitor_documento_alterar_tipo',
+                           -- 20261006160000: trigger (sem execute para clientes); testes em monitor_fatura_do_caso.test.sql
+                           'documentos_monitor_anexo_dono',
                            -- compras sem conta / associação (só service_role; testes em compras_sem_conta.test.sql)
                            'conta_existe_com_email', 'registar_compra_sem_conta', 'reclamar_compra_sem_conta',
                            'compras_sem_conta_pendentes', 'reservar_lembrete_compra', 'compras_sem_conta_resolver_ao_ligar',
