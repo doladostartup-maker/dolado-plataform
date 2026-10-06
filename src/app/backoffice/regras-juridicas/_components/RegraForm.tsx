@@ -103,6 +103,9 @@ export function RegraForm({
         <label className={ROTULO}>
           Última revisão
           <input name="revista_em" type="date" defaultValue={v.revista_em ?? ""} className={INPUT} />
+          <span className={AJUDA}>
+            Se alterar o conteúdo jurídico sem indicar uma nova data, a regra deixa de estar revista e fica inativa.
+          </span>
         </label>
       </div>
       <label className={`${LINHA_SELECAO} rounded-[12px] bg-[var(--v2-surface)] p-3`}>

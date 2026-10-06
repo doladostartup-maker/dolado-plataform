@@ -13,7 +13,7 @@ export default async function RegraJuridicaPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ erro?: string }>;
+  searchParams: Promise<{ erro?: string; aviso?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -32,6 +32,7 @@ export default async function RegraJuridicaPage({
         descricao="As sugestões já geradas guardam a versão da regra que receberam; esta alteração só vale para as próximas."
       />
       {query.erro && <Aviso tom="erro">{query.erro}</Aviso>}
+      {query.aviso && <Aviso tom="atencao">{query.aviso}</Aviso>}
       <Seccao titulo="Editar regra">
         <RegraForm action={atualizarRegra.bind(null, regra.id)} valores={regra} submitLabel="Guardar alterações" />
       </Seccao>
