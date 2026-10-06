@@ -1,6 +1,7 @@
 # Política de Privacidade — acompanhamento depois do envio (rascunho para validação)
 
-**Estado: por validar pela advogada.** Nada foi alterado na Política publicada (`2026-10-05`). Este documento
+**Estado: aprovado e publicado como Política `2026-10-06`** (texto aprovado por Thiago a 06/10/2026; DPA do
+Resend obtido a 06/10/2026 — região e mecanismo de transferência na matriz de subcontratantes). Este documento
 descreve o que muda no tratamento com o acompanhamento depois do envio (06/10/2026) e propõe o texto das
 secções a alterar, para uma nova versão (`_versoes/vAAAA-MM-DD.tsx`, sem editar a publicada).
 
