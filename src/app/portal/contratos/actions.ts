@@ -19,6 +19,7 @@ import {
   reiniciarProcessamento,
 } from "@/lib/monitor/servidor";
 import { LIMITE_SEM_AVANCO_MS } from "@/lib/monitor/processamento";
+import { criarDocumentoDaFaturaDoCaso } from "@/lib/monitor/faturaDoCasoServidor";
 import { CAMPOS_EDITAVEIS, SETORES_CONTRATO, lerEurosParaCents, lerMeses, type TipoCampo } from "@/lib/monitor/contratos";
 import { dataValida, type CampoContrato } from "@/lib/monitor/extracaoFatura";
 
@@ -136,6 +137,23 @@ export async function registarDocumento(dados: {
 
   after(() => processarDocumentoEmSegundoPlano(doc.id));
   return { ok: true, documentoId: doc.id };
+}
+
+/**
+ * "Verificar esta fatura": usa a fatura que o cliente enviou num caso como
+ * documento da Proteção, sem novo upload. A posse do caso é verificada no
+ * servidor e na base de dados; o ficheiro é copiado no Storage (o anexo do
+ * caso não muda). A leitura corre depois, como num upload.
+ */
+export async function usarFaturaDoCaso(anexoId: string): Promise<ResultadoRegisto> {
+  const { supabase, user } = await requireProtecao("contratos");
+  if (excedeuLimiteTaxa(`monitor-documento:${user.id}`)) {
+    return { ok: false, erro: "Já carregou vários documentos nos últimos minutos. Tente de novo daqui a pouco." };
+  }
+  const r = await criarDocumentoDaFaturaDoCaso(supabase, user.id, String(anexoId ?? ""));
+  if (!r.ok) return r;
+  if (r.novo) after(() => processarDocumentoEmSegundoPlano(r.documentoId));
+  return { ok: true, documentoId: r.documentoId };
 }
 
 async function documentoDoCliente(documentoId: string) {
