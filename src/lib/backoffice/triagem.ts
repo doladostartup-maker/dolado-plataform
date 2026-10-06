@@ -19,20 +19,30 @@ export const ESTADOS_CASO = [
   "Novo",
   "Em investigação",
   "Aguardando operador",
+  "Resposta em análise",
+  "Aguardando cliente",
   "Aguardando decisão cliente",
   "Resolvido",
   "Bloqueado",
+  "Encerrado sem resolução",
 ] as const;
 
-export const ESTADOS_FINAIS = ["Resolvido", "Bloqueado"];
+/** Estados em que o trabalho da DoLado terminou (resolvido, encaminhado ou encerrado). */
+export const ESTADOS_FINAIS = ["Resolvido", "Bloqueado", "Encerrado sem resolução"];
+
+/** Filtro PostgREST para excluir os estados finais (`.not("status", "in", FILTRO_FINAIS)`). */
+export const FILTRO_FINAIS = '(Resolvido,Bloqueado,"Encerrado sem resolução")';
 
 const ESTADO_CASO: Record<string, { rotulo: string; tom: TomBackoffice }> = {
   Novo: { rotulo: "Novo", tom: "info" },
-  "Em investigação": { rotulo: "Em investigação", tom: "curso" },
-  "Aguardando operador": { rotulo: "A aguardar o operador", tom: "curso" },
-  "Aguardando decisão cliente": { rotulo: "A aguardar decisão do cliente", tom: "aviso" },
+  "Em investigação": { rotulo: "Em preparação", tom: "curso" },
+  "Aguardando operador": { rotulo: "A aguardar resposta da empresa", tom: "curso" },
+  "Resposta em análise": { rotulo: "Resposta em análise", tom: "acao" },
+  "Aguardando cliente": { rotulo: "A aguardar informação do cliente", tom: "curso" },
+  "Aguardando decisão cliente": { rotulo: "A aguardar confirmação do cliente", tom: "aviso" },
   Resolvido: { rotulo: "Resolvido", tom: "sucesso" },
-  Bloqueado: { rotulo: "Bloqueado / escalada", tom: "bloqueado" },
+  Bloqueado: { rotulo: "Encaminhado / escalada", tom: "bloqueado" },
+  "Encerrado sem resolução": { rotulo: "Encerrado sem resolução", tom: "neutro" },
 };
 
 export function estadoCaso(status: string) {
@@ -64,6 +74,10 @@ export type CasoTriagem = {
   data_fim_fidelidade?: string | null;
   /** Versão mais recente do texto (null: ainda não há texto). */
   texto?: TextoResumo | null;
+  /** Comunicações recebidas ainda por analisar. */
+  comunicacoesPorAnalisar?: number;
+  /** Prazo de resposta indicado no último envio (só quando efetivamente aplicável). */
+  prazoRespostaEm?: string | null;
 };
 
 export type ProximaAcao = {
@@ -77,7 +91,7 @@ export type ProximaAcao = {
   /** De quem se espera o próximo passo (null: caso terminado). */
   aguarda: "dolado" | "cliente" | "empresa" | null;
   /** Secção do detalhe do caso onde a ação se faz. */
-  ancora: "texto" | "envio" | "decisao" | "dados" | null;
+  ancora: "texto" | "envio" | "decisao" | "dados" | "comunicacoes" | null;
 };
 
 /** Próxima ação de um caso, a partir do estado e do texto em curso. */
@@ -85,24 +99,51 @@ export function proximaAcao(c: CasoTriagem): ProximaAcao {
   if (c.status === "Resolvido") {
     return { rotulo: "Concluído", descricao: "Caso resolvido. Nada a fazer.", tom: "sucesso", interna: false, aguarda: null, ancora: null };
   }
+  if (c.status === "Encerrado sem resolução") {
+    return { rotulo: "Encerrado", descricao: "Caso encerrado sem resolução. Nada a fazer.", tom: "neutro", interna: false, aguarda: null, ancora: null };
+  }
+  // Uma comunicação recebida por analisar é sempre trabalho da DoLado
+  // (mesmo que chegue num estado inesperado).
+  if ((c.comunicacoesPorAnalisar ?? 0) > 0 || c.status === "Resposta em análise") {
+    const n = c.comunicacoesPorAnalisar ?? 0;
+    return {
+      rotulo: n > 0 ? "Analisar comunicação recebida" : "Analisar e decidir o próximo passo",
+      descricao:
+        n > 1 ? `${n} comunicações recebidas por analisar.` : n === 1 ? "Há uma comunicação recebida por analisar." : "O caso está em análise: decidir o próximo passo.",
+      tom: "acao",
+      interna: true,
+      aguarda: "dolado",
+      ancora: "comunicacoes",
+    };
+  }
   if (c.status === "Bloqueado") {
     return {
-      rotulo: "Bloqueado / escalada",
-      descricao: "O cliente recusou a oferta ou o caso foi escalado. Rever o seguimento.",
+      rotulo: "Encaminhado / escalada",
+      descricao: "O próximo passo indicado ao cliente é outro meio (ou o caso foi escalado). Rever o seguimento se necessário.",
       tom: "bloqueado",
       interna: false,
       aguarda: null,
-      ancora: "dados",
+      ancora: "comunicacoes",
     };
   }
   if (c.status === "Aguardando decisão cliente") {
     return {
-      rotulo: "À espera da decisão do cliente",
-      descricao: "Registar a decisão quando o cliente responder à oferta.",
+      rotulo: "À espera da confirmação do cliente",
+      descricao: "A empresa apresentou uma solução; o cliente confirma no portal se ficou resolvido.",
       tom: "curso",
       interna: false,
       aguarda: "cliente",
       ancora: "decisao",
+    };
+  }
+  if (c.status === "Aguardando cliente") {
+    return {
+      rotulo: "À espera de informação do cliente",
+      descricao: "Foi pedida informação ou documentos ao cliente.",
+      tom: "curso",
+      interna: false,
+      aguarda: "cliente",
+      ancora: "comunicacoes",
     };
   }
 
@@ -170,6 +211,16 @@ export function proximaAcao(c: CasoTriagem): ProximaAcao {
         ancora: "texto",
       };
     case "enviado":
+      if (c.status === "Em investigação") {
+        return {
+          rotulo: "Preparar nova comunicação",
+          descricao: `Depois da análise, é preciso uma nova comunicação à empresa (a versão ${t.versao} já foi enviada).`,
+          tom: "acao",
+          interna: true,
+          aguarda: "dolado",
+          ancora: "texto",
+        };
+      }
       return {
         rotulo: "À espera da resposta da empresa",
         descricao: `Reclamação enviada (versão ${t.versao}).`,
@@ -218,7 +269,19 @@ export function prazosCaso(c: CasoTriagem, hoje: Date = new Date()): Prazo[] {
     });
   }
 
-  const dias = diasUteisRestantes(c.data_envio_reclamacao ?? null);
+  // Prazo de resposta da empresa: só enquanto se aguarda a resposta. Se a
+  // equipa indicou um prazo no envio, vale esse; senão, a referência
+  // interna de 15 dias úteis desde o primeiro envio.
+  if (c.prazoRespostaEm && c.status === "Aguardando operador") {
+    const d = diasCorridosAte(c.prazoRespostaEm, hoje);
+    prazos.push({
+      tipo: "resposta_empresa",
+      rotulo: "Prazo de resposta (indicado)",
+      detalhe: d < 0 ? `Ultrapassado há ${-d} ${d === -1 ? "dia" : "dias"}` : d === 0 ? "Termina hoje" : `Faltam ${d} ${d === 1 ? "dia" : "dias"}`,
+      nivel: d < 0 ? "vencido" : d <= 3 ? "proximo" : "ok",
+    });
+  }
+  const dias = c.prazoRespostaEm || c.status !== "Aguardando operador" ? null : diasUteisRestantes(c.data_envio_reclamacao ?? null);
   if (dias !== null) {
     prazos.push({
       tipo: "resposta_empresa",

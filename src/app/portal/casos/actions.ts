@@ -6,6 +6,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 import { agendarRascunhoIA } from "@/lib/rascunhoIA/servidor";
+import { requireUser } from "@/lib/auth";
+import { avisarEquipa } from "@/lib/comunicacoes/servidor";
+import { FORMATOS, tipoDeclarado, verificarConteudo } from "@/lib/comunicacoes/anexos";
+import { normalizarNomeFicheiro } from "@/lib/comunicacoes/sanitizar";
+import { randomUUID } from "node:crypto";
 
 export async function criarCasoCliente(formData: FormData) {
   const supabase = await createClient();
@@ -82,51 +87,97 @@ export async function criarCasoCliente(formData: FormData) {
   redirect(`/portal/casos/${data.id}`);
 }
 
-export async function decidirClienteCaso(
+/**
+ * Resposta do cliente à solução apresentada pela empresa: "O problema ficou
+ * resolvido" (→ Resolvido) ou "não ficou resolvido" (→ de volta à análise).
+ * A base de dados confirma que o caso é do utilizador da sessão e que está à
+ * espera desta confirmação; nunca fecha por causa do texto da empresa.
+ */
+export async function confirmarResolucaoCliente(
   id: string,
-  decisao: "aceitou" | "recusou",
+  resolvido: boolean,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- exigido pela assinatura de Server Action ligada a um form
   _formData: FormData,
 ) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
+  const { user } = await requireUser();
+  const { data, error } = await createAdminClient().rpc("caso_confirmar_resolucao", {
+    p_caso_id: id,
+    p_utilizador: user.id,
+    p_resolvido: resolvido,
+    p_admin: null,
+  });
+  const r = (data as { resultado?: string } | null)?.resultado;
+  if (r === "invalido") redirect("/portal/casos");
+  if (error || r !== "ok") {
+    redirect(`/portal/casos/${id}?erro=${encodeURIComponent(r === "estado_invalido" ? "Este caso já não está à espera da sua confirmação." : MSG_ERRO_GUARDAR)}`);
   }
+  if (!resolvido) await avisarEquipa(id, "O cliente indicou que o problema não ficou resolvido");
+  revalidatePath(`/portal/casos/${id}`);
+  redirect(`/portal/casos/${id}?confirmado=${resolvido ? "resolvido" : "nao_resolvido"}`);
+}
 
-  // A RLS só devolve o caso se pertencer ao utilizador autenticado —
-  // garante a posse antes de usar a service role para escrever.
-  const { data: caso } = await supabase
-    .from("casos")
-    .select("id, status")
-    .eq("id", id)
-    .single();
+/** Ficheiros que o cliente pode enviar com a informação pedida (iguais ao bucket anexos-casos). */
+const TIPOS_RESPOSTA = ["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic"];
+const MAX_FICHEIROS_RESPOSTA = 5;
+const MAX_TOTAL_RESPOSTA = 20 * 1024 * 1024;
 
-  if (!caso) {
-    redirect("/portal/casos");
-  }
+/**
+ * Resposta do cliente a um pedido de informação: texto e/ou ficheiros. Os
+ * ficheiros vão para o bucket privado do caso com um caminho decidido aqui
+ * (<conta>/<uuid>.<ext>); só a equipa os lê. A base de dados confirma a
+ * posse, que o pedido está aberto, e passa o caso de volta à DoLado.
+ */
+export async function responderPedidoCliente(casoId: string, pedidoId: string, formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const voltar = (erro: string): never => redirect(`/portal/casos/${casoId}?erro=${encodeURIComponent(erro)}#pedido`);
 
-  if (caso.status !== "Aguardando decisão cliente") {
-    redirect(
-      `/portal/casos/${id}?erro=${encodeURIComponent("Este caso já não está à espera de decisão.")}`,
-    );
-  }
+  // RLS: só devolve o pedido se o caso for do utilizador.
+  const { data: pedido } = await supabase.from("casos_pedidos_cliente").select("id, caso_id, estado").eq("id", pedidoId).maybeSingle();
+  if (!pedido || pedido.caso_id !== casoId) redirect("/portal/casos");
+  if (pedido.estado !== "aberto") voltar("Este pedido já foi respondido.");
+
+  const texto = ((formData.get("resposta") as string | null) ?? "").replace(/\r\n/g, "\n").trim();
+  if (texto.length > 5000) voltar("O texto é demasiado longo (máximo de 5000 caracteres).");
+  const ficheiros = (formData.getAll("ficheiros") as File[]).filter((f) => f && f.size > 0);
+  if (!texto && ficheiros.length === 0) voltar("Escreva a informação pedida ou junte um ficheiro.");
+  if (ficheiros.length > MAX_FICHEIROS_RESPOSTA) voltar(`Pode juntar no máximo ${MAX_FICHEIROS_RESPOSTA} ficheiros.`);
+  if (ficheiros.reduce((s, f) => s + f.size, 0) > MAX_TOTAL_RESPOSTA) voltar("Os ficheiros têm mais de 20 MB no total.");
 
   const admin = createAdminClient();
-  const dados =
-    decisao === "aceitou"
-      ? { status: "Resolvido", tipo_abc: "A" }
-      : { status: "Bloqueado", tipo_abc: "B" };
-
-  const { error } = await admin.from("casos").update(dados).eq("id", id);
-
-  if (error) {
-    redirect(`/portal/casos/${id}?erro=${encodeURIComponent(MSG_ERRO_GUARDAR)}`);
+  const guardados: { path: string; nome: string; mime: string; tamanho: number }[] = [];
+  for (const f of ficheiros) {
+    const formato = FORMATOS.find((x) => x.mime === tipoDeclarado(f.type));
+    const bytes = new Uint8Array(await f.arrayBuffer());
+    if (!formato || !TIPOS_RESPOSTA.includes(formato.mime) || !verificarConteudo(formato, bytes).ok) {
+      await admin.storage.from("anexos-casos").remove(guardados.map((g) => g.path));
+      voltar(`“${f.name.slice(0, 60)}” não é um ficheiro aceite (PDF ou imagem).`);
+    }
+    const path = `${user.id}/${randomUUID()}.${formato!.extensao}`;
+    const { error } = await admin.storage.from("anexos-casos").upload(path, bytes, { contentType: formato!.mime, upsert: false });
+    if (error) {
+      await admin.storage.from("anexos-casos").remove(guardados.map((g) => g.path));
+      voltar("Não foi possível carregar os ficheiros. Tente novamente.");
+    }
+    guardados.push({ path, nome: normalizarNomeFicheiro(f.name, formato!.extensao), mime: formato!.mime, tamanho: f.size });
   }
 
-  revalidatePath(`/portal/casos/${id}`);
-  redirect(`/portal/casos/${id}?guardado=1`);
+  const { data, error } = await admin.rpc("pedido_cliente_responder", {
+    p_pedido_id: pedidoId,
+    p_utilizador: user.id,
+    p_texto: texto,
+    p_anexos: guardados.map((g) => ({ nome: g.nome, tamanho_bytes: g.tamanho })),
+  });
+  const r = (data as { resultado?: string } | null)?.resultado;
+  if (error || r !== "ok") {
+    await admin.storage.from("anexos-casos").remove(guardados.map((g) => g.path));
+    voltar(r === "ja_respondido" ? "Este pedido já foi respondido." : MSG_ERRO_GUARDAR);
+  }
+  if (guardados.length) {
+    await admin.from("anexos").insert(
+      guardados.map((g) => ({ caso_id: casoId, nome_ficheiro: g.nome, caminho_storage: g.path, tipo_mime: g.mime, tamanho_bytes: g.tamanho, pedido_cliente_id: pedidoId })),
+    );
+  }
+  await avisarEquipa(casoId, "O cliente enviou a informação pedida");
+  revalidatePath(`/portal/casos/${casoId}`);
+  redirect(`/portal/casos/${casoId}?informacao=enviada`);
 }

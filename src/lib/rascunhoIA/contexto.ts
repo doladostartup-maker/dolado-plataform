@@ -213,3 +213,28 @@ export function construirContexto(caso: CasoParaRascunho, servicos: ServicoMonit
     })),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Seguimento (nova comunicação depois de uma resposta da empresa)
+
+export type SeguimentoParaRascunho = {
+  /** Comunicações enviadas pela DoLado (mais recente primeiro). */
+  enviadas: { conteudo: string; enviado_em: string }[];
+  ultimaResposta: { texto: string | null; data: string | null } | null;
+  /** Análise humana da DoLado (interna). */
+  analise: string | null;
+};
+
+const MAX_SEGUIMENTO_ENVIADA = 6000;
+const MAX_SEGUIMENTO_RESPOSTA = 8000;
+
+export function construirSeguimento(seg: SeguimentoParaRascunho, nome: string | null) {
+  const limpar = (t: string | null | undefined, max: number) => (t ? retirarDadosPessoais(t.slice(0, max), { nome }) : null);
+  return {
+    comunicacoes_enviadas: seg.enviadas.slice(0, 2).map((e) => ({ data: e.enviado_em.slice(0, 10), texto: limpar(e.conteudo, MAX_SEGUIMENTO_ENVIADA) })),
+    ultima_resposta_da_empresa: seg.ultimaResposta
+      ? { data: seg.ultimaResposta.data?.slice(0, 10) ?? null, texto: limpar(seg.ultimaResposta.texto, MAX_SEGUIMENTO_RESPOSTA) }
+      : null,
+    analise_da_dolado: limpar(seg.analise, 3000),
+  };
+}

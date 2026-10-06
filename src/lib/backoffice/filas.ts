@@ -8,7 +8,7 @@
 import { cache } from "react";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { CasoTriagem, TextoResumo } from "./triagem";
+import { FILTRO_FINAIS, type CasoTriagem, type TextoResumo } from "./triagem";
 
 export type CasoLista = CasoTriagem & {
   id: string;
@@ -29,31 +29,41 @@ export const COLUNAS_CASO_LISTA =
 
 type Supabase = Awaited<ReturnType<typeof requireAdmin>>["supabase"];
 
-/** Junta a cada caso a versão mais recente do texto (ou null). */
+/**
+ * Junta a cada caso a versão mais recente do texto (ou null), as
+ * comunicações recebidas por analisar e o prazo indicado no último envio.
+ */
 export async function juntarTextos(supabase: Supabase, casos: Omit<CasoLista, "texto">[]): Promise<CasoLista[]> {
   if (casos.length === 0) return [];
-  const { data } = await supabase
-    .from("casos_textos")
-    .select("caso_id, versao, estado, origem, revisto_em")
-    .in(
-      "caso_id",
-      casos.map((c) => c.id),
-    )
-    .order("versao", { ascending: false });
+  const ids = casos.map((c) => c.id);
+  const [{ data }, { data: porAnalisar }, { data: envios }] = await Promise.all([
+    supabase.from("casos_textos").select("caso_id, versao, estado, origem, revisto_em").in("caso_id", ids).order("versao", { ascending: false }),
+    supabase.from("casos_comunicacoes_recebidas").select("caso_id").in("caso_id", ids).eq("estado_analise", "por_analisar"),
+    supabase.from("casos_textos_envios").select("caso_id, prazo_resposta_em").in("caso_id", ids).order("enviado_em", { ascending: false }),
+  ]);
   const atual = new Map<string, TextoResumo>();
   for (const t of data ?? []) {
     if (!atual.has(t.caso_id as string)) atual.set(t.caso_id as string, t as unknown as TextoResumo);
   }
-  return casos.map((c) => ({ ...c, texto: atual.get(c.id) ?? null }));
+  const contagem = new Map<string, number>();
+  for (const c of porAnalisar ?? []) contagem.set(c.caso_id as string, (contagem.get(c.caso_id as string) ?? 0) + 1);
+  const prazo = new Map<string, string | null>();
+  for (const e of envios ?? []) if (!prazo.has(e.caso_id as string)) prazo.set(e.caso_id as string, (e.prazo_resposta_em as string | null) ?? null);
+  return casos.map((c) => ({
+    ...c,
+    texto: atual.get(c.id) ?? null,
+    comunicacoesPorAnalisar: contagem.get(c.id) ?? 0,
+    prazoRespostaEm: prazo.get(c.id) ?? null,
+  }));
 }
 
-/** Casos em curso (não resolvidos nem bloqueados) com o texto atual. */
+/** Casos em curso (sem estado final) com o texto atual. */
 export const casosEmCurso = cache(async (): Promise<CasoLista[]> => {
   const { supabase } = await requireAdmin();
   const { data } = await supabase
     .from("casos")
     .select(COLUNAS_CASO_LISTA)
-    .not("status", "in", "(Resolvido,Bloqueado)")
+    .not("status", "in", FILTRO_FINAIS)
     .order("created_at", { ascending: true });
   return juntarTextos(supabase, (data ?? []) as unknown as Omit<CasoLista, "texto">[]);
 });
@@ -63,13 +73,15 @@ export type ContagensFilas = {
   achados: number | null;
   compras: number | null;
   conversoes: number | null;
+  /** E-mails recebidos que não foi possível associar a um caso (quarentena). */
+  naoAssociadas: number | null;
 };
 
 /** Contagens das filas fora dos casos (null = não foi possível ler). */
 export const contagensFilas = cache(async (): Promise<ContagensFilas> => {
   const { supabase } = await requireAdmin();
   const admin = createAdminClient();
-  const [documentos, achados, duplicadas, semConta, conversoes] = await Promise.all([
+  const [documentos, achados, duplicadas, semConta, conversoes, naoAssociadas] = await Promise.all([
     admin
       .from("documentos_monitor")
       .select("id", { count: "exact", head: true })
@@ -79,6 +91,7 @@ export const contagensFilas = cache(async (): Promise<ContagensFilas> => {
     supabase.from("subscricoes_duplicadas").select("nova_subscription_id", { count: "exact", head: true }).eq("estado", "por_rever"),
     supabase.from("compras_sem_conta").select("stripe_session_id", { count: "exact", head: true }).is("resolvido_em", null),
     supabase.from("conversoes_avulso").select("id", { count: "exact", head: true }).eq("requer_intervencao", true),
+    supabase.from("comunicacoes_nao_associadas").select("id", { count: "exact", head: true }).is("revista_em", null),
   ]);
   const n = (r: { count: number | null; error: unknown }) => (r.error ? null : (r.count ?? 0));
   const d = n(duplicadas);
@@ -88,5 +101,6 @@ export const contagensFilas = cache(async (): Promise<ContagensFilas> => {
     achados: n(achados),
     compras: d === null || s === null ? null : d + s,
     conversoes: n(conversoes),
+    naoAssociadas: n(naoAssociadas),
   };
 });

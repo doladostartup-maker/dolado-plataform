@@ -19,6 +19,7 @@ export const MOTIVOS_FALHA: Record<string, string> = {
   orcamento_atingido: "O orçamento da Claude API foi atingido.",
   interrompido: "A geração foi interrompida antes de terminar.",
   caso_inexistente: "O caso não foi encontrado.",
+  sem_envio_anterior: "Ainda não há nenhuma comunicação enviada a que responder.",
   erro_interno: "Erro inesperado ao gerar a sugestão.",
 };
 

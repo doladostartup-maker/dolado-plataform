@@ -11,6 +11,7 @@ import {
   IconeLupaDocumento,
   IconeMais,
   IconeMegafone,
+  IconeMensagem,
   IconePainel,
   IconePasta,
   IconeRelogio,
@@ -30,6 +31,7 @@ export type ContagensNavegacao = {
   achados: number | null;
   compras: number | null;
   conversoes: number | null;
+  naoAssociadas: number | null;
 };
 
 type ItemNav = {
@@ -117,6 +119,7 @@ export function NavegacaoBackoffice({ contagens, email }: { contagens: Contagens
             { href: "/backoffice/casos", texto: "Todos os casos", icone: <IconePasta tamanho={t} />, exceto: ["/backoffice/casos/novo"] },
             { href: "/backoffice/revisao", texto: "Fila de revisão", icone: <IconeVisto tamanho={t} /> },
             { href: "/backoffice/urgentes", texto: "Fidelização a terminar", icone: <IconeRelogio tamanho={t} /> },
+            { href: "/backoffice/respostas-sem-caso", texto: "Respostas sem caso", icone: <IconeMensagem tamanho={t} />, contagem: contagens.naoAssociadas },
           ]}
         />
         <Grupo

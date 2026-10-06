@@ -9,6 +9,7 @@ import {
   BUCKET_COMPROVATIVOS,
   COMPROVATIVO_MAX_BYTES,
   COMPROVATIVO_TIPOS_MIME,
+  MAX_REFERENCIA,
   ehCanalEnvio,
   ehTipoComprovativo,
 } from "@/lib/textoCaso";
@@ -61,6 +62,7 @@ const ERROS_ENVIO: Record<string, string> = {
   versao_antiga: "Envio bloqueado: existe uma versão mais recente.",
   conteudo_diferente: "Envio bloqueado: o texto mudou desde que abriu a página. Atualize e confirme de novo.",
   ja_enviado: "Esta versão já tinha sido registada como enviada.",
+  prazo_sem_base: "Indique a base do prazo de resposta.",
   invalido: "Versão inexistente.",
 };
 
@@ -75,8 +77,14 @@ export async function registarEnvioTexto(casoId: string, textoId: string, formDa
   const canal = formData.get("canal");
   const resultado = ((formData.get("resultado") as string | null) ?? "").trim();
   const hash = formData.get("conteudo_sha256") as string | null;
+  const referencia = ((formData.get("referencia") as string | null) ?? "").trim();
+  const prazo = ((formData.get("prazo_resposta_em") as string | null) ?? "").trim();
+  const prazoBase = ((formData.get("prazo_resposta_base") as string | null) ?? "").trim();
   if (!destinatario || destinatario.length > 300) voltar(casoId, "texto_erro", "Indique o destinatário.");
   if (!ehCanalEnvio(canal)) voltar(casoId, "texto_erro", "Escolha o canal de envio.");
+  if (referencia.length > MAX_REFERENCIA) voltar(casoId, "texto_erro", "A referência é demasiado longa.");
+  if (prazo && !/^\d{4}-\d{2}-\d{2}$/.test(prazo)) voltar(casoId, "texto_erro", "Data do prazo inválida.");
+  if (prazo && !prazoBase) voltar(casoId, "texto_erro", "Indique a base do prazo de resposta (ex.: norma ou compromisso da empresa).");
 
   const { data, error } = await createAdminClient().rpc("texto_registar_envio", {
     p_texto_id: textoId,
@@ -85,10 +93,13 @@ export async function registarEnvioTexto(casoId: string, textoId: string, formDa
     p_canal: canal,
     p_resultado: resultado.slice(0, 1000),
     p_admin: user.id,
+    p_referencia: referencia || null,
+    p_prazo_resposta_em: prazo || null,
+    p_prazo_resposta_base: prazo ? prazoBase.slice(0, 300) : null,
   });
   const r = (data as { resultado?: string } | null)?.resultado;
   if (error || r !== "enviado") voltar(casoId, "texto_erro", ERROS_ENVIO[r ?? ""] ?? "Não foi possível registar o envio.");
-  voltar(casoId, "texto_ok", "Envio registado.");
+  voltar(casoId, "texto_ok", "Envio registado. O caso passou a “A aguardar resposta da empresa”.");
 }
 
 /**

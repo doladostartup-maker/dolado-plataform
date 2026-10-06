@@ -203,7 +203,9 @@ select is(
                            'monitor_documento_alterar_tipo',
                            -- compras sem conta / associação (só service_role; testes em compras_sem_conta.test.sql)
                            'conta_existe_com_email', 'registar_compra_sem_conta', 'reclamar_compra_sem_conta',
-                           'compras_sem_conta_pendentes', 'reservar_lembrete_compra', 'compras_sem_conta_resolver_ao_ligar')), 0::bigint,
+                           'compras_sem_conta_pendentes', 'reservar_lembrete_compra', 'compras_sem_conta_resolver_ao_ligar',
+                           -- 20261006100000: trigger do histórico de estados (só insere esse registo); testes em acompanhamento_pos_envio.test.sql
+                           'casos_registar_estado')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em

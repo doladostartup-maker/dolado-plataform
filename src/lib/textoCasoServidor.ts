@@ -6,6 +6,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ADMIN_EMAIL, enviarEmailBrevo } from "@/lib/email/brevo";
 import {
+  ASSUNTO_NOVA_COMUNICACAO_PARA_REVISAO,
   ASSUNTO_TEXTO_PARA_REVISAO,
   montarHtmlAvisoAlteracoes,
   montarHtmlTextoParaRevisao,
@@ -25,23 +26,29 @@ function novosTokens() {
   return { rever, alterar, hashRever: hashToken(rever), hashAlterar: hashToken(alterar) };
 }
 
-async function assuntoDoTexto(textoId: string) {
+async function contextoDoTexto(textoId: string) {
   const admin = createAdminClient();
-  const { data } = await admin.from("casos_textos").select("casos(empresa, sector)").eq("id", textoId).maybeSingle();
+  const { data } = await admin.from("casos_textos").select("caso_id, casos(empresa, sector)").eq("id", textoId).maybeSingle();
   const caso = (Array.isArray(data?.casos) ? data?.casos[0] : data?.casos) as { empresa: string | null; sector: string | null } | null;
-  return caso?.empresa || caso?.sector || null;
+  // Já houve um envio no caso: este texto é uma nova comunicação à empresa.
+  const { count } = data?.caso_id
+    ? await admin.from("casos_textos_envios").select("id", { count: "exact", head: true }).eq("caso_id", data.caso_id)
+    : { count: 0 };
+  return { assunto: caso?.empresa || caso?.sector || null, seguimento: (count ?? 0) > 0 };
 }
 
 async function enviarLinks(email: string, textoId: string, tokens: ReturnType<typeof novosTokens>, novoLink: boolean) {
+  const { assunto, seguimento } = await contextoDoTexto(textoId);
   await enviarEmailBrevo(
     email,
-    ASSUNTO_TEXTO_PARA_REVISAO,
+    seguimento ? ASSUNTO_NOVA_COMUNICACAO_PARA_REVISAO : ASSUNTO_TEXTO_PARA_REVISAO,
     montarHtmlTextoParaRevisao({
       urlRever: `${SITE_URL}${ROTAS_TEXTO.rever(tokens.rever)}`,
       urlAlterar: `${SITE_URL}${ROTAS_TEXTO.alterar(tokens.alterar)}`,
-      assunto: await assuntoDoTexto(textoId),
+      assunto,
       validadeDias: VALIDADE_LINKS_REVISAO_DIAS,
       novoLink,
+      seguimento,
     }),
   );
 }

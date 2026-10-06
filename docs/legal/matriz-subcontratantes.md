@@ -21,8 +21,9 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 |---|---|---|---|---|---|---|
 | Supabase | Base de dados, autenticação, armazenamento de documentos, funções agendadas | Subcontratante | UE — AWS `eu-west-3` (Paris) | Possíveis (empresa dos EUA) | SCCs (segundo o `CLAUDE.md`) — confirmar no DPA | Obtido |
 | Clever Cloud | Alojamento e execução da aplicação Next.js | Subcontratante | UE — `par` (Paris) | Não previstas — a validar subcontratantes ulteriores | Não aplicável, salvo o que o DPA indicar | Obtido |
-| Brevo | E-mail transacional | Subcontratante | UE (sede em França) | Não previstas — a validar subcontratantes ulteriores | A validar no DPA | Obtido |
-| Anthropic | Claude API (leitura de faturas e contratos no Monitor de Proteção; primeira proposta do texto da reclamação) | Subcontratante | A validar | Possíveis | A validar no DPA (SCCs, se aplicável) | Obtido |
+| Brevo | E-mail transacional (envios) | Subcontratante | UE (sede em França) | Não previstas — a validar subcontratantes ulteriores | A validar no DPA | Obtido |
+| Resend (proposto) | Receção das respostas das empresas (respostas.dolado.pt) — a validar | Subcontratante | A validar (empresa dos EUA) | Possíveis | A validar (SCCs / DPF) | Por obter |
+| Anthropic | Claude API (leitura de faturas e contratos no Monitor de Proteção; primeira proposta do texto da reclamação; proposto: análise preliminar das respostas — a validar) | Subcontratante | A validar | Possíveis | A validar no DPA (SCCs, se aplicável) | Obtido |
 | Stripe | Pagamentos, subscrições, faturação, reembolsos | Subcontratante; responsável autónomo para finalidades próprias | A validar (entidade contratante) | Possíveis | A validar no DPA (SCCs / DPF) | Obtido |
 | Google | GA4, Tag Manager, Google Ads (com consentimento); início de sessão com Google | Subcontratante na medição; responsável autónomo para fins próprios e no início de sessão | A validar | Possíveis | A validar no DPA (SCCs / DPF) | Obtido |
 | Cookiebot (Usercentrics) | Gestão do consentimento de cookies | Subcontratante | A validar | A validar | A validar | **Por confirmar** |
@@ -87,6 +88,20 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 - **DPA:** obtido.
 - **Nota:** ainda não há envio de e-mails comerciais (ver `CLAUDE.md`, "E-mails com novidades e ofertas");
   quando houver, rever esta linha.
+- **Nota (06/10/2026):** a receção das respostas das empresas **não** passa pela Brevo (o inbound da Brevo
+  exige um plano pago) — ver Resend, abaixo.
+
+### Resend (proposto, 06/10/2026 — a validar)
+
+- **Serviço / finalidade:** só **receção** dos e-mails enviados para os endereços dos casos
+  (`*@respostas.dolado.pt`, MX para o Resend): avisa a DoLado (webhook `email.received`, assinado) e a
+  DoLado obtém o conteúdo e os anexos pela API (`src/lib/comunicacoes/`). Não envia e-mails.
+- **Categorias de dados:** conteúdo das respostas das empresas (pode incluir dados do cliente e de
+  trabalhadores da empresa), anexos, cabeçalhos, resultados SPF/DKIM/DMARC; também e-mails sem caso (spam).
+- **Localização / transferências:** empresa com sede nos EUA — **a validar** região de processamento e
+  conservação das mensagens recebidas, prazo de conservação do lado do Resend, subcontratantes ulteriores.
+- **Mecanismo:** a validar (SCCs / Data Privacy Framework). **DPA:** por obter.
+- Só entra em produção depois do DPA e da nova versão da Política (`docs/legal/rascunho-privacidade-respostas-empresas.md`).
 
 ### Anthropic (Claude API)
 
@@ -115,6 +130,11 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 - **Mecanismo:** a validar no DPA (SCCs, se aplicável).
 - **DPA:** obtido.
 - **A validar:** prazo de conservação das entradas/saídas pela Anthropic, segundo o DPA/termos comerciais.
+- **Proposto (06/10/2026, a validar):** **análise preliminar das respostas das empresas**
+  (`src/lib/analiseResposta/`), interna e sempre revista por uma pessoa; dados: problema descrito, última
+  comunicação enviada, até 3 comunicações anteriores e a resposta recebida (com contactos, números e o nome
+  do cliente retirados — melhor esforço), domínio do remetente e tipo dos anexos. Só corre com
+  `ANALISE_RESPOSTA_IA_ATIVO=1`, depois da nova versão da Política.
 - **Estado:** `ANTHROPIC_API_KEY` configurada na Clever Cloud a 03/10/2026 (Monitor). A proposta do texto
   só corre com `RASCUNHO_IA_ATIVO=1`. Sem chave ou desligada, não há envio de dados (fallback manual).
 

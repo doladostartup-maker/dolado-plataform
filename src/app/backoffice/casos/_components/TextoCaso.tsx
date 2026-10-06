@@ -53,7 +53,7 @@ export type VersaoTexto = {
 };
 export type AutorizacaoTexto = { texto_id: string; autorizado_em: string; metodo: string; conteudo_sha256: string };
 export type PedidoAlteracao = { texto_id: string; mensagem: string; created_at: string; metodo: string };
-export type EnvioTexto = { texto_id: string; destinatario: string; canal: string; resultado: string | null; enviado_em: string };
+export type EnvioTexto = { texto_id: string; destinatario: string; canal: string; resultado: string | null; enviado_em: string; referencia?: string | null };
 export type EventoCaso = { tipo: string; versao: number | null; ator: string; created_at: string };
 
 export function dataHora(iso: string | null) {
@@ -141,7 +141,7 @@ function PercursoVersao({ v, autorizacao, pedido, envio }: { v: VersaoTexto; aut
     feitos.push(!!autorizacao);
     passos.push({
       id: "enviado",
-      titulo: "Reclamação enviada à empresa",
+      titulo: "Enviado à empresa",
       quando: envio ? dataHora(envio.enviado_em) : null,
       detalhe: envio ? `${CANAIS_ENVIO[envio.canal as keyof typeof CANAIS_ENVIO] ?? envio.canal} · ${envio.destinatario}` : undefined,
     });
@@ -195,13 +195,21 @@ export function TextoCaso({
   const sugestaoPorRever = !!atual && atual.origem === "ia" && !atual.revisto_em && atual.estado === "rascunho";
   const geracaoAtual = atual?.rascunho_ia_id ? geracoes.find((g) => g.id === atual.rascunho_ia_id) : undefined;
   const aplicadas = new Set(versoes.flatMap((v) => (v.rascunho_ia_id ? [v.rascunho_ia_id] : [])));
-  const podeGerar = !atual || atual.estado === "rascunho" || atual.estado === "alteracoes_solicitadas";
+  const podeGerar = !atual || atual.estado === "rascunho" || atual.estado === "alteracoes_solicitadas" || atual.estado === "enviado";
+  // Depois do primeiro envio, cada nova versão é uma nova comunicação à
+  // empresa (mesmo fluxo: revisão, autorização explícita da versão, envio).
+  const envioAnterior = envios.some((e) => e.texto_id !== atual?.id);
+  const seguimento = envios.length > 0;
 
   return (
     <Seccao
       id="texto"
       titulo="Reclamação"
-      descricao="Texto para envio: preparação, revisão do cliente e envio à empresa."
+      descricao={
+        seguimento
+          ? "Texto para envio: a reclamação e as comunicações seguintes à empresa. Cada nova comunicação é revista e autorizada pelo cliente antes do envio."
+          : "Texto para envio: preparação, revisão do cliente e envio à empresa."
+      }
       destaque={destaque}
       estado={
         atual && (
@@ -219,7 +227,15 @@ export function TextoCaso({
         </Aviso>
       )}
 
-      <PainelRascunhoIA casoId={casoId} ativa={iaAtiva} podeGerar={podeGerar} geracoes={geracoes} aplicadas={aplicadas} agora={agora} />
+      <PainelRascunhoIA
+        casoId={casoId}
+        ativa={iaAtiva}
+        podeGerar={podeGerar}
+        geracoes={geracoes}
+        aplicadas={aplicadas}
+        agora={agora}
+        finalidade={seguimento ? "nova_comunicacao" : "reclamacao"}
+      />
 
       {!atual && (
         <div className="flex flex-col gap-3">
@@ -347,15 +363,36 @@ export function TextoCaso({
                     </select>
                   </label>
                 </div>
-                <label className={ROTULO}>
-                  Resultado ou referência <span className={AJUDA_CAMPO}>(opcional)</span>
-                  <input name="resultado" maxLength={1000} className={CAMPO} />
-                </label>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className={ROTULO}>
+                    N.º / referência da reclamação <span className={AJUDA_CAMPO}>(ex.: n.º do Livro de Reclamações)</span>
+                    <input name="referencia" maxLength={200} className={CAMPO} />
+                  </label>
+                  <label className={ROTULO}>
+                    Nota sobre o envio <span className={AJUDA_CAMPO}>(opcional)</span>
+                    <input name="resultado" maxLength={1000} className={CAMPO} />
+                  </label>
+                </div>
+                <details className="rounded-[10px] border border-[var(--v2-line)] bg-white">
+                  <summary className="flex min-h-9 cursor-pointer items-center px-3 text-[13px] font-semibold text-[var(--v2-navy)]">
+                    Prazo de resposta (só se for efetivamente aplicável)
+                  </summary>
+                  <div className="grid gap-3 border-t border-[var(--v2-line)] p-3 sm:grid-cols-2">
+                    <label className={ROTULO}>
+                      Data limite
+                      <input type="date" name="prazo_resposta_em" className={CAMPO} />
+                    </label>
+                    <label className={ROTULO}>
+                      Base do prazo <span className={AJUDA_CAMPO}>(norma ou compromisso — obrigatório com data)</span>
+                      <input name="prazo_resposta_base" maxLength={300} className={CAMPO} />
+                    </label>
+                  </div>
+                </details>
                 <div>
                   <ConfirmarAcao
                     className={BOTAO_PRIMARIO}
                     titulo={`Registar o envio da versão ${atual.versao}?`}
-                    descricao="Fica registado que a versão autorizada pelo cliente foi enviada à empresa, com o destinatário e o canal indicados. O registo não pode ser apagado."
+                    descricao="Fica registado que a versão autorizada pelo cliente foi enviada à empresa, com o destinatário e o canal indicados. O caso passa a “A aguardar resposta da empresa”. O registo não pode ser apagado."
                     confirmar="Registar envio"
                   >
                     Registar envio da versão {atual.versao}
@@ -365,15 +402,18 @@ export function TextoCaso({
             )}
 
             {envio && (
-              <Aviso tom="sucesso" titulo={`Reclamação enviada em ${dataHora(envio.enviado_em)}`}>
+              <Aviso tom="sucesso" titulo={`${envioAnterior ? "Nova comunicação enviada" : "Reclamação enviada"} em ${dataHora(envio.enviado_em)}`}>
                 {CANAIS_ENVIO[envio.canal as keyof typeof CANAIS_ENVIO] ?? envio.canal} · {envio.destinatario}
+                {envio.referencia ? ` · referência ${envio.referencia}` : ""}
                 {envio.resultado ? ` · ${envio.resultado}` : ""}. O comprovativo regista-se em “Envio e comprovativo”.
               </Aviso>
             )}
 
             {atual.estado !== "rascunho" && (
               <details open={atual.estado === "alteracoes_solicitadas"} className="rounded-[12px] border border-[var(--v2-line)]">
-                <summary className="flex min-h-10 cursor-pointer items-center px-4 text-[14px] font-semibold text-[var(--v2-navy)]">Criar nova versão</summary>
+                <summary className="flex min-h-10 cursor-pointer items-center px-4 text-[14px] font-semibold text-[var(--v2-navy)]">
+                  {atual.estado === "enviado" ? "Preparar nova comunicação à empresa" : "Criar nova versão"}
+                </summary>
                 <div className="border-t border-[var(--v2-line)] p-4">
                   <EditorTexto
                     casoId={casoId}

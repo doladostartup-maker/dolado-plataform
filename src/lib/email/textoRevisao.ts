@@ -13,6 +13,8 @@ export function escaparHtml(texto: string) {
 }
 
 export const ASSUNTO_TEXTO_PARA_REVISAO = "O texto da sua reclamação está pronto para revisão";
+/** Nova comunicação à empresa depois de uma resposta (mesmo fluxo de revisão e autorização). */
+export const ASSUNTO_NOVA_COMUNICACAO_PARA_REVISAO = "Uma nova comunicação do seu caso está pronta para revisão";
 
 /**
  * Dois botões: rever e autorizar / pedir alterações. Os links só abrem
@@ -25,6 +27,7 @@ export function montarHtmlTextoParaRevisao({
   assunto,
   validadeDias,
   novoLink,
+  seguimento = false,
 }: {
   urlRever: string;
   urlAlterar: string;
@@ -33,14 +36,18 @@ export function montarHtmlTextoParaRevisao({
   validadeDias: number;
   /** true quando é um novo link pedido pelo cliente (link anterior expirado). */
   novoLink: boolean;
+  /** true quando já houve um envio: é uma nova comunicação à empresa. */
+  seguimento?: boolean;
 }) {
   const sobre = assunto ? ` relativa a <strong>${escaparHtml(assunto)}</strong>` : "";
   const abertura = novoLink
-    ? `Como pediu, enviamos-lhe um novo link para rever o texto da sua reclamação${sobre}.`
-    : `O texto da sua reclamação${sobre} está pronto. Antes de o enviarmos em seu nome, pedimos-lhe que o reveja.`;
+    ? `Como pediu, enviamos-lhe um novo link para rever o texto${seguimento ? " da nova comunicação" : " da sua reclamação"}${sobre}.`
+    : seguimento
+      ? `Na sequência da resposta da empresa à sua reclamação${sobre}, preparámos uma nova comunicação. Antes de a enviarmos em seu nome, pedimos-lhe que a reveja.`
+      : `O texto da sua reclamação${sobre} está pronto. Antes de o enviarmos em seu nome, pedimos-lhe que o reveja.`;
   const P = P_EMAIL;
   return emailV2({
-    titulo: ASSUNTO_TEXTO_PARA_REVISAO,
+    titulo: seguimento ? ASSUNTO_NOVA_COMUNICACAO_PARA_REVISAO : ASSUNTO_TEXTO_PARA_REVISAO,
     corpo: `<p ${P}>Olá,</p>
           <p ${P}>${abertura}</p>
           <p ${P}>Nada é enviado sem a sua autorização explícita. Se quiser mudar alguma coisa, pode pedir alterações.</p>

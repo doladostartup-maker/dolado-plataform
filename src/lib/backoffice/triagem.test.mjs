@@ -61,11 +61,37 @@ describe("proximaAcao", () => {
       enviado: ["À espera da resposta da empresa", false, "empresa"],
     };
     for (const [estado, [rotulo, interna, aguarda]] of Object.entries(casos)) {
-      const a = proximaAcao({ status: "Em investigação", email: "a@b.pt", texto: texto(estado) });
+      // O registo do envio passa o caso a "Aguardando operador" (base de dados).
+      const status = estado === "enviado" ? "Aguardando operador" : "Em investigação";
+      const a = proximaAcao({ status, email: "a@b.pt", texto: texto(estado) });
       assert.equal(a.rotulo, rotulo, estado);
       assert.equal(a.interna, interna, estado);
       assert.equal(a.aguarda, aguarda, estado);
     }
+  });
+
+  test("acompanhamento: resposta por analisar é sempre da DoLado", () => {
+    const a = proximaAcao({ status: "Resposta em análise", texto: texto("enviado"), comunicacoesPorAnalisar: 1 });
+    assert.deepEqual([a.rotulo, a.interna, a.aguarda, a.ancora], ["Analisar comunicação recebida", true, "dolado", "comunicacoes"]);
+    // Mensagem num estado inesperado (ex.: à espera do cliente) também.
+    assert.equal(proximaAcao({ status: "Aguardando cliente", texto: texto("enviado"), comunicacoesPorAnalisar: 2 }).interna, true);
+    assert.equal(proximaAcao({ status: "Resposta em análise", texto: texto("enviado") }).rotulo, "Analisar e decidir o próximo passo");
+  });
+
+  test("acompanhamento: de quem se espera", () => {
+    assert.equal(proximaAcao({ status: "Aguardando cliente", texto: texto("enviado") }).aguarda, "cliente");
+    assert.equal(proximaAcao({ status: "Aguardando decisão cliente", texto: texto("enviado") }).aguarda, "cliente");
+    assert.equal(proximaAcao({ status: "Aguardando operador", texto: texto("enviado") }).aguarda, "empresa");
+    const nova = proximaAcao({ status: "Em investigação", texto: texto("enviado") });
+    assert.deepEqual([nova.rotulo, nova.aguarda], ["Preparar nova comunicação", "dolado"]);
+    assert.equal(proximaAcao({ status: "Encerrado sem resolução", texto: null }).aguarda, null);
+  });
+
+  test("prazo indicado no envio prevalece; só enquanto se aguarda a empresa", () => {
+    const hoje = new Date("2026-10-05T12:00:00");
+    const p = prazosCaso({ status: "Aguardando operador", primeira_resposta_em: "x", data_envio_reclamacao: "2026-09-01", prazoRespostaEm: "2026-10-07" }, hoje);
+    assert.deepEqual(p.map((x) => [x.tipo, x.rotulo, x.nivel]), [["resposta_empresa", "Prazo de resposta (indicado)", "proximo"]]);
+    assert.equal(prazosCaso({ status: "Resposta em análise", primeira_resposta_em: "x", data_envio_reclamacao: "2026-09-01" }, hoje).length, 0);
   });
 
   test("estado do caso prevalece: resolvido, bloqueado, decisão do cliente", () => {

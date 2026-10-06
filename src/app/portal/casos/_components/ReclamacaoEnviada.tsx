@@ -17,6 +17,7 @@ export type EnvioCliente = {
   destinatario: string;
   versao: number | null;
   conteudo: string | null;
+  referencia?: string | null;
 };
 export type ComprovativoCliente = {
   id: string;
@@ -74,7 +75,16 @@ export function Comprovativo({ comprovativo }: { comprovativo: ComprovativoClien
   );
 }
 
-export function ReclamacaoEnviada({ envio, comprovativo }: { envio: EnvioCliente; comprovativo: ComprovativoCliente | null }) {
+export function ReclamacaoEnviada({
+  envio,
+  comprovativo,
+  seguimento = false,
+}: {
+  envio: EnvioCliente;
+  comprovativo: ComprovativoCliente | null;
+  /** Comunicação enviada depois da reclamação. */
+  seguimento?: boolean;
+}) {
   return (
     <section aria-labelledby={`envio-${envio.id}`} className={`${CARTAO} flex flex-col gap-5`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -83,7 +93,7 @@ export function ReclamacaoEnviada({ envio, comprovativo }: { envio: EnvioCliente
             <IconeEnviar tamanho={19} />
           </span>
           <h2 id={`envio-${envio.id}`} className={TITULO_SECCAO}>
-            Reclamação enviada
+            {seguimento ? "Nova comunicação enviada" : "Reclamação enviada"}
           </h2>
         </div>
         <Etiqueta tom="concluido">Enviada</Etiqueta>
@@ -95,6 +105,11 @@ export function ReclamacaoEnviada({ envio, comprovativo }: { envio: EnvioCliente
         <Dado rotulo="Destinatário" largo>
           {envio.destinatario}
         </Dado>
+        {envio.referencia && (
+          <Dado rotulo="Referência" largo>
+            {envio.referencia}
+          </Dado>
+        )}
       </ListaDados>
 
       <Comprovativo comprovativo={comprovativo} />

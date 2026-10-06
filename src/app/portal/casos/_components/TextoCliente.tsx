@@ -13,10 +13,13 @@ export function TextoCliente({
   casoId,
   texto,
   resultado,
+  seguimento = false,
 }: {
   casoId: string;
   texto: { id: string; versao: number; conteudo: string; estado: EstadoTexto; autorizado_em: string | null } | null;
   resultado?: string;
+  /** Já houve um envio: este texto é uma nova comunicação à empresa. */
+  seguimento?: boolean;
 }) {
   if (!texto) return null;
   const aRever = texto.estado === "aguardando_aprovacao";
@@ -24,7 +27,13 @@ export function TextoCliente({
     <section id="texto" aria-labelledby="texto-titulo" className={`${aRever ? CARTAO_ACAO : CARTAO} flex scroll-mt-24 flex-col gap-4`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="texto-titulo" className={TITULO_SECCAO}>
-          {aRever ? "Reveja o texto da reclamação" : "Texto da reclamação"}
+          {seguimento
+            ? aRever
+              ? "Reveja a nova comunicação à empresa"
+              : "Nova comunicação à empresa"
+            : aRever
+              ? "Reveja o texto da reclamação"
+              : "Texto da reclamação"}
         </h2>
         <Etiqueta tom={aRever ? "acao" : texto.estado === "autorizado" ? "concluido" : "curso"}>{ESTADO_TEXTO_CLIENTE[texto.estado]}</Etiqueta>
       </div>

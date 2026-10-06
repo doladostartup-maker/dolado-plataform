@@ -1,11 +1,11 @@
 import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ADMIN_EMAIL, enviarEmailBrevo } from "@/lib/email/brevo";
+import { avisarAdminIA, gastoApiUsd } from "@/lib/orcamentoClaude";
 import { avisosAtravessados, estadoOrcamento, lerTetoOrcamentoUsd } from "@/lib/monitor/custos";
 import type { Fornecedor } from "@/lib/monitor/fornecedores";
 import { chamarClaudeRascunho } from "./claude";
 import type { CasoParaRascunho, FaturaMonitor, ServicoMonitor } from "./contexto";
-import { gerarRascunho, iniciarGeracao, type DepsRascunho, type OrigemGeracao, type ResultadoAplicar, type ResultadoGeracao } from "./gerar";
+import { gerarRascunho, iniciarGeracao, type DepsRascunho, type FinalidadeGeracao, type OrigemGeracao, type ResultadoAplicar, type ResultadoGeracao } from "./gerar";
 import type { RegraJuridica } from "./regras";
 
 // DoLado — dependências reais da geração da sugestão do texto (service
@@ -16,8 +16,6 @@ import type { RegraJuridica } from "./regras";
 // caso segue o caminho manual de sempre. Partilha o orçamento da Claude API
 // do piloto (ANTHROPIC_ORCAMENTO_USD) com o Monitor de Proteção.
 
-type Admin = ReturnType<typeof createAdminClient>;
-
 export function rascunhoIAAtivo() {
   return process.env.RASCUNHO_IA_ATIVO === "1";
 }
@@ -26,20 +24,7 @@ function hojeLisboa() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(new Date());
 }
 
-async function gastoApiUsd(admin: Admin): Promise<number> {
-  const { data } = await admin.from("uso_api_claude").select("custo_estimado_usd");
-  return (data ?? []).reduce((s, l) => s + Number(l.custo_estimado_usd ?? 0), 0);
-}
-
-async function avisarAdmin(assunto: string, texto: string) {
-  if (!process.env.BREVO_API_KEY) {
-    console.log(`[rascunho IA] aviso ao admin (sem envio): ${assunto} — ${texto}`);
-    return;
-  }
-  await enviarEmailBrevo(ADMIN_EMAIL, `[Rascunho IA] ${assunto}`, `<p>${texto}</p>`).catch((erro) =>
-    console.error("Falha ao avisar o admin (rascunho IA):", erro),
-  );
-}
+const avisarAdmin = (assunto: string, texto: string) => avisarAdminIA("Rascunho IA", assunto, texto);
 
 function falhou(contexto: string, error: { message: string } | null) {
   if (error) throw new Error(`${contexto}: ${error.message}`);
@@ -54,13 +39,14 @@ export function criarDependenciasRascunho(): DepsRascunho {
     ativo: rascunhoIAAtivo,
     hoje: hojeLisboa,
 
-    async iniciar(casoId, origem, adminId, versoes) {
+    async iniciar(casoId, origem, adminId, versoes, finalidade = "reclamacao") {
       const { data, error } = await admin.rpc("rascunho_ia_iniciar", {
         p_caso_id: casoId,
         p_origem: origem,
         p_admin: adminId,
         p_prompt_versao: versoes.prompt,
         p_schema_versao: versoes.schema,
+        p_finalidade: finalidade,
       });
       falhou("rascunho_ia_iniciar", error);
       return (data as string | null) ?? null;
@@ -74,6 +60,30 @@ export function criarDependenciasRascunho(): DepsRascunho {
         .maybeSingle<CasoParaRascunho>();
       falhou("casos", error);
       return data ?? null;
+    },
+
+    async carregarSeguimento(casoId) {
+      const [envios, recebidas, analises] = await Promise.all([
+        admin.from("casos_textos_envios").select("enviado_em, casos_textos(conteudo)").eq("caso_id", casoId).order("enviado_em", { ascending: false }).limit(2),
+        admin
+          .from("casos_comunicacoes_recebidas")
+          .select("corpo_apresentacao, corpo_texto, data_mensagem, recebida_em")
+          .eq("caso_id", casoId)
+          .neq("estado_analise", "sem_acao")
+          .order("recebida_em", { ascending: false })
+          .limit(1),
+        admin.from("casos_analises").select("resumo").eq("caso_id", casoId).not("resumo", "is", null).order("created_at", { ascending: false }).limit(1),
+      ]);
+      falhou("casos_textos_envios", envios.error);
+      const r = recebidas.data?.[0];
+      return {
+        enviadas: (envios.data ?? []).flatMap((e) => {
+          const t = (Array.isArray(e.casos_textos) ? e.casos_textos[0] : e.casos_textos) as { conteudo: string } | null;
+          return t ? [{ conteudo: t.conteudo, enviado_em: e.enviado_em as string }] : [];
+        }),
+        ultimaResposta: r ? { texto: (r.corpo_apresentacao ?? r.corpo_texto) as string | null, data: (r.data_mensagem ?? r.recebida_em) as string | null } : null,
+        analise: (analises.data?.[0]?.resumo as string | undefined) ?? null,
+      };
     },
 
     async carregarServicos(utilizadorId) {
@@ -209,11 +219,15 @@ export function gerarRascunhoIA(
  * página mostrar "A gerar…", e corre a geração depois da resposta.
  * null = já havia uma geração em curso para este caso.
  */
-export async function pedirRascunhoIAManual(casoId: string, adminId: string): Promise<string | null> {
+export async function pedirRascunhoIAManual(
+  casoId: string,
+  adminId: string,
+  finalidade: FinalidadeGeracao = "reclamacao",
+): Promise<string | null> {
   const deps = criarDependenciasRascunho();
-  const geracaoId = await iniciarGeracao(casoId, "manual", adminId, deps);
+  const geracaoId = await iniciarGeracao(casoId, "manual", adminId, deps, finalidade);
   if (geracaoId) {
-    after(() => gerarRascunho(casoId, { origem: "manual", adminId, geracaoIniciada: geracaoId }, deps).then(() => undefined));
+    after(() => gerarRascunho(casoId, { origem: "manual", adminId, geracaoIniciada: geracaoId, finalidade }, deps).then(() => undefined));
   }
   return geracaoId;
 }

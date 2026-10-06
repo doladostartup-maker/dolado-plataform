@@ -33,6 +33,7 @@ export default async function BackofficeLayout({ children }: { children: React.R
     achados: filas.achados,
     compras: filas.compras,
     conversoes: filas.conversoes,
+    naoAssociadas: filas.naoAssociadas,
   };
   const navegacao = <NavegacaoBackoffice contagens={contagens} email={user.email} />;
 

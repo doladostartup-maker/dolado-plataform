@@ -1,15 +1,25 @@
 import { notFound } from "next/navigation";
-import { EVENTOS_CASO } from "@/lib/textoCaso";
-import { prazosCaso, proximaAcao } from "@/lib/backoffice/triagem";
+import { EVENTOS_CASO, EVENTOS_CASO_INTERNOS } from "@/lib/textoCaso";
+import { ESTADOS_CASO, estadoCaso, prazosCaso, proximaAcao } from "@/lib/backoffice/triagem";
 import { CabecalhoPagina } from "@/components/backoffice/Cabecalho";
 import { Dado, Historico, ListaDados, Seccao, type EventoHistorico } from "@/components/backoffice/Blocos";
 import { ConfirmarAcao } from "@/components/backoffice/ConfirmarAcao";
 import { EstadoCaso, Etiqueta, IndicadorPrazo } from "@/components/backoffice/Estado";
 import { dataCurta } from "@/components/backoffice/TabelaCasos";
 import { Aviso } from "@/components/portal/Aviso";
-import { BLOCO_LEITURA, BOTAO_DESTRUTIVO, BOTAO_PRIMARIO, BOTAO_SECUNDARIO, EYEBROW, LIGACAO } from "@/components/backoffice/ui";
+import { AJUDA_CAMPO, BLOCO_LEITURA, BOTAO_DESTRUTIVO, BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAMPO, EYEBROW, LIGACAO, ROTULO } from "@/components/backoffice/ui";
 import { createClient } from "@/lib/supabase/server";
-import { actualizarCaso, decidirCaso } from "../actions";
+import { actualizarCaso } from "../actions";
+import { corrigirEstado, registarConfirmacaoCliente } from "../acompanhamento-actions";
+import {
+  ComunicacoesCaso,
+  type DecisaoResumo,
+  type EnvioComunicacao,
+  type PedidoResumo,
+  type RecebidaResumo,
+} from "../_components/ComunicacoesCaso";
+import type { TipoEncaminhamento } from "../_components/DecisaoAnalise";
+import { enderecoRespostaDoCaso } from "@/lib/comunicacoes/servidor";
 import { carregarAnexo, apagarAnexo } from "../anexos-actions";
 import { CasoForm } from "../_components/CasoForm";
 import { EnviarBoasVindas } from "../_components/EnviarBoasVindas";
@@ -43,7 +53,7 @@ export default async function CasoDetalhePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ erro?: string; guardado?: string; texto_ok?: string; texto_erro?: string }>;
+  searchParams: Promise<{ erro?: string; guardado?: string; texto_ok?: string; texto_erro?: string; acomp_ok?: string; acomp_erro?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -76,10 +86,10 @@ export default async function CasoDetalhePage({
     supabase.from("casos_textos_pedidos_alteracao").select("texto_id, mensagem, created_at, metodo").eq("caso_id", id).order("created_at"),
     supabase
       .from("casos_textos_envios")
-      .select("id, texto_id, destinatario, canal, resultado, enviado_em, conteudo_sha256")
+      .select("id, texto_id, destinatario, canal, resultado, enviado_em, conteudo_sha256, referencia, prazo_resposta_em, prazo_resposta_base")
       .eq("caso_id", id)
       .order("enviado_em"),
-    supabase.from("casos_eventos").select("tipo, versao, ator, created_at").eq("caso_id", id).order("created_at"),
+    supabase.from("casos_eventos").select("tipo, versao, ator, created_at, visivel_cliente, dados").eq("caso_id", id).order("created_at"),
     // Sugestões da IA (só o admin lê — RLS).
     supabase
       .from("casos_rascunhos_ia")
@@ -91,11 +101,41 @@ export default async function CasoDetalhePage({
 
   // Comprovativos: com a service role (o layout já exigiu admin) para ler a
   // nota interna, que a API não expõe. O caminho no storage nunca sai do servidor.
-  const { data: comprovativos } = await createAdminClient()
+  const admin = createAdminClient();
+  const { data: comprovativos } = await admin
     .from("casos_comprovativos")
     .select("id, envio_id, tipo, nome, identificador_externo, nota, tamanho_bytes, created_at, substituido_em")
     .eq("caso_id", id)
     .order("created_at");
+
+  // Acompanhamento depois do envio: comunicações recebidas (RLS: só admin),
+  // decisões (com a análise interna: service role, o layout já exigiu
+  // admin), pedidos ao cliente e o endereço único de respostas do caso.
+  const [recebidas, anexosRecebidos, decisoes, pedidosCliente, tiposEnc, endereco] = await Promise.all([
+    supabase
+      .from("casos_comunicacoes_recebidas")
+      .select("id, origem, canal, remetente_email, remetente_nome, assunto, data_mensagem, recebida_em, estado_analise, classificacao, automatica, suspeita_spam, estado_processamento")
+      .eq("caso_id", id)
+      .order("recebida_em"),
+    supabase.from("casos_comunicacoes_anexos").select("comunicacao_id").eq("caso_id", id).eq("estado", "guardado"),
+    admin
+      .from("casos_analises")
+      .select("id, comunicacao_id, decisao, classificacao, resumo, mensagem_cliente, tipo_encaminhamento, estado_anterior, estado_novo, created_at")
+      .eq("caso_id", id)
+      .order("created_at"),
+    supabase
+      .from("casos_pedidos_cliente")
+      .select("id, pedido, instrucoes, prazo, estado, created_at, respondido_em, resposta_texto, resposta_anexos")
+      .eq("caso_id", id)
+      .order("created_at", { ascending: false }),
+    supabase.from("tipos_encaminhamento").select("codigo, rotulo, descricao_cliente").eq("ativo", true).order("ordem"),
+    enderecoRespostaDoCaso(id).catch(() => null),
+  ]);
+  const anexosPorComunicacao = new Map<string, number>();
+  for (const a of anexosRecebidos.data ?? []) anexosPorComunicacao.set(a.comunicacao_id as string, (anexosPorComunicacao.get(a.comunicacao_id as string) ?? 0) + 1);
+  const listaRecebidas: RecebidaResumo[] = (recebidas.data ?? []).map((r) => ({ ...(r as Omit<RecebidaResumo, "anexos">), anexos: anexosPorComunicacao.get(r.id as string) ?? 0 }));
+  const listaDecisoes = (decisoes.data ?? []) as DecisaoResumo[];
+  const ultimaSolucao = [...listaDecisoes].reverse().find((d) => d.decisao === "resolucao_proposta");
   const textosPorId = new Map((versoes.data ?? []).map((v) => [v.id as string, v]));
   const enviosEquipa: EnvioEquipa[] = (envios.data ?? []).map((e) => ({
     ...(e as Omit<EnvioEquipa, "versao" | "conteudo">),
@@ -109,8 +149,8 @@ export default async function CasoDetalhePage({
   }));
 
   const actualizarComId = actualizarCaso.bind(null, id);
-  const aceitar = decidirCaso.bind(null, id, "aceitou");
-  const recusar = decidirCaso.bind(null, id, "recusou");
+  const aceitar = registarConfirmacaoCliente.bind(null, id, true);
+  const recusar = registarConfirmacaoCliente.bind(null, id, false);
   const carregarComId = carregarAnexo.bind(null, id);
 
   const agora = new Date().getTime();
@@ -119,9 +159,12 @@ export default async function CasoDetalhePage({
   // Apresentação: estado, próxima ação e prazos (sem efeitos).
   const versoesTexto = (versoes.data ?? []) as VersaoTexto[];
   const atual = versoesTexto[0];
+  const ultimoEnvio = (envios.data ?? []).at(-1);
   const triagem = {
     ...caso,
     texto: atual ? { estado: atual.estado, origem: atual.origem, revisto_em: atual.revisto_em, versao: atual.versao } : null,
+    comunicacoesPorAnalisar: listaRecebidas.filter((r) => r.estado_analise === "por_analisar").length,
+    prazoRespostaEm: (ultimoEnvio?.prazo_resposta_em as string | null | undefined) ?? null,
   };
   const acao = proximaAcao(triagem);
   const prazos = prazosCaso(triagem);
@@ -130,21 +173,29 @@ export default async function CasoDetalhePage({
 
   const historico: EventoHistorico[] = [
     { id: "criado", quando: criadoEm, titulo: "Caso criado", detalhe: caso.origem ? `Origem: ${caso.origem}` : undefined },
-    ...((eventos.data ?? []) as EventoCaso[]).map((e, i) => ({
+    ...((eventos.data ?? []) as (EventoCaso & { visivel_cliente: boolean; dados: Record<string, string> | null })[]).map((e, i) => ({
       id: `${i}-${e.created_at}`,
       quando: dataHora(e.created_at),
-      titulo: `${EVENTOS_CASO[e.tipo] ?? e.tipo}${e.versao ? ` (versão ${e.versao})` : ""}`,
-      ator: ATOR[e.ator] ?? e.ator,
+      titulo: `${EVENTOS_CASO[e.tipo] ?? EVENTOS_CASO_INTERNOS[e.tipo] ?? e.tipo}${e.versao ? ` (versão ${e.versao})` : ""}`,
+      ator: `${ATOR[e.ator] ?? e.ator}${e.visivel_cliente ? "" : " · só interno"}`,
+      detalhe:
+        e.tipo === "encaminhamento_registado" && e.dados?.rotulo
+          ? e.dados.rotulo
+          : e.tipo === "estado_corrigido" && e.dados
+            ? `${estadoCaso(e.dados.de).rotulo} → ${estadoCaso(e.dados.para).rotulo}`
+            : undefined,
     })),
   ];
+  const AGUARDA: Record<string, string> = { dolado: "da DoLado", cliente: "do cliente", empresa: "da empresa" };
 
   const ANCORAS = [
     ["contexto", "Problema"],
+    ["comunicacoes", "Resposta da empresa"],
     ["texto", "Reclamação"],
     ["envio", "Envio"],
     ["documentos", "Documentos"],
     ["dados", "Dados do caso"],
-    ["historico", "Histórico"],
+    ["historico", "Cronologia"],
   ] as const;
 
   return (
@@ -171,6 +222,8 @@ export default async function CasoDetalhePage({
       />
 
       {query.guardado && <Aviso tom="sucesso">Alterações guardadas.</Aviso>}
+      {query.acomp_ok && <Aviso tom="sucesso">{query.acomp_ok}</Aviso>}
+      {query.acomp_erro && <Aviso tom="erro">{query.acomp_erro}</Aviso>}
       {query.erro && (
         <Aviso tom="erro" titulo="Não foi possível guardar.">
           {query.erro}
@@ -189,6 +242,9 @@ export default async function CasoDetalhePage({
             <Etiqueta tom={acao.tom}>{acao.rotulo}</Etiqueta>
           </div>
           <p className="text-[14px] text-[var(--v2-muted)]">{acao.descricao}</p>
+          <p className="text-[13px] font-semibold text-[var(--v2-navy)]">
+            {acao.aguarda ? `Neste momento, à espera ${AGUARDA[acao.aguarda]}.` : "Nada à espera de ninguém."}
+          </p>
         </div>
         <div className="flex flex-col gap-2">
           <p className={EYEBROW}>Prazos</p>
@@ -239,6 +295,21 @@ export default async function CasoDetalhePage({
             </ListaDados>
           </Seccao>
 
+          <ComunicacoesCaso
+            casoId={id}
+            status={caso.status}
+            endereco={endereco}
+            envios={(envios.data ?? []).map((e) => ({
+              ...(e as unknown as EnvioComunicacao),
+              versao: (textosPorId.get(e.texto_id as string)?.versao as number | undefined) ?? null,
+            }))}
+            recebidas={listaRecebidas}
+            decisoes={listaDecisoes}
+            pedidos={(pedidosCliente.data ?? []) as PedidoResumo[]}
+            tipos={(tiposEnc.data ?? []) as TipoEncaminhamento[]}
+            destaque={acao.interna && acao.ancora === "comunicacoes"}
+          />
+
           <TextoCaso
             casoId={id}
             temEmail={!!caso.email}
@@ -270,11 +341,51 @@ export default async function CasoDetalhePage({
             </div>
           </Seccao>
 
-          <Seccao id="dados" titulo="Dados do caso" descricao="Editar todos os campos do caso.">
-            <CasoForm action={actualizarComId} valores={caso} submitLabel="Guardar alterações" />
+          <Seccao id="dados" titulo="Dados do caso" descricao="Editar os campos do caso. O estado muda com as ações do caso.">
+            <CasoForm action={actualizarComId} valores={caso} submitLabel="Guardar alterações" edicao />
+            <details className="rounded-[12px] border border-[var(--v2-line)]">
+              <summary className="flex min-h-10 cursor-pointer items-center px-4 text-[14px] font-semibold text-[var(--v2-navy)]">
+                Corrigir estado (exceção)
+              </summary>
+              <form action={corrigirEstado.bind(null, id)} className="flex flex-col gap-3 border-t border-[var(--v2-line)] p-4">
+                <p className={AJUDA_CAMPO}>
+                  Só para corrigir um engano ou refletir algo que aconteceu fora do sistema. Não envia e-mails nem mexe no texto. Fica registado na cronologia
+                  interna, com o motivo.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className={ROTULO}>
+                    Novo estado
+                    <select name="para" required defaultValue="" className={CAMPO}>
+                      <option value="" disabled>
+                        Escolher
+                      </option>
+                      {ESTADOS_CASO.filter((s) => s !== caso.status).map((s) => (
+                        <option key={s} value={s}>
+                          {estadoCaso(s).rotulo}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className={ROTULO}>
+                    Motivo
+                    <input name="motivo" required minLength={5} maxLength={500} className={CAMPO} />
+                  </label>
+                </div>
+                <div>
+                  <ConfirmarAcao
+                    className={BOTAO_SECUNDARIO}
+                    titulo="Corrigir o estado do caso?"
+                    descricao="A correção fica registada com o motivo. O cliente vê o novo estado no portal."
+                    confirmar="Corrigir estado"
+                  >
+                    Corrigir estado
+                  </ConfirmarAcao>
+                </div>
+              </form>
+            </details>
           </Seccao>
 
-          <Seccao id="historico" titulo="Histórico" descricao="Eventos registados no caso, do mais antigo ao mais recente. Só leitura.">
+          <Seccao id="historico" titulo="Cronologia" descricao="Acontecimentos do caso, do mais antigo ao mais recente. Só leitura; os marcados “só interno” não são vistos pelo cliente.">
             <Historico eventos={historico} />
           </Seccao>
         </div>
@@ -304,30 +415,39 @@ export default async function CasoDetalhePage({
 
           <Seccao
             id="decisao"
-            titulo="Decisão do cliente"
-            descricao="Registar a resposta do cliente à oferta da empresa."
+            titulo="Confirmação do cliente"
+            descricao={
+              aguardaDecisao
+                ? "O cliente confirma no portal se o problema ficou resolvido. Se responder por outro meio, registe aqui."
+                : "Disponível quando houver uma solução apresentada ao cliente."
+            }
             destaque={aguardaDecisao}
           >
+            {aguardaDecisao && ultimaSolucao?.mensagem_cliente && (
+              <p className="whitespace-pre-wrap text-[13.5px] text-[var(--v2-muted)]">Solução apresentada: {ultimaSolucao.mensagem_cliente}</p>
+            )}
             <div className="flex flex-col gap-2">
               <form action={aceitar}>
                 <ConfirmarAcao
                   className={`${aguardaDecisao ? BOTAO_PRIMARIO : BOTAO_SECUNDARIO} w-full`}
-                  titulo="O cliente aceitou a oferta?"
+                  disabled={!aguardaDecisao}
+                  titulo="O cliente confirmou que ficou resolvido?"
                   descricao="O caso passa a “Resolvido”, tipo A."
-                  confirmar="Registar: aceitou"
+                  confirmar="Registar: resolvido"
                 >
-                  Cliente aceitou oferta
+                  Cliente confirmou: resolvido
                 </ConfirmarAcao>
               </form>
               <form action={recusar}>
                 <ConfirmarAcao
                   className={`${BOTAO_DESTRUTIVO} w-full`}
-                  titulo="O cliente recusou a oferta?"
-                  descricao="O caso passa a “Bloqueado / escalada”, tipo B."
-                  confirmar="Registar: recusou"
+                  disabled={!aguardaDecisao}
+                  titulo="O cliente disse que não ficou resolvido?"
+                  descricao="O caso volta a “Resposta em análise” (tipo B) para a DoLado decidir o próximo passo."
+                  confirmar="Registar: não resolvido"
                   destrutiva
                 >
-                  Cliente recusou oferta
+                  Cliente: não ficou resolvido
                 </ConfirmarAcao>
               </form>
             </div>

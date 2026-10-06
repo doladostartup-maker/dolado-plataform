@@ -67,10 +67,13 @@ export function CasoForm({
   action,
   valores = {},
   submitLabel,
+  edicao = false,
 }: {
   action: (formData: FormData) => void;
   valores?: CasoFormValues;
   submitLabel: string;
+  /** Caso existente: o estado não se edita aqui (transições explícitas). */
+  edicao?: boolean;
 }) {
   return (
     <form action={action} className="flex flex-col gap-5">
@@ -135,15 +138,21 @@ export function CasoForm({
       </Grupo>
 
       <Grupo titulo="Estado e prazos">
-        <Campo label="Estado" ajuda="Alteração manual: não envia e-mails nem mexe no texto.">
-          <select name="status" defaultValue={valores.status ?? "Novo"} className={CAMPO}>
-            {ESTADOS_CASO.map((s) => (
-              <option key={s} value={s}>
-                {estadoCaso(s).rotulo}
-              </option>
-            ))}
-          </select>
-        </Campo>
+        {edicao ? (
+          <Campo label="Estado" ajuda="Muda com as ações do caso (envio, análise, confirmação do cliente). Exceções: “Corrigir estado”, abaixo.">
+            <input value={estadoCaso(valores.status ?? "Novo").rotulo} readOnly disabled className={CAMPO} />
+          </Campo>
+        ) : (
+          <Campo label="Estado inicial" ajuda="Caso criado à mão: não envia e-mails nem mexe no texto.">
+            <select name="status" defaultValue={valores.status ?? "Novo"} className={CAMPO}>
+              {ESTADOS_CASO.map((s) => (
+                <option key={s} value={s}>
+                  {estadoCaso(s).rotulo}
+                </option>
+              ))}
+            </select>
+          </Campo>
+        )}
         <Campo label="Tipo (A/B/C)">
           <select name="tipo_abc" defaultValue={valores.tipo_abc ?? ""} className={CAMPO}>
             <option value="">Sem tipo</option>

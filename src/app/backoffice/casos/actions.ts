@@ -54,30 +54,11 @@ export async function criarCaso(formData: FormData) {
 
 export async function actualizarCaso(id: string, formData: FormData) {
   const supabase = await createClient();
-  const dados = parseCasoFormData(formData);
-
-  const { error } = await supabase.from("casos").update(dados).eq("id", id);
-
-  if (error) {
-    redirect(`/backoffice/casos/${id}?erro=${encodeURIComponent(error.message)}`);
-  }
-
-  revalidatePath(`/backoffice/casos/${id}`);
-  redirect(`/backoffice/casos/${id}?guardado=1`);
-}
-
-export async function decidirCaso(
-  id: string,
-  decisao: "aceitou" | "recusou",
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- exigido pela assinatura de Server Action ligada a um form
-  _formData: FormData,
-) {
-  const supabase = await createClient();
-
-  const dados =
-    decisao === "aceitou"
-      ? { status: "Resolvido", tipo_abc: "A" }
-      : { status: "Bloqueado", tipo_abc: "B" };
+  // O estado não se edita aqui: muda pelas ações do fluxo (envio, análise,
+  // confirmação do cliente) ou pela correção manual com motivo, validadas na
+  // base de dados (transições explícitas).
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { status, ...dados } = parseCasoFormData(formData);
 
   const { error } = await supabase.from("casos").update(dados).eq("id", id);
 
