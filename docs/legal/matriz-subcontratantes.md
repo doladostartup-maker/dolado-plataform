@@ -22,8 +22,8 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 | Supabase | Base de dados, autenticação, armazenamento de documentos, funções agendadas | Subcontratante | UE — AWS `eu-west-3` (Paris) | Possíveis (empresa dos EUA) | SCCs (segundo o `CLAUDE.md`) — confirmar no DPA | Obtido |
 | Clever Cloud | Alojamento e execução da aplicação Next.js | Subcontratante | UE — `par` (Paris) | Não previstas — a validar subcontratantes ulteriores | Não aplicável, salvo o que o DPA indicar | Obtido |
 | Brevo | E-mail transacional (envios) | Subcontratante | UE (sede em França) | Não previstas — a validar subcontratantes ulteriores | A validar no DPA | Obtido |
-| Resend (proposto) | Receção das respostas das empresas (respostas.dolado.pt) — a validar | Subcontratante | A validar (empresa dos EUA) | Possíveis | A validar (SCCs / DPF) | Por obter |
-| Anthropic | Claude API (leitura de faturas e contratos no Monitor de Proteção; primeira proposta do texto da reclamação; proposto: análise preliminar das respostas — a validar) | Subcontratante | A validar | Possíveis | A validar no DPA (SCCs, se aplicável) | Obtido |
+| Resend (Plus Five Five, Inc.) | Receção das respostas das empresas (respostas.dolado.pt) | Subcontratante (responsável autónomo só pelos dados da conta e de utilização do serviço) | EUA (tratamento principal) | Sim | SCCs 2021/914 (Módulo 2) no DPA + certificação EU-U.S. DPF | Obtido (06/10/2026) |
+| Anthropic | Claude API (leitura de faturas e contratos no Monitor de Proteção; primeira proposta do texto da reclamação; análise preliminar das respostas das empresas) | Subcontratante | A validar | Possíveis | A validar no DPA (SCCs, se aplicável) | Obtido |
 | Stripe | Pagamentos, subscrições, faturação, reembolsos | Subcontratante; responsável autónomo para finalidades próprias | A validar (entidade contratante) | Possíveis | A validar no DPA (SCCs / DPF) | Obtido |
 | Google | GA4, Tag Manager, Google Ads (com consentimento); início de sessão com Google | Subcontratante na medição; responsável autónomo para fins próprios e no início de sessão | A validar | Possíveis | A validar no DPA (SCCs / DPF) | Obtido |
 | Cookiebot (Usercentrics) | Gestão do consentimento de cookies | Subcontratante | A validar | A validar | A validar | **Por confirmar** |
@@ -91,17 +91,27 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 - **Nota (06/10/2026):** a receção das respostas das empresas **não** passa pela Brevo (o inbound da Brevo
   exige um plano pago) — ver Resend, abaixo.
 
-### Resend (proposto, 06/10/2026 — a validar)
+### Resend (06/10/2026)
 
 - **Serviço / finalidade:** só **receção** dos e-mails enviados para os endereços dos casos
   (`*@respostas.dolado.pt`, MX para o Resend): avisa a DoLado (webhook `email.received`, assinado) e a
   DoLado obtém o conteúdo e os anexos pela API (`src/lib/comunicacoes/`). Não envia e-mails.
 - **Categorias de dados:** conteúdo das respostas das empresas (pode incluir dados do cliente e de
   trabalhadores da empresa), anexos, cabeçalhos, resultados SPF/DKIM/DMARC; também e-mails sem caso (spam).
-- **Localização / transferências:** empresa com sede nos EUA — **a validar** região de processamento e
-  conservação das mensagens recebidas, prazo de conservação do lado do Resend, subcontratantes ulteriores.
-- **Mecanismo:** a validar (SCCs / Data Privacy Framework). **DPA:** por obter.
-- Só entra em produção depois do DPA e da nova versão da Política (`docs/legal/rascunho-privacidade-respostas-empresas.md`).
+- **Entidade:** Plus Five Five, Inc., 2261 Market Street #5039, San Francisco, CA 94114 (contacto: privacy@resend.com).
+- **Localização / transferências:** segundo o DPA (versão de 31/12/2025, assinado pelo Resend a 14/01/2026,
+  cópia assinada guardada por Thiago fora do repositório e disponível no dashboard do Resend), o tratamento
+  principal decorre nos **EUA** — há transferência internacional.
+- **Mecanismo:** cláusulas contratuais-tipo da Comissão (Decisão 2021/914), Módulo 2 (responsável →
+  subcontratante), incorporadas no DPA (lei e foro da Irlanda), com medidas suplementares (secção 6.6);
+  e certificação no **EU-U.S. Data Privacy Framework** (secção 11). **DPA:** obtido (06/10/2026).
+- **Conservação do lado do Resend:** enquanto o contrato estiver ativo; apagamento até 90 dias depois do fim
+  da conta. A DoLado obtém o conteúdo pela API e guarda-o na Supabase.
+- **Subcontratantes ulteriores:** lista em https://resend.com/legal/subprocessors (aviso prévio de 14 dias,
+  com direito de oposição).
+- **Papel:** subcontratante; responsável autónomo só pelos dados da conta DoLado no Resend e pelos dados de
+  utilização do serviço (secção 9 do DPA).
+- Política de Privacidade `2026-10-06` (secção 5) publicada com esta informação.
 
 ### Anthropic (Claude API)
 
