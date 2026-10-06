@@ -1,5 +1,6 @@
 import { MODELO_RASCUNHOS, PARAMETROS_RASCUNHO } from "@/lib/claude";
 import { chamarClaudeJson } from "@/lib/claudeJson";
+import type { MensagemIA } from "@/lib/ia/minimizacao";
 import type { ResultadoModelo } from "./gerar";
 
 // DoLado — chamada à Claude API para a sugestão do texto (primeira
@@ -12,7 +13,7 @@ export function chamarClaudeRascunho({
   schema,
 }: {
   sistema: string;
-  mensagem: string;
+  mensagem: MensagemIA;
   schema: Record<string, unknown>;
 }): Promise<ResultadoModelo> {
   return chamarClaudeJson({

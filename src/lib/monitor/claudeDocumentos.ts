@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { MODELO_DOCUMENTOS, PARAMETROS_EXTRACAO } from "@/lib/claude";
+import { documentoParaIA, selarMensagemIA } from "@/lib/ia/minimizacao";
 import { custoEstimadoUsd } from "./custos.ts";
 
 // DoLado — chamada à Claude API para ler um documento do Monitor de
@@ -11,7 +12,10 @@ import { custoEstimadoUsd } from "./custos.ts";
 // processo.
 //
 // Uma chamada isolada por documento: sem histórico, sem dados da conta, sem
-// ferramentas. Structured outputs com o schema da versão em uso. Novas
+// ferramentas. O documento é a única exceção à minimização do texto (o modelo
+// tem de o ler): documentoParaIA() só aceita URL assinadas do bucket do
+// Monitor; o NIF e o nome do titular lidos são pseudonimizados antes de
+// gravar (protegerExtracao). Structured outputs com o schema da versão em uso. Novas
 // tentativas só por erro técnico (2 tentativas no total, feitas pelo SDK);
 // confiança baixa nunca provoca nova chamada. Nunca lança: o chamador cai
 // sempre no caminho manual (regra 3 do "Uso de IA").
@@ -70,10 +74,16 @@ export async function lerDocumentoComClaude({
   const client = obterCliente();
   if (!client) return { ok: false, motivo: "api_nao_configurada", uso: null };
 
+  let documento: string;
+  try {
+    documento = documentoParaIA(url);
+  } catch (erro) {
+    return { ok: false, motivo: "erro_api", uso: null, detalhe: erro instanceof Error ? erro.message : "documento recusado" };
+  }
   const bloco: Anthropic.ContentBlockParam =
     mime === "application/pdf"
-      ? { type: "document", source: { type: "url", url } }
-      : { type: "image", source: { type: "url", url } };
+      ? { type: "document", source: { type: "url", url: documento } }
+      : { type: "image", source: { type: "url", url: documento } };
 
   const inicio = Date.now();
   try {
@@ -86,7 +96,7 @@ export async function lerDocumentoComClaude({
           effort: PARAMETROS_EXTRACAO.output_config.effort,
           format: { type: "json_schema", schema },
         },
-        messages: [{ role: "user", content: [bloco, { type: "text", text: instrucao }] }],
+        messages: [{ role: "user", content: [bloco, { type: "text", text: selarMensagemIA(instrucao) }] }],
       })
       .withResponse();
 

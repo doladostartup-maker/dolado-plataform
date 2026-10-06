@@ -148,7 +148,7 @@ describe("contexto enviado à IA", () => {
     const s = c.servicos_acompanhados_no_monitor[0];
     assert.equal(s.mensalidade_contratada_eur, 30);
     assert.equal(s.faturas_recentes[0].total_eur, 36);
-    assert.equal(s.faturas_recentes[0].linhas[0].descricao, "Mensalidade ([número])");
+    assert.equal(s.faturas_recentes[0].linhas[0].descricao, "Mensalidade ([TELEFONE])");
   });
 });
 

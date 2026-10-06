@@ -14,6 +14,7 @@
 // e o caso continua normalmente no backoffice (regra 3 do "Uso de IA").
 // A sugestão nunca é enviada ao cliente nem marcada como revista aqui.
 
+import type { MensagemIA } from "../ia/minimizacao.ts";
 import { createHash } from "node:crypto";
 import type { Fornecedor } from "../monitor/fornecedores.ts";
 import {
@@ -87,7 +88,7 @@ export type DepsRascunho = {
   carregarFornecedores(): Promise<Fornecedor[]>;
   carregarRegras(): Promise<RegraJuridica[]>;
   orcamentoBloqueado(): Promise<boolean>;
-  chamarModelo(pedido: { sistema: string; mensagem: string; schema: Record<string, unknown> }): Promise<ResultadoModelo>;
+  chamarModelo(pedido: { sistema: string; mensagem: MensagemIA; schema: Record<string, unknown> }): Promise<ResultadoModelo>;
   registarUso(uso: UsoModelo, ok: boolean): Promise<void>;
   concluir(geracaoId: string, dados: DadosConclusao): Promise<void>;
   falhar(geracaoId: string, dados: DadosFalha): Promise<void>;

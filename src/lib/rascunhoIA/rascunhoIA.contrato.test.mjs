@@ -91,7 +91,7 @@ describe("sugestão do texto pela IA (Supabase real)", { skip: !ATIVO && "só co
     const { data: geracao } = await admin.from("casos_rascunhos_ia").select("*").eq("id", r.geracaoId).single();
     assert.equal(geracao.estado, "gerado");
     assert.equal(geracao.modelo, "claude-opus-5-5");
-    assert.equal(geracao.prompt_versao, "reclamacao_v1");
+    assert.equal(geracao.prompt_versao, "reclamacao_v2");
     assert.match(geracao.contexto_sha256, /^[0-9a-f]{64}$/);
     assert.deepEqual(geracao.resposta.missing_information, ["Data de contratação não identificada."]);
 
