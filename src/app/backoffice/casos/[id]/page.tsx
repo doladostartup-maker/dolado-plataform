@@ -36,6 +36,7 @@ import {
 import { EnviosCaso, type ComprovativoEquipa, type EnvioEquipa } from "../_components/EnviosCaso";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rascunhoIAAtivo } from "@/lib/rascunhoIA/servidor";
+import { documentosParaPreenchimento } from "@/lib/preenchimentoReclamacao/servidor";
 import type { GeracaoIA } from "../_components/RascunhoIA";
 
 // casos.origem_credito: caso disponível gasto para abrir o caso. A compra
@@ -131,6 +132,9 @@ export default async function CasoDetalhePage({
     supabase.from("tipos_encaminhamento").select("codigo, rotulo, descricao_cliente").eq("ativo", true).order("ordem"),
     enderecoRespostaDoCaso(id).catch(() => null),
   ]);
+  // Faturas/contratos para preencher os marcadores de identificação do texto
+  // (só a lista; a leitura é a pedido, em "Ler dados do documento").
+  const documentosPreenchimento = await documentosParaPreenchimento(id).catch(() => []);
   const anexosPorComunicacao = new Map<string, number>();
   for (const a of anexosRecebidos.data ?? []) anexosPorComunicacao.set(a.comunicacao_id as string, (anexosPorComunicacao.get(a.comunicacao_id as string) ?? 0) + 1);
   const listaRecebidas: RecebidaResumo[] = (recebidas.data ?? []).map((r) => ({ ...(r as Omit<RecebidaResumo, "anexos">), anexos: anexosPorComunicacao.get(r.id as string) ?? 0 }));
@@ -319,6 +323,7 @@ export default async function CasoDetalhePage({
             envios={(envios.data ?? []) as EnvioTexto[]}
             geracoes={(geracoes.data ?? []) as GeracaoIA[]}
             iaAtiva={rascunhoIAAtivo()}
+            documentosPreenchimento={documentosPreenchimento}
             agora={agora}
             ok={query.texto_ok}
             erro={query.texto_erro}

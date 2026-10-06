@@ -72,6 +72,15 @@ const PADROES_NOME: RegExp[] = [
     `(\\b(?:Exm[oa]s?\\.?(?:\\(a\\))?|Car[oa](?:\\(a\\))?|Estimad[oa](?:\\(a\\))?|Prezad[oa](?:\\(a\\))?|Sr\\.?(?:\\(a\\))?|Sra\\.?|Senhor(?:\\(a\\))?|Senhora|Dr\\.?(?:\\(a\\))?|Dra\\.?)(?:\\s+(?:Sr\\.?(?:\\(a\\))?|Sra\\.?|Senhor(?:\\(a\\))?|Senhora|Dr\\.?(?:\\(a\\))?|Dra\\.?|Cliente))*\\s+)(${NOME_PROPRIO})`,
     "gu",
   ),
+  // Identificação no texto da reclamação já preenchido (os marcadores são
+  // substituídos pelos dados do cliente antes do envio, e esse texto volta à
+  // IA na análise da resposta e na nova comunicação): "Eu, X, titular do
+  // NIF…", "X, contribuinte n.º…, residente em…".
+  new RegExp(`(\\b[Ee]u,?\\s+)(${NOME_PROPRIO})(?=\\s*,)`, "gu"),
+  new RegExp(
+    `()(${NOME_PROPRIO})(?=\\s*,\\s*(?:titular|portador|portadora|contribuinte|NIF|com\\s+o\\s+NIF|com\\s+o\\s+n[úu]mero\\s+de\\s+contribuinte|residente|com\\s+morada|morador|moradora|cliente\\s+n))`,
+    "gu",
+  ),
 ];
 
 // Valores identificados por um rótulo explícito. O valor tem de conter
@@ -161,13 +170,19 @@ function mascararSemUrl(texto: string, nomes: (string | null | undefined)[]): st
   t = t.replace(PADRAO_VIA, MASCARAS.morada);
   t = t.replace(/\b\d{4}-\d{3}\b/g, MASCARAS.codigoPostal);
 
-  // Nomes apresentados no próprio texto.
+  // Nomes apresentados no próprio texto (e as outras ocorrências do mesmo
+  // nome, ex.: na assinatura).
+  const detetados: string[] = [];
   for (const padrao of PADROES_NOME) {
-    t = t.replace(padrao, (m, prefixo: string, nome: string) => (soMascarasOuCortesia(nome) ? m : `${prefixo}${MASCARAS.cliente}`));
+    t = t.replace(padrao, (m, prefixo: string, nome: string) => {
+      if (soMascarasOuCortesia(nome)) return m;
+      detetados.push(nome);
+      return `${prefixo}${MASCARAS.cliente}`;
+    });
   }
 
   // Nomes conhecidos (palavra a palavra: apanha "Sr. Costa" e "Maria").
-  const conhecidas = nomes
+  const conhecidas = [...nomes, ...detetados]
     .flatMap((n) => (n ?? "").split(/\s+/))
     .map((p) => p.trim().replace(/[.,;:]+$/, ""))
     .filter((p) => p.length >= 3 && !PARTICULAS.has(p.toLowerCase()));
@@ -287,7 +302,9 @@ export type DocumentoIA = string & { readonly [marcaDocumento]: true };
 
 // Única exceção ao envio de dados minimizados: para ler as condições de um
 // contrato ou os valores de uma fatura, o modelo tem de ver o documento que
-// o cliente carregou (o servidor não tem OCR próprio). O documento pode
+// o cliente carregou (a leitura local, sem IA, de src/lib/preenchimentoReclamacao
+// só procura os dados de identificação por rótulos — não lê condições nem
+// valores). O documento pode
 // conter nome, morada, NIF ou IBAN do cliente; o prompt pede só os campos do
 // schema, e o NIF e o nome do titular são substituídos por um pseudónimo
 // antes de qualquer gravação (protegerExtracao). Só documentos do bucket

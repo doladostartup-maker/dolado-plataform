@@ -21,6 +21,9 @@ import {
 import { enviarTextoParaRevisao, guardarTexto, registarEnvioTexto } from "../texto-actions";
 import { guardarTextoRevisto } from "../rascunho-ia-actions";
 import { DetalhesSugestao, PainelRascunhoIA, type GeracaoIA } from "./RascunhoIA";
+import { PreencherMarcadores } from "./PreencherMarcadores";
+import { marcadoresPorPreencher, marcadoresPresentes } from "@/lib/preenchimentoReclamacao/campos";
+import type { DocumentoCandidato } from "@/lib/preenchimentoReclamacao/servidor";
 
 // Texto para envio (equipa). A autorização do cliente aparece só para
 // leitura: não há — nem a base de dados aceita — forma de a criar ou editar
@@ -34,6 +37,11 @@ import { DetalhesSugestao, PainelRascunhoIA, type GeracaoIA } from "./RascunhoIA
 // Apresentação: a versão em vigor é sempre a mais recente e o seu percurso
 // (preparada → revista → enviada ao cliente → autorizada → enviada à empresa)
 // aparece numa linha própria, para nunca haver dúvida sobre qual vale.
+//
+// Marcadores de identificação ([NOME DO CLIENTE], [NIF], [MORADA],
+// [N.º DE CLIENTE OU CONTRATO]): o editor pode preenchê-los com os dados de
+// uma fatura ou contrato do caso (PreencherMarcadores — leitura sem IA, nada
+// guardado além do texto que a pessoa guardar).
 
 export type VersaoTexto = {
   id: string;
@@ -67,9 +75,12 @@ function EditorTexto({
   aviso,
   sugestaoPorRever = false,
   principal = false,
+  documentos = [],
 }: {
   casoId: string;
   inicial: string;
+  /** Faturas/contratos do caso para preencher os marcadores de identificação. */
+  documentos?: DocumentoCandidato[];
   rotulo: string;
   aviso?: string;
   sugestaoPorRever?: boolean;
@@ -79,9 +90,11 @@ function EditorTexto({
   return (
     <form action={guardarTexto.bind(null, casoId)} className="flex flex-col gap-3">
       {aviso && <Aviso tom="atencao">{aviso}</Aviso>}
+      {marcadoresPresentes(inicial).length > 0 && <PreencherMarcadores casoId={casoId} documentos={documentos} />}
       <label className={ROTULO}>
         Texto da reclamação
-        <textarea name="conteudo" defaultValue={inicial} rows={sugestaoPorRever ? 20 : 14} required className={`${CAMPO_TEXTO_LONGO} text-[14.5px]! leading-[1.7]`} />
+        {/* autoComplete off: o browser não restaura texto por guardar (ex.: dados inseridos de um documento) ao recarregar. */}
+        <textarea name="conteudo" defaultValue={inicial} rows={sugestaoPorRever ? 20 : 14} required autoComplete="off" className={`${CAMPO_TEXTO_LONGO} text-[14.5px]! leading-[1.7]`} />
       </label>
       <div className="flex flex-wrap gap-2">
         {sugestaoPorRever && (
@@ -169,6 +182,7 @@ export function TextoCaso({
   envios,
   geracoes,
   iaAtiva,
+  documentosPreenchimento = [],
   agora,
   ok,
   erro,
@@ -182,6 +196,7 @@ export function TextoCaso({
   envios: EnvioTexto[];
   geracoes: GeracaoIA[];
   iaAtiva: boolean;
+  documentosPreenchimento?: DocumentoCandidato[];
   agora: number;
   ok?: string;
   erro?: string;
@@ -200,6 +215,7 @@ export function TextoCaso({
   // empresa (mesmo fluxo: revisão, autorização explícita da versão, envio).
   const envioAnterior = envios.some((e) => e.texto_id !== atual?.id);
   const seguimento = envios.length > 0;
+  const porPreencher = atual && atual.estado === "rascunho" ? marcadoresPorPreencher(atual.conteudo) : [];
 
   return (
     <Seccao
@@ -240,7 +256,7 @@ export function TextoCaso({
       {!atual && (
         <div className="flex flex-col gap-3">
           <p className="text-[14px] text-[var(--v2-muted)]">Ainda não há texto preparado. O que guardar aqui fica como versão 1, em preparação.</p>
-          <EditorTexto casoId={casoId} inicial="" rotulo="Guardar rascunho (versão 1)" principal />
+          <EditorTexto casoId={casoId} inicial="" rotulo="Guardar rascunho (versão 1)" principal documentos={documentosPreenchimento} />
         </div>
       )}
 
@@ -269,7 +285,13 @@ export function TextoCaso({
                     marcar como revisto” pode ser enviado ao cliente.
                   </Aviso>
                 )}
-                <EditorTexto casoId={casoId} inicial={atual.conteudo} rotulo="Guardar rascunho" sugestaoPorRever={sugestaoPorRever} />
+                <EditorTexto
+                  casoId={casoId}
+                  inicial={atual.conteudo}
+                  rotulo="Guardar rascunho"
+                  sugestaoPorRever={sugestaoPorRever}
+                  documentos={documentosPreenchimento}
+                />
                 {geracaoAtual && <DetalhesSugestao geracao={geracaoAtual} />}
                 <form action={enviarTextoParaRevisao.bind(null, casoId, atual.id)} className="flex flex-col gap-2 border-t border-[var(--v2-line)] pt-4">
                   <p className={TITULO_BLOCO}>Enviar ao cliente</p>
@@ -277,6 +299,11 @@ export function TextoCaso({
                     O cliente recebe um e-mail com a versão {atual.versao} guardada para rever e autorizar. Alterações no editor que ainda não tenham sido
                     guardadas não são incluídas.
                   </p>
+                  {porPreencher.length > 0 && (
+                    <Aviso tom="atencao" titulo="O texto guardado ainda tem marcadores por preencher.">
+                      {porPreencher.join(", ")}. Preencha-os (manualmente ou com “Ler dados do documento”) e guarde antes de enviar ao cliente.
+                    </Aviso>
+                  )}
                   <div>
                     <ConfirmarAcao
                       className={BOTAO_PRIMARIO}
@@ -425,6 +452,7 @@ export function TextoCaso({
                         : undefined
                     }
                     principal={atual.estado === "alteracoes_solicitadas"}
+                    documentos={documentosPreenchimento}
                   />
                 </div>
               </details>
