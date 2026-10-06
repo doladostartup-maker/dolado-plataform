@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { selarMensagemIA, type MensagemIA } from "@/lib/ia/minimizacao";
 import { custoEstimadoUsd } from "@/lib/monitor/custos";
 import type { ResultadoModelo } from "@/lib/rascunhoIA/gerar";
 
@@ -7,6 +8,10 @@ import type { ResultadoModelo } from "@/lib/rascunhoIA/gerar";
 // (src/lib/rascunhoIA/) e pela análise das respostas das empresas
 // (src/lib/analiseResposta/). Só no servidor: a chave (ANTHROPIC_API_KEY)
 // nunca sai daqui.
+//
+// Só aceita mensagens preparadas pela camada comum de minimização
+// (src/lib/ia/minimizacao.ts: prepararParaIA + selarMensagemIA) e volta a
+// selar a mensagem aqui, mesmo que alguém force o tipo.
 //
 // Sem histórico, sem ferramentas. Fallback do lado do servidor da API
 // ("default") se o modelo recusar por política de segurança: o modelo que
@@ -38,7 +43,7 @@ export async function chamarClaudeJson({
   maxTokens: number;
   effort: "low" | "medium" | "high";
   sistema: string;
-  mensagem: string;
+  mensagem: MensagemIA;
   schema: Record<string, unknown>;
   /** Só para os registos de erro (ex.: "rascunho", "analise"). */
   contexto: string;
@@ -56,7 +61,7 @@ export async function chamarClaudeJson({
         fallbacks: "default",
         system: sistema,
         output_config: { effort, format: { type: "json_schema", schema } },
-        messages: [{ role: "user", content: mensagem }],
+        messages: [{ role: "user", content: selarMensagemIA(mensagem) }],
       })
       .withResponse();
 

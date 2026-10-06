@@ -305,6 +305,8 @@ A exclusão geral de IA da v1 foi revista. A Claude API está agora em escopo, m
 4. **Nunca gerar texto que conclua responsabilidade jurídica de terceiro** (ex.: "a empresa violou a lei"), mesmo em sugestões internas — o padrão é sempre: descrever o facto, citar a norma legal objectivamente, formular o pedido concreto.
 5. **Medir custo real** nos primeiros 10-15 casos de cada funcionalidade e anotar em `custos-fixos-e-break-even.md` (ainda por criar) — o piloto está em tier gratuito, um custo por chamada de API é uma excepção a essa regra que vale a pena vigiar.
 
+**Minimização dos dados enviados (06/10/2026):** todas as chamadas à Claude API passam pela camada comum `src/lib/ia/minimizacao.ts` — `prepararParaIA()` (recusa chaves de identidade, IDs internos/Stripe e objetos completos de utilizador/Stripe; mascara o texto livre: nome, NIF, morada, IBAN, contactos, n.º de cliente/contrato, documentos de identificação → `[CLIENTE]`, `[NIF]`, `[MORADA]`, …) e `selarMensagemIA()`, o único tipo aceite por `chamarClaudeJson()`. Única exceção: o documento do Monitor (`documentoParaIA()`, só URL assinadas do bucket `documentos-monitor`). Só `src/lib/claudeJson.ts` e `src/lib/monitor/claudeDocumentos.ts` podem importar o SDK (teste em `src/lib/ia/minimizacao.test.mjs`). Nova funcionalidade com IA = usar esta camada e acrescentar o payload real aos testes.
+
 Qualquer uso de IA fora destas 5 regras (ex.: decisão automática sem revisão) continua a exigir decisão nova de Thiago. A primeira sugestão do texto da reclamação passou a estar em escopo a 05/10/2026, só nas condições da secção seguinte (revisão humana sempre — regra 2).
 
 ## Sugestão do texto da reclamação pela IA (05/10/2026)

@@ -7,6 +7,7 @@
 // inválida) fica registada e o backoffice mostra "Não foi possível gerar a
 // análise automática. Faça a análise manualmente."
 
+import type { MensagemIA } from "../ia/minimizacao.ts";
 import { createHash } from "node:crypto";
 import type { MotivoFalhaModelo, ResultadoModelo, UsoModelo } from "../rascunhoIA/gerar.ts";
 import { construirContexto, type DadosAnalise } from "./contexto.ts";
@@ -20,7 +21,7 @@ export type DepsAnalise = {
   iniciar(comunicacaoId: string, origem: OrigemAnalise, adminId: string | null, versoes: { prompt: string; schema: string }): Promise<string | null>;
   carregar(comunicacaoId: string): Promise<DadosAnalise | null>;
   orcamentoBloqueado(): Promise<boolean>;
-  chamarModelo(pedido: { sistema: string; mensagem: string; schema: Record<string, unknown> }): Promise<ResultadoModelo>;
+  chamarModelo(pedido: { sistema: string; mensagem: MensagemIA; schema: Record<string, unknown> }): Promise<ResultadoModelo>;
   registarUso(uso: UsoModelo, ok: boolean): Promise<void>;
   concluir(analiseId: string, dados: { analise: AnaliseIA; contextoSha256: string; uso: UsoModelo }): Promise<void>;
   falhar(analiseId: string, dados: { motivo: string; detalhe?: string | null; contextoSha256?: string | null; uso?: UsoModelo | null }): Promise<void>;

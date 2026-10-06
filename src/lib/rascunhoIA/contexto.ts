@@ -3,15 +3,17 @@
 //
 // Só os dados necessários para redigir o texto. Nunca vão: nome, e-mail,
 // telefone, NIF, morada, referências de contrato/cliente, CPE/CUI, notas
-// internas, nem dados de pagamento. O texto livre do cliente passa por
-// retirarDadosPessoais() antes de sair do servidor. O rascunho usa
-// marcadores ([NOME DO CLIENTE], …) que a DoLado preenche na revisão.
+// internas, nem dados de pagamento. O contexto passa pela camada comum de
+// minimização (prepararParaIA, src/lib/ia/minimizacao.ts), que recusa chaves
+// proibidas e mascara o texto livre. O rascunho usa marcadores
+// ([NOME DO CLIENTE], …) que a DoLado preenche na revisão.
 //
 // Dados do Monitor de Proteção: só os serviços acompanhados da própria conta
 // que correspondem à empresa e ao setor do caso, com as condições já aceites
 // (valores atuais) e as faturas mais recentes.
 
 import { encontrarFornecedor, normalizarNomeEmpresa, type Fornecedor } from "../monitor/fornecedores.ts";
+import { mascararTextoLivre, prepararParaIA } from "../ia/minimizacao.ts";
 
 export type CasoParaRascunho = {
   id: string;
@@ -63,7 +65,7 @@ export type ServicoMonitor = {
 };
 
 /** Versão da forma do contexto (gravada na auditoria com o hash). */
-export const CONTEXTO_VERSAO = "contexto_v1";
+export const CONTEXTO_VERSAO = "contexto_v2";
 
 const MAX_DESCRICAO = 4000;
 const MAX_SERVICOS = 3;
@@ -73,35 +75,13 @@ const MAX_LINHAS = 15;
 // ---------------------------------------------------------------------------
 // Dados pessoais no texto livre
 
-const PARTICULAS = new Set(["da", "de", "do", "das", "dos", "e"]);
-
-function escaparRegex(s: string) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 /**
  * Retira do texto livre dados pessoais que não são precisos para redigir a
- * reclamação: e-mails, IBAN, telefones, NIF/números longos, códigos postais
- * e o nome do cliente. Melhor esforço (não é anonimização completa).
+ * reclamação (camada comum: mascararTextoLivre). Melhor esforço (não é
+ * anonimização completa).
  */
 export function retirarDadosPessoais(texto: string, { nome }: { nome?: string | null } = {}): string {
-  let t = texto;
-  t = t.replace(/[\p{L}\p{N}._%+-]+@[\p{L}\p{N}.-]+\.[\p{L}]{2,}/gu, "[e-mail]");
-  t = t.replace(/\b[A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]{4}){3,7}(?:[ ]?[A-Z0-9]{1,4})?\b/g, "[IBAN]");
-  t = t.replace(/(?:\+|00)\s?351[\s.-]?\d{3}[\s.-]?\d{3}[\s.-]?\d{3}\b/g, "[telefone]");
-  t = t.replace(/\b[29]\d{2}[\s.-]\d{3}[\s.-]\d{3}\b/g, "[telefone]");
-  // Qualquer sequência de 9 ou mais algarismos (NIF, telefone, cartão,
-  // n.º de cliente): o texto da reclamação não precisa deles.
-  t = t.replace(/\b\d(?:[ -]?\d){8,}\b/g, "[número]");
-  t = t.replace(/\b\d{4}-\d{3}\b/g, "[código postal]");
-  const partes = (nome ?? "")
-    .split(/\s+/)
-    .map((p) => p.trim())
-    .filter((p) => p.length >= 3 && !PARTICULAS.has(p.toLowerCase()));
-  for (const parte of partes) {
-    t = t.replace(new RegExp(`(?<![\\p{L}])${escaparRegex(parte)}(?![\\p{L}])`, "giu"), "[cliente]");
-  }
-  return t;
+  return mascararTextoLivre(texto, { nomes: [nome] });
 }
 
 // ---------------------------------------------------------------------------
@@ -158,7 +138,7 @@ export type ContextoRascunho = ReturnType<typeof construirContexto>;
 
 export function construirContexto(caso: CasoParaRascunho, servicos: ServicoMonitor[]) {
   const descricao = caso.descricao ? retirarDadosPessoais(caso.descricao.slice(0, MAX_DESCRICAO), { nome: caso.nome }) : null;
-  return {
+  return prepararParaIA({
     versao: CONTEXTO_VERSAO,
     pedido_do_cliente: {
       setor: caso.sector,
@@ -211,7 +191,7 @@ export function construirContexto(caso: CasoParaRascunho, servicos: ServicoMonit
           linhas: linhasFatura(f.linhas, caso.nome),
         })),
     })),
-  };
+  }, { nomes: [caso.nome] });
 }
 
 // ---------------------------------------------------------------------------
@@ -230,11 +210,11 @@ const MAX_SEGUIMENTO_RESPOSTA = 8000;
 
 export function construirSeguimento(seg: SeguimentoParaRascunho, nome: string | null) {
   const limpar = (t: string | null | undefined, max: number) => (t ? retirarDadosPessoais(t.slice(0, max), { nome }) : null);
-  return {
+  return prepararParaIA({
     comunicacoes_enviadas: seg.enviadas.slice(0, 2).map((e) => ({ data: e.enviado_em.slice(0, 10), texto: limpar(e.conteudo, MAX_SEGUIMENTO_ENVIADA) })),
     ultima_resposta_da_empresa: seg.ultimaResposta
       ? { data: seg.ultimaResposta.data?.slice(0, 10) ?? null, texto: limpar(seg.ultimaResposta.texto, MAX_SEGUIMENTO_RESPOSTA) }
       : null,
     analise_da_dolado: limpar(seg.analise, 3000),
-  };
+  }, { nomes: [nome] });
 }
