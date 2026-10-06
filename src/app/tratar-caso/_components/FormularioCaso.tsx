@@ -95,7 +95,14 @@ type ErrosPasso = Partial<
 
 const ESTADO_INICIAL: EstadoPedidoForm = { erro: null };
 
-type ValoresIniciais = { sector: string; problemaTipo: string; momentoCliente: string };
+type ValoresIniciais = {
+  sector: string;
+  problemaTipo: string;
+  momentoCliente: string;
+  /** Já conhecidos da conta com sessão (vazio se não houver); continuam editáveis. */
+  nome?: string;
+  telefone?: string;
+};
 
 export function FormularioCaso({
   origem,
@@ -106,7 +113,7 @@ export function FormularioCaso({
 }: {
   origem: string;
   comSessao: boolean;
-  /** Pré-preenchimento vindo do Simulador de Elegibilidade (já validado na página). */
+  /** Pré-preenchimento: Simulador de Elegibilidade e dados já conhecidos da conta (validado na página). */
   inicial?: ValoresIniciais;
   /** O que a conta pode fazer no fim (entradaDoPedido, calculado no servidor). */
   entrada?: EntradaPedido;
@@ -132,8 +139,8 @@ export function FormularioCaso({
   const [erroAnexo, setErroAnexo] = useState<string | null>(null);
   const inputFicheiroRef = useRef<HTMLInputElement>(null);
 
-  const [nome, setNome] = useState("");
-  const [telefone, setTelefone] = useState("");
+  const [nome, setNome] = useState(inicial?.nome ?? "");
+  const [telefone, setTelefone] = useState(inicial?.telefone ?? "");
   const [rgpd, setRgpd] = useState(false);
   const [alertas, setAlertas] = useState(false);
   const iniciado = useRef(false);
@@ -497,6 +504,7 @@ export function FormularioCaso({
               <input
                 id="nome-field"
                 name="nome"
+                autoComplete="name"
                 className={CAMPO}
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
@@ -508,6 +516,7 @@ export function FormularioCaso({
                 id="telefone-field-guiado"
                 type="tel"
                 name="telefone"
+                autoComplete="tel"
                 className={CAMPO}
                 value={telefone}
                 onChange={(e) => setTelefone(e.target.value)}
