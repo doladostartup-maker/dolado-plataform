@@ -1,8 +1,8 @@
 # Termos e Condições — novos setores (rascunho para validação)
 
-**Estado: rascunho, por validar** (Thiago / advogada). Nada publicado: os Termos em vigor continuam a ser a
-versão `2026-10-05`. Depois de aprovado, o texto entra numa versão nova (`_versoes/vAAAA-MM-DD.tsx`, a data da
-publicação), sem editar a publicada.
+**Estado: aprovado e publicado como Termos `2026-10-06`** (texto validado pela advogada a 06/10/2026, tal como
+proposto abaixo: com a nova última frase da secção 2, "health clubs" e sem acrescento a "em Portugal").
+Ficheiro `src/app/(legal)/termos/_versoes/v2026-10-06.tsx`; a versão `2026-10-05` não foi editada.
 
 ## Porquê
 
