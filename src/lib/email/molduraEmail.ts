@@ -109,7 +109,7 @@ export function emailV2({
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
           <tr>
             <td style="padding:0 8px 20px 8px;">
-              <a href="${SITE_EMAIL}" style="text-decoration:none;"><img src="${LOGO_EMAIL}" width="30" height="30" alt="" style="display:inline-block; vertical-align:middle; border:0;"><span style="display:inline-block; vertical-align:middle; margin-left:8px; font-family:${FONTE}; font-size:19px; font-weight:800; letter-spacing:-0.02em; color:${COR_EMAIL.navy};">DoLado</span></a>
+              <a href="${SITE_EMAIL}" style="text-decoration:none;"><img src="${LOGO_EMAIL}" width="30" height="30" alt="" style="display:inline-block; vertical-align:middle; border:0;"><span style="display:inline-block; vertical-align:middle; margin-left:8px; font-family:${FONTE}; font-size:19px; font-weight:800; letter-spacing:-0.02em; color:${COR_EMAIL.navy};">DoLado.<span style="color:#046A38;">p</span><span style="color:#DA291C;">t</span></span></a>
             </td>
           </tr>
           <tr>
