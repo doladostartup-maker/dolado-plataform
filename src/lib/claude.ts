@@ -26,3 +26,14 @@ export const PARAMETROS_RASCUNHO = {
   max_tokens: 16000,
   output_config: { effort: "medium" },
 } as const;
+
+// Análise preliminar das respostas das empresas (src/lib/analiseResposta/):
+// interpretar uma resposta face à reclamação enviada é exigente — Opus por
+// omissão, esforço médio. Sempre revista por uma pessoa antes de qualquer
+// decisão. Trocável sem alterar código (ANTHROPIC_ANALISE_MODEL).
+export const MODELO_ANALISES = process.env.ANTHROPIC_ANALISE_MODEL || "claude-opus-5-5";
+
+export const PARAMETROS_ANALISE = {
+  max_tokens: 16000,
+  output_config: { effort: "medium" },
+} as const;

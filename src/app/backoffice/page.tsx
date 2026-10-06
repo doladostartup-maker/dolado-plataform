@@ -4,7 +4,7 @@ import { prazoPrincipal, prazosCaso, prioridade, proximaAcao } from "@/lib/backo
 import { CabecalhoPagina, TituloSeccao } from "@/components/backoffice/Cabecalho";
 import { CartaoFila, Metrica } from "@/components/backoffice/Blocos";
 import { Etiqueta, IndicadorPrazo } from "@/components/backoffice/Estado";
-import { IconeCartao, IconeCirculoVisto, IconeEscudo, IconeLupaDocumento, IconeSeta, IconeTrocar } from "@/components/backoffice/Icones";
+import { IconeCartao, IconeCirculoVisto, IconeMensagem, IconeEscudo, IconeLupaDocumento, IconeSeta, IconeTrocar } from "@/components/backoffice/Icones";
 import { EstadoVazio } from "@/components/portal/EstadoVazio";
 import { LIGACAO } from "@/components/backoffice/ui";
 
@@ -73,7 +73,7 @@ export default async function BackofficeHoje() {
   const esperaCliente = casos.filter((c) => proximaAcao(c).aguarda === "cliente").length;
   const esperaEmpresa = casos.filter((c) => proximaAcao(c).aguarda === "empresa").length;
 
-  const outrasFilas = [filas.documentosMonitor, filas.achados, filas.compras, filas.conversoes].reduce<number>((s, n) => s + (n ?? 0), 0);
+  const outrasFilas = [filas.documentosMonitor, filas.achados, filas.compras, filas.conversoes, filas.naoAssociadas].reduce<number>((s, n) => s + (n ?? 0), 0);
   const tudoEmDia = precisam.length === 0 && comPrazo.length === 0 && outrasFilas === 0;
 
   const dataHoje = hoje.toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Lisbon" });
@@ -89,8 +89,8 @@ export default async function BackofficeHoje() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Metrica rotulo="Precisam de ação" valor={precisam.length} detalhe="Casos à espera da DoLado" />
         <Metrica rotulo="Fora do prazo" valor={foraDoPrazo} detalhe="1.ª resposta, empresa ou fidelização" tom={foraDoPrazo > 0 ? "erro" : "normal"} />
-        <Metrica rotulo="À espera do cliente" valor={esperaCliente} detalhe="Aprovação do texto ou decisão" />
-        <Metrica rotulo="À espera da empresa" valor={esperaEmpresa} detalhe="Reclamação enviada" />
+        <Metrica rotulo="À espera do cliente" valor={esperaCliente} detalhe="Aprovação do texto, informação ou confirmação" />
+        <Metrica rotulo="À espera da empresa" valor={esperaEmpresa} detalhe="Reclamação ou nova comunicação enviada" />
       </div>
 
       {tudoEmDia && (
@@ -131,8 +131,15 @@ export default async function BackofficeHoje() {
       )}
 
       <section aria-labelledby="filas" className="flex flex-col gap-3">
-        <TituloSeccao id="filas" titulo="Outras filas" descricao="Proteção e pagamentos que esperam uma decisão." />
+        <TituloSeccao id="filas" titulo="Outras filas" descricao="Respostas sem caso, Proteção e pagamentos que esperam uma decisão." />
         <div className="grid gap-3 sm:grid-cols-2">
+          <CartaoFila
+            href="/backoffice/respostas-sem-caso"
+            titulo="Respostas sem caso"
+            descricao="E-mails recebidos em respostas.dolado.pt que não foi possível associar a um caso."
+            contagem={filas.naoAssociadas}
+            icone={<IconeMensagem tamanho={18} />}
+          />
           <CartaoFila
             href="/backoffice/monitor"
             titulo="Documentos por tratar"

@@ -19,16 +19,22 @@ function voltar(casoId: string, chave: "texto_ok" | "texto_erro", msg: string): 
 }
 
 /** "Gerar rascunho com IA" / "Tentar novamente" / "Gerar nova sugestão". */
-export async function gerarRascunhoIAAcao(casoId: string) {
+export async function gerarRascunhoIAAcao(casoId: string, finalidade: "reclamacao" | "nova_comunicacao" = "reclamacao") {
   const { user } = await requireAdmin();
   if (!rascunhoIAAtivo()) voltar(casoId, "texto_erro", "A sugestão por IA está desativada neste ambiente (RASCUNHO_IA_ATIVO).");
   let geracaoId: string | null = null;
   try {
-    geracaoId = await pedirRascunhoIAManual(casoId, user.id);
+    geracaoId = await pedirRascunhoIAManual(casoId, user.id, finalidade === "nova_comunicacao" ? "nova_comunicacao" : "reclamacao");
   } catch {
     voltar(casoId, "texto_erro", "Não foi possível iniciar a geração.");
   }
-  if (!geracaoId) voltar(casoId, "texto_erro", "Já há uma sugestão a ser gerada para este caso.");
+  if (!geracaoId) {
+    voltar(
+      casoId,
+      "texto_erro",
+      finalidade === "nova_comunicacao" ? "Não foi possível gerar: já há uma sugestão em curso ou ainda não há nenhuma comunicação enviada." : "Já há uma sugestão a ser gerada para este caso.",
+    );
+  }
   voltar(casoId, "texto_ok", "A gerar a sugestão com IA. A página atualiza quando terminar.");
 }
 

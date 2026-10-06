@@ -114,10 +114,13 @@ export function PainelRascunhoIA({
   geracoes,
   aplicadas,
   agora,
+  finalidade = "reclamacao",
 }: {
   casoId: string;
   ativa: boolean;
   podeGerar: boolean;
+  /** "nova_comunicacao": depois de um envio, sugere a resposta à empresa. */
+  finalidade?: "reclamacao" | "nova_comunicacao";
   geracoes: GeracaoIA[];
   aplicadas: Set<string>;
   agora: number;
@@ -183,13 +186,15 @@ export function PainelRascunhoIA({
       )}
 
       {ativa && podeGerar && !aGerar && (
-        <form action={gerarRascunhoIAAcao.bind(null, casoId)} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <form action={gerarRascunhoIAAcao.bind(null, casoId, finalidade)} className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <button type="submit" className={BOTAO_SECUNDARIO}>
             {ultima?.estado === "falhou" || (ultima?.estado === "a_gerar" && !aGerar)
               ? "Tentar novamente"
-              : geracoes.length === 0
-                ? "Gerar rascunho com IA"
-                : "Gerar nova sugestão com IA"}
+              : finalidade === "nova_comunicacao"
+                ? "Gerar nova comunicação com IA"
+                : geracoes.length === 0
+                  ? "Gerar rascunho com IA"
+                  : "Gerar nova sugestão com IA"}
           </button>
           <p className={AJUDA_CAMPO}>Nunca substitui texto editado sem confirmação.</p>
         </form>

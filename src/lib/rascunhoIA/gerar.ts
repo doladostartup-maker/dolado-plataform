@@ -16,12 +16,28 @@
 
 import { createHash } from "node:crypto";
 import type { Fornecedor } from "../monitor/fornecedores.ts";
-import { construirContexto, servicosDoCaso, type CasoParaRascunho, type ServicoMonitor } from "./contexto.ts";
-import { PROMPT_SISTEMA, PROMPT_VERSAO, SCHEMA_RESPOSTA, SCHEMA_VERSAO, montarMensagem } from "./prompt.ts";
+import {
+  construirContexto,
+  construirSeguimento,
+  servicosDoCaso,
+  type CasoParaRascunho,
+  type SeguimentoParaRascunho,
+  type ServicoMonitor,
+} from "./contexto.ts";
+import {
+  PROMPT_SISTEMA,
+  PROMPT_SISTEMA_NOVA_COMUNICACAO,
+  PROMPT_VERSAO,
+  PROMPT_VERSAO_NOVA_COMUNICACAO,
+  SCHEMA_RESPOSTA,
+  SCHEMA_VERSAO,
+  montarMensagem,
+} from "./prompt.ts";
 import { paraEnvio, selecionarRegras, type RegraEnviada, type RegraJuridica, type SeletorRegras } from "./regras.ts";
 import { validarResposta, type RespostaRascunho } from "./validacao.ts";
 
 export type OrigemGeracao = "automatico" | "manual";
+export type FinalidadeGeracao = "reclamacao" | "nova_comunicacao";
 
 export type UsoModelo = {
   modelo: string;
@@ -57,8 +73,16 @@ export type DadosFalha = {
 
 export type DepsRascunho = {
   ativo(): boolean;
-  iniciar(casoId: string, origem: OrigemGeracao, adminId: string | null, versoes: { prompt: string; schema: string }): Promise<string | null>;
+  iniciar(
+    casoId: string,
+    origem: OrigemGeracao,
+    adminId: string | null,
+    versoes: { prompt: string; schema: string },
+    finalidade?: FinalidadeGeracao,
+  ): Promise<string | null>;
   carregarCaso(casoId: string): Promise<CasoParaRascunho | null>;
+  /** Só para "nova_comunicacao": envios, última resposta e análise da DoLado. */
+  carregarSeguimento?(casoId: string): Promise<SeguimentoParaRascunho | null>;
   carregarServicos(utilizadorId: string): Promise<ServicoMonitor[]>;
   carregarFornecedores(): Promise<Fornecedor[]>;
   carregarRegras(): Promise<RegraJuridica[]>;
@@ -83,8 +107,15 @@ export function hashContexto(mensagem: string) {
 }
 
 /** Regista o início de uma geração (null = já há uma em curso / não se aplica). */
-export function iniciarGeracao(casoId: string, origem: OrigemGeracao, adminId: string | null, deps: Pick<DepsRascunho, "iniciar">) {
-  return deps.iniciar(casoId, origem, adminId, { prompt: PROMPT_VERSAO, schema: SCHEMA_VERSAO });
+export function iniciarGeracao(
+  casoId: string,
+  origem: OrigemGeracao,
+  adminId: string | null,
+  deps: Pick<DepsRascunho, "iniciar">,
+  finalidade: FinalidadeGeracao = "reclamacao",
+) {
+  const prompt = finalidade === "nova_comunicacao" ? PROMPT_VERSAO_NOVA_COMUNICACAO : PROMPT_VERSAO;
+  return deps.iniciar(casoId, origem, adminId, { prompt, schema: SCHEMA_VERSAO }, finalidade);
 }
 
 export async function gerarRascunho(
@@ -93,9 +124,11 @@ export async function gerarRascunho(
     origem,
     adminId,
     geracaoIniciada,
+    finalidade = "reclamacao",
   }: {
     origem: OrigemGeracao;
     adminId: string | null;
+    finalidade?: FinalidadeGeracao;
     /** Geração já começada com iniciarGeracao() (pedido manual no backoffice). */
     geracaoIniciada?: string;
   },
@@ -105,7 +138,7 @@ export async function gerarRascunho(
 
   let geracaoId: string | null;
   try {
-    geracaoId = geracaoIniciada ?? (await iniciarGeracao(casoId, origem, adminId, deps));
+    geracaoId = geracaoIniciada ?? (await iniciarGeracao(casoId, origem, adminId, deps, finalidade));
   } catch (erro) {
     console.error("[rascunho IA] não foi possível iniciar a geração:", erro instanceof Error ? erro.message : erro);
     return { estado: "ignorado" };
@@ -131,11 +164,18 @@ export async function gerarRascunho(
 
     const seletor = deps.seletor ?? selecionarRegras;
     const regrasEnviadas = seletor({ setor: caso.sector, categoria: caso.problema_tipo }, regras, deps.hoje()).map(paraEnvio);
-    const contexto = construirContexto(caso, servicosDoCaso(caso, servicos, fornecedores));
-    const mensagem = montarMensagem(contexto, regrasEnviadas);
+    const base = construirContexto(caso, servicosDoCaso(caso, servicos, fornecedores));
+    let contexto: unknown = base;
+    if (finalidade === "nova_comunicacao") {
+      const seguimento = deps.carregarSeguimento ? await deps.carregarSeguimento(casoId) : null;
+      if (!seguimento || seguimento.enviadas.length === 0) return await falhar({ motivo: "sem_envio_anterior" });
+      contexto = { ...base, seguimento: construirSeguimento(seguimento, caso.nome) };
+    }
+    const mensagem = montarMensagem(contexto, regrasEnviadas, finalidade);
     const contextoSha256 = hashContexto(mensagem);
+    const sistema = finalidade === "nova_comunicacao" ? PROMPT_SISTEMA_NOVA_COMUNICACAO : PROMPT_SISTEMA;
 
-    const chamada = await deps.chamarModelo({ sistema: PROMPT_SISTEMA, mensagem, schema: SCHEMA_RESPOSTA as unknown as Record<string, unknown> });
+    const chamada = await deps.chamarModelo({ sistema, mensagem, schema: SCHEMA_RESPOSTA as unknown as Record<string, unknown> });
     if (chamada.uso) await deps.registarUso(chamada.uso, chamada.ok).catch(() => undefined);
     if (!chamada.ok) {
       return await falhar({ motivo: chamada.motivo, detalhe: chamada.detalhe, regrasEnviadas, contextoSha256, uso: chamada.uso });

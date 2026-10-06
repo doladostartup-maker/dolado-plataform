@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { decidirClienteCaso } from "../actions";
+import { confirmarResolucaoCliente, responderPedidoCliente } from "../actions";
 import type { EstadoTexto } from "@/lib/textoCaso";
-import { estadoCasoCliente, rotuloEventoCliente, type EstadoTextoRelevante } from "@/lib/portal/estadoCaso";
+import { cronologiaCliente, estadoCasoCliente, type EstadoTextoRelevante, type EventoCliente } from "@/lib/portal/estadoCaso";
 import { formatarDataHora } from "@/app/texto/_components/Mensagem";
 import { Aviso } from "@/components/portal/Aviso";
 import { CabecalhoPagina } from "@/components/portal/Cabecalho";
@@ -11,12 +11,17 @@ import { Etiqueta } from "@/components/portal/Etiqueta";
 import { IconeDocumentoVisto, IconeSeta } from "@/components/portal/Icones";
 import { LinhaTemporal, type PassoLinhaTemporal } from "@/components/portal/LinhaTemporal";
 import {
+  AJUDA_CAMPO,
+  BOTAO_PRIMARIO,
   BOTAO_SECUNDARIO,
+  CAMPO,
   CARTAO,
   CARTAO_ACAO,
   CARTAO_DESTAQUE,
   CARTAO_SUCESSO,
   LIGACAO,
+  METADADOS,
+  ROTULO,
   TEXTO,
   TEXTO_SECUNDARIO,
   TITULO_SECCAO,
@@ -39,7 +44,7 @@ export default async function CasoClienteDetalhePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ erro?: string; guardado?: string; texto?: string }>;
+  searchParams: Promise<{ erro?: string; guardado?: string; texto?: string; confirmado?: string; informacao?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -53,7 +58,7 @@ export default async function CasoClienteDetalhePage({
 
   // Tudo com a sessão do cliente (RLS: só o próprio caso; nunca rascunhos;
   // sem o caminho no storage dos comprovativos).
-  const [{ data: textoAtual }, { data: eventos }, { data: envios }, { data: comprovativos }] = await Promise.all([
+  const [{ data: textoAtual }, { data: eventos }, { data: envios }, { data: comprovativos }, { data: pedidos }, { data: decisoes }] = await Promise.all([
     // Texto em curso: o mais recente ainda não enviado nem substituído.
     supabase
       .from("casos_textos")
@@ -63,10 +68,11 @@ export default async function CasoClienteDetalhePage({
       .order("versao", { ascending: false })
       .limit(1)
       .maybeSingle(),
-    supabase.from("casos_eventos").select("tipo, created_at").eq("caso_id", id).order("created_at"),
+    // RLS: só os acontecimentos visíveis ao cliente.
+    supabase.from("casos_eventos").select("tipo, created_at, texto_id, dados").eq("caso_id", id).order("created_at"),
     supabase
       .from("casos_textos_envios")
-      .select("id, texto_id, enviado_em, canal, destinatario")
+      .select("id, texto_id, enviado_em, canal, destinatario, referencia")
       .eq("caso_id", id)
       .order("enviado_em", { ascending: false }),
     supabase
@@ -74,6 +80,14 @@ export default async function CasoClienteDetalhePage({
       .select("id, envio_id, tipo, nome, identificador_externo")
       .eq("caso_id", id)
       .is("substituido_em", null),
+    supabase
+      .from("casos_pedidos_cliente")
+      .select("id, pedido, instrucoes, prazo, estado, created_at, respondido_em")
+      .eq("caso_id", id)
+      .order("created_at", { ascending: false })
+      .limit(1),
+    // Só o que foi dito ao cliente (permissões por coluna; sem a análise interna).
+    supabase.from("casos_analises").select("decisao, mensagem_cliente, created_at").eq("caso_id", id).order("created_at", { ascending: false }),
   ]);
 
   // Texto de cada envio: a versão apontada pelo registo de envio (imutável).
@@ -87,6 +101,7 @@ export default async function CasoClienteDetalhePage({
     enviado_em: e.enviado_em as string,
     canal: e.canal as string,
     destinatario: e.destinatario as string,
+    referencia: (e.referencia as string | null) ?? null,
     versao: (textoDoEnvio.get(e.texto_id as string)?.versao as number | undefined) ?? null,
     conteudo: (textoDoEnvio.get(e.texto_id as string)?.conteudo as string | undefined) ?? null,
   }));
@@ -94,27 +109,44 @@ export default async function CasoClienteDetalhePage({
   // Casos antigos: comprovativo associado ao caso sem envio no sistema.
   const comprovativoSemEnvio = listaComprovativos.find((c) => c.envio_id === null) ?? null;
 
-  const aceitar = decidirClienteCaso.bind(null, id, "aceitou");
-  const recusar = decidirClienteCaso.bind(null, id, "recusou");
+  const resolvido = confirmarResolucaoCliente.bind(null, id, true);
+  const naoResolvido = confirmarResolucaoCliente.bind(null, id, false);
 
-  const apresentacao = estadoCasoCliente(caso.status, (textoAtual?.estado as EstadoTextoRelevante | undefined) ?? null);
+  const listaEventos = (eventos ?? []) as EventoCliente[];
+  // "Em análise" sem mensagem nova (o cliente disse que não ficou resolvido ou
+  // enviou a informação pedida): texto próprio.
+  const ultimoMotivo = [...listaEventos]
+    .reverse()
+    .find((e) => ["comunicacao_recebida", "cliente_rejeitou_resolucao", "informacao_cliente_enviada"].includes(e.tipo));
+  const apresentacao = estadoCasoCliente(caso.status, (textoAtual?.estado as EstadoTextoRelevante | undefined) ?? null, {
+    jaEnviado: (envios ?? []).length > 0,
+    analiseSemResposta: !!ultimoMotivo && ultimoMotivo.tipo !== "comunicacao_recebida",
+  });
   const concluido = caso.status === "Resolvido";
+  const encerrado = caso.status === "Encerrado sem resolução";
   const aguardaDecisao = caso.status === "Aguardando decisão cliente";
+  const pedido = pedidos?.[0] ?? null;
+  const pedidoAberto = caso.status === "Aguardando cliente" && pedido?.estado === "aberto" ? pedido : null;
+  const solucao = (decisoes ?? []).find((d) => d.decisao === "resolucao_proposta");
+  const encaminhamento = (decisoes ?? []).find((d) => d.decisao === "encaminhar");
+  const mostrarEncaminhamento = (caso.status === "Bloqueado" || encerrado) && !!encaminhamento?.mensagem_cliente;
 
-  // Linha temporal: caso recebido → acontecimentos registados → situação
-  // atual → próximo passo (ou conclusão).
+  // Cronologia: caso recebido → acontecimentos registados (só os visíveis
+  // ao cliente) → situação atual → próximo passo (ou conclusão).
+  const referencias = new Map((envios ?? []).map((e) => [e.texto_id as string, (e.referencia as string | null) ?? null]));
   const passos: PassoLinhaTemporal[] = [
     { id: "recebido", titulo: "Caso recebido", quando: formatarDataHora(caso.created_at), estado: "feito" },
-    ...((eventos ?? []) as { tipo: string; created_at: string }[]).map((e, i) => ({
+    ...cronologiaCliente(listaEventos, referencias).map((e, i) => ({
       id: `evento-${i}`,
-      titulo: rotuloEventoCliente(e.tipo),
-      quando: formatarDataHora(e.created_at),
+      titulo: e.titulo,
+      quando: formatarDataHora(e.quando),
+      detalhe: e.detalhe,
       estado: "feito" as const,
     })),
-    concluido
-      ? { id: "concluido", titulo: "Caso concluído", estado: "feito" as const }
+    concluido || encerrado
+      ? { id: "concluido", titulo: concluido ? "Caso concluído" : "Caso encerrado", estado: "feito" as const }
       : { id: "atual", titulo: apresentacao.rotulo, estado: "atual" as const },
-    ...(!concluido && apresentacao.proximoPasso
+    ...(!concluido && !encerrado && apresentacao.proximoPasso
       ? [{ id: "seguinte", titulo: "A seguir", detalhe: apresentacao.proximoPasso, estado: "futuro" as const }]
       : []),
   ];
@@ -129,6 +161,11 @@ export default async function CasoClienteDetalhePage({
       />
 
       {query.guardado && <Aviso tom="sucesso">A sua decisão foi registada.</Aviso>}
+      {query.confirmado === "resolvido" && <Aviso tom="sucesso">Obrigado pela confirmação. O caso fica dado como resolvido.</Aviso>}
+      {query.confirmado === "nao_resolvido" && (
+        <Aviso tom="sucesso">Obrigado. A DoLado vai analisar a situação e indicar-lhe o próximo passo.</Aviso>
+      )}
+      {query.informacao === "enviada" && <Aviso tom="sucesso">Recebemos a informação. A DoLado vai analisá-la.</Aviso>}
       {query.erro && <Aviso tom="erro">{query.erro}</Aviso>}
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -137,6 +174,7 @@ export default async function CasoClienteDetalhePage({
           <section
             aria-labelledby="situacao"
             className={`${concluido ? CARTAO_SUCESSO : apresentacao.requerAcao ? CARTAO_ACAO : CARTAO_DESTAQUE} flex flex-col gap-3`}
+            aria-live="polite"
           >
             <h2 id="situacao" className="text-[13px] font-bold uppercase tracking-[0.08em] text-[var(--v2-muted)]">
               Ponto de situação
@@ -149,8 +187,8 @@ export default async function CasoClienteDetalhePage({
               </p>
             )}
             {apresentacao.requerAcao && (
-              <a href={aguardaDecisao ? "#decisao" : "#texto"} className={`${LIGACAO} self-start text-[14.5px]`}>
-                {aguardaDecisao ? "Ver a proposta" : "Rever o texto"}
+              <a href={aguardaDecisao ? "#decisao" : pedidoAberto ? "#pedido" : "#texto"} className={`${LIGACAO} self-start text-[14.5px]`}>
+                {aguardaDecisao ? "Ver a solução" : pedidoAberto ? "Ver o que precisamos" : "Rever o texto"}
                 <IconeSeta tamanho={16} />
               </a>
             )}
@@ -159,24 +197,74 @@ export default async function CasoClienteDetalhePage({
           {aguardaDecisao && (
             <section id="decisao" aria-labelledby="decisao-titulo" className={`${CARTAO_ACAO} flex scroll-mt-24 flex-col gap-4`}>
               <h2 id="decisao-titulo" className={TITULO_SECCAO}>
-                Precisamos da sua decisão
+                A empresa apresentou uma solução
               </h2>
-              <p className={TEXTO}>
-                Foi encontrada uma proposta para o seu caso
-                {caso.valor_indicado != null ? ` no valor de ${caso.valor_indicado} €` : ""}. O que decide?
-              </p>
+              {solucao?.mensagem_cliente ? (
+                <p className={`${TEXTO} whitespace-pre-wrap`}>{solucao.mensagem_cliente}</p>
+              ) : (
+                <p className={TEXTO}>A empresa apresentou uma solução para o seu caso.</p>
+              )}
+              <p className={TEXTO_SECUNDARIO}>O problema ficou resolvido? Só damos o caso por resolvido com a sua confirmação.</p>
               <div className="flex flex-col gap-3 sm:flex-row">
-                <form action={aceitar}>
-                  <button type="submit" className={`${BOTAO_SECUNDARIO} w-full sm:w-auto`}>
-                    Aceito
+                <form action={resolvido}>
+                  <button type="submit" className={`${BOTAO_PRIMARIO} w-full sm:w-auto`}>
+                    O problema ficou resolvido
                   </button>
                 </form>
-                <form action={recusar}>
+                <form action={naoResolvido}>
                   <button type="submit" className={`${BOTAO_SECUNDARIO} w-full sm:w-auto`}>
-                    Não aceito, quero avançar
+                    O problema não ficou resolvido
                   </button>
                 </form>
               </div>
+            </section>
+          )}
+
+          {pedidoAberto && (
+            <section id="pedido" aria-labelledby="pedido-titulo" className={`${CARTAO_ACAO} flex scroll-mt-24 flex-col gap-4`}>
+              <h2 id="pedido-titulo" className={TITULO_SECCAO}>
+                Precisamos de informação sua
+              </h2>
+              <p className={`${TEXTO} whitespace-pre-wrap`}>{pedidoAberto.pedido}</p>
+              {pedidoAberto.instrucoes && <p className={`${TEXTO_SECUNDARIO} whitespace-pre-wrap`}>{pedidoAberto.instrucoes}</p>}
+              {pedidoAberto.prazo && (
+                <p className={TEXTO_SECUNDARIO}>
+                  <span className="font-semibold text-[var(--v2-navy)]">Prazo: </span>
+                  {new Date(`${pedidoAberto.prazo}T00:00:00`).toLocaleDateString("pt-PT", { dateStyle: "long" })}
+                </p>
+              )}
+              <form action={responderPedidoCliente.bind(null, id, pedidoAberto.id as string)} className="flex flex-col gap-4">
+                <label className={ROTULO}>
+                  A sua resposta
+                  <textarea name="resposta" rows={4} maxLength={5000} className={`${CAMPO} leading-relaxed`} />
+                </label>
+                <label className={ROTULO}>
+                  Ficheiros <span className={AJUDA_CAMPO}>PDF ou imagem; até 5 ficheiros e 20 MB no total</span>
+                  <input
+                    type="file"
+                    name="ficheiros"
+                    multiple
+                    accept="application/pdf,image/jpeg,image/png,image/webp,image/heic"
+                    className={`${CAMPO} file:mr-3 file:rounded-[8px] file:border-0 file:bg-[var(--v2-mint)] file:px-3 file:py-1.5 file:font-semibold file:text-[var(--v2-green-dark)]`}
+                  />
+                </label>
+                <p className={METADADOS}>Os ficheiros ficam guardados no seu caso e só a equipa DoLado os vê.</p>
+                <div>
+                  <button type="submit" className={`${BOTAO_PRIMARIO} w-full sm:w-auto`}>
+                    Enviar informação
+                  </button>
+                </div>
+              </form>
+            </section>
+          )}
+
+          {mostrarEncaminhamento && (
+            <section aria-labelledby="encaminhamento-titulo" className={`${CARTAO} flex flex-col gap-3`}>
+              <h2 id="encaminhamento-titulo" className={TITULO_SECCAO}>
+                {encerrado ? "Encerramento do caso" : "Próximo passo indicado pela DoLado"}
+              </h2>
+              <p className={`${TEXTO} whitespace-pre-wrap`}>{encaminhamento!.mensagem_cliente}</p>
+              <p className={TEXTO_SECUNDARIO}>Se tiver dúvidas, responda ao último e-mail da DoLado ou escreva-nos.</p>
             </section>
           )}
 
@@ -194,12 +282,14 @@ export default async function CasoClienteDetalhePage({
                 : null
             }
             resultado={query.texto}
+            seguimento={(envios ?? []).length > 0}
           />
 
-          {enviosCliente.map((envio) => (
+          {enviosCliente.map((envio, i) => (
             <ReclamacaoEnviada
               key={envio.id}
               envio={envio}
+              seguimento={i < enviosCliente.length - 1}
               comprovativo={listaComprovativos.find((c) => c.envio_id === envio.id) ?? null}
             />
           ))}

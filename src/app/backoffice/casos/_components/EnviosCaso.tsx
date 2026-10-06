@@ -31,6 +31,7 @@ export type EnvioEquipa = {
   conteudo_sha256: string;
   versao: number | null;
   conteudo: string | null;
+  referencia?: string | null;
 };
 export type ComprovativoEquipa = {
   id: string;
@@ -166,10 +167,11 @@ export function EnviosCaso({
 
   return (
     <Seccao id="envio" titulo="Envio e comprovativo" descricao="Texto exato enviado à empresa (só leitura), data, canal e comprovativo.">
-      {envios.map((e) => (
+      {envios.map((e, i) => (
         <div key={e.id} className="flex flex-col gap-3">
-          <Aviso tom="sucesso" titulo={`Reclamação enviada${e.versao ? ` — versão ${e.versao}` : ""}`}>
+          <Aviso tom="sucesso" titulo={`${i === 0 ? "Reclamação enviada" : "Nova comunicação enviada"}${e.versao ? ` — versão ${e.versao}` : ""}`}>
             {dataHora(e.enviado_em)} · {CANAIS_ENVIO[e.canal as keyof typeof CANAIS_ENVIO] ?? e.canal} · {e.destinatario}
+            {e.referencia ? ` · referência ${e.referencia}` : ""}
             {e.resultado ? ` · ${e.resultado}` : ""}
           </Aviso>
           <p className={CODIGO}>SHA-256 do texto enviado: {e.conteudo_sha256.slice(0, 16)}…</p>

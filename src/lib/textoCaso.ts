@@ -52,6 +52,23 @@ export const EVENTOS_CASO: Record<string, string> = {
   comunicacao_enviada: "Reclamação enviada",
   comprovativo_disponivel: "Comprovativo de submissão disponível",
   dossie_disponivel: "Dossiê final disponível",
+  aguarda_resposta_empresa: "A aguardar resposta da empresa",
+  comunicacao_recebida: "Comunicação recebida",
+  em_analise_dolado: "Em análise pela DoLado",
+  analise_concluida: "Análise concluída pela DoLado",
+  solucao_apresentada: "Solução apresentada ao cliente",
+  cliente_confirmou_resolucao: "Resolução confirmada",
+  cliente_rejeitou_resolucao: "Resolução não confirmada",
+  pedido_informacao_cliente: "Informação pedida ao cliente",
+  informacao_cliente_enviada: "Cliente enviou a informação pedida",
+  encaminhamento_registado: "Encaminhamento registado",
+  caso_encerrado: "Caso encerrado sem resolução",
+};
+
+/** Eventos só da cronologia interna (o cliente não os vê). */
+export const EVENTOS_CASO_INTERNOS: Record<string, string> = {
+  mensagem_sem_acao: "Mensagem marcada sem ação",
+  estado_corrigido: "Estado corrigido manualmente",
 };
 
 // ---------------------------------------------------------------------------
@@ -87,6 +104,9 @@ export function mensagemComprovativoCliente(tipo: TipoComprovativo | null) {
   // Sem registo, ou erro na obtenção: mensagem neutra, sem botões.
   return "O comprovativo de submissão será disponibilizado aqui assim que estiver disponível.";
 }
+
+/** Limite da referência da reclamação (igual à base de dados). */
+export const MAX_REFERENCIA = 200;
 
 export const CANAIS_ENVIO = {
   livro_reclamacoes_eletronico: "Livro de Reclamações Eletrónico",

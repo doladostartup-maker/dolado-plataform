@@ -40,6 +40,8 @@ const ROTAS_SEM_REFRESH_DE_SESSAO = [
   ...PAGINAS_PUBLICAS,
   "/auth/callback",
   "/api/stripe/webhook",
+  // Webhook de receção de respostas (Resend): sem sessão, como o do Stripe.
+  "/api/webhooks/resend/inbound",
 ];
 
 // Só estas páginas de marketing fazem sentido em dolado.pt (sem "portal.").
