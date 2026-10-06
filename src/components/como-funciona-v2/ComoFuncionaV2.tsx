@@ -32,7 +32,7 @@ const PASSOS: Passo[] = [
     rotulo: DOLADO,
     titulo: "Analisamos o mérito do caso",
     texto:
-      "Verificamos se há fundamento legal e identificamos a legislação aplicável ao seu setor — telecomunicações, energia ou água.",
+      "Verificamos se há fundamento legal e identificamos a legislação aplicável ao seu setor.",
   },
   {
     rotulo: DOLADO,

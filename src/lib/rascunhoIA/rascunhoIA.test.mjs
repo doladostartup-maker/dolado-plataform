@@ -345,3 +345,54 @@ describe("fluxo da geração", () => {
     for (const nome of Object.keys(deps)) assert.doesNotMatch(nome, /revis|enviar|emitir|autoriz|links/i);
   });
 });
+
+// ---------------------------------------------------------------------------
+describe("novos setores (Gás, Compras & Reembolsos, Ginásios)", () => {
+  const NOVOS = ["Gás", "Compras & Reembolsos", "Ginásios"];
+  const TEXTO_SEM_FUNDAMENTO = TEXTO_OK.replace(/Nos termos[^,]*, artigo 129\.º, /, "");
+
+  test("o setor chega à IA tal como o cliente o escolheu", () => {
+    for (const setor of NOVOS) {
+      const mensagem = montarMensagem(construirContexto(caso({ sector: setor }), []), []);
+      assert.ok(mensagem.includes(JSON.stringify(setor).slice(1, -1)), setor);
+    }
+  });
+
+  test("sem regras do setor: só as gerais; nunca regras de outro setor", () => {
+    const regras = [regra(), regra({ id: "g", codigo: "GERAL-01", setor: null, categoria: null })];
+    for (const setor of NOVOS) {
+      assert.deepEqual(selecionarRegras({ setor, categoria: "Cobrança indevida" }, regras, HOJE).map((r) => r.codigo), ["GERAL-01"]);
+    }
+  });
+
+  test("regras jurídicas podem ser criadas para os novos setores", () => {
+    for (const setor of NOVOS) {
+      const r = lerRegraDoFormulario((c) => ({ codigo: "x-01", setor, titulo: "Título", diploma: "Lei n.º 1/2020", resumo: "Resumo aprovado." })[c]);
+      assert.equal(r.ok, true);
+      assert.equal(r.dados.setor, setor);
+    }
+  });
+
+  test("a geração corre em cada novo setor (sem fundamentação legal, com aviso)", async () => {
+    for (const setor of NOVOS) {
+      const { deps, registo } = depsFalsas({
+        carregarCaso: async () => caso({ sector: setor, empresa: "Empresa Y" }),
+        chamarModelo: async (pedido) => {
+          registo.pedidos.push(pedido);
+          return { ok: true, bruto: respostaOk({ draft: TEXTO_SEM_FUNDAMENTO, legal_basis: [] }), uso: { modelo: "m", tokensEntrada: 1, tokensSaida: 1, custoUsd: 0, latenciaMs: 1, requestId: "r" } };
+        },
+      });
+      const r = await gerarRascunho("c1", { origem: "automatico", adminId: null }, deps);
+      assert.equal(r.estado, "gerado", setor);
+      assert.deepEqual(registo.concluir[0].dados.regrasEnviadas, []);
+    }
+  });
+
+  test("Monitor: um caso de Gás só usa serviços de gás da mesma empresa", () => {
+    const servico = (id, setor) => ({ id, setor, fornecedor: "Galp", faturas: [] });
+    const lista = [servico("g", "gas"), servico("e", "eletricidade")];
+    assert.deepEqual(servicosDoCaso(caso({ sector: "Gás", empresa: "Galp" }), lista, []).map((s) => s.id), ["g"]);
+    // Casos antigos de gás abertos em "Energia" continuam a ver os dois.
+    assert.deepEqual(servicosDoCaso(caso({ sector: "Energia", empresa: "Galp" }), lista, []).map((s) => s.id), ["g", "e"]);
+  });
+});

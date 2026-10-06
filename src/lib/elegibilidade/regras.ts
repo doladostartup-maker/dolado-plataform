@@ -10,7 +10,7 @@
 // caso" (src/lib/pedidoCaso.ts), para o resultado positivo poder pré-preencher
 // esse formulário sem repetir perguntas.
 
-import { MOMENTOS, PROBLEMAS, SETORES } from "../pedidoCaso.ts";
+import { MOMENTOS, PROBLEMAS, SETORES, problemasDoSetor } from "../pedidoCaso.ts";
 
 export const SETOR_FORA_DO_AMBITO = "Outro tipo de empresa";
 export const OPCOES_SETOR = [...SETORES, SETOR_FORA_DO_AMBITO];
@@ -21,6 +21,8 @@ export const TITULAR_NAO_SEI = "Não tenho a certeza";
 export const OPCOES_TITULAR = [TITULAR_PARTICULAR, TITULAR_EMPRESA, TITULAR_NAO_SEI];
 
 export const OPCOES_PROBLEMA = PROBLEMAS;
+/** Opções de "O que aconteceu?" para o setor escolhido (as do formulário). */
+export const opcoesProblema = (setor: string) => problemasDoSetor(setor);
 
 export const MOMENTO_RESOLVIDO = "Sim, e o problema ficou resolvido";
 export const OPCOES_MOMENTO = [...MOMENTOS, MOMENTO_RESOLVIDO];
@@ -41,7 +43,7 @@ export type AvaliacaoSimulador = {
 };
 
 export const MOTIVOS = {
-  setor: "Neste momento, a DoLado trata apenas situações com empresas de telecomunicações, energia e água.",
+  setor: "Neste momento, a DoLado trata apenas situações de telecomunicações, energia, gás, água, compras e reembolsos e ginásios.",
   empresa: "O serviço atual da DoLado é dirigido a consumidores particulares, não a contratos de empresas ou atividades profissionais.",
   resolvido: "Pelas suas respostas, a situação parece já ter sido resolvida com a empresa.",
   titular: "Não é claro se o contrato é pessoal ou de uma empresa ou atividade profissional.",
@@ -63,7 +65,7 @@ export function avaliarSimulador(r: RespostasSimulador): AvaliacaoSimulador {
   const valido =
     SETORES.includes(r.setor) &&
     r.titular === TITULAR_PARTICULAR &&
-    PROBLEMAS.includes(r.problema) &&
+    problemasDoSetor(r.setor).includes(r.problema) &&
     MOMENTOS.includes(r.momento);
   return valido ? { resultado: "positivo", motivo: null } : { resultado: "incerto", motivo: null };
 }
@@ -76,7 +78,7 @@ export function avaliarSimulador(r: RespostasSimulador): AvaliacaoSimulador {
 export function parametrosPrePreenchimento(r: RespostasSimulador): Record<string, string> {
   const p: Record<string, string> = {};
   if (SETORES.includes(r.setor)) p.setor = r.setor;
-  if (PROBLEMAS.includes(r.problema)) p.problema = r.problema;
+  if (problemasDoSetor(r.setor).includes(r.problema)) p.problema = r.problema;
   if (MOMENTOS.includes(r.momento)) p.momento = r.momento;
   return p;
 }

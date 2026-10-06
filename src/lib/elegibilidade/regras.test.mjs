@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { describe, test } from "node:test";
-import { MOMENTOS, PROBLEMAS, SETORES } from "../pedidoCaso.ts";
+import { MOMENTOS, PROBLEMAS, SETORES, problemasDoSetor } from "../pedidoCaso.ts";
 import {
   MOMENTO_RESOLVIDO,
   MOTIVOS,
@@ -17,6 +17,7 @@ import {
   TITULAR_NAO_SEI,
   TITULAR_PARTICULAR,
   avaliarSimulador,
+  opcoesProblema,
   parametrosPrePreenchimento,
 } from "./regras.ts";
 
@@ -32,12 +33,18 @@ const BASE = {
 describe("resultado do simulador", () => {
   test("caso típico dentro do âmbito é positivo, em todos os setores", () => {
     for (const setor of SETORES) {
-      for (const problema of PROBLEMAS.filter((p) => p !== "Outro")) {
+      for (const problema of problemasDoSetor(setor).filter((p) => p !== "Outro")) {
         for (const momento of MOMENTOS) {
           assert.equal(avaliarSimulador({ ...BASE, setor, problema, momento }).resultado, "positivo");
         }
       }
     }
+  });
+
+  test("problema de outro setor não dá positivo (fica incerto)", () => {
+    assert.equal(avaliarSimulador({ ...BASE, setor: "Telecomunicações", problema: "Produto com defeito" }).resultado, "incerto");
+    assert.equal(avaliarSimulador({ ...BASE, setor: "Compras & Reembolsos", problema: "Produto com defeito" }).resultado, "positivo");
+    assert.equal(avaliarSimulador({ ...BASE, setor: "Ginásios", problema: "Cobrança após cancelamento" }).resultado, "positivo");
   });
 
   test("setor fora do âmbito é negativo, com motivo", () => {
@@ -81,6 +88,7 @@ describe("resultado do simulador", () => {
   test("4 perguntas, só de escolha, com as opções do formulário do caso", () => {
     assert.ok(SETORES.every((s) => OPCOES_SETOR.includes(s)));
     assert.deepEqual(OPCOES_PROBLEMA, PROBLEMAS);
+    for (const setor of SETORES) assert.deepEqual(opcoesProblema(setor), problemasDoSetor(setor));
     assert.ok(MOMENTOS.every((m) => OPCOES_MOMENTO.includes(m)));
     assert.equal(OPCOES_TITULAR.length, 3);
   });
@@ -93,6 +101,11 @@ describe("pré-preenchimento de Tratar o meu caso", () => {
       problema: "Aumento de mensalidade",
       momento: "Ainda não reclamei",
     });
+    // Problema que não existe no setor escolhido não é passado.
+    assert.deepEqual(parametrosPrePreenchimento({ ...BASE, setor: "Ginásios", problema: "Corte ou falha de serviço" }), {
+      setor: "Ginásios",
+      momento: "Ainda não reclamei",
+    });
     assert.deepEqual(parametrosPrePreenchimento({ ...BASE, setor: SETOR_FORA_DO_AMBITO, momento: MOMENTO_RESOLVIDO }), {
       problema: "Aumento de mensalidade",
     });
@@ -101,7 +114,7 @@ describe("pré-preenchimento de Tratar o meu caso", () => {
   test("a página do formulário valida os parâmetros contra as listas fechadas", () => {
     const pagina = ler("src/app/tratar-caso/page.tsx");
     assert.match(pagina, /SETORES\.includes/);
-    assert.match(pagina, /PROBLEMAS\.includes/);
+    assert.match(pagina, /problemasDoSetor\(setor\)\.includes/);
     assert.match(pagina, /MOMENTOS\.includes/);
   });
 });

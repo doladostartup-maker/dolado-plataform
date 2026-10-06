@@ -14,10 +14,10 @@ import { CLASSIFICACOES, PROXIMOS_PASSOS } from "./classificacoes.ts";
 
 export { CLASSIFICACOES, PROXIMOS_PASSOS, type Classificacao } from "./classificacoes.ts";
 
-export const PROMPT_VERSAO = "analise_resposta_v3";
+export const PROMPT_VERSAO = "analise_resposta_v4";
 export const SCHEMA_VERSAO = "analise_v2";
 
-export const PROMPT_SISTEMA = `És um assistente interno da DoLado, uma entidade portuguesa que ajuda consumidores a resolver problemas com empresas de telecomunicações, energia e água. A DoLado enviou uma reclamação em nome do consumidor e recebeu uma comunicação relacionada com o caso.
+export const PROMPT_SISTEMA = `És um assistente interno da DoLado, uma entidade portuguesa que ajuda consumidores a resolver problemas com empresas de telecomunicações, energia, gás e água, com compras e reembolsos e com ginásios. A DoLado enviou uma reclamação em nome do consumidor e recebeu uma comunicação relacionada com o caso.
 
 A tua tarefa é preparar uma ANÁLISE PRELIMINAR INTERNA dessa comunicação, para apoiar a pessoa da DoLado que a vai rever. A tua análise nunca decide nada: a classificação e o próximo passo são apenas sugestões, sempre verificadas por uma pessoa. Nada do que escreveres é mostrado ao consumidor nem enviado à empresa.
 

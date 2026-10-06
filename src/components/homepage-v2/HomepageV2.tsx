@@ -279,9 +279,9 @@ export function HomepageV2() {
         é mostrada. Quando existirem, entram aqui (três cartões com texto curto
         e nome; sem fotografias, estrelas nem resultados inventados).
 
-        Setores: omitida. O tratamento de casos aceita hoje só Telecomunicações,
-        Energia e Água (SETORES em src/lib/pedidoCaso.ts) e o mockup usava
-        logótipos de empresas, que não podem ser usados.
+        Setores: omitida. Os setores aceites estão em SETORES
+        (src/lib/pedidoCaso.ts) e o mockup usava logótipos de empresas, que
+        não podem ser usados.
       */}
 
       {/* ===== Perguntas frequentes ===== */}

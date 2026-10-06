@@ -230,10 +230,14 @@ describe("contratos: regras puras", async () => {
     assert.equal(c.lerEurosParaCents("abc"), null);
   });
 
-  test("formatação e setor para Tratar o meu caso", () => {
+  test("formatação e setor para Tratar o meu caso", async () => {
     assert.equal(c.formatarValorCampo("data_fim_fidelizacao", "2027-02-28"), "28/02/2027");
     assert.match(c.formatarValorCampo("mensalidade_cents", 4299), /42,99/);
-    assert.equal(c.setorTratarCaso("gas"), "Energia");
+    // Gás é um setor próprio desde 06/10/2026 (antes ia para "Energia").
+    assert.equal(c.setorTratarCaso("gas"), "Gás");
+    assert.equal(c.setorTratarCaso("eletricidade"), "Energia");
+    const { SETORES } = await import("../pedidoCaso.ts");
+    for (const s of ["telecomunicacoes", "eletricidade", "gas", "agua"]) assert.ok(SETORES.includes(c.setorTratarCaso(s)), s);
     assert.equal(c.setorTratarCaso("nao_indicado"), null);
   });
 });

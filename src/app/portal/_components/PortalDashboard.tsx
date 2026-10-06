@@ -318,7 +318,7 @@ export function PortalDashboard({
           >
             {casos.length > 0
               ? `Não tem nenhum problema em tratamento neste momento${concluidos > 0 ? ` (${concluidos === 1 ? "1 caso concluído" : `${concluidos} casos concluídos`})` : ""}. Se surgir outro, estamos aqui.`
-              : "Quando tiver um problema com uma empresa de telecomunicações, energia ou água, a DoLado trata dele consigo."}
+              : "Quando tiver um problema com uma empresa de telecomunicações, energia, gás ou água, uma loja ou um ginásio, a DoLado trata dele consigo."}
           </EstadoVazio>
         )}
         {emCurso.length > casosVisiveis.length && (

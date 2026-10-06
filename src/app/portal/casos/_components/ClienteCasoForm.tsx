@@ -1,3 +1,4 @@
+import { SETORES } from "@/lib/pedidoCaso";
 import { AJUDA_CAMPO, BOTAO_PRIMARIO, CAIXA_SELECAO, CAMPO, ROTULO } from "@/components/portal/ui";
 
 function Campo({
@@ -50,9 +51,11 @@ export function ClienteCasoForm({
         <Campo label="Setor">
           <select name="sector" defaultValue="" className={CAMPO}>
             <option value="">—</option>
-            <option value="Telecomunicações">Telecomunicações</option>
-            <option value="Energia">Energia</option>
-            <option value="Água">Água</option>
+            {SETORES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
           </select>
         </Campo>
         <Campo label="Tipo de problema">

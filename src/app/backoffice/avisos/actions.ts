@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { SETORES } from "@/lib/pedidoCaso";
 import { CONTACTO_EMAIL } from "@/lib/site";
 import { montarHtmlAvisoSetorial } from "@/lib/email/avisoSetorial";
 
@@ -31,8 +32,6 @@ async function enviarEmailBrevo(destino: { email: string; nome: string }, assunt
   }
 }
 
-const SETORES_VALIDOS = ["Telecomunicações", "Energia", "Água"];
-
 export async function enviarAvisoSectorial(formData: FormData) {
   const { supabase, user } = await requireAdmin();
 
@@ -40,7 +39,7 @@ export async function enviarAvisoSectorial(formData: FormData) {
   const titulo = ((formData.get("titulo") as string) || "").trim();
   const descricao = ((formData.get("descricao") as string) || "").trim();
 
-  if (!SETORES_VALIDOS.includes(setor)) {
+  if (!SETORES.includes(setor)) {
     redirect(`/backoffice/avisos?erro=${encodeURIComponent("Escolha um setor válido.")}`);
   }
   if (!titulo || !descricao) {
