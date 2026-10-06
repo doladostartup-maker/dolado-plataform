@@ -65,14 +65,46 @@ export function regraEmVigor(regra: RegraJuridica, dataReferencia: string) {
   return true;
 }
 
+/**
+ * Categorias das regras jurídicas relevantes para cada tipo de problema do
+ * formulário (PROBLEMAS, src/lib/pedidoCaso.ts) — tabela aprovada por Thiago
+ * a 06/10/2026. "Outro" (ou sem tipo) recebe as regras de todas as
+ * categorias do setor. Mudar a tabela é uma decisão de produto: decide que
+ * fundamentos a IA pode considerar.
+ */
+export const CATEGORIAS_POR_PROBLEMA: Record<string, string[]> = {
+  "Aumento de mensalidade": ["Alteração contratual", "Alteração tarifária", "Faturação", "Contrato"],
+  "Cobrança indevida": ["Cobrança", "Faturação", "Medição", "Pagamento", "Prova"],
+  "Fidelização ou penalização": ["Fidelização", "Cancelamento", "Renovação", "Contrato"],
+  "Corte ou falha de serviço": ["Suspensão", "Qualidade de serviço", "Qualidade do serviço"],
+  "Cancelamento recusado": ["Cancelamento", "Livre resolução", "Contrato", "Renovação"],
+};
+
+/** Categorias sempre enviadas, além das do tipo de problema. */
+export const CATEGORIAS_SEMPRE = ["Reclamação", "Resolução de conflitos", "Prática comercial", "Defesa do consumidor"];
+
+/**
+ * Regras ativas, revistas e em vigor, do setor do caso (ou gerais), das
+ * categorias do tipo de problema e das categorias sempre enviadas. Ordem:
+ * do setor antes das gerais; do tipo de problema antes das sempre enviadas;
+ * no máximo MAX_REGRAS_POR_PEDIDO.
+ */
 export const selecionarRegras: SeletorRegras = (caso, regras, dataReferencia) => {
   const setor = normalizar(caso.setor);
-  const categoria = normalizar(caso.categoria);
+  const problema = (caso.categoria ?? "").trim();
+  const doProblema = CATEGORIAS_POR_PROBLEMA[problema];
+  // Uma regra com a categoria igual ao próprio tipo de problema também conta.
+  const categorias = doProblema ? new Set([...doProblema, problema].map(normalizar)) : null;
+  const sempre = new Set(CATEGORIAS_SEMPRE.map(normalizar));
   return regras
     .filter((r) => regraEmVigor(r, dataReferencia))
     .filter((r) => !r.setor || (setor && normalizar(r.setor) === setor))
-    .filter((r) => !r.categoria || (categoria && normalizar(r.categoria) === categoria))
-    .map((r) => ({ r, especificidade: (r.setor ? 2 : 0) + (r.categoria ? 1 : 0) }))
+    .map((r) => {
+      const cat = normalizar(r.categoria);
+      const relevante = !r.categoria ? 1 : categorias === null || categorias.has(cat) ? 1 : sempre.has(cat) ? 0 : -1;
+      return { r, relevante, especificidade: (r.setor ? 2 : 0) + relevante };
+    })
+    .filter(({ relevante }) => relevante >= 0)
     .sort((a, b) => b.especificidade - a.especificidade || a.r.codigo.localeCompare(b.r.codigo))
     .slice(0, MAX_REGRAS_POR_PEDIDO)
     .map(({ r }) => r);

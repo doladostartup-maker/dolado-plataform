@@ -8,7 +8,8 @@ import { describe, test } from "node:test";
 import { construirContexto, retirarDadosPessoais, servicosDoCaso } from "./contexto.ts";
 import { gerarRascunho } from "./gerar.ts";
 import { PROMPT_SISTEMA, montarMensagem } from "./prompt.ts";
-import { lerRegraDoFormulario, paraEnvio, selecionarRegras } from "./regras.ts";
+import { CATEGORIAS_POR_PROBLEMA, lerRegraDoFormulario, paraEnvio, selecionarRegras } from "./regras.ts";
+import { PROBLEMAS } from "../pedidoCaso.ts";
 import { validarResposta } from "./validacao.ts";
 
 const HOJE = "2026-10-05";
@@ -82,6 +83,28 @@ describe("seleção das regras jurídicas", () => {
     ];
     const escolhidas = selecionarRegras({ setor: "Telecomunicações", categoria: "Aumento de mensalidade" }, regras, HOJE);
     assert.deepEqual(escolhidas.map((r) => r.codigo), ["TEL-ALT-01", "GERAL-01"]);
+  });
+
+  test("tabela aprovada: tipos de problema do formulário → categorias das regras", () => {
+    const regras = [
+      regra({ id: "a", codigo: "TEL_ALT", categoria: "Alteração contratual" }),
+      regra({ id: "b", codigo: "TEL_FAT", categoria: "Faturação" }),
+      regra({ id: "c", codigo: "TEL_COB", categoria: "Cobrança" }),
+      regra({ id: "d", codigo: "GERAL_RECL", setor: null, categoria: "Reclamação" }),
+      regra({ id: "e", codigo: "TEL_SUSP", categoria: "Suspensão" }),
+      regra({ id: "f", codigo: "AGUA_FAT", setor: "Água", categoria: "Faturação" }),
+    ];
+    const codigos = (categoria) => selecionarRegras({ setor: "Telecomunicações", categoria }, regras, HOJE).map((r) => r.codigo);
+    // Do setor e do problema primeiro; as sempre enviadas no fim; nunca de outro setor.
+    assert.deepEqual(codigos("Aumento de mensalidade"), ["TEL_ALT", "TEL_FAT", "GERAL_RECL"]);
+    assert.deepEqual(codigos("Cobrança indevida"), ["TEL_COB", "TEL_FAT", "GERAL_RECL"]);
+    assert.deepEqual(codigos("Corte ou falha de serviço"), ["TEL_SUSP", "GERAL_RECL"]);
+    // "Outro": todas as categorias do setor (e as gerais).
+    assert.deepEqual(codigos("Outro"), ["TEL_ALT", "TEL_COB", "TEL_FAT", "TEL_SUSP", "GERAL_RECL"]);
+  });
+
+  test("todos os tipos de problema do formulário estão na tabela (exceto Outro)", () => {
+    for (const p of PROBLEMAS) if (p !== "Outro") assert.ok(CATEGORIAS_POR_PROBLEMA[p], p);
   });
 
   test("4. nenhuma regra aplicável → lista vazia", () => {
