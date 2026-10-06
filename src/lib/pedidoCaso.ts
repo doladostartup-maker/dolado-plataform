@@ -24,8 +24,16 @@ export type EstadoPedido = "rascunho" | "aguarda_pagamento" | "convertido" | "ca
 export const MODALIDADES_CASO = ["avulso", "caso_protecao"] as const;
 export type ModalidadeCaso = (typeof MODALIDADES_CASO)[number];
 
-export const SETORES = ["Telecomunicações", "Energia", "Água"];
-export const PROBLEMAS = [
+// Fonte única dos setores dos casos (formulários, filtros do backoffice, avisos
+// sectoriais, regras jurídicas, simulador). O valor é também o nome mostrado
+// ao cliente e o que fica gravado em casos.sector / pedidos_caso.sector.
+// Acrescentar um setor: aqui e nos `check` de preferencias_setor,
+// avisos_setoriais e regras_juridicas (ver 20261006120000_novos_setores.sql).
+export const SETORES = ["Telecomunicações", "Energia", "Gás", "Água", "Compras & Reembolsos", "Ginásios"];
+// Tipos de problema ("O que aconteceu?"). O cliente só vê os do setor
+// escolhido (problemasDoSetor); PROBLEMAS é a lista de todos os valores
+// válidos (backoffice, regras jurídicas). Cada setor termina em "Outro".
+const PROBLEMAS_SERVICOS = [
   "Aumento de mensalidade",
   "Cobrança indevida",
   "Fidelização ou penalização",
@@ -33,6 +41,38 @@ export const PROBLEMAS = [
   "Cancelamento recusado",
   "Outro",
 ];
+
+export const PROBLEMAS_POR_SETOR: Record<string, string[]> = {
+  "Telecomunicações": PROBLEMAS_SERVICOS,
+  Energia: PROBLEMAS_SERVICOS,
+  "Gás": PROBLEMAS_SERVICOS,
+  "Água": PROBLEMAS_SERVICOS,
+  "Compras & Reembolsos": [
+    "Produto com defeito",
+    "Produto errado ou danificado",
+    "Encomenda não entregue",
+    "Devolução ou reembolso em falta",
+    "Garantia recusada",
+    "Cobrança indevida",
+    "Outro",
+  ],
+  "Ginásios": [
+    "Cancelamento recusado",
+    "Fidelização ou penalização",
+    "Cobrança após cancelamento",
+    "Aumento de mensalidade",
+    "Cobrança indevida",
+    "Serviço diferente do contratado",
+    "Outro",
+  ],
+};
+
+export const PROBLEMAS = [...new Set(SETORES.flatMap((s) => PROBLEMAS_POR_SETOR[s]))];
+
+/** Tipos de problema do setor; sem setor conhecido, todos. */
+export function problemasDoSetor(setor: string | null | undefined): string[] {
+  return (setor && PROBLEMAS_POR_SETOR[setor]) || PROBLEMAS;
+}
 export const MOMENTOS = [
   "Sim, e não me responderam",
   "Sim, mas a resposta não resolveu",
@@ -91,7 +131,7 @@ export function lerDadosPedido(ler: (campo: string) => unknown): { ok: true; dad
   const origem = texto("origem", 200) || "/";
 
   if (!SETORES.includes(sector) || empresa.length < 2) return { ok: false, erro: "Indique o setor e a empresa." };
-  if (!PROBLEMAS.includes(problemaTipo)) return { ok: false, erro: "Selecione o que aconteceu." };
+  if (!problemasDoSetor(sector).includes(problemaTipo)) return { ok: false, erro: "Selecione o que aconteceu." };
   if (!MOMENTOS.includes(momento)) return { ok: false, erro: "Indique se já reclamou junto da empresa." };
   if (!validNome(nome)) return { ok: false, erro: "Insira um nome válido." };
   if (!validTelemovel(telefone)) return { ok: false, erro: "Telemóvel inválido." };

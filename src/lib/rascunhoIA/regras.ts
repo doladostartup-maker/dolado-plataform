@@ -10,6 +10,8 @@
 // (ex.: subcategorias, palavras-chave, datas dos factos), basta outra função
 // com a mesma assinatura (SeletorRegras) — o resto do fluxo não muda.
 
+import { SETORES } from "../pedidoCaso.ts";
+
 export type RegraJuridica = {
   id: string;
   codigo: string;
@@ -78,6 +80,14 @@ export const CATEGORIAS_POR_PROBLEMA: Record<string, string[]> = {
   "Fidelização ou penalização": ["Fidelização", "Cancelamento", "Renovação", "Contrato"],
   "Corte ou falha de serviço": ["Suspensão", "Qualidade de serviço", "Qualidade do serviço"],
   "Cancelamento recusado": ["Cancelamento", "Livre resolução", "Contrato", "Renovação"],
+  // Compras & Reembolsos e Ginásios (06/10/2026).
+  "Produto com defeito": ["Conformidade", "Garantia"],
+  "Produto errado ou danificado": ["Conformidade", "Entrega", "Garantia"],
+  "Encomenda não entregue": ["Entrega", "Reembolso"],
+  "Devolução ou reembolso em falta": ["Livre resolução", "Reembolso", "Conformidade"],
+  "Garantia recusada": ["Garantia", "Conformidade"],
+  "Cobrança após cancelamento": ["Cancelamento", "Cobrança", "Pagamento"],
+  "Serviço diferente do contratado": ["Contrato", "Alteração contratual", "Qualidade do serviço"],
 };
 
 /** Categorias sempre enviadas, além das do tipo de problema. */
@@ -126,7 +136,8 @@ export function paraEnvio(regra: RegraJuridica): RegraEnviada {
 // ---------------------------------------------------------------------------
 // Formulário do backoffice (/backoffice/regras-juridicas)
 
-export const SETORES_REGRAS = ["Telecomunicações", "Energia", "Água"] as const;
+// Os mesmos setores dos casos (src/lib/pedidoCaso.ts); null = qualquer setor.
+export const SETORES_REGRAS: readonly string[] = SETORES;
 
 export type DadosRegra = Omit<RegraJuridica, "id">;
 
@@ -149,7 +160,7 @@ export function lerRegraDoFormulario(ler: (campo: string) => unknown): { ok: tru
   const setor = texto("setor", 40);
   const dados: DadosRegra = {
     codigo,
-    setor: (SETORES_REGRAS as readonly string[]).includes(setor) ? setor : null,
+    setor: SETORES_REGRAS.includes(setor) ? setor : null,
     categoria: opcional("categoria", 80),
     subcategoria: opcional("subcategoria", 120),
     titulo: texto("titulo", 200),

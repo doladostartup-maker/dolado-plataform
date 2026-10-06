@@ -1,6 +1,6 @@
 import { obterAcesso } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { entradaDoPedido, MOMENTOS, PROBLEMAS, SETORES } from "@/lib/pedidoCaso";
+import { entradaDoPedido, MOMENTOS, problemasDoSetor, SETORES } from "@/lib/pedidoCaso";
 import { casoExtraConfigurado } from "@/lib/stripe/planos";
 import { Etapas } from "./_components/Etapas";
 import { FormularioCaso } from "./_components/FormularioCaso";
@@ -21,9 +21,10 @@ export default async function TratarCasoPage({
   // modalidade): quem tem casos disponíveis não é avisado de um pagamento.
   const acesso = userId ? await obterAcesso(supabase, userId) : null;
   const origem = typeof params.origem === "string" && params.origem ? params.origem.slice(0, 200) : "/";
+  const setor = typeof params.setor === "string" && SETORES.includes(params.setor) ? params.setor : "";
   const inicial = {
-    sector: typeof params.setor === "string" && SETORES.includes(params.setor) ? params.setor : "",
-    problemaTipo: typeof params.problema === "string" && PROBLEMAS.includes(params.problema) ? params.problema : "",
+    sector: setor,
+    problemaTipo: typeof params.problema === "string" && problemasDoSetor(setor).includes(params.problema) ? params.problema : "",
     momentoCliente: typeof params.momento === "string" && MOMENTOS.includes(params.momento) ? params.momento : "",
   };
 

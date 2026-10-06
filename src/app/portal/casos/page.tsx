@@ -131,7 +131,7 @@ export default async function MeusCasosPage() {
             </Link>
           }
         >
-          Conte-nos o problema com a sua empresa de telecomunicações, energia ou água. A DoLado analisa, prepara a
+          Conte-nos o problema com a empresa — de telecomunicações, energia, gás ou água, uma loja ou um ginásio. A DoLado analisa, prepara a
           reclamação, mostra-lha antes de enviar e acompanha a resposta.
         </EstadoVazio>
       ) : (

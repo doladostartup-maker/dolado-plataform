@@ -7,10 +7,10 @@ import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/mark
 import { track } from "@/lib/analytics";
 import {
   OPCOES_MOMENTO,
-  OPCOES_PROBLEMA,
   OPCOES_SETOR,
   OPCOES_TITULAR,
   avaliarSimulador,
+  opcoesProblema,
   parametrosPrePreenchimento,
   type ResultadoSimulador,
   type RespostasSimulador,
@@ -34,7 +34,8 @@ const PERGUNTAS: Pergunta[] = [
     ajuda: "Por exemplo, o telemóvel, a internet ou a eletricidade da sua casa.",
     opcoes: OPCOES_TITULAR,
   },
-  { campo: "problema", titulo: "O que aconteceu?", opcoes: OPCOES_PROBLEMA },
+  // Opções do setor escolhido (opcoesProblema), preenchidas ao mostrar a pergunta.
+  { campo: "problema", titulo: "O que aconteceu?", opcoes: [] },
   { campo: "momento", titulo: "Já reclamou junto da empresa?", opcoes: OPCOES_MOMENTO },
 ];
 
@@ -108,6 +109,8 @@ function Simulador() {
       track("simulador_iniciado");
     }
     const novas = { ...respostas, [campo]: valor };
+    // Ao mudar de setor, um problema que não exista no novo setor é apagado.
+    if (campo === "setor" && novas.problema && !opcoesProblema(valor).includes(novas.problema)) novas.problema = "";
     setRespostas(novas);
     const proximo = passo + 1;
     if (proximo === PERGUNTAS.length) {
@@ -150,7 +153,7 @@ function Simulador() {
           {pergunta.titulo}
         </legend>
         {pergunta.ajuda && <p className="-mt-1 mb-1 text-[15px] text-[var(--v2-muted)]">{pergunta.ajuda}</p>}
-        {pergunta.opcoes.map((opcao) => {
+        {(pergunta.campo === "problema" ? opcoesProblema(respostas.setor) : pergunta.opcoes).map((opcao) => {
           const selecionada = respostas[pergunta.campo] === opcao;
           return (
             <button
@@ -186,7 +189,7 @@ const COMO_FUNCIONA: { titulo: string; texto: string }[] = [
   {
     titulo: "Para que serve.",
     texto:
-      "Ajuda a perceber se a sua situação é do tipo que a DoLado trata: problemas de consumidores particulares com empresas de telecomunicações, energia e água, como aumentos de mensalidade, cobranças indevidas, fidelizações, falhas de serviço ou cancelamentos recusados.",
+      "Ajuda a perceber se a sua situação é do tipo que a DoLado trata: problemas de consumidores particulares com empresas de telecomunicações, energia, gás e água, com compras e reembolsos e com ginásios, como aumentos de mensalidade, cobranças indevidas, fidelizações, falhas de serviço ou cancelamentos recusados.",
   },
   {
     titulo: "O que não é.",
@@ -213,7 +216,7 @@ export function SimuladorV2() {
             Veja se a DoLado pode ajudar com o seu caso
           </h1>
           <p className={`${TEXTO} mt-5 text-[17.5px]`}>
-            Responda a 4 perguntas rápidas sobre a sua situação com uma empresa de telecomunicações, energia ou água.
+            Responda a 4 perguntas rápidas sobre a sua situação com uma empresa de telecomunicações, energia, gás ou água, com uma compra ou com um ginásio.
             O resultado aparece logo, sem pedir e-mail nem criar conta.
           </p>
         </div>

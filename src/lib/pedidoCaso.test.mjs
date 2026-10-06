@@ -10,6 +10,10 @@ import {
   pedidoDaMetadata,
   pedidoPorPagar,
   posseDoPedido,
+  SETORES,
+  PROBLEMAS,
+  PROBLEMAS_POR_SETOR,
+  problemasDoSetor,
 } from "./pedidoCaso.ts";
 import { calcularAcesso } from "./acesso.ts";
 
@@ -38,6 +42,48 @@ describe("formulário do caso (lerDadosPedido)", () => {
     assert.equal(r.ok, true);
     assert.equal(r.dados.empresa, "EDP");
     assert.equal(r.dados.anexo, null);
+  });
+
+  test("aceita todos os setores, incluindo Gás, Compras & Reembolsos e Ginásios", () => {
+    assert.deepEqual(SETORES, ["Telecomunicações", "Energia", "Gás", "Água", "Compras & Reembolsos", "Ginásios"]);
+    for (const sector of SETORES) {
+      const r = lerDadosPedido(formulario({ sector }));
+      assert.equal(r.ok, true, sector);
+      assert.equal(r.dados.sector, sector);
+    }
+    // Sem variações nem slugs: o valor gravado é o nome mostrado.
+    for (const sector of ["gas", "Gas", "compras-reembolsos", "Compras e Reembolsos", "ginasios"]) {
+      assert.equal(lerDadosPedido(formulario({ sector })).ok, false, sector);
+    }
+  });
+
+  test("tipos de problema por setor", () => {
+    assert.deepEqual(Object.keys(PROBLEMAS_POR_SETOR).sort(), [...SETORES].sort(), "cada setor tem a sua lista");
+    for (const setor of SETORES) {
+      const lista = problemasDoSetor(setor);
+      assert.equal(lista.at(-1), "Outro", setor);
+      assert.equal(new Set(lista).size, lista.length, setor);
+      for (const p of lista) assert.ok(PROBLEMAS.includes(p));
+    }
+    // Os serviços continuam com a lista de sempre.
+    for (const setor of ["Telecomunicações", "Energia", "Gás", "Água"]) {
+      assert.deepEqual(problemasDoSetor(setor), ["Aumento de mensalidade", "Cobrança indevida", "Fidelização ou penalização", "Corte ou falha de serviço", "Cancelamento recusado", "Outro"]);
+    }
+    for (const p of ["Produto com defeito", "Produto errado ou danificado", "Encomenda não entregue", "Devolução ou reembolso em falta", "Garantia recusada"]) {
+      assert.ok(problemasDoSetor("Compras & Reembolsos").includes(p), p);
+      assert.ok(!problemasDoSetor("Telecomunicações").includes(p), p);
+    }
+    for (const p of ["Cobrança após cancelamento", "Serviço diferente do contratado", "Cancelamento recusado", "Fidelização ou penalização"]) {
+      assert.ok(problemasDoSetor("Ginásios").includes(p), p);
+    }
+    assert.deepEqual(problemasDoSetor(""), PROBLEMAS);
+  });
+
+  test("o problema tem de existir no setor escolhido", () => {
+    assert.equal(lerDadosPedido(formulario({ sector: "Compras & Reembolsos", problema_tipo: "Produto com defeito" })).ok, true);
+    assert.equal(lerDadosPedido(formulario({ sector: "Ginásios", problema_tipo: "Cobrança após cancelamento" })).ok, true);
+    assert.equal(lerDadosPedido(formulario({ sector: "Energia", problema_tipo: "Produto com defeito" })).ok, false);
+    assert.equal(lerDadosPedido(formulario({ sector: "Ginásios", problema_tipo: "Corte ou falha de serviço" })).ok, false);
   });
 
   test("só aceita setores, problemas e momentos das listas", () => {

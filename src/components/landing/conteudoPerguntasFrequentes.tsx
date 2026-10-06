@@ -15,7 +15,7 @@ const O_QUE_E: Pergunta = {
   id: "o-que-e",
   pergunta: "O que é a DoLado?",
   resposta:
-    "A DoLado ajuda os consumidores a tratar problemas com empresas de serviços como as telecomunicações, a energia e a água. Quando é necessário reclamar, analisamos o caso, identificamos a informação relevante, preparamos a reclamação e acompanhamos o processo. Com a Proteção, também ajudamos a identificar situações que possam tornar-se num problema, antes que seja tarde para agir.",
+    "A DoLado ajuda os consumidores a tratar problemas com empresas de serviços como as telecomunicações, a energia, o gás e a água, e também com compras, reembolsos e ginásios. Quando é necessário reclamar, analisamos o caso, identificamos a informação relevante, preparamos a reclamação e acompanhamos o processo. Com a Proteção, também ajudamos a identificar situações que possam tornar-se num problema, antes que seja tarde para agir.",
 };
 
 // A Proteção descreve-se pelo benefício, como na secção de funcionalidades

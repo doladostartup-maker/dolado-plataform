@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { SETORES } from "@/lib/pedidoCaso";
 import { ConfirmarAcao } from "@/components/backoffice/ConfirmarAcao";
 import { BOTAO_PRIMARIO, BOTAO_TERCIARIO, CAMPO, CAMPO_TEXTO_LONGO, ROTULO, AJUDA_CAMPO } from "@/components/backoffice/ui";
 
-const SETORES = ["Telecomunicações", "Energia", "Água"];
 
 export function AvisoSetorialForm({
   action,

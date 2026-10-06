@@ -89,7 +89,9 @@ export function retirarDadosPessoais(texto: string, { nome }: { nome?: string | 
 
 const SETORES_MONITOR: Record<string, string[]> = {
   "telecomunicações": ["telecomunicacoes"],
+  // Casos antigos de gás foram abertos em "Energia" (antes de existir "Gás").
   energia: ["eletricidade", "gas"],
+  "gás": ["gas"],
   "água": ["agua"],
 };
 

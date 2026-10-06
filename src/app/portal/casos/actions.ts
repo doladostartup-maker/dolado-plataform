@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 import { agendarRascunhoIA } from "@/lib/rascunhoIA/servidor";
 import { requireUser } from "@/lib/auth";
+import { SETORES } from "@/lib/pedidoCaso";
 import { avisarEquipa } from "@/lib/comunicacoes/servidor";
 import { FORMATOS, tipoDeclarado, verificarConteudo } from "@/lib/comunicacoes/anexos";
 import { normalizarNomeFicheiro } from "@/lib/comunicacoes/sanitizar";
@@ -35,7 +36,8 @@ export async function criarCasoCliente(formData: FormData) {
     email: formData.get("email") as string,
     telefone: (formData.get("telefone") as string) || null,
     empresa_parceira: (formData.get("empresa_parceira") as string) || null,
-    sector: (formData.get("sector") as string) || null,
+    // Só setores da lista fechada (src/lib/pedidoCaso.ts); outro valor fica sem setor.
+    sector: SETORES.includes(formData.get("sector") as string) ? (formData.get("sector") as string) : null,
     tipo_problema: (formData.get("tipo_problema") as string) || null,
     descricao: (formData.get("descricao") as string) || null,
     autorizacao,

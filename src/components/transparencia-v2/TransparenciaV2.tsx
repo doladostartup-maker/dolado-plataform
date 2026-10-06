@@ -19,7 +19,7 @@ type Item = {
 const O_QUE_FAZEMOS: Item[] = [
   {
     titulo: "Identificamos a lei aplicável",
-    descricao: "Lemos o seu caso e identificamos a legislação aplicável — telecomunicações, energia ou água.",
+    descricao: "Lemos o seu caso e identificamos a legislação aplicável ao seu setor.",
   },
   {
     titulo: "Preparamos a reclamação formal",

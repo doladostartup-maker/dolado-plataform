@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SETORES } from "@/lib/pedidoCaso";
 import { obterAcesso, requireUser } from "@/lib/auth";
 import { alterarPassword, guardarPreferenciasSetor, retirarConsentimentoComunicacoes } from "./actions";
 import { Aviso } from "@/components/portal/Aviso";
@@ -6,8 +7,6 @@ import { CabecalhoPagina } from "@/components/portal/Cabecalho";
 import { Dado, ListaDados } from "@/components/portal/Dados";
 import { Etiqueta } from "@/components/portal/Etiqueta";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAIXA_SELECAO, CAMPO, CARTAO, LIGACAO, ROTULO, TEXTO_SECUNDARIO, TITULO_SECCAO } from "@/components/portal/ui";
-
-const SETORES = ["Telecomunicações", "Energia", "Água"];
 
 export default async function PerfilPage({
   searchParams,

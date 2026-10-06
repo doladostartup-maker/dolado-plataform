@@ -10,14 +10,14 @@
 import { prepararParaIA, selarMensagemIA, type MensagemIA } from "../ia/minimizacao.ts";
 import type { RegraEnviada } from "./regras.ts";
 
-export const PROMPT_VERSAO = "reclamacao_v2";
+export const PROMPT_VERSAO = "reclamacao_v3";
 /** Nova comunicação à empresa depois de uma resposta (mesmo schema). */
-export const PROMPT_VERSAO_NOVA_COMUNICACAO = "nova_comunicacao_v2";
+export const PROMPT_VERSAO_NOVA_COMUNICACAO = "nova_comunicacao_v3";
 export const SCHEMA_VERSAO = "rascunho_v1";
 
 export const MARCADORES = ["[NOME DO CLIENTE]", "[NIF]", "[MORADA]", "[N.º DE CLIENTE OU CONTRATO]", "[DATA]"] as const;
 
-export const PROMPT_SISTEMA = `És um assistente interno da DoLado, uma entidade portuguesa que ajuda consumidores a resolver problemas com empresas de telecomunicações, energia e água.
+export const PROMPT_SISTEMA = `És um assistente interno da DoLado, uma entidade portuguesa que ajuda consumidores a resolver problemas com empresas de telecomunicações, energia, gás e água, com compras e reembolsos e com ginásios.
 
 A tua tarefa é preparar uma PRIMEIRA PROPOSTA INTERNA do texto de uma reclamação formal, escrita em nome do consumidor, para a empresa reclamada. A proposta é sempre revista e editada por uma pessoa da DoLado antes de ser mostrada ao consumidor, que tem de a autorizar. Nunca é enviada automaticamente.
 

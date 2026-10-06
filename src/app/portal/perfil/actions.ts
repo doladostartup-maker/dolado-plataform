@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { SETORES } from "@/lib/pedidoCaso";
 import { MSG_ERRO_GUARDAR, mensagemErroConta } from "@/lib/mensagensErro";
 
 export async function alterarPassword(formData: FormData) {
@@ -31,8 +32,6 @@ export async function alterarPassword(formData: FormData) {
   redirect("/portal/perfil?guardado=1");
 }
 
-const SETORES_VALIDOS = ["Telecomunicações", "Energia", "Água"];
-
 export async function guardarPreferenciasSetor(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -43,10 +42,10 @@ export async function guardarPreferenciasSetor(formData: FormData) {
     redirect("/login");
   }
 
-  const setores = formData.getAll("setor").filter((s): s is string => typeof s === "string" && SETORES_VALIDOS.includes(s));
+  const setores = formData.getAll("setor").filter((s): s is string => typeof s === "string" && SETORES.includes(s));
 
   // Guardado sempre como apagar tudo + inserir de novo — mais simples do
-  // que calcular o diff de checkboxes, e o volume é sempre no máximo 3 linhas.
+  // que calcular o diff de checkboxes, e o volume é sempre no máximo uma linha por setor.
   const { error: erroApagar } = await supabase
     .from("preferencias_setor")
     .delete()

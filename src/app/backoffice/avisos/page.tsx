@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/auth";
+import { SETORES } from "@/lib/pedidoCaso";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarAvisoSectorial } from "./actions";
 import { AvisoSetorialForm } from "./_components/AvisoSetorialForm";
@@ -8,8 +9,6 @@ import { IconeMegafone } from "@/components/backoffice/Icones";
 import { Aviso } from "@/components/portal/Aviso";
 import { EstadoVazio } from "@/components/portal/EstadoVazio";
 import { TABELA, TABELA_MOLDURA, TABELA_TD, TABELA_TH, TABELA_TR } from "@/components/backoffice/ui";
-
-const SETORES = ["Telecomunicações", "Energia", "Água"];
 
 export default async function AvisosSetoriaisPage({
   searchParams,

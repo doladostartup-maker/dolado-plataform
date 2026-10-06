@@ -15,9 +15,10 @@ export const ROTULO_SETOR: Record<SetorContratoMonitor, string> = {
 };
 
 // Setor para pré-preencher "Tratar o meu caso" (listas de src/lib/pedidoCaso.ts).
-export function setorTratarCaso(setor: string): "Telecomunicações" | "Energia" | "Água" | null {
+export function setorTratarCaso(setor: string): "Telecomunicações" | "Energia" | "Gás" | "Água" | null {
   if (setor === "telecomunicacoes") return "Telecomunicações";
-  if (setor === "eletricidade" || setor === "gas") return "Energia";
+  if (setor === "eletricidade") return "Energia";
+  if (setor === "gas") return "Gás";
   if (setor === "agua") return "Água";
   return null;
 }

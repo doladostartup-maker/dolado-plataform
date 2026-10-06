@@ -5,7 +5,7 @@ import Link from "next/link";
 import { criarUploadAssinado } from "@/app/actions/formulario-guiado";
 import { track } from "@/lib/analytics";
 import { TEXTO_CONSENTIMENTO_COMUNICACOES } from "@/lib/legal";
-import { MOMENTOS, PROBLEMAS, SETORES, validNome, validTelemovel, type EntradaPedido } from "@/lib/pedidoCaso";
+import { MOMENTOS, problemasDoSetor, SETORES, validNome, validTelemovel, type EntradaPedido } from "@/lib/pedidoCaso";
 import { CASO_EXTRA, IVA_INCLUIDO, PLANOS, TEXTO_BENEFICIO_SUBSCRITOR, formatarPreco, precoComUnidade, textoCasosDisponiveis } from "@/lib/planos";
 import { MARKETING_SITE_URL } from "@/lib/site";
 import { createClient } from "@/lib/supabase/client";
@@ -186,6 +186,13 @@ export function FormularioCaso({
     setStep(proximo);
   }
 
+  // Os tipos de problema dependem do setor: ao mudar de setor, um problema
+  // que não exista no novo setor deixa de estar escolhido.
+  function escolherSetor(s: string) {
+    setSector(s);
+    if (problemaTipo && !problemasDoSetor(s).includes(problemaTipo)) setProblemaTipo("");
+  }
+
   function continuarPasso1() {
     const e: ErrosPasso = {};
     if (!sector) e.sector = "Selecione um tipo de empresa.";
@@ -319,7 +326,7 @@ export function FormularioCaso({
             </h3>
             <div className="mb-5 flex flex-col gap-2.5">
               {SETORES.map((s) => (
-                <BotaoEscolha key={s} label={s} selecionado={sector === s} onClick={() => setSector(s)} />
+                <BotaoEscolha key={s} label={s} selecionado={sector === s} onClick={() => escolherSetor(s)} />
               ))}
             </div>
             {erros.sector && (
@@ -350,7 +357,7 @@ export function FormularioCaso({
               O que aconteceu?
             </h3>
             <div className="mb-2 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              {PROBLEMAS.map((p) => (
+              {problemasDoSetor(sector).map((p) => (
                 <BotaoEscolha key={p} label={p} selecionado={problemaTipo === p} onClick={() => setProblemaTipo(p)} />
               ))}
             </div>
