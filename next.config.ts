@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   // inteiro (15–30 s por pedido, 503) — e qualquer visitante ou bot podia
   // pedir larguras novas. As imagens são SVG ou ficheiros já no tamanho certo.
   images: { unoptimized: true },
+  // Leitura local de faturas/contratos para preencher o texto da reclamação
+  // (src/lib/preenchimentoReclamacao): o tesseract.js arranca um worker por
+  // caminho de ficheiro e lê o modelo de português do node_modules — não
+  // pode ser empacotado.
+  serverExternalPackages: ["tesseract.js", "tesseract.js-core", "@tesseract.js-data/por", "unpdf"],
   experimental: {
     // Uploads do backoffice (anexos e comprovativos) por Server Action: os
     // buckets aceitam até 20 MB; o limite por omissão (1 MB) cortava PDFs.
