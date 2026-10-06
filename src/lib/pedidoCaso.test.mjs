@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 import {
+  contactoConhecido,
   destinoSeguro,
   lerDadosPedido,
   entradaDoPedido,
@@ -255,5 +256,45 @@ describe("nenhuma rota pública cria casos sem pagamento (código)", () => {
   test("a página de regresso do Stripe só lê estado (não converte nem concede)", () => {
     const recebido = fonte("../app/tratar-caso/recebido/page.tsx");
     assert.equal(/converterPedidoEmCaso|concederCredito|conceder_credito_caso|\.insert\(|\.update\(/.test(recebido), false);
+  });
+});
+
+describe("nome e telemóvel já conhecidos (contactoConhecido)", () => {
+  test("sem dados conhecidos, os campos ficam vazios", () => {
+    assert.deepEqual(contactoConhecido({}), { nome: "", telefone: "" });
+  });
+
+  test("o nome do perfil prevalece; o telemóvel vem do caso/pedido mais recente", () => {
+    const r = contactoConhecido({
+      perfilNome: "Ana Silva",
+      anteriores: [{ nome: "Ana S.", telefone: "912 345 678" }, { nome: "Outra", telefone: "933333333" }],
+      nomeDaConta: "Ana Google",
+    });
+    assert.deepEqual(r, { nome: "Ana Silva", telefone: "912 345 678" });
+  });
+
+  test("sem nome no perfil usa o dos casos/pedidos e, por fim, o da conta Google", () => {
+    assert.equal(contactoConhecido({ perfilNome: null, anteriores: [{ nome: "Rui Costa" }] }).nome, "Rui Costa");
+    assert.equal(contactoConhecido({ perfilNome: " ", anteriores: [{ nome: null }], nomeDaConta: "Rui Google" }).nome, "Rui Google");
+  });
+
+  test("ignora valores inválidos e salta para o seguinte", () => {
+    const r = contactoConhecido({
+      perfilNome: "A1",
+      anteriores: [{ nome: "Jo", telefone: "123" }, { nome: "Joana Reis", telefone: "+351 961 234 567" }],
+    });
+    assert.deepEqual(r, { nome: "Joana Reis", telefone: "+351 961 234 567" });
+  });
+
+  test("só nome conhecido: telemóvel fica vazio", () => {
+    assert.deepEqual(contactoConhecido({ perfilNome: "Ana Silva", anteriores: [{ telefone: null }] }), { nome: "Ana Silva", telefone: "" });
+  });
+
+  test("a página lê os dados com o cliente da sessão (RLS), nunca com a service role", () => {
+    const pagina = readFileSync(new URL("../app/tratar-caso/page.tsx", import.meta.url), "utf8");
+    assert.equal(/createAdminClient/.test(pagina), false);
+    assert.match(pagina, /\.from\("utilizadores"\)\.select\("nome"\)\.eq\("id", userId\)/);
+    assert.match(pagina, /\.from\("casos"\)[^;]*\.eq\("utilizador_id", userId\)/);
+    assert.match(pagina, /\.from\("pedidos_caso"\)[^;]*\.eq\("user_id", userId\)/);
   });
 });

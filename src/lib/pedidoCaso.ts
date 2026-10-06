@@ -101,6 +101,35 @@ export function validTelemovel(v: string) {
   return /^9\d{8}$/.test(n);
 }
 
+export type ContactoConhecido = { nome?: string | null; telefone?: string | null };
+
+/**
+ * Nome e telemóvel já conhecidos da conta, para pré-preencher "Tratar o meu
+ * caso" (os campos continuam editáveis). Não há campo de telemóvel no perfil:
+ * a fonte é o que o próprio cliente indicou nos seus casos/pedidos.
+ * Ordem do nome: perfil (`utilizadores.nome`) → casos/pedidos (mais recente
+ * primeiro) → nome da conta Google. Só valores válidos; sem dado, fica vazio.
+ */
+export function contactoConhecido({
+  perfilNome,
+  anteriores = [],
+  nomeDaConta,
+}: {
+  perfilNome?: string | null;
+  /** Casos e pedidos da própria conta, do mais recente para o mais antigo. */
+  anteriores?: ContactoConhecido[];
+  nomeDaConta?: string | null;
+}): { nome: string; telefone: string } {
+  const limpo = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const nome =
+    [limpo(perfilNome), ...anteriores.map((a) => limpo(a.nome)), limpo(nomeDaConta)].find(
+      (n) => n && n.length <= 120 && validNome(n),
+    ) ?? "";
+  const telefone =
+    anteriores.map((a) => limpo(a.telefone)).find((t) => t && t.length <= 30 && validTelemovel(t)) ?? "";
+  return { nome, telefone };
+}
+
 export type DadosPedido = {
   nome: string;
   telefone: string | null;
