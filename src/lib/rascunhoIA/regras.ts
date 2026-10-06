@@ -10,7 +10,7 @@
 // (ex.: subcategorias, palavras-chave, datas dos factos), basta outra função
 // com a mesma assinatura (SeletorRegras) — o resto do fluxo não muda.
 
-import { SETORES } from "../pedidoCaso.ts";
+import { isServicoPublicoEssencial, SETORES } from "../pedidoCaso.ts";
 
 export type RegraJuridica = {
   id: string;
@@ -80,6 +80,9 @@ export const CATEGORIAS_POR_PROBLEMA: Record<string, string[]> = {
   "Fidelização ou penalização": ["Fidelização", "Cancelamento", "Renovação", "Contrato"],
   "Corte ou falha de serviço": ["Suspensão", "Qualidade de serviço", "Qualidade do serviço"],
   "Cancelamento recusado": ["Cancelamento", "Livre resolução", "Contrato", "Renovação"],
+  // Energia e Gás (06/10/2026).
+  "Mudança de comercializador": ["Mudança de comercializador", "Contrato", "Faturação", "Fidelização"],
+  "Tarifa social": ["Tarifa social", "Faturação"],
   // Compras & Reembolsos e Ginásios (06/10/2026).
   "Produto com defeito": ["Conformidade", "Garantia"],
   "Produto errado ou danificado": ["Conformidade", "Entrega", "Garantia"],
@@ -93,6 +96,28 @@ export const CATEGORIAS_POR_PROBLEMA: Record<string, string[]> = {
 /** Categorias sempre enviadas, além das do tipo de problema. */
 export const CATEGORIAS_SEMPRE = ["Reclamação", "Resolução de conflitos", "Prática comercial", "Defesa do consumidor"];
 
+/** Categorias usadas pelas regras (formulário do backoffice). */
+export const CATEGORIAS_REGRAS: readonly string[] = [
+  ...new Set([...Object.values(CATEGORIAS_POR_PROBLEMA).flat(), ...CATEGORIAS_SEMPRE]),
+].sort((a, b) => a.localeCompare(b, "pt"));
+
+// Lei n.º 23/96 (serviços públicos essenciais): identificada pelo diploma da
+// regra — o código (SPE_*) é só um reforço para regras com o diploma escrito
+// de outra forma. Estas regras só valem para setores que sejam serviços
+// públicos essenciais (isServicoPublicoEssencial, src/lib/pedidoCaso.ts).
+const DIPLOMA_LEI_SERVICOS_PUBLICOS_ESSENCIAIS = /\bLei\s+n\.?\s*º?\s*23\/96\b/i;
+
+export function regraDaLeiServicosPublicosEssenciais(regra: Pick<RegraJuridica, "codigo" | "diploma">) {
+  return DIPLOMA_LEI_SERVICOS_PUBLICOS_ESSENCIAIS.test(regra.diploma) || /^SPE[_-]/.test(regra.codigo);
+}
+
+/** Uma regra pode ser considerada para um caso deste setor? (setor + âmbito legal) */
+export function regraAplicavelAoSetor(regra: Pick<RegraJuridica, "codigo" | "diploma" | "setor">, setorCaso: string | null) {
+  if (regra.setor) return !!setorCaso && normalizar(regra.setor) === normalizar(setorCaso);
+  if (regraDaLeiServicosPublicosEssenciais(regra)) return isServicoPublicoEssencial(setorCaso);
+  return true;
+}
+
 /**
  * Regras ativas, revistas e em vigor, do setor do caso (ou gerais), das
  * categorias do tipo de problema e das categorias sempre enviadas. Ordem:
@@ -100,7 +125,6 @@ export const CATEGORIAS_SEMPRE = ["Reclamação", "Resolução de conflitos", "P
  * no máximo MAX_REGRAS_POR_PEDIDO.
  */
 export const selecionarRegras: SeletorRegras = (caso, regras, dataReferencia) => {
-  const setor = normalizar(caso.setor);
   const problema = (caso.categoria ?? "").trim();
   const doProblema = CATEGORIAS_POR_PROBLEMA[problema];
   // Uma regra com a categoria igual ao próprio tipo de problema também conta.
@@ -108,7 +132,7 @@ export const selecionarRegras: SeletorRegras = (caso, regras, dataReferencia) =>
   const sempre = new Set(CATEGORIAS_SEMPRE.map(normalizar));
   return regras
     .filter((r) => regraEmVigor(r, dataReferencia))
-    .filter((r) => !r.setor || (setor && normalizar(r.setor) === setor))
+    .filter((r) => regraAplicavelAoSetor(r, caso.setor))
     .map((r) => {
       const cat = normalizar(r.categoria);
       const relevante = !r.categoria ? 1 : categorias === null || categorias.has(cat) ? 1 : sempre.has(cat) ? 0 : -1;

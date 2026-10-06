@@ -1,5 +1,5 @@
 import { ESTADOS_CASO, estadoCaso } from "@/lib/backoffice/triagem";
-import { MOMENTOS, PROBLEMAS, SETORES } from "@/lib/pedidoCaso";
+import { MOMENTOS, PROBLEMAS, PROBLEMAS_POR_SETOR, SETORES } from "@/lib/pedidoCaso";
 import { BotaoSubmeter } from "@/components/backoffice/BotaoSubmeter";
 import {
   AJUDA_CAMPO,
@@ -106,14 +106,18 @@ export function CasoForm({
             ))}
           </select>
         </Campo>
-        <Campo label="O que aconteceu" ajuda="Categoria do formulário guiado.">
+        <Campo label="O que aconteceu" ajuda="Categoria do formulário guiado. Tem de existir no setor escolhido.">
           <select name="problema_tipo" defaultValue={valores.problema_tipo ?? ""} className={CAMPO}>
             <option value="">Sem categoria</option>
-            {PROBLEMAS.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
+            {PROBLEMAS.map((p) => {
+              const setores = SETORES.filter((s) => PROBLEMAS_POR_SETOR[s].includes(p));
+              const todos = setores.length === SETORES.length;
+              return (
+                <option key={p} value={p}>
+                  {todos ? p : `${p} (${setores.join(", ")})`}
+                </option>
+              );
+            })}
           </select>
         </Campo>
         <Campo label="Tipo de problema" ajuda="Texto livre (casos antigos).">

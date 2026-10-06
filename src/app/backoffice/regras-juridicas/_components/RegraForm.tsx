@@ -1,5 +1,5 @@
 import { PROBLEMAS } from "@/lib/pedidoCaso";
-import { SETORES_REGRAS, type RegraJuridica } from "@/lib/rascunhoIA/regras";
+import { CATEGORIAS_REGRAS, SETORES_REGRAS, type RegraJuridica } from "@/lib/rascunhoIA/regras";
 
 import { BotaoSubmeter } from "@/components/backoffice/BotaoSubmeter";
 import { AJUDA_CAMPO as AJUDA, BOTAO_PRIMARIO, CAIXA_SELECAO, CAMPO as INPUT, CAMPO_TEXTO_LONGO, LINHA_SELECAO, ROTULO } from "@/components/backoffice/ui";
@@ -37,13 +37,25 @@ export function RegraForm({
           Categoria do problema
           <select name="categoria" defaultValue={v.categoria ?? ""} className={INPUT}>
             <option value="">Todas as categorias</option>
-            {PROBLEMAS.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
+            {v.categoria && !CATEGORIAS_REGRAS.includes(v.categoria) && !PROBLEMAS.includes(v.categoria) && (
+              <option value={v.categoria}>{v.categoria}</option>
+            )}
+            <optgroup label="Categorias das regras">
+              {CATEGORIAS_REGRAS.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Tipos de problema do formulário">
+              {PROBLEMAS.filter((p) => !CATEGORIAS_REGRAS.includes(p)).map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </optgroup>
           </select>
-          <span className={AJUDA}>As mesmas opções do formulário “Tratar o meu caso”.</span>
+          <span className={AJUDA}>A regra é enviada aos tipos de problema ligados a esta categoria (ou ao tipo de problema com o mesmo nome).</span>
         </label>
         <label className={ROTULO}>
           Subcategoria
