@@ -205,7 +205,8 @@ select is(tt.tenta($$select public.texto_marcar_revisto(gen_random_uuid(), 'x', 
 reset role;
 select tt.como('00000000-0000-4000-a000-0000000000ad');
 select cmp_ok(tt.contar('select * from public.casos_rascunhos_ia'), '>', 0::bigint, 'admin lê as sugestões');
-select is(tt.contar('select * from public.regras_juridicas'), 1::bigint, 'admin lê a base jurídica');
+-- Só a regra deste teste: a base já traz as regras das cargas (ex.: carga 4, inativas).
+select is(tt.contar($$select * from public.regras_juridicas where codigo = 'TEST-01'$$), 1::bigint, 'admin lê a base jurídica');
 select is(tt.tenta($$update public.casos_rascunhos_ia set erro = 'x'$$), 'erro:42501', 'admin não reescreve a auditoria pela API');
 select is(tt.tenta($$delete from public.regras_juridicas$$), 'erro:42501', 'regras não se apagam (desativar)');
 

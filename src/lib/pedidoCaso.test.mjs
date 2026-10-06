@@ -15,6 +15,7 @@ import {
   PROBLEMAS,
   PROBLEMAS_POR_SETOR,
   problemasDoSetor,
+  problemaValidoParaSetor,
 } from "./pedidoCaso.ts";
 import { calcularAcesso } from "./acesso.ts";
 
@@ -66,9 +67,19 @@ describe("formulário do caso (lerDadosPedido)", () => {
       assert.equal(new Set(lista).size, lista.length, setor);
       for (const p of lista) assert.ok(PROBLEMAS.includes(p));
     }
-    // Os serviços continuam com a lista de sempre.
-    for (const setor of ["Telecomunicações", "Energia", "Gás", "Água"]) {
-      assert.deepEqual(problemasDoSetor(setor), ["Aumento de mensalidade", "Cobrança indevida", "Fidelização ou penalização", "Corte ou falha de serviço", "Cancelamento recusado", "Outro"]);
+    // Telecomunicações e Água continuam com a lista de sempre.
+    const SERVICOS = ["Aumento de mensalidade", "Cobrança indevida", "Fidelização ou penalização", "Corte ou falha de serviço", "Cancelamento recusado"];
+    for (const setor of ["Telecomunicações", "Água"]) {
+      assert.deepEqual(problemasDoSetor(setor), [...SERVICOS, "Outro"]);
+    }
+    // Energia e Gás têm ainda a mudança de comercializador e a tarifa social (06/10/2026).
+    for (const setor of ["Energia", "Gás"]) {
+      assert.deepEqual(problemasDoSetor(setor), [...SERVICOS, "Mudança de comercializador", "Tarifa social", "Outro"]);
+    }
+    for (const p of ["Mudança de comercializador", "Tarifa social"]) {
+      for (const setor of ["Telecomunicações", "Água", "Compras & Reembolsos", "Ginásios"]) {
+        assert.ok(!problemasDoSetor(setor).includes(p), `${p} não aparece em ${setor}`);
+      }
     }
     for (const p of ["Produto com defeito", "Produto errado ou danificado", "Encomenda não entregue", "Devolução ou reembolso em falta", "Garantia recusada"]) {
       assert.ok(problemasDoSetor("Compras & Reembolsos").includes(p), p);
@@ -85,6 +96,22 @@ describe("formulário do caso (lerDadosPedido)", () => {
     assert.equal(lerDadosPedido(formulario({ sector: "Ginásios", problema_tipo: "Cobrança após cancelamento" })).ok, true);
     assert.equal(lerDadosPedido(formulario({ sector: "Energia", problema_tipo: "Produto com defeito" })).ok, false);
     assert.equal(lerDadosPedido(formulario({ sector: "Ginásios", problema_tipo: "Corte ou falha de serviço" })).ok, false);
+    // Mudança de comercializador e tarifa social: só Energia e Gás.
+    for (const p of ["Mudança de comercializador", "Tarifa social"]) {
+      assert.equal(lerDadosPedido(formulario({ sector: "Gás", problema_tipo: p })).ok, true, p);
+      assert.equal(lerDadosPedido(formulario({ sector: "Energia", problema_tipo: p })).ok, true, p);
+      assert.equal(lerDadosPedido(formulario({ sector: "Telecomunicações", problema_tipo: p })).ok, false, p);
+      assert.equal(lerDadosPedido(formulario({ sector: "Compras & Reembolsos", problema_tipo: p })).ok, false, p);
+    }
+  });
+
+  test("backoffice: o tipo de problema tem de pertencer ao setor (vazio continua válido)", () => {
+    assert.equal(problemaValidoParaSetor("Gás", "Tarifa social"), true);
+    assert.equal(problemaValidoParaSetor("Ginásios", "Tarifa social"), false);
+    assert.equal(problemaValidoParaSetor("Água", "Mudança de comercializador"), false);
+    assert.equal(problemaValidoParaSetor("Ginásios", null), true);
+    assert.equal(problemaValidoParaSetor(null, "Tarifa social"), true, "sem setor: qualquer tipo da lista");
+    assert.equal(problemaValidoParaSetor(null, "x"), false);
   });
 
   test("só aceita setores, problemas e momentos das listas", () => {

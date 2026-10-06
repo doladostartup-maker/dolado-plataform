@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { problemaValidoParaSetor } from "@/lib/pedidoCaso";
 
 function parseCasoFormData(formData: FormData) {
   const valorIndicado = formData.get("valor_indicado") as string;
@@ -35,9 +36,14 @@ function parseCasoFormData(formData: FormData) {
   };
 }
 
+const ERRO_PROBLEMA = "O tipo de problema não existe no setor escolhido.";
+
 export async function criarCaso(formData: FormData) {
   const supabase = await createClient();
   const dados = parseCasoFormData(formData);
+  if (!problemaValidoParaSetor(dados.sector, dados.problema_tipo)) {
+    redirect(`/backoffice/casos/novo?erro=${encodeURIComponent(ERRO_PROBLEMA)}`);
+  }
 
   const { data, error } = await supabase
     .from("casos")
@@ -59,6 +65,9 @@ export async function actualizarCaso(id: string, formData: FormData) {
   // base de dados (transições explícitas).
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { status, ...dados } = parseCasoFormData(formData);
+  if (!problemaValidoParaSetor(dados.sector, dados.problema_tipo)) {
+    redirect(`/backoffice/casos/${id}?erro=${encodeURIComponent(ERRO_PROBLEMA)}`);
+  }
 
   const { error } = await supabase.from("casos").update(dados).eq("id", id);
 

@@ -42,10 +42,19 @@ const PROBLEMAS_SERVICOS = [
   "Outro",
 ];
 
+// Energia e Gás têm ainda a mudança de comercializador e a tarifa social
+// (06/10/2026) — só nestes dois setores.
+const PROBLEMAS_ENERGIA_GAS = [
+  ...PROBLEMAS_SERVICOS.filter((p) => p !== "Outro"),
+  "Mudança de comercializador",
+  "Tarifa social",
+  "Outro",
+];
+
 export const PROBLEMAS_POR_SETOR: Record<string, string[]> = {
   "Telecomunicações": PROBLEMAS_SERVICOS,
-  Energia: PROBLEMAS_SERVICOS,
-  "Gás": PROBLEMAS_SERVICOS,
+  Energia: PROBLEMAS_ENERGIA_GAS,
+  "Gás": PROBLEMAS_ENERGIA_GAS,
   "Água": PROBLEMAS_SERVICOS,
   "Compras & Reembolsos": [
     "Produto com defeito",
@@ -72,6 +81,29 @@ export const PROBLEMAS = [...new Set(SETORES.flatMap((s) => PROBLEMAS_POR_SETOR[
 /** Tipos de problema do setor; sem setor conhecido, todos. */
 export function problemasDoSetor(setor: string | null | undefined): string[] {
   return (setor && PROBLEMAS_POR_SETOR[setor]) || PROBLEMAS;
+}
+
+/** Sem tipo de problema é válido (casos antigos); com tipo, tem de ser do setor. */
+export function problemaValidoParaSetor(setor: string | null | undefined, problema: string | null | undefined) {
+  if (!problema) return true;
+  return problemasDoSetor(setor).includes(problema);
+}
+
+// Setores da DoLado que são serviços públicos essenciais (Lei n.º 23/96,
+// art. 1.º, n.º 2) — lista positiva. As regras jurídicas dessa lei só chegam
+// a casos destes setores (src/lib/rascunhoIA/regras.ts).
+//   Telecomunicações → comunicações eletrónicas (alínea d));
+//   Energia → energia elétrica (b));
+//   Gás → gás natural e GPL canalizados (c)) — o gás de garrafa NÃO está
+//         abrangido; o formulário não distingue, por isso a revisão humana
+//         confirma o tipo de gás;
+//   Água → água, águas residuais e resíduos urbanos (a), f), g)).
+// Serviços postais (e)) e transporte de passageiros (h)) só entram quando
+// existirem como setor. Compras & Reembolsos e Ginásios não são.
+export const SETORES_SERVICOS_PUBLICOS_ESSENCIAIS: readonly string[] = ["Telecomunicações", "Energia", "Gás", "Água"];
+
+export function isServicoPublicoEssencial(setor: string | null | undefined): boolean {
+  return !!setor && SETORES_SERVICOS_PUBLICOS_ESSENCIAIS.includes(setor);
 }
 export const MOMENTOS = [
   "Sim, e não me responderam",
