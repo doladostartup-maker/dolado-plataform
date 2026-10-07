@@ -4,7 +4,9 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import {
   ESTADOS_CASO,
+  ESTADOS_FINAIS,
   ESTADO_TEXTO_TOM,
+  FILTRO_FINAIS,
   estadoCaso,
   pertenceVista,
   prazoPrincipal,
@@ -85,6 +87,16 @@ describe("proximaAcao", () => {
     const nova = proximaAcao({ status: "Em investigação", texto: texto("enviado") });
     assert.deepEqual([nova.rotulo, nova.aguarda], ["Preparar nova comunicação", "dolado"]);
     assert.equal(proximaAcao({ status: "Encerrado sem resolução", texto: null }).aguarda, null);
+  });
+
+  test("encerrado com encaminhamento externo: terminado, sem ação; avisa de mensagens chegadas depois", () => {
+    const a = proximaAcao({ status: "Encerrado com encaminhamento externo", texto: texto("substituido") });
+    assert.deepEqual([a.rotulo, a.interna, a.aguarda, a.ancora], ["Encerrado na DoLado", false, null, "encerramento"]);
+    const b = proximaAcao({ status: "Encerrado com encaminhamento externo", texto: null, comunicacoesPorAnalisar: 1 });
+    assert.equal(b.interna, false);
+    assert.match(b.descricao, /depois do encerramento/);
+    assert.ok(ESTADOS_FINAIS.includes("Encerrado com encaminhamento externo"));
+    assert.match(FILTRO_FINAIS, /"Encerrado com encaminhamento externo"/);
   });
 
   test("prazo indicado no envio prevalece; só enquanto se aguarda a empresa", () => {

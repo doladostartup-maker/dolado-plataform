@@ -27,6 +27,8 @@ import {
   TITULO_SECCAO,
 } from "@/components/portal/ui";
 import { TextoCliente } from "../_components/TextoCliente";
+import { EncerramentoExternoResumo, EntidadesResolucaoConflitos, type DossieCliente } from "../_components/EncerramentoExterno";
+import { ESTADO_ENCERRADO_EXTERNO } from "@/lib/encerramentoExterno";
 import {
   Comprovativo,
   ReclamacaoEnviada,
@@ -58,7 +60,8 @@ export default async function CasoClienteDetalhePage({
 
   // Tudo com a sessão do cliente (RLS: só o próprio caso; nunca rascunhos;
   // sem o caminho no storage dos comprovativos).
-  const [{ data: textoAtual }, { data: eventos }, { data: envios }, { data: comprovativos }, { data: pedidos }, { data: decisoes }] = await Promise.all([
+  const [{ data: textoAtual }, { data: eventos }, { data: envios }, { data: comprovativos }, { data: pedidos }, { data: decisoes }, { data: dossies }] =
+    await Promise.all([
     // Texto em curso: o mais recente ainda não enviado nem substituído.
     supabase
       .from("casos_textos")
@@ -88,6 +91,8 @@ export default async function CasoClienteDetalhePage({
       .limit(1),
     // Só o que foi dito ao cliente (permissões por coluna; sem a análise interna).
     supabase.from("casos_analises").select("decisao, mensagem_cliente, created_at").eq("caso_id", id).order("created_at", { ascending: false }),
+    // Dossiê do caso (só a versão mais recente; sem o caminho no storage).
+    supabase.from("casos_dossies").select("id, versao, gerado_em").eq("caso_id", id).order("versao", { ascending: false }).limit(1),
   ]);
 
   // Texto de cada envio: a versão apontada pelo registo de envio (imutável).
@@ -123,13 +128,15 @@ export default async function CasoClienteDetalhePage({
     analiseSemResposta: !!ultimoMotivo && ultimoMotivo.tipo !== "comunicacao_recebida",
   });
   const concluido = caso.status === "Resolvido";
-  const encerrado = caso.status === "Encerrado sem resolução";
+  const encerradoExterno = caso.status === ESTADO_ENCERRADO_EXTERNO;
+  const encerrado = caso.status === "Encerrado sem resolução" || encerradoExterno;
+  const dossie = (dossies?.[0] as DossieCliente | undefined) ?? null;
   const aguardaDecisao = caso.status === "Aguardando decisão cliente";
   const pedido = pedidos?.[0] ?? null;
   const pedidoAberto = caso.status === "Aguardando cliente" && pedido?.estado === "aberto" ? pedido : null;
   const solucao = (decisoes ?? []).find((d) => d.decisao === "resolucao_proposta");
   const encaminhamento = (decisoes ?? []).find((d) => d.decisao === "encaminhar");
-  const mostrarEncaminhamento = (caso.status === "Bloqueado" || encerrado) && !!encaminhamento?.mensagem_cliente;
+  const mostrarEncaminhamento = (caso.status === "Bloqueado" || (encerrado && !encerradoExterno)) && !!encaminhamento?.mensagem_cliente;
 
   // Cronologia: caso recebido → acontecimentos registados (só os visíveis
   // ao cliente) → situação atual → próximo passo (ou conclusão).
@@ -144,7 +151,7 @@ export default async function CasoClienteDetalhePage({
       estado: "feito" as const,
     })),
     concluido || encerrado
-      ? { id: "concluido", titulo: concluido ? "Caso concluído" : "Caso encerrado", estado: "feito" as const }
+      ? { id: "concluido", titulo: concluido ? "Caso concluído" : encerradoExterno ? "Acompanhamento terminado" : "Caso encerrado", estado: "feito" as const }
       : { id: "atual", titulo: apresentacao.rotulo, estado: "atual" as const },
     ...(!concluido && !encerrado && apresentacao.proximoPasso
       ? [{ id: "seguinte", titulo: "A seguir", detalhe: apresentacao.proximoPasso, estado: "futuro" as const }]
@@ -171,28 +178,35 @@ export default async function CasoClienteDetalhePage({
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex min-w-0 flex-col gap-6">
           {/* Ponto de situação */}
-          <section
-            aria-labelledby="situacao"
-            className={`${concluido ? CARTAO_SUCESSO : apresentacao.requerAcao ? CARTAO_ACAO : CARTAO_DESTAQUE} flex flex-col gap-3`}
-            aria-live="polite"
-          >
-            <h2 id="situacao" className="text-[13px] font-bold uppercase tracking-[0.08em] text-[var(--v2-muted)]">
-              Ponto de situação
-            </h2>
-            <p className="text-[19px] font-bold leading-snug tracking-[-0.01em] text-[var(--v2-navy)]">{apresentacao.explicacao}</p>
-            {apresentacao.proximoPasso && (
-              <p className={TEXTO_SECUNDARIO}>
-                <span className="font-semibold text-[var(--v2-navy)]">Próximo passo: </span>
-                {apresentacao.proximoPasso}
-              </p>
-            )}
-            {apresentacao.requerAcao && (
-              <a href={aguardaDecisao ? "#decisao" : pedidoAberto ? "#pedido" : "#texto"} className={`${LIGACAO} self-start text-[14.5px]`}>
-                {aguardaDecisao ? "Ver a solução" : pedidoAberto ? "Ver o que precisamos" : "Rever o texto"}
-                <IconeSeta tamanho={16} />
-              </a>
-            )}
-          </section>
+          {encerradoExterno ? (
+            <>
+              <EncerramentoExternoResumo dossie={dossie} />
+              <EntidadesResolucaoConflitos />
+            </>
+          ) : (
+            <section
+              aria-labelledby="situacao"
+              className={`${concluido ? CARTAO_SUCESSO : apresentacao.requerAcao ? CARTAO_ACAO : CARTAO_DESTAQUE} flex flex-col gap-3`}
+              aria-live="polite"
+            >
+              <h2 id="situacao" className="text-[13px] font-bold uppercase tracking-[0.08em] text-[var(--v2-muted)]">
+                Ponto de situação
+              </h2>
+              <p className="text-[19px] font-bold leading-snug tracking-[-0.01em] text-[var(--v2-navy)]">{apresentacao.explicacao}</p>
+              {apresentacao.proximoPasso && (
+                <p className={TEXTO_SECUNDARIO}>
+                  <span className="font-semibold text-[var(--v2-navy)]">Próximo passo: </span>
+                  {apresentacao.proximoPasso}
+                </p>
+              )}
+              {apresentacao.requerAcao && (
+                <a href={aguardaDecisao ? "#decisao" : pedidoAberto ? "#pedido" : "#texto"} className={`${LIGACAO} self-start text-[14.5px]`}>
+                  {aguardaDecisao ? "Ver a solução" : pedidoAberto ? "Ver o que precisamos" : "Rever o texto"}
+                  <IconeSeta tamanho={16} />
+                </a>
+              )}
+            </section>
+          )}
 
           {aguardaDecisao && (
             <section id="decisao" aria-labelledby="decisao-titulo" className={`${CARTAO_ACAO} flex scroll-mt-24 flex-col gap-4`}>

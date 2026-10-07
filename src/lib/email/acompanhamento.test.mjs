@@ -2,10 +2,12 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import {
+  ASSUNTO_CASO_ENCERRADO_EXTERNO,
   ASSUNTO_PEDIDO_INFORMACAO,
   ASSUNTO_RESPOSTA_RECEBIDA,
   ASSUNTO_SOLUCAO_APRESENTADA,
   montarHtmlAvisoEquipa,
+  montarHtmlCasoEncerradoExterno,
   montarHtmlPedidoInformacao,
   montarHtmlRespostaRecebida,
   montarHtmlSolucaoApresentada,
@@ -35,6 +37,17 @@ describe("e-mails ao cliente", () => {
     const todos = [ASSUNTO_RESPOSTA_RECEBIDA, ASSUNTO_PEDIDO_INFORMACAO, ASSUNTO_SOLUCAO_APRESENTADA].join(" ") +
       [montarHtmlRespostaRecebida, montarHtmlPedidoInformacao, montarHtmlSolucaoApresentada].map((f) => f({ empresa: null, urlCaso: URL })).join(" ");
     assert.doesNotMatch(todos, /\bemail\b|você|\bteu\b|\btua\b/i);
+  });
+
+  test("encerramento com encaminhamento externo: não diz que ficou resolvido; dossiê e RAL; sem representação", () => {
+    const html = montarHtmlCasoEncerradoExterno({ empresa: "Operadora <X>", urlCaso: URL });
+    assert.equal(ASSUNTO_CASO_ENCERRADO_EXTERNO, "A DoLado terminou o acompanhamento do seu caso");
+    assert.match(html, /Isto não significa necessariamente que o problema esteja resolvido\./);
+    assert.match(html, /dossiê/);
+    assert.match(html, /Resolução Alternativa de Litígios de Consumo/);
+    assert.match(html, /não representa o consumidor/);
+    assert.match(html, /Operadora &lt;X&gt;/);
+    assert.doesNotMatch(html, /\bemail\b|você|competente é/i);
   });
 
   test("aviso interno à equipa: sem dados do caso além da ligação", () => {

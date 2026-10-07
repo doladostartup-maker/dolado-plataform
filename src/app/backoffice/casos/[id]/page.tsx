@@ -34,6 +34,7 @@ import {
   type VersaoTexto,
 } from "../_components/TextoCaso";
 import { EnviosCaso, type ComprovativoEquipa, type EnvioEquipa } from "../_components/EnviosCaso";
+import { EncerramentoCaso, type DossieResumo, type EncerramentoResumo } from "../_components/EncerramentoCaso";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rascunhoIAAtivo } from "@/lib/rascunhoIA/servidor";
 import { documentosParaPreenchimento } from "@/lib/preenchimentoReclamacao/servidor";
@@ -132,6 +133,29 @@ export default async function CasoDetalhePage({
     supabase.from("tipos_encaminhamento").select("codigo, rotulo, descricao_cliente").eq("ativo", true).order("ordem"),
     enderecoRespostaDoCaso(id).catch(() => null),
   ]);
+  // Encerramento com encaminhamento externo e versões do dossiê (só admin;
+  // o motivo e o caminho no storage nunca saem do servidor para o cliente).
+  const [encerramentos, dossies] = await Promise.all([
+    admin
+      .from("casos_encerramentos")
+      .select("encerrado_em, estado_anterior, motivo, utilizadores:encerrado_por (nome, email)")
+      .eq("caso_id", id)
+      .order("encerrado_em", { ascending: false })
+      .limit(1),
+    admin.from("casos_dossies").select("id, versao, nome, tamanho_bytes, gerado_em, modelo_versao").eq("caso_id", id).order("versao", { ascending: false }),
+  ]);
+  const ultimoEncerramento = encerramentos.data?.[0] as
+    | { encerrado_em: string; estado_anterior: string; motivo: string; utilizadores: { nome: string | null; email: string } | null }
+    | undefined;
+  const encerramento: EncerramentoResumo | null = ultimoEncerramento
+    ? {
+        encerrado_em: ultimoEncerramento.encerrado_em,
+        estado_anterior: ultimoEncerramento.estado_anterior,
+        motivo: ultimoEncerramento.motivo,
+        encerrado_por_nome: ultimoEncerramento.utilizadores?.nome ?? ultimoEncerramento.utilizadores?.email ?? null,
+      }
+    : null;
+
   // Faturas/contratos para preencher os marcadores de identificação do texto
   // (só a lista; a leitura é a pedido, em "Ler dados do documento").
   const documentosPreenchimento = await documentosParaPreenchimento(id).catch(() => []);
@@ -187,7 +211,11 @@ export default async function CasoDetalhePage({
           ? e.dados.rotulo
           : e.tipo === "estado_corrigido" && e.dados
             ? `${estadoCaso(e.dados.de).rotulo} → ${estadoCaso(e.dados.para).rotulo}`
-            : undefined,
+            : e.tipo === "caso_encerrado" && e.dados?.modo === "encaminhamento_externo"
+              ? "Com encaminhamento externo (dossiê e informação RAL ao cliente)"
+              : e.tipo === "dossie_gerado" && e.dados?.versao
+                ? `Versão ${e.dados.versao}`
+                : undefined,
     })),
   ];
   const AGUARDA: Record<string, string> = { dolado: "da DoLado", cliente: "do cliente", empresa: "da empresa" };
@@ -198,6 +226,7 @@ export default async function CasoDetalhePage({
     ["texto", "Reclamação"],
     ["envio", "Envio"],
     ["documentos", "Documentos"],
+    ["encerramento", "Encerramento"],
     ["dados", "Dados do caso"],
     ["historico", "Cronologia"],
   ] as const;
@@ -345,6 +374,14 @@ export default async function CasoDetalhePage({
               )}
             </div>
           </Seccao>
+
+          <EncerramentoCaso
+            casoId={id}
+            status={caso.status}
+            comunicacoesPorAnalisar={triagem.comunicacoesPorAnalisar}
+            encerramento={encerramento}
+            dossies={(dossies.data ?? []) as DossieResumo[]}
+          />
 
           <Seccao id="dados" titulo="Dados do caso" descricao="Editar os campos do caso. O estado muda com as ações do caso.">
             <CasoForm action={actualizarComId} valores={caso} submitLabel="Guardar alterações" edicao />

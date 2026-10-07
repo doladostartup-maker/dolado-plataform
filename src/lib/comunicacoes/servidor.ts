@@ -6,10 +6,12 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ADMIN_EMAIL, enviarEmailBrevo } from "@/lib/email/brevo";
 import {
+  ASSUNTO_CASO_ENCERRADO_EXTERNO,
   ASSUNTO_PEDIDO_INFORMACAO,
   ASSUNTO_RESPOSTA_RECEBIDA,
   ASSUNTO_SOLUCAO_APRESENTADA,
   montarHtmlAvisoEquipa,
+  montarHtmlCasoEncerradoExterno,
   montarHtmlPedidoInformacao,
   montarHtmlRespostaRecebida,
   montarHtmlSolucaoApresentada,
@@ -116,7 +118,10 @@ export async function avisarEquipa(casoId: string, texto: string) {
 }
 
 /** E-mails ao cliente nos momentos que pedem a sua atenção (sem conteúdo da resposta). Nunca lança. */
-export async function avisarCliente(casoId: string, momento: "resposta_recebida" | "pedido_informacao" | "solucao_apresentada") {
+export async function avisarCliente(
+  casoId: string,
+  momento: "resposta_recebida" | "pedido_informacao" | "solucao_apresentada" | "caso_encerrado_externo",
+) {
   const caso = await casoParaAviso(casoId);
   if (!caso?.email) return;
   if (!process.env.BREVO_API_KEY) return logEstruturado({ fase: "aviso_cliente", resultado: "sem_envio", momento });
@@ -126,7 +131,9 @@ export async function avisarCliente(casoId: string, momento: "resposta_recebida"
       ? [ASSUNTO_RESPOSTA_RECEBIDA, montarHtmlRespostaRecebida(args)]
       : momento === "pedido_informacao"
         ? [ASSUNTO_PEDIDO_INFORMACAO, montarHtmlPedidoInformacao(args)]
-        : [ASSUNTO_SOLUCAO_APRESENTADA, montarHtmlSolucaoApresentada(args)];
+        : momento === "caso_encerrado_externo"
+          ? [ASSUNTO_CASO_ENCERRADO_EXTERNO, montarHtmlCasoEncerradoExterno(args)]
+          : [ASSUNTO_SOLUCAO_APRESENTADA, montarHtmlSolucaoApresentada(args)];
   await enviarEmailBrevo(caso.email, assunto, html).catch(() => logEstruturado({ fase: "aviso_cliente", resultado: "erro", momento }));
 }
 
