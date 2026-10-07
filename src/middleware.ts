@@ -76,6 +76,11 @@ function ehVersaoDosTermos(pathname: string) {
   return pathname.startsWith("/termos/") || pathname.startsWith("/privacidade/");
 }
 
+// Links de indicação (/r/<código>): só registam a visita e redirecionam.
+function ehLinkDeIndicacao(pathname: string) {
+  return pathname.startsWith("/r/");
+}
+
 // Páginas públicas de revisão do texto (link do e-mail, sem login): não
 // precisam da sessão Supabase.
 function ehPaginaDeRevisaoDoTexto(pathname: string) {
@@ -123,7 +128,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/entrar", request.url));
   }
 
-  if (ROTAS_SEM_REFRESH_DE_SESSAO.includes(pathname) || ehVersaoDosTermos(pathname) || ehPaginaDeRevisaoDoTexto(pathname)) {
+  if (
+    ROTAS_SEM_REFRESH_DE_SESSAO.includes(pathname) ||
+    ehVersaoDosTermos(pathname) ||
+    ehPaginaDeRevisaoDoTexto(pathname) ||
+    ehLinkDeIndicacao(pathname)
+  ) {
     return NextResponse.next();
   }
 

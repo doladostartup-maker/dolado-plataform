@@ -4,6 +4,7 @@ import { destinoDepoisDeAutenticar } from "@/lib/authServidor";
 import { COOKIE_DESTINO_POS_LOGIN, ehDestinoSeguro } from "@/lib/destinoAuth";
 import { haPedidoPorPagarNoBrowser } from "@/lib/pedidoCasoServidor";
 import { createClient } from "@/lib/supabase/server";
+import { atribuirIndicacaoDoBrowser } from "@/lib/indicacoes/servidor";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -36,6 +37,10 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     const destinoGuardado = (await cookies()).get(COOKIE_DESTINO_POS_LOGIN)?.value;
     if (!error && data.user) {
+      // Programa de indicação: a conta fica ligada ao link visitado neste
+      // browser (a base de dados recusa auto-indicação, contas já clientes e
+      // visitas com mais de 30 dias). Nunca impede o login.
+      await atribuirIndicacaoDoBrowser(data.user.id).catch(() => undefined);
       // Destino: ?next= explícito → destino guardado ao criar a conta ou ao
       // sair para o Google (ex.: continuar a compra em /comprar) → pedido de
       // caso por pagar neste browser → /portal/casos (ou backoffice, admin).

@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { confirmarCompra, type EstadoCompra } from "@/app/actions/stripe";
+import { ofertaIndicacaoNaCompra, type OfertaIndicacaoCompra } from "@/app/actions/indicacoes";
 import {
   CAMPO_ACEITA_TERMOS,
   CAMPO_INICIO_IMEDIATO,
+  CAMPO_SEM_DESCONTO_INDICACAO,
   VALOR_ACEITE,
   type FluxoCompra,
   type OrigemCompra,
@@ -19,6 +21,7 @@ import {
 } from "@/lib/legal";
 import { track } from "@/lib/analytics";
 import { CASO_EXTRA, IVA_INCLUIDO, PLANOS, TEXTO_BENEFICIO_SUBSCRITOR, formatarPreco, type PlanoId } from "@/lib/planos";
+import { TEXTOS_INDICACAO, precoComDescontoCentimos, textoDescontoNaCompra } from "@/lib/indicacoes/regras";
 import { fonteV2 } from "@/components/marketing-v2/fonte";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAIXA_SELECAO } from "@/components/portal/ui";
 
@@ -63,6 +66,22 @@ export function ConfirmarCompra({
   const info = casoExtra ? { ...PLANOS.avulso, ...CASO_EXTRA } : PLANOS[plano];
   const inicioImediato = consentimentoInicioImediato(plano);
 
+  // Desconto de indicação: só para mostrar (o servidor decide de novo ao abrir
+  // o Checkout). O cliente pode preferir um código promocional — não acumulam.
+  const [oferta, setOferta] = useState<OfertaIndicacaoCompra | null>(null);
+  const [prescindiu, setPrescindiu] = useState(false);
+  useEffect(() => {
+    if (casoExtra) return;
+    let ativo = true;
+    ofertaIndicacaoNaCompra(plano, fluxo, !!conversao)
+      .then((r) => ativo && setOferta(r))
+      .catch(() => undefined);
+    return () => {
+      ativo = false;
+    };
+  }, [plano, fluxo, conversao, casoExtra]);
+  const descontoIndicacao = !prescindiu ? (oferta?.desconto ?? null) : null;
+
   return (
     <div
       onClick={onFechar}
@@ -83,16 +102,21 @@ export function ConfirmarCompra({
           <p className="text-[16px] font-bold text-[var(--v2-navy)]">{info.nome}</p>
           {casoExtra && <p className="text-[13.5px] font-semibold text-[var(--v2-green-dark)]">{TEXTO_BENEFICIO_SUBSCRITOR}</p>}
           <p className="text-[15px] font-semibold text-[var(--v2-navy)]">
-            {casoExtra && (
+            {(casoExtra || descontoIndicacao) && (
               <>
                 <span className="font-normal text-[var(--v2-muted)] line-through">
                   <span className="sr-only">Preço normal: </span>
-                  {formatarPreco(CASO_EXTRA.precoReferenciaCentimos)}
+                  {formatarPreco(casoExtra ? CASO_EXTRA.precoReferenciaCentimos : info.precoCentimos)}
                 </span>{" "}
               </>
             )}
-            {formatarPreco(info.precoCentimos)}
-            {info.subscricao ? " por mês" : " — pagamento único"} ({IVA_INCLUIDO})
+            {formatarPreco(descontoIndicacao ? precoComDescontoCentimos(info.precoCentimos) : info.precoCentimos)}
+            {descontoIndicacao && info.subscricao
+              ? " no primeiro mês"
+              : info.subscricao
+                ? " por mês"
+                : " — pagamento único"}{" "}
+            ({IVA_INCLUIDO})
           </p>
           <p className="mt-1 text-[13.5px] text-[var(--v2-muted)]">
             {info.subscricao
@@ -120,7 +144,33 @@ export function ConfirmarCompra({
           {casoExtra && (
             <p>O desconto de subscritor já está aplicado no preço e não acumula com códigos promocionais.</p>
           )}
-          {!conversao && !casoExtra && (
+          {descontoIndicacao && (
+            <>
+              <p className="font-semibold text-[var(--v2-green-dark)]">
+                {textoDescontoNaCompra(descontoIndicacao, info.subscricao)}
+              </p>
+              <p>
+                O desconto de indicação não acumula com códigos promocionais.{" "}
+                <button type="button" onClick={() => setPrescindiu(true)} className={LINK}>
+                  Prefiro usar um código promocional
+                </button>
+              </p>
+            </>
+          )}
+          {prescindiu && oferta?.desconto && (
+            <p>
+              Não aplicamos o desconto de indicação nesta compra: pode introduzir o seu código promocional no passo de
+              pagamento.{" "}
+              <button type="button" onClick={() => setPrescindiu(false)} className={LINK}>
+                Usar o desconto de indicação
+              </button>
+            </p>
+          )}
+          {plano === "caso_protecao" && oferta?.novoClienteIndicado && <p>{TEXTOS_INDICACAO.casoProtecaoSemDesconto}</p>}
+          {oferta?.semContaComIndicacao && (
+            <p className="font-semibold text-[var(--v2-navy)]">{TEXTOS_INDICACAO.semConta}</p>
+          )}
+          {!conversao && !casoExtra && !descontoIndicacao && (
             <p>
               {info.subscricao
                 ? "Se tiver um código promocional, pode aplicá-lo no passo de pagamento. Mesmo com desconto ou com valor de 0 €, a subscrição renova-se todos os meses, ao preço do plano ou nas condições do código aplicado, até a cancelar."
@@ -164,6 +214,7 @@ export function ConfirmarCompra({
           <input type="hidden" name="fluxo" value={fluxo} />
           <input type="hidden" name="origem" value={origem} />
           {pedidoId && <input type="hidden" name="pedido_id" value={pedidoId} />}
+          {prescindiu && <input type="hidden" name={CAMPO_SEM_DESCONTO_INDICACAO} value={VALOR_ACEITE} />}
 
           <label className="flex items-start gap-3 text-[14.5px] leading-relaxed text-[var(--v2-navy)]">
             <input

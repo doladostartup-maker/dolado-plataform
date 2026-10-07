@@ -8,6 +8,8 @@ import { agendarRascunhoIA } from "@/lib/rascunhoIA/servidor";
 import type Stripe from "stripe";
 import { getStripe as stripeReal } from "@/lib/stripe/client";
 import { planoDoPreco } from "@/lib/stripe/planos";
+import { indicacoesAtivas } from "@/lib/indicacoes/regras";
+import { criarDependenciasIndicacoes } from "@/lib/indicacoes/servidor";
 import {
   idDe,
   snapshotDeSubscricao,
@@ -72,6 +74,10 @@ function falhar(contexto: string, erro: { code?: string } | null) {
 export type OpcoesDependencias = {
   stripe?: Pick<Stripe, "subscriptions" | "checkout" | "paymentIntents" | "refunds">;
   enviarEmail?: EnviarEmail;
+  /** Programa de indicação mesmo com INDICACOES_ATIVO desligado (testes de contrato). */
+  indicacoes?: boolean;
+  /** Stripe falso para o programa de indicação (testes de contrato). */
+  stripeIndicacoes?: Parameters<typeof criarDependenciasIndicacoes>[0]["stripe"];
 };
 
 export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): DependenciasWebhook {
@@ -92,7 +98,7 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
     return (data?.user_id as string | undefined) ?? null;
   }
 
-  return {
+  const deps: DependenciasWebhook = {
     async reclamarEvento(eventId, tipo) {
       const { error } = await admin
         .from("stripe_webhook_events")
@@ -733,4 +739,15 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
       console.log(JSON.stringify({ origem: "stripe_webhook", ...linha }));
     },
   };
+
+  // Programa de indicação: só quando ligado (INDICACOES_ATIVO=1).
+  if (indicacoesAtivas() || opcoes.indicacoes) {
+    deps.indicacoes = criarDependenciasIndicacoes({
+      notificarAdmin: deps.notificarAdmin,
+      // Sem dados pessoais: só o passo e o resultado.
+      registar: (linha) => console.log(JSON.stringify({ origem: "stripe_webhook_indicacao", ...linha })),
+      ...(opcoes.stripeIndicacoes ? { stripe: opcoes.stripeIndicacoes } : {}),
+    });
+  }
+  return deps;
 }

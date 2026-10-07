@@ -4,7 +4,9 @@ import { BotaoComprar } from "@/components/compra/BotaoComprar";
 import { obterAcesso } from "@/lib/auth";
 import { opcoesDoPedido, pedidoPorPagar, type ModalidadeCaso } from "@/lib/pedidoCaso";
 import { pedidoDaConta } from "@/lib/pedidoCasoServidor";
-import { CASO_EXTRA, IVA_INCLUIDO, PLANOS, precoComUnidade, textoCasosDisponiveis } from "@/lib/planos";
+import { CASO_EXTRA, IVA_INCLUIDO, PLANOS, formatarPreco, precoComUnidade, textoCasosDisponiveis } from "@/lib/planos";
+import { TEXTOS_INDICACAO, escolherDescontoCheckout, precoComDescontoCentimos } from "@/lib/indicacoes/regras";
+import { situacaoIndicacaoNaCompra } from "@/lib/indicacoes/servidor";
 import { casosDoMes } from "@/lib/casoExtra";
 import { casoExtraConfigurado } from "@/lib/stripe/planos";
 import { CTA_CASO_EXTRA, PrecoCasoExtra, textoProximoCaso } from "@/components/portal/CasoExtra";
@@ -101,6 +103,9 @@ export default async function ModalidadePage({
     if (escolha) conversao = { mensalidade: escolha.calculo.mensalidade, reembolso: escolha.calculo.reembolso };
   }
 
+  // Programa de indicação: só para mostrar o preço (o Checkout decide de novo).
+  const indicacao = await situacaoIndicacaoNaCompra(userId);
+
   return (
     <>
       {params.conta === "nova" && <RegistarEvento nome="conta_criada" />}
@@ -190,17 +195,44 @@ export default async function ModalidadePage({
             {opcoes.modalidades.map((id) => {
               const plano = PLANOS[id];
               const destaque = id === "caso_protecao";
+              const descontoIndicacao = indicacao
+                ? escolherDescontoCheckout({
+                    plano: id,
+                    fluxo: "pedido_caso",
+                    conversao: id === "caso_protecao" && !!conversao,
+                    ...indicacao,
+                    prescindiu: false,
+                  })
+                : null;
               return (
                 <div
                   key={id}
                   className={`flex flex-col ${destaque ? CARTAO_ACAO : CARTAO}`}
                 >
                   <p className={TITULO_CARTAO}>{plano.nome}</p>
-                  <p className="mt-1 text-[24px] font-extrabold tracking-[-0.02em] text-[var(--v2-navy)]">{precoComUnidade(id)}</p>
+                  {descontoIndicacao ? (
+                    <>
+                      <p className="mt-1 text-[24px] font-extrabold tracking-[-0.02em] text-[var(--v2-navy)]">
+                        <span className="mr-2 text-[16px] font-semibold text-[var(--v2-muted)] line-through">
+                          <span className="sr-only">Preço normal: </span>
+                          {formatarPreco(plano.precoCentimos)}
+                        </span>
+                        {formatarPreco(precoComDescontoCentimos(plano.precoCentimos))}
+                      </p>
+                      <p className="text-[13.5px] font-semibold text-[var(--v2-green-dark)]">
+                        {descontoIndicacao === "novo_cliente" ? "Desconto de indicação" : "Com 1 dos seus descontos de indicação"}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="mt-1 text-[24px] font-extrabold tracking-[-0.02em] text-[var(--v2-navy)]">{precoComUnidade(id)}</p>
+                  )}
                   <p className={`${METADADOS} mb-3`}>
                     {plano.subscricao ? `Subscrição mensal · ${IVA_INCLUIDO}` : `Pagamento único · ${IVA_INCLUIDO}`}
                   </p>
                   <p className={`${TEXTO_SECUNDARIO} mb-5`}>{plano.descricaoCurta}</p>
+                  {id === "caso_protecao" && indicacao?.novoClienteIndicado && (
+                    <p className={`${METADADOS} -mt-3 mb-5`}>{TEXTOS_INDICACAO.casoProtecaoSemDesconto}</p>
+                  )}
                   <BotaoComprar
                     plano={id}
                     fluxo="pedido_caso"
