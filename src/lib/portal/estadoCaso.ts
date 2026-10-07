@@ -83,6 +83,13 @@ const POR_STATUS: Record<string, EstadoCasoCliente> = {
     proximoPasso: null,
     requerAcao: false,
   },
+  "Encerrado com encaminhamento externo": {
+    rotulo: "Encerrado na DoLado",
+    tom: "neutro",
+    explicacao: "A DoLado terminou o acompanhamento deste caso. Isto não significa necessariamente que o problema esteja resolvido.",
+    proximoPasso: null,
+    requerAcao: false,
+  },
 };
 
 const DESCONHECIDO: EstadoCasoCliente = {
@@ -97,7 +104,16 @@ const DESCONHECIDO: EstadoCasoCliente = {
 export type EstadoTextoRelevante = "aguardando_aprovacao" | "alteracoes_solicitadas" | "autorizado" | null;
 
 /** Estados em que o texto em curso não muda o que o cliente vê. */
-const SEM_TEXTO_EM_CURSO = ["Resolvido", "Encerrado sem resolução", "Aguardando decisão cliente", "Aguardando cliente"];
+const SEM_TEXTO_EM_CURSO = [
+  "Resolvido",
+  "Encerrado sem resolução",
+  "Encerrado com encaminhamento externo",
+  "Aguardando decisão cliente",
+  "Aguardando cliente",
+];
+
+/** Estados em que o acompanhamento da DoLado terminou (o caso deixa de estar "em curso" no portal). */
+export const ESTADOS_TERMINADOS_CLIENTE = ["Resolvido", "Encerrado sem resolução", "Encerrado com encaminhamento externo"];
 
 export type ContextoEstado = {
   /** Já foi enviada pelo menos uma comunicação à empresa. */
@@ -190,13 +206,19 @@ export const EVENTOS_CASO_CLIENTE: Record<string, string> = {
   informacao_cliente_enviada: "Enviou a informação pedida",
   encaminhamento_registado: "Próximo passo indicado",
   caso_encerrado: "Caso encerrado",
+  dossie_gerado: "Dossiê do caso preparado",
 };
 
 export function rotuloEventoCliente(tipo: string): string {
   return EVENTOS_CASO_CLIENTE[tipo] ?? "Atualização do caso";
 }
 
-export type EventoCliente = { tipo: string; created_at: string; texto_id?: string | null; dados?: { rotulo?: string } | null };
+export type EventoCliente = {
+  tipo: string;
+  created_at: string;
+  texto_id?: string | null;
+  dados?: { rotulo?: string; modo?: string; versao?: number } | null;
+};
 export type ItemCronologia = { titulo: string; quando: string; detalhe?: string };
 
 /**
@@ -221,6 +243,11 @@ export function cronologiaCliente(eventos: EventoCliente[], referencias: Map<str
       titulo = "Nova comunicação enviada para a sua revisão";
     } else if (e.tipo === "encaminhamento_registado" && e.dados?.rotulo) {
       detalhe = e.dados.rotulo;
+    } else if (e.tipo === "caso_encerrado" && e.dados?.modo === "encaminhamento_externo") {
+      titulo = "Encerrado na DoLado";
+      detalhe = "O acompanhamento terminou; existem opções externas para continuar";
+    } else if (e.tipo === "dossie_gerado" && (e.dados?.versao ?? 1) > 1) {
+      titulo = "Nova versão do dossiê do caso preparada";
     }
     return { titulo, quando: e.created_at, detalhe };
   });

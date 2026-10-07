@@ -3,7 +3,7 @@ import { obterAcesso, requireUser } from "@/lib/auth";
 import { casosDoMes, elegivelCasoExtra } from "@/lib/casoExtra";
 import { casoExtraConfigurado } from "@/lib/stripe/planos";
 import { CasosDoMes } from "@/components/portal/CasoExtra";
-import { estadoCasoCliente, type EstadoTextoRelevante } from "@/lib/portal/estadoCaso";
+import { ESTADOS_TERMINADOS_CLIENTE, estadoCasoCliente, type EstadoTextoRelevante } from "@/lib/portal/estadoCaso";
 import { CabecalhoPagina, TituloSeccao } from "@/components/portal/Cabecalho";
 import { EstadoVazio } from "@/components/portal/EstadoVazio";
 import { Etiqueta } from "@/components/portal/Etiqueta";
@@ -50,8 +50,10 @@ export default async function MeusCasosPage() {
 
   const lista = (casos ?? []).map((c) => ({ ...c, apresentacao: estadoCasoCliente(c.status, textoDoCaso.get(c.id) ?? null) }));
   // Primeiro o que precisa do cliente; depois em curso; concluídos no fim.
-  const emCurso = lista.filter((c) => c.status !== "Resolvido").sort((a, b) => Number(b.apresentacao.requerAcao) - Number(a.apresentacao.requerAcao));
-  const concluidos = lista.filter((c) => c.status === "Resolvido");
+  // "Concluídos": resolvidos e encerrados (o acompanhamento da DoLado terminou).
+  const terminado = (status: string) => ESTADOS_TERMINADOS_CLIENTE.includes(status);
+  const emCurso = lista.filter((c) => !terminado(c.status)).sort((a, b) => Number(b.apresentacao.requerAcao) - Number(a.apresentacao.requerAcao));
+  const concluidos = lista.filter((c) => terminado(c.status));
 
   const cartao = (c: (typeof lista)[number]) => (
     <li key={c.id}>
@@ -148,7 +150,7 @@ export default async function MeusCasosPage() {
           </section>
           {concluidos.length > 0 && (
             <section aria-labelledby="concluidos" className="flex flex-col gap-3">
-              <TituloSeccao id="concluidos" titulo="Concluídos" />
+              <TituloSeccao id="concluidos" titulo="Concluídos e encerrados" />
               <ul className="flex flex-col gap-3">{concluidos.map(cartao)}</ul>
             </section>
           )}

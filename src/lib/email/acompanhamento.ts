@@ -50,6 +50,20 @@ export function montarHtmlSolucaoApresentada({ empresa, urlCaso }: { empresa: st
   });
 }
 
+export const ASSUNTO_CASO_ENCERRADO_EXTERNO = "A DoLado terminou o acompanhamento do seu caso";
+
+export function montarHtmlCasoEncerradoExterno({ empresa, urlCaso }: { empresa: string | null; urlCaso: string }) {
+  return emailV2({
+    titulo: ASSUNTO_CASO_ENCERRADO_EXTERNO,
+    preheader: "Preparámos o dossiê do seu caso e a informação sobre como pode continuar.",
+    corpo: `<p ${P_EMAIL}>Olá,</p>
+          <p ${P_EMAIL}>A DoLado terminou o acompanhamento da sua reclamação${sobre(empresa)}. Isto não significa necessariamente que o problema esteja resolvido.</p>
+          <p ${P_EMAIL}>Preparámos o seu dossiê com o histórico e os documentos do caso. Se pretender continuar, poderá consultar uma entidade oficial de Resolução Alternativa de Litígios de Consumo — indicamos no portal onde encontrar a informação.</p>
+          ${botaoEmail(escaparHtml(urlCaso), "Ver o caso e descarregar o dossiê")}
+          <p ${P_NOTA}>A DoLado não representa o consumidor em processos de mediação, conciliação ou arbitragem.</p>`,
+  });
+}
+
 /** Aviso interno à equipa (sem conteúdo da mensagem, sem endereços). */
 export function montarHtmlAvisoEquipa({ texto, urlCaso }: { texto: string; urlCaso: string }) {
   return `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8"></head>
