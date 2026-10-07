@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { urlLogin } from "@/lib/destinoAuth";
 import { BUCKET_COMPROVATIVOS, COMPROVATIVO_URL_SEGUNDOS } from "@/lib/textoCaso";
 
 // Abre (ou descarrega, com ?download=1) um comprovativo de submissão.
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   if (!claims?.claims?.sub) {
-    return NextResponse.redirect(new URL("/login", request.url), { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.redirect(urlLogin(process.env.NEXT_PUBLIC_SITE_URL!, `${request.nextUrl.pathname}${request.nextUrl.search}`), { headers: { "Cache-Control": "no-store" } });
   }
   if (!UUID.test(id)) return naoEncontrado();
 

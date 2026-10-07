@@ -57,3 +57,14 @@ export function destinoCompra(plano: string) {
 export function urlConfirmarEmail(destino: string) {
   return `/confirmar-email?next=${encodeURIComponent(destinoSeguro(destino))}`;
 }
+
+/**
+ * Login absoluto no site público, com regresso ao caminho pedido (ex.: uma
+ * descarga). Recebe sempre o NEXT_PUBLIC_SITE_URL, nunca o origin do pedido:
+ * atrás do proxy da Clever Cloud, request.url é o endereço interno
+ * (localhost:8080).
+ */
+export function urlLogin(siteUrl: string, next: unknown) {
+  const destino = ehDestinoSeguro(next) ? `?next=${encodeURIComponent(next)}` : "";
+  return `${siteUrl}/login${destino}`;
+}

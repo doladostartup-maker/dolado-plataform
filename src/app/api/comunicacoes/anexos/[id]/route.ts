@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { urlLogin } from "@/lib/destinoAuth";
 import { ANEXO_URL_SEGUNDOS, BUCKET_COMUNICACOES } from "@/lib/comunicacoes/anexos";
 
 // Descarrega um anexo de uma comunicação recebida — só a equipa.
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
-  if (!claims?.claims?.sub) return NextResponse.redirect(new URL("/login", request.url), { headers: SEM_CACHE });
+  if (!claims?.claims?.sub) return NextResponse.redirect(urlLogin(process.env.NEXT_PUBLIC_SITE_URL!, `${request.nextUrl.pathname}${request.nextUrl.search}`), { headers: SEM_CACHE });
   if (!UUID.test(id)) return new NextResponse("Não encontrado.", { status: 404, headers: SEM_CACHE });
 
   const { data: visivel } = await supabase.from("casos_comunicacoes_anexos").select("id, nome, estado").eq("id", id).maybeSingle();
