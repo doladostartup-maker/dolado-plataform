@@ -141,7 +141,7 @@ describe("login a partir das rotas de descarga", () => {
     }
   });
   test("descargas sem sessão vão para urlLogin com o caminho pedido", () => {
-    for (const rel of ["comprovativos/[id]/route.ts", "monitor/documentos/[id]/route.ts", "comunicacoes/anexos/[id]/route.ts"]) {
+    for (const rel of ["dossies/[id]/route.ts", "comprovativos/[id]/route.ts", "monitor/documentos/[id]/route.ts", "comunicacoes/anexos/[id]/route.ts"]) {
       const s = fonte(`../app/api/${rel}`);
       assert.match(s, /NextResponse\.redirect\(urlLogin\(process\.env\.NEXT_PUBLIC_SITE_URL!, `\$\{request\.nextUrl\.pathname\}\$\{request\.nextUrl\.search\}`\)/, rel);
     }
