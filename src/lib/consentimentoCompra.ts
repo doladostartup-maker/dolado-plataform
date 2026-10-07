@@ -53,7 +53,11 @@ export type PedidoCompra = {
   origem: OrigemCompra;
   /** Só nos fluxos "pedido_caso" e "caso_extra": o pedido a pagar (a posse é validada no servidor). */
   pedidoId?: string;
+  /** O cliente prefere usar um código promocional em vez do desconto de indicação. */
+  semDescontoIndicacao?: boolean;
 };
+
+export const CAMPO_SEM_DESCONTO_INDICACAO = "sem_desconto_indicacao";
 
 const UUID_PEDIDO = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -104,6 +108,7 @@ export function lerPedidoCompra(
       fluxo: fluxo as FluxoCompra,
       origem: origem as OrigemCompra,
       ...(comPedido ? { pedidoId: pedidoId as string } : {}),
+      ...(ler(CAMPO_SEM_DESCONTO_INDICACAO) === VALOR_ACEITE ? { semDescontoIndicacao: true } : {}),
     },
   };
 }

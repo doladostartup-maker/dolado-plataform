@@ -12,6 +12,9 @@ import { PLANOS, ehPlanoId } from "@/lib/planos";
 import { MARKETING_SITE_URL, urlTratarCaso } from "@/lib/site";
 import { BotaoComprar } from "@/components/compra/BotaoComprar";
 import { destinoCompra } from "@/lib/destinoAuth";
+import { TEXTOS_INDICACAO, produtoComDescontoIndicacao } from "@/lib/indicacoes/regras";
+import { visitaDeIndicacaoNoBrowser } from "@/lib/indicacoes/servidor";
+import { Aviso } from "@/components/portal/Aviso";
 import { Logotipo } from "@/components/marketing-v2/Logotipo";
 import { fonteV2 } from "@/components/marketing-v2/fonte";
 import {
@@ -57,6 +60,9 @@ export default async function ComprarPage({
   if (decisao.acao === "tratar_caso") redirect(urlTratarCaso("precario"));
 
   const nome = PLANOS[plano].nome;
+  // Chegou por um link de indicação, sem sessão: os 20% só com conta.
+  const avisoIndicacao =
+    decisao.acao === "publico" && produtoComDescontoIndicacao(plano) && (await visitaDeIndicacaoNoBrowser().catch(() => false));
   return (
     <div
       className={`tema-portal ${fonteV2.className} flex min-h-screen flex-col bg-[#F7F9FC] text-[var(--v2-navy)] antialiased`}
@@ -89,6 +95,7 @@ export default async function ComprarPage({
 
           {decisao.acao === "publico" && (
             <>
+              {avisoIndicacao && <Aviso tom="info">{TEXTOS_INDICACAO.semConta}</Aviso>}
               <p className={TEXTO_SECUNDARIO}>
                 Se já tem conta na DoLado, inicie sessão antes de comprar: a compra fica logo associada à sua conta.
               </p>
