@@ -15,6 +15,7 @@ const STATUS = [
   "Resolvido",
   "Bloqueado",
   "Encerrado sem resolução",
+  "Encerrado com encaminhamento externo",
 ];
 
 describe("estadoCasoCliente", () => {
@@ -37,6 +38,27 @@ describe("estadoCasoCliente", () => {
     assert.equal(estadoCasoCliente("Resolvido", "aguardando_aprovacao").rotulo, "Resolvido");
     assert.equal(estadoCasoCliente("Aguardando decisão cliente", "autorizado").rotulo, "A empresa apresentou uma solução");
     assert.equal(estadoCasoCliente("Aguardando cliente", "aguardando_aprovacao").rotulo, "Precisamos de informação sua");
+  });
+
+  test("encerramento com encaminhamento externo: “Encerrado na DoLado”, nunca “Resolvido”, sem texto em curso", () => {
+    const e = estadoCasoCliente("Encerrado com encaminhamento externo", "aguardando_aprovacao", { jaEnviado: true });
+    assert.equal(e.rotulo, "Encerrado na DoLado");
+    assert.equal(e.requerAcao, false);
+    assert.match(e.explicacao, /Isto não significa necessariamente que o problema esteja resolvido/);
+    assert.doesNotMatch(`${e.rotulo} ${e.explicacao}`, /Concluído|ficou resolvido|O caso está concluído/i);
+  });
+
+  test("cronologia do encerramento e do dossiê", () => {
+    const itens = cronologiaCliente([
+      { tipo: "caso_encerrado", created_at: "2026-10-06T10:00:00Z", dados: { modo: "encaminhamento_externo" } },
+      { tipo: "dossie_gerado", created_at: "2026-10-06T10:01:00Z", dados: { versao: 1 } },
+      { tipo: "dossie_gerado", created_at: "2026-10-07T10:01:00Z", dados: { versao: 2 } },
+      { tipo: "caso_encerrado", created_at: "2026-10-08T10:00:00Z" },
+    ]);
+    assert.deepEqual(
+      itens.map((i) => i.titulo),
+      ["Encerrado na DoLado", "Dossiê do caso preparado", "Nova versão do dossiê do caso preparada", "Caso encerrado"],
+    );
   });
 
   test("estado desconhecido não falha nem mostra o valor interno", () => {

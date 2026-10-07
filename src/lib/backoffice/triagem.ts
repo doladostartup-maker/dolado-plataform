@@ -25,13 +25,14 @@ export const ESTADOS_CASO = [
   "Resolvido",
   "Bloqueado",
   "Encerrado sem resolução",
+  "Encerrado com encaminhamento externo",
 ] as const;
 
 /** Estados em que o trabalho da DoLado terminou (resolvido, encaminhado ou encerrado). */
-export const ESTADOS_FINAIS = ["Resolvido", "Bloqueado", "Encerrado sem resolução"];
+export const ESTADOS_FINAIS = ["Resolvido", "Bloqueado", "Encerrado sem resolução", "Encerrado com encaminhamento externo"];
 
 /** Filtro PostgREST para excluir os estados finais (`.not("status", "in", FILTRO_FINAIS)`). */
-export const FILTRO_FINAIS = '(Resolvido,Bloqueado,"Encerrado sem resolução")';
+export const FILTRO_FINAIS = '(Resolvido,Bloqueado,"Encerrado sem resolução","Encerrado com encaminhamento externo")';
 
 const ESTADO_CASO: Record<string, { rotulo: string; tom: TomBackoffice }> = {
   Novo: { rotulo: "Novo", tom: "info" },
@@ -43,6 +44,7 @@ const ESTADO_CASO: Record<string, { rotulo: string; tom: TomBackoffice }> = {
   Resolvido: { rotulo: "Resolvido", tom: "sucesso" },
   Bloqueado: { rotulo: "Encaminhado / escalada", tom: "bloqueado" },
   "Encerrado sem resolução": { rotulo: "Encerrado sem resolução", tom: "neutro" },
+  "Encerrado com encaminhamento externo": { rotulo: "Encerrado · encaminhamento externo", tom: "neutro" },
 };
 
 export function estadoCaso(status: string) {
@@ -91,7 +93,7 @@ export type ProximaAcao = {
   /** De quem se espera o próximo passo (null: caso terminado). */
   aguarda: "dolado" | "cliente" | "empresa" | null;
   /** Secção do detalhe do caso onde a ação se faz. */
-  ancora: "texto" | "envio" | "decisao" | "dados" | "comunicacoes" | null;
+  ancora: "texto" | "envio" | "decisao" | "dados" | "comunicacoes" | "encerramento" | null;
 };
 
 /** Próxima ação de um caso, a partir do estado e do texto em curso. */
@@ -101,6 +103,22 @@ export function proximaAcao(c: CasoTriagem): ProximaAcao {
   }
   if (c.status === "Encerrado sem resolução") {
     return { rotulo: "Encerrado", descricao: "Caso encerrado sem resolução. Nada a fazer.", tom: "neutro", interna: false, aguarda: null, ancora: null };
+  }
+  if (c.status === "Encerrado com encaminhamento externo") {
+    // Mensagens que cheguem depois do encerramento ficam guardadas, sem
+    // análise: para as tratar, a equipa retoma o caso (corrigir o estado).
+    const novas = c.comunicacoesPorAnalisar ?? 0;
+    return {
+      rotulo: "Encerrado na DoLado",
+      descricao:
+        novas > 0
+          ? `Chegou ${novas === 1 ? "uma comunicação" : `${novas} comunicações`} depois do encerramento. Para a analisar, retome o caso (corrigir o estado).`
+          : "Acompanhamento terminado; o cliente recebeu o dossiê e a informação sobre as entidades RAL. Sem novas ações (para retomar, corrigir o estado).",
+      tom: "neutro",
+      interna: false,
+      aguarda: null,
+      ancora: "encerramento",
+    };
   }
   // Uma comunicação recebida por analisar é sempre trabalho da DoLado
   // (mesmo que chegue num estado inesperado).

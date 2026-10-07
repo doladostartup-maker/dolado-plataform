@@ -63,6 +63,7 @@ export const EVENTOS_CASO: Record<string, string> = {
   informacao_cliente_enviada: "Cliente enviou a informação pedida",
   encaminhamento_registado: "Encaminhamento registado",
   caso_encerrado: "Caso encerrado sem resolução",
+  dossie_gerado: "Dossiê do caso gerado",
 };
 
 /** Eventos só da cronologia interna (o cliente não os vê). */
