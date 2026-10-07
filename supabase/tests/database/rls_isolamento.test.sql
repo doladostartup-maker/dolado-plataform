@@ -207,7 +207,13 @@ select is(
                            'conta_existe_com_email', 'registar_compra_sem_conta', 'reclamar_compra_sem_conta',
                            'compras_sem_conta_pendentes', 'reservar_lembrete_compra', 'compras_sem_conta_resolver_ao_ligar',
                            -- 20261006100000: trigger do histórico de estados (só insere esse registo); testes em acompanhamento_pos_envio.test.sql
-                           'casos_registar_estado')), 0::bigint,
+                           'casos_registar_estado',
+                           -- Programa de indicação: só service_role (métricas: só admin), testes em indicacoes.test.sql.
+                           'indicacao_conta_ja_cliente', 'indicacao_atribuir', 'indicacao_confirmar_compra',
+                           'indicacao_reservar_recompensa', 'indicacao_atualizar_reserva', 'indicacao_usar_recompensa',
+                           'indicacao_libertar_reserva', 'indicacao_reverter_compra', 'indicacao_rever_recompensa',
+                           'indicacoes_metricas', 'indicacoes_expirar_recompensas',
+                           'indicacoes_recompensas_registar_historico')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em

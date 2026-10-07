@@ -31,6 +31,7 @@ import { idDe } from "@/lib/stripe/webhook";
 import { direitoCasoExtra, subscricaoStripeConfirmaCasoExtra } from "@/lib/casoExtra";
 import { DIAS_VALIDADE_PEDIDO, pedidoPorPagar } from "@/lib/pedidoCaso";
 import { pedidoDaConta } from "@/lib/pedidoCasoServidor";
+import { camposDesconto, prepararDescontoCheckout } from "@/lib/indicacoes/servidor";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!;
 
@@ -146,23 +147,37 @@ async function compraAvulsoComConta(pedido: PedidoCompra, ctx?: ContextoPedido):
     userId: user.id,
     email: user.email ?? null,
   });
-  const { url, sessionId } = await abrirCheckoutComConsentimento(
-    registo,
-    dependenciasCheckout((metadata) => ({
-      mode: "payment",
-      ...(customerId
-        ? { customer: customerId }
-        : { customer_creation: "always" as const, customer_email: user.email }),
-      line_items: [{ price: PRECO_AVULSO_ID, quantity: 1 }],
-      allow_promotion_codes: true,
-      payment_intent_data: { metadata: { ...metadata, ...metadataPedido } },
-      ...(ctx
-        ? urlsDoPedido(ctx)
-        : { success_url: `${SITE_URL}/portal/casos/novo?pagamento=1`, cancel_url: `${SITE_URL}${voltar}` }),
-      metadata: { ...metadata, ...metadataPedido, plano: "avulso", user_id: user.id },
-    })),
-  );
-  return { destino: url ?? "/portal", sessionId };
+  // Desconto de indicação (novo cliente ou de quem indicou), decidido aqui.
+  const desconto = await prepararDescontoCheckout({
+    userId: user.id,
+    plano: "avulso",
+    fluxo: ctx ? "pedido_caso" : "avulso_conta",
+    conversao: false,
+    prescindiu: !!pedido.semDescontoIndicacao,
+  });
+  try {
+    const { url, sessionId } = await abrirCheckoutComConsentimento(
+      registo,
+      dependenciasCheckout((metadata) => ({
+        mode: "payment",
+        ...(customerId
+          ? { customer: customerId }
+          : { customer_creation: "always" as const, customer_email: user.email }),
+        line_items: [{ price: PRECO_AVULSO_ID, quantity: 1 }],
+        ...camposDesconto(desconto),
+        payment_intent_data: { metadata: { ...metadata, ...metadataPedido } },
+        ...(ctx
+          ? urlsDoPedido(ctx)
+          : { success_url: `${SITE_URL}/portal/casos/novo?pagamento=1`, cancel_url: `${SITE_URL}${voltar}` }),
+        metadata: { ...metadata, ...metadataPedido, ...(desconto?.metadata ?? {}), plano: "avulso", user_id: user.id },
+      })),
+    );
+    await desconto?.aposCriar(sessionId);
+    return { destino: url ?? "/portal", sessionId };
+  } catch (erro) {
+    await desconto?.seFalhar().catch(() => undefined);
+    throw erro;
+  }
 }
 
 async function garantirCupaoConversao(stripe: ReturnType<typeof getStripe>) {
@@ -240,21 +255,42 @@ async function adesao(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Desti
       userId: user.id,
       email: user.email ?? null,
     });
-    const { url, sessionId } = await abrirCheckoutComConsentimento(
-      registo,
-      dependenciasCheckout((metadata) => ({
-        mode: "subscription",
-        ...cliente,
-        line_items: [{ price: precoId, quantity: 1 }],
-        allow_promotion_codes: true,
-        ...(ctx
-          ? urlsDoPedido(ctx)
-          : { success_url: `${SITE_URL}/portal?upgraded=true`, cancel_url: `${SITE_URL}/portal` }),
-        metadata: { ...metadata, ...metadataPedido, plano: "assinatura", upgrade: "false", user_id: user.id },
-        subscription_data: { metadata },
-      })),
-    );
-    return { destino: url ?? "/portal", sessionId };
+    // Desconto de indicação só na Proteção (1.ª mensalidade); nunca no Caso + Proteção.
+    const desconto = await prepararDescontoCheckout({
+      userId: user.id,
+      plano,
+      fluxo: ctx ? "pedido_caso" : "adesao",
+      conversao: false,
+      prescindiu: !!pedido.semDescontoIndicacao,
+    });
+    try {
+      const { url, sessionId } = await abrirCheckoutComConsentimento(
+        registo,
+        dependenciasCheckout((metadata) => ({
+          mode: "subscription",
+          ...cliente,
+          line_items: [{ price: precoId, quantity: 1 }],
+          ...camposDesconto(desconto),
+          ...(ctx
+            ? urlsDoPedido(ctx)
+            : { success_url: `${SITE_URL}/portal?upgraded=true`, cancel_url: `${SITE_URL}/portal` }),
+          metadata: {
+            ...metadata,
+            ...metadataPedido,
+            ...(desconto?.metadata ?? {}),
+            plano: "assinatura",
+            upgrade: "false",
+            user_id: user.id,
+          },
+          subscription_data: { metadata },
+        })),
+      );
+      await desconto?.aposCriar(sessionId);
+      return { destino: url ?? "/portal", sessionId };
+    } catch (erro) {
+      await desconto?.seFalhar().catch(() => undefined);
+      throw erro;
+    }
   }
 
   // Um checkout de conversão de cada vez: um anterior ainda aberto é

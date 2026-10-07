@@ -6,6 +6,7 @@ import { Aviso } from "@/components/portal/Aviso";
 import { CabecalhoPagina } from "@/components/portal/Cabecalho";
 import { Dado, ListaDados } from "@/components/portal/Dados";
 import { Etiqueta } from "@/components/portal/Etiqueta";
+import { AreaIndicacao } from "@/components/portal/Indicacao";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAIXA_SELECAO, CAMPO, CARTAO, LIGACAO, ROTULO, TEXTO_SECUNDARIO, TITULO_SECCAO } from "@/components/portal/ui";
 
 export default async function PerfilPage({
@@ -122,6 +123,8 @@ export default async function PerfilPage({
           </button>
         </form>
       </section>
+
+      <AreaIndicacao />
 
       <section aria-labelledby="comunicacoes" className={`${CARTAO} flex flex-col gap-3`}>
         <h2 id="comunicacoes" className={TITULO_SECCAO}>

@@ -10,6 +10,7 @@ import { Dado, ListaDados } from "@/components/portal/Dados";
 import { Etiqueta } from "@/components/portal/Etiqueta";
 import { IconeDocumentoVisto, IconeSeta } from "@/components/portal/Icones";
 import { LinhaTemporal, type PassoLinhaTemporal } from "@/components/portal/LinhaTemporal";
+import { ConviteIndicacao } from "@/components/portal/Indicacao";
 import {
   AJUDA_CAMPO,
   BOTAO_PRIMARIO,
@@ -208,6 +209,9 @@ export default async function CasoClienteDetalhePage({
             </section>
           )}
 
+          {/* Programa de indicação: o momento mais forte é o problema resolvido. */}
+          {concluido && <ConviteIndicacao momento="resultado_positivo" />}
+
           {aguardaDecisao && (
             <section id="decisao" aria-labelledby="decisao-titulo" className={`${CARTAO_ACAO} flex scroll-mt-24 flex-col gap-4`}>
               <h2 id="decisao-titulo" className={TITULO_SECCAO}>
@@ -307,6 +311,8 @@ export default async function CasoClienteDetalhePage({
               comprovativo={listaComprovativos.find((c) => c.envio_id === envio.id) ?? null}
             />
           ))}
+
+          {enviosCliente.length > 0 && !concluido && <ConviteIndicacao momento="apos_envio" />}
 
           {enviosCliente.length === 0 && comprovativoSemEnvio && (
             <section className={CARTAO}>

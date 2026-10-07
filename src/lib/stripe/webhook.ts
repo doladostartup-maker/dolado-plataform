@@ -1,6 +1,16 @@
 import type Stripe from "stripe";
 import { consentimentoDaMetadata } from "../consentimentoCompra.ts";
 import { pedidoDaMetadata } from "../pedidoCaso.ts";
+import {
+  indicacaoAoConfirmarPagamento,
+  indicacaoAoDisputar,
+  indicacaoAoPagamentoFalhado,
+  indicacaoAoPagamentoPendente,
+  indicacaoAoPagarFatura,
+  indicacaoAoReembolso,
+  indicacaoAoTerminarSubscricao,
+  type DependenciasIndicacoes,
+} from "../indicacoes/webhook.ts";
 
 // Lógica do webhook Stripe, separada do route handler para ser testável sem
 // rede nem base de dados: tudo o que tem efeitos (Supabase, API Stripe,
@@ -73,6 +83,10 @@ import { pedidoDaMetadata } from "../pedidoCaso.ts";
 //   recebe uma segunda por cima (a primeira ficava órfã). Fica em
 //   subscricoes_duplicadas "por_rever" e o admin é avisado; não se cancela
 //   nem se reembolsa nada automaticamente.
+// - Programa de indicação (src/lib/indicacoes/webhook.ts, opcional em
+//   `deps.indicacoes`): corre depois de o acesso e o pagamento estarem
+//   gravados — primeira compra de uma conta indicada, descontos de quem
+//   indicou usados/libertados, reversão em reembolso integral ou disputa.
 
 export type Plano = "avulso" | "protecao" | "caso_protecao" | "caso_extra";
 /** Compra única que dá 1 caso disponível (case_credit_grants.produto). */
@@ -334,6 +348,8 @@ export interface DependenciasWebhook {
     consentimento: ConsentimentoLigado | null;
   }): Promise<void>;
   registar(linha: LinhaLog): void;
+  /** Programa de indicação (ausente = desligado, ex.: testes antigos). */
+  indicacoes?: DependenciasIndicacoes;
 }
 
 export type ResultadoWebhook = { status: 200 | 500; corpo: Record<string, unknown> };
@@ -759,6 +775,16 @@ async function confirmarCompra(
       consentimento,
     });
   }
+  // Programa de indicação: no fim, com o acesso e o pagamento já gravados
+  // (tudo idempotente — um reenvio depois de uma falha repete sem duplicar).
+  if (deps.indicacoes && !duplicada) {
+    await indicacaoAoConfirmarPagamento(
+      session,
+      contas[0] ?? null,
+      s.tipo === "subscricao" ? planoAplicado : null,
+      deps.indicacoes,
+    );
+  }
   if (!plano) return "confirmado_preco_desconhecido";
   if (estadoAnterior === "concluido") return "ja_confirmado";
   if (duplicada) return "pagamento_confirmado_subscricao_duplicada";
@@ -783,6 +809,7 @@ async function tratarCheckoutConcluido(event: Stripe.Event, deps: DependenciasWe
     // chegado por outro evento entregue fora de ordem.
     await deps.gravarPagamento(dadosPagamento(session, s, estadoAtual ?? "pendente"));
     await ligarConsentimentoDaSessao(session, s, s.userId ? [s.userId] : [], deps);
+    if (deps.indicacoes) await indicacaoAoPagamentoPendente(session, deps.indicacoes);
     return { resultado: "pagamento_pendente", ...ids };
   }
 
@@ -820,6 +847,7 @@ async function tratarPagamentoAssincronoFalhado(
   // Nunca dá acesso nem créditos. A conta (se existir) fica intacta e o
   // portal mostra o pagamento como falhado, com opção de pagar de novo.
   await deps.gravarPagamento(dadosPagamento(session, s, "falhado"));
+  if (deps.indicacoes) await indicacaoAoPagamentoFalhado(session, deps.indicacoes);
 
   // Se esta subscrição chegou a ficar ativa numa conta, deixa de estar.
   if (s.subscriptionId) {
@@ -904,6 +932,9 @@ async function tratarFatura(
       creditou = novo || creditou;
     }
   }
+  if (deps.indicacoes && invoice.id) {
+    await indicacaoAoPagarFatura(invoice.id, subscriptionId, contas, deps.indicacoes);
+  }
   return { resultado: creditou ? "acesso_e_credito" : "acesso_garantido", ...ids };
 }
 
@@ -927,6 +958,7 @@ async function tratarSubscricaoAtualizada(event: Stripe.Event, deps: Dependencia
     // Antes de mexer na conta: congela pelas contas que ainda têm esta subscrição.
     await deps.congelarCreditosCaso(sub, em);
   }
+  if (terminada && deps.indicacoes) await indicacaoAoTerminarSubscricao(sub, deps.indicacoes);
   const afetadas = await deps.atualizarSubscricaoNasContas(sub, {
     ...(plano ? { plano } : {}),
     status: snapshot.status,
@@ -965,6 +997,7 @@ async function tratarSubscricaoEliminada(event: Stripe.Event, deps: Dependencias
   // tenha chegado antes.
   await deps.gravarSubscricao({ ...snapshot, status: "canceled" }, Number.MAX_SAFE_INTEGER);
   await deps.marcarPagamentosDaSubscricao(snapshot.stripe_subscription_id, "assinatura_cancelada");
+  if (deps.indicacoes) await indicacaoAoTerminarSubscricao(snapshot.stripe_subscription_id, deps.indicacoes);
 
   const plano = deps.planoDoPreco(snapshot.price_id);
   const em = paraIso(event.created)!;
@@ -1017,6 +1050,9 @@ async function tratarReembolso(event: Stripe.Event, deps: DependenciasWebhook): 
 async function tratarReembolsoForaDeConversao(refund: Stripe.Refund, deps: DependenciasWebhook): Promise<Tratamento> {
   const paymentIntentId = idDe(refund.payment_intent);
   if (refund.status !== "succeeded" || !paymentIntentId) return { resultado: "ignorado_sem_conversao" };
+  // Primeira compra de uma conta indicada reembolsada na totalidade: a
+  // indicação é revertida (Avulso ou subscrição). Idempotente.
+  if (deps.indicacoes) await indicacaoAoReembolso(paymentIntentId, deps.indicacoes);
   const avulso = await deps.avulsoDoPagamento(paymentIntentId);
   if (!avulso) return { resultado: "ignorado_sem_conversao" };
 
@@ -1033,7 +1069,16 @@ async function tratarReembolsoForaDeConversao(refund: Stripe.Refund, deps: Depen
   return { resultado: `reembolso_avulso_${credito}` };
 }
 
+/** Disputa (chargeback): só o programa de indicação reage (o resto é tratado à mão no Stripe). */
+async function tratarDisputa(event: Stripe.Event, deps: DependenciasWebhook): Promise<Tratamento> {
+  const disputa = event.data.object as Stripe.Dispute;
+  const paymentIntentId = idDe(disputa.payment_intent);
+  if (!deps.indicacoes || !paymentIntentId) return { resultado: "ignorado_disputa" };
+  return { resultado: `disputa_indicacao_${await indicacaoAoDisputar(paymentIntentId, deps.indicacoes)}` };
+}
+
 const TRATAMENTOS: Record<string, (event: Stripe.Event, deps: DependenciasWebhook) => Promise<Tratamento>> = {
+  "charge.dispute.created": tratarDisputa,
   "refund.created": tratarReembolso,
   "refund.updated": tratarReembolso,
   "refund.failed": tratarReembolso,
