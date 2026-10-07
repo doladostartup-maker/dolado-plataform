@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "ask": [
+      "mcp__supabase"
+    ],
+    "deny": [
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__deploy_edge_function",
+      "mcp__supabase__create_edge_function_secret"
+    ]
+  }
+}
