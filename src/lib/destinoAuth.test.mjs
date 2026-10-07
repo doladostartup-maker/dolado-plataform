@@ -1,6 +1,7 @@
 // Continuidade dos fluxos de conta (login, confirmação do e-mail, Google) — `npm test`.
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { describe, test } from "node:test";
 import {
   DESTINO_PEDIDO_POR_PAGAR,
@@ -11,6 +12,7 @@ import {
   destinoSeguro,
   escolherDestino,
   urlConfirmarEmail,
+  urlLogin,
 } from "./destinoAuth.ts";
 
 const fonte = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
@@ -106,5 +108,42 @@ describe("template do e-mail de confirmação", () => {
   test("texto em português europeu, sem a referência ao caso para quem não o está a tratar", () => {
     assert.doesNotMatch(html, /Se está a tratar o seu caso/);
     assert.doesNotMatch(html, /\b(arquivo|você|cadastro|email)\b/i);
+  });
+});
+
+// Incidente de 07/10/2026: sem sessão, as descargas redirecionavam para
+// https://localhost:8080/login — atrás do proxy da Clever Cloud, request.url
+// é o endereço interno. O login é sempre absoluto no NEXT_PUBLIC_SITE_URL.
+describe("login a partir das rotas de descarga", () => {
+  test("URL absoluto no site público, com regresso à descarga", () => {
+    assert.equal(
+      urlLogin("https://portal.dolado.pt", "/api/comprovativos/abc?download=1"),
+      "https://portal.dolado.pt/login?next=%2Fapi%2Fcomprovativos%2Fabc%3Fdownload%3D1",
+    );
+  });
+  test("destino inseguro é ignorado (sem open redirect)", () => {
+    assert.equal(urlLogin("https://portal.dolado.pt", "//outro.site/x"), "https://portal.dolado.pt/login");
+    assert.equal(urlLogin("https://portal.dolado.pt", "https://outro.site"), "https://portal.dolado.pt/login");
+    assert.equal(urlLogin("https://portal.dolado.pt", null), "https://portal.dolado.pt/login");
+  });
+
+  const rotasApi = (dir) =>
+    readdirSync(dir).flatMap((n) => {
+      const c = join(dir, n);
+      return statSync(c).isDirectory() ? rotasApi(c) : n === "route.ts" ? [c] : [];
+    });
+  const api = rotasApi(new URL("../app/api/", import.meta.url).pathname);
+
+  test("nenhuma rota de /api constrói URLs a partir de request.url", () => {
+    assert.ok(api.length > 0);
+    for (const f of api) {
+      assert.doesNotMatch(readFileSync(f, "utf8"), /new URL\([^)]*\b(request|req)\.url\b/, f);
+    }
+  });
+  test("descargas sem sessão vão para urlLogin com o caminho pedido", () => {
+    for (const rel of ["comprovativos/[id]/route.ts", "monitor/documentos/[id]/route.ts", "comunicacoes/anexos/[id]/route.ts"]) {
+      const s = fonte(`../app/api/${rel}`);
+      assert.match(s, /NextResponse\.redirect\(urlLogin\(process\.env\.NEXT_PUBLIC_SITE_URL!, `\$\{request\.nextUrl\.pathname\}\$\{request\.nextUrl\.search\}`\)/, rel);
+    }
   });
 });

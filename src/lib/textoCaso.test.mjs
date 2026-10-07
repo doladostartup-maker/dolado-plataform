@@ -229,7 +229,7 @@ describe("pós-envio: texto enviado e comprovativo", () => {
     const iRls = rota.indexOf('supabase\n    .from("casos_comprovativos")');
     const iAdmin = rota.indexOf("createAdminClient()");
     assert.ok(iSessao > 0 && iRls > iSessao && iAdmin > iRls, "ordem: sessão, RLS, só depois service role");
-    assert.match(rota, /redirect\(new URL\("\/login"/);
+    assert.match(rota, /redirect\(urlLogin\(process\.env\.NEXT_PUBLIC_SITE_URL!/);
     assert.match(rota, /createSignedUrl\([\s\S]*COMPROVATIVO_URL_SEGUNDOS/);
     assert.ok(COMPROVATIVO_URL_SEGUNDOS <= 300);
     assert.match(rota, /status: 404/);
