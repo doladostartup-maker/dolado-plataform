@@ -214,7 +214,7 @@ select is(
                            'indicacao_libertar_reserva', 'indicacao_reverter_compra', 'indicacao_rever_recompensa',
                            'indicacoes_metricas', 'indicacoes_expirar_recompensas',
                            'indicacoes_recompensas_registar_historico',
-                           'origem_aquisicao_registar',
+                           'origem_aquisicao_registar', 'origem_aquisicao_retirar',
                            -- 20261008100000: resumo mensal da Proteção (só service_role); testes em resumo_mensal.test.sql
                            'protecao_resumo_destinatarios', 'protecao_resumo_reservar', 'protecao_resumo_concluir')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');

@@ -3,7 +3,8 @@ import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CARTAO, CARTAO_DESTAQUE, LIGACAO, MET
 import {
   BOTAO_CONSULTAR_ENTIDADES,
   BOTAO_DESCARREGAR_DOSSIE,
-  ENTIDADES_A_CONSULTAR,
+  CENTROS_RAL_GERAIS,
+  ENTIDADES_RAL_SETORIAIS,
   LISTA_OFICIAL_RAL_URL,
   MENSAGEM_ENCERRADO_EXTERNO,
   SECCAO_ENTIDADES,
@@ -63,7 +64,7 @@ export function EntidadesResolucaoConflitos() {
       <div className="flex flex-col gap-2">
         <h3 className="text-[15px] font-bold text-[var(--v2-navy)]">{SECCAO_ENTIDADES.rotuloLista}</h3>
         <ul className="flex flex-col divide-y divide-[var(--v2-line)] rounded-[12px] border border-[var(--v2-line)]">
-          {ENTIDADES_A_CONSULTAR.map((e) => (
+          {CENTROS_RAL_GERAIS.map((e) => (
             <li key={e.nome} className="flex flex-col gap-0.5 px-4 py-3">
               <a href={e.site} target="_blank" rel="noopener noreferrer" className={`${LIGACAO} text-[14.5px]`}>
                 {e.nome}
@@ -73,6 +74,17 @@ export function EntidadesResolucaoConflitos() {
           ))}
         </ul>
         <p className={METADADOS}>{SECCAO_ENTIDADES.notaLista}</p>
+        <h3 className="text-[15px] font-bold text-[var(--v2-navy)]">{SECCAO_ENTIDADES.rotuloSetoriais}</h3>
+        <ul className="flex flex-col divide-y divide-[var(--v2-line)] rounded-[12px] border border-[var(--v2-line)]">
+          {ENTIDADES_RAL_SETORIAIS.map((e) => (
+            <li key={e.nome} className="flex flex-col gap-0.5 px-4 py-3">
+              <a href={e.site} target="_blank" rel="noopener noreferrer" className={`${LIGACAO} text-[14.5px]`}>
+                {e.nome}
+              </a>
+              <span className={METADADOS}>{e.ambito}</span>
+            </li>
+          ))}
+        </ul>
       </div>
       <a href={LISTA_OFICIAL_RAL_URL} target="_blank" rel="noopener noreferrer" className={`${LIGACAO} self-start text-[14.5px]`}>
         {SECCAO_ENTIDADES.ligacaoOficial}

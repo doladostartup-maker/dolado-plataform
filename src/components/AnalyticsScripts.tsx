@@ -1,5 +1,6 @@
 import Script from "next/script";
 import { MedicaoComConsentimento } from "./MedicaoComConsentimento";
+import { origemAquisicaoAtiva } from "@/lib/origemAquisicao";
 
 // Banner de consentimento (Cookiebot) + medição. Incluído uma única vez por
 // PaginaV2 (todas as páginas públicas) e pelo layout de /tratar-caso.
@@ -21,7 +22,7 @@ export function AnalyticsScripts() {
         data-blockingmode="auto"
         strategy="beforeInteractive"
       />
-      <MedicaoComConsentimento />
+      <MedicaoComConsentimento origemAtiva={origemAquisicaoAtiva()} />
     </>
   );
 }

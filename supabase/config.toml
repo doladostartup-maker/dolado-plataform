@@ -11,6 +11,11 @@ verify_jwt = false
 [functions.novo-caso]
 verify_jwt = false
 
+# Limpeza diária de dossiês invocada pelo pg_net; valida x-cron-secret dentro
+# da função, como os outros trabalhos agendados.
+[functions.limpar-dossies-expirados]
+verify_jwt = false
+
 # E-mail "Confirm sign up" (confirmação do e-mail de uma conta nova).
 # Fonte única do texto: supabase/templates/confirmacao.html. Tem sempre a
 # ligação ({{ .ConfirmationURL }}, que volta a /auth/callback) e só mostra o

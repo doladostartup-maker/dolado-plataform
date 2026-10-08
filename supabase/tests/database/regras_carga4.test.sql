@@ -44,6 +44,8 @@ create temporary table carga4 as
   select * from public.regras_juridicas
   where codigo like 'GAS\_%' or codigo like 'COMPRA\_%' or codigo like 'GIN\_%'
      or codigo in ('DIST_EXCECOES_17', 'CONS_RETRATACAO_INFO_8');
+-- Regras novas da revisão de 08/10/2026 (20261008120000) não são da carga 4.
+delete from carga4 where codigo in ('GAS_CORTE_AGENDAMENTO_79_7', 'COMPRA_INDISPONIBILIDADE_DISTANCIA_19');
 
 select is((select count(*) from carga4), 45::bigint, '45 regras da carga 4');
 select is((select count(*) from carga4 where setor = 'Gás'), 21::bigint, '21 de Gás');
@@ -51,8 +53,10 @@ select is((select count(*) from carga4 where setor = 'Compras & Reembolsos'), 15
 select is((select count(*) from carga4 where setor = 'Ginásios'), 7::bigint, '7 de Ginásios');
 select is((select count(*) from carga4 where setor is null), 2::bigint, '2 gerais');
 
-select is((select count(*) from carga4 where ativa or revista_em is not null or revista_por is not null), 0::bigint,
-  'nenhuma regra nova entra ativa ou revista');
+-- Exceção: as três revistas pela advogada a 08/10/2026 (20261008120000).
+select is((select count(*) from carga4 where (ativa or revista_em is not null or revista_por is not null)
+           and codigo not in ('GAS_CORTE_PREAVISO_79', 'COMPRA_ENTREGA_PRAZO_11', 'COMPRA_ENTREGA_REEMBOLSO_11')), 0::bigint,
+  'nenhuma regra da carga entra ativa ou revista (exceto as revistas a 08/10/2026)');
 select is((select count(*) from carga4
            where diploma is null or artigo is null or fonte_url is null
               or fonte_url !~ '^https://(diariodarepublica\.pt|www\.erse\.pt)/'

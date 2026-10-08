@@ -32,8 +32,9 @@ export const SECCAO_ENTIDADES = {
   introducao:
     "Existem entidades oficiais de Resolução Alternativa de Litígios de Consumo, como os centros de arbitragem de conflitos de consumo, que prestam informação e podem tratar conflitos entre consumidores e empresas através de mediação, conciliação ou arbitragem, nos termos da competência e das regras de cada entidade.",
   rotuloLista: "Centros a consultar",
+  rotuloSetoriais: "Entidades setoriais a consultar",
   notaLista:
-    "Lista meramente informativa de centros de arbitragem de conflitos de consumo de competência genérica, com base na informação pública da Direção-Geral do Consumidor. Não constitui indicação da entidade competente para o seu caso. A competência pode depender, entre outros aspetos, do setor, do valor e do local do contrato; existem também entidades especializadas em alguns setores.",
+    "Lista meramente informativa, baseada na informação pública da Direção-Geral do Consumidor. Não constitui indicação da entidade competente para o seu caso. A competência pode depender, entre outros aspetos, do setor, do valor, do local do contrato, da adesão das partes e das regras da entidade.",
   limites:
     "A DoLado não representa o consumidor em processos de mediação, conciliação ou arbitragem, não apresenta pedidos em seu nome, não determina nem indica qual é a entidade competente para este caso e não presta aconselhamento jurídico. Confirme diretamente junto da entidade se pode apreciar o conflito.",
   ligacaoOficial: "Ver a lista oficial completa das entidades RAL (Direção-Geral do Consumidor)",
@@ -50,7 +51,10 @@ export const OPCOES_CONFLITO = {
   ],
 } as const;
 
-export const ENTIDADES_A_CONSULTAR: readonly EntidadeRal[] = ENTIDADES_RAL;
+/** "Centros a consultar": só os centros de arbitragem de competência genérica. */
+export const CENTROS_RAL_GERAIS: readonly EntidadeRal[] = ENTIDADES_RAL.filter((e) => e.tipo === "geral");
+/** Entidades setoriais ("Centros de Arbitragem para Conflitos Específicos" na lista da DGC), em secção separada. */
+export const ENTIDADES_RAL_SETORIAIS: readonly EntidadeRal[] = ENTIDADES_RAL.filter((e) => e.tipo === "setorial");
 export { LISTA_OFICIAL_RAL_URL };
 
 /** Estado final descrito no dossiê. */

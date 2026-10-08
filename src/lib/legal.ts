@@ -8,10 +8,11 @@
 // o texto exato apresentado, por isso uma versão antiga continua provável
 // mesmo depois de o texto mudar.
 //
-// IMPORTANTE: os textos abaixo aguardam validação jurídica (ver
-// REVISAO_JURIDICA_PENDENTE). Nenhuma regra de código decide reembolsos ou a
-// perda do direito de livre resolução com base nestes consentimentos — isso
-// é sempre decidido caso a caso.
+// Termos e Política 2026-10-08: decisões jurídicas aprovadas pela advogada,
+// conforme confirmação de Thiago a 08/10/2026
+// (docs/legal/decisoes-juridicas-e-ropa-2026-10-08.md). Nenhuma regra de código
+// decide reembolsos ou a perda do direito de livre resolução com base nestes
+// consentimentos — isso é sempre decidido caso a caso.
 
 // Extensão .ts explícita: o módulo é importado diretamente por `node --test`.
 import type { PlanoId } from "./planos.ts";
@@ -21,10 +22,10 @@ import { CONTACTO_EMAIL, ENTIDADE_LEGAL, MORADA_SEDE } from "./site.ts";
 // mesmo dia leva um sufixo de letra ("2026-10-01b").
 
 /** Versão dos Termos e Condições em vigor. Cada versão fica acessível em /termos/<versão>. */
-export const TERMOS_VERSAO = "2026-10-07";
+export const TERMOS_VERSAO = "2026-10-08";
 
 /** Versão da Política de Privacidade em vigor. Cada versão fica acessível em /privacidade/<versão>. */
-export const PRIVACIDADE_VERSAO = "2026-10-06";
+export const PRIVACIDADE_VERSAO = "2026-10-08";
 
 /** Versão do texto de pedido expresso de início imediato. */
 export const CONSENTIMENTO_INICIO_IMEDIATO_VERSAO = "2026-10-01";
@@ -124,69 +125,89 @@ export const LIVRO_RECLAMACOES_URL = "https://www.livroreclamacoes.pt/Inicio/";
 
 /** Lista oficial e atualizada das entidades RAL (Direção-Geral do Consumidor). */
 export const LISTA_OFICIAL_RAL_URL =
-  "https://www.consumidor.gov.pt/parceiros/sistema-de-defesa-do-consumidor/entidades-de-resolucao-alternativa-de-litigios-de-consumo/ral-mapa-e-lista-de-entidades.aspx";
+  "https://www.consumidor.gov.pt/ral-mapa-e-lista-de-entidades";
 
-export type EntidadeRal = { nome: string; site: string; ambito: string };
+export type EntidadeRal = { nome: string; site: string; ambito: string; tipo: "geral" | "setorial" };
 
 /**
- * Centros de arbitragem de conflitos de consumo de competência genérica
- * (Lei 144/2015, art. 18.º). A DoLado presta o serviço online em todo o
- * território nacional, por isso indica todas as entidades competentes
- * (orientação da ASAE) — a competente em cada caso depende do local de
- * celebração do contrato; sem centro territorial, o CNIACC. Validar contra a
- * lista oficial (LISTA_OFICIAL_RAL_URL) sempre que for revista.
+ * Entidades RAL da lista oficial da DGC (LISTA_OFICIAL_RAL_URL), confrontada a
+ * 08/10/2026: nomes como na lista; "geral" = centros de arbitragem de
+ * conflitos de consumo de competência genérica; "setorial" = "Centros de
+ * Arbitragem para Conflitos Específicos" (seguros, agências de viagens).
+ * Lista informativa: a competência depende do âmbito material e territorial,
+ * do valor e das regras de cada entidade — nunca inferir a competente.
  */
 export const ENTIDADES_RAL: readonly EntidadeRal[] = [
   {
-    nome: "CACCL — Centro de Arbitragem de Conflitos de Consumo de Lisboa",
-    site: "https://www.centroarbitragemlisboa.pt",
-    ambito: "Área Metropolitana de Lisboa",
-  },
-  {
-    nome: "CICAP — Centro de Informação de Consumo e Arbitragem do Porto",
-    site: "https://www.cicap.pt",
-    ambito: "Área do Porto",
-  },
-  {
-    nome: "CACRC — Centro de Arbitragem de Conflitos de Consumo da Região de Coimbra",
-    site: "https://www.cacrc.pt",
-    ambito: "Região de Coimbra",
-  },
-  {
-    nome: "TRIAVE — Centro de Arbitragem de Conflitos de Consumo do Ave, Tâmega e Sousa",
-    site: "https://www.triave.pt",
-    ambito: "Ave, Tâmega e Sousa",
-  },
-  {
-    nome: "CIAB — Centro de Informação, Mediação e Arbitragem de Consumo (Tribunal Arbitral de Consumo)",
-    site: "https://www.ciab.pt",
-    ambito: "Braga e Viana do Castelo",
-  },
-  {
-    nome: "CIMAAL — Centro de Informação, Mediação e Arbitragem de Conflitos de Consumo do Algarve",
-    site: "https://www.consumidoronline.pt",
-    ambito: "Algarve",
-  },
-  {
-    nome: "CAUAL — Centro de Arbitragem da Universidade Autónoma de Lisboa",
-    site: "https://www.arbitragem.autonoma.pt",
-    ambito: "Nos termos do seu regulamento",
-  },
-  {
-    nome: "CNIACC — Centro Nacional de Informação e Arbitragem de Conflitos de Consumo",
+    nome: "Centro Nacional de Informação e Arbitragem de Conflitos de Consumo (CNIACC)",
     site: "https://www.cniacc.pt",
-    ambito: "Zonas do território nacional sem centro de arbitragem territorialmente competente",
+    ambito: "Competência territorial residual, nas zonas sem centro regional competente; confirmar o regulamento e a admissibilidade do caso.",
+    tipo: "geral",
+  },
+  {
+    nome: "Centro de Arbitragem de Conflitos de Consumo da Região de Coimbra (CACRC)",
+    site: "https://www.cacrc.pt",
+    ambito: "Região de Coimbra; competência territorial e em razão do valor sujeita ao regulamento vigente.",
+    tipo: "geral",
+  },
+  {
+    nome: "Centro de Arbitragem de Conflitos de Consumo de Lisboa (CACCL)",
+    site: "https://www.centroarbitragemlisboa.pt",
+    ambito: "Lisboa e área territorial definida no regulamento.",
+    tipo: "geral",
+  },
+  {
+    nome: "Centro de Arbitragem da Universidade Autónoma de Lisboa (CAUAL)",
+    site: "https://arbitragem.grupoautonoma.pt",
+    ambito: "Conflitos de consumo no âmbito previsto no seu regulamento; confirme a competência junto do centro.",
+    tipo: "geral",
+  },
+  {
+    nome: "Centro de Arbitragem de Conflitos de Consumo da Região Autónoma da Madeira (CACC RAM)",
+    site: "https://www.madeira.gov.pt/cacc",
+    ambito: "Região Autónoma da Madeira, nos termos do regulamento.",
+    tipo: "geral",
+  },
+  {
+    nome: "Centro de Informação, Mediação e Arbitragem de Consumo da Região Açores (CIMARA)",
+    site: "https://ocimara.pt",
+    ambito: "Região Autónoma dos Açores, nos termos do regulamento.",
+    tipo: "geral",
+  },
+  {
+    nome: "Centro de Informação de Consumo e Arbitragem do Porto (CICAP)",
+    site: "https://www.cicap.pt",
+    ambito: "Área do Porto e municípios abrangidos pelo regulamento.",
+    tipo: "geral",
+  },
+  {
+    nome: "Centro de Arbitragem de Conflitos de Consumo do Ave, Tâmega e Sousa (TRIAVE)",
+    site: "https://www.triave.pt",
+    ambito: "Ave, Tâmega e Sousa e municípios abrangidos pelo regulamento.",
+    tipo: "geral",
+  },
+  {
+    nome: "Centro de Informação, Mediação e Arbitragem de Consumo (Tribunal Arbitral de Consumo) (CIAB)",
+    site: "https://www.ciab.pt",
+    ambito: "Braga, Viana do Castelo e municípios abrangidos pelo regulamento.",
+    tipo: "geral",
+  },
+  {
+    nome: "Centro de Informação, Mediação e Arbitragem do Algarve (CIMAAL)",
+    site: "https://www.consumidoronline.pt",
+    ambito: "Região do Algarve, nos termos do regulamento.",
+    tipo: "geral",
+  },
+  {
+    nome: "Centro de Informação, Mediação e Arbitragem de Seguros (CIMPAS)",
+    site: "https://www.cimpas.pt",
+    ambito: "Entidade setorial para conflitos decorrentes de contratos de seguros; confirmar ramos, valor e condições de acesso.",
+    tipo: "setorial",
+  },
+  {
+    nome: "Provedor do Cliente das Agências de Viagens e Turismo (Provedor da APAVT)",
+    site: "https://provedor.apavtnet.pt",
+    ambito: "Conflitos com agências de viagens associadas da APAVT, segundo as regras do Provedor.",
+    tipo: "setorial",
   },
 ];
-
-/** Textos que ainda têm de ser validados pela advogada antes de serem considerados definitivos. */
-export const REVISAO_JURIDICA_PENDENTE = [
-  "Texto do pedido expresso de início imediato (INICIO_IMEDIATO_POR_PLANO)",
-  "Tratamento jurídico definitivo do Avulso (execução integral dentro dos 14 dias)",
-  "Tratamento jurídico definitivo do Caso + Proteção (serviço continuado + caso)",
-  "Resumo e forma de exercício da livre resolução (RESUMO_LIVRE_RESOLUCAO, COMO_EXERCER_LIVRE_RESOLUCAO, /livre-resolucao)",
-  "Termos e Condições versão 2026-10-01b — em especial: cancelamento, início da prestação e livre resolução; limitações de responsabilidade; RAL e lei aplicável",
-  "Política de Privacidade versão 2026-10-01c — prazos de conservação (secção 6), bases jurídicas e descrição do Simulador de Elegibilidade público",
-  "Lista de entidades RAL (ENTIDADES_RAL) e respetiva competência territorial",
-  "Função online de livre resolução (/livre-resolucao) e modelo de formulário",
-] as const;

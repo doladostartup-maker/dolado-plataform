@@ -23,7 +23,7 @@ describe("medição só com consentimento", () => {
   test("os scripts de medição só são inseridos pelo componente com consentimento", () => {
     const scripts = fonte("../components/AnalyticsScripts.tsx");
     assert.match(scripts, /consent\.cookiebot\.com\/uc\.js/);
-    assert.match(scripts, /<MedicaoComConsentimento \/>/);
+    assert.match(scripts, /<MedicaoComConsentimento origemAtiva=\{origemAquisicaoAtiva\(\)\} \/>/);
     assert.doesNotMatch(scripts, /googletagmanager|gtag\(/);
     const medicao = fonte("../components/MedicaoComConsentimento.tsx");
     assert.match(medicao, /permitidos\.gtm &&/);
