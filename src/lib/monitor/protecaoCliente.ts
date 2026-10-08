@@ -1,10 +1,15 @@
 // DoLado — leitura do resultado da Proteção de um cliente (servidor).
 //
-// Só leituras com a sessão do cliente: o RLS garante que cada linha é dele,
-// que os eventos "atencao" só aparecem depois de comunicados e que as
-// situações (achados) só aparecem quando a DoLado as comunicou. As regras
-// de apresentação estão em resultadoProtecao.ts (sem I/O, testadas).
+// No portal, leituras com a sessão do cliente: o RLS garante que cada linha
+// é dele, que os eventos "atencao" só aparecem depois de comunicados e que
+// as situações (achados) só aparecem quando a DoLado as comunicou. As mesmas
+// regras estão também aqui, explícitas, para que o resumo mensal (servidor,
+// service_role, sem RLS) leia exatamente o que o cliente veria no portal:
+// filtro pelo dono em todas as consultas e eventos "atencao" só com o achado
+// comunicado. As regras de apresentação estão em resultadoProtecao.ts (sem
+// I/O, testadas).
 
+import type { createAdminClient } from "@/lib/supabase/admin";
 import type { createClient } from "@/lib/supabase/server";
 import { ROTULO_SETOR, type SetorContratoMonitor } from "./contratos";
 import type { LinhaFatura } from "./extracaoFatura";
@@ -25,6 +30,8 @@ import {
 import { listaFornecedores } from "./servidor";
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
+/** Sessão do cliente (portal) ou service_role (resumo mensal). */
+type Leitor = SupabaseServer | ReturnType<typeof createAdminClient>;
 
 export type ProtecaoCliente = { servicos: ResultadoServico[]; geral: ResultadoGeral };
 
@@ -43,6 +50,17 @@ function agrupar<T>(linhas: T[] | null | undefined, chave: (l: T) => string | nu
 
 /** Resultado de todos os serviços acompanhados (ou só de um, com `contratoId`). */
 export async function carregarProtecao(supabase: SupabaseServer, userId: string, contratoId?: string): Promise<ProtecaoCliente> {
+  const hoje = hojeLisboa();
+  const servicos = (await carregarEntradasServicos(supabase, userId, contratoId)).map((entrada) => resultadoServico(entrada, hoje));
+  return { servicos, geral: resultadoGeral(servicos) };
+}
+
+/**
+ * Dados de cada serviço acompanhado ativo do cliente, tal como o cliente os
+ * vê no portal. Seguro também com a service_role: todas as consultas filtram
+ * pelo dono e os eventos "atencao" só entram com o achado comunicado.
+ */
+export async function carregarEntradasServicos(supabase: Leitor, userId: string, contratoId?: string): Promise<EntradaServico[]> {
   let contratosQ = supabase
     .from("contratos_monitorizados")
     .select("id, setor, fornecedor, estado, created_at")
@@ -77,7 +95,10 @@ export async function carregarProtecao(supabase: SupabaseServer, userId: string,
     .or("etapa.is.null,etapa.neq.repetido");
   // Avisos de datas enviados (RLS: só os dos próprios serviços; sem a policy
   // do cliente a leitura devolve vazio e o histórico omite-os).
-  let alertasQ = supabase.from("contratos_alertas_envios").select("contrato_id, regra, data_alvo, enviado_em");
+  let alertasQ = supabase
+    .from("contratos_alertas_envios")
+    .select("contrato_id, regra, data_alvo, enviado_em, contratos_monitorizados!inner(utilizador_id)")
+    .eq("contratos_monitorizados.utilizador_id", userId);
   if (contratoId) {
     contratosQ = contratosQ.eq("id", contratoId);
     camposQ = camposQ.eq("contrato_id", contratoId);
@@ -104,13 +125,17 @@ export async function carregarProtecao(supabase: SupabaseServer, userId: string,
   const camposPor = agrupar(campos, (c) => c.contrato_id);
   const versaoPor = new Map((versoes ?? []).map((v) => [v.contrato_id, v]));
   const faturasPor = agrupar(faturas, (f) => f.contrato_id);
-  const eventosPor = agrupar(eventos, (e) => e.contrato_id);
+  // Igual ao RLS do cliente: "atencao" só depois de a DoLado comunicar o achado.
+  const comunicados = new Set((achados ?? []).map((a) => a.id));
+  const eventosPor = agrupar(
+    (eventos ?? []).filter((e) => e.severidade !== "atencao" || (e.achado_id && comunicados.has(e.achado_id))),
+    (e) => e.contrato_id,
+  );
   const achadosPor = agrupar(achados, (a) => a.contrato_id);
   const documentosPor = agrupar(documentos, (d) => d.contrato_id);
   const alertasPor = agrupar(alertas, (a) => a.contrato_id);
-  const hoje = hojeLisboa();
 
-  const servicos = (contratos ?? []).map((c) => {
+  return (contratos ?? []).map((c) => {
     const lista = camposPor.get(c.id) ?? [];
     const atuais: Record<string, CondicaoAtual> = {};
     for (const x of lista.filter((x) => x.estado === "atual")) atuais[x.campo] = { valor: x.valor, origem: x.origem };
@@ -161,8 +186,6 @@ export async function carregarProtecao(supabase: SupabaseServer, userId: string,
       ),
       alertas: (alertasPor.get(c.id) ?? []).map((a): AlertaEnviado => ({ regra: a.regra, dataAlvo: a.data_alvo, enviadoEm: a.enviado_em })),
     };
-    return resultadoServico(entrada, hoje);
+    return entrada;
   });
-
-  return { servicos, geral: resultadoGeral(servicos) };
 }

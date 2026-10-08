@@ -386,7 +386,7 @@ const REGRA_ALERTA: Record<string, "fidelizacao" | "promocao"> = {
   promocao_fim: "promocao",
 };
 
-function dataCampo(c: CondicaoAtual | undefined): string | null {
+export function dataCampo(c: CondicaoAtual | undefined): string | null {
   return c && typeof c.valor === "string" && /^\d{4}-\d{2}-\d{2}/.test(c.valor) ? c.valor.slice(0, 10) : null;
 }
 

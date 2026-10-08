@@ -4,8 +4,11 @@ import { CONTACTO_EMAIL } from "@/lib/site";
 
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "thiago.pereira@dolado.pt";
 
-/** Lança se a Brevo recusar — quem chama decide se isso bloqueia ou não. */
-export async function enviarEmailBrevo(destinatario: string, assunto: string, html: string) {
+/**
+ * Lança se a Brevo recusar (code `brevo_<status>`) — quem chama decide se
+ * isso bloqueia ou não. `texto`: versão em texto simples, opcional.
+ */
+export async function enviarEmailBrevo(destinatario: string, assunto: string, html: string, texto?: string) {
   const resposta = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: { "api-key": process.env.BREVO_API_KEY ?? "", "Content-Type": "application/json" },
@@ -15,6 +18,7 @@ export async function enviarEmailBrevo(destinatario: string, assunto: string, ht
       to: [{ email: destinatario }],
       subject: assunto,
       htmlContent: html,
+      ...(texto ? { textContent: texto } : {}),
     }),
     // Nunca deixar um pedido pendurado à espera da Brevo.
     signal: AbortSignal.timeout(10_000),
