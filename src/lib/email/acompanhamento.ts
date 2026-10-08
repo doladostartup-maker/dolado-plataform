@@ -58,9 +58,9 @@ export function montarHtmlCasoEncerradoExterno({ empresa, urlCaso }: { empresa: 
     preheader: "Preparámos o dossiê do seu caso e a informação sobre como pode continuar.",
     corpo: `<p ${P_EMAIL}>Olá,</p>
           <p ${P_EMAIL}>A DoLado terminou o acompanhamento da sua reclamação${sobre(empresa)}. Isto não significa necessariamente que o problema esteja resolvido.</p>
-          <p ${P_EMAIL}>Preparámos o seu dossiê com o histórico e os documentos do caso. Se pretender continuar, poderá consultar uma entidade oficial de Resolução Alternativa de Litígios de Consumo — indicamos no portal onde encontrar a informação.</p>
+          <p ${P_EMAIL}>Preparámos o seu dossiê com o histórico e os documentos do caso. Se pretender continuar, poderá consultar a lista meramente informativa de entidades oficiais de Resolução Alternativa de Litígios de Consumo no portal.</p>
           ${botaoEmail(escaparHtml(urlCaso), "Ver o caso e descarregar o dossiê")}
-          <p ${P_NOTA}>A DoLado não representa o consumidor em processos de mediação, conciliação ou arbitragem.</p>`,
+          <p ${P_NOTA}>A DoLado não representa o consumidor em processos de mediação, conciliação ou arbitragem, não apresenta pedidos em seu nome e não determina nem indica qual é a entidade competente para este caso. Confirme diretamente junto da entidade se pode apreciar o conflito.</p>`,
   });
 }
 

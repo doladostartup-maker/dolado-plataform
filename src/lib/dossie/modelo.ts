@@ -19,7 +19,7 @@ import { CANAIS_ENVIO } from "../textoCaso.ts";
 import { ROTULO_CANAL_RECEBIDA } from "../acompanhamento/apresentacao.ts";
 
 /** Subir quando a estrutura ou os textos do dossiê mudarem (fica em casos_dossies.modelo_versao). */
-export const DOSSIE_MODELO_VERSAO = "dossie_v1";
+export const DOSSIE_MODELO_VERSAO = "dossie_v2";
 
 /** Limite por comunicação recebida (o original completo fica guardado na DoLado). */
 export const MAX_CARACTERES_COMUNICACAO = 30000;
@@ -307,7 +307,7 @@ export function montarDossie(d: DadosDossie): DossieModelo {
     nomeFicheiro: nomeFicheiroDossie(d.caso.id, d.versao),
     cabecalho,
     aviso:
-      "Este documento organiza, por ordem cronológica, a informação registada pela DoLado durante o acompanhamento do caso, tal como existe no sistema na data da geração. É um registo organizado do caso: não é um parecer jurídico nem uma peça processual.",
+      "Este dossiê é um registo factual e cronológico da informação e das comunicações registadas pela DoLado durante o acompanhamento do caso, tal como constam do sistema na data da geração. Os elementos são atribuídos aos respetivos autores; a sua inclusão não significa que a DoLado confirme o seu conteúdo. Este documento não contém uma avaliação jurídica do conflito e não é um parecer jurídico nem uma peça processual.",
     seccoes,
   };
 }
