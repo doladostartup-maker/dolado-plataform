@@ -17,6 +17,7 @@ import {
   pedidoDaConta,
   tokenHashDoCookie,
 } from "@/lib/pedidoCasoServidor";
+import { registarOrigemDaConta } from "@/lib/origemAquisicaoServidor";
 
 // "Tratar o meu caso": formulário → conta → modalidade → pagamento.
 //
@@ -123,6 +124,9 @@ export async function criarContaPedido(_anterior: EstadoConta, formData: FormDat
   });
   if (error) return { erro: mensagemErroAuth(error.code, error.message), passo: "conta" };
 
+  // Origem de aquisição (?ref=): só atribuição, nunca acesso.
+  if (data.user && (data.user.identities?.length ?? 0) > 0) await registarOrigemDaConta(data.user.id);
+
   // Sem confirmação de e-mail ativa (ex.: stack local), já há sessão.
   if (data.session) redirect(`${MODALIDADE}?conta=nova`);
 
@@ -152,6 +156,8 @@ export async function verificarCodigo(_anterior: EstadoConta, formData: FormData
   if (error) ({ error } = await supabase.auth.verifyOtp({ email, token: codigo, type: "signup" }));
   if (error) return { erro: mensagemErroAuth(error.code, error.message), passo: "codigo", email };
 
+  const { data: sessao } = await supabase.auth.getUser();
+  if (sessao.user) await registarOrigemDaConta(sessao.user.id);
   redirect(`${MODALIDADE}?conta=nova`);
 }
 

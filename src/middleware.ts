@@ -1,5 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import {
+  COOKIE_ORIGEM,
+  PARAMETRO_ORIGEM,
+  cookieOrigemParaDefinir,
+  opcoesCookieOrigem,
+  origemAquisicaoAtiva,
+} from "@/lib/origemAquisicao";
 
 // Páginas públicas sem estado de sessão — poupam a chamada de rede à
 // Supabase feita em updateSession, que é o maior custo de latência por
@@ -88,6 +95,25 @@ function ehPaginaDeRevisaoDoTexto(pathname: string) {
 }
 
 export async function middleware(request: NextRequest) {
+  const resposta = await encaminhar(request);
+  return comOrigemAquisicao(request, resposta);
+}
+
+// Origem de aquisição (?ref=…): guarda a primeira origem válida num cookie
+// partilhado entre dolado.pt e portal.dolado.pt (first-touch, 30 dias).
+// Só atribuição — nunca dá acesso, plano, desconto nem casos. Sem I/O.
+function comOrigemAquisicao(request: NextRequest, resposta: NextResponse) {
+  const ref = request.nextUrl.searchParams.get(PARAMETRO_ORIGEM);
+  if (!ref || !origemAquisicaoAtiva()) return resposta;
+  const valor = cookieOrigemParaDefinir(ref, request.cookies.get(COOKIE_ORIGEM)?.value, Date.now());
+  if (valor) {
+    const host = request.headers.get("host")?.split(":")[0] ?? "";
+    resposta.cookies.set(COOKIE_ORIGEM, valor, opcoesCookieOrigem(host, process.env.NODE_ENV === "production"));
+  }
+  return resposta;
+}
+
+async function encaminhar(request: NextRequest): Promise<NextResponse> {
   const host = request.headers.get("host")?.split(":")[0] ?? "";
   const { pathname, search } = request.nextUrl;
 

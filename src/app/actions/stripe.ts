@@ -32,6 +32,8 @@ import { direitoCasoExtra, subscricaoStripeConfirmaCasoExtra } from "@/lib/casoE
 import { DIAS_VALIDADE_PEDIDO, pedidoPorPagar } from "@/lib/pedidoCaso";
 import { pedidoDaConta } from "@/lib/pedidoCasoServidor";
 import { camposDesconto, prepararDescontoCheckout } from "@/lib/indicacoes/servidor";
+import { comOrigemNaMetadata } from "@/lib/origemAquisicao";
+import { origemParaCheckout } from "@/lib/origemAquisicaoServidor";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!;
 
@@ -82,7 +84,11 @@ function dependenciasCheckout(
       return data.id as string;
     },
     async criarSessao(metadata) {
-      const session = await getStripe().checkout.sessions.create(parametros(metadata));
+      // Origem de aquisição (?ref=): só atribuição. Junta-se à metadata sem
+      // substituir nada e segue, como o resto, para a subscrição/pagamento.
+      // Não mexe em preço, cupões, plano nem acesso.
+      const origem = await origemParaCheckout((await utilizadorAtual()).user?.id ?? null);
+      const session = await getStripe().checkout.sessions.create(parametros(comOrigemNaMetadata(metadata, origem)));
       return { id: session.id, url: session.url };
     },
     async ligarSessao(consentimentoId, sessionId) {
