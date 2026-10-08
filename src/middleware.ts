@@ -28,6 +28,7 @@ const PAGINAS_PUBLICAS = [
   "/perguntas-frequentes",
   "/precario",
   "/ferramentas-gratuitas",
+  "/empresas",
 ];
 
 // /auth/callback tem de fazer a troca do code PKCE de forma atómica, sem
@@ -69,6 +70,7 @@ const PAGINAS_SO_MARKETING = [
   "/perguntas-frequentes",
   "/precario",
   "/ferramentas-gratuitas",
+  "/empresas",
 ];
 
 // Versões dos Termos e da Política de Privacidade (/termos/<versão>,

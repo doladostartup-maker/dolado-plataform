@@ -39,6 +39,7 @@ Páginas V2:
 | Guia de Mudança de Casa | `/mudanca-de-casa` — `src/app/mudanca-de-casa/page.tsx`, `src/components/mudanca-casa-v2/MudancaDeCasaV2.tsx` (conteúdo já publicado; CTAs e medição `mudanca_casa_clique_tratar_caso` iguais) | indexada (substituiu a versão V1) |
 | Transparência | `/transparencia` — `src/app/transparencia/page.tsx`, `src/components/transparencia-v2/TransparenciaV2.tsx` (texto já publicado; CTA final novo) | indexada (substituiu a versão V1) |
 | Páginas legais | `/termos`, `/termos/<versão>`, `/privacidade`, `/privacidade/<versão>`, `/livre-resolucao`, `/resolucao-de-litigios` — moldura em `src/app/(legal)/layout.tsx` (PaginaV2). As versões publicadas não se editam: usam os tokens antigos `--color-*`, que `.documento-legal` (`globals.css`) aponta para as cores V2; os pesos dos títulos também são ajustados aí. Versões novas podem usar já as classes V2. | indexadas, como antes |
+| Empresas | `/empresas` — `src/app/empresas/page.tsx`, `src/components/empresas-v2/EmpresasV2.tsx` (página estática para empresas: colaboradores, clientes ou ambos; sem preços nem condições — formatos definidos numa conversa; contacto pelo formulário de `/contacto#formulario` e `CONTACTO_EMAIL`, sem formulário próprio). "Empresas" na navbar (sem prefetch) e no rodapé | indexada (página nova, 08/10/2026) |
 | Preçário | `/precario` — `src/app/precario/page.tsx`, `src/components/precario-v2/PrecarioV2.tsx`; conteúdo dos planos e destino dos botões em `src/lib/precario.ts`, `/#precario` (links antigos) leva aqui pela homepage | indexada, com `canonical` |
 
 Uma página V2 nova: `<PaginaV2 eventoCtaNavbar="click_…">` + `SectionV2`/`SectionHeader` + classes de `estilos.ts`. Criar componentes novos (PricingCard, FAQAccordionV2, …) só quando forem usados, em `src/components/marketing-v2/`, e reutilizá-los nas páginas seguintes.
@@ -196,7 +197,7 @@ Escala: 4, 8, 12, 16, 24, 32, 48, 64, 96, 128px. Secções: ~96–128px de paddi
 
 ## 12. Navbar V2
 
-Desktop: logótipo · ao centro "Como funciona", "Ferramentas gratuitas", "Preçário", "Ajuda" · à direita "Iniciar sessão" e o CTA "Tratar do meu caso". Fundo branco, layout limpo, altura confortável (não excessiva), borda inferior subtil, sticky.
+Desktop: logótipo · ao centro "Como funciona", "Ferramentas gratuitas", "Preçário", "Ajuda", "Empresas" (sem prefetch) · à direita "Iniciar sessão" e o CTA "Tratar do meu caso". Fundo branco, layout limpo, altura confortável (não excessiva), borda inferior subtil, sticky.
 
 Telemóvel: menu simplificado, CTA principal sempre acessível, sem subcategorias em excesso.
 

@@ -11,13 +11,14 @@ import { ROTAS_V2 } from "./rotas";
 
 // Navbar do Design System V2 (todas as páginas públicas). Só existe dentro de
 // PaginaV2. Prefetch: só os 4 links principais (navegação mais provável);
-// logótipo e "Iniciar sessão" (portal, outro domínio) sem prefetch.
+// "Empresas", logótipo e "Iniciar sessão" (portal, outro domínio) sem prefetch.
 
 const LINKS = [
   { href: ROTAS_V2.comoFunciona, label: "Como funciona" },
   { href: ROTAS_V2.ferramentas, label: "Ferramentas gratuitas" },
   { href: ROTAS_V2.precario, label: "Preçário" },
   { href: ROTAS_V2.ajuda, label: "Ajuda" },
+  { href: ROTAS_V2.empresas, label: "Empresas", prefetch: false },
 ];
 
 export function NavbarV2({ eventoCta, parametrosCta }: { eventoCta: string; parametrosCta?: Record<string, string> }) {
@@ -32,19 +33,21 @@ export function NavbarV2({ eventoCta, parametrosCta }: { eventoCta: string; para
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--v2-line)] bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-[68px] max-w-[1200px] items-center justify-between gap-6 px-5 sm:px-8">
-        <Logotipo />
-        <nav aria-label="Principal" className="hidden items-center gap-8 lg:flex">
+        <div className="flex-none">
+          <Logotipo />
+        </div>
+        <nav aria-label="Principal" className="hidden items-center gap-4 lg:flex xl:gap-8">
           {LINKS.map((l) => (
-            <Link key={l.label} href={l.href} className="text-[14px] font-medium text-[var(--v2-muted)] hover:text-[var(--v2-navy)]">
+            <Link key={l.label} href={l.href} prefetch={l.prefetch} className="whitespace-nowrap text-[14px] font-medium text-[var(--v2-muted)] hover:text-[var(--v2-navy)]">
               {l.label}
             </Link>
           ))}
         </nav>
-        <div className="hidden items-center gap-6 lg:flex">
-          <a href={ROTAS_V2.entrar} className="text-[14px] font-semibold text-[var(--v2-navy)] hover:text-[var(--v2-green)]">
+        <div className="hidden items-center gap-4 lg:flex xl:gap-6">
+          <a href={ROTAS_V2.entrar} className="whitespace-nowrap text-[14px] font-semibold text-[var(--v2-navy)] hover:text-[var(--v2-green)]">
             Iniciar sessão
           </a>
-          <button type="button" onClick={tratarCaso} className={`${BOTAO_PRIMARIO} min-h-10 px-5 text-[14px]`}>
+          <button type="button" onClick={tratarCaso} className={`${BOTAO_PRIMARIO} min-h-10 whitespace-nowrap px-5 text-[14px]`}>
             Tratar do meu caso <IconeSeta tamanho={16} />
           </button>
         </div>
@@ -66,6 +69,7 @@ export function NavbarV2({ eventoCta, parametrosCta }: { eventoCta: string; para
               <Link
                 key={l.label}
                 href={l.href}
+                prefetch={l.prefetch}
                 onClick={() => setAberto(false)}
                 className="flex min-h-12 items-center border-b border-[var(--v2-line)] text-[16px] font-medium text-[var(--v2-navy)]"
               >
