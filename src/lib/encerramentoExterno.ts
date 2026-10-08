@@ -30,12 +30,12 @@ export const BOTAO_CONSULTAR_ENTIDADES = "Consultar entidades de resolução de 
 export const SECCAO_ENTIDADES = {
   titulo: "Continuar através de uma entidade de resolução de conflitos",
   introducao:
-    "Existem entidades oficiais de Resolução Alternativa de Litígios de Consumo, como os centros de arbitragem de conflitos de consumo, que podem ajudar a resolver um conflito entre um consumidor e uma empresa através de informação, mediação, conciliação ou arbitragem.",
+    "Existem entidades oficiais de Resolução Alternativa de Litígios de Consumo, como os centros de arbitragem de conflitos de consumo, que prestam informação e podem tratar conflitos entre consumidores e empresas através de mediação, conciliação ou arbitragem, nos termos da competência e das regras de cada entidade.",
   rotuloLista: "Centros a consultar",
   notaLista:
-    "Centros de arbitragem de conflitos de consumo de competência genérica, segundo a informação pública da Direção-Geral do Consumidor. A área indicada é a que cada centro divulga; existem também entidades especializadas em alguns setores.",
+    "Lista meramente informativa de centros de arbitragem de conflitos de consumo de competência genérica, com base na informação pública da Direção-Geral do Consumidor. Não constitui indicação da entidade competente para o seu caso. A competência pode depender, entre outros aspetos, do setor, do valor e do local do contrato; existem também entidades especializadas em alguns setores.",
   limites:
-    "A DoLado não representa o consumidor em processos de mediação, conciliação ou arbitragem, nem apresenta pedidos em seu nome. A competência para apreciar o conflito deve ser confirmada diretamente junto da entidade escolhida.",
+    "A DoLado não representa o consumidor em processos de mediação, conciliação ou arbitragem, não apresenta pedidos em seu nome, não determina nem indica qual é a entidade competente para este caso e não presta aconselhamento jurídico. Confirme diretamente junto da entidade se pode apreciar o conflito.",
   ligacaoOficial: "Ver a lista oficial completa das entidades RAL (Direção-Geral do Consumidor)",
 } as const;
 
@@ -43,9 +43,10 @@ export const SECCAO_ENTIDADES = {
 export const OPCOES_CONFLITO = {
   titulo: "Opções para continuar a tratar o conflito",
   paragrafos: [
-    "Este dossiê reúne a informação e documentação tratadas pela DoLado durante o acompanhamento do seu caso.",
-    "A DoLado terminou o acompanhamento deste processo. Caso pretenda continuar a tentar resolver o conflito, poderá contactar uma entidade oficial de Resolução Alternativa de Litígios de Consumo.",
-    "A DoLado não representa o consumidor em processos de mediação, conciliação ou arbitragem. A competência para apreciar o conflito deve ser confirmada diretamente junto da entidade escolhida.",
+    "Este dossiê reúne informação e documentos registados durante o acompanhamento do caso pela DoLado.",
+    "Se pretender prosseguir por sua iniciativa, poderá consultar as entidades oficiais de Resolução Alternativa de Litígios de Consumo e as respetivas regras.",
+    "A lista incluída é meramente informativa e não identifica a entidade competente para este caso. O âmbito e a admissibilidade dependem das regras de cada entidade; confirme diretamente com a entidade escolhida, incluindo se é necessário contactar previamente a empresa reclamada.",
+    "A DoLado não representa o consumidor em processos de mediação, conciliação ou arbitragem, não apresenta pedidos em seu nome, não determina nem indica qual é a entidade competente para este caso e não presta aconselhamento jurídico.",
   ],
 } as const;
 
@@ -54,4 +55,4 @@ export { LISTA_OFICIAL_RAL_URL };
 
 /** Estado final descrito no dossiê. */
 export const ESTADO_FINAL_DOSSIE =
-  "Encerrado na DoLado. A DoLado terminou o acompanhamento deste caso depois de realizar as ações previstas no seu serviço. O encerramento não significa que o problema esteja resolvido.";
+  "Na data de geração deste dossiê, o acompanhamento do caso consta como encerrado na DoLado. Este estado refere-se apenas ao serviço prestado pela DoLado; não constitui uma decisão sobre o conflito nem confirma que o problema esteja resolvido.";

@@ -249,7 +249,8 @@ describe("textos do portal (encerramento)", () => {
     assert.equal(SECCAO_ENTIDADES.rotuloLista, "Centros a consultar");
     assert.doesNotMatch(todos, /centro competente é|entidade competente é|escolhemos|representamos/i);
     assert.match(todos, /não representa o consumidor/);
-    assert.match(todos, /deve ser confirmada diretamente junto da entidade escolhida/);
+    assert.match(todos, /não determina nem indica qual é a entidade competente para este caso/);
+    assert.match(todos, /Confirme diretamente junto da entidade se pode apreciar o conflito/);
   });
 
   test("lista oficial da Direção-Geral do Consumidor e entidades com site", () => {
