@@ -12,7 +12,6 @@ import { contaExisteComEmail } from "@/lib/compra/servidor";
 import { avaliarSessaoParaCriarConta } from "@/lib/stripe/criarConta";
 import { aplicarCompraConfirmadaNaConta, idDe } from "@/lib/stripe/webhook";
 import { criarDependenciasWebhook } from "@/lib/stripe/webhookDependencias";
-import { origemDaMetadata } from "@/lib/origemAquisicao";
 import { registarOrigemDaConta } from "@/lib/origemAquisicaoServidor";
 
 async function lerSessao(sessionId: string) {
@@ -75,13 +74,8 @@ export async function criarContaComPagamento(formData: FormData) {
   if (!data.user) voltar(sessionId, "Não foi possível criar a conta.");
   const userId = data.user.id;
 
-  // Origem de aquisição (?ref=): o cookie deste browser ou, se se perdeu, a
-  // que foi para a metadata do Checkout (a visita foi antes da sessão).
-  const origemCheckout = origemDaMetadata(session.metadata);
-  await registarOrigemDaConta(
-    userId,
-    origemCheckout ? { origem: origemCheckout, primeiraVisita: new Date(session.created * 1000) } : null,
-  );
+  // Atribuição de origem apenas a partir do cookie consentido no browser.
+  await registarOrigemDaConta(userId);
 
   // Liga a compra à conta nova — só se ainda não estiver ligada a outra.
   // O webhook pode já ter gravado a linha (com o estado real do pagamento):

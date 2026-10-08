@@ -7,7 +7,8 @@ import { extractText, getDocumentProxy } from "unpdf";
 import { montarDossie, nomeFicheiroDossie, recebidaEntraNoDossie, referenciaCaso, DOSSIE_MODELO_VERSAO } from "./modelo.ts";
 import { gerarPdfDossie, normalizarTexto, quebrarLinhas } from "./pdf.ts";
 import {
-  ENTIDADES_A_CONSULTAR,
+  CENTROS_RAL_GERAIS,
+  ENTIDADES_RAL_SETORIAIS,
   LISTA_OFICIAL_RAL_URL,
   MENSAGEM_ENCERRADO_EXTERNO,
   OPCOES_CONFLITO,
@@ -255,8 +256,30 @@ describe("textos do portal (encerramento)", () => {
 
   test("lista oficial da Direção-Geral do Consumidor e entidades com site", () => {
     assert.match(LISTA_OFICIAL_RAL_URL, /^https:\/\/www\.consumidor\.gov\.pt\//);
-    assert.ok(ENTIDADES_A_CONSULTAR.length > 0);
-    for (const e of ENTIDADES_A_CONSULTAR) assert.match(e.site, /^https:\/\//);
+    assert.ok(CENTROS_RAL_GERAIS.length > 0);
+    for (const e of [...CENTROS_RAL_GERAIS, ...ENTIDADES_RAL_SETORIAIS]) assert.match(e.site, /^https:\/\//);
+  });
+
+  test("lista DGC (08/10/2026): 10 centros gerais e 2 entidades setoriais, em secções separadas", () => {
+    assert.equal(CENTROS_RAL_GERAIS.length, 10);
+    assert.deepEqual(
+      ENTIDADES_RAL_SETORIAIS.map((e) => e.nome),
+      [
+        "Centro de Informação, Mediação e Arbitragem de Seguros (CIMPAS)",
+        "Provedor do Cliente das Agências de Viagens e Turismo (Provedor da APAVT)",
+      ],
+    );
+    assert.ok(CENTROS_RAL_GERAIS.every((e) => e.tipo === "geral"));
+    assert.ok(CENTROS_RAL_GERAIS.some((e) => e.nome.includes("(CNIACC)")));
+    // "Centros a consultar" só lista os gerais; as setoriais têm subtítulo próprio.
+    const d = montarDossie(dados());
+    const linhas = JSON.stringify(d);
+    const iCentros = linhas.indexOf("Centros a consultar (informação pública)");
+    const iSetoriais = linhas.indexOf("Entidades setoriais a consultar (informação pública)");
+    assert.ok(iCentros >= 0 && iSetoriais > iCentros);
+    assert.ok(linhas.indexOf("CIMPAS") > iSetoriais, "CIMPAS só depois do subtítulo das entidades setoriais");
+    assert.ok(linhas.indexOf("CNIACC") > iCentros && linhas.indexOf("CNIACC") < iSetoriais);
+    assert.match(SECCAO_ENTIDADES.notaLista, /não constitui indicação da entidade competente/i);
   });
 
   test("português europeu: e-mail com hífen, terceira pessoa, sem termos do Brasil", () => {

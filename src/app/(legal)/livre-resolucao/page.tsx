@@ -23,8 +23,8 @@ const UL = "flex list-disc flex-col gap-2 pl-5 text-base leading-relaxed text-[v
 const LINK = "text-[var(--color-brand)] underline";
 
 // Textos jurídicos centralizados em src/lib/legal.ts e src/lib/livreResolucao.ts
-// — REVISÃO JURÍDICA PENDENTE (ver REVISAO_JURIDICA_PENDENTE). Esta página
-// descreve o regime legal (DL 24/2014) sem tirar conclusões por plano: os
+// — revistos em 08/10/2026. Esta página descreve o regime legal (DL 24/2014)
+// sem tirar conclusões por plano: os
 // efeitos de cada pedido são apreciados caso a caso.
 export default function LivreResolucaoPage() {
   return (

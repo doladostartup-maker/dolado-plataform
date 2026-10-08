@@ -3,16 +3,18 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 import {
-  CHAVE_METADATA_ORIGEM,
+  COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM,
   COOKIE_ORIGEM,
   ORIGEM_JANELA_DIAS,
-  comOrigemNaMetadata,
   cookieOrigemParaDefinir,
+  decidirCookiesOrigem,
+  dominioCookiesOrigem,
+  estadoConsentimentoOrigem,
+  linhaCookieOrigem,
+  pedidoDoProprioSite,
   lerCookieOrigem,
   normalizarOrigem,
-  opcoesCookieOrigem,
   origemAquisicaoAtiva,
-  origemDaMetadata,
   rotuloOrigem,
   valorCookieOrigem,
 } from "./origemAquisicao.ts";
@@ -102,56 +104,10 @@ describe("cookie first-touch", () => {
     }
   });
 
-  test("cookie partilhado por dolado.pt e portal.dolado.pt, httpOnly, 30 dias", () => {
-    for (const host of ["dolado.pt", "portal.dolado.pt", "www.dolado.pt"]) {
-      const o = opcoesCookieOrigem(host, true);
-      assert.equal(o.domain, ".dolado.pt");
-      assert.equal(o.httpOnly, true);
-      assert.equal(o.secure, true);
-      assert.equal(o.sameSite, "lax");
-      assert.equal(o.maxAge, ORIGEM_JANELA_DIAS * 24 * 3600);
-    }
-    assert.equal(opcoesCookieOrigem("localhost", false).domain, undefined);
-    assert.equal(opcoesCookieOrigem("dolado.pt.evil.com", true).domain, undefined);
-  });
-
   test("desligado por omissão", () => {
     assert.equal(origemAquisicaoAtiva(undefined), false);
     assert.equal(origemAquisicaoAtiva("0"), false);
     assert.equal(origemAquisicaoAtiva("1"), true);
-  });
-});
-
-describe("metadata do Stripe", () => {
-  test("acrescenta acquisition_source sem substituir a metadata existente", () => {
-    const base = { consentimento_compra_id: "c1", plano: "avulso" };
-    assert.deepEqual(comOrigemNaMetadata(base, "contabilista_marta"), { ...base, acquisition_source: "contabilista_marta" });
-    assert.deepEqual(base, { consentimento_compra_id: "c1", plano: "avulso" }, "não muda o objeto original");
-  });
-
-  test("sem origem (ou inválida) a metadata fica igual", () => {
-    const base = { plano: "avulso" };
-    assert.equal(comOrigemNaMetadata(base, null), base);
-    assert.equal(comOrigemNaMetadata(base, "a@b"), base);
-  });
-
-  test("nunca substitui um acquisition_source já presente", () => {
-    const base = { [CHAVE_METADATA_ORIGEM]: "remax_duplo_prestigio" };
-    assert.equal(comOrigemNaMetadata(base, "instagram"), base);
-  });
-
-  test("cenários E/F: origem e voucher são independentes", () => {
-    // E: veio pela Marta, compra sem cupão → continua atribuída.
-    assert.equal(comOrigemNaMetadata({}, "contabilista_marta").acquisition_source, "contabilista_marta");
-    // F: usa o cupão CONTABILISTAMARTA sem ter vindo pelo link → sem origem.
-    assert.equal(comOrigemNaMetadata({ promo: "CONTABILISTAMARTA" }, null).acquisition_source, undefined);
-    assert.equal(origemDaMetadata({ promo: "CONTABILISTAMARTA" }), null);
-  });
-
-  test("lê a origem da metadata só no formato válido", () => {
-    assert.equal(origemDaMetadata({ acquisition_source: "contabilista_marta" }), "contabilista_marta");
-    assert.equal(origemDaMetadata({ acquisition_source: "<b>" }), null);
-    assert.equal(origemDaMetadata(null), null);
   });
 });
 
@@ -164,22 +120,107 @@ describe("backoffice", () => {
   });
 });
 
-describe("ligações e isolamento (o ?ref= nunca dá acesso)", () => {
-  test("o middleware só define o cookie, sem I/O", () => {
+describe("consentimento de estatística (Cookiebot) e cookies da origem", () => {
+  const base = { ativo: true, temResposta: true, estatisticas: true, marcaAtual: undefined, origemAtual: undefined, ref: "contabilista_marta", agoraMs: AGORA };
+  const nomes = (r) => r.cookies.map((c) => `${c.nome}=${c.valor ?? "<apagar>"}`);
+
+  test("com consentimento: marca 1 e origem first-touch", () => {
+    const r = decidirCookiesOrigem(base);
+    assert.deepEqual(nomes(r), [`${COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM}=1`, `${COOKIE_ORIGEM}=${valorCookieOrigem("contabilista_marta", AGORA)}`]);
+    assert.equal(r.avisarRetirada, false);
+    // Uma origem válida já guardada nunca é substituída.
+    const r2 = decidirCookiesOrigem({ ...base, origemAtual: valorCookieOrigem("instagram", AGORA - DIA), ref: "outra" });
+    assert.deepEqual(nomes(r2), [`${COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM}=1`]);
+  });
+
+  test("sem resposta no banner (ou sem Cookiebot, ex.: domínio não autorizado): não cria nada", () => {
+    const r = decidirCookiesOrigem({ ...base, temResposta: false, estatisticas: false });
+    assert.deepEqual(r, { cookies: [], avisarRetirada: false });
+  });
+
+  test("recusa: marca 0, cookie de origem apagado, sem pedido ao servidor se nunca houve consentimento", () => {
+    const r = decidirCookiesOrigem({ ...base, estatisticas: false, origemAtual: valorCookieOrigem("instagram", AGORA) });
+    assert.deepEqual(nomes(r), [`${COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM}=0`, `${COOKIE_ORIGEM}=<apagar>`]);
+    assert.equal(r.avisarRetirada, false);
+    assert.ok(!r.cookies.some((c) => c.nome === COOKIE_ORIGEM && c.valor), "nunca grava a origem sem consentimento");
+  });
+
+  test("retirada (de 1 para recusado): avisa o servidor uma vez", () => {
+    assert.equal(decidirCookiesOrigem({ ...base, estatisticas: false, marcaAtual: "1" }).avisarRetirada, true);
+    assert.equal(decidirCookiesOrigem({ ...base, estatisticas: false, marcaAtual: "0" }).avisarRetirada, false);
+  });
+
+  test("funcionalidade desligada: não cria cookies e apaga um cookie de origem antigo", () => {
+    assert.deepEqual(decidirCookiesOrigem({ ...base, ativo: false }), { cookies: [], avisarRetirada: false });
+    assert.deepEqual(nomes(decidirCookiesOrigem({ ...base, ativo: false, origemAtual: "x.1" })), [`${COOKIE_ORIGEM}=<apagar>`]);
+  });
+
+  test("estado da marca: só 1 e 0 contam; tudo o resto é desconhecido (não grava nem apaga)", () => {
+    assert.equal(estadoConsentimentoOrigem("1"), "dado");
+    assert.equal(estadoConsentimentoOrigem("0"), "retirado");
+    for (const v of [undefined, null, "", "true", "yes"]) assert.equal(estadoConsentimentoOrigem(v), "desconhecido");
+  });
+
+  test("cookies partilhados por dolado.pt e portal.dolado.pt, 30 dias, apagar com Max-Age=0", () => {
+    assert.equal(dominioCookiesOrigem("portal.dolado.pt"), ".dolado.pt");
+    assert.equal(dominioCookiesOrigem("dolado.pt"), ".dolado.pt");
+    assert.equal(dominioCookiesOrigem("dolado.pt.evil.com"), undefined);
+    assert.equal(dominioCookiesOrigem("localhost"), undefined);
+    assert.equal(
+      linhaCookieOrigem({ nome: COOKIE_ORIGEM, valor: "marta.1" }, "portal.dolado.pt", true),
+      `dolado_origem=marta.1; Max-Age=${ORIGEM_JANELA_DIAS * 24 * 3600}; Path=/; Domain=.dolado.pt; SameSite=Lax; Secure`,
+    );
+    assert.equal(linhaCookieOrigem({ nome: COOKIE_ORIGEM, valor: null }, "localhost", false), "dolado_origem=; Max-Age=0; Path=/; SameSite=Lax");
+  });
+});
+
+describe("rota de retirada: só pedidos do próprio site", () => {
+  test("aceita o mesmo host; recusa outro site, sem Origin ou cross-site", () => {
+    assert.equal(pedidoDoProprioSite("https://portal.dolado.pt", "portal.dolado.pt", "same-origin"), true);
+    assert.equal(pedidoDoProprioSite("http://localhost:3000", "localhost:3000", null), true);
+    assert.equal(pedidoDoProprioSite("https://evil.example", "portal.dolado.pt", "cross-site"), false);
+    assert.equal(pedidoDoProprioSite("https://evil.example", "portal.dolado.pt", null), false);
+    assert.equal(pedidoDoProprioSite(null, "portal.dolado.pt", "same-origin"), false);
+    assert.equal(pedidoDoProprioSite("https://portal.dolado.pt", "portal.dolado.pt", "same-site"), false);
+    assert.equal(pedidoDoProprioSite("null", "portal.dolado.pt", null), false);
+  });
+
+  test("a rota valida a origem antes da sessão e só apaga pela função da base de dados", () => {
+    const r = fonte("../app/api/privacidade/origem-aquisicao/route.ts");
+    assert.match(r, /export async function POST/);
+    assert.doesNotMatch(r, /export async function GET/);
+    assert.ok(r.indexOf("pedidoDoProprioSite(") < r.indexOf("getClaims("));
+    assert.match(r, /retirarOrigemDaConta\(userId\)/);
+    assert.doesNotMatch(r, /\.update\(/);
+  });
+});
+
+describe("ligações e consentimento (o ?ref= nunca dá acesso)", () => {
+  test("a persistência exige consentimento de estatística; o middleware nunca cria o cookie", () => {
     const m = fonte("../middleware.ts");
-    assert.match(m, /cookieOrigemParaDefinir\(ref, request\.cookies\.get\(COOKIE_ORIGEM\)/);
-    assert.match(m, /return comOrigemAquisicao\(request, resposta\)/);
+    const c = fonte("../components/MedicaoComConsentimento.tsx");
+    const s = fonte("./origemAquisicaoServidor.ts");
+    assert.match(m, /=== "dado"\) return resposta;[\s\S]*resposta\.cookies\.delete\(\{ name: COOKIE_ORIGEM/);
+    assert.doesNotMatch(m, /cookies\.set\(/);
+    assert.match(c, /Cookiebot\?\.hasResponse === true[\s\S]*consent\?\.statistics === true/);
+    assert.match(c, /decidirCookiesOrigem\(/);
+    assert.match(fonte("../components/AnalyticsScripts.tsx"), /origemAtiva=\{origemAquisicaoAtiva\(\)\}/);
+    assert.match(s, /consentimento === "dado" \? lerCookieOrigem/);
+    assert.match(s, /consentimento === "retirado"\) \{\s*await retirarOrigemDaConta\(userId\)/);
     assert.equal(COOKIE_ORIGEM, "dolado_origem");
   });
 
-  test("todas as Checkout Sessions levam a origem (única chamada a sessions.create)", () => {
+  test("a origem não é enviada à Stripe (única chamada a sessions.create)", () => {
     const s = fonte("../app/actions/stripe.ts");
     assert.equal(s.match(/checkout\.sessions\.create\(/g)?.length, 1);
-    assert.match(s, /checkout\.sessions\.create\(parametros\(comOrigemNaMetadata\(metadata, origem\)\)\)/);
+    assert.match(s, /checkout\.sessions\.create\(parametros\(metadata\)\)/);
+    assert.doesNotMatch(s, /acquisition_source|origemParaCheckout|comOrigemNaMetadata/);
+    // Nem a criação da conta lê a origem da metadata de uma sessão da Stripe.
+    assert.doesNotMatch(fonte("../app/criar-conta/actions.ts"), /origemDaMetadata|acquisition_source/);
   });
 
-  test("a conta é atribuída na criação, no callback e no código", () => {
-    for (const f of ["../app/auth/callback/route.ts", "../app/registo/actions.ts", "../app/tratar-caso/actions.ts", "../app/criar-conta/actions.ts"]) {
+  test("a escolha de cookies é aplicada à conta na criação, no callback, no código, no início de sessão e no Checkout", () => {
+    for (const f of ["../app/auth/callback/route.ts", "../app/registo/actions.ts", "../app/tratar-caso/actions.ts", "../app/criar-conta/actions.ts", "../app/login/actions.ts", "../app/actions/stripe.ts"]) {
       assert.match(fonte(f), /registarOrigemDaConta\(/, f);
     }
   });
@@ -198,6 +239,12 @@ describe("ligações e isolamento (o ?ref= nunca dá acesso)", () => {
     assert.equal(funcao.match(/\bupdate public\./g)?.length, 1);
     assert.match(funcao, /update public\.utilizadores\s+set acquisition_source = p_origem\s+where/);
     assert.doesNotMatch(funcao, /user_access|case_credit|insert into/);
+    // A retirada: só passa a origem a null.
+    const ret = fonte("../../supabase/migrations/20261008110000_origem_aquisicao_retirada.sql");
+    const fr = ret.slice(ret.indexOf("create or replace function public.origem_aquisicao_retirar"));
+    assert.equal(fr.match(/\bupdate public\./g)?.length, 1);
+    assert.match(fr, /update public\.utilizadores\s+set acquisition_source = null\s+where/);
+    assert.doesNotMatch(fr, /user_access|case_credit|insert into/);
   });
 
   test("o formato da base de dados é o mesmo do código", () => {

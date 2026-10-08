@@ -1,12 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
-import {
-  COOKIE_ORIGEM,
-  PARAMETRO_ORIGEM,
-  cookieOrigemParaDefinir,
-  opcoesCookieOrigem,
-  origemAquisicaoAtiva,
-} from "@/lib/origemAquisicao";
+import { COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM, COOKIE_ORIGEM, dominioCookiesOrigem, estadoConsentimentoOrigem } from "@/lib/origemAquisicao";
 
 // Páginas públicas sem estado de sessão — poupam a chamada de rede à
 // Supabase feita em updateSession, que é o maior custo de latência por
@@ -96,20 +90,19 @@ function ehPaginaDeRevisaoDoTexto(pathname: string) {
 
 export async function middleware(request: NextRequest) {
   const resposta = await encaminhar(request);
-  return comOrigemAquisicao(request, resposta);
+  return semOrigemSemConsentimento(request, resposta);
 }
 
-// Origem de aquisição (?ref=…): guarda a primeira origem válida num cookie
-// partilhado entre dolado.pt e portal.dolado.pt (first-touch, 30 dias).
-// Só atribuição — nunca dá acesso, plano, desconto nem casos. Sem I/O.
-function comOrigemAquisicao(request: NextRequest, resposta: NextResponse) {
-  const ref = request.nextUrl.searchParams.get(PARAMETRO_ORIGEM);
-  if (!ref || !origemAquisicaoAtiva()) return resposta;
-  const valor = cookieOrigemParaDefinir(ref, request.cookies.get(COOKIE_ORIGEM)?.value, Date.now());
-  if (valor) {
-    const host = request.headers.get("host")?.split(":")[0] ?? "";
-    resposta.cookies.set(COOKIE_ORIGEM, valor, opcoesCookieOrigem(host, process.env.NODE_ENV === "production"));
-  }
+// Origem de aquisição (?ref=): o cookie dolado_origem só é criado no browser
+// depois do consentimento de estatística (MedicaoComConsentimento). Aqui só se
+// apaga um dolado_origem que exista sem esse consentimento confirmado
+// (incluindo cookies antigos httpOnly, que o JavaScript não consegue apagar).
+function semOrigemSemConsentimento(request: NextRequest, resposta: NextResponse) {
+  if (!request.cookies.has(COOKIE_ORIGEM)) return resposta;
+  if (estadoConsentimentoOrigem(request.cookies.get(COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM)?.value) === "dado") return resposta;
+  const host = request.headers.get("host")?.split(":")[0] ?? "";
+  const dominio = dominioCookiesOrigem(host);
+  resposta.cookies.delete({ name: COOKIE_ORIGEM, path: "/", ...(dominio ? { domain: dominio } : {}) });
   return resposta;
 }
 

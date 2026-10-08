@@ -174,5 +174,44 @@ select is(
   1::bigint, 'cliente só vê a própria linha');
 reset role;
 
+-- ---------------------------------------------------------------------------
+-- Retirada do consentimento (20261008110000_origem_aquisicao_retirada.sql)
+-- ---------------------------------------------------------------------------
+select testes.como('00000000-0000-4000-e000-00000000000a');
+select is(
+  testes.tenta($$select public.origem_aquisicao_retirar('00000000-0000-4000-e000-00000000000a')$$),
+  'erro:42501', 'o cliente não chama a função de retirada (só o servidor)');
+reset role;
+
+select testes.como(null);
+select is(
+  testes.tenta($$update public.utilizadores set acquisition_source = 'instagram' where id = '00000000-0000-4000-e000-00000000000a'$$),
+  'erro:23514', 'a origem nunca muda para outro valor, nem pela service_role');
+select is(
+  testes.tenta($$update public.utilizadores set acquisition_source = null where id = '00000000-0000-4000-e000-00000000000a'$$),
+  'erro:23514', 'nem a service_role a apaga diretamente: só pela função de retirada');
+select ok(public.origem_aquisicao_retirar('00000000-0000-4000-e000-00000000000a'), 'retirada apaga a origem da conta');
+select ok(not public.origem_aquisicao_retirar('00000000-0000-4000-e000-00000000000a'), 'retirada repetida: false, sem erro');
+select ok(not public.origem_aquisicao_retirar(null), 'sem conta: false, sem erro');
+select is(
+  testes.tenta($$update public.utilizadores set acquisition_source = null where id = '00000000-0000-4000-e000-00000000000e'$$),
+  'erro:23514', 'a permissão da retirada não fica ativa depois da função');
+reset role;
+
+select is(
+  (select acquisition_source from public.utilizadores where id = '00000000-0000-4000-e000-00000000000a'),
+  null, 'A fica sem origem depois da retirada');
+select is(
+  (select acquisition_source from public.utilizadores where id = '00000000-0000-4000-e000-00000000000e'),
+  'remax_duplo_prestigio', 'a retirada de A não mexe noutras contas');
+
+-- Depois da retirada, uma nova visita (posterior à criação da conta) não volta a atribuí-la.
+update public.utilizadores set created_at = now() - interval '2 days' where id = '00000000-0000-4000-e000-00000000000a';
+select testes.como(null);
+select ok(
+  not public.origem_aquisicao_registar('00000000-0000-4000-e000-00000000000a', 'instagram', now() - interval '1 hour'),
+  'conta já existente não é atribuída de novo por um ?ref= posterior');
+reset role;
+
 select * from finish();
 rollback;

@@ -6,16 +6,21 @@
 // à origem com o mesmo nome; quem veio por um link e não usa cupão continua
 // atribuído).
 //
-// Fluxo: o middleware lê ?ref= e guarda a primeira origem válida num cookie
-// (first-touch, 30 dias) → o servidor grava-a em utilizadores.acquisition_source
-// (função origem_aquisicao_registar: só se vazia, só para contas criadas
-// depois da visita) → vai na metadata das Checkout Sessions.
-// Fonte de verdade: utilizadores.acquisition_source. O Stripe é só cópia.
+// Fluxo (revisto a 08/10/2026): só depois de o Cookiebot confirmar o
+// consentimento de estatística, o browser grava a marca dolado_estatisticas=1
+// e a primeira origem válida em dolado_origem (first-touch, 30 dias); o
+// servidor grava-a em utilizadores.acquisition_source. Recusa ou retirada:
+// marca dolado_estatisticas=0, dolado_origem apagado e a origem da conta
+// apagada (na hora, se houver sessão; senão na próxima interação autenticada).
+// Nunca é enviada à Stripe nem a parceiros.
 
 export const COOKIE_ORIGEM = "dolado_origem";
+export const COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM = "dolado_estatisticas";
 export const ORIGEM_JANELA_DIAS = 30;
 export const PARAMETRO_ORIGEM = "ref";
-export const CHAVE_METADATA_ORIGEM = "acquisition_source";
+/** Valores da marca dolado_estatisticas: consentimento de estatística dado / recusado ou retirado. */
+export const CONSENTIMENTO_DADO = "1";
+export const CONSENTIMENTO_RETIRADO = "0";
 
 const MAX_COMPRIMENTO = 64;
 // Letras minúsculas, números, "_" e "-"; começa por letra ou número; pelo
@@ -24,7 +29,7 @@ const FORMATO = /^[a-z0-9][a-z0-9_-]{1,63}$/;
 // Tolerância para relógios diferentes entre servidores.
 const FOLGA_MS = 5 * 60 * 1000;
 
-/** Ligado só com ORIGEM_AQUISICAO_ATIVO=1 (Política de Privacidade e cookies têm de o descrever antes). */
+/** Ligado só com ORIGEM_AQUISICAO_ATIVO=1 e após consentimento de estatística. */
 export function origemAquisicaoAtiva(valor: string | undefined = process.env.ORIGEM_AQUISICAO_ATIVO) {
   return valor === "1";
 }
@@ -72,32 +77,75 @@ export function cookieOrigemParaDefinir(
   return valorCookieOrigem(origem, agoraMs);
 }
 
-/** Opções do cookie: partilhado entre dolado.pt e portal.dolado.pt (a conta e o Checkout vivem no portal). */
-export function opcoesCookieOrigem(host: string, producao: boolean) {
-  const dominio = host === "dolado.pt" || host.endsWith(".dolado.pt") ? ".dolado.pt" : undefined;
-  return {
-    httpOnly: true,
-    secure: producao,
-    sameSite: "lax" as const,
-    path: "/",
-    maxAge: ORIGEM_JANELA_DIAS * 24 * 3600,
-    ...(dominio ? { domain: dominio } : {}),
-  };
+export type EstadoConsentimentoOrigem = "dado" | "retirado" | "desconhecido";
+
+/** Lê a marca dolado_estatisticas. Sem marca (ou outro valor) = desconhecido: não grava nem apaga. */
+export function estadoConsentimentoOrigem(marca: string | null | undefined): EstadoConsentimentoOrigem {
+  if (marca === CONSENTIMENTO_DADO) return "dado";
+  if (marca === CONSENTIMENTO_RETIRADO) return "retirado";
+  return "desconhecido";
+}
+
+/** Cookie a gravar no browser (valor null = apagar). */
+export type CookieOrigemBrowser = { nome: string; valor: string | null };
+
+/**
+ * O que o browser faz com os cookies da origem depois de ler o Cookiebot.
+ * Falha fechada: sem resposta no banner (ou sem Cookiebot) não cria nada.
+ * `avisarRetirada` = pedir ao servidor que apague a origem da conta (só na
+ * passagem de consentido para recusado, para não repetir o pedido a cada página).
+ */
+export function decidirCookiesOrigem(p: {
+  ativo: boolean;
+  temResposta: boolean;
+  estatisticas: boolean;
+  marcaAtual: string | null | undefined;
+  origemAtual: string | null | undefined;
+  ref: string | null | undefined;
+  agoraMs: number;
+}): { cookies: CookieOrigemBrowser[]; avisarRetirada: boolean } {
+  const apagarOrigem: CookieOrigemBrowser[] = p.origemAtual ? [{ nome: COOKIE_ORIGEM, valor: null }] : [];
+  if (!p.ativo || !p.temResposta) {
+    // Desligado: limpa só o cookie de origem antigo. Sem resposta: nada muda.
+    return { cookies: p.ativo ? [] : apagarOrigem, avisarRetirada: false };
+  }
+  if (!p.estatisticas) {
+    return {
+      cookies: [{ nome: COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM, valor: CONSENTIMENTO_RETIRADO }, ...apagarOrigem],
+      avisarRetirada: estadoConsentimentoOrigem(p.marcaAtual) === "dado",
+    };
+  }
+  const cookies: CookieOrigemBrowser[] = [{ nome: COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM, valor: CONSENTIMENTO_DADO }];
+  const origem = cookieOrigemParaDefinir(p.ref, p.origemAtual, p.agoraMs);
+  if (origem) cookies.push({ nome: COOKIE_ORIGEM, valor: origem });
+  return { cookies, avisarRetirada: false };
+}
+
+/** Domínio dos cookies: partilhado entre dolado.pt e portal.dolado.pt; host-only noutros (localhost). */
+export function dominioCookiesOrigem(host: string): string | undefined {
+  return host === "dolado.pt" || host.endsWith(".dolado.pt") ? ".dolado.pt" : undefined;
+}
+
+/** Linha document.cookie (30 dias; valor null = apagar). */
+export function linhaCookieOrigem(c: CookieOrigemBrowser, host: string, https: boolean) {
+  const dominio = dominioCookiesOrigem(host);
+  const maxAge = c.valor === null ? 0 : ORIGEM_JANELA_DIAS * 24 * 3600;
+  return `${c.nome}=${c.valor === null ? "" : encodeURIComponent(c.valor)}; Max-Age=${maxAge}; Path=/${dominio ? `; Domain=${dominio}` : ""}; SameSite=Lax${https ? "; Secure" : ""}`;
 }
 
 /**
- * Acrescenta a origem à metadata do Stripe sem substituir nada do que já lá
- * está. Sem origem válida, devolve a metadata tal como veio.
+ * Pedido feito por uma página deste mesmo host (proteção contra pedidos de
+ * outros sites): Origin obrigatório e igual ao host; Sec-Fetch-Site, quando o
+ * browser o envia, tem de ser same-origin.
  */
-export function comOrigemNaMetadata(metadata: Record<string, string>, origem: string | null | undefined) {
-  const valida = normalizarOrigem(origem);
-  if (!valida || CHAVE_METADATA_ORIGEM in metadata) return metadata;
-  return { ...metadata, [CHAVE_METADATA_ORIGEM]: valida };
-}
-
-/** Origem lida da metadata de uma Checkout Session (só valores no formato). */
-export function origemDaMetadata(metadata: Record<string, string> | null | undefined) {
-  return normalizarOrigem(metadata?.[CHAVE_METADATA_ORIGEM]);
+export function pedidoDoProprioSite(origin: string | null, host: string | null, secFetchSite: string | null) {
+  if (!origin || !host) return false;
+  if (secFetchSite && secFetchSite !== "same-origin") return false;
+  try {
+    return new URL(origin).host === host.split(",")[0].trim();
+  } catch {
+    return false;
+  }
 }
 
 // Nomes amigáveis para o backoffice. Origem nova = nova linha aqui (opcional:

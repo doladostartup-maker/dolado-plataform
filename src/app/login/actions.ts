@@ -5,6 +5,7 @@ import { destinoDepoisDeAutenticar } from "@/lib/authServidor";
 import { ehDestinoSeguro } from "@/lib/destinoAuth";
 import { createClient } from "@/lib/supabase/server";
 import { mensagemErroConta } from "@/lib/mensagensErro";
+import { registarOrigemDaConta } from "@/lib/origemAquisicaoServidor";
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -19,6 +20,9 @@ export async function login(formData: FormData) {
     const voltar = ehDestinoSeguro(next) ? `&next=${encodeURIComponent(next)}` : "";
     redirect(`/login?erro=${encodeURIComponent(mensagemErroConta(error?.code, error?.message))}${voltar}`);
   }
+
+  // Origem de aquisição: aplica a escolha de cookies deste browser à conta.
+  await registarOrigemDaConta(data.user.id);
 
   // Sem destino explícito: /portal/casos (ou o backoffice, para o admin).
   redirect(await destinoDepoisDeAutenticar(supabase, data.user.id, { nextExplicito: next }));

@@ -113,8 +113,9 @@ describe("textos e páginas legais", () => {
 
   test("Livro de Reclamações e RAL: serviço oficial e CNIACC presentes", () => {
     assert.ok(LIVRO_RECLAMACOES_URL.startsWith("https://www.livroreclamacoes.pt"));
-    assert.ok(ENTIDADES_RAL.some((e) => e.nome.startsWith("CNIACC") && e.site === "https://www.cniacc.pt"));
-    assert.ok(ENTIDADES_RAL.some((e) => e.nome.startsWith("CACCL")));
+    // Nomes como na lista oficial da DGC (confrontada a 08/10/2026).
+    assert.ok(ENTIDADES_RAL.some((e) => e.nome.endsWith("(CNIACC)") && e.site === "https://www.cniacc.pt" && e.tipo === "geral"));
+    assert.ok(ENTIDADES_RAL.some((e) => e.nome.endsWith("(CACCL)") && e.tipo === "geral"));
     for (const e of ENTIDADES_RAL) assert.match(e.site, /^https:\/\//);
   });
 

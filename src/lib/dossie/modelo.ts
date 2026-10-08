@@ -13,7 +13,7 @@
 //   * só comunicações recebidas já analisadas por uma pessoa e sem suspeita
 //     de spam nem marcadas como irrelevantes; mostradas em texto simples.
 
-import { ESTADO_FINAL_DOSSIE, LISTA_OFICIAL_RAL_URL, OPCOES_CONFLITO, ENTIDADES_A_CONSULTAR } from "../encerramentoExterno.ts";
+import { ESTADO_FINAL_DOSSIE, LISTA_OFICIAL_RAL_URL, OPCOES_CONFLITO, CENTROS_RAL_GERAIS, ENTIDADES_RAL_SETORIAIS } from "../encerramentoExterno.ts";
 import { cronologiaCliente, type EventoCliente } from "../portal/estadoCaso.ts";
 import { CANAIS_ENVIO } from "../textoCaso.ts";
 import { ROTULO_CANAL_RECEBIDA } from "../acompanhamento/apresentacao.ts";
@@ -296,7 +296,9 @@ export function montarDossie(d: DadosDossie): DossieModelo {
     blocos: [
       ...OPCOES_CONFLITO.paragrafos.map((texto) => ({ tipo: "paragrafo" as const, texto })),
       { tipo: "subtitulo", texto: "Centros a consultar (informação pública)" },
-      { tipo: "lista", itens: ENTIDADES_A_CONSULTAR.map((e) => `${e.nome} — ${e.ambito} — ${e.site}`) },
+      { tipo: "lista", itens: CENTROS_RAL_GERAIS.map((e) => `${e.nome} — ${e.ambito} — ${e.site}`) },
+      { tipo: "subtitulo", texto: "Entidades setoriais a consultar (informação pública)" },
+      { tipo: "lista", itens: ENTIDADES_RAL_SETORIAIS.map((e) => `${e.nome} — ${e.ambito} — ${e.site}`) },
       { tipo: "paragrafo", texto: `Lista oficial completa das entidades RAL (Direção-Geral do Consumidor): ${LISTA_OFICIAL_RAL_URL}`, estilo: "nota" },
     ],
   });
