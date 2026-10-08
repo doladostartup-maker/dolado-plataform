@@ -213,7 +213,8 @@ select is(
                            'indicacao_reservar_recompensa', 'indicacao_atualizar_reserva', 'indicacao_usar_recompensa',
                            'indicacao_libertar_reserva', 'indicacao_reverter_compra', 'indicacao_rever_recompensa',
                            'indicacoes_metricas', 'indicacoes_expirar_recompensas',
-                           'indicacoes_recompensas_registar_historico')), 0::bigint,
+                           'indicacoes_recompensas_registar_historico',
+                           'origem_aquisicao_registar')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em

@@ -36,6 +36,7 @@ import {
 import { EnviosCaso, type ComprovativoEquipa, type EnvioEquipa } from "../_components/EnviosCaso";
 import { EncerramentoCaso, type DossieResumo, type EncerramentoResumo } from "../_components/EncerramentoCaso";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { rotuloOrigem } from "@/lib/origemAquisicao";
 import { rascunhoIAAtivo } from "@/lib/rascunhoIA/servidor";
 import { documentosParaPreenchimento } from "@/lib/preenchimentoReclamacao/servidor";
 import type { GeracaoIA } from "../_components/RascunhoIA";
@@ -70,6 +71,24 @@ export default async function CasoDetalhePage({
   if (!caso) {
     notFound();
   }
+
+  // Origem de aquisição (?ref=) do cliente — fonte de verdade na conta.
+  const { data: conta } = caso.utilizador_id
+    ? await supabase.from("utilizadores").select("acquisition_source").eq("id", caso.utilizador_id).maybeSingle()
+    : { data: null };
+  const origemAquisicao = rotuloOrigem(conta?.acquisition_source as string | null | undefined);
+  // Voucher (cupão Stripe) da compra mais recente com desconto — à parte da origem.
+  const { data: compraComVoucher } = caso.utilizador_id
+    ? await supabase
+        .from("stripe_payments")
+        .select("codigo_desconto")
+        .eq("user_id", caso.utilizador_id)
+        .not("codigo_desconto", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    : { data: null };
+  const voucher = (compraComVoucher?.codigo_desconto as string | null | undefined) ?? null;
 
   const { data: anexosData } = await supabase
     .from("anexos")
@@ -242,6 +261,8 @@ export default async function CasoDetalhePage({
           <>
             Contra <strong className="font-semibold text-[var(--v2-navy)]">{caso.empresa || "empresa por indicar"}</strong> · criado em {criadoEm} ·{" "}
             origem comercial: {ORIGEM_COMERCIAL[caso.origem_credito as string] ?? "sem registo"}
+            {origemAquisicao && <> · origem: {origemAquisicao}</>}
+            {voucher && <> · voucher: {voucher}</>}
           </>
         }
         acoes={

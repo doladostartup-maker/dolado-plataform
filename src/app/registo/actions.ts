@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { dadosContaNova, destinoDepoisDeAutenticar, guardarDestinoPosLogin } from "@/lib/authServidor";
 import { DESTINO_POS_LOGIN, ehDestinoSeguro, urlConfirmarEmail } from "@/lib/destinoAuth";
 import { mensagemErroConta } from "@/lib/mensagensErro";
+import { registarOrigemDaConta } from "@/lib/origemAquisicaoServidor";
 
 export async function registar(formData: FormData) {
   const supabase = await createClient();
@@ -27,6 +28,9 @@ export async function registar(formData: FormData) {
     const voltar = ehDestinoSeguro(next) ? `&next=${encodeURIComponent(next)}` : "";
     redirect(`/registo?erro=${encodeURIComponent(mensagemErroConta(error.code, error.message))}${voltar}`);
   }
+
+  // Origem de aquisição (?ref=): só atribuição, nunca acesso.
+  if (data.user && (data.user.identities?.length ?? 0) > 0) await registarOrigemDaConta(data.user.id);
 
   // Sem confirmação de e-mail ativa (ex.: stack local), já há sessão.
   if (data.session && data.user) {
