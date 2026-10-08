@@ -74,7 +74,8 @@ export async function codigoDaConta(userId: string): Promise<string> {
 }
 
 /**
- * Visita pelo link. Reutiliza a visita do cookie se for do mesmo código (um
+ * Visita pelo link, chamada só pelo endpoint que confirmou consentimento de
+ * marketing. Reutiliza a visita do cookie se for do mesmo código (um
  * recarregamento não conta duas vezes). null = código inexistente.
  */
 export async function registarVisita(codigo: string, visitaAtual: string | null): Promise<string | null> {
@@ -97,7 +98,10 @@ export async function registarVisita(codigo: string, visitaAtual: string | null)
  */
 export async function atribuirIndicacaoDoBrowser(userId: string): Promise<string> {
   if (!indicacoesAtivas()) return "desligado";
-  const visita = visitaDoCookie((await cookies()).get(COOKIE_INDICACAO)?.value);
+  // O cookie é httpOnly e só é emitido pelo endpoint depois de confirmar o
+  // consentimento do Cookiebot; a retirada apaga-o no domínio principal.
+  const jar = await cookies();
+  const visita = visitaDoCookie(jar.get(COOKIE_INDICACAO)?.value);
   if (!visita) return "sem_visita";
   const { data, error } = await createAdminClient().rpc("indicacao_atribuir", {
     p_referred: userId,
@@ -115,7 +119,8 @@ export async function atribuirIndicacaoDoBrowser(userId: string): Promise<string
  */
 export async function visitaDeIndicacaoNoBrowser(): Promise<boolean> {
   if (!indicacoesAtivas()) return false;
-  const visita = visitaDoCookie((await cookies()).get(COOKIE_INDICACAO)?.value);
+  const jar = await cookies();
+  const visita = visitaDoCookie(jar.get(COOKIE_INDICACAO)?.value);
   if (!visita) return false;
   const { data } = await createAdminClient()
     .from("indicacoes_visitas")
@@ -344,8 +349,7 @@ export function criarDependenciasIndicacoes(opcoes: {
       }
     },
 
-    async sinalAutoIndicacao({ referrerUserId, paymentIntentId }) {
-      if (!paymentIntentId) return null;
+    async sinalAutoIndicacao({ referrerUserId, referredCustomerId, paymentIntentId }) {
       try {
         const { data: conta } = await admin
           .from("user_access")
@@ -354,6 +358,8 @@ export function criarDependenciasIndicacoes(opcoes: {
           .maybeSingle();
         const customer = conta?.stripe_customer_id as string | null | undefined;
         if (!customer) return null;
+        if (referredCustomerId && referredCustomerId === customer) return "mesmo_cliente_stripe";
+        if (!paymentIntentId) return null;
         const pi = await stripe().paymentIntents.retrieve(paymentIntentId, { expand: ["payment_method"] });
         const impressao = impressaoDigital(pi.payment_method as Stripe.PaymentMethod | null);
         if (!impressao) return null;

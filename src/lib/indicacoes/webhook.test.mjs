@@ -55,9 +55,10 @@ function depsIndicacoes() {
     async paymentIntentDaCompra(session) {
       return session.payment_intent ?? (session.invoice ? `pi_de_${session.invoice}` : null);
     },
-    async sinalAutoIndicacao({ referrerUserId, paymentIntentId }) {
-      const imp = e.pis.get(paymentIntentId)?.impressao;
+    async sinalAutoIndicacao({ referrerUserId, referredCustomerId, paymentIntentId }) {
       const cust = e.contas.get(referrerUserId)?.customer;
+      if (referredCustomerId && referredCustomerId === cust) return "mesmo_cliente_stripe";
+      const imp = e.pis.get(paymentIntentId)?.impressao;
       return imp && (e.cartoes.get(cust) ?? []).includes(imp) ? "mesmo_meio_de_pagamento" : null;
     },
     async confirmarCompra(d) {
@@ -70,9 +71,7 @@ function depsIndicacoes() {
         ? "nao_primeira_compra"
         : (d.valorCentimos ?? 0) <= 0
           ? "compra_sem_pagamento"
-          : d.customerId && d.customerId === e.contas.get(i.referrer)?.customer
-            ? "mesmo_cliente_stripe"
-            : null;
+          : null;
       Object.assign(i, {
         estado: motivo ? "rejeitada" : "compra_confirmada",
         compra_session_id: d.sessionId,
@@ -369,11 +368,11 @@ describe("primeira compra de quem foi indicado", () => {
 });
 
 describe("auto-indicação", () => {
-  test("mesmo Customer Stripe de quem indicou → rejeitada, sem recompensa", async () => {
+  test("mesmo Customer Stripe de quem indicou → recompensa em revisão humana", async () => {
     atribuir(BRUNO, ANA);
     await processar(evento("checkout.session.completed", sessaoAvulso(BRUNO, { customer: "cus_a1" })));
-    assert.equal(e.indicacoes.get(BRUNO).motivo, "mesmo_cliente_stripe");
-    assert.equal(e.recompensas.length, 0);
+    assert.deepEqual(recompensasDe(ANA).map((r) => r.estado), ["em_revisao"]);
+    assert.ok(e.avisos.some((a) => a.startsWith("Indicação por rever")));
   });
 
   test("mesmo cartão de quem indicou → desconto em revisão e aviso ao admin (nunca por IP)", async () => {

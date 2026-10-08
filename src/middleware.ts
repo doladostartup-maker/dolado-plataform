@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM, COOKIE_ORIGEM, dominioCookiesOrigem, estadoConsentimentoOrigem } from "@/lib/origemAquisicao";
+import { COOKIE_INDICACAO } from "@/lib/indicacoes/regras";
+import { cookiebotAceitouMarketing } from "@/lib/indicacoes/consentimento";
 
 // Páginas públicas sem estado de sessão — poupam a chamada de rede à
 // Supabase feita em updateSession, que é o maior custo de latência por
@@ -42,6 +44,7 @@ const ROTAS_SEM_REFRESH_DE_SESSAO = [
   ...PAGINAS_PUBLICAS,
   "/auth/callback",
   "/api/stripe/webhook",
+  "/api/indicacoes/visita",
   // Webhook de receção de respostas (Resend): sem sessão, como o do Stripe.
   "/api/webhooks/resend/inbound",
 ];
@@ -79,9 +82,13 @@ function ehVersaoDosTermos(pathname: string) {
   return pathname.startsWith("/termos/") || pathname.startsWith("/privacidade/");
 }
 
-// Links de indicação (/r/<código>): só registam a visita e redirecionam.
+// Links de indicação (/r/<código>): página pública no domínio com Cookiebot.
 function ehLinkDeIndicacao(pathname: string) {
   return pathname.startsWith("/r/");
+}
+
+function ehApiIndicacao(pathname: string) {
+  return pathname === "/api/indicacoes/visita";
 }
 
 // Páginas públicas de revisão do texto (link do e-mail, sem login): não
@@ -95,16 +102,28 @@ export async function middleware(request: NextRequest) {
   return semOrigemSemConsentimento(request, resposta);
 }
 
-// Origem de aquisição (?ref=): o cookie dolado_origem só é criado no browser
-// depois do consentimento de estatística (MedicaoComConsentimento). Aqui só se
-// apaga um dolado_origem que exista sem esse consentimento confirmado
-// (incluindo cookies antigos httpOnly, que o JavaScript não consegue apagar).
+// Cookies de aquisição e indicação: dolado_origem só é criado no browser após
+// consentimento de estatística; dolado_indicacao só é emitido pelo endpoint após
+// consentimento de marketing no Cookiebot. O middleware apaga ambos quando a
+// escolha correspondente é recusada/retirada (incluindo cookies httpOnly).
 function semOrigemSemConsentimento(request: NextRequest, resposta: NextResponse) {
-  if (!request.cookies.has(COOKIE_ORIGEM)) return resposta;
-  if (estadoConsentimentoOrigem(request.cookies.get(COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM)?.value) === "dado") return resposta;
   const host = request.headers.get("host")?.split(":")[0] ?? "";
-  const dominio = dominioCookiesOrigem(host);
-  resposta.cookies.delete({ name: COOKIE_ORIGEM, path: "/", ...(dominio ? { domain: dominio } : {}) });
+  if (
+    request.cookies.has(COOKIE_ORIGEM) &&
+    estadoConsentimentoOrigem(request.cookies.get(COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM)?.value) !== "dado"
+  ) {
+    const dominioOrigem = dominioCookiesOrigem(host);
+    resposta.cookies.delete({ name: COOKIE_ORIGEM, path: "/", ...(dominioOrigem ? { domain: dominioOrigem } : {}) });
+  }
+  const consentimentoMarketing = request.cookies.get("CookieConsent")?.value;
+  const hostMarketing = host === "dolado.pt" || host === "www.dolado.pt";
+  if (
+    request.cookies.has(COOKIE_INDICACAO) &&
+    ((consentimentoMarketing !== undefined && !cookiebotAceitouMarketing(consentimentoMarketing)) ||
+      (hostMarketing && consentimentoMarketing === undefined))
+  ) {
+    resposta.cookies.delete({ name: COOKIE_INDICACAO, path: "/", domain: ".dolado.pt" });
+  }
   return resposta;
 }
 
@@ -121,10 +140,16 @@ async function encaminhar(request: NextRequest): Promise<NextResponse> {
     );
   }
 
+  if (host.startsWith("portal.") && ehLinkDeIndicacao(pathname)) {
+    return NextResponse.redirect(new URL(`${pathname}${search}`, "https://dolado.pt"), 308);
+  }
+
   if (
     (host === "dolado.pt" || host === "www.dolado.pt") &&
     !PAGINAS_SO_MARKETING.includes(pathname) &&
-    !ehVersaoDosTermos(pathname)
+    !ehVersaoDosTermos(pathname) &&
+    !ehLinkDeIndicacao(pathname) &&
+    !ehApiIndicacao(pathname)
   ) {
     return NextResponse.redirect(
       new URL(`${pathname}${search}`, "https://portal.dolado.pt"),

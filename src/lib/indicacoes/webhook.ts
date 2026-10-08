@@ -11,8 +11,8 @@ import { produtoDaCompra } from "./regras.ts";
 //   reserva do desconto; pagamento falhado devolve-o.
 // - Primeira compra confirmada da conta indicada → decisão atómica e
 //   idempotente na base de dados (indicacao_confirmar_compra): recompensa
-//   "disponivel", "em_revisao" (mesmo cartão de quem indicou) ou rejeitada
-//   (mesmo Customer Stripe, 0 €, não é a primeira compra). Um reenvio do
+//   "disponivel", "em_revisao" (fingerprint coincidente ou mesmo Customer
+//   Stripe) ou rejeitada (0 €, não é a primeira compra). Um reenvio do
 //   Stripe nunca cria uma segunda recompensa.
 // - Desconto de quem indicou usado numa cobrança paga: checkout:<sessão>
 //   (metadata indicacao_recompensa_id) ou invoice:<id> (cupão posto na
@@ -55,7 +55,7 @@ export interface DependenciasIndicacoes {
    * (ex.: o cartão desta compra é o mesmo de quem indicou). Motivo ou null.
    * Nunca por IP.
    */
-  sinalAutoIndicacao(dados: { referrerUserId: string; paymentIntentId: string | null }): Promise<string | null>;
+  sinalAutoIndicacao(dados: { referrerUserId: string; referredCustomerId: string | null; paymentIntentId: string | null }): Promise<string | null>;
   confirmarCompra(dados: DadosPrimeiraCompra): Promise<ResultadoConfirmacaoIndicacao>;
   usarRecompensa(recompensaId: string, userId: string, usadaOrigem: string, descontoCentimos: number | null): Promise<string>;
   /** Reserva → nova origem e prazo (null = sem prazo). */
@@ -142,7 +142,12 @@ export async function indicacaoAoConfirmarPagamento(
   if (!produto) return "produto_sem_indicacao";
 
   const paymentIntentId = await deps.paymentIntentDaCompra(session);
-  const suspeita = await deps.sinalAutoIndicacao({ referrerUserId: pendente.referrerUserId, paymentIntentId });
+  const customerId = typeof session.customer === "string" ? session.customer : (session.customer?.id ?? null);
+  const suspeita = await deps.sinalAutoIndicacao({
+    referrerUserId: pendente.referrerUserId,
+    referredCustomerId: customerId,
+    paymentIntentId,
+  });
   const r = await deps.confirmarCompra({
     referredUserId: userId,
     sessionId: session.id,
@@ -150,7 +155,7 @@ export async function indicacaoAoConfirmarPagamento(
     valorCentimos: session.amount_total ?? null,
     descontoCentimos: session.total_details?.amount_discount ?? null,
     comDescontoIndicacao: session.metadata?.indicacao_desconto === "novo_cliente",
-    customerId: typeof session.customer === "string" ? session.customer : (session.customer?.id ?? null),
+    customerId,
     subscriptionId: typeof session.subscription === "string" ? session.subscription : (session.subscription?.id ?? null),
     paymentIntentId,
     suspeita,

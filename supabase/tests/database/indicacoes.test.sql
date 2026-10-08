@@ -6,7 +6,7 @@
 -- dados de terceiros) e não escreve nada; o código não muda; a atribuição
 -- recusa auto-indicação, contas já clientes, visitas expiradas e uma segunda
 -- atribuição; a primeira compra dá uma única recompensa (idempotente), nunca
--- a 0 €, nunca com o mesmo Customer Stripe, e "em_revisao" com sinal de
+-- a 0 €, e "em_revisao" com sinais de
 -- suspeita; uma cobrança usa no máximo um desconto; 3 descontos = 3
 -- cobranças; reembolso reverte e anula o desconto por usar.
 -- Tudo numa transação revertida.
@@ -124,13 +124,13 @@ select is(public.indicacao_confirmar_compra('00000000-0000-4000-d000-00000000000
 select is((select count(*) from public.indicacoes_recompensas where user_id = '00000000-0000-4000-d000-00000000000a'), 1::bigint, 'A tem 1 desconto');
 select is(testes.tenta($$update public.indicacoes set compra_session_id = 'cs_outra' where referred_user_id = '00000000-0000-4000-d000-00000000000c'$$), 'erro:23514', 'indicação registada não pode ter compra sem decisão');
 
--- Mesmo Customer Stripe de quem indicou → rejeitada.
-select is(public.indicacao_confirmar_compra('00000000-0000-4000-d000-00000000000c', 'cs_c1', 'protecao', 399, 100, true, 'cus_a', 'sub_c', 'pi_c1', null)->>'resultado', 'rejeitada_mesmo_cliente_stripe', 'mesmo Customer de A → rejeitada');
-select is((select count(*) from public.indicacoes_recompensas where indicacao_id = (select id from public.indicacoes where referred_user_id = '00000000-0000-4000-d000-00000000000c')), 0::bigint, 'sem recompensa para a auto-indicação');
+-- Mesmo Customer Stripe de quem indicou → sinal para revisão humana.
+select is(public.indicacao_confirmar_compra('00000000-0000-4000-d000-00000000000c', 'cs_c1', 'protecao', 399, 100, true, 'cus_a', 'sub_c', 'pi_c1', null)->>'resultado', 'recompensa_em_revisao', 'mesmo Customer de A → recompensa em revisão humana');
+select is((select count(*) from public.indicacoes_recompensas where indicacao_id = (select id from public.indicacoes where referred_user_id = '00000000-0000-4000-d000-00000000000c') and estado = 'em_revisao'), 1::bigint, 'a recompensa fica pendente de decisão humana');
 
 -- Sinal de suspeita → em revisão; o admin decide.
 select is(public.indicacao_confirmar_compra('00000000-0000-4000-d000-00000000000e', 'cs_e1', 'caso_protecao', 799, 0, false, 'cus_e', 'sub_e', 'pi_e1', 'mesmo_meio_de_pagamento')->>'resultado', 'recompensa_em_revisao', 'Caso + Proteção com o mesmo cartão → em revisão');
-select is(public.indicacao_rever_recompensa((select id from public.indicacoes_recompensas where estado = 'em_revisao'), true, 'verificado'), true, 'admin aprova → disponível');
+select is(public.indicacao_rever_recompensa((select id from public.indicacoes_recompensas where indicacao_id = (select id from public.indicacoes where referred_user_id = '00000000-0000-4000-d000-00000000000e') and estado = 'em_revisao'), true, 'verificado'), true, 'admin aprova → disponível');
 select is(public.indicacao_rever_recompensa((select id from public.indicacoes_recompensas where motivo = 'verificado'), true, 'x'), false, 'decisão só uma vez');
 
 -- 0 € não recompensa (novo indicado F2 por C).
@@ -178,13 +178,13 @@ select is(public.indicacao_reverter_compra(null, 'pi_inexistente', 'disputa')->>
 -- Cliente vê os próprios descontos (só estado e datas); admin vê métricas
 -- ---------------------------------------------------------------------------
 select testes.como('00000000-0000-4000-d000-00000000000a');
-select is(testes.contar('select id, estado, criado_em, usada_em from public.indicacoes_recompensas'), 2::bigint, 'A lê os próprios 2 descontos');
+select is(testes.contar('select id, estado, criado_em, usada_em from public.indicacoes_recompensas'), 3::bigint, 'A lê os próprios 3 descontos (inclui a recompensa em revisão)');
 select is(testes.contar('select indicacao_id from public.indicacoes_recompensas'), -1::bigint, 'A não lê a indicação de cada desconto');
 select is(testes.contar('select usada_origem from public.indicacoes_recompensas'), -1::bigint, 'A não lê as origens Stripe');
 select testes.como('00000000-0000-4000-d000-00000000000b');
 select is(testes.contar('select id from public.indicacoes_recompensas'), 0::bigint, 'B não lê os descontos de A');
 select testes.como('00000000-0000-4000-d000-00000000000d');
-select is((public.indicacoes_metricas()->>'compras')::int, 0, 'admin: métricas — compras confirmadas e não revertidas');
+select is((public.indicacoes_metricas()->>'compras')::int, 1, 'admin: métricas — compra confirmada de C, ainda por rever');
 select is((public.indicacoes_metricas()->>'compras_revertidas')::int, 2, 'admin: métricas — revertidas');
 select is((public.indicacoes_metricas()->>'recompensas_usadas')::int, 1, 'admin: métricas — descontos usados');
 select is((public.indicacoes_metricas()->>'visitas')::int, 3, 'admin: visitas');
@@ -226,7 +226,7 @@ select is((select count(*) from cron.job where jobname = 'indicacoes-expirar-rec
 select is((select count(*) from public.indicacoes_recompensas where estado = 'reservada' and reserva_expira_em is null and expira_em <= now()), 0::bigint, 'sem reservas de subscrição expiradas por engano');
 
 select testes.como('00000000-0000-4000-d000-00000000000a');
-select is(testes.contar('select expira_em, expirada_em from public.indicacoes_recompensas'), 3::bigint, 'A lê a validade dos próprios descontos');
+select is(testes.contar('select expira_em, expirada_em from public.indicacoes_recompensas'), 4::bigint, 'A lê a validade dos próprios 4 descontos');
 select is(testes.contar('select * from public.indicacoes_recompensas_historico'), 0::bigint, 'A não lê o histórico de auditoria');
 select testes.como('00000000-0000-4000-d000-00000000000d');
 select is((public.indicacoes_metricas()->>'recompensas_expiradas')::int, 1, 'admin: métricas — expirados');

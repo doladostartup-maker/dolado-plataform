@@ -69,7 +69,6 @@ export function EntidadesResolucaoConflitos() {
               <a href={e.site} target="_blank" rel="noopener noreferrer" className={`${LIGACAO} text-[14.5px]`}>
                 {e.nome}
               </a>
-              <span className={METADADOS}>{e.ambito}</span>
             </li>
           ))}
         </ul>
@@ -81,7 +80,6 @@ export function EntidadesResolucaoConflitos() {
               <a href={e.site} target="_blank" rel="noopener noreferrer" className={`${LIGACAO} text-[14.5px]`}>
                 {e.nome}
               </a>
-              <span className={METADADOS}>{e.ambito}</span>
             </li>
           ))}
         </ul>

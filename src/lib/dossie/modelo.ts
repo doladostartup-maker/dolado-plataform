@@ -19,7 +19,7 @@ import { CANAIS_ENVIO } from "../textoCaso.ts";
 import { ROTULO_CANAL_RECEBIDA } from "../acompanhamento/apresentacao.ts";
 
 /** Subir quando a estrutura ou os textos do dossiê mudarem (fica em casos_dossies.modelo_versao). */
-export const DOSSIE_MODELO_VERSAO = "dossie_v2";
+export const DOSSIE_MODELO_VERSAO = "dossie_v3";
 
 /** Limite por comunicação recebida (o original completo fica guardado na DoLado). */
 export const MAX_CARACTERES_COMUNICACAO = 30000;
@@ -296,9 +296,9 @@ export function montarDossie(d: DadosDossie): DossieModelo {
     blocos: [
       ...OPCOES_CONFLITO.paragrafos.map((texto) => ({ tipo: "paragrafo" as const, texto })),
       { tipo: "subtitulo", texto: "Centros a consultar (informação pública)" },
-      { tipo: "lista", itens: CENTROS_RAL_GERAIS.map((e) => `${e.nome} — ${e.ambito} — ${e.site}`) },
+      { tipo: "lista", itens: CENTROS_RAL_GERAIS.map((e) => `${e.nome} — ${e.site}`) },
       { tipo: "subtitulo", texto: "Entidades setoriais a consultar (informação pública)" },
-      { tipo: "lista", itens: ENTIDADES_RAL_SETORIAIS.map((e) => `${e.nome} — ${e.ambito} — ${e.site}`) },
+      { tipo: "lista", itens: ENTIDADES_RAL_SETORIAIS.map((e) => `${e.nome} — ${e.site}`) },
       { tipo: "paragrafo", texto: `Lista oficial completa das entidades RAL (Direção-Geral do Consumidor): ${LISTA_OFICIAL_RAL_URL}`, estilo: "nota" },
     ],
   });

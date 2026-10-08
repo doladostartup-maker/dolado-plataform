@@ -80,7 +80,7 @@ export const ALFABETO_CODIGO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export const COMPRIMENTO_CODIGO = 8;
 const CODIGO = /^[A-HJ-NP-Z2-9]{8}$/;
 
-/** Código a partir de bytes aleatórios (crypto.randomBytes no servidor): 40 bits, sem dados pessoais. */
+/** Código aleatório (40 bits) que não revela diretamente a identidade; ligado a uma conta, é dado pessoal pseudonimizado. */
 export function gerarCodigo(bytes: Uint8Array) {
   if (bytes.length < COMPRIMENTO_CODIGO) throw new Error("bytes insuficientes");
   let codigo = "";
