@@ -25,7 +25,7 @@ import { CONTACTO_EMAIL, ENTIDADE_LEGAL, MORADA_SEDE } from "./site.ts";
 export const TERMOS_VERSAO = "2026-10-08";
 
 /** Versão da Política de Privacidade em vigor. Cada versão fica acessível em /privacidade/<versão>. */
-export const PRIVACIDADE_VERSAO = "2026-10-08";
+export const PRIVACIDADE_VERSAO = "2026-10-09";
 
 /** Versão do texto de pedido expresso de início imediato. */
 export const CONSENTIMENTO_INICIO_IMEDIATO_VERSAO = "2026-10-01";
@@ -127,87 +127,78 @@ export const LIVRO_RECLAMACOES_URL = "https://www.livroreclamacoes.pt/Inicio/";
 export const LISTA_OFICIAL_RAL_URL =
   "https://www.consumidor.gov.pt/ral-mapa-e-lista-de-entidades";
 
-export type EntidadeRal = { nome: string; site: string; ambito: string; tipo: "geral" | "setorial" };
+export type EntidadeRal = { nome: string; site: string; tipo: "geral" | "setorial" };
 
 /**
  * Entidades RAL da lista oficial da DGC (LISTA_OFICIAL_RAL_URL), confrontada a
  * 08/10/2026: nomes como na lista; "geral" = centros de arbitragem de
  * conflitos de consumo de competência genérica; "setorial" = "Centros de
  * Arbitragem para Conflitos Específicos" (seguros, agências de viagens).
- * Lista informativa: a competência depende do âmbito material e territorial,
- * do valor e das regras de cada entidade — nunca inferir a competente.
+ * Sites verificados a 08/10/2026: os endereços da lista da DGC redirecionam
+ * para estes (centrodearbitragemdecoimbra.com → cacrc.pt, arbitragem.autonoma.pt
+ * → arbitragem.grupoautonoma.pt, provedorapavt.com → provedor.apavtnet.pt).
+ * Lista informativa, sem descrições de âmbito ou indicação da entidade
+ * competente para um caso. Consultar a lista oficial da DGC e cada entidade.
  */
 export const ENTIDADES_RAL: readonly EntidadeRal[] = [
   {
     nome: "Centro Nacional de Informação e Arbitragem de Conflitos de Consumo (CNIACC)",
     site: "https://www.cniacc.pt",
-    ambito: "Competência territorial residual, nas zonas sem centro regional competente; confirmar o regulamento e a admissibilidade do caso.",
     tipo: "geral",
   },
   {
     nome: "Centro de Arbitragem de Conflitos de Consumo da Região de Coimbra (CACRC)",
     site: "https://www.cacrc.pt",
-    ambito: "Região de Coimbra; competência territorial e em razão do valor sujeita ao regulamento vigente.",
     tipo: "geral",
   },
   {
     nome: "Centro de Arbitragem de Conflitos de Consumo de Lisboa (CACCL)",
     site: "https://www.centroarbitragemlisboa.pt",
-    ambito: "Lisboa e área territorial definida no regulamento.",
     tipo: "geral",
   },
   {
     nome: "Centro de Arbitragem da Universidade Autónoma de Lisboa (CAUAL)",
     site: "https://arbitragem.grupoautonoma.pt",
-    ambito: "Conflitos de consumo no âmbito previsto no seu regulamento; confirme a competência junto do centro.",
     tipo: "geral",
   },
   {
     nome: "Centro de Arbitragem de Conflitos de Consumo da Região Autónoma da Madeira (CACC RAM)",
     site: "https://www.madeira.gov.pt/cacc",
-    ambito: "Região Autónoma da Madeira, nos termos do regulamento.",
     tipo: "geral",
   },
   {
     nome: "Centro de Informação, Mediação e Arbitragem de Consumo da Região Açores (CIMARA)",
     site: "https://ocimara.pt",
-    ambito: "Região Autónoma dos Açores, nos termos do regulamento.",
     tipo: "geral",
   },
   {
     nome: "Centro de Informação de Consumo e Arbitragem do Porto (CICAP)",
     site: "https://www.cicap.pt",
-    ambito: "Área do Porto e municípios abrangidos pelo regulamento.",
     tipo: "geral",
   },
   {
     nome: "Centro de Arbitragem de Conflitos de Consumo do Ave, Tâmega e Sousa (TRIAVE)",
     site: "https://www.triave.pt",
-    ambito: "Ave, Tâmega e Sousa e municípios abrangidos pelo regulamento.",
     tipo: "geral",
   },
   {
     nome: "Centro de Informação, Mediação e Arbitragem de Consumo (Tribunal Arbitral de Consumo) (CIAB)",
     site: "https://www.ciab.pt",
-    ambito: "Braga, Viana do Castelo e municípios abrangidos pelo regulamento.",
     tipo: "geral",
   },
   {
     nome: "Centro de Informação, Mediação e Arbitragem do Algarve (CIMAAL)",
     site: "https://www.consumidoronline.pt",
-    ambito: "Região do Algarve, nos termos do regulamento.",
     tipo: "geral",
   },
   {
     nome: "Centro de Informação, Mediação e Arbitragem de Seguros (CIMPAS)",
     site: "https://www.cimpas.pt",
-    ambito: "Entidade setorial para conflitos decorrentes de contratos de seguros; confirmar ramos, valor e condições de acesso.",
     tipo: "setorial",
   },
   {
     nome: "Provedor do Cliente das Agências de Viagens e Turismo (Provedor da APAVT)",
     site: "https://provedor.apavtnet.pt",
-    ambito: "Conflitos com agências de viagens associadas da APAVT, segundo as regras do Provedor.",
     tipo: "setorial",
   },
 ];

@@ -65,7 +65,6 @@ export default function ResolucaoLitigiosPage() {
               <a href={e.site} target="_blank" rel="noopener noreferrer" className={LINK}>
                 {e.nome}
               </a>
-              <span className="block text-[14px] text-[var(--color-ink-muted)]">{e.ambito}</span>
             </li>
           ))}
         </ul>
@@ -76,7 +75,6 @@ export default function ResolucaoLitigiosPage() {
               <a href={e.site} target="_blank" rel="noopener noreferrer" className={LINK}>
                 {e.nome}
               </a>
-              <span className="block text-[14px] text-[var(--color-ink-muted)]">{e.ambito}</span>
             </li>
           ))}
         </ul>

@@ -200,7 +200,8 @@ describe("ligações e consentimento (o ?ref= nunca dá acesso)", () => {
     const m = fonte("../middleware.ts");
     const c = fonte("../components/MedicaoComConsentimento.tsx");
     const s = fonte("./origemAquisicaoServidor.ts");
-    assert.match(m, /=== "dado"\) return resposta;[\s\S]*resposta\.cookies\.delete\(\{ name: COOKIE_ORIGEM/);
+    assert.match(m, /request\.cookies\.has\(COOKIE_ORIGEM\)[\s\S]*estadoConsentimentoOrigem\([\s\S]*resposta\.cookies\.delete\(\{ name: COOKIE_ORIGEM/);
+    assert.match(m, /request\.cookies\.has\(COOKIE_INDICACAO\)[\s\S]*cookiebotAceitouMarketing/);
     assert.doesNotMatch(m, /cookies\.set\(/);
     assert.match(c, /Cookiebot\?\.hasResponse === true[\s\S]*consent\?\.statistics === true/);
     assert.match(c, /decidirCookiesOrigem\(/);
