@@ -178,13 +178,13 @@ select is(public.indicacao_reverter_compra(null, 'pi_inexistente', 'disputa')->>
 -- Cliente vê os próprios descontos (só estado e datas); admin vê métricas
 -- ---------------------------------------------------------------------------
 select testes.como('00000000-0000-4000-d000-00000000000a');
-select is(testes.contar('select id, estado, criado_em, usada_em from public.indicacoes_recompensas'), 2::bigint, 'A lê os próprios 2 descontos');
+select is(testes.contar('select id, estado, criado_em, usada_em from public.indicacoes_recompensas'), 3::bigint, 'A lê os próprios 3 descontos (inclui a recompensa em revisão)');
 select is(testes.contar('select indicacao_id from public.indicacoes_recompensas'), -1::bigint, 'A não lê a indicação de cada desconto');
 select is(testes.contar('select usada_origem from public.indicacoes_recompensas'), -1::bigint, 'A não lê as origens Stripe');
 select testes.como('00000000-0000-4000-d000-00000000000b');
 select is(testes.contar('select id from public.indicacoes_recompensas'), 0::bigint, 'B não lê os descontos de A');
 select testes.como('00000000-0000-4000-d000-00000000000d');
-select is((public.indicacoes_metricas()->>'compras')::int, 0, 'admin: métricas — compras confirmadas e não revertidas');
+select is((public.indicacoes_metricas()->>'compras')::int, 1, 'admin: métricas — compra confirmada de C, ainda por rever');
 select is((public.indicacoes_metricas()->>'compras_revertidas')::int, 2, 'admin: métricas — revertidas');
 select is((public.indicacoes_metricas()->>'recompensas_usadas')::int, 1, 'admin: métricas — descontos usados');
 select is((public.indicacoes_metricas()->>'visitas')::int, 3, 'admin: visitas');
@@ -226,7 +226,7 @@ select is((select count(*) from cron.job where jobname = 'indicacoes-expirar-rec
 select is((select count(*) from public.indicacoes_recompensas where estado = 'reservada' and reserva_expira_em is null and expira_em <= now()), 0::bigint, 'sem reservas de subscrição expiradas por engano');
 
 select testes.como('00000000-0000-4000-d000-00000000000a');
-select is(testes.contar('select expira_em, expirada_em from public.indicacoes_recompensas'), 3::bigint, 'A lê a validade dos próprios descontos');
+select is(testes.contar('select expira_em, expirada_em from public.indicacoes_recompensas'), 4::bigint, 'A lê a validade dos próprios 4 descontos');
 select is(testes.contar('select * from public.indicacoes_recompensas_historico'), 0::bigint, 'A não lê o histórico de auditoria');
 select testes.como('00000000-0000-4000-d000-00000000000d');
 select is((public.indicacoes_metricas()->>'recompensas_expiradas')::int, 1, 'admin: métricas — expirados');

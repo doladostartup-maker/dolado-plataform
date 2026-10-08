@@ -212,7 +212,7 @@ select is(
                            'indicacao_conta_ja_cliente', 'indicacao_atribuir', 'indicacao_confirmar_compra',
                            'indicacao_reservar_recompensa', 'indicacao_atualizar_reserva', 'indicacao_usar_recompensa',
                            'indicacao_libertar_reserva', 'indicacao_reverter_compra', 'indicacao_rever_recompensa',
-                           'indicacoes_metricas', 'indicacoes_expirar_recompensas',
+                           'indicacoes_metricas', 'indicacoes_expirar_recompensas', 'indicacoes_limpar_dados',
                            'indicacoes_recompensas_registar_historico',
                            'origem_aquisicao_registar', 'origem_aquisicao_retirar',
                            -- 20261008100000: resumo mensal da Proteção (só service_role); testes em resumo_mensal.test.sql
