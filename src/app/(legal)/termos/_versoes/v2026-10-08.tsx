@@ -573,7 +573,7 @@ export function TermosV20261008() {
         </ul>
       </Secao>
 
-      <p className="text-sm text-[var(--color-ink-faint)]">Versão 2026-10-07 · Última atualização: 7 de outubro de 2026</p>
+      <p className="text-sm text-[var(--color-ink-faint)]">Versão 2026-10-08 · Última atualização: 8 de outubro de 2026</p>
     </article>
   );
 }
