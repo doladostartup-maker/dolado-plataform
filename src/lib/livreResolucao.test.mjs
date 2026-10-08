@@ -1,7 +1,7 @@
 // Função online de livre resolução — `npm test`. RLS e imutabilidade da
 // tabela pedidos_livre_resolucao: supabase/tests/database/rls_isolamento.test.sql.
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { describe, test } from "node:test";
 import {
   FORMULARIO_LIVRE_RESOLUCAO_VERSAO,
@@ -117,6 +117,17 @@ describe("textos e páginas legais", () => {
     assert.ok(ENTIDADES_RAL.some((e) => e.nome.endsWith("(CNIACC)") && e.site === "https://www.cniacc.pt" && e.tipo === "geral"));
     assert.ok(ENTIDADES_RAL.some((e) => e.nome.endsWith("(CACCL)") && e.tipo === "geral"));
     for (const e of ENTIDADES_RAL) assert.match(e.site, /^https:\/\//);
+  });
+
+  test("o rótulo \"Versão …\" de cada página versionada é a própria versão", () => {
+    for (const doc of ["termos", "privacidade"]) {
+      const dir = new URL(`../app/(legal)/${doc}/_versoes/`, import.meta.url);
+      for (const f of readdirSync(dir).filter((n) => /^v[\d-]+[a-z]?\.tsx$/.test(n))) {
+        const versao = f.slice(1, -4);
+        const rotulos = [...readFileSync(new URL(f, dir), "utf8").matchAll(/Versão (\d{4}-\d{2}-\d{2}[a-z]?)/g)].map((m) => m[1]);
+        for (const r of rotulos) assert.equal(r, versao, `${doc}/${f}`);
+      }
+    }
   });
 
   test("versões em vigor estão registadas nas páginas versionadas", () => {

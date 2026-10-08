@@ -633,7 +633,7 @@ export function PrivacidadeV20261008() {
       </section>
 
       <p className="mt-6 text-xs text-[var(--color-ink-faint)]">
-        Versão 2026-10-06 · Última atualização: 6 de outubro de 2026
+        Versão 2026-10-08 · Última atualização: 8 de outubro de 2026
       </p>
     </article>
   );
