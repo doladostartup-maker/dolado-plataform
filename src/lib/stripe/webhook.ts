@@ -125,6 +125,8 @@ export type SnapshotSubscricao = {
   cancel_at: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
+  /** Início da subscrição no Stripe (subscription.start_date) — não muda nas renovações. */
+  start_date?: string | null;
   /** Conversão Avulso → subscrição que criou esta subscrição (metadata), se houver. */
   conversao_id?: string | null;
 };
@@ -407,6 +409,7 @@ export function snapshotDeSubscricao(sub: Stripe.Subscription): SnapshotSubscric
     cancel_at: paraIso(sub.cancel_at),
     current_period_start: paraIso(item?.current_period_start),
     current_period_end: paraIso(item?.current_period_end),
+    start_date: paraIso(sub.start_date),
     conversao_id: sub.metadata?.conversao_id ?? null,
   };
 }
