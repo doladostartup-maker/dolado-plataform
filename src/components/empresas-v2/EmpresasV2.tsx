@@ -225,9 +225,11 @@ export function EmpresasV2() {
           titulo="Apoio aplicado a problemas concretos."
           texto="Não é uma lista de funcionalidades: é um serviço que acompanha a pessoa desde o problema até aos próximos passos."
         />
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
+        {/* Ícone, título, texto e lista alinhados entre os dois cartões por
+            subgrid (como GRELHA_PLANOS no PricingCard). */}
+        <div className="mt-10 grid gap-6 md:grid-cols-2 md:gap-y-0">
           {PUBLICOS.map((p) => (
-            <article key={p.titulo} className={`${CARTAO} flex flex-col p-7 sm:p-9`}>
+            <article key={p.titulo} className={`${CARTAO} flex flex-col p-7 sm:p-9 md:row-span-4 md:grid md:grid-rows-subgrid`}>
               <span className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-[var(--v2-mint)] text-[var(--v2-green)]">
                 {p.icone}
               </span>
