@@ -68,7 +68,7 @@ Estado: decisões aprovadas pela advogada, conforme confirmação do responsáve
 ## 5. Riscos e dependências externas remanescentes
 
 - A advogada deve confirmar se a operação real da DoLado pode ser qualificada como consulta jurídica individualizada e, consequentemente, qual o seguro obrigatório ou recomendável. A Lei n.º 10/2024 é posterior à antiga Lei n.º 49/2004.
-- O domínio `portal.dolado.pt` tem de estar autorizado no Cookiebot. Enquanto não estiver, o código falha fechado e não cria cookie nem carrega medição/atribuição nesse domínio.
+- `portal.dolado.pt` não é autorizado no Cookiebot (plano gratuito = 1 domínio; decisão de Thiago, 08/10/2026). O código falha fechado nesse domínio: não cria cookies nem carrega medição. A atribuição funciona porque os cookies são criados no banner de `dolado.pt` com `Domain=.dolado.pt`; as ligações `?ref=` dos parceiros têm de apontar para `dolado.pt`. A retirada faz-se no banner de `dolado.pt` e é aplicada à conta na interação autenticada seguinte.
 - O Cookiebot tem de classificar `dolado_estatisticas` como necessário (regista a escolha, incluindo a recusa) e `dolado_origem` como estatística. Se o Cookiebot apagar a marca `0` numa recusa, a origem da conta só é apagada pela rota de retirada (com sessão no domínio) e não na interação seguinte.
 - A atribuição continua desligada por omissão (`ORIGEM_AQUISICAO_ATIVO`); a flag é lida no servidor e passada ao componente de medição — as páginas estáticas só a refletem depois de um novo build/deploy.
 - A remoção de `acquisition_source` da Stripe aplica-se a novas sessões. Metadata já gravada em sessões/subscrições existentes requer limpeza administrativa separada na Stripe; não foi alterada remotamente.
@@ -78,7 +78,7 @@ Estado: decisões aprovadas pela advogada, conforme confirmação do responsáve
 
 ## 6. Tarefas manuais (Thiago), por ordem
 
-1. **Cookiebot Manager** (domain group `dafec895-…`): autorizar `portal.dolado.pt`; declarar `dolado_estatisticas` (Necessário; regista a escolha sobre estatística; 30 dias; `.dolado.pt`) e `dolado_origem` (Estatística; origem `?ref=`; 30 dias; `.dolado.pt`); confirmar em `dolado.pt` e em `portal.dolado.pt` que o banner aparece, que nada de estatística corre antes do consentimento e que, ao retirar, `dolado_origem` desaparece e `dolado_estatisticas` passa a `0`.
+1. ✅ (08/10/2026, exceto `portal.dolado.pt`, que não é autorizado — plano gratuito) **Cookiebot Manager** (domain group `dafec895-…`): declarar `dolado_estatisticas` (Necessário; regista a escolha sobre estatística; 30 dias; `.dolado.pt`) e `dolado_origem` (Estatística; origem `?ref=`; 30 dias; `.dolado.pt`); confirmar em `dolado.pt` e em `portal.dolado.pt` que o banner aparece, que nada de estatística corre antes do consentimento e que, ao retirar, `dolado_origem` desaparece e `dolado_estatisticas` passa a `0`.
 2. **Supabase → Edge Functions → Secrets**: confirmar que `CRON_SECRET` é igual ao segredo do Vault `alertas_fidelizacao_cron_secret` (é o que `verificar-monitor-datas` já usa).
 3. ✅ (08/10/2026) **Publicar a Edge Function**: `supabase functions deploy limpar-dossies-expirados` (com `verify_jwt = false`, de `supabase/config.toml`).
 4. ✅ (08/10/2026; a primeira tentativa da `20261008120000` foi revertida pela verificação final — três regras já tinham revisão de 08/10 dada no backoffice — e a migration foi corrigida para limpar a revisão anterior antes de gravar a nova) **Migrations**: `supabase db push --linked --dry-run`; confirmar que lista, por esta ordem, `20261008110000_origem_aquisicao_retirada`, `20261008120000_revisao_regras_juridicas_aprovada` e `20261008130000_retencao_dossies_pdf` (e `20261008090000`/`20261008100000`, se ainda não aplicadas); depois `supabase db push --linked`. Antes do deploy do código.
@@ -88,7 +88,7 @@ Estado: decisões aprovadas pela advogada, conforme confirmação do responsáve
 8. **Dados históricos**: decidir com a advogada se as `acquisition_source` antigas se apagam em lote (comando no ponto 5 acima).
 9. **Seguro e âmbito**: confirmar com a advogada a qualificação à luz da Lei n.º 10/2024 e, se aplicável, contratar seguro de responsabilidade civil profissional (erro/omissão, custos de defesa, colaboradores/subcontratados, atos passados/continuidade, Portugal/UE).
 10. **Encerramento dos casos**: adotar o procedimento escrito de revisão dos anexos (secção 4).
-11. **Ligar a atribuição** (`ORIGEM_AQUISICAO_ATIVO=1` no Clever Cloud + novo deploy) só depois dos pontos 1, 4 e 5.
+11. ✅ (08/10/2026; efetivo nas páginas estáticas a partir do build seguinte) **Ligar a atribuição** (`ORIGEM_AQUISICAO_ATIVO=1` no Clever Cloud + novo deploy) só depois dos pontos 1, 4 e 5.
 
 ## Fontes primárias
 
