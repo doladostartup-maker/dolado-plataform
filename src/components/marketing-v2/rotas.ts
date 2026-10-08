@@ -8,6 +8,7 @@ export const ROTAS_V2 = {
   sobreNos: "/sobre-nos",
   transparencia: "/transparencia",
   contacto: "/contacto",
+  empresas: "/empresas",
   // Login vive em portal.dolado.pt (cookies host-only): URL absoluto e <a>
   // simples, nunca <Link> — um prefetch em dolado.pt dava 308 para o portal
   // e falhava por CORS em cada visita.
