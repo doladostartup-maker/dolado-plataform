@@ -2,6 +2,8 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { calcularAcesso, type Acesso } from "@/lib/acesso";
 import { createClient } from "@/lib/supabase/server";
+import { destinoDepoisDeAutenticar } from "@/lib/authServidor";
+import { localizarHref, type Idioma } from "@/i18n/config";
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
 
@@ -43,6 +45,17 @@ export async function requireAdmin() {
   }
 
   return { supabase, user };
+}
+
+/**
+ * Páginas de acesso (/login, /entrar) abertas por quem já tem sessão: segue
+ * para o ?next= seguro ou, sem ele, para o Painel (admin: backoffice). Sem
+ * sessão, não faz nada. Só navegação — não mexe em acesso nem planos.
+ */
+export async function redirecionarSeComSessao(idioma: Idioma, next?: unknown) {
+  const { supabase, user } = await utilizadorPorPedido();
+  if (!user) return;
+  redirect(localizarHref(idioma, await destinoDepoisDeAutenticar(supabase, user.id, { nextExplicito: next })));
 }
 
 /** Utilizador da sessão, sem redirecionar (null sem sessão). */

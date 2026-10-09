@@ -30,6 +30,6 @@ export async function login(formData: FormData) {
   // Origem de aquisição: aplica a escolha de cookies deste browser à conta.
   await registarOrigemDaConta(data.user.id);
 
-  // Sem destino explícito: /portal/casos (ou o backoffice, para o admin).
+  // Sem destino explícito: o Painel do portal (ou o backoffice, para o admin).
   redirect(localizarHref(idioma, await destinoDepoisDeAutenticar(supabase, data.user.id, { nextExplicito: next })));
 }

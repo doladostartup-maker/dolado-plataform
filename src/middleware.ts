@@ -54,8 +54,12 @@ const FICHEIROS_SEO = ["/robots.txt", "/sitemap.xml"];
 // O webhook do Stripe é chamado pelo próprio Stripe, sem cookies de sessão
 // — correr o updateSession nele é trabalho desperdiçado e um cliente
 // Supabase a mexer em cookies numa resposta que o Stripe só lê pelo corpo.
+// /login e /entrar precisam da sessão refrescada: quem já tem sessão é
+// encaminhado para o Painel (ou para o ?next=). Refrescar num Server
+// Component não grava os cookies novos — por isso é feito aqui.
+const PAGINAS_DE_ACESSO = ["/entrar", "/login"];
 const ROTAS_SEM_REFRESH_DE_SESSAO = [
-  ...PAGINAS_PUBLICAS,
+  ...PAGINAS_PUBLICAS.filter((p) => !PAGINAS_DE_ACESSO.includes(p)),
   ...FICHEIROS_SEO,
   "/auth/callback",
   "/api/stripe/webhook",

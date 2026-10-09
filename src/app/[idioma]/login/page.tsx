@@ -4,6 +4,7 @@ import { tConta, traduzirMensagemConta } from "@/i18n/mensagens/conta";
 import { rico } from "@/i18n/Rico";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { ehDestinoSeguro } from "@/lib/destinoAuth";
+import { redirecionarSeComSessao } from "@/lib/auth";
 import { MSG_PALAVRA_PASSE_ALTERADA, ROTA_RECUPERAR } from "@/lib/recuperarPalavraPasse";
 import { Aviso } from "@/components/portal/Aviso";
 import { MolduraConta, SeparadorOu } from "@/components/portal/MolduraConta";
@@ -21,6 +22,8 @@ export default async function LoginPage({
   const msg = (m: string) => traduzirMensagemConta(idioma, m);
   const params = await searchParams;
   const next = ehDestinoSeguro(params.next) ? params.next : null;
+  // Já com sessão: não mostra o formulário — segue para o ?next= ou o Painel.
+  await redirecionarSeComSessao(idioma, next);
 
   return (
     <MolduraConta

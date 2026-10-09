@@ -4,9 +4,13 @@ import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, LIGACAO } from "@/components/portal/u
 import { tConta } from "@/i18n/mensagens/conta";
 import { rico } from "@/i18n/Rico";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
+import { redirecionarSeComSessao } from "@/lib/auth";
 
 export default async function EntrarPage({ params }: ComIdioma) {
-  const t = tConta[await idiomaDaPagina(params)].entrar;
+  const idioma = await idiomaDaPagina(params);
+  // Já com sessão (ex.: portal.dolado.pt/ → /entrar): segue para o Painel.
+  await redirecionarSeComSessao(idioma);
+  const t = tConta[idioma].entrar;
   return (
     <MolduraConta
       contexto={t.contexto}

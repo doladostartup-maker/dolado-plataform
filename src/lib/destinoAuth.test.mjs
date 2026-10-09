@@ -22,18 +22,19 @@ describe("destino depois de autenticar", () => {
     const destino = escolherDestino({ destinoGuardado: destinoCompra("caso_protecao") });
     assert.equal(destino, "/comprar?plano=caso_protecao");
   });
-  test("caso B — compra já paga (criar conta depois do Checkout): entra no portal", () => {
-    assert.equal(escolherDestino({ destinoGuardado: DESTINO_POS_LOGIN }), "/portal/casos");
+  test("caso B — compra já paga (criar conta depois do Checkout): entra no Painel do portal", () => {
+    assert.equal(escolherDestino({ destinoGuardado: DESTINO_POS_LOGIN }), "/portal");
   });
-  test("caso C — login normal, sem destino: /portal/casos (cliente) ou backoffice (admin)", () => {
+  test("caso C — login normal, sem destino: Painel /portal (cliente) ou backoffice (admin)", () => {
+    assert.equal(DESTINO_POS_LOGIN, "/portal");
     assert.equal(escolherDestino({}), null);
     assert.equal(destinoPorPerfil("cliente"), DESTINO_POS_LOGIN);
-    assert.equal(destinoPorPerfil(null), "/portal/casos");
+    assert.equal(destinoPorPerfil(null), "/portal");
     assert.equal(destinoPorPerfil("admin"), DESTINO_POS_LOGIN_ADMIN);
   });
   test("\"A sua conta\" (/conta) deixou de ser destino por omissão", () => {
     assert.notEqual(DESTINO_POS_LOGIN, "/conta");
-    assert.equal(destinoSeguro(null), "/portal/casos");
+    assert.equal(destinoSeguro(null), "/portal");
   });
   test("?next= explícito ganha ao destino guardado; o guardado ganha ao pedido por pagar", () => {
     assert.equal(escolherDestino({ nextExplicito: "/associar-compra?x=1", destinoGuardado: "/portal/casos" }), "/associar-compra?x=1");
@@ -47,7 +48,7 @@ describe("destino depois de autenticar", () => {
   });
   test("página de confirmação leva o destino, sem dados pessoais", () => {
     assert.equal(urlConfirmarEmail("/comprar?plano=protecao"), "/confirmar-email?next=%2Fcomprar%3Fplano%3Dprotecao");
-    assert.equal(urlConfirmarEmail("https://evil.example"), "/confirmar-email?next=%2Fportal%2Fcasos");
+    assert.equal(urlConfirmarEmail("https://evil.example"), "/confirmar-email?next=%2Fportal");
   });
 });
 
@@ -149,5 +150,32 @@ describe("login a partir das rotas de descarga", () => {
       const s = fonte(`../app/api/${rel}`);
       assert.match(s, /NextResponse\.redirect\(urlLogin\(process\.env\.NEXT_PUBLIC_SITE_URL!, `\$\{request\.nextUrl\.pathname\}\$\{request\.nextUrl\.search\}`\)/, rel);
     }
+  });
+});
+
+describe("login sem destino próprio → Painel do portal", () => {
+  test("e-mail/palavra-passe e Google usam a mesma regra (destinoDepoisDeAutenticar)", () => {
+    assert.match(fonte("../app/[idioma]/login/actions.ts"), /destinoDepoisDeAutenticar\(supabase, data\.user\.id, \{ nextExplicito: next \}\)/);
+    assert.match(fonte("../app/auth/callback/route.ts"), /destinoDepoisDeAutenticar\(supabase, data\.user\.id, \{/);
+  });
+  test("o destino é localizado no idioma da página (/portal ou /en/portal)", () => {
+    assert.match(fonte("../app/[idioma]/login/actions.ts"), /redirect\(localizarHref\(idioma, await destinoDepoisDeAutenticar/);
+    assert.match(fonte("../app/auth/callback/route.ts"), /noIdioma\(next\)/);
+  });
+  test("/login e /entrar com sessão aberta seguem para o ?next= ou o Painel", () => {
+    assert.match(fonte("../app/[idioma]/login/page.tsx"), /await redirecionarSeComSessao\(idioma, next\)/);
+    assert.match(fonte("../app/[idioma]/entrar/page.tsx"), /await redirecionarSeComSessao\(idioma\)/);
+    assert.match(fonte("./auth.ts"), /destinoDepoisDeAutenticar\(supabase, user\.id, \{ nextExplicito: next \}\)/);
+  });
+  test("o middleware refresca a sessão em /login e /entrar (cookies novos gravados)", () => {
+    const mw = fonte("../middleware.ts");
+    assert.match(mw, /const PAGINAS_DE_ACESSO = \["\/entrar", "\/login"\]/);
+    assert.match(mw, /PAGINAS_PUBLICAS\.filter\(\(p\) => !PAGINAS_DE_ACESSO\.includes\(p\)\)/);
+  });
+  test("destinos específicos continuam a ganhar ao Painel", () => {
+    assert.equal(escolherDestino({ nextExplicito: "/tratar-caso/recebido?pedido=x" }), "/tratar-caso/recebido?pedido=x");
+    assert.equal(escolherDestino({ nextExplicito: "/api/dossies/abc" }), "/api/dossies/abc");
+    assert.equal(escolherDestino({ destinoGuardado: "/comprar?plano=protecao" }), "/comprar?plano=protecao");
+    assert.equal(escolherDestino({ haPedidoPorPagar: true }), DESTINO_PEDIDO_POR_PAGAR);
   });
 });
