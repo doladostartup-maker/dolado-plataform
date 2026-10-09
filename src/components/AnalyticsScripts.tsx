@@ -15,7 +15,8 @@ import { obterIdioma } from "@/i18n/servidor";
 const COOKIEBOT_ID = "dafec895-e2af-4e2e-a904-ea3c9f12380e";
 
 export async function AnalyticsScripts() {
-  // Páginas em inglês: banner em inglês (data-culture); português como sempre.
+  // Idioma do banner sempre explícito (data-culture), igual ao da página: sem
+  // ele, o Cookiebot usa o idioma por omissão do Manager ou o do browser.
   const idioma = await obterIdioma();
   return (
     <>
@@ -24,7 +25,7 @@ export async function AnalyticsScripts() {
         src="https://consent.cookiebot.com/uc.js"
         data-cbid={COOKIEBOT_ID}
         data-blockingmode="auto"
-        data-culture={idioma === "en-GB" ? "en" : undefined}
+        data-culture={idioma === "en-GB" ? "en" : "pt"}
         strategy="beforeInteractive"
       />
       <MedicaoComConsentimento origemAtiva={origemAquisicaoAtiva()} />
