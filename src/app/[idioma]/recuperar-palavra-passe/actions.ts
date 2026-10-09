@@ -39,8 +39,11 @@ export async function pedirRecuperacao(formData: FormData) {
     // O e-mail leva <redirectTo>?token_hash=… (supabase/templates/recuperacao.html):
     // funciona noutro dispositivo. Com o template por omissão da Supabase,
     // volta com ?code= (fluxo PKCE, só neste navegador) — também aceite.
+    // Pedido em /en: a ligação abre /en/redefinir-palavra-passe (URL
+    // autorizado em Redirect URLs; se não estiver, a Supabase usa o Site URL
+    // e o middleware encaminha ?token_hash= para a página de redefinição).
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}${ROTA_REDEFINIR}`,
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}${await caminho(ROTA_REDEFINIR)}`,
     });
     // Nunca o e-mail no registo — só o código do erro.
     if (error) console.error("[recuperar-palavra-passe] resetPasswordForEmail:", error.code ?? error.status);

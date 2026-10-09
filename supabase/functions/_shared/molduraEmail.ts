@@ -59,14 +59,29 @@ export function tabelaEmail(linhas: [string, string][]): string {
   return caixaEmail(`<table role="presentation" cellpadding="0" cellspacing="0">${tr}</table>`);
 }
 
+/** Idiomas dos e-mails ao cliente (igual a Idioma de src/i18n/config.ts, repetido: sem imports). */
+export type IdiomaEmail = "pt-PT" | "en-GB";
+
+const NOME_THIAGO = `<p style="margin:0; font-weight:700;">Thiago<br><span style="font-weight:400; color:${COR_EMAIL.muted}; font-size:14px;">DoLado</span></p>`;
+
 const ASSINATURAS = {
-  thiago: `<p style="margin:0 0 4px 0;">Estamos juntos nisto.</p><p style="margin:0; font-weight:700;">Thiago<br><span style="font-weight:400; color:${COR_EMAIL.muted}; font-size:14px;">DoLado</span></p>`,
-  equipa: `<p style="margin:0;">Com os melhores cumprimentos,<br><span style="font-weight:700;">A equipa DoLado</span></p>`,
-  /** Só o nome (quando o texto já fecha com um agradecimento). */
-  nome: `<p style="margin:0; font-weight:700;">Thiago<br><span style="font-weight:400; color:${COR_EMAIL.muted}; font-size:14px;">DoLado</span></p>`,
+  "pt-PT": {
+    thiago: `<p style="margin:0 0 4px 0;">Estamos juntos nisto.</p>${NOME_THIAGO}`,
+    equipa: `<p style="margin:0;">Com os melhores cumprimentos,<br><span style="font-weight:700;">A equipa DoLado</span></p>`,
+    /** Só o nome (quando o texto já fecha com um agradecimento). */
+    nome: NOME_THIAGO,
+  },
+  "en-GB": {
+    thiago: `<p style="margin:0 0 4px 0;">We're in this together.</p>${NOME_THIAGO}`,
+    equipa: `<p style="margin:0;">Kind regards,<br><span style="font-weight:700;">The DoLado team</span></p>`,
+    nome: NOME_THIAGO,
+  },
 } as const;
 
-export type AssinaturaEmail = keyof typeof ASSINATURAS;
+/** Frase da marca no rodapé. */
+const LEMA: Record<IdiomaEmail, string> = { "pt-PT": "Do lado dos consumidores.", "en-GB": "On the consumer's side." };
+
+export type AssinaturaEmail = keyof (typeof ASSINATURAS)["pt-PT"];
 
 /**
  * E-mail completo: logótipo, conteúdo, assinatura e rodapé. `titulo` e
@@ -75,6 +90,8 @@ export type AssinaturaEmail = keyof typeof ASSINATURAS;
  * Opcionais, também já seguros: `preheader` (texto de pré-visualização na
  * caixa de entrada, escondido no e-mail) e `rodape` (porque recebe o e-mail
  * e onde alterar as preferências, por cima da identificação da DoLado).
+ * `idioma`: idioma do destinatário (assinatura, rodapé e lang); por omissão
+ * português. Os textos do corpo vêm já no idioma certo de quem chama.
  */
 export function emailV2({
   titulo,
@@ -82,20 +99,23 @@ export function emailV2({
   assinatura = "thiago",
   preheader,
   rodape,
+  idioma = "pt-PT",
 }: {
   titulo: string;
   corpo: string;
   assinatura?: AssinaturaEmail | null;
   preheader?: string;
   rodape?: string;
+  idioma?: IdiomaEmail;
 }): string {
+  const lingua: IdiomaEmail = idioma === "en-GB" ? "en-GB" : "pt-PT";
   const previa = preheader
     ? `<div style="display:none; max-height:0; max-width:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:${COR_EMAIL.azulFundo}; opacity:0;">${preheader}</div>\n  `
     : "";
   const motivo = rodape ? `${rodape}<br><br>` : "";
-  const fecho = assinatura ? `<tr><td style="padding:0 32px 32px 32px; font-family:${FONTE}; color:${COR_EMAIL.navy}; font-size:16px; line-height:1.6;">${ASSINATURAS[assinatura]}</td></tr>` : "";
+  const fecho = assinatura ? `<tr><td style="padding:0 32px 32px 32px; font-family:${FONTE}; color:${COR_EMAIL.navy}; font-size:16px; line-height:1.6;">${ASSINATURAS[lingua][assinatura]}</td></tr>` : "";
   return `<!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="${lingua}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -122,7 +142,7 @@ export function emailV2({
           </tr>
           <tr>
             <td style="padding:20px 8px 0 8px; font-family:${FONTE}; font-size:13px; line-height:1.6; color:${COR_EMAIL.muted};">
-              ${motivo}<span style="font-weight:700; color:${COR_EMAIL.navy};">DoLado</span> · Do lado dos consumidores.<br>
+              ${motivo}<span style="font-weight:700; color:${COR_EMAIL.navy};">DoLado</span> · ${LEMA[lingua]}<br>
               <a href="${SITE_EMAIL}" style="color:${COR_EMAIL.verde}; text-decoration:none;">dolado.pt</a> · <a href="mailto:${CONTACTO_EMAIL_MOLDURA}" style="color:${COR_EMAIL.verde}; text-decoration:none;">${CONTACTO_EMAIL_MOLDURA}</a>
             </td>
           </tr>

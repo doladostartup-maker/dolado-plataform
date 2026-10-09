@@ -2,6 +2,8 @@
 // diretamente com `node --test`. Sem termos técnicos para o cliente.
 import { CONTACTO_EMAIL } from "../site.ts";
 import { LIGACAO_EMAIL, P_EMAIL, P_NOTA, botaoEmail, emailV2, ligacaoSecundariaEmail } from "./molduraEmail.ts";
+import { IDIOMA_PADRAO, localizarHref, type Idioma } from "../../i18n/config.ts";
+import { tEmails } from "../../i18n/mensagens/emails.ts";
 
 export function escaparHtml(texto: string) {
   return texto
@@ -12,49 +14,58 @@ export function escaparHtml(texto: string) {
     .replace(/'/g, "&#39;");
 }
 
-export const ASSUNTO_TEXTO_PARA_REVISAO = "O texto da sua reclamação está pronto para revisão";
+export const ASSUNTO_TEXTO_PARA_REVISAO = tEmails["pt-PT"].textoRevisao.assunto;
 /** Nova comunicação à empresa depois de uma resposta (mesmo fluxo de revisão e autorização). */
-export const ASSUNTO_NOVA_COMUNICACAO_PARA_REVISAO = "Uma nova comunicação do seu caso está pronta para revisão";
+export const ASSUNTO_NOVA_COMUNICACAO_PARA_REVISAO = tEmails["pt-PT"].textoRevisao.assuntoNovaComunicacao;
+
+export function assuntoTextoParaRevisao(seguimento: boolean, idioma: Idioma = IDIOMA_PADRAO) {
+  const t = tEmails[idioma].textoRevisao;
+  return seguimento ? t.assuntoNovaComunicacao : t.assunto;
+}
 
 /**
  * Dois botões: rever e autorizar / pedir alterações. Os links só abrem
  * páginas da DoLado — nenhuma ação acontece sem um clique explícito na
- * página (um scanner que abra o link não autoriza nada).
+ * página (um scanner que abra o link não autoriza nada). Em inglês, os
+ * links abrem as mesmas páginas em /en (o token não muda).
  */
-export function montarHtmlTextoParaRevisao({
-  urlRever,
-  urlAlterar,
-  assunto,
-  validadeDias,
-  novoLink,
-  seguimento = false,
-}: {
-  urlRever: string;
-  urlAlterar: string;
-  /** Ex.: nome da empresa reclamada ou setor — para o cliente reconhecer o caso. */
-  assunto: string | null;
-  validadeDias: number;
-  /** true quando é um novo link pedido pelo cliente (link anterior expirado). */
-  novoLink: boolean;
-  /** true quando já houve um envio: é uma nova comunicação à empresa. */
-  seguimento?: boolean;
-}) {
-  const sobre = assunto ? ` relativa a <strong>${escaparHtml(assunto)}</strong>` : "";
-  const abertura = novoLink
-    ? `Como pediu, enviamos-lhe um novo link para rever o texto${seguimento ? " da nova comunicação" : " da sua reclamação"}${sobre}.`
-    : seguimento
-      ? `Na sequência da resposta da empresa à sua reclamação${sobre}, preparámos uma nova comunicação. Antes de a enviarmos em seu nome, pedimos-lhe que a reveja.`
-      : `O texto da sua reclamação${sobre} está pronto. Antes de o enviarmos em seu nome, pedimos-lhe que o reveja.`;
+export function montarHtmlTextoParaRevisao(
+  {
+    urlRever,
+    urlAlterar,
+    assunto,
+    validadeDias,
+    novoLink,
+    seguimento = false,
+  }: {
+    urlRever: string;
+    urlAlterar: string;
+    /** Ex.: nome da empresa reclamada ou setor — para o cliente reconhecer o caso. */
+    assunto: string | null;
+    validadeDias: number;
+    /** true quando é um novo link pedido pelo cliente (link anterior expirado). */
+    novoLink: boolean;
+    /** true quando já houve um envio: é uma nova comunicação à empresa. */
+    seguimento?: boolean;
+  },
+  idioma: Idioma = IDIOMA_PADRAO,
+) {
+  const tc = tEmails[idioma].comum;
+  const t = tEmails[idioma].textoRevisao;
+  const sobre = assunto ? tc.sobre(escaparHtml(assunto)) : "";
+  const abertura = novoLink ? t.novoLink(seguimento, sobre) : seguimento ? t.seguimento(sobre) : t.primeiro(sobre);
   const P = P_EMAIL;
+  const contacto = `<a href="mailto:${CONTACTO_EMAIL}" ${LIGACAO_EMAIL}>${CONTACTO_EMAIL}</a>`;
   return emailV2({
-    titulo: seguimento ? ASSUNTO_NOVA_COMUNICACAO_PARA_REVISAO : ASSUNTO_TEXTO_PARA_REVISAO,
-    corpo: `<p ${P}>Olá,</p>
+    titulo: assuntoTextoParaRevisao(seguimento, idioma),
+    idioma,
+    corpo: `<p ${P}>${tc.ola}</p>
           <p ${P}>${abertura}</p>
-          <p ${P}>Nada é enviado sem a sua autorização explícita. Se quiser mudar alguma coisa, pode pedir alterações.</p>
-          ${botaoEmail(escaparHtml(urlRever), "Rever e autorizar o envio")}
-          ${ligacaoSecundariaEmail(escaparHtml(urlAlterar), "Pedir alterações")}
-          <p ${P_NOTA}>Por segurança, estes links são pessoais e válidos durante ${validadeDias} dias. Não os partilhe. Também pode rever o texto na sua área de cliente, se tiver conta.</p>
-          <p ${P_NOTA}>Se não reconhece este pedido, ignore este e-mail ou escreva para <a href="mailto:${CONTACTO_EMAIL}" ${LIGACAO_EMAIL}>${CONTACTO_EMAIL}</a>.</p>`,
+          <p ${P}>${t.nadaSemAutorizacao}</p>
+          ${botaoEmail(escaparHtml(localizarHref(idioma, urlRever)), t.botaoRever)}
+          ${ligacaoSecundariaEmail(escaparHtml(localizarHref(idioma, urlAlterar)), t.pedirAlteracoes)}
+          <p ${P_NOTA}>${t.seguranca(validadeDias)}</p>
+          <p ${P_NOTA}>${t.naoReconhece(contacto)}</p>`,
   });
 }
 

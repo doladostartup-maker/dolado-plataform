@@ -6,10 +6,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ADMIN_EMAIL, enviarEmailBrevo } from "@/lib/email/brevo";
 import {
-  ASSUNTO_CASO_ENCERRADO_EXTERNO,
-  ASSUNTO_PEDIDO_INFORMACAO,
-  ASSUNTO_RESPOSTA_RECEBIDA,
-  ASSUNTO_SOLUCAO_APRESENTADA,
+  assuntoAcompanhamento,
   montarHtmlAvisoEquipa,
   montarHtmlCasoEncerradoExterno,
   montarHtmlPedidoInformacao,
@@ -17,6 +14,7 @@ import {
   montarHtmlSolucaoApresentada,
 } from "@/lib/email/acompanhamento";
 import { agendarAnaliseIA } from "@/lib/analiseResposta/servidor";
+import { idiomaDaConta } from "@/lib/idiomaContaServidor";
 import { ANEXO_MAX_BYTES, BUCKET_COMUNICACOES } from "./anexos";
 import { dominioRespostas, enderecoCompleto, gerarLocalPart } from "./endereco";
 import type { AnexoResend, DepsInbound, EmailResend } from "./inbound";
@@ -126,14 +124,16 @@ export async function avisarCliente(
   if (!caso?.email) return;
   if (!process.env.BREVO_API_KEY) return logEstruturado({ fase: "aviso_cliente", resultado: "sem_envio", momento });
   const args = { empresa: caso.empresa, urlCaso: urlPortal(casoId) };
+  // Idioma do e-mail: o da conta do cliente (só apresentação; sem idioma → português).
+  const idioma = await idiomaDaConta(caso.utilizador_id);
   const [assunto, html] =
     momento === "resposta_recebida"
-      ? [ASSUNTO_RESPOSTA_RECEBIDA, montarHtmlRespostaRecebida(args)]
+      ? [assuntoAcompanhamento("respostaRecebida", idioma), montarHtmlRespostaRecebida(args, idioma)]
       : momento === "pedido_informacao"
-        ? [ASSUNTO_PEDIDO_INFORMACAO, montarHtmlPedidoInformacao(args)]
+        ? [assuntoAcompanhamento("pedidoInformacao", idioma), montarHtmlPedidoInformacao(args, idioma)]
         : momento === "caso_encerrado_externo"
-          ? [ASSUNTO_CASO_ENCERRADO_EXTERNO, montarHtmlCasoEncerradoExterno(args)]
-          : [ASSUNTO_SOLUCAO_APRESENTADA, montarHtmlSolucaoApresentada(args)];
+          ? [assuntoAcompanhamento("casoEncerradoExterno", idioma), montarHtmlCasoEncerradoExterno(args, idioma)]
+          : [assuntoAcompanhamento("solucaoApresentada", idioma), montarHtmlSolucaoApresentada(args, idioma)];
   await enviarEmailBrevo(caso.email, assunto, html).catch(() => logEstruturado({ fase: "aviso_cliente", resultado: "erro", momento }));
 }
 

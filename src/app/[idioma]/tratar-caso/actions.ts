@@ -18,7 +18,7 @@ import {
   tokenHashDoCookie,
 } from "@/lib/pedidoCasoServidor";
 import { registarOrigemDaConta } from "@/lib/origemAquisicaoServidor";
-import { caminho } from "@/i18n/servidor";
+import { caminho, obterIdioma } from "@/i18n/servidor";
 
 // "Tratar o meu caso": formulário → conta → modalidade → pagamento.
 //
@@ -121,7 +121,7 @@ export async function criarContaPedido(_anterior: EstadoConta, formData: FormDat
     password,
     // Única página com campo para o código: o e-mail mostra-o
     // (mostrar_codigo) e também a ligação, que volta à modalidade.
-    options: dadosContaNova({ nome: await nomeDoPedidoNoBrowser(), mostrarCodigo: true }),
+    options: dadosContaNova({ nome: await nomeDoPedidoNoBrowser(), mostrarCodigo: true, idioma: await obterIdioma() }),
   });
   if (error) return { erro: mensagemErroAuth(error.code, error.message), passo: "conta" };
 

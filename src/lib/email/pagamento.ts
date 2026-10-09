@@ -1,22 +1,23 @@
 // Extensões .ts explícitas: o módulo é testado diretamente com `node --test`.
-import { CASO_EXTRA, IVA_INCLUIDO, PLANOS, TEXTO_BENEFICIO_SUBSCRITOR, formatarPreco, precoComUnidade } from "../planos.ts";
-import {
-  COMO_EXERCER_LIVRE_RESOLUCAO,
-  RESUMO_LIVRE_RESOLUCAO,
-  ROTAS_LEGAIS,
-  rotaTermosVersao,
-} from "../legal.ts";
+import { CASO_EXTRA, PLANOS } from "../planos.ts";
+import { ROTAS_LEGAIS, rotaTermosVersao } from "../legal.ts";
 import { CONTACTO_EMAIL, MARKETING_SITE_URL } from "../site.ts";
 import { LIGACAO_EMAIL, P_EMAIL, botaoEmail, emailV2, tabelaEmail } from "./molduraEmail.ts";
+import { IDIOMA_PADRAO, localizarHref, type Idioma } from "../../i18n/config.ts";
+import { formatarData } from "../../i18n/formatar.ts";
+import { tEmails } from "../../i18n/mensagens/emails.ts";
+import { tJuridico } from "../../i18n/mensagens/juridico.ts";
+import { precoNoIdioma, tPlanos } from "../../i18n/mensagens/planos.ts";
 
 export type PlanoEmail = "avulso" | "protecao" | "caso_protecao" | "caso_extra";
 
-/** Nome, preço e tipo do produto (o Caso Extra não é um plano de PLANOS). */
-function produtoDoEmail(plano: PlanoEmail) {
+/** Nome, preço e tipo do produto no idioma (o Caso Extra não é um plano de PLANOS). */
+function produtoDoEmail(plano: PlanoEmail, idioma: Idioma) {
+  const t = tPlanos[idioma];
   if (plano === "caso_extra") {
-    return { nome: CASO_EXTRA.nome, precoCentimos: CASO_EXTRA.precoCentimos, subscricao: false };
+    return { nome: t.casoExtra.nome, precoCentimos: CASO_EXTRA.precoCentimos, subscricao: false };
   }
-  return PLANOS[plano];
+  return { ...PLANOS[plano], nome: t.nome[plano] };
 }
 
 export type DadosEmailPagamento = {
@@ -38,13 +39,10 @@ export type DadosEmailPagamento = {
   portalUrl: string;
 };
 
-function formatarData(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-PT", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    timeZone: "Europe/Lisbon",
-  });
+/** Assunto do e-mail de pagamento confirmado. */
+export function assuntoPagamentoConfirmado(estado: { contaExiste: boolean; associarCompra: boolean }, idioma: Idioma = IDIOMA_PADRAO) {
+  const t = tEmails[idioma].pagamento;
+  return estado.contaExiste ? t.assuntoContaExiste : estado.associarCompra ? t.assuntoAssociar : t.assuntoCriarConta;
 }
 
 const P = P_EMAIL;
@@ -56,78 +54,85 @@ const P_LEGAL = 'style="margin:0 0 16px 0; font-size:14px; line-height:1.6;"';
  * Confirmação da contratação em suporte duradouro: produto, valor, tipo,
  * renovação, como gerir/cancelar, início imediato pedido, livre resolução e
  * como a exercer, e ligações para os Termos aceites e a Política de
- * Privacidade. Textos legais vêm de src/lib/legal.ts; preços de planos.ts.
+ * Privacidade. Textos legais vêm de src/lib/legal.ts (português) e, em
+ * inglês, das traduções informativas de tJuridico (o português continua a
+ * ser a versão vinculativa); preços de planos.ts.
  */
-export function montarHtmlBoasVindasPagamento(plano: PlanoEmail, dados: DadosEmailPagamento) {
+export function montarHtmlBoasVindasPagamento(plano: PlanoEmail, dados: DadosEmailPagamento, idioma: Idioma = IDIOMA_PADRAO) {
   const { contaExiste, associarCompra = false, ligacao, valorPagoCentimos, renovacao, consentimento, portalUrl } = dados;
-  const info = produtoDoEmail(plano);
+  const t = tEmails[idioma];
+  const tp = t.pagamento;
+  const tpl = tPlanos[idioma];
+  const info = produtoDoEmail(plano, idioma);
   const casoExtra = plano === "caso_extra";
   const nomePlano = info.nome;
+  const noIdioma = (url: string) => localizarHref(idioma, url);
   // O Caso Extra é sempre comprado com sessão iniciada (contaExiste).
   const passo = casoExtra
-    ? "Tem 1 Caso Extra na sua conta. Se pagou um caso que já tinha descrito, esse caso segue para tratamento; acompanhe-o em Os meus casos."
+    ? tp.passoCasoExtra
     : contaExiste
-      ? "Já pode iniciar sessão no portal: o seu acesso já está ativo."
+      ? tp.passoContaExiste
       : associarCompra
-        ? "Já existe uma conta na DoLado com este e-mail. Falta só um passo: inicie sessão e associe esta compra à sua conta."
+        ? tp.passoAssociar
         : plano === "protecao"
-          ? "Falta só um passo: crie a sua palavra-passe para aceder ao portal."
-          : "Falta só um passo: crie a sua palavra-passe para aceder ao portal e abrir o seu caso.";
+          ? tp.passoCriarProtecao
+          : tp.passoCriarCaso;
   const botao = casoExtra
-    ? "Ver os meus casos"
+    ? tp.botaoCasoExtra
     : contaExiste
-      ? "Iniciar sessão"
+      ? tp.botaoIniciarSessao
       : associarCompra
-        ? "Associar a compra"
-        : "Criar a minha conta";
-  const destinoBotao = casoExtra ? `${portalUrl}/portal/casos` : ligacao;
+        ? tp.botaoAssociar
+        : tp.botaoCriarConta;
+  const destinoBotao = noIdioma(casoExtra ? `${portalUrl}/portal/casos` : ligacao);
 
-  const linhas: [string, string][] = [["Produto", casoExtra ? `${nomePlano} (${TEXTO_BENEFICIO_SUBSCRITOR})` : nomePlano]];
-  if (valorPagoCentimos !== null) linhas.push(["Valor pago", `${formatarPreco(valorPagoCentimos)} (${IVA_INCLUIDO})`]);
+  const linhas: [string, string][] = [[tp.rotuloProduto, casoExtra ? `${nomePlano} (${tpl.casoExtra.beneficio})` : nomePlano]];
+  if (valorPagoCentimos !== null) linhas.push([tp.rotuloValorPago, `${precoNoIdioma(idioma, valorPagoCentimos)} (${tpl.ivaIncluido})`]);
   if (info.subscricao) {
-    linhas.push(["Tipo", "Subscrição mensal com renovação automática"]);
-    linhas.push(["Preço do plano", `${precoComUnidade(plano as "protecao" | "caso_protecao")} (${IVA_INCLUIDO})`]);
-    if (renovacao) linhas.push(["Próxima renovação", formatarData(renovacao)]);
+    linhas.push([tp.rotuloTipo, tp.tipoSubscricao]);
+    linhas.push([tp.rotuloPrecoPlano, `${tpl.comUnidade(precoNoIdioma(idioma, info.precoCentimos), true)} (${tpl.ivaIncluido})`]);
+    if (renovacao) linhas.push([tp.rotuloRenovacao, formatarData(idioma, renovacao, { day: "2-digit", month: "long", year: "numeric" })]);
   } else {
-    linhas.push(["Tipo", "Pagamento único"]);
+    linhas.push([tp.rotuloTipo, tp.tipoUnico]);
   }
-  if (casoExtra) linhas.push(["A sua subscrição", "Continua ativa e não foi alterada"]);
+  if (casoExtra) linhas.push([tp.rotuloSubscricao, tp.subscricaoInalterada]);
   const tabela = tabelaEmail(linhas);
 
+  // Documentos legais: só em português (as páginas /en mostram um aviso).
   const termosUrl = `${MARKETING_SITE_URL}${consentimento ? rotaTermosVersao(consentimento.termos_versao) : ROTAS_LEGAIS.termos}`;
   const privacidadeUrl = `${MARKETING_SITE_URL}${ROTAS_LEGAIS.privacidade}`;
-  const livreResolucaoUrl = `${MARKETING_SITE_URL}${ROTAS_LEGAIS.livreResolucao}`;
-  const gestaoUrl = `${portalUrl}${ROTAS_LEGAIS.gestaoSubscricao}`;
+  const livreResolucaoUrl = noIdioma(`${MARKETING_SITE_URL}${ROTAS_LEGAIS.livreResolucao}`);
+  const gestaoUrl = noIdioma(`${portalUrl}${ROTAS_LEGAIS.gestaoSubscricao}`);
 
   const blocoSubscricao = info.subscricao
-    ? `<p ${P_LEGAL}><strong>Renovação e cancelamento.</strong> A subscrição renova-se automaticamente todos os meses${
-        valorPagoCentimos !== null && valorPagoCentimos !== info.precoCentimos
-          ? ", com os descontos aplicados nas condições do código usado no pagamento"
-          : ""
-      }, até a cancelar. Pode cancelar a qualquer momento em <a href="${gestaoUrl}" ${LINK}>Gestão de Subscrição</a>, na sua área de cliente; o cancelamento produz efeitos no fim do período já pago.</p>`
+    ? `<p ${P_LEGAL}>${tp.renovacao(
+        valorPagoCentimos !== null && valorPagoCentimos !== info.precoCentimos,
+        (texto) => `<a href="${gestaoUrl}" ${LINK}>${texto}</a>`,
+      )}</p>`
     : "";
 
-  const blocoInicio = consentimento?.pediu_inicio_imediato
-    ? `<p ${P_LEGAL}><strong>Início imediato.</strong> Antes do pagamento, pediu expressamente que a DoLado iniciasse a prestação do serviço de imediato, antes do fim do prazo de 14 dias de livre resolução.</p>`
-    : "";
+  const blocoInicio = consentimento?.pediu_inicio_imediato ? `<p ${P_LEGAL}>${tp.inicioImediato}</p>` : "";
+  const notaPortugues = t.comum.notaDocumentosPortugues ? ` ${t.comum.notaDocumentosPortugues}` : "";
 
   return emailV2({
-    titulo: "Pagamento confirmado — DoLado",
-    corpo: `<p ${P}>Olá,</p>
-              <p ${P}>O seu pagamento foi confirmado. Obrigado por confiar na DoLado. Guarde este e-mail como confirmação da sua contratação.</p>
+    titulo: tp.titulo,
+    idioma,
+    corpo: `<p ${P}>${t.comum.ola}</p>
+              <p ${P}>${tp.introducao}</p>
               ${tabela}
               <p ${P}>${passo}</p>
               ${botaoEmail(destinoBotao, botao)}
               ${blocoSubscricao}
               ${blocoInicio}
-              <p ${P_LEGAL}><strong>Direito de livre resolução.</strong> ${RESUMO_LIVRE_RESOLUCAO} ${COMO_EXERCER_LIVRE_RESOLUCAO} <a href="${livreResolucaoUrl}" ${LINK}>Saiba mais</a>.</p>
-              <p ${P_LEGAL}>Documentos: <a href="${termosUrl}" ${LINK}>Termos e Condições${consentimento ? ` (versão ${consentimento.termos_versao})` : ""}</a> · <a href="${privacidadeUrl}" ${LINK}>Política de Privacidade</a>.</p>
-              <p ${P_LEGAL}>Para qualquer questão: <a href="mailto:${CONTACTO_EMAIL}" ${LINK}>${CONTACTO_EMAIL}</a>.</p>`,
+              <p ${P_LEGAL}><strong>${tp.livreResolucao}</strong> ${tJuridico[idioma].resumoLivreResolucao} ${tJuridico[idioma].comoExercer} <a href="${livreResolucaoUrl}" ${LINK}>${tp.saibaMais}</a>.</p>
+              <p ${P_LEGAL}>${tp.documentos} <a href="${termosUrl}" ${LINK}>${tp.termos}${consentimento ? tp.versao(consentimento.termos_versao) : ""}</a> · <a href="${privacidadeUrl}" ${LINK}>${tp.privacidade}</a>.${notaPortugues}</p>
+              <p ${P_LEGAL}>${tp.questoes} <a href="mailto:${CONTACTO_EMAIL}" ${LINK}>${CONTACTO_EMAIL}</a>.</p>`,
   });
 }
 
+/** Aviso interno ao admin (sempre em português). */
 export function montarHtmlNotificacaoNovoPagamento(email: string, plano: PlanoEmail) {
-  const nomePlano = produtoDoEmail(plano).nome;
+  const nomePlano = produtoDoEmail(plano, IDIOMA_PADRAO).nome;
 
   return `<!DOCTYPE html>
 <html lang="pt-PT">

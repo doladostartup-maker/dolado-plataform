@@ -6,7 +6,7 @@
 // escape e no assunto perdem quebras de linha e são encurtados.
 
 import { escaparHtml, textoParaAssunto } from "./textoSeguro.ts";
-import { P_EMAIL, emailV2 } from "./molduraEmail.ts";
+import { P_EMAIL, emailV2, type IdiomaEmail } from "./molduraEmail.ts";
 
 export interface CasoNovo {
   id: string;
@@ -19,6 +19,8 @@ export interface CasoNovo {
   telefone: string | null;
   empresa: string | null;
   empresa_parceira: string | null;
+  /** Conta do cliente (idioma do e-mail de confirmação). */
+  utilizador_id?: string | null;
 }
 
 /** Escape de HTML; vazio/nulo aparece como "—". Quebras de linha opcionais. */
@@ -28,15 +30,43 @@ function valor(texto: string | null | undefined, quebras = false): string {
   return quebras ? seguro.replace(/\r\n|\r|\n/g, "<br>") : seguro;
 }
 
-export const ASSUNTO_CONFIRMACAO_CLIENTE = "Recebemos o seu caso";
+// Confirmação ao cliente: português (texto de sempre) e inglês britânico,
+// pelo idioma guardado na conta (user_metadata.idioma; sem idioma → português).
+const CONFIRMACAO: Record<IdiomaEmail, { assunto: string; ola: string; recebemos: string; analise: string; obrigado: string }> = {
+  "pt-PT": {
+    assunto: "Recebemos o seu caso",
+    ola: "Olá",
+    recebemos: "Recebemos o seu caso.",
+    analise:
+      "A DoLado irá analisar as informações enviadas e, antes de qualquer envio, poderá entrar em contacto consigo para confirmar os factos ou solicitar informações adicionais.",
+    obrigado: "Obrigado por confiar na DoLado.",
+  },
+  "en-GB": {
+    assunto: "We have received your case",
+    ola: "Hello",
+    recebemos: "We have received your case.",
+    analise:
+      "DoLado will review the information you sent and, before anything is sent, may get in touch with you to confirm the facts or ask for further information.",
+    obrigado: "Thank you for trusting DoLado.",
+  },
+};
 
-export function htmlConfirmacaoCliente(nome: string): string {
+export const ASSUNTO_CONFIRMACAO_CLIENTE = CONFIRMACAO["pt-PT"].assunto;
+
+export function assuntoConfirmacaoCliente(idioma: IdiomaEmail = "pt-PT"): string {
+  return CONFIRMACAO[idioma === "en-GB" ? "en-GB" : "pt-PT"].assunto;
+}
+
+export function htmlConfirmacaoCliente(nome: string, idioma: IdiomaEmail = "pt-PT"): string {
+  const lingua: IdiomaEmail = idioma === "en-GB" ? "en-GB" : "pt-PT";
+  const t = CONFIRMACAO[lingua];
   return emailV2({
-    titulo: ASSUNTO_CONFIRMACAO_CLIENTE,
-    corpo: `<p ${P_EMAIL}>Olá ${escaparHtml(nome ?? "")},</p>
-              <p ${P_EMAIL}>Recebemos o seu caso.</p>
-              <p ${P_EMAIL}>A DoLado irá analisar as informações enviadas e, antes de qualquer envio, poderá entrar em contacto consigo para confirmar os factos ou solicitar informações adicionais.</p>
-              <p style="margin:0 0 4px 0;">Obrigado por confiar na DoLado.</p>`,
+    titulo: t.assunto,
+    idioma: lingua,
+    corpo: `<p ${P_EMAIL}>${t.ola} ${escaparHtml(nome ?? "")},</p>
+              <p ${P_EMAIL}>${t.recebemos}</p>
+              <p ${P_EMAIL}>${t.analise}</p>
+              <p style="margin:0 0 4px 0;">${t.obrigado}</p>`,
     assinatura: "nome",
   });
 }

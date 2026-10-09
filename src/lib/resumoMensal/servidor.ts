@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarEmailBrevo } from "@/lib/email/brevo";
 import { carregarEntradasServicos } from "@/lib/monitor/protecaoCliente";
+import { idiomaDaConta } from "@/lib/idiomaContaServidor";
 import type { DependenciasResumoMensal, DestinatarioResumo } from "./envio";
 
 // Dependências reais do resumo mensal (service_role + Brevo). Só código de
@@ -27,6 +28,7 @@ export function dependenciasResumoMensal(
       return (data as string | null) ?? null;
     },
     carregarServicos: (utilizadorId) => carregarEntradasServicos(admin, utilizadorId),
+    idiomaDaConta,
     enviarEmail: opcoes.enviarEmail ?? ((destinatario, assunto, html, texto) => enviarEmailBrevo(destinatario, assunto, html, texto)),
     async concluir(reservaId, c) {
       const { error } = await admin.rpc(

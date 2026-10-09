@@ -48,8 +48,11 @@ describe("destinatário dos alertas diários", () => {
     // A reserva vem antes do envio; uma falha liberta a reserva.
     assert.ok(codigo.indexOf('"monitor_reservar_alerta"') < codigo.indexOf("await enviarEmailBrevo("));
     assert.match(codigo, /"monitor_libertar_alerta"/);
-    // Nunca lê tabelas diretamente para escolher destinatários.
-    assert.equal(/rest\/v1\/contratos_/.test(codigo), false);
+    // Nunca lê tabelas diretamente para escolher destinatários: o único
+    // acesso direto é o dono do contrato, só para o idioma do texto.
+    assert.equal((codigo.match(/rest\/v1\/contratos_/g) ?? []).length, 1);
+    assert.match(codigo, /contratos_monitorizados\?id=eq\.\$\{encodeURIComponent\(contratoId\)\}&select=utilizador_id/);
+    assert.match(codigo, /\{ email: a\.email, nome: a\.nome \}/);
   });
 });
 

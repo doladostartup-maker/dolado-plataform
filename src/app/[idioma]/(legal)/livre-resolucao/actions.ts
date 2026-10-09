@@ -2,8 +2,9 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ADMIN_EMAIL, enviarEmailBrevo } from "@/lib/email/brevo";
+import { obterIdioma } from "@/i18n/servidor";
 import {
-  ASSUNTO_CONFIRMACAO_LIVRE_RESOLUCAO,
+  assuntoConfirmacaoLivreResolucao,
   montarHtmlAvisoLivreResolucao,
   montarHtmlConfirmacaoLivreResolucao,
 } from "@/lib/email/livreResolucao";
@@ -87,10 +88,12 @@ export async function pedirLivreResolucao(
   let confirmacaoEnviada = false;
   if (contaConhecida) {
     try {
+      // Idioma da página onde o pedido foi feito (/livre-resolucao ou /en/…).
+      const idioma = await obterIdioma();
       await enviarEmailBrevo(
         pedido.email,
-        ASSUNTO_CONFIRMACAO_LIVRE_RESOLUCAO,
-        montarHtmlConfirmacaoLivreResolucao(pedido, registo.id, registo.pedido_em),
+        assuntoConfirmacaoLivreResolucao(idioma),
+        montarHtmlConfirmacaoLivreResolucao(pedido, registo.id, registo.pedido_em, idioma),
       );
       confirmacaoEnviada = true;
       await admin

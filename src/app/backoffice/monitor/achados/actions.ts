@@ -6,7 +6,8 @@ import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 import { enviarEmailBrevo } from "@/lib/email/brevo";
-import { ASSUNTO_ACHADO_MONITOR, montarHtmlAchadoMonitor } from "@/lib/email/achadoMonitor";
+import { assuntoAchadoMonitor, montarHtmlAchadoMonitor } from "@/lib/email/achadoMonitor";
+import { idiomaDosMetadados } from "@/lib/idiomaConta";
 import { ESTADOS_ACHADO_POR_DECIDIR } from "@/lib/monitor/achados";
 
 // Revisão humana dos achados do Monitor (F2/F4). Nada chega ao cliente sem
@@ -64,10 +65,15 @@ export async function comunicarAchado(formData: FormData) {
     ]);
     const u = conta?.user;
     if (u?.email && u.email_confirmed_at) {
+      // Idioma da conta (só a moldura do e-mail; o texto é o escrito aqui).
+      const idioma = idiomaDosMetadados(u.user_metadata);
       await enviarEmailBrevo(
         u.email,
-        ASSUNTO_ACHADO_MONITOR,
-        montarHtmlAchadoMonitor({ fornecedor: contrato?.fornecedor ?? null, texto, url: `https://portal.dolado.pt/portal/contratos/${a.contrato_id}` }),
+        assuntoAchadoMonitor(idioma),
+        montarHtmlAchadoMonitor(
+          { fornecedor: contrato?.fornecedor ?? null, texto, url: `https://portal.dolado.pt/portal/contratos/${a.contrato_id}` },
+          idioma,
+        ),
       );
       enviado = true;
     }

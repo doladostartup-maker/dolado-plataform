@@ -88,19 +88,23 @@ describe("criação de contas por e-mail (código)", () => {
   });
 });
 
+// Os templates têm ramos en-GB ({{ if eq (print .Data.idioma) "en-GB" }}…{{ else }}…{{ end }}):
+// os testes de texto português leem o ramo português (o que recebe quem não tem idioma).
+const ramoPortugues = (t) => t.replace(/\{\{ if eq \(print \.Data\.idioma\) "en-GB" \}\}[\s\S]*?\{\{ else \}\}([\s\S]*?)\{\{ end \}\}/g, "$1");
+
 describe("template do e-mail de confirmação", () => {
-  const html = fonte("../../supabase/templates/confirmacao.html");
+  const html = ramoPortugues(fonte("../../supabase/templates/confirmacao.html"));
 
   test("o código só aparece dentro do bloco condicional mostrar_codigo", () => {
-    const inicio = html.indexOf("{{ with .Data }}{{ if .mostrar_codigo }}");
-    const fim = html.indexOf("{{ end }}{{ end }}");
+    const inicio = html.indexOf("{{ if .Data.mostrar_codigo }}");
+    const fim = html.indexOf("{{ end }}", inicio);
     assert.ok(inicio > 0 && fim > inicio, "bloco condicional em falta");
     const token = html.indexOf(".Token");
     assert.ok(token > inicio && token < fim, "o código está fora do bloco condicional");
     assert.equal(html.split(".Token").length - 1, 1);
   });
   test("a ligação de confirmação está sempre presente", () => {
-    const inicio = html.indexOf("{{ with .Data }}");
+    const inicio = html.indexOf("{{ if .Data.mostrar_codigo }}");
     const botao = html.indexOf("{{ .ConfirmationURL }}");
     assert.ok(botao > 0 && botao < inicio);
     assert.match(html, /Confirmar o meu e-mail/);

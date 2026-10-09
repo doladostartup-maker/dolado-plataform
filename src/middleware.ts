@@ -43,6 +43,10 @@ const PAGINAS_PUBLICAS = [
   "/empresas",
 ];
 
+// robots.txt e sitemap.xml: servidos diretamente em dolado.pt (nunca
+// redirecionados para o portal) e sem sessão.
+const FICHEIROS_SEO = ["/robots.txt", "/sitemap.xml"];
+
 // /auth/callback tem de fazer a troca do code PKCE de forma atómica, sem
 // outro cliente Supabase a mexer nos cookies antes — deixar o updateSession
 // correr aqui apaga por vezes o cookie do code verifier antes da troca
@@ -52,6 +56,7 @@ const PAGINAS_PUBLICAS = [
 // Supabase a mexer em cookies numa resposta que o Stripe só lê pelo corpo.
 const ROTAS_SEM_REFRESH_DE_SESSAO = [
   ...PAGINAS_PUBLICAS,
+  ...FICHEIROS_SEO,
   "/auth/callback",
   "/api/stripe/webhook",
   "/api/indicacoes/visita",
@@ -252,6 +257,7 @@ async function encaminharSemIdioma(request: NextRequest, host: string, pathname:
   if (
     (host === "dolado.pt" || host === "www.dolado.pt") &&
     !PAGINAS_SO_MARKETING.includes(pathname) &&
+    !FICHEIROS_SEO.includes(pathname) &&
     !ehApiIndicacao(pathname)
   ) {
     return NextResponse.redirect(
