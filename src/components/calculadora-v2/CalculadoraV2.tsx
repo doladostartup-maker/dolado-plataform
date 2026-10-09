@@ -18,6 +18,10 @@ import {
   type ResultadoCalculadora,
 } from "@/lib/calculadoraCancelamento/regras";
 import { urlTratarCaso } from "@/lib/site";
+import type { Idioma } from "@/i18n/config";
+import { useCaminho, useIdioma } from "@/i18n/cliente";
+import { formatarEurosCents } from "@/i18n/formatar";
+import { tCalculadora } from "@/i18n/mensagens/calculadora";
 
 // Calculadora pública no Design System V2: formulário → estimativa do encargo
 // máximo de um cancelamento antecipado (telecomunicações). Tudo acontece no
@@ -41,8 +45,6 @@ const ROTULO = "text-[15.5px] font-bold text-[var(--v2-navy)]";
 const AJUDA = "text-[14px] leading-relaxed text-[var(--v2-muted)]";
 const ERRO = "text-[14px] font-medium text-[var(--v2-erro)]";
 
-const NOTA_AMBITO =
-  "Esta calculadora estima o encargo máximo de um cancelamento antecipado por iniciativa do cliente, quando não exista um motivo legal ou contratual que permita cancelar sem encargos.";
 
 const semSubscricao = () => () => {};
 
@@ -56,11 +58,17 @@ function formatarData(iso: string) {
   return `${d}/${m}/${a}`;
 }
 
-function textoDuracao({ meses, dias }: Duracao) {
+function textoDuracao(idioma: Idioma, { meses, dias }: Duracao) {
+  const t = tCalculadora[idioma].duracao;
   const partes: string[] = [];
-  if (meses > 0) partes.push(meses === 1 ? "1 mês" : `${meses} meses`);
-  if (dias > 0 || meses === 0) partes.push(dias === 1 ? "1 dia" : `${dias} dias`);
-  return partes.join(" e ");
+  if (meses > 0) partes.push(t.meses(meses));
+  if (dias > 0 || meses === 0) partes.push(t.dias(dias));
+  return partes.join(t.e);
+}
+
+/** Euros no idioma: português como sempre (formatarEuros), inglês "€80.00". */
+function euros(idioma: Idioma, centimos: number) {
+  return idioma === "pt-PT" ? formatarEuros(centimos) : formatarEurosCents(idioma, centimos);
 }
 
 // ---------------------------------------------------------------------------
@@ -141,41 +149,41 @@ function LinhaTempo({ rotulo, valor }: { rotulo: string; valor: string }) {
 
 function Resultado({ resultado, mensalidade, onRecomecar }: { resultado: ResultadoValido; mensalidade: string; onRecomecar: () => void }) {
   const { tempo } = resultado;
+  const idioma = useIdioma();
+  const c = useCaminho();
+  const t = tCalculadora[idioma].resultado;
+  const formatarEuros = (centimos: number) => euros(idioma, centimos);
 
   return (
     <div aria-live="polite" className="flex flex-col gap-4">
-      <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]">Resultado</p>
+      <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]">{t.rotulo}</p>
 
       <h2 className="text-[22px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">
-        Estimativa máxima do encargo de cancelamento:{" "}
+        {t.titulo}{" "}
         <span className="whitespace-nowrap text-[var(--v2-green)]">{formatarEuros(resultado.resultadoCentimos)}</span>
       </h2>
 
       {resultado.estado === "terminada" && (
-        <p className="text-[14.5px] leading-relaxed text-[var(--v2-muted)]">
-          Com base nas datas introduzidas, a fidelização terminou a {formatarData(tempo.dataFim)}: já não existe
-          período de fidelização em curso.
-        </p>
+        <p className="text-[14.5px] leading-relaxed text-[var(--v2-muted)]">{t.terminada(formatarData(tempo.dataFim))}</p>
       )}
 
       {resultado.estado === "calculado" && (
         <ul className="flex flex-col gap-1.5 text-[14.5px] leading-relaxed text-[var(--v2-navy)]">
           <li>
-            Vantagem proporcional ainda por recuperar:{" "}
+            {t.vantagem}{" "}
             <strong>{formatarEuros(resultado.vantagemProporcionalCentimos)}</strong>
           </li>
           {resultado.limiteMensalidadesCentimos !== null && (
             <li>
-              Limite pelas mensalidades restantes ({tempo.mensalidadesEmFalta} × {mensalidade} ×{" "}
-              {resultado.percentagemLimite}%): <strong>{formatarEuros(resultado.limiteMensalidadesCentimos)}</strong>
+              {t.limite(tempo.mensalidadesEmFalta, mensalidade, resultado.percentagemLimite ?? 0)}{" "}
+              <strong>{formatarEuros(resultado.limiteMensalidadesCentimos)}</strong>
             </li>
           )}
           <li>
-            Valor aplicável: <strong>{formatarEuros(resultado.resultadoCentimos)}</strong>
-            {(resultado.criterio === "vantagem" || resultado.criterio === "limite") && ", por ser o menor dos dois"}
-            {resultado.criterio === "iguais" && ", por os dois valores serem iguais"}
-            {resultado.criterio === "so_vantagem" &&
-              ". Num contrato iniciado antes de 14 de novembro de 2022, só se aplica a vantagem proporcional, exceto numa refidelização sem nova instalação"}
+            {t.aplicavel} <strong>{formatarEuros(resultado.resultadoCentimos)}</strong>
+            {(resultado.criterio === "vantagem" || resultado.criterio === "limite") && t.menor}
+            {resultado.criterio === "iguais" && t.iguais}
+            {resultado.criterio === "so_vantagem" && t.soVantagem}
             .
           </li>
         </ul>
@@ -183,38 +191,36 @@ function Resultado({ resultado, mensalidade, onRecomecar }: { resultado: Resulta
 
       {resultado.estado === "calculado" && (
         <dl className="rounded-[10px] bg-[var(--v2-surface)] px-4 py-1">
-          <LinhaTempo rotulo="Tempo já decorrido" valor={textoDuracao(tempo.decorrido)} />
-          <LinhaTempo rotulo="Tempo de fidelização em falta" valor={textoDuracao(tempo.emFalta)} />
-          <LinhaTempo rotulo="Mensalidades em falta (estimativa)" valor={String(tempo.mensalidadesEmFalta)} />
-          <LinhaTempo rotulo="Fim da fidelização" valor={formatarData(tempo.dataFim)} />
+          <LinhaTempo rotulo={t.decorrido} valor={textoDuracao(idioma, tempo.decorrido)} />
+          <LinhaTempo rotulo={t.emFalta} valor={textoDuracao(idioma, tempo.emFalta)} />
+          <LinhaTempo rotulo={t.mensalidadesEmFalta} valor={String(tempo.mensalidadesEmFalta)} />
+          <LinhaTempo rotulo={t.fim} valor={formatarData(tempo.dataFim)} />
         </dl>
       )}
 
       {resultado.equipamento && (
         <p className="rounded-[12px] border-l-[3px] border-[var(--v2-aviso)] bg-[var(--v2-aviso-bg)] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--v2-navy)]">
-          Indicou que recebeu equipamento subsidiado. Podem existir regras e encargos específicos relacionados com o
-          equipamento, que não estão incluídos neste valor: o resultado não corresponde ao custo total do cancelamento.
+          {t.equipamento}
         </p>
       )}
 
       <div className="mt-1 flex flex-col gap-3 sm:flex-row">
         <a
-          href={hrefTratarCaso()}
+          href={c(hrefTratarCaso())}
           onClick={() => track("click_nav_reclamacao")}
           className={BOTAO_PRIMARIO}
         >
-          Tratar o meu caso <IconeSeta tamanho={17} />
+          {t.tratarCaso} <IconeSeta tamanho={17} />
         </a>
         <button type="button" onClick={onRecomecar} className={BOTAO_CONTORNO}>
-          Calcular de novo
+          {t.calcularDeNovo}
         </button>
       </div>
 
       <ul className="flex list-disc flex-col gap-1 border-t border-[var(--v2-line)] pt-3 pl-4 text-[12.5px] leading-relaxed text-[var(--v2-muted)]">
-        <li>Este valor é uma estimativa e depende dos dados que introduziu.</li>
-        <li>Podem existir outras condições contratuais ou legais que esta calculadora não considera.</li>
-        <li>O equipamento subsidiado pode ter regras próprias, não incluídas neste cálculo.</li>
-        <li>Não é uma avaliação jurídica do seu caso.</li>
+        {t.notas.map((n) => (
+          <li key={n}>{n}</li>
+        ))}
       </ul>
     </div>
   );
@@ -225,6 +231,9 @@ function Resultado({ resultado, mensalidade, onRecomecar }: { resultado: Resulta
 // ---------------------------------------------------------------------------
 
 function Calculadora() {
+  const idioma = useIdioma();
+  const tc = tCalculadora[idioma];
+  const t = tc.campos;
   const [dados, setDados] = useState<DadosCalculadora>(DADOS_VAZIOS);
   const [erros, setErros] = useState<Partial<Record<CampoCalculadora, string>>>({});
   const [resultado, setResultado] = useState<ResultadoValido | null>(null);
@@ -241,7 +250,12 @@ function Calculadora() {
     e.preventDefault();
     const r = calcularEncargoCancelamento(dados, hojeEmLisboa());
     if (!r.ok) {
-      setErros(r.erros);
+      // Mensagens de validação no idioma (as regras devolvem-nas em português).
+      const traduzidas: Partial<Record<CampoCalculadora, string>> = {};
+      for (const [campo, msg] of Object.entries(r.erros) as [CampoCalculadora, string | undefined][]) {
+        if (msg) traduzidas[campo] = (tc.erros as Record<string, string>)[msg] ?? msg;
+      }
+      setErros(traduzidas);
       return;
     }
     setErros({});
@@ -253,14 +267,14 @@ function Calculadora() {
     setResultado(null);
   }
 
-  if (resultado) return <Resultado resultado={resultado} mensalidade={formatarEuros(lerEuros(dados.mensalidade) ?? 0)} onRecomecar={recomecar} />;
+  if (resultado) return <Resultado resultado={resultado} mensalidade={euros(idioma, lerEuros(dados.mensalidade) ?? 0)} onRecomecar={recomecar} />;
 
   return (
     <form onSubmit={calcular} noValidate className="flex flex-col gap-6">
       <Campo
         id="data-inicio"
-        rotulo="Data de início da fidelização"
-        ajuda="Numa refidelização, indique a data em que começou o novo período de fidelização."
+        rotulo={t.dataInicio}
+        ajuda={t.dataInicioAjuda}
         erro={erros.dataInicio}
       >
         <input
@@ -273,7 +287,7 @@ function Calculadora() {
         />
       </Campo>
 
-      <Campo id="duracao" rotulo="Duração total da fidelização (meses)" ajuda="Normalmente 12 ou 24 meses." erro={erros.duracaoMeses}>
+      <Campo id="duracao" rotulo={t.duracao} ajuda={t.duracaoAjuda} erro={erros.duracaoMeses}>
         <input
           id="duracao"
           type="number"
@@ -288,11 +302,11 @@ function Calculadora() {
       </Campo>
 
       <Escolha
-        rotulo="É a primeira fidelização ou uma refidelização?"
-        ajuda="Refidelização: um novo período de fidelização no mesmo contrato, por exemplo ao mudar de tarifário ou ao receber uma nova oferta."
+        rotulo={t.tipo}
+        ajuda={t.tipoAjuda}
         opcoes={[
-          { valor: "primeira", texto: "Primeira fidelização" },
-          { valor: "refidelizacao", texto: "Refidelização" },
+          { valor: "primeira", texto: t.primeira },
+          { valor: "refidelizacao", texto: t.refidelizacao },
         ]}
         valor={dados.tipo}
         onEscolher={(v) => alterar("tipo", v)}
@@ -301,11 +315,11 @@ function Calculadora() {
 
       {dados.tipo === "refidelizacao" && (
         <Escolha
-          rotulo="Na refidelização, houve nova instalação ou alteração do lacete local?"
-          ajuda="Por exemplo, uma nova instalação física da ligação em sua casa."
+          rotulo={t.novaInstalacao}
+          ajuda={t.novaInstalacaoAjuda}
           opcoes={[
-            { valor: "sim", texto: "Sim" },
-            { valor: "nao", texto: "Não" },
+            { valor: "sim", texto: t.sim },
+            { valor: "nao", texto: t.nao },
           ]}
           valor={dados.novaInstalacao}
           onEscolher={(v) => alterar("novaInstalacao", v)}
@@ -313,12 +327,12 @@ function Calculadora() {
         />
       )}
 
-      <Campo id="mensalidade" rotulo="Valor atual da mensalidade (€)" erro={erros.mensalidade}>
+      <Campo id="mensalidade" rotulo={t.mensalidade} erro={erros.mensalidade}>
         <input
           id="mensalidade"
           type="text"
           inputMode="decimal"
-          placeholder="Ex.: 29,99"
+          placeholder={t.mensalidadeExemplo}
           value={dados.mensalidade}
           onChange={(e) => alterar("mensalidade", e.target.value)}
           className={CAMPO}
@@ -327,15 +341,15 @@ function Calculadora() {
 
       <Campo
         id="vantagem"
-        rotulo="Valor total da vantagem associada à fidelização (€)"
-        ajuda="O valor indicado no contrato como vantagem ou benefício por aceitar a fidelização (por exemplo, descontos ou instalação gratuita)."
+        rotulo={t.vantagem}
+        ajuda={t.vantagemAjuda}
         erro={erros.vantagem}
       >
         <input
           id="vantagem"
           type="text"
           inputMode="decimal"
-          placeholder="Ex.: 120,00"
+          placeholder={t.vantagemExemplo}
           value={dados.vantagem}
           onChange={(e) => alterar("vantagem", e.target.value)}
           className={CAMPO}
@@ -343,11 +357,11 @@ function Calculadora() {
       </Campo>
 
       <Escolha
-        rotulo="Recebeu equipamento subsidiado associado ao contrato?"
-        ajuda="Por exemplo, um telemóvel ou outro equipamento oferecido ou com desconto por causa da fidelização."
+        rotulo={t.equipamento}
+        ajuda={t.equipamentoAjuda}
         opcoes={[
-          { valor: "sim", texto: "Sim" },
-          { valor: "nao", texto: "Não" },
+          { valor: "sim", texto: t.sim },
+          { valor: "nao", texto: t.nao },
         ]}
         valor={dados.equipamento}
         onEscolher={(v) => alterar("equipamento", v)}
@@ -355,58 +369,34 @@ function Calculadora() {
       />
 
       <p className="rounded-[12px] border-l-[3px] border-[var(--v2-green)] bg-[var(--v2-mint)] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--v2-navy)]">
-        {NOTA_AMBITO}
+        {tc.notaAmbito}
       </p>
 
       {Object.values(erros).some(Boolean) && (
         <p className={ERRO} role="alert">
-          Reveja os campos assinalados.
+          {tc.reveja}
         </p>
       )}
 
       <button type="submit" className={`${BOTAO_PRIMARIO} self-start px-8`}>
-        Calcular
+        {tc.calcular}
       </button>
     </form>
   );
 }
 
-const COMO_FUNCIONA: { titulo: string; texto: string }[] = [
-  {
-    titulo: "Como é feito o cálculo.",
-    texto:
-      "Nos contratos com fidelização iniciada ou renovada a partir de 14 de novembro de 2022, o encargo corresponde ao menor de dois valores: a parte da vantagem ainda por recuperar, proporcional ao tempo de fidelização em falta, e uma percentagem das mensalidades em falta (50% no primeiro ano e 30% no segundo; 30% numa refidelização sem nova instalação). Nos contratos anteriores, conta a vantagem proporcional ao tempo em falta e, numa refidelização sem nova instalação, também o limite de 30% das mensalidades em falta.",
-  },
-  {
-    titulo: "O que não é.",
-    texto:
-      "Não avalia se pode cancelar sem encargos, não inclui encargos com equipamento e não é uma avaliação jurídica do seu caso.",
-  },
-  {
-    titulo: "Os seus dados.",
-    texto:
-      "O cálculo é feito apenas no seu navegador: não guardamos os valores que introduz nem os associamos a si.",
-  },
-  {
-    titulo: "Se decidir avançar.",
-    texto: "Em “Tratar o meu caso” descreve o que aconteceu, cria a sua conta e escolhe a modalidade. Só paga no fim.",
-  },
-];
-
 export function CalculadoraV2() {
+  const t = tCalculadora[useIdioma()];
   return (
     <>
       {/* ===== Hero + calculadora ===== */}
       <SectionV2 size="compact" className="grid items-start gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:py-20">
         <div className="lg:sticky lg:top-28 lg:pt-6">
-          <Eyebrow>Grátis · sem conta · telecomunicações</Eyebrow>
+          <Eyebrow>{t.eyebrow}</Eyebrow>
           <h1 className="mt-5 text-[clamp(32px,3.8vw,48px)] font-extrabold leading-[1.08] tracking-[-0.035em] text-[var(--v2-navy)]">
-            Calculadora de Cancelamento
+            {t.titulo}
           </h1>
-          <p className={`${TEXTO} mt-5 text-[17.5px]`}>
-            Estime quanto lhe pode ser cobrado se cancelar antecipadamente um contrato de telecomunicações com
-            fidelização. O resultado aparece logo, sem pedir e-mail nem criar conta.
-          </p>
+          <p className={`${TEXTO} mt-5 text-[17.5px]`}>{t.texto}</p>
         </div>
         <div className={`${CARTAO} p-6 sm:p-8`}>
           <Calculadora />
@@ -415,9 +405,9 @@ export function CalculadoraV2() {
 
       {/* ===== Como funciona ===== */}
       <SectionV2 tone="soft-blue">
-        <SectionHeader eyebrow="Como funciona" titulo="O que precisa de saber sobre a calculadora." />
+        <SectionHeader eyebrow={t.comoFunciona.eyebrow} titulo={t.comoFunciona.titulo} />
         <ul className="mt-10 grid gap-8 md:grid-cols-2 md:gap-x-12">
-          {COMO_FUNCIONA.map((c) => (
+          {t.comoFunciona.itens.map((c) => (
             <li key={c.titulo}>
               <h3 className="text-[18px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{c.titulo}</h3>
               <p className="mt-2 text-[15.5px] leading-relaxed text-[var(--v2-muted)]">{c.texto}</p>

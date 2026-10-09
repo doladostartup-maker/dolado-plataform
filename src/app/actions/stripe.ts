@@ -17,7 +17,6 @@ import {
   type PagamentoAvulso,
 } from "@/lib/stripe/conversao";
 import {
-  MENSAGENS_ERRO_CONSENTIMENTO,
   abrirCheckoutComConsentimento,
   lerPedidoCompra,
   montarRegistoConsentimento,
@@ -33,6 +32,9 @@ import { DIAS_VALIDADE_PEDIDO, pedidoPorPagar } from "@/lib/pedidoCaso";
 import { pedidoDaConta } from "@/lib/pedidoCasoServidor";
 import { camposDesconto, prepararDescontoCheckout } from "@/lib/indicacoes/servidor";
 import { registarOrigemDaConta } from "@/lib/origemAquisicaoServidor";
+import { LOCALE_STRIPE, localizarHref, type Idioma } from "@/i18n/config";
+import { tCompra } from "@/i18n/mensagens/compra";
+import { caminho, obterIdioma, textos } from "@/i18n/servidor";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL!;
 
@@ -72,6 +74,22 @@ function urlsDoPedido(ctx: ContextoPedido) {
   };
 }
 
+/**
+ * Idioma da página onde a compra foi confirmada — só apresentação: os URLs de
+ * regresso ficam no mesmo idioma e o Checkout abre em inglês para quem
+ * compra em inglês (em português, o Stripe continua a escolher sozinho, como
+ * sempre). Preços, Price IDs, metadata e regras não mudam.
+ */
+function comIdioma(p: Stripe.Checkout.SessionCreateParams, idioma: Idioma): Stripe.Checkout.SessionCreateParams {
+  if (idioma === "pt-PT") return p;
+  return {
+    ...p,
+    locale: LOCALE_STRIPE[idioma],
+    ...(p.success_url ? { success_url: localizarHref(idioma, p.success_url) } : {}),
+    ...(p.cancel_url ? { cancel_url: localizarHref(idioma, p.cancel_url) } : {}),
+  };
+}
+
 function dependenciasCheckout(
   parametros: (metadata: Record<string, string>) => Stripe.Checkout.SessionCreateParams,
 ): DependenciasCheckout {
@@ -87,7 +105,7 @@ function dependenciasCheckout(
       // consentimento foi retirado). Nunca vai para a metadata da Stripe.
       const userId = (await utilizadorAtual()).user?.id;
       if (userId) await registarOrigemDaConta(userId);
-      const session = await getStripe().checkout.sessions.create(parametros(metadata));
+      const session = await getStripe().checkout.sessions.create(comIdioma(parametros(metadata), await obterIdioma()));
       return { id: session.id, url: session.url };
     },
     async ligarSessao(consentimentoId, sessionId) {
@@ -499,7 +517,9 @@ async function checkoutPedidoCaso(pedido: PedidoCompra): Promise<Destino> {
  */
 export async function confirmarCompra(_anterior: EstadoCompra, formData: FormData): Promise<EstadoCompra> {
   const lido = lerPedidoCompra((campo) => formData.get(campo));
-  if (!lido.ok) return { erro: MENSAGENS_ERRO_CONSENTIMENTO[lido.erro] };
+  // Mensagens no idioma da página (o português é MENSAGENS_ERRO_CONSENTIMENTO).
+  const mensagens = (await textos(tCompra)).mensagens;
+  if (!lido.ok) return { erro: mensagens[lido.erro] };
 
   let destino: string;
   try {
@@ -525,7 +545,8 @@ export async function confirmarCompra(_anterior: EstadoCompra, formData: FormDat
     // requireUser() sem sessão faz redirect: deixa passar.
     if ((erro as { digest?: string })?.digest?.startsWith("NEXT_REDIRECT")) throw erro;
     console.error(JSON.stringify({ origem: "checkout", erro_codigo: (erro as { code?: string })?.code ?? "erro" }));
-    return { erro: "Não foi possível abrir o pagamento. Tente novamente dentro de alguns minutos." };
+    return { erro: mensagens.abrir };
   }
-  redirect(destino);
+  // Destinos internos (/tratar-caso/…) no idioma da página; o Stripe é externo.
+  redirect(await caminho(destino));
 }

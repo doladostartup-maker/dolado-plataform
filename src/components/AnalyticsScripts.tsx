@@ -2,6 +2,7 @@ import Script from "next/script";
 import { MedicaoComConsentimento } from "./MedicaoComConsentimento";
 import { origemAquisicaoAtiva } from "@/lib/origemAquisicao";
 import { ConsentimentoCookieIndicacao } from "@/components/indicacoes/ConsentimentoCookieIndicacao";
+import { obterIdioma } from "@/i18n/servidor";
 
 // Banner de consentimento (Cookiebot) + medição. Incluído uma única vez por
 // PaginaV2 (todas as páginas públicas) e pelo layout de /tratar-caso.
@@ -13,7 +14,9 @@ import { ConsentimentoCookieIndicacao } from "@/components/indicacoes/Consentime
 
 const COOKIEBOT_ID = "dafec895-e2af-4e2e-a904-ea3c9f12380e";
 
-export function AnalyticsScripts() {
+export async function AnalyticsScripts() {
+  // Páginas em inglês: banner em inglês (data-culture); português como sempre.
+  const idioma = await obterIdioma();
   return (
     <>
       <Script
@@ -21,6 +24,7 @@ export function AnalyticsScripts() {
         src="https://consent.cookiebot.com/uc.js"
         data-cbid={COOKIEBOT_ID}
         data-blockingmode="auto"
+        data-culture={idioma === "en-GB" ? "en" : undefined}
         strategy="beforeInteractive"
       />
       <MedicaoComConsentimento origemAtiva={origemAquisicaoAtiva()} />

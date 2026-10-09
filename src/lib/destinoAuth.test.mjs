@@ -53,9 +53,9 @@ describe("destino depois de autenticar", () => {
 
 describe("criação de contas por e-mail (código)", () => {
   const fluxos = {
-    registo: fonte("../app/registo/actions.ts"),
-    criarConta: fonte("../app/criar-conta/actions.ts"),
-    tratarCaso: fonte("../app/tratar-caso/actions.ts"),
+    registo: fonte("../app/[idioma]/registo/actions.ts"),
+    criarConta: fonte("../app/[idioma]/criar-conta/actions.ts"),
+    tratarCaso: fonte("../app/[idioma]/tratar-caso/actions.ts"),
   };
 
   test("todos os signUp passam por dadosContaNova (emailRedirectTo = /auth/callback)", () => {
@@ -71,7 +71,7 @@ describe("criação de contas por e-mail (código)", () => {
     assert.match(fluxos.tratarCaso, /mostrarCodigo: true/);
     assert.doesNotMatch(fluxos.registo, /mostrarCodigo/);
     assert.doesNotMatch(fluxos.criarConta, /mostrarCodigo/);
-    assert.match(fonte("../app/tratar-caso/conta/FormularioConta.tsx"), /name="codigo"/);
+    assert.match(fonte("../app/[idioma]/tratar-caso/conta/FormularioConta.tsx"), /name="codigo"/);
   });
 
   test("os fluxos sem código guardam o destino e mostram a página de confirmação", () => {
@@ -83,7 +83,7 @@ describe("criação de contas por e-mail (código)", () => {
   });
 
   test("o login com palavra-passe e o callback não caem em /conta", () => {
-    assert.doesNotMatch(fonte("../app/login/actions.ts"), /"\/conta"/);
+    assert.doesNotMatch(fonte("../app/[idioma]/login/actions.ts"), /"\/conta"/);
     assert.doesNotMatch(fonte("../app/auth/callback/route.ts"), /"\/conta"/);
   });
 });

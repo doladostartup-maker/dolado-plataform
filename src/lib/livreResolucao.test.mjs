@@ -121,7 +121,7 @@ describe("textos e páginas legais", () => {
 
   test("o rótulo \"Versão …\" de cada página versionada é a própria versão", () => {
     for (const doc of ["termos", "privacidade"]) {
-      const dir = new URL(`../app/(legal)/${doc}/_versoes/`, import.meta.url);
+      const dir = new URL(`../app/[idioma]/(legal)/${doc}/_versoes/`, import.meta.url);
       for (const f of readdirSync(dir).filter((n) => /^v[\d-]+[a-z]?\.tsx$/.test(n))) {
         const versao = f.slice(1, -4);
         const rotulos = [...readFileSync(new URL(f, dir), "utf8").matchAll(/Versão (\d{4}-\d{2}-\d{2}[a-z]?)/g)].map((m) => m[1]);
@@ -131,13 +131,13 @@ describe("textos e páginas legais", () => {
   });
 
   test("versões em vigor estão registadas nas páginas versionadas", () => {
-    assert.ok(fonte("../app/(legal)/termos/_versoes/index.ts").includes(`"${TERMOS_VERSAO}"`));
-    assert.ok(fonte("../app/(legal)/privacidade/_versoes/index.ts").includes(`"${PRIVACIDADE_VERSAO}"`));
+    assert.ok(fonte("../app/[idioma]/(legal)/termos/_versoes/index.ts").includes(`"${TERMOS_VERSAO}"`));
+    assert.ok(fonte("../app/[idioma]/(legal)/privacidade/_versoes/index.ts").includes(`"${PRIVACIDADE_VERSAO}"`));
   });
 
   test("documentos em vigor sem Beta, gratuitidade ou 'sem conta'", () => {
-    const termos = fonte(`../app/(legal)/termos/_versoes/v${TERMOS_VERSAO}.tsx`);
-    const privacidade = fonte(`../app/(legal)/privacidade/_versoes/v${PRIVACIDADE_VERSAO}.tsx`);
+    const termos = fonte(`../app/[idioma]/(legal)/termos/_versoes/v${TERMOS_VERSAO}.tsx`);
+    const privacidade = fonte(`../app/[idioma]/(legal)/privacidade/_versoes/v${PRIVACIDADE_VERSAO}.tsx`);
     for (const doc of [termos, privacidade]) {
       assert.ok(!/beta/i.test(doc));
       assert.ok(!/servi[çc]o (é )?gratuito|sem custo durante|n[ãa]o h[áa] cobran/i.test(doc));
@@ -147,8 +147,8 @@ describe("textos e páginas legais", () => {
 
   test("identificação da entidade vem de site.ts (sem morada repetida no código)", () => {
     for (const p of [
-      `../app/(legal)/termos/_versoes/v${TERMOS_VERSAO}.tsx`,
-      `../app/(legal)/privacidade/_versoes/v${PRIVACIDADE_VERSAO}.tsx`,
+      `../app/[idioma]/(legal)/termos/_versoes/v${TERMOS_VERSAO}.tsx`,
+      `../app/[idioma]/(legal)/privacidade/_versoes/v${PRIVACIDADE_VERSAO}.tsx`,
       "../components/marketing-v2/FooterV2.tsx",
     ]) {
       const f = fonte(p);
@@ -158,7 +158,7 @@ describe("textos e páginas legais", () => {
   });
 
   test("a função online grava a prova no servidor e não faz reembolsos", () => {
-    const acao = fonte("../app/(legal)/livre-resolucao/actions.ts");
+    const acao = fonte("../app/[idioma]/(legal)/livre-resolucao/actions.ts");
     assert.ok(acao.includes('"use server"'));
     assert.ok(acao.includes("pedidos_livre_resolucao"));
     assert.ok(!/refunds|subscriptions\.(cancel|update)/.test(acao));

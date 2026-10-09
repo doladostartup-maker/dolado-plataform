@@ -32,7 +32,8 @@ describe("desempenho em produção", () => {
       assert.doesNotMatch(readFileSync(f, "utf8"), /<Link[^>]*href="\/entrar"/, f);
     }
     assert.match(fonte("../components/marketing-v2/rotas.ts"), /entrar: `\$\{process\.env\.NEXT_PUBLIC_SITE_URL \?\? ""\}\/entrar`/);
-    assert.match(fonte("../components/marketing-v2/NavbarV2.tsx"), /<a href=\{ROTAS_V2\.entrar\}/);
+    // <a> simples, no idioma da página (c = useCaminho()).
+    assert.match(fonte("../components/marketing-v2/NavbarV2.tsx"), /<a href=\{c\(ROTAS_V2\.entrar\)\}/);
   });
 
   test("prefetch só nos 4 links principais da navbar", () => {
@@ -53,15 +54,15 @@ describe("desempenho em produção", () => {
   test("o logótipo leva sempre à página inicial da DoLado (dolado.pt)", () => {
     for (const p of ["../components/marketing-v2/Logotipo.tsx"]) {
       const f = fonte(p);
-      assert.match(f, /href=\{MARKETING_SITE_URL\}[\s\S]{0,260}dolado-logo/, p);
+      assert.match(f, /href=\{localizarHref\(idioma, MARKETING_SITE_URL\)\}[\s\S]{0,260}dolado-logo/, p);
     }
     // O portal, a revisão do texto, "Tratar o meu caso" e as páginas de conta usam o mesmo Logotipo V2 (verificado acima).
-    for (const p of ["../app/portal/layout.tsx", "../app/texto/layout.tsx", "../app/tratar-caso/layout.tsx", "../components/portal/MolduraConta.tsx"]) {
+    for (const p of ["../app/[idioma]/portal/layout.tsx", "../app/[idioma]/texto/layout.tsx", "../app/[idioma]/tratar-caso/layout.tsx", "../components/portal/MolduraConta.tsx"]) {
       const f = fonte(p);
       assert.match(f, /import \{ Logotipo \} from "@\/components\/marketing-v2\/Logotipo"/, p);
       assert.match(f, /<Logotipo \/>/, p);
     }
     // As páginas de conta (/entrar, /login, …) usam a MolduraConta.
-    assert.match(fonte("../app/entrar/page.tsx"), /<MolduraConta/);
+    assert.match(fonte("../app/[idioma]/entrar/page.tsx"), /<MolduraConta/);
   });
 });

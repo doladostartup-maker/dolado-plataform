@@ -83,7 +83,7 @@ describe("regresso do Checkout (/portal?upgraded=true)", () => {
   });
 
   test("a página /portal não escreve acessos nem consulta a sessão Stripe", () => {
-    const fonte = readFileSync(new URL("../app/portal/page.tsx", import.meta.url), "utf8");
+    const fonte = readFileSync(new URL("../app/[idioma]/portal/page.tsx", import.meta.url), "utf8");
     assert.equal(/\.(upsert|update|insert)\(/.test(fonte), false);
     assert.equal(fonte.includes("createAdminClient"), false);
     assert.equal(fonte.includes("checkout.sessions"), false);

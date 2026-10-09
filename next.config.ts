@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
   // Páginas antigas que abriam casos sem pagamento: os links que ainda
   // existam passam a levar ao início de "Tratar o meu caso" (ou à homepage).
   async redirects() {
-    return [
+    const publicos = [
       { source: "/pedido-classico", destination: "/tratar-caso", permanent: true },
       { source: "/home-anterior", destination: "/", permanent: true },
       // O Simulador de Elegibilidade saiu do portal (01/10/2026): é público,
@@ -37,6 +37,12 @@ const nextConfig: NextConfig = {
       { source: "/portal/alertas/:caminho*", destination: "/portal/contratos", permanent: true },
       { source: "/portal/promocoes/:caminho*", destination: "/portal/contratos", permanent: true },
       { source: "/portal/faturas/:caminho*", destination: "/portal/contratos", permanent: true },
+    ];
+    return [
+      ...publicos,
+      // As mesmas páginas antigas na versão inglesa (/en/…), para o destino
+      // ficar no mesmo idioma. O backoffice não tem versão inglesa.
+      ...publicos.map((r) => ({ ...r, source: `/en${r.source}`, destination: r.destination === "/" ? "/en" : `/en${r.destination}` })),
       { source: "/backoffice/faturas/:caminho*", destination: "/backoffice/monitor", permanent: true },
     ];
   },

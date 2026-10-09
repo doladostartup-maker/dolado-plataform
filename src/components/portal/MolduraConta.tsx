@@ -1,4 +1,7 @@
-import Link from "next/link";
+import Link from "@/i18n/Link";
+import { tConta } from "@/i18n/mensagens/conta";
+import { textos } from "@/i18n/servidor";
+import { SeletorIdioma } from "@/components/idioma/SeletorIdioma";
 import type { ReactNode } from "react";
 import { Logotipo } from "@/components/marketing-v2/Logotipo";
 import { fonteV2 } from "@/components/marketing-v2/fonte";
@@ -11,7 +14,7 @@ import { CARTAO, EYEBROW, TEXTO_SECUNDARIO, TITULO_PAGINA } from "./ui";
 // Design System V2 (.tema-portal), logótipo, cartão central e ligações legais.
 // Só apresentação — formulários e ações ficam em cada página.
 
-export function MolduraConta({
+export async function MolduraConta({
   contexto,
   titulo,
   descricao,
@@ -25,11 +28,13 @@ export function MolduraConta({
   /** Conteúdo abaixo do cartão (ligações secundárias). */
   depois?: ReactNode;
 }) {
+  const t = (await textos(tConta)).moldura;
   return (
     <div className={`tema-portal ${fonteV2.className} flex min-h-screen flex-col bg-[#F7F9FC] text-[var(--v2-navy)] antialiased`}>
       <header className="border-b border-[var(--v2-line)] bg-white">
-        <div className="mx-auto flex h-16 w-full max-w-md items-center px-4">
+        <div className="mx-auto flex h-16 w-full max-w-md items-center justify-between gap-3 px-4">
           <Logotipo />
+          <SeletorIdioma compacto />
         </div>
       </header>
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-5 px-4 py-10">
@@ -45,15 +50,15 @@ export function MolduraConta({
       </main>
       <footer className="flex flex-wrap justify-center gap-x-4 gap-y-2 px-4 py-6 text-[13px] text-[var(--v2-muted)]">
         <Link href={`${MARKETING_SITE_URL}${ROTAS_LEGAIS.termos}`} prefetch={false} className="hover:text-[var(--v2-navy)]">
-          Termos e Condições
+          {t.termos}
         </Link>
         <span aria-hidden>·</span>
         <Link href={`${MARKETING_SITE_URL}${ROTAS_LEGAIS.privacidade}`} prefetch={false} className="hover:text-[var(--v2-navy)]">
-          Política de Privacidade
+          {t.privacidade}
         </Link>
         <span aria-hidden>·</span>
         <a href={LIVRO_RECLAMACOES_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--v2-navy)]">
-          Livro de Reclamações
+          {t.livroReclamacoes}
         </a>
       </footer>
     </div>

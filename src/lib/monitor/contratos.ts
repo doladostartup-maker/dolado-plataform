@@ -1,6 +1,21 @@
 // DoLado — regras puras dos contratos monitorizados (sem I/O; `npm test`).
 
 import type { CampoContrato } from "./extracaoFatura.ts";
+import { LANG_HTML, type Idioma } from "../../i18n/config.ts";
+import { tMonitor } from "../../i18n/mensagens/monitor.ts";
+
+// Rótulos e frases no idioma da interface do cliente (português por omissão:
+// backoffice, e-mails e testes). As constantes ROTULO_* continuam em
+// português para o backoffice.
+export function rotuloSetorMonitor(setor: string, idioma: Idioma = "pt-PT"): string {
+  return (tMonitor[idioma].contratos.setores as Record<string, string>)[setor] ?? setor;
+}
+export function rotuloCampo(campo: string, idioma: Idioma = "pt-PT"): string {
+  return (tMonitor[idioma].contratos.campos as Record<string, string>)[campo] ?? campo;
+}
+export function rotuloOrigem(origem: string, idioma: Idioma = "pt-PT"): string {
+  return (tMonitor[idioma].contratos.origens as Record<string, string>)[origem] ?? origem;
+}
 
 export const SETORES_CONTRATO = ["telecomunicacoes", "eletricidade", "gas", "agua", "outro", "nao_indicado"] as const;
 export type SetorContratoMonitor = (typeof SETORES_CONTRATO)[number];
@@ -131,17 +146,18 @@ export function proximaData(
   return candidatas[0] ?? null;
 }
 
-export function textoProximaData(p: ProximaData): string {
-  if (!p) return "Sem datas por acompanhar";
-  const oque = p.tipo === "fidelizacao" ? "A fidelização termina" : "A promoção termina";
-  if (p.dias === 0) return `${oque} hoje`;
-  if (p.dias === 1) return `${oque} amanhã`;
-  return `${oque} dentro de ${p.dias} dias`;
+export function textoProximaData(p: ProximaData, idioma: Idioma = "pt-PT"): string {
+  const t = tMonitor[idioma].contratos;
+  if (!p) return t.semDatas;
+  const oque = p.tipo === "fidelizacao" ? t.fidelizacaoTermina : t.promocaoTermina;
+  if (p.dias === 0) return t.hoje(oque);
+  if (p.dias === 1) return t.amanha(oque);
+  return t.dentroDe(oque, p.dias);
 }
 
-export function formatarEurosCents(cents: number | null | undefined): string {
+export function formatarEurosCents(cents: number | null | undefined, idioma: Idioma = "pt-PT"): string {
   if (cents == null) return "—";
-  return new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(cents / 100);
+  return new Intl.NumberFormat(LANG_HTML[idioma], { style: "currency", currency: "EUR" }).format(cents / 100);
 }
 
 export function formatarDataPt(iso: string | null | undefined): string {
@@ -151,17 +167,18 @@ export function formatarDataPt(iso: string | null | undefined): string {
 }
 
 // Valor de um campo (jsonb) apresentado ao cliente.
-export function formatarValorCampo(campo: CampoContrato, valor: unknown): string {
+export function formatarValorCampo(campo: CampoContrato, valor: unknown, idioma: Idioma = "pt-PT"): string {
+  const t = tMonitor[idioma].contratos;
   if (valor == null) return "—";
-  if (campo.endsWith("_cents") && typeof valor === "number") return formatarEurosCents(valor);
+  if (campo.endsWith("_cents") && typeof valor === "number") return formatarEurosCents(valor, idioma);
   if ((campo.startsWith("data_") || campo === "cessacao_operador_data") && typeof valor === "string") return formatarDataPt(valor);
-  if (campo === "duracao_fidelizacao_meses" && typeof valor === "number") return `${valor} ${valor === 1 ? "mês" : "meses"}`;
+  if (campo === "duracao_fidelizacao_meses" && typeof valor === "number") return t.meses(valor);
   if (
     typeof valor === "string" &&
     ROTULO_OPCAO[valor] &&
     ["tipo_fidelizacao", "nova_instalacao", "equipamento_subsidiado", "inicio_na_ativacao"].includes(campo)
   ) {
-    return ROTULO_OPCAO[valor];
+    return (t.opcoes as Record<string, string>)[valor] ?? ROTULO_OPCAO[valor];
   }
   return String(valor);
 }

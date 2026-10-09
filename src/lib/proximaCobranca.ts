@@ -18,6 +18,14 @@
 
 import type Stripe from "stripe";
 import { formatarPreco } from "./planos.ts";
+import { normalizarIdioma, type Idioma } from "../i18n/config.ts";
+import { formatarData as formatarDataIdioma, formatarEurosCents } from "../i18n/formatar.ts";
+import { tSubscricao } from "../i18n/mensagens/subscricao.ts";
+
+// Português exatamente como antes (formatarPreco, toLocaleDateString); inglês por Intl.
+function preco(centimos: number, idioma: Idioma) {
+  return idioma === "pt-PT" ? formatarPreco(centimos) : formatarEurosCents(idioma, centimos);
+}
 
 export type DuracaoDesconto = "forever" | "once" | "repeating";
 const DURACOES: ReadonlySet<string> = new Set(["forever", "once", "repeating"]);
@@ -89,7 +97,8 @@ export function resumirCobranca(dados: DadosCobranca): ResumoCobranca {
   };
 }
 
-function formatarData(iso: string) {
+function formatarData(iso: string, idioma: Idioma = "pt-PT") {
+  if (idioma !== "pt-PT") return formatarDataIdioma(idioma, iso);
   return new Date(iso).toLocaleDateString("pt-PT", {
     day: "numeric",
     month: "long",
@@ -99,20 +108,24 @@ function formatarData(iso: string) {
 }
 
 /** "100% vitalício", "50% até 5 de janeiro de 2027", "2,00 € na próxima cobrança". */
-export function textoDesconto(d: DescontoSubscricao) {
-  const quanto = d.percentOff ? `${String(d.percentOff).replace(".", ",")}%` : formatarPreco(d.amountOffCentimos ?? 0);
-  if (d.duracao === "forever") return `${quanto} vitalício`;
-  if (d.duracao === "once") return `${quanto} na próxima cobrança`;
-  return d.fim ? `${quanto} até ${formatarData(d.fim)}` : quanto;
+export function textoDesconto(d: DescontoSubscricao, idiomaPedido: Idioma = "pt-PT") {
+  // Também usada em .map(textoDesconto): um índice não é um idioma.
+  const idioma = normalizarIdioma(idiomaPedido);
+  const t = tSubscricao[idioma].cobranca;
+  const percentagem = idioma === "pt-PT" ? String(d.percentOff).replace(".", ",") : String(d.percentOff);
+  const quanto = d.percentOff ? `${percentagem}%` : preco(d.amountOffCentimos ?? 0, idioma);
+  if (d.duracao === "forever") return t.vitalicio(quanto);
+  if (d.duracao === "once") return t.proximaCobranca(quanto);
+  return d.fim ? t.ate(quanto, formatarData(d.fim, idioma)) : quanto;
 }
 
-export function textoProximaCobranca(resumo: ResumoCobranca) {
-  const valor = formatarPreco(resumo.valorProximaCobrancaCentimos);
+export function textoProximaCobranca(resumo: ResumoCobranca, idiomaPedido: Idioma = "pt-PT") {
+  const idioma = normalizarIdioma(idiomaPedido);
+  const t = tSubscricao[idioma].cobranca;
+  const valor = preco(resumo.valorProximaCobrancaCentimos, idioma);
   if (resumo.valorProximaCobrancaCentimos > 0) return valor;
   const vitalicio = resumo.descontosAplicaveis.some((d) => d.duracao === "forever" && d.percentOff === 100);
-  return vitalicio
-    ? `${valor} — sem cobrança prevista, desconto de 100% vitalício ativo`
-    : `${valor} — sem cobrança prevista`;
+  return vitalicio ? t.semCobrancaVitalicio(valor) : t.semCobranca(valor);
 }
 
 /**
@@ -120,19 +133,20 @@ export function textoProximaCobranca(resumo: ResumoCobranca) {
  * do portal): desconto(s), próxima cobrança e, num desconto temporário, o
  * valor depois de ele terminar.
  */
-export function linhasDaCobranca(resumo: ResumoCobranca): { label: string; valor: string }[] {
+export function linhasDaCobranca(resumo: ResumoCobranca, idioma: Idioma = "pt-PT"): { label: string; valor: string }[] {
+  const t = tSubscricao[idioma].cobranca;
   const linhas: { label: string; valor: string }[] = [];
   if (resumo.descontosAplicaveis.length > 0) {
     linhas.push({
-      label: resumo.descontosAplicaveis.length === 1 ? "Desconto" : "Descontos",
-      valor: resumo.descontosAplicaveis.map(textoDesconto).join("; "),
+      label: resumo.descontosAplicaveis.length === 1 ? t.desconto : t.descontos,
+      valor: resumo.descontosAplicaveis.map((d) => textoDesconto(d, idioma)).join("; "),
     });
   }
-  linhas.push({ label: "Próxima cobrança", valor: textoProximaCobranca(resumo) });
+  linhas.push({ label: t.proxima, valor: textoProximaCobranca(resumo, idioma) });
   if (resumo.mudaEm) {
     linhas.push({
-      label: "Depois do desconto",
-      valor: `${formatarPreco(resumo.precoBaseCentimos)}/mês a partir de ${formatarData(resumo.mudaEm)}`,
+      label: t.depoisDesconto,
+      valor: t.depoisValor(preco(resumo.precoBaseCentimos, idioma), formatarData(resumo.mudaEm, idioma)),
     });
   }
   return linhas;

@@ -6,6 +6,8 @@ import { haPedidoPorPagarNoBrowser } from "@/lib/pedidoCasoServidor";
 import { createClient } from "@/lib/supabase/server";
 import { atribuirIndicacaoDoBrowser } from "@/lib/indicacoes/servidor";
 import { registarOrigemDaConta } from "@/lib/origemAquisicaoServidor";
+import { COOKIE_IDIOMA, localizarHref, normalizarIdioma } from "@/i18n/config";
+import { traduzirMensagemConta } from "@/i18n/mensagens/conta";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -15,6 +17,11 @@ export async function GET(request: Request) {
   // atrás do proxy da Clever Cloud, request.url resolve para o endereço
   // interno (localhost:8080), não para o domínio público.
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  // Idioma escolhido neste browser (cookie de preferência): o regresso do
+  // e-mail ou do Google continua no mesmo idioma. Só apresentação.
+  const idioma = normalizarIdioma((await cookies()).get(COOKIE_IDIOMA)?.value);
+  const noIdioma = (caminho: string) => localizarHref(idioma, caminho);
+  const msg = (m: string) => encodeURIComponent(traduzirMensagemConta(idioma, m));
 
   if (!code) {
     // O próprio Google/Supabase pode devolver um erro em vez de um code
@@ -52,7 +59,7 @@ export async function GET(request: Request) {
         destinoGuardado,
         haPedidoPorPagar: haPedidoPorPagarNoBrowser,
       });
-      const resposta = NextResponse.redirect(`${siteUrl}${next}`);
+      const resposta = NextResponse.redirect(`${siteUrl}${noIdioma(next)}`);
       if (destinoGuardado) resposta.cookies.delete(COOKIE_DESTINO_POS_LOGIN);
       return resposta;
     }
@@ -64,13 +71,9 @@ export async function GET(request: Request) {
     // destino para continuar no mesmo passo.
     const voltar = ehDestinoSeguro(destinoGuardado) ? `&next=${encodeURIComponent(destinoGuardado)}` : "";
     return NextResponse.redirect(
-      `${siteUrl}/login?info=${encodeURIComponent(
-        "Se acabou de confirmar o seu e-mail, inicie sessão para continuar.",
-      )}${voltar}`,
+      `${siteUrl}${noIdioma(`/login?info=${msg("Se acabou de confirmar o seu e-mail, inicie sessão para continuar.")}${voltar}`)}`,
     );
   }
 
-  return NextResponse.redirect(
-    `${siteUrl}/login?erro=${encodeURIComponent("Não foi possível iniciar sessão.")}`,
-  );
+  return NextResponse.redirect(`${siteUrl}${noIdioma(`/login?erro=${msg("Não foi possível iniciar sessão.")}`)}`);
 }

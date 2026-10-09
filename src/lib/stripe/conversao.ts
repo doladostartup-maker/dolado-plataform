@@ -1,4 +1,8 @@
 import type Stripe from "stripe";
+import type { Idioma } from "../../i18n/config.ts";
+import { formatarEurosCents } from "../../i18n/formatar.ts";
+import { tPlanos } from "../../i18n/mensagens/planos.ts";
+import { tSubscricao } from "../../i18n/mensagens/subscricao.ts";
 
 // Conversão de um Avulso pago na 1.ª mensalidade de uma assinatura, com
 // reembolso parcial da diferença. Sem efeitos, para ser testável com
@@ -189,9 +193,10 @@ export function formatarEuros(centimos: number) {
 }
 
 /** Texto mostrado ao cliente depois da conversão (sem falar em saldo ou crédito futuro). */
-export function mensagemConversao(plano: PlanoDestino, mensalidade: number, reembolso: number) {
-  const base = `Utilizámos ${formatarEuros(mensalidade)} do valor do seu pagamento Avulso para cobrir o primeiro mês do plano ${NOME_PLANO[plano]}.`;
-  return reembolso > 0
-    ? `${base} Os restantes ${formatarEuros(reembolso)} serão reembolsados para o método de pagamento original.`
-    : base;
+export function mensagemConversao(plano: PlanoDestino, mensalidade: number, reembolso: number, idioma: Idioma = "pt-PT") {
+  const euros = (c: number) => (idioma === "pt-PT" ? formatarEuros(c) : formatarEurosCents(idioma, c));
+  const nome = idioma === "pt-PT" ? NOME_PLANO[plano] : tPlanos[idioma].nome[plano];
+  const t = tSubscricao[idioma];
+  const base = t.conversao(euros(mensalidade), nome);
+  return reembolso > 0 ? `${base}${t.conversaoReembolso(euros(reembolso))}` : base;
 }

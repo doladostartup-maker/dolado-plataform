@@ -21,6 +21,11 @@
 // desde 01/10/2026 — não depende do plano. Funcionalidades
 // futuras de proteção usam a mesma verificação (temProtecao).
 
+
+// Textos apresentados (pt-PT/en-GB): src/i18n/mensagens/*/subscricao.ts.
+import type { Idioma } from "../i18n/config.ts";
+import { tSubscricao } from "../i18n/mensagens/subscricao.ts";
+
 export type PlanoSubscricao = "none" | "protecao" | "caso_protecao";
 
 export type LinhaAcesso = {
@@ -145,24 +150,16 @@ export type ResumoPlano = {
   casosDisponiveis: number | null;
 };
 
-const ESTADO_SUBSCRICAO_PT: Record<string, string> = {
-  active: "Ativa",
-  trialing: "Ativa",
-  past_due: "Pagamento em atraso",
-  incomplete: "Pagamento em confirmação",
-  unpaid: "Suspensa por falta de pagamento",
-  paused: "Suspensa",
-};
 
 // Subscrições terminadas deixam de identificar o plano da conta.
 const ESTADOS_TERMINADOS: ReadonlySet<string> = new Set(["canceled", "incomplete_expired"]);
 
-export function estadoSubscricaoPt(status: string | null | undefined) {
+export function estadoSubscricaoPt(status: string | null | undefined, idioma: Idioma = "pt-PT") {
   if (!status) return null;
-  return ESTADO_SUBSCRICAO_PT[status] ?? null;
+  return (tSubscricao[idioma].estados as Record<string, string>)[status] ?? null;
 }
 
-export function resumoPlanoPortal(acesso: Acesso): ResumoPlano {
+export function resumoPlanoPortal(acesso: Acesso, idioma: Idioma = "pt-PT"): ResumoPlano {
   const subscricaoEmVigor =
     acesso.plano !== "none" && !!acesso.estadoSubscricao && !ESTADOS_TERMINADOS.has(acesso.estadoSubscricao);
 
@@ -171,7 +168,7 @@ export function resumoPlanoPortal(acesso: Acesso): ResumoPlano {
     const agendado = comAcesso && acesso.cancelamentoAgendado;
     return {
       plano: acesso.plano as "protecao" | "caso_protecao",
-      estado: agendado ? "Cancelamento agendado" : estadoSubscricaoPt(acesso.estadoSubscricao),
+      estado: agendado ? tSubscricao[idioma].cancelamentoAgendado : estadoSubscricaoPt(acesso.estadoSubscricao, idioma),
       renovacao: comAcesso && !agendado ? acesso.fimPeriodo : null,
       fimAgendado: agendado ? acesso.fimPeriodo : null,
       // Proteção não inclui casos; só mostra se tiver comprado um Avulso à parte.
@@ -228,34 +225,25 @@ export function casosGuardados(
 
 export type EstadoReembolsoCliente = { titulo: string; texto: string } | null;
 
-export function estadoReembolsoCliente({
-  refundEstado,
-  requerIntervencao,
-  intervencaoResolvida,
-  montanteCentimos,
-}: {
-  refundEstado: string | null;
-  requerIntervencao: boolean;
-  intervencaoResolvida: boolean;
-  montanteCentimos: number;
-}): EstadoReembolsoCliente {
+export function estadoReembolsoCliente(
+  {
+    refundEstado,
+    requerIntervencao,
+    intervencaoResolvida,
+    montanteCentimos,
+  }: {
+    refundEstado: string | null;
+    requerIntervencao: boolean;
+    intervencaoResolvida: boolean;
+    montanteCentimos: number;
+  },
+  idioma: Idioma = "pt-PT",
+): EstadoReembolsoCliente {
+  const t = tSubscricao[idioma].reembolso;
   if (montanteCentimos <= 0) return null;
-  if (refundEstado === "succeeded") {
-    return {
-      titulo: "Reembolso efetuado",
-      texto: "O reembolso foi processado para o método de pagamento original.",
-    };
-  }
+  if (refundEstado === "succeeded") return { ...t.efetuado };
   // Resolvido manualmente pelo admin: sem estado fiável a mostrar.
   if (intervencaoResolvida) return null;
-  if (requerIntervencao || refundEstado === "failed" || refundEstado === "canceled") {
-    return {
-      titulo: "Estamos a verificar o reembolso",
-      texto: "Houve um problema no processamento do reembolso. Não precisa de fazer nada neste momento.",
-    };
-  }
-  return {
-    titulo: "Reembolso em processamento",
-    texto: "O reembolso foi iniciado para o método de pagamento original.",
-  };
+  if (requerIntervencao || refundEstado === "failed" || refundEstado === "canceled") return { ...t.verificar };
+  return { ...t.emProcessamento };
 }

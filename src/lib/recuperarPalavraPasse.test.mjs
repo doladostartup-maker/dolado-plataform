@@ -74,11 +74,11 @@ describe("ligação do e-mail", () => {
 });
 
 describe("não revela se o e-mail tem conta", () => {
-  const pedir = fonte("../app/recuperar-palavra-passe/actions.ts");
+  const pedir = fonte("../app/[idioma]/recuperar-palavra-passe/actions.ts");
   test("a resposta é sempre a mesma, com ou sem erro da Supabase ou limite de pedidos", () => {
     assert.match(pedir, /resetPasswordForEmail\(email/);
     // Um só destino depois do pedido, fora de qualquer condição sobre o resultado.
-    assert.equal(pedir.split("redirect(`${ROTA_RECUPERAR}?enviado=1`)").length - 1, 1);
+    assert.equal(pedir.split("redirect(await caminho(`${ROTA_RECUPERAR}?enviado=1`))").length - 1, 1);
     assert.doesNotMatch(pedir, /if \(error\)[^\n]*redirect/);
     assert.doesNotMatch(pedir, /console\.[a-z]+\([^)]*email/);
     assert.match(MSG_PEDIDO_RECUPERACAO, /^Se existir uma conta associada a este endereço/);
@@ -91,7 +91,7 @@ describe("não revela se o e-mail tem conta", () => {
     assert.equal(pedidoRecuperacaoPermitido("repetido@exemplo.pt", t0 + INTERVALO_PEDIDOS_MS), true);
     // A verificação vem antes da Supabase e do limite por IP; o aviso não fala de contas.
     assert.ok(pedir.indexOf("pedidoRecuperacaoPermitido(email)") < pedir.indexOf("resetPasswordForEmail("));
-    assert.match(pedir, /redirect\(`\$\{ROTA_RECUPERAR\}\?enviado=1&recente=1`\)/);
+    assert.match(pedir, /redirect\(await caminho\(`\$\{ROTA_RECUPERAR\}\?enviado=1&recente=1`\)\)/);
     assert.doesNotMatch(MSG_PEDIDO_RECENTE, /conta/);
     assert.match(MSG_LIGACAO.expirada.texto, /só a do e-mail mais recente funciona/);
   });
@@ -102,29 +102,31 @@ describe("não revela se o e-mail tem conta", () => {
 
 describe("integração com a autenticação existente", () => {
   test("login tem \"Esqueceu-se da palavra-passe?\" e confirma a alteração", () => {
-    const login = fonte("../app/login/page.tsx");
-    assert.match(login, /href=\{ROTA_RECUPERAR\}[^>]*>\s*Esqueceu-se da palavra-passe\?/);
+    const login = fonte("../app/[idioma]/login/page.tsx");
+    // Texto no dicionário (src/i18n/mensagens/pt-PT/conta.ts).
+    assert.match(login, /href=\{ROTA_RECUPERAR\}[^>]*>\s*\{t\.esqueceu\}/);
+    assert.match(fonte("../i18n/mensagens/pt-PT/conta.ts"), /esqueceu: "Esqueceu-se da palavra-passe\?"/);
     assert.match(login, /params\.alterada === "1"/);
   });
   test("a ligação só é usada no POST, depois de validar a palavra-passe; no fim, todas as sessões terminam", () => {
-    const acao = fonte("../app/redefinir-palavra-passe/actions.ts");
-    const pagina = fonte("../app/redefinir-palavra-passe/page.tsx");
+    const acao = fonte("../app/[idioma]/redefinir-palavra-passe/actions.ts");
+    const pagina = fonte("../app/[idioma]/redefinir-palavra-passe/page.tsx");
     assert.doesNotMatch(pagina, /verifyOtp|exchangeCodeForSession|updateUser/);
     assert.ok(acao.indexOf("validarNovaPalavraPasse(") < acao.indexOf("verifyOtp("));
     assert.match(acao, /verifyOtp\(\{ type: "recovery", token_hash: token \}\)/);
     assert.ok(acao.indexOf("updateUser(") < acao.indexOf('signOut({ scope: "global" })'));
-    assert.match(acao, /redirect\("\/login\?alterada=1"\)/);
+    assert.match(acao, /redirect\(await caminho\("\/login\?alterada=1"\)\)/);
     assert.match(pagina, /referrer: "no-referrer"/);
   });
   test("não mexe em acessos, planos nem subscrições", () => {
-    for (const f of ["../app/recuperar-palavra-passe/actions.ts", "../app/redefinir-palavra-passe/actions.ts"]) {
+    for (const f of ["../app/[idioma]/recuperar-palavra-passe/actions.ts", "../app/[idioma]/redefinir-palavra-passe/actions.ts"]) {
       assert.doesNotMatch(fonte(f), /user_access|createAdminClient|subscri|plano/i, f);
     }
   });
   test("páginas públicas no portal (sem refresh de sessão no middleware)", () => {
     const mw = fonte("../middleware.ts");
     assert.match(mw, /"\/recuperar-palavra-passe",\n\s*"\/redefinir-palavra-passe",/);
-    assert.match(mw, /searchParams\.has\("token_hash"\)[\s\S]*\/redefinir-palavra-passe\$\{search\}/);
+    assert.match(mw, /searchParams\.has\("token_hash"\)[\s\S]*\/redefinir-palavra-passe"\)\}\$\{search\}/);
     assert.equal(ROTA_RECUPERAR, "/recuperar-palavra-passe");
   });
   test("template do e-mail: ligação com token_hash para a página da DoLado, em português europeu", () => {
@@ -138,6 +140,6 @@ describe("integração com a autenticação existente", () => {
     assert.match(config, /\[auth\.email\.template\.recovery\]\nsubject = "Defina uma nova palavra-passe na DoLado"\ncontent_path = "\.\/supabase\/templates\/recuperacao\.html"/);
   });
   test("o redirectTo enviado à Supabase é a página de redefinição", () => {
-    assert.match(fonte("../app/recuperar-palavra-passe/actions.ts"), /redirectTo: `\$\{process\.env\.NEXT_PUBLIC_SITE_URL\}\$\{ROTA_REDEFINIR\}`/);
+    assert.match(fonte("../app/[idioma]/recuperar-palavra-passe/actions.ts"), /redirectTo: `\$\{process\.env\.NEXT_PUBLIC_SITE_URL\}\$\{ROTA_REDEFINIR\}`/);
   });
 });

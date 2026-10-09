@@ -34,7 +34,7 @@ describe("medição só com consentimento", () => {
 
   test("medição centralizada: só na moldura pública e no fluxo do caso", () => {
     assert.match(fonte("../components/marketing-v2/PaginaV2.tsx"), /<AnalyticsScripts \/>/);
-    for (const p of ["../app/page.tsx", "../app/precario/page.tsx", "../app/como-funciona/page.tsx", "../app/(legal)/layout.tsx"]) {
+    for (const p of ["../app/[idioma]/page.tsx", "../app/[idioma]/precario/page.tsx", "../app/[idioma]/como-funciona/page.tsx", "../app/[idioma]/(legal)/layout.tsx"]) {
       assert.doesNotMatch(fonte(p), /AnalyticsScripts/, p);
     }
   });

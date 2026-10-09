@@ -112,7 +112,7 @@ describe("pré-preenchimento de Tratar o meu caso", () => {
   });
 
   test("a página do formulário valida os parâmetros contra as listas fechadas", () => {
-    const pagina = ler("src/app/tratar-caso/page.tsx");
+    const pagina = ler("src/app/[idioma]/tratar-caso/page.tsx");
     assert.match(pagina, /SETORES\.includes/);
     assert.match(pagina, /problemasDoSetor\(setor\)\.includes/);
     assert.match(pagina, /MOMENTOS\.includes/);
@@ -120,8 +120,9 @@ describe("pré-preenchimento de Tratar o meu caso", () => {
 });
 
 describe("simulador público, sem conta e sem gravação", () => {
-  const componente = ler("src/components/simulador-v2/SimuladorV2.tsx");
-  const pagina = ler("src/app/simulador-elegibilidade/page.tsx");
+  // Componente + textos em português (src/i18n): os textos vivem no dicionário.
+  const componente = ler("src/components/simulador-v2/SimuladorV2.tsx") + ler("src/i18n/mensagens/pt-PT/simulador.ts");
+  const pagina = ler("src/app/[idioma]/simulador-elegibilidade/page.tsx");
 
   test("não pede e-mail, nome nem telefone, nem tem campos de texto", () => {
     assert.doesNotMatch(componente, /type="email"|type="tel"|<textarea|name="(email|nome|telefone)"/);
@@ -153,12 +154,12 @@ describe("simulador público, sem conta e sem gravação", () => {
 
 describe("fora do portal", () => {
   test("sem item de navegação nem cartão no painel", () => {
-    assert.doesNotMatch(ler("src/app/portal/layout.tsx"), /elegibilidade/i);
-    assert.doesNotMatch(ler("src/app/portal/_components/PortalDashboard.tsx"), /elegibilidade/i);
+    assert.doesNotMatch(ler("src/app/[idioma]/portal/layout.tsx"), /elegibilidade/i);
+    assert.doesNotMatch(ler("src/app/[idioma]/portal/_components/PortalDashboard.tsx"), /elegibilidade/i);
   });
 
   test("a rota antiga do portal redireciona para a página pública, antes do login", () => {
-    assert.equal(existsSync(new URL("../../app/portal/elegibilidade", import.meta.url)), false);
+    assert.equal(existsSync(new URL("../../app/[idioma]/portal/elegibilidade", import.meta.url)), false);
     assert.match(
       ler("next.config.ts"),
       /source: "\/portal\/elegibilidade", destination: "\/simulador-elegibilidade"/,
@@ -187,7 +188,7 @@ describe("legado e privacidade", () => {
 
   test("Política de Privacidade em vigor descreve o simulador sem recolha", async () => {
     const { PRIVACIDADE_VERSAO } = await import("../legal.ts");
-    const politica = ler(`src/app/(legal)/privacidade/_versoes/v${PRIVACIDADE_VERSAO}.tsx`);
+    const politica = ler(`src/app/[idioma]/(legal)/privacidade/_versoes/v${PRIVACIDADE_VERSAO}.tsx`);
     assert.match(politica, /Simulador de Elegibilidade<\/strong> é gratuito e funciona sem conta/);
     assert.match(politica, /não as\s+guarda/);
     assert.doesNotMatch(politica, /respostas ao Simulador|Comparador de Faturas e o Simulador|no Simulador de\s+Elegibilidade, a análise/);

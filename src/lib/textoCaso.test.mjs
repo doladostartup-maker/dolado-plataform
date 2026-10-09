@@ -100,7 +100,7 @@ describe("textos para o cliente", () => {
 });
 
 describe("3. abrir o link (GET) nunca muda nada", () => {
-  for (const pagina of ["../app/texto/rever/[token]/page.tsx", "../app/texto/alterar/[token]/page.tsx"]) {
+  for (const pagina of ["../app/[idioma]/texto/rever/[token]/page.tsx", "../app/[idioma]/texto/alterar/[token]/page.tsx"]) {
     test(`${pagina}: só lê`, () => {
       const f = fonte(pagina);
       assert.match(f, /consultarLink\(/);
@@ -109,8 +109,12 @@ describe("3. abrir o link (GET) nunca muda nada", () => {
   }
 
   test("as páginas dizem que abrir o link não decidiu nada", () => {
-    assert.match(fonte("../app/texto/rever/[token]/page.tsx"), /Abrir este link não\s+autorizou nada/);
-    assert.match(fonte("../app/texto/alterar/[token]/page.tsx"), /O pedido só fica registado quando selecionar/);
+    // Texto no dicionário (src/i18n/mensagens/pt-PT/texto.ts), usado pelas duas páginas.
+    const textos = fonte("../i18n/mensagens/pt-PT/texto.ts");
+    assert.match(fonte("../app/[idioma]/texto/rever/[token]/page.tsx"), /\{t\.reverTexto\}/);
+    assert.match(fonte("../app/[idioma]/texto/alterar/[token]/page.tsx"), /\{t\.alterarTexto\}/);
+    assert.match(textos, /Abrir este link não\s+autorizou nada/);
+    assert.match(textos, /O pedido só fica registado quando selecionar/);
   });
 
   test("a função de leitura do link é STABLE (o Postgres recusa escritas nela)", () => {
@@ -127,20 +131,20 @@ describe("3. abrir o link (GET) nunca muda nada", () => {
   });
 
   test("autorizar e pedir alterações só por Server Action (POST)", () => {
-    const f = fonte("../app/texto/actions.ts");
+    const f = fonte("../app/[idioma]/texto/actions.ts");
     assert.match(f, /^"use server";/);
     assert.match(f, /rpc\("texto_autorizar_por_link"/);
     assert.match(f, /rpc\("texto_pedir_alteracoes_por_link"/);
   });
 
   test("páginas públicas: sem indexação nem Referer", () => {
-    const layout = fonte("../app/texto/layout.tsx");
+    const layout = fonte("../app/[idioma]/texto/layout.tsx");
     assert.match(layout, /index: false/);
     assert.match(layout, /referrer: "no-referrer"/);
   });
 
   test("XSS: o texto é mostrado como texto simples", () => {
-    for (const f of ["../app/texto/_components/Mensagem.tsx", "../app/backoffice/casos/_components/TextoCaso.tsx", "../app/portal/casos/_components/TextoCliente.tsx"]) {
+    for (const f of ["../app/[idioma]/texto/_components/Mensagem.tsx", "../app/backoffice/casos/_components/TextoCaso.tsx", "../app/[idioma]/portal/casos/_components/TextoCliente.tsx"]) {
       assert.equal(fonte(f).includes("dangerouslySetInnerHTML"), false, f);
     }
   });
@@ -167,8 +171,8 @@ describe("22. a equipa não consegue contornar a autorização", () => {
   test("nenhum código escreve diretamente nas tabelas de prova", () => {
     const ficheiros = [
       "../app/backoffice/casos/texto-actions.ts",
-      "../app/portal/casos/texto-actions.ts",
-      "../app/texto/actions.ts",
+      "../app/[idioma]/portal/casos/texto-actions.ts",
+      "../app/[idioma]/texto/actions.ts",
       "./textoCasoServidor.ts",
     ];
     for (const f of ficheiros) {
@@ -178,7 +182,7 @@ describe("22. a equipa não consegue contornar a autorização", () => {
   });
 
   test("24. portal usa as mesmas funções, com o utilizador da sessão", () => {
-    const portal = fonte("../app/portal/casos/texto-actions.ts");
+    const portal = fonte("../app/[idioma]/portal/casos/texto-actions.ts");
     assert.match(portal, /rpc\("texto_autorizar_no_portal"[\s\S]*p_utilizador: user\.id/);
     assert.match(portal, /rpc\("texto_pedir_alteracoes_no_portal"[\s\S]*p_utilizador: user\.id/);
     assert.match(portal, /requireUser\(\)/);
@@ -187,16 +191,16 @@ describe("22. a equipa não consegue contornar a autorização", () => {
 
 describe("17. FAQ", () => {
   test("E se eu não concordar com o texto preparado?", () => {
-    const faq = fonte("../components/landing/conteudoPerguntasFrequentes.tsx");
+    const faq = fonte("../i18n/mensagens/pt-PT/perguntas.ts");
     assert.match(faq, /selecione “Pedir alterações”/);
     assert.match(faq, /só procede ao envio depois de receber a sua autorização explícita/);
   });
 });
 
 describe("pós-envio: texto enviado e comprovativo", () => {
-  const portal = fonte("../app/portal/casos/[id]/page.tsx");
+  const portal = fonte("../app/[idioma]/portal/casos/[id]/page.tsx");
   const rota = fonte("../app/api/comprovativos/[id]/route.ts");
-  const componente = fonte("../app/portal/casos/_components/ReclamacaoEnviada.tsx");
+  const componente = fonte("../app/[idioma]/portal/casos/_components/ReclamacaoEnviada.tsx");
 
   test("3/5. o portal mostra o texto da versão apontada pelo envio, nunca a mais recente", () => {
     assert.match(portal, /from\("casos_textos_envios"\)[\s\S]*texto_id/);
@@ -258,7 +262,7 @@ describe("pós-envio: texto enviado e comprovativo", () => {
   });
 
   test("FAQ e copy: sem \"acesso permanente\"", () => {
-    const faq = fonte("../components/landing/conteudoPerguntasFrequentes.tsx");
+    const faq = fonte("../i18n/mensagens/pt-PT/perguntas.ts");
     assert.match(faq, /pode consultar no seu caso o texto exato da reclamação submetida/);
     for (const f of [faq, componente, portal]) assert.equal(/acesso permanente/i.test(f), false);
   });

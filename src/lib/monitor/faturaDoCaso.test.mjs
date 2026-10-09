@@ -66,8 +66,8 @@ describe("fatura do caso: o que pode ser proposto", () => {
 
 describe("fatura do caso: servidor", () => {
   const servidor = fonte("./faturaDoCasoServidor.ts");
-  const acoes = fonte("../../app/portal/contratos/actions.ts");
-  const componente = fonte("../../app/portal/contratos/_components/FaturaDoCaso.tsx");
+  const acoes = fonte("../../app/[idioma]/portal/contratos/actions.ts");
+  const componente = fonte("../../app/[idioma]/portal/contratos/_components/FaturaDoCaso.tsx");
 
   test("posse do caso verificada com a sessão antes da service role", () => {
     assert.match(servidor, /supabase\.from\("casos"\)\.select\("id"\)\.eq\("id", anexo\.caso_id\)\.eq\("utilizador_id", userId\)/);

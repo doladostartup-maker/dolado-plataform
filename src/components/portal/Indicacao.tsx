@@ -1,4 +1,7 @@
-import { indicacoesAtivas, TEXTOS_INDICACAO, textoDescontosDisponiveis, textoValidade } from "@/lib/indicacoes/regras";
+import { indicacoesAtivas } from "@/lib/indicacoes/regras";
+import { formatarDataCurta } from "@/i18n/formatar";
+import { tIndicacoes } from "@/i18n/mensagens/indicacoes";
+import { obterIdioma } from "@/i18n/servidor";
 import { resumoIndicacaoDaConta } from "@/lib/indicacoes/servidor";
 import { createClient } from "@/lib/supabase/server";
 import { PartilharIndicacao } from "./PartilharIndicacao";
@@ -24,6 +27,9 @@ async function resumoDaSessao() {
 export async function AreaIndicacao() {
   const resumo = await resumoDaSessao();
   if (!resumo) return null;
+  const idioma = await obterIdioma();
+  const t = tIndicacoes[idioma];
+  const TEXTOS_INDICACAO = t.textos;
   return (
     <section id="indicar" aria-labelledby="indicar-titulo" className={`${CARTAO} flex scroll-mt-24 flex-col gap-4`}>
       <div className="flex flex-col gap-1">
@@ -37,19 +43,18 @@ export async function AreaIndicacao() {
       <PartilharIndicacao url={resumo.url} local="perfil" />
 
       <div className={`${CARTAO_INFO} flex flex-col gap-1`}>
-        <p className="text-[16px] font-bold text-[var(--v2-navy)]">{textoDescontosDisponiveis(resumo.disponiveis)}</p>
+        <p className="text-[16px] font-bold text-[var(--v2-navy)]">{t.descontosDisponiveis(resumo.disponiveis)}</p>
         {resumo.validades.length > 0 && (
           <ul className="flex flex-col gap-0.5 text-[14px] text-[var(--v2-navy)]">
             {resumo.validades.map((expira, i) => (
-              <li key={`${expira}-${i}`}>Desconto de 20% — {textoValidade(expira)}</li>
+              <li key={`${expira}-${i}`}>{t.area.desconto(t.validade(formatarDataCurta(idioma, expira)))}</li>
             ))}
           </ul>
         )}
         <p className={METADADOS}>
-          {resumo.concluidas === 1 ? "1 indicação concluída" : `${resumo.concluidas} indicações concluídas`} ·{" "}
-          {resumo.usados === 1 ? "1 desconto já utilizado" : `${resumo.usados} descontos já utilizados`}
-          {resumo.expirados > 0 && ` · ${resumo.expirados === 1 ? "1 desconto expirado" : `${resumo.expirados} descontos expirados`}`}
-          {resumo.emVerificacao > 0 && ` · ${resumo.emVerificacao} em verificação pela DoLado`}
+          {t.area.concluidas(resumo.concluidas)} · {t.area.usados(resumo.usados)}
+          {resumo.expirados > 0 && ` · ${t.area.expirados(resumo.expirados)}`}
+          {resumo.emVerificacao > 0 && ` · ${t.area.emVerificacao(resumo.emVerificacao)}`}
         </p>
       </div>
 
@@ -65,6 +70,7 @@ export async function AreaIndicacao() {
 export async function ConviteIndicacao({ momento }: { momento: "apos_envio" | "resultado_positivo" }) {
   const resumo = await resumoDaSessao();
   if (!resumo) return null;
+  const TEXTOS_INDICACAO = tIndicacoes[await obterIdioma()].textos;
   const forte = momento === "resultado_positivo";
   return (
     <section aria-label={TEXTOS_INDICACAO.titulo} className={`${forte ? CARTAO : CARTAO_INFO} flex flex-col gap-3`}>

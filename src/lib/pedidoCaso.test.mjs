@@ -238,13 +238,13 @@ describe("direito a caso no fluxo Tratar o meu caso (acesso → opções)", () =
     assert.equal(entradaDoPedido(null), "escolher");
   });
   test("a página do formulário lê o acesso da conta e usa a mesma regra (sem lógica própria)", () => {
-    const pagina = readFileSync(new URL("../app/tratar-caso/page.tsx", import.meta.url), "utf8");
+    const pagina = readFileSync(new URL("../app/[idioma]/tratar-caso/page.tsx", import.meta.url), "utf8");
     assert.match(pagina, /obterAcesso\(/);
     assert.match(pagina, /entradaDoPedido\(acesso, casoExtraConfigurado\(\)\)/);
     assert.doesNotMatch(pagina, /case_credits/);
   });
   test("o botão da área de contratos leva ao mesmo fluxo", () => {
-    const contrato = readFileSync(new URL("../app/portal/contratos/[id]/page.tsx", import.meta.url), "utf8");
+    const contrato = readFileSync(new URL("../app/[idioma]/portal/contratos/[id]/page.tsx", import.meta.url), "utf8");
     assert.match(contrato, /urlTratarCaso\(/);
   });
 });
@@ -269,19 +269,19 @@ describe("nenhuma rota pública cria casos sem pagamento (código)", () => {
   const fonte = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 
   test("o formulário e as ações de conta só gravam pedidos — nunca casos", () => {
-    for (const f of ["../app/tratar-caso/actions.ts", "../lib/pedidoCasoServidor.ts", "../app/actions/formulario-guiado.ts"]) {
+    for (const f of ["../app/[idioma]/tratar-caso/actions.ts", "../lib/pedidoCasoServidor.ts", "../app/actions/formulario-guiado.ts"]) {
       assert.equal(/from\("casos"\)/.test(fonte(f)), false, f);
     }
   });
 
   test("o caso só nasce de converter_pedido_em_caso (que gasta um caso pago) ou do portal com caso disponível", () => {
-    const portal = fonte("../app/portal/casos/actions.ts");
+    const portal = fonte("../app/[idioma]/portal/casos/actions.ts");
     assert.match(portal, /consumir_credito_caso[\s\S]*from\("casos"\)[\s\S]*insert/);
     assert.equal(/acesso\.casoConsomeCredito/.test(portal), false, "sem o antigo caminho gratuito");
   });
 
   test("a página de regresso do Stripe só lê estado (não converte nem concede)", () => {
-    const recebido = fonte("../app/tratar-caso/recebido/page.tsx");
+    const recebido = fonte("../app/[idioma]/tratar-caso/recebido/page.tsx");
     assert.equal(/converterPedidoEmCaso|concederCredito|conceder_credito_caso|\.insert\(|\.update\(/.test(recebido), false);
   });
 });
@@ -318,7 +318,7 @@ describe("nome e telemóvel já conhecidos (contactoConhecido)", () => {
   });
 
   test("a página lê os dados com o cliente da sessão (RLS), nunca com a service role", () => {
-    const pagina = readFileSync(new URL("../app/tratar-caso/page.tsx", import.meta.url), "utf8");
+    const pagina = readFileSync(new URL("../app/[idioma]/tratar-caso/page.tsx", import.meta.url), "utf8");
     assert.equal(/createAdminClient/.test(pagina), false);
     assert.match(pagina, /\.from\("utilizadores"\)\.select\("nome"\)\.eq\("id", userId\)/);
     assert.match(pagina, /\.from\("casos"\)[^;]*\.eq\("utilizador_id", userId\)/);

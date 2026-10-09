@@ -28,7 +28,9 @@ import {
   type DadosCalculadora,
   type ResultadoCalculadora,
 } from "../calculadoraCancelamento/regras.ts";
-import { formatarDataPt, formatarEurosCents } from "./contratos.ts";
+import { formatarDataPt, formatarEurosCents } from "./contratos.ts";import type { Idioma } from "../../i18n/config.ts";
+import { tMonitor } from "../../i18n/mensagens/monitor.ts";
+
 
 // v2 (03/10/2026): o valor da fatura é comparado com o intervalo da
 // estimativa (com e sem a mensalidade do período em curso).
@@ -309,9 +311,10 @@ export function detalheCustoSaida(dados: DadosCalculadora, hoje: string): Detalh
 }
 
 /** "Segundo ano da fidelização inicial" — a primeira fidelização não se confunde com o 2.º ano dela. */
-export function textoSituacao(d: { tipo: "primeira" | "refidelizacao"; anoFidelizacao: 1 | 2 }): string {
-  const ano = d.anoFidelizacao === 1 ? "Primeiro ano" : "Segundo ano";
-  return d.tipo === "primeira" ? `${ano} da fidelização inicial` : `${ano} de uma refidelização (nova fidelização)`;
+export function textoSituacao(d: { tipo: "primeira" | "refidelizacao"; anoFidelizacao: 1 | 2 }, idioma: Idioma = "pt-PT"): string {
+  const t = tMonitor[idioma].custoSaida;
+  const ano = d.anoFidelizacao === 1 ? t.primeiroAno : t.segundoAno;
+  return d.tipo === "primeira" ? t.inicial(ano) : t.refidelizacao(ano);
 }
 
 // ---------------------------------------------------------------------------

@@ -1,0 +1,205 @@
+import type { Traducao } from "../../dicionario.ts";
+import type { tratarCaso as pt } from "../pt-PT/tratarCaso.ts";
+
+export const tratarCaso: Traducao<typeof pt> = {
+  metadados: {
+    titulo: "Start my case - DoLado",
+    descricao: "Describe your case, create your account and choose how you would like DoLado to handle it.",
+  },
+  etapas: {
+    rotulo: "Steps",
+    nomes: ["Your case", "Account", "Option", "Payment"],
+    concluida: " (completed)",
+    atual: " (current)",
+  },
+  formulario: {
+    titulo: "Start my case",
+    duracao: "About 5 minutes",
+    nomesPasso: ["Company", "Problem", "Background", "Documents", "Your details"],
+    passoDe: (n: number, nome: string) => `Step ${n} of 5 · ${nome}`,
+    entrada: {
+      usarCaso: (casos: string) => `You have ${casos} in your account.`,
+      usarCasoTexto: "At the end, this request will use one of them, with no new payment.",
+      casoExtra: "You have already used the case included in your subscription this month.",
+      casoExtraTexto: (nome: string, beneficio: string) => `At the end, you can have this case handled as an ${nome} (${beneficio}):`,
+      casoExtraFim: (iva: string) => `(${iva}). Your subscription stays active and unchanged. You only pay after reviewing your request.`,
+      soAvulso: "Your subscription has no cases available at the moment.",
+      soAvulsoTexto: (nome: string, preco: string, iva: string) =>
+        `At the end, you can have this case handled as a ${nome}: ${preco} (${iva}). You only pay after reviewing the option.`,
+      escolher: "At the end, you choose how you would like DoLado to handle your case.",
+      escolherTexto: (iva: string) => `(${iva}). You only pay after reviewing the option you choose.`,
+      verPrecario: "See pricing",
+    },
+    passo1: {
+      titulo: "What type of company is the problem with?",
+      empresa: "Which company is it?",
+      empresaExemplo: "E.g. MEO, NOS, Vodafone, EDP, Galp…",
+    },
+    passo2: {
+      titulo: "What happened?",
+      descricao: "Tell us in your own words",
+      descricaoExemplo: "For example: in August my monthly bill went up from €35 to €42 and I wasn't told about it.",
+    },
+    passo3: {
+      titulo: "Have you already complained to the company?",
+      texto: "This helps us choose the right next step. There is no wrong answer.",
+    },
+    passo4: {
+      titulo: "Do you have any documents?",
+      texto: "Optional. If you don't have them now, we will ask for them later.",
+      aCarregar: "Uploading…",
+      escolher: "Choose file",
+      tipos: "Bill, contract, email or screenshot · PDF or image",
+      remover: "Remove",
+    },
+    passo5: {
+      titulo: "How should we contact you?",
+      comSessao: "We use your account's email address to contact you about this case.",
+      semSessao: "Next, you create your account with your email address: that is where you follow your case.",
+      nome: "Name",
+      telefone: "Mobile number (optional)",
+      autorizacao:
+        "I ask DoLado to review this complaint and confirm that the information is true. I have read the <privacidade>Privacy Policy</privacidade>. Nothing is sent to the company without my express authorisation.",
+    },
+    continuar: "Continue",
+    voltar: "← Back",
+    aGuardar: "Saving…",
+    erros: {
+      setor: "Please select a type of company.",
+      empresa: "Please enter the company's name.",
+      problema: "Please select what happened.",
+      momento: "Please select an option.",
+      nome: "Please enter a valid name.",
+      telefone: "Invalid mobile number. Please use a Portuguese mobile number.",
+      autorizacao: "Please confirm your request to continue.",
+      formato: "Format not supported. Please upload a PDF, JPG, PNG or HEIC file.",
+      tamanho: "The file is larger than the 10 MB limit.",
+      carregar: "We couldn't upload the file. Please try again.",
+    },
+  },
+  conta: {
+    confirmarTitulo: "Confirm your email",
+    confirmarTexto:
+      "We have sent a message to <b>{email}</b>. Enter the code you received here, or click “Confirm my email” on this device. Then choose your option and complete your request.",
+    codigo: "Confirmation code",
+    aConfirmar: "Confirming…",
+    confirmar: "Confirm and continue",
+    aEnviar: "Sending…",
+    reenviar: "Didn't get it? Send again",
+    crie: "Create your account",
+    entre: "Sign in to your account",
+    guardado:
+      "Your request has been saved. With an account, you can follow your case in the portal and won't need to enter these details again after paying.",
+    google: "Continue with Google",
+    ouEmail: "or with email",
+    email: "Email",
+    palavraPasse: "Password",
+    minimo: "At least 8 characters.",
+    aCriar: "Creating your account…",
+    criar: "Create account and continue",
+    aEntrar: "Signing in…",
+    entrar: "Sign in and continue",
+    jaTem: "Already have an account? ",
+    naoTem: "Don't have an account yet? ",
+    jaTenho: "I already have an account",
+    criarConta: "Create account",
+    semCusto:
+      "Creating an account is free. Work on your case only starts once you have chosen an option and the payment has been confirmed.",
+  },
+  modalidade: {
+    titulo: "How would you like DoLado to handle your case?",
+    texto: "Your request has been saved. We only start working on your case once the payment has been confirmed.",
+    oSeuPedido: "Your request",
+    alterar: "Change the request",
+    cancelado:
+      "The payment wasn't completed and nothing was charged. Your request is still saved: you can choose an option and pay whenever you like.",
+    semCasos: "You have no cases available at the moment. Please choose one of the options below.",
+    casoExtraIndisponivel:
+      "We couldn't confirm your subscriber benefit right now, so nothing was charged. Your request is still saved: please try again in a few minutes or see the options available below.",
+    usarCasoTitulo: "Use one of your available cases",
+    usarCasoTexto: (casos: string) => `${casos} in your account. This request will use one of them, with no new payment.`,
+    usarCaso: "Use an available case",
+    cta: { avulso: "Choose Single Case", caso_protecao: "Choose Case + Protection" },
+    precoNormal: "Standard price: ",
+    descontoNovo: "Referral discount",
+    descontoRecompensa: "With 1 of your referral discounts",
+    casoExtraNota: (plano: string, nome: string) =>
+      `Your ${plano} subscription stays active and unchanged: the ${nome} only adds the handling of this case.`,
+    soAvulsoNota: (nome: string) =>
+      `Your current subscription has no cases available at the moment. You can have this case handled as a ${nome}.`,
+  },
+  recebido: {
+    pagamentoConfirmado: "Payment confirmed",
+    casoUtilizado: "Available case used",
+    titulo: "We have received your case.",
+    texto:
+      "We have sent a confirmation to your email. DoLado will review the information you sent and, before anything is sent, may contact you to confirm the facts or ask for further information.",
+    acompanhar: "Follow my case",
+    naoConcluido: "The payment wasn't completed",
+    naoConcluidoTexto:
+      "Your request is still saved, but it isn't a case yet. You can try to pay again, using the same or a different payment method.",
+    escolherModalidade: "Choose an option",
+    emConfirmacao: "Payment being confirmed",
+    emConfirmacaoTexto:
+      "Your payment is still being confirmed. You don't need to pay again. Some methods, such as SEPA Direct Debit, can take a few working days; as soon as the payment is confirmed, your case is received and we will let you know by email.",
+    irPortal: "Go to the portal",
+    obrigado: "Thank you. We are confirming your payment.",
+    obrigadoTexto: "As soon as Stripe confirms the payment, your case is received and this page will update.",
+    concluir: "Complete the request",
+    aConfirmar: "Confirming your payment…",
+    demora:
+      "Confirmation is taking longer than usual. You don't need to pay again: as soon as the payment is confirmed, we will email you and the case will be available in the portal.",
+  },
+  casoExtra: {
+    cta: (preco: string) => `Get an Extra Case handled — ${preco}`,
+    precoNormal: "Standard price: ",
+    precoSubscritores: "Subscriber price: ",
+    proximoCaso: (data: string) => `Your next included case will be available on ${data}.`,
+    cancelamentoAgendado: (data: string) =>
+      `Your subscription is scheduled to be cancelled on ${data}; until then it stays active, but no new included case will be added.`,
+    casosDoMes: "This month's cases",
+    casoIncluido: "Case included in your subscription",
+    utilizacao: (utilizado: boolean) => (utilizado ? "1 of 1 used" : "0 of 1 used"),
+    acumulados: (n: number) => ` · plus ${n === 1 ? "1 built-up case" : `${n} built-up cases`}`,
+    proximoIncluido: "Next included case",
+    ativaAte: "Subscription active until",
+    compradosPorUsar: "Purchased cases not yet used",
+    jaUtilizou: "You have already used your included case this month",
+    naoPodeEsperar: "Got a problem that can't wait?",
+    comoSubscritor: (nome: string, percentagem: number) =>
+      `As a DoLado subscriber, you can have an ${nome} handled with ${percentagem}% off.`,
+    comoSubscritorEste: (nome: string, percentagem: number) =>
+      `As a DoLado subscriber, you can have this case handled as an ${nome}, with ${percentagem}% off.`,
+    primeiro: "First, tell us what happened; you only pay at the end. Your subscription stays active and unchanged.",
+  },
+  mensagens: {
+    "Demasiados pedidos. Tente novamente dentro de alguns minutos.": "Too many requests. Please try again in a few minutes.",
+    "Não foi possível guardar o seu pedido. Tente novamente.": "We couldn't save your request. Please try again.",
+    "Indique o setor e a empresa.": "Please enter the sector and the company.",
+    "Selecione o que aconteceu.": "Please select what happened.",
+    "Indique se já reclamou junto da empresa.": "Please say whether you have already complained to the company.",
+    "Insira um nome válido.": "Please enter a valid name.",
+    "Telemóvel inválido.": "Invalid mobile number. Please use a Portuguese mobile number.",
+    "Confirme o pedido para avançar.": "Please confirm your request to go ahead.",
+    "Já existe uma conta com este e-mail. Use “Já tenho conta” para entrar.":
+      "There is already an account with this email. Use “I already have an account” to sign in.",
+    "A palavra-passe não cumpre os requisitos. Use pelo menos 8 caracteres, com letras e números.":
+      "The password doesn't meet the requirements. Use at least 8 characters, with letters and numbers.",
+    "Demasiadas tentativas. Aguarde alguns minutos e tente novamente.":
+      "Too many attempts. Please wait a few minutes and try again.",
+    "E-mail ou palavra-passe incorretos.": "Incorrect email or password.",
+    "O código é inválido ou expirou. Peça um novo código.": "The code is invalid or has expired. Please request a new code.",
+    "Não foi possível concluir. Tente novamente.": "We couldn't complete that. Please try again.",
+    "Insira um e-mail válido.": "Please enter a valid email address.",
+    "A palavra-passe tem de ter pelo menos 8 caracteres.": "The password must be at least 8 characters long.",
+    "Enviámos-lhe um e-mail para confirmar o endereço.": "We have sent you an email to confirm your address.",
+    "Introduza o código que recebeu por e-mail.": "Please enter the code you received by email.",
+    "Enviámos um novo e-mail de confirmação.": "We have sent a new confirmation email.",
+    "Indique o e-mail e a palavra-passe.": "Please enter your email and password.",
+    "Ainda não confirmou o seu e-mail. Enviámos-lhe um novo e-mail de confirmação.":
+      "You haven't confirmed your email yet. We have sent you a new confirmation email.",
+    "Tipo de ficheiro não suportado. Envie um PDF ou uma imagem.": "File type not supported. Please upload a PDF or an image.",
+    "O ficheiro excede o limite de 10 MB.": "The file is larger than the 10 MB limit.",
+    "Não foi possível preparar o envio do ficheiro.": "We couldn't prepare the file upload.",
+  },
+};

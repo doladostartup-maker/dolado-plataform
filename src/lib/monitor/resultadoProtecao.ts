@@ -22,6 +22,11 @@
 import { componentesFatura, dataReferencia, fraseEvento, mesAnoTexto, ordenarFaturas, type FaturaComparavel, type TipoEvento } from "./acompanhamento.ts";
 import { diasAte, formatarEurosCents, proximaData, type ProximaData } from "./contratos.ts";
 import { emCurso } from "./processamento.ts";
+import type { Idioma } from "../../i18n/config.ts";
+import { tMonitor } from "../../i18n/mensagens/monitor.ts";
+
+// Textos (pt-PT e en-GB): src/i18n/mensagens/*/monitor.ts. Todas as funções
+// aceitam o idioma; por omissão português (e-mail mensal, backoffice, testes).
 
 /** Uma situação comunicada continua em destaque durante este tempo (ou enquanto for da última fatura). */
 export const ACHADO_ATIVO_DIAS = 60;
@@ -162,8 +167,6 @@ export type ResultadoServico = {
 // Datas
 // ---------------------------------------------------------------------------
 
-const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-const MESES_CURTOS = ["jan.", "fev.", "mar.", "abr.", "mai.", "jun.", "jul.", "ago.", "set.", "out.", "nov.", "dez."];
 
 /** Dia (AAAA-MM-DD) em Lisboa de uma data ou de um timestamp. */
 export function diaLisboa(valor: string): string {
@@ -174,24 +177,26 @@ export function diaLisboa(valor: string): string {
 }
 
 /** "4 de outubro de 2026" (sem o ano quando é o ano de `hoje`). */
-export function dataExtenso(valor: string | null | undefined, hoje?: string): string {
+export function dataExtenso(valor: string | null | undefined, hoje?: string, idioma: Idioma = "pt-PT"): string {
   if (!valor) return "";
+  const t = tMonitor[idioma].datas;
   const dia = diaLisboa(valor);
-  const mes = MESES[Number(dia.slice(5, 7)) - 1];
+  const mes = t.meses[Number(dia.slice(5, 7)) - 1];
   if (!mes) return "";
-  const base = `${Number(dia.slice(8, 10))} de ${mes}`;
-  return hoje && hoje.slice(0, 4) === dia.slice(0, 4) ? base : `${base} de ${dia.slice(0, 4)}`;
+  const mesmoAno = !!hoje && hoje.slice(0, 4) === dia.slice(0, 4);
+  return t.extenso(Number(dia.slice(8, 10)), mes, mesmoAno ? null : dia.slice(0, 4));
 }
 
 /** "4 out." (com o ano quando não é o de `hoje`). */
-export function dataCurta(valor: string, hoje?: string): string {
+export function dataCurta(valor: string, hoje?: string, idioma: Idioma = "pt-PT"): string {
+  const t = tMonitor[idioma].datas;
   const dia = diaLisboa(valor);
-  const mes = MESES_CURTOS[Number(dia.slice(5, 7)) - 1] ?? "";
-  const base = `${Number(dia.slice(8, 10))} ${mes}`;
-  return hoje && hoje.slice(0, 4) !== dia.slice(0, 4) ? `${base} ${dia.slice(0, 4)}` : base;
+  const mes = t.mesesCurtos[Number(dia.slice(5, 7)) - 1] ?? "";
+  const outroAno = !!hoje && hoje.slice(0, 4) !== dia.slice(0, 4);
+  return t.curta(Number(dia.slice(8, 10)), mes, outroAno ? dia.slice(0, 4) : null);
 }
 
-const eur = (c: unknown) => formatarEurosCents(typeof c === "number" ? c : null);
+const euros = (idioma: Idioma) => (c: unknown) => formatarEurosCents(typeof c === "number" ? c : null, idioma);
 const num = (v: unknown) => (typeof v === "number" ? v : null);
 const texto = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 const maisRecente = (datas: (string | null | undefined)[]) =>
@@ -201,22 +206,15 @@ const maisRecente = (datas: (string | null | undefined)[]) =>
 // Situações comunicadas
 // ---------------------------------------------------------------------------
 
-const CAUSAS: Record<string, string> = {
-  aumento:
-    "Um aumento da mensalidade pode resultar, por exemplo, do fim de uma promoção, de uma atualização de preços comunicada pelo fornecedor ou de um serviço acrescentado. Nem sempre é um erro, mas vale a pena confirmar.",
-  desconto:
-    "Um desconto pode deixar de aparecer quando a promoção chega ao fim, quando as condições são alteradas ou por um erro de faturação.",
-  cobranca_nova:
-    "Uma cobrança nova pode corresponder a um serviço ou equipamento acrescentado, a uma alteração do tarifário ou a um serviço que não pediu.",
-  duplicado:
-    "Duas cobranças iguais podem corresponder a dois serviços distintos com o mesmo nome ou a uma cobrança repetida por engano.",
-  fidelizacao:
-    "As datas podem diferir por causa de uma refidelização, de uma alteração do contrato ou de um erro num dos documentos.",
-  cessacao:
-    "O valor indicado pelo fornecedor pode incluir encargos que a nossa estimativa não considera, como equipamento, ou ser calculado de outra forma.",
-};
-
-export function situacaoDe(a: AchadoComunicado, eventos: EventoVisivel[], servico: { id: string; nome: string }): Situacao {
+export function situacaoDe(
+  a: AchadoComunicado,
+  eventos: EventoVisivel[],
+  servico: { id: string; nome: string },
+  idioma: Idioma = "pt-PT",
+): Situacao {
+  const t = tMonitor[idioma].situacao;
+  const CAUSAS = t.causas;
+  const eur = euros(idioma);
   const e = eventos.find((x) => x.achadoId === a.id) ?? null;
   const d = e?.dados ?? {};
   const base: Situacao = {
@@ -224,7 +222,7 @@ export function situacaoDe(a: AchadoComunicado, eventos: EventoVisivel[], servic
     servicoId: servico.id,
     servicoNome: servico.nome,
     resumo: null,
-    curto: "uma situação que merece a sua atenção",
+    curto: t.curtoGenerico,
     texto: a.texto,
     valores: null,
     causas: null,
@@ -241,18 +239,15 @@ export function situacaoDe(a: AchadoComunicado, eventos: EventoVisivel[], servic
       const dif = agora - antes;
       return {
         ...base,
-        resumo:
-          dif > 0
-            ? `A sua mensalidade aumentou ${eur(dif)} relativamente ao valor que estávamos a acompanhar.`
-            : `A sua mensalidade diminuiu ${eur(-dif)} relativamente ao valor que estávamos a acompanhar.`,
+        resumo: dif > 0 ? t.aumentou(eur(dif)) : t.diminuiu(eur(-dif)),
         valores: {
-          antes: { rotulo: "Antes", valor: eur(antes) },
-          agora: { rotulo: "Agora", valor: eur(agora) },
-          diferenca: { rotulo: "Diferença", valor: `${dif > 0 ? "+" : "−"}${eur(Math.abs(dif))}/mês` },
+          antes: { rotulo: t.antes, valor: eur(antes) },
+          agora: { rotulo: t.agora, valor: eur(agora) },
+          diferenca: { rotulo: t.diferenca, valor: t.porMes(`${dif > 0 ? "+" : "−"}${eur(Math.abs(dif))}`) },
         },
         causas: dif > 0 ? CAUSAS.aumento : null,
         problema: dif > 0 ? "Aumento de mensalidade" : null,
-        curto: dif > 0 ? `um aumento de ${eur(dif)} na mensalidade` : `uma descida de ${eur(-dif)} na mensalidade`,
+        curto: dif > 0 ? t.curtoAumento(eur(dif)) : t.curtoDescida(eur(-dif)),
       };
     }
     case "diferenca_preco_contrato": {
@@ -262,15 +257,15 @@ export function situacaoDe(a: AchadoComunicado, eventos: EventoVisivel[], servic
       const dif = cobrada - esperada;
       return {
         ...base,
-        resumo: `A mensalidade cobrada está ${eur(Math.abs(dif))} ${dif > 0 ? "acima" : "abaixo"} do valor do seu contrato.`,
+        resumo: t.contratoDif(eur(Math.abs(dif)), dif > 0),
         valores: {
-          antes: { rotulo: "No contrato", valor: eur(esperada) },
-          agora: { rotulo: "Cobrado", valor: eur(cobrada) },
-          diferenca: { rotulo: "Diferença", valor: `${dif > 0 ? "+" : "−"}${eur(Math.abs(dif))}/mês` },
+          antes: { rotulo: t.noContrato, valor: eur(esperada) },
+          agora: { rotulo: t.cobrado, valor: eur(cobrada) },
+          diferenca: { rotulo: t.diferenca, valor: t.porMes(`${dif > 0 ? "+" : "−"}${eur(Math.abs(dif))}`) },
         },
         causas: dif > 0 ? CAUSAS.aumento : null,
         problema: dif > 0 ? "Aumento de mensalidade" : null,
-        curto: `uma diferença de ${eur(Math.abs(dif))} face à mensalidade do contrato`,
+        curto: t.curtoContrato(eur(Math.abs(dif))),
       };
     }
     case "promocao_em_falta": {
@@ -278,18 +273,15 @@ export function situacaoDe(a: AchadoComunicado, eventos: EventoVisivel[], servic
       if (desconto == null) return { ...base, causas: CAUSAS.desconto, problema: "Aumento de mensalidade" };
       return {
         ...base,
-        resumo:
-          e?.base === "contrato"
-            ? `O desconto de ${eur(desconto)} previsto no seu contrato não aparece na fatura.`
-            : `O desconto de ${eur(desconto)} que aparecia na fatura anterior deixou de aparecer.`,
+        resumo: e?.base === "contrato" ? t.descontoContrato(eur(desconto)) : t.descontoDeixou(eur(desconto)),
         valores: {
-          antes: { rotulo: e?.base === "contrato" ? "Desconto previsto" : "Desconto antes", valor: eur(desconto) },
-          agora: { rotulo: "Desconto agora", valor: eur(0) },
-          diferenca: { rotulo: "Diferença", valor: `+${eur(desconto)}/mês` },
+          antes: { rotulo: e?.base === "contrato" ? t.descontoPrevisto : t.descontoAntes, valor: eur(desconto) },
+          agora: { rotulo: t.descontoAgora, valor: eur(0) },
+          diferenca: { rotulo: t.diferenca, valor: t.porMes(`+${eur(desconto)}`) },
         },
         causas: CAUSAS.desconto,
         problema: "Aumento de mensalidade",
-        curto: `que o desconto de ${eur(desconto)} deixou de aparecer`,
+        curto: t.curtoDesconto(eur(desconto)),
       };
     }
     case "promocao_alterada": {
@@ -299,48 +291,51 @@ export function situacaoDe(a: AchadoComunicado, eventos: EventoVisivel[], servic
       const dif = antes - agora;
       return {
         ...base,
-        resumo: `O desconto passou de ${eur(antes)} para ${eur(agora)}.`,
+        resumo: t.descontoPassou(eur(antes), eur(agora)),
         valores: {
-          antes: { rotulo: "Desconto antes", valor: eur(antes) },
-          agora: { rotulo: "Desconto agora", valor: eur(agora) },
-          diferenca: { rotulo: "Diferença", valor: `${dif > 0 ? "+" : "−"}${eur(Math.abs(dif))}/mês` },
+          antes: { rotulo: t.descontoAntes, valor: eur(antes) },
+          agora: { rotulo: t.descontoAgora, valor: eur(agora) },
+          diferenca: { rotulo: t.diferenca, valor: t.porMes(`${dif > 0 ? "+" : "−"}${eur(Math.abs(dif))}`) },
         },
         causas: CAUSAS.desconto,
         problema: dif > 0 ? "Aumento de mensalidade" : null,
-        curto: "uma alteração do desconto",
+        curto: t.curtoDescontoAlterado,
       };
     }
     case "cobranca_recorrente_nova":
       return {
         ...base,
-        resumo: e ? fraseEvento({ tipo: "cobranca_recorrente_nova", base: "historico", montanteCents: e.montanteCents, dados: d }) : null,
+        resumo: e ? fraseEvento({ tipo: "cobranca_recorrente_nova", base: "historico", montanteCents: e.montanteCents, dados: d }, idioma) : null,
         causas: CAUSAS.cobranca_nova,
-        curto: e?.montanteCents != null ? `uma cobrança nova de ${eur(e.montanteCents)}` : "uma cobrança nova",
+        curto: e?.montanteCents != null ? t.curtoCobrancaNova(eur(e.montanteCents)) : t.curtoCobrancaNovaSem,
       };
     case "possivel_duplicado":
       return {
         ...base,
-        resumo: e ? fraseEvento({ tipo: "possivel_duplicado", base: "historico", montanteCents: e.montanteCents, dados: d }) : null,
+        resumo: e ? fraseEvento({ tipo: "possivel_duplicado", base: "historico", montanteCents: e.montanteCents, dados: d }, idioma) : null,
         causas: CAUSAS.duplicado,
-        curto: "uma possível cobrança em duplicado",
+        curto: t.curtoDuplicado,
       };
     case "fidelizacao_diferente": {
       const contrato = texto(d.contrato);
       const fatura = texto(d.fatura);
       return {
         ...base,
-        resumo: contrato && fatura ? "A data de fim da fidelização indicada na fatura é diferente da que está no contrato." : null,
+        resumo: contrato && fatura ? t.fidelizacaoDiferente : null,
         valores:
           contrato && fatura
-            ? { antes: { rotulo: "No contrato", valor: dataExtenso(contrato) }, agora: { rotulo: "Na fatura", valor: dataExtenso(fatura) } }
+            ? {
+                antes: { rotulo: t.noContrato, valor: dataExtenso(contrato, undefined, idioma) },
+                agora: { rotulo: t.naFatura, valor: dataExtenso(fatura, undefined, idioma) },
+              }
             : null,
         causas: CAUSAS.fidelizacao,
         problema: "Fidelização ou penalização",
-        curto: "uma diferença na data de fim da fidelização",
+        curto: t.curtoFidelizacao,
       };
     }
     case "cessacao_divergente":
-      return { ...base, causas: CAUSAS.cessacao, problema: "Fidelização ou penalização", curto: "uma diferença no valor indicado para terminar o contrato" };
+      return { ...base, causas: CAUSAS.cessacao, problema: "Fidelização ou penalização", curto: t.curtoCessacao };
     default:
       return base;
   }
@@ -369,14 +364,6 @@ const CAMPOS_CONDICOES = [
   "tipo_fidelizacao",
 ];
 
-const ORIGEM_DATA: Record<string, string> = {
-  contrato: "Indicado no contrato",
-  cliente: "Indicado por si",
-  admin: "Confirmado pela DoLado",
-  calculado: "Calculado a partir do início e da duração da fidelização",
-  fatura: "Indicado na fatura",
-};
-
 const REGRA_ALERTA: Record<string, "fidelizacao" | "promocao"> = {
   fidelizacao_60d: "fidelizacao",
   fidelizacao_30d: "fidelizacao",
@@ -390,7 +377,11 @@ export function dataCampo(c: CondicaoAtual | undefined): string | null {
   return c && typeof c.valor === "string" && /^\d{4}-\d{2}-\d{2}/.test(c.valor) ? c.valor.slice(0, 10) : null;
 }
 
-export function resultadoServico(s: EntradaServico, hoje: string): ResultadoServico {
+export function resultadoServico(s: EntradaServico, hoje: string, idioma: Idioma = "pt-PT"): ResultadoServico {
+  const t = tMonitor[idioma].servico;
+  const ORIGEM_DATA = tMonitor[idioma].origemData as Record<string, string>;
+  const eur = euros(idioma);
+  const extenso = (v: string, h?: string) => dataExtenso(v, h, idioma);
   const ordenadas = ordenarFaturas(s.faturas);
   const ultima = ordenadas.at(-1) ?? null;
   const c = ultima ? componentesFatura(ultima) : null;
@@ -408,92 +399,92 @@ export function resultadoServico(s: EntradaServico, hoje: string): ResultadoServ
   const fimPromocao = dataCampo(s.campos.data_fim_promocao);
   const fimFidelizacao = dataCampo(s.campos.data_fim_fidelizacao);
   const proxima = proximaData({ data_fim_fidelizacao: fimFidelizacao, data_fim_promocao: fimPromocao }, hoje);
-  const mesUltima = ultima ? mesAnoTexto(dataReferencia(ultima)) : null;
+  const mesUltima = ultima ? mesAnoTexto(dataReferencia(ultima), idioma) : null;
 
   // ---- Situações comunicadas ainda em destaque ----------------------------
   const situacoes = s.achados
     .filter((a) => (ultima && a.faturaId === ultima.id) || diasAte(diaLisboa(a.comunicadoEm), hoje) >= -ACHADO_ATIVO_DIAS)
     .sort((a, b) => (a.comunicadoEm < b.comunicadoEm ? 1 : -1))
-    .map((a) => situacaoDe(a, s.eventos, s));
+    .map((a) => situacaoDe(a, s.eventos, s, idioma));
 
   // ---- O que verificámos -------------------------------------------------
   const verificacoes: Verificacao[] = [];
   const mensalidadeRef = temContrato && s.mensalidadeContratadaCents != null ? s.mensalidadeContratadaCents : c?.mensalidadeCents ?? null;
   if (temContrato && s.mensalidadeContratadaCents != null) {
     verificacoes.push({
-      rotulo: "Mensalidade do contrato",
+      rotulo: t.mensalidadeContrato,
       valor: eur(s.mensalidadeContratadaCents),
-      detalhe: temEvento("mensalidade_conforme") ? `A fatura de ${mesUltima} está de acordo com este valor.` : undefined,
+      detalhe: temEvento("mensalidade_conforme") ? t.faturaDeAcordo(mesUltima ?? "") : undefined,
     });
   } else if (c?.mensalidadeCents != null) {
     const alterada = eventosUltima.find((e) => e.tipo === "mensalidade_alterada");
     verificacoes.push({
-      rotulo: "Mensalidade",
+      rotulo: t.mensalidade,
       valor: eur(c.mensalidadeCents),
       detalhe: alterada
-        ? fraseEvento({ tipo: "mensalidade_alterada", base: "historico", montanteCents: alterada.montanteCents, dados: alterada.dados })
+        ? fraseEvento({ tipo: "mensalidade_alterada", base: "historico", montanteCents: alterada.montanteCents, dados: alterada.dados }, idioma)
         : ordenadas.length === 1
-          ? "Valor de referência para as próximas faturas."
+          ? t.referencia
           : temEvento("mensalidade_mantida")
-            ? "Igual à fatura anterior."
+            ? t.igualAnterior
             : undefined,
     });
   }
   const descontoContrato = temContrato && s.descontoContratadoCents ? s.descontoContratadoCents : 0;
   if (descontoContrato > 0) {
     verificacoes.push({
-      rotulo: "Desconto da promoção",
-      valor: `${eur(descontoContrato)}/mês`,
-      detalhe: temEvento("promocao_aplicada") ? "Aplicado na última fatura." : undefined,
+      rotulo: t.descontoPromocao,
+      valor: tMonitor[idioma].situacao.porMes(eur(descontoContrato)),
+      detalhe: temEvento("promocao_aplicada") ? t.aplicadoUltima : undefined,
     });
   } else if (c && c.descontoCents > 0) {
-    verificacoes.push({ rotulo: "Desconto", valor: `${eur(c.descontoCents)}/mês`, detalhe: `Identificado na fatura de ${mesUltima}.` });
+    verificacoes.push({ rotulo: t.desconto, valor: tMonitor[idioma].situacao.porMes(eur(c.descontoCents)), detalhe: t.identificadoFatura(mesUltima ?? "") });
   }
   if (fimPromocao) {
-    verificacoes.push({ rotulo: "Fim da promoção", valor: dataExtenso(fimPromocao), detalhe: ORIGEM_DATA[s.campos.data_fim_promocao!.origem] });
+    verificacoes.push({ rotulo: t.fimPromocao, valor: extenso(fimPromocao), detalhe: ORIGEM_DATA[s.campos.data_fim_promocao!.origem] });
   }
   if (fimFidelizacao) {
     verificacoes.push({
-      rotulo: "Fim da fidelização",
-      valor: dataExtenso(fimFidelizacao),
+      rotulo: t.fimFidelizacao,
+      valor: extenso(fimFidelizacao),
       detalhe: ORIGEM_DATA[s.campos.data_fim_fidelizacao!.origem],
     });
   }
   const servico = texto(condicao("servico")?.valor);
-  if (servico) verificacoes.push({ rotulo: "Serviço", valor: servico });
+  if (servico) verificacoes.push({ rotulo: t.servico, valor: servico });
   // Verificações sem resultado negativo só quando não há nada por rever.
   if (ultima && ultima.linhas.length > 0 && !ultimaEmVerificacao) {
-    if (!temEvento("possivel_duplicado")) verificacoes.push({ rotulo: "Cobranças em duplicado", valor: "Nenhuma encontrada" });
+    if (!temEvento("possivel_duplicado")) verificacoes.push({ rotulo: t.duplicados, valor: t.nenhumaEncontrada });
     if (ordenadas.length >= 2 && !temEvento("cobranca_recorrente_nova")) {
-      verificacoes.push({ rotulo: "Cobranças novas", valor: "Nenhuma face às faturas anteriores" });
+      verificacoes.push({ rotulo: t.cobrancasNovas, valor: t.nenhumaFaceAnteriores });
     }
   }
-  if (c && c.consumosCents > 0) verificacoes.push({ rotulo: "Consumo adicional", valor: eur(c.consumosCents), detalhe: `Na fatura de ${mesUltima}.` });
-  if (c && c.pontuaisCents > 0) verificacoes.push({ rotulo: "Cobranças pontuais", valor: eur(c.pontuaisCents), detalhe: `Na fatura de ${mesUltima}.` });
-  if (c && c.creditosCents > 0) verificacoes.push({ rotulo: "Crédito aplicado", valor: eur(c.creditosCents), detalhe: `Na fatura de ${mesUltima}.` });
+  if (c && c.consumosCents > 0) verificacoes.push({ rotulo: t.consumoAdicional, valor: eur(c.consumosCents), detalhe: t.naFaturaDe(mesUltima ?? "") });
+  if (c && c.pontuaisCents > 0) verificacoes.push({ rotulo: t.cobrancasPontuais, valor: eur(c.pontuaisCents), detalhe: t.naFaturaDe(mesUltima ?? "") });
+  if (c && c.creditosCents > 0) verificacoes.push({ rotulo: t.credito, valor: eur(c.creditosCents), detalhe: t.naFaturaDe(mesUltima ?? "") });
 
   // ---- O que vamos acompanhar ---------------------------------------------
   const atentos: Atento[] = [];
   if (!s.terminado) {
-    if (fimPromocao && diasAte(fimPromocao, hoje) >= 0) atentos.push({ texto: `Fim da promoção a ${dataExtenso(fimPromocao, hoje)}`, data: fimPromocao });
+    if (fimPromocao && diasAte(fimPromocao, hoje) >= 0) atentos.push({ texto: t.atentoFimPromocao(extenso(fimPromocao, hoje)), data: fimPromocao });
     if (fimFidelizacao && diasAte(fimFidelizacao, hoje) >= 0) {
-      atentos.push({ texto: `Fim da fidelização a ${dataExtenso(fimFidelizacao, hoje)}`, data: fimFidelizacao });
+      atentos.push({ texto: t.atentoFimFidelizacao(extenso(fimFidelizacao, hoje)), data: fimFidelizacao });
     }
-    if (mensalidadeRef != null) atentos.push({ texto: `Alterações à mensalidade de ${eur(mensalidadeRef)}` });
+    if (mensalidadeRef != null) atentos.push({ texto: t.atentoMensalidade(eur(mensalidadeRef)) });
     const descontoAcompanhado = descontoContrato || (c?.descontoCents ?? 0);
-    if (descontoAcompanhado > 0) atentos.push({ texto: `Que o desconto de ${eur(descontoAcompanhado)} continua a ser aplicado` });
-    if (s.faturas.some((f) => f.linhas.length > 0)) atentos.push({ texto: "Cobranças novas ou repetidas nas próximas faturas" });
+    if (descontoAcompanhado > 0) atentos.push({ texto: t.atentoDesconto(eur(descontoAcompanhado)) });
+    if (s.faturas.some((f) => f.linhas.length > 0)) atentos.push({ texto: t.atentoCobrancas });
   }
 
   // ---- O que ainda não conseguimos confirmar ------------------------------
   const pendente = new Set(s.porConfirmar.campos);
   const lacunas: string[] = [];
-  if (ultima && c?.mensalidadeCents == null && !temContrato) lacunas.push("Não conseguimos identificar a mensalidade na última fatura.");
+  if (ultima && c?.mensalidadeCents == null && !temContrato) lacunas.push(t.lacunaMensalidade);
   if (s.setor === "telecomunicacoes" && (ultima || temContrato) && !fimFidelizacao && !pendente.has("data_fim_fidelizacao")) {
-    lacunas.push("Não conseguimos confirmar se este serviço tem fidelização, nem quando termina.");
+    lacunas.push(t.lacunaFidelizacao);
   }
   if ((descontoContrato > 0 || (c?.descontoCents ?? 0) > 0) && !fimPromocao && !pendente.has("data_fim_promocao")) {
-    lacunas.push("Não conseguimos confirmar até quando se aplica o desconto.");
+    lacunas.push(t.lacunaDesconto);
   }
 
   // ---- Estado, título e texto ----------------------------------------------
@@ -517,79 +508,69 @@ export function resultadoServico(s: EntradaServico, hoje: string): ResultadoServ
   let textoPrincipal: string;
   switch (estado) {
     case "encontramos":
-      titulo = "Encontrámos algo que merece a sua atenção";
-      textoPrincipal =
-        situacoes.length === 1
-          ? "A DoLado reviu esta situação antes de lha mostrar. Veja o que encontrámos e o que pode fazer."
-          : `A DoLado reviu estas ${situacoes.length} situações antes de lhas mostrar. Veja o que encontrámos e o que pode fazer.`;
+      titulo = t.encontramosTitulo;
+      textoPrincipal = situacoes.length === 1 ? t.encontramosUma : t.encontramosVarias(situacoes.length);
       break;
     case "por_confirmar":
-      titulo = "Lemos o seu contrato";
-      textoPrincipal =
-        "Encontrámos as condições abaixo. Confirme-as para começarmos a acompanhá-las: só as usamos depois da sua confirmação.";
+      titulo = t.porConfirmarTitulo;
+      textoPrincipal = t.porConfirmarTexto;
       break;
     case "em_verificacao": {
       const f = ordenadas.filter((x) => x.emVerificacao).at(-1);
-      titulo = "Estamos a verificar uma alteração";
-      textoPrincipal = `Encontrámos uma diferença na fatura de ${f ? mesAnoTexto(dataReferencia(f)) : mesUltima} e a DoLado está a revê-la. Se merecer a sua atenção, avisamo-lo por e-mail. Não precisa de fazer nada por agora.`;
+      titulo = t.emVerificacaoTitulo;
+      textoPrincipal = t.emVerificacaoTexto((f ? mesAnoTexto(dataReferencia(f), idioma) : mesUltima) ?? "");
       break;
     }
     case "verificado":
       if (ultima && c?.mensalidadeCents == null && !temContrato) {
-        titulo = ordenadas.length === 1 ? "Já verificámos a sua primeira fatura" : "Verificámos a sua nova fatura";
-        textoPrincipal =
-          "Não conseguimos identificar a mensalidade nesta fatura, por isso ainda não a podemos usar como referência. Uma fatura mais recente ou o contrato ajudam-nos a acompanhar este serviço.";
+        titulo = ordenadas.length === 1 ? t.primeiraFaturaTitulo : t.novaFaturaTitulo;
+        textoPrincipal = t.semMensalidadeTexto;
       } else if (primeira) {
-        conclusao = "Está tudo certo por agora.";
+        conclusao = t.tudoCerto;
         if (ordenadas.length === 1) {
-          titulo = "Já verificámos a sua primeira fatura";
-          textoPrincipal = "Analisámos as condições relevantes do seu serviço e não encontrámos nada que exija a sua atenção neste momento.";
+          titulo = t.primeiraFaturaTitulo;
+          textoPrincipal = t.primeiraFaturaTexto;
         } else if (docsContratoLidos.length > 0) {
-          titulo = "Já verificámos o seu contrato";
-          textoPrincipal = "Registámos as condições relevantes do seu contrato e não encontrámos nada que exija a sua atenção neste momento.";
+          titulo = t.contratoTitulo;
+          textoPrincipal = t.contratoTexto;
         } else {
-          titulo = "Registámos as condições que indicou";
-          textoPrincipal = "Com estes dados já podemos acompanhar as datas importantes deste serviço.";
+          titulo = t.indicadasTitulo;
+          textoPrincipal = t.indicadasTexto;
         }
       } else {
-        titulo = "Continua tudo certo";
-        textoPrincipal = ultima
-          ? `Comparámos a fatura de ${mesUltima} com ${temContrato ? "as condições do contrato e com as faturas anteriores" : "as faturas anteriores"} e não encontrámos alterações relevantes.`
-          : "Registámos as condições do seu contrato e não encontrámos nada que exija a sua atenção neste momento.";
+        titulo = t.continuaTitulo;
+        textoPrincipal = ultima ? t.comparamos(mesUltima ?? "", temContrato) : t.registamosContrato;
       }
       break;
     case "a_rever":
-      titulo = "Estamos a verificar o seu documento";
-      textoPrincipal = "Não conseguimos ler tudo automaticamente. A DoLado vai verificá-lo e o resultado aparece aqui.";
+      titulo = t.aReverTitulo;
+      textoPrincipal = t.aReverTexto;
       break;
     case "em_analise":
-      titulo = "Estamos a verificar por si";
-      textoPrincipal = "Estamos a analisar o documento e a identificar as condições que merecem acompanhamento.";
+      titulo = t.emAnaliseTitulo;
+      textoPrincipal = t.emAnaliseTexto;
       break;
     default:
-      titulo = "Ainda não verificámos este serviço";
-      textoPrincipal = "Adicione uma fatura ou o contrato: verificamos a situação atual e, a partir daí, ficamos atentos por si.";
+      titulo = t.semDadosTitulo;
+      textoPrincipal = t.semDadosTexto;
   }
 
   let seguinte: string | null = null;
   if (verificado && !s.terminado) {
     if (temContrato && ordenadas.length === 0) {
-      seguinte = "Quando recebermos uma fatura, vamos comparar o que está a ser cobrado com estas condições.";
+      seguinte = t.seguinteContratoSemFatura;
     } else if (!temContrato) {
-      seguinte =
-        ordenadas.length <= 1
-          ? "Vamos usar esta fatura como referência para acompanhar alterações futuras. Se adicionar o contrato, passamos também a comparar o que é cobrado com o que foi contratado."
-          : "Comparamos cada nova fatura com as anteriores. Se adicionar o contrato, passamos também a comparar o que é cobrado com o que foi contratado.";
+      seguinte = ordenadas.length <= 1 ? t.seguintePrimeira : t.seguinteSemContrato;
     } else {
-      seguinte = "A partir daqui, ficamos atentos por si. Vamos comparar as próximas faturas com o contrato e avisá-lo se alguma coisa mudar ou merecer a sua atenção.";
+      seguinte = t.seguinteComContrato;
     }
   }
 
   let encontramos: string | null = null;
-  if (situacoes.length > 0) encontramos = situacoes.length === 1 ? "1 situação que merece a sua atenção" : `${situacoes.length} situações que merecem a sua atenção`;
-  else if (estado === "em_verificacao") encontramos = "Uma alteração em verificação pela DoLado";
-  else if (estado === "por_confirmar") encontramos = "Condições por confirmar";
-  else if (estado === "verificado") encontramos = "Nenhum problema neste momento";
+  if (situacoes.length > 0) encontramos = situacoes.length === 1 ? t.encontramosUmaSituacao : t.encontramosSituacoes(situacoes.length);
+  else if (estado === "em_verificacao") encontramos = t.alteracaoVerificacao;
+  else if (estado === "por_confirmar") encontramos = t.condicoesPorConfirmar;
+  else if (estado === "verificado") encontramos = t.nenhumProblema;
 
   // ---- Última verificação ---------------------------------------------------
   const docsLidos = s.documentos.filter((d) => d.estado === "processado");
@@ -604,9 +585,9 @@ export function resultadoServico(s: EntradaServico, hoje: string): ResultadoServ
   const ultimaFaturaRegistada = maisRecente(s.faturas.map((f) => f.registadaEm));
   const documentoVerificado =
     ultimoContrato && (!ultimaFaturaRegistada || ultimoContrato > ultimaFaturaRegistada)
-      ? "o contrato"
+      ? t.oContrato
       : ultima
-        ? `a fatura de ${mesUltima}`
+        ? t.aFaturaDe(mesUltima ?? "")
         : null;
 
   return {
@@ -629,7 +610,7 @@ export function resultadoServico(s: EntradaServico, hoje: string): ResultadoServ
     lacunas: verificado ? lacunas : [],
     seguinte,
     confirmar,
-    historico: historicoServico(s, ordenadas, situacoes, hoje),
+    historico: historicoServico(s, ordenadas, situacoes, hoje, idioma),
   };
 }
 
@@ -637,40 +618,47 @@ export function resultadoServico(s: EntradaServico, hoje: string): ResultadoServ
 // O que já fizemos por si
 // ---------------------------------------------------------------------------
 
-function historicoServico(s: EntradaServico, ordenadas: FaturaServico[], situacoes: Situacao[], hoje: string): ItemHistorico[] {
+function historicoServico(
+  s: EntradaServico,
+  ordenadas: FaturaServico[],
+  situacoes: Situacao[],
+  hoje: string,
+  idioma: Idioma = "pt-PT",
+): ItemHistorico[] {
+  const t = tMonitor[idioma].historico;
   const itens: ItemHistorico[] = [];
   const item = (data: string, txt: string, tom: ItemHistorico["tom"], tipo: ItemHistorico["tipo"]) =>
     itens.push({ data, texto: txt, tom, tipo, servicoId: s.id, servicoNome: s.nome });
-  const todas = s.achados.map((a) => situacoes.find((x) => x.id === a.id) ?? situacaoDe(a, s.eventos, s));
+  const todas = s.achados.map((a) => situacoes.find((x) => x.id === a.id) ?? situacaoDe(a, s.eventos, s, idioma));
 
   ordenadas.forEach((f, i) => {
-    const mes = mesAnoTexto(dataReferencia(f));
+    const mes = mesAnoTexto(dataReferencia(f), idioma);
     const achado = todas.find((x) => s.achados.find((a) => a.id === x.id)?.faturaId === f.id);
     const semMensalidade = s.eventos.some((e) => e.faturaId === f.id && e.tipo === "dados_insuficientes");
     if (achado) {
-      item(s.achados.find((a) => a.id === achado.id)!.comunicadoEm, `Detetámos ${achado.curto} na fatura de ${mes}.`, "atencao", "situacao");
+      item(s.achados.find((a) => a.id === achado.id)!.comunicadoEm, t.detetamosNaFatura(achado.curto, mes), "atencao", "situacao");
       return;
     }
-    const acao = i === 0 ? `Verificámos a primeira fatura (${mes})` : `Comparámos a fatura de ${mes}`;
-    if (f.emVerificacao) item(f.registadaEm, `${acao} — estamos a verificar uma alteração.`, "info", "fatura");
-    else if (semMensalidade) item(f.registadaEm, `${acao} — não conseguimos identificar a mensalidade.`, "info", "fatura");
-    else item(f.registadaEm, `${acao} — ${i === 0 ? "tudo certo" : "sem alterações relevantes"}.`, "ok", "fatura");
+    const acao = i === 0 ? t.verificamosPrimeira(mes) : t.comparamos(mes);
+    if (f.emVerificacao) item(f.registadaEm, t.emVerificacao(acao), "info", "fatura");
+    else if (semMensalidade) item(f.registadaEm, t.semMensalidade(acao), "info", "fatura");
+    else item(f.registadaEm, i === 0 ? t.tudoCerto(acao) : t.semAlteracoes(acao), "ok", "fatura");
   });
 
   // Situações sem fatura associada (ex.: valor de cessação).
   for (const a of s.achados.filter((x) => !x.faturaId || !ordenadas.some((f) => f.id === x.faturaId))) {
     const sit = todas.find((x) => x.id === a.id)!;
-    item(a.comunicadoEm, `Detetámos ${sit.curto}.`, "atencao", "situacao");
+    item(a.comunicadoEm, t.detetamos(sit.curto), "atencao", "situacao");
   }
 
   for (const d of s.documentos.filter((x) => x.tipo === "contrato" && x.estado === "processado")) {
-    item(d.criadoEm, "Lemos o contrato e identificámos as condições a acompanhar.", "ok", "contrato");
+    item(d.criadoEm, t.lemosContrato, "ok", "contrato");
   }
 
   for (const a of s.alertas) {
     const sobre = REGRA_ALERTA[a.regra];
     if (!sobre) continue;
-    item(a.enviadoEm, `Avisámo-lo por e-mail do fim da ${sobre === "fidelizacao" ? "fidelização" : "promoção"} (${dataExtenso(a.dataAlvo, hoje)}).`, "info", "aviso");
+    item(a.enviadoEm, t.avisamos(sobre === "fidelizacao", dataExtenso(a.dataAlvo, hoje, idioma)), "info", "aviso");
   }
 
   return itens.sort((a, b) => (new Date(a.data).getTime() < new Date(b.data).getTime() ? 1 : -1));
@@ -699,7 +687,9 @@ export type ResultadoGeral = {
   historico: ItemHistorico[];
 };
 
-export function resultadoGeral(servicos: ResultadoServico[]): ResultadoGeral {
+export function resultadoGeral(servicos: ResultadoServico[], idioma: Idioma = "pt-PT"): ResultadoGeral {
+  const t = tMonitor[idioma].geral;
+  const ts = tMonitor[idioma].servico;
   const ordenados = [...servicos].sort((a, b) => PRIORIDADE_ESTADO[a.estado] - PRIORIDADE_ESTADO[b.estado]);
   const principal = ordenados[0];
   const verificados = servicos.filter((s) => s.estado !== "em_analise" && s.estado !== "a_rever" && s.estado !== "sem_dados");
@@ -728,9 +718,9 @@ export function resultadoGeral(servicos: ResultadoServico[]): ResultadoGeral {
     return {
       ...base,
       estado: "sem_dados",
-      titulo: "Comece pela sua situação atual",
+      titulo: t.semDadosTitulo,
       conclusao: null,
-      texto: "Adicione uma fatura ou o contrato de um serviço. Verificamos a sua situação atual, mostramos-lhe o que encontrámos e, a partir daí, ficamos atentos por si.",
+      texto: t.semDadosTexto,
       encontramos: null,
     };
   }
@@ -741,43 +731,43 @@ export function resultadoGeral(servicos: ResultadoServico[]): ResultadoGeral {
   }
 
   const restantesBem = servicos.filter((s) => s.id !== principal.id).every((s) => s.estado === "verificado");
-  const nota = restantesBem ? " Nos restantes serviços, está tudo certo." : "";
+  const nota = restantesBem ? t.restantesBem : "";
   switch (principal.estado) {
     case "encontramos":
       return {
         ...base,
         estado: "encontramos",
-        titulo: "Encontrámos algo que merece a sua atenção",
+        titulo: ts.encontramosTitulo,
         conclusao: null,
-        texto: `${situacoes.length === 1 ? `Há uma situação no serviço ${principal.nome}` : `Há ${situacoes.length} situações nos seus serviços`} que a DoLado reviu antes de lha mostrar.${nota}`,
-        encontramos: situacoes.length === 1 ? "1 situação que merece a sua atenção" : `${situacoes.length} situações que merecem a sua atenção`,
+        texto: situacoes.length === 1 ? t.encontramosUma(principal.nome, nota) : t.encontramosVarias(situacoes.length, nota),
+        encontramos: situacoes.length === 1 ? ts.encontramosUmaSituacao : ts.encontramosSituacoes(situacoes.length),
       };
     case "por_confirmar":
       return {
         ...base,
         estado: "por_confirmar",
-        titulo: "Falta só a sua confirmação",
+        titulo: t.porConfirmarTitulo,
         conclusao: null,
-        texto: `Lemos o contrato de ${principal.nome}. Confirme as condições que encontrámos para começarmos a acompanhá-las.${nota}`,
-        encontramos: "Condições por confirmar",
+        texto: t.porConfirmarTexto(principal.nome, nota),
+        encontramos: ts.condicoesPorConfirmar,
       };
     case "em_verificacao":
       return {
         ...base,
         estado: "em_verificacao",
-        titulo: "Estamos a verificar uma alteração",
+        titulo: ts.emVerificacaoTitulo,
         conclusao: null,
-        texto: `Encontrámos uma diferença numa fatura de ${principal.nome} e a DoLado está a revê-la. Se merecer a sua atenção, avisamo-lo por e-mail.${nota}`,
-        encontramos: "Uma alteração em verificação pela DoLado",
+        texto: t.emVerificacaoTexto(principal.nome, nota),
+        encontramos: ts.alteracaoVerificacao,
       };
     case "verificado":
       return {
         ...base,
         estado: "verificado",
-        titulo: "Continua tudo certo",
+        titulo: ts.continuaTitulo,
         conclusao: null,
-        texto: `Verificámos ${verificados.length === servicos.length ? `os seus ${servicos.length} serviços` : `${verificados.length} dos seus ${servicos.length} serviços`} e não encontrámos nada que exija a sua atenção neste momento.`,
-        encontramos: "Nenhum problema neste momento",
+        texto: t.verificadoTexto(verificados.length, servicos.length),
+        encontramos: ts.nenhumProblema,
       };
     default:
       return { ...base, estado: principal.estado, titulo: principal.titulo, conclusao: null, texto: principal.texto, encontramos: null };
