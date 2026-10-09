@@ -55,7 +55,7 @@ export function dadosContaNova(dados: { nome?: string | null; mostrarCodigo?: bo
   };
 }
 
-/** Destino por omissão de uma conta: backoffice (admin) ou os casos do portal. */
+/** Destino por omissão de uma conta: backoffice (admin) ou o Painel do portal. */
 export async function destinoPorOmissao(supabase: SupabaseClient, userId: string) {
   const { data } = await supabase.from("utilizadores").select("role").eq("id", userId).maybeSingle();
   return destinoPorPerfil(data?.role as string | undefined);

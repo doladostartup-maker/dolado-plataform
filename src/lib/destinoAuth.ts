@@ -6,7 +6,7 @@
 //   2. destino guardado no cookie ao criar a conta / ao sair para o Google
 //      (ex.: /comprar?plano=caso_protecao, para continuar a compra);
 //   3. pedido de caso por pagar neste browser → escolha da modalidade;
-//   4. por omissão: /portal/casos (cliente) ou o backoffice (admin).
+//   4. por omissão: o Painel do portal (/portal; cliente) ou o backoffice (admin).
 // "A sua conta" (/conta) deixou de ser destino: fica só no menu do portal.
 
 /** Destino guardado ao criar a conta ou ao sair para o Google (só caminhos deste site). */
@@ -16,7 +16,8 @@ export const COOKIE_DESTINO_POS_LOGIN = "dolado_destino_pos_login";
 export const VALIDADE_DESTINO_GOOGLE_S = 10 * 60;
 export const VALIDADE_DESTINO_CONFIRMACAO_S = 24 * 60 * 60;
 
-export const DESTINO_POS_LOGIN = "/portal/casos";
+/** Painel do portal (item "Painel" da navegação) — destino de qualquer login sem destino próprio. */
+export const DESTINO_POS_LOGIN = "/portal";
 export const DESTINO_POS_LOGIN_ADMIN = "/backoffice";
 export const DESTINO_PEDIDO_POR_PAGAR = "/tratar-caso/modalidade";
 

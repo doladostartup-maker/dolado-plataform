@@ -58,7 +58,7 @@ export async function GET(request: Request) {
       await gravarIdiomaDeContaNova(data.user, idioma);
       // Destino: ?next= explícito → destino guardado ao criar a conta ou ao
       // sair para o Google (ex.: continuar a compra em /comprar) → pedido de
-      // caso por pagar neste browser → /portal/casos (ou backoffice, admin).
+      // caso por pagar neste browser → Painel /portal (ou backoffice, admin).
       const next = await destinoDepoisDeAutenticar(supabase, data.user.id, {
         nextExplicito: nextPedido,
         destinoGuardado,
