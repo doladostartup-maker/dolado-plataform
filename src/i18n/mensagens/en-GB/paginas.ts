@@ -80,7 +80,7 @@ export const paginas: Traducao<typeof pt> = {
       {
         titulo: "We track the response deadline",
         texto:
-          "Telecoms: 10 working days without a substantive response. Energy and water follow each sector's own regulatory deadlines.",
+          "Telecoms: 15 working days without a substantive response. Energy and water follow each sector's own regulatory deadlines.",
       },
       {
         titulo: "We follow it to the end",
