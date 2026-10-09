@@ -82,7 +82,7 @@ export const paginas = {
       {
         titulo: "Acompanhamos o prazo de resposta",
         texto:
-          "Telecom: 10 dias úteis sem resposta substantiva. Energia e água seguem os prazos regulatórios próprios de cada setor.",
+          "Telecom: 15 dias úteis sem resposta substantiva. Energia e água seguem os prazos regulatórios próprios de cada setor.",
       },
       {
         titulo: "Acompanhamos até ao fim",
