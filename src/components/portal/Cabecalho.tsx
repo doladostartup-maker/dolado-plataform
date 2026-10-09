@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/i18n/Link";
 import type { ReactNode } from "react";
 import { IconeVoltar } from "./Icones";
 import { EYEBROW, TEXTO_SECUNDARIO, TITULO_PAGINA } from "./ui";

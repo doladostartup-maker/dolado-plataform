@@ -148,8 +148,8 @@ describe("motivo", () => {
 });
 
 describe("o cancelamento normal não é livre resolução nem cancelamento imediato", () => {
-  const acoes = readFileSync(new URL("../app/portal/subscricao/actions.ts", import.meta.url), "utf8");
-  const pagina = readFileSync(new URL("../app/portal/subscricao/page.tsx", import.meta.url), "utf8");
+  const acoes = readFileSync(new URL("../app/[idioma]/portal/subscricao/actions.ts", import.meta.url), "utf8");
+  const pagina = readFileSync(new URL("../app/[idioma]/portal/subscricao/page.tsx", import.meta.url), "utf8");
 
   test("as ações do cliente só usam cancel_at_period_end: sem reembolsos nem cancelamento imediato", () => {
     assert.match(acoes, /cancel_at_period_end: cancelar/);

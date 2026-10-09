@@ -1,4 +1,8 @@
+"use client";
+
 import Image from "next/image";
+import { useTextos } from "@/i18n/cliente";
+import { tMarketing } from "@/i18n/mensagens/marketing";
 import type { ReactNode } from "react";
 import { SectionHeader, SectionV2, type TomSecao } from "./SectionV2";
 
@@ -8,6 +12,7 @@ import { SectionHeader, SectionV2, type TomSecao } from "./SectionV2";
 // Ficheiro já redimensionado (600 px, 2× a largura máxima mostrada): as
 // imagens não são otimizadas no servidor (images.unoptimized, next.config.ts).
 export function OrigemFundador({ tone = "soft-blue", aside }: { tone?: TomSecao; aside?: ReactNode }) {
+  const t = useTextos(tMarketing).origem;
   return (
     <SectionV2
       tone={tone}
@@ -17,28 +22,19 @@ export function OrigemFundador({ tone = "soft-blue", aside }: { tone?: TomSecao;
     >
       <Image
         src="/landing/founder-thiago-600.webp"
-        alt="Thiago Pereira, fundador da DoLado"
+        alt={t.fotografia}
         width={300}
         height={340}
         className="aspect-[4/5] w-full max-w-[260px] rounded-[18px] object-cover md:max-w-none"
       />
       <div className="max-w-[560px]">
-        <SectionHeader eyebrow="A nossa origem" titulo="“Eu próprio já passei por isto.”" />
+        <SectionHeader eyebrow={t.eyebrow} titulo={t.titulo} />
         <div className="mt-6 space-y-4 text-[16px] leading-[1.7] text-[var(--v2-muted)]">
-          <p>
-            Tive uma penalização de fidelização de uma operadora depois de aumentos e só mais tarde
-            descobri que poderia ter tido outras opções.
-          </p>
-          <p>
-            Percebi que muitas pessoas passam pelo mesmo, não porque não tenham direitos, mas porque nem
-            sempre sabem quais são ou o que devem fazer.
-          </p>
-          <p>
-            Foi por isso que criei a DoLado: para que ninguém seja prejudicado simplesmente por
-            desconhecer as leis, os caminhos ou as responsabilidades.
-          </p>
+          {t.paragrafos.map((p) => (
+            <p key={p}>{p}</p>
+          ))}
         </div>
-        <p className="mt-6 text-[15px] font-semibold text-[var(--v2-navy)]">— Thiago Pereira, fundador da DoLado</p>
+        <p className="mt-6 text-[15px] font-semibold text-[var(--v2-navy)]">{t.assinatura}</p>
       </div>
       {aside}
     </SectionV2>

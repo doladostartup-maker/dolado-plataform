@@ -9,13 +9,16 @@ import {
   OPCOES_MOMENTO,
   OPCOES_SETOR,
   OPCOES_TITULAR,
+  MOTIVOS,
   avaliarSimulador,
   opcoesProblema,
   parametrosPrePreenchimento,
-  type ResultadoSimulador,
   type RespostasSimulador,
 } from "@/lib/elegibilidade/regras";
 import { urlTratarCaso } from "@/lib/site";
+import { useCaminho, useIdioma } from "@/i18n/cliente";
+import { rotulo } from "@/i18n/mensagens/rotulos";
+import { tSimulador } from "@/i18n/mensagens/simulador";
 
 // Simulador público no Design System V2: 4 perguntas de escolha → resultado
 // indicativo. Tudo acontece no browser — nada é gravado, enviado ou associado
@@ -24,38 +27,21 @@ import { urlTratarCaso } from "@/lib/site";
 
 const ORIGEM = "/simulador-elegibilidade";
 
-type Pergunta = { campo: keyof RespostasSimulador; titulo: string; ajuda?: string; opcoes: string[] };
+type Pergunta = { campo: keyof RespostasSimulador; opcoes: string[] };
 
+// Valores (sempre em português, iguais aos do formulário do caso); textos em
+// src/i18n/mensagens/*/simulador.ts e rótulos das opções em */rotulos.ts.
 const PERGUNTAS: Pergunta[] = [
-  { campo: "setor", titulo: "Com que tipo de empresa é o problema?", opcoes: OPCOES_SETOR },
-  {
-    campo: "titular",
-    titulo: "O contrato é pessoal?",
-    ajuda: "Por exemplo, o telemóvel, a internet ou a eletricidade da sua casa.",
-    opcoes: OPCOES_TITULAR,
-  },
+  { campo: "setor", opcoes: OPCOES_SETOR },
+  { campo: "titular", opcoes: OPCOES_TITULAR },
   // Opções do setor escolhido (opcoesProblema), preenchidas ao mostrar a pergunta.
-  { campo: "problema", titulo: "O que aconteceu?", opcoes: [] },
-  { campo: "momento", titulo: "Já reclamou junto da empresa?", opcoes: OPCOES_MOMENTO },
+  { campo: "problema", opcoes: [] },
+  { campo: "momento", opcoes: OPCOES_MOMENTO },
 ];
 
-const RESPOSTAS_VAZIAS: RespostasSimulador = { setor: "", titular: "", problema: "", momento: "" };
+const GRUPO_ROTULO = { setor: "setores", titular: "titular", problema: "problemas", momento: "momentos" } as const;
 
-const TEXTO_RESULTADO: Record<ResultadoSimulador, { titulo: string; texto?: string; cta?: string }> = {
-  positivo: {
-    titulo: "Pelas suas respostas, o seu caso parece enquadrar-se no tipo de situações que a DoLado trata.",
-    texto: "Conte-nos o que aconteceu. A DoLado organiza o caso, prepara a reclamação e acompanha o processo consigo.",
-    cta: "Tratar do meu caso",
-  },
-  incerto: {
-    titulo: "Pelas suas respostas, não conseguimos determinar com segurança se este caso se enquadra no serviço da DoLado.",
-    texto: "Se quiser avançar, conte-nos o que aconteceu no formulário do caso. No fim, escolhe a modalidade antes de pagar.",
-    cta: "Tratar do meu caso",
-  },
-  negativo: {
-    titulo: "Pelas suas respostas, este caso pode não se enquadrar no serviço atual da DoLado.",
-  },
-};
+const RESPOSTAS_VAZIAS: RespostasSimulador = { setor: "", titular: "", problema: "", momento: "" };
 
 function hrefTratarCaso(respostas: RespostasSimulador) {
   const params = new URLSearchParams(parametrosPrePreenchimento(respostas)).toString();
@@ -66,20 +52,24 @@ function hrefTratarCaso(respostas: RespostasSimulador) {
 const ROTULO_PASSO = "text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]";
 
 function Resultado({ respostas, onRecomecar }: { respostas: RespostasSimulador; onRecomecar: () => void }) {
+  const t = tSimulador[useIdioma()];
+  const c = useCaminho();
   const { resultado, motivo } = avaliarSimulador(respostas);
-  const texto = TEXTO_RESULTADO[resultado];
+  const texto = t.resultados[resultado];
+  const chaveMotivo = (Object.keys(MOTIVOS) as (keyof typeof MOTIVOS)[]).find((k) => MOTIVOS[k] === motivo);
+  const motivoTexto = chaveMotivo ? t.motivos[chaveMotivo] : motivo;
 
   return (
     <div aria-live="polite" className="flex flex-col gap-4">
-      <p className={ROTULO_PASSO}>Resultado</p>
+      <p className={ROTULO_PASSO}>{t.resultado}</p>
       <h2 className="text-[22px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">{texto.titulo}</h2>
-      {motivo && <p className="text-[15.5px] leading-relaxed text-[var(--v2-muted)]">{motivo}</p>}
+      {motivoTexto && <p className="text-[15.5px] leading-relaxed text-[var(--v2-muted)]">{motivoTexto}</p>}
       {texto.texto && <p className="text-[15.5px] leading-relaxed text-[var(--v2-muted)]">{texto.texto}</p>}
 
       <div className="mt-2 flex flex-col gap-3 sm:flex-row">
         {texto.cta && (
           <a
-            href={hrefTratarCaso(respostas)}
+            href={c(hrefTratarCaso(respostas))}
             onClick={() => track("simulador_clique_tratar_caso", { resultado })}
             className={BOTAO_PRIMARIO}
           >
@@ -87,18 +77,20 @@ function Resultado({ respostas, onRecomecar }: { respostas: RespostasSimulador; 
           </a>
         )}
         <button type="button" onClick={onRecomecar} className={BOTAO_CONTORNO}>
-          Responder de novo
+          {t.responderDeNovo}
         </button>
       </div>
 
       <p className="mt-2 border-t border-[var(--v2-line)] pt-4 text-[13.5px] text-[var(--v2-muted)]">
-        Este resultado é apenas indicativo e baseia-se nas respostas fornecidas.
+        {t.indicativo}
       </p>
     </div>
   );
 }
 
 function Simulador() {
+  const idioma = useIdioma();
+  const t = tSimulador[idioma];
   const [passo, setPasso] = useState(0);
   const [respostas, setRespostas] = useState<RespostasSimulador>(RESPOSTAS_VAZIAS);
   const iniciado = useRef(false);
@@ -134,7 +126,7 @@ function Simulador() {
     <div className="flex flex-col gap-5">
       <div
         role="progressbar"
-        aria-label="Progresso do simulador"
+        aria-label={t.progresso}
         aria-valuemin={0}
         aria-valuemax={PERGUNTAS.length}
         aria-valuenow={passo}
@@ -146,13 +138,13 @@ function Simulador() {
         />
       </div>
       <p className={ROTULO_PASSO}>
-        Pergunta {passo + 1} de {PERGUNTAS.length}
+        {t.perguntaDe(passo + 1, PERGUNTAS.length)}
       </p>
       <fieldset className="flex flex-col gap-3">
         <legend className="mb-2 text-[22px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">
-          {pergunta.titulo}
+          {t.perguntas[pergunta.campo].titulo}
         </legend>
-        {pergunta.ajuda && <p className="-mt-1 mb-1 text-[15px] text-[var(--v2-muted)]">{pergunta.ajuda}</p>}
+        {pergunta.campo === "titular" && <p className="-mt-1 mb-1 text-[15px] text-[var(--v2-muted)]">{t.perguntas.titular.ajuda}</p>}
         {(pergunta.campo === "problema" ? opcoesProblema(respostas.setor) : pergunta.opcoes).map((opcao) => {
           const selecionada = respostas[pergunta.campo] === opcao;
           return (
@@ -167,7 +159,7 @@ function Simulador() {
                   : "border-[var(--v2-line-strong)] bg-white text-[var(--v2-navy)] hover:border-[var(--v2-green)]"
               }`}
             >
-              {opcao}
+              {rotulo(idioma, GRUPO_ROTULO[pergunta.campo], opcao)}
             </button>
           );
         })}
@@ -178,47 +170,25 @@ function Simulador() {
           onClick={() => setPasso(passo - 1)}
           className="self-start text-[15px] font-semibold text-[var(--v2-muted)] underline-offset-4 hover:text-[var(--v2-navy)] hover:underline"
         >
-          ← Voltar
+          {t.voltar}
         </button>
       )}
     </div>
   );
 }
 
-const COMO_FUNCIONA: { titulo: string; texto: string }[] = [
-  {
-    titulo: "Para que serve.",
-    texto:
-      "Ajuda a perceber se a sua situação é do tipo que a DoLado trata: problemas de consumidores particulares com empresas de telecomunicações, energia, gás e água, com compras e reembolsos e com ginásios, como aumentos de mensalidade, cobranças indevidas, fidelizações, falhas de serviço ou cancelamentos recusados.",
-  },
-  {
-    titulo: "O que não é.",
-    texto: "Não é uma avaliação jurídica do seu caso nem uma previsão do resultado da reclamação.",
-  },
-  {
-    titulo: "As suas respostas.",
-    texto: "Ficam apenas no seu navegador: não as guardamos nem as associamos a si.",
-  },
-  {
-    titulo: "Se decidir avançar.",
-    texto: "Em “Tratar o meu caso” descreve o que aconteceu, cria a sua conta e escolhe a modalidade. Só paga no fim.",
-  },
-];
-
 export function SimuladorV2() {
+  const t = tSimulador[useIdioma()];
   return (
     <>
       {/* ===== Hero + simulador ===== */}
       <SectionV2 size="compact" className="grid items-start gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16 lg:py-20">
         <div className="lg:pt-6">
-          <Eyebrow>Grátis · sem conta · 4 perguntas</Eyebrow>
+          <Eyebrow>{t.eyebrow}</Eyebrow>
           <h1 className="mt-5 text-[clamp(32px,3.8vw,48px)] font-extrabold leading-[1.08] tracking-[-0.035em] text-[var(--v2-navy)]">
-            Veja se a DoLado pode ajudar com o seu caso
+            {t.titulo}
           </h1>
-          <p className={`${TEXTO} mt-5 text-[17.5px]`}>
-            Responda a 4 perguntas rápidas sobre a sua situação com uma empresa de telecomunicações, energia, gás ou água, com uma compra ou com um ginásio.
-            O resultado aparece logo, sem pedir e-mail nem criar conta.
-          </p>
+          <p className={`${TEXTO} mt-5 text-[17.5px]`}>{t.texto}</p>
         </div>
         <div className={`${CARTAO} p-6 sm:p-8`}>
           <Simulador />
@@ -227,9 +197,9 @@ export function SimuladorV2() {
 
       {/* ===== Como funciona ===== */}
       <SectionV2 tone="soft-blue">
-        <SectionHeader eyebrow="Como funciona" titulo="O que precisa de saber sobre o simulador." />
+        <SectionHeader eyebrow={t.comoFunciona.eyebrow} titulo={t.comoFunciona.titulo} />
         <ul className="mt-10 grid gap-8 md:grid-cols-2 md:gap-x-12">
-          {COMO_FUNCIONA.map((c) => (
+          {t.comoFunciona.itens.map((c) => (
             <li key={c.titulo}>
               <h3 className="text-[18px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{c.titulo}</h3>
               <p className="mt-2 text-[15.5px] leading-relaxed text-[var(--v2-muted)]">{c.texto}</p>

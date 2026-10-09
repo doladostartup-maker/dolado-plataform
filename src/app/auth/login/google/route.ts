@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { COOKIE_DESTINO_POS_LOGIN, VALIDADE_DESTINO_GOOGLE_S, destinoSeguro } from "@/lib/destinoAuth";
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
+import { COOKIE_IDIOMA, localizarHref, normalizarIdioma } from "@/i18n/config";
+import { traduzirMensagemConta } from "@/i18n/mensagens/conta";
 
 // Route Handler em vez de Server Action: redirect() para um domínio
 // externo (Google) dentro de uma Server Action não aplica de forma
@@ -17,9 +20,10 @@ export async function GET(request: Request) {
   });
 
   if (error || !data.url) {
-    return NextResponse.redirect(
-      `${siteUrl}/login?erro=${encodeURIComponent(error?.message ?? "Erro ao iniciar sessão com Google.")}`,
-    );
+    // Mensagem fixa (nunca o texto técnico da Supabase), no idioma deste browser.
+    const idioma = normalizarIdioma((await cookies()).get(COOKIE_IDIOMA)?.value);
+    const erro = traduzirMensagemConta(idioma, "Erro ao iniciar sessão com Google.");
+    return NextResponse.redirect(`${siteUrl}${localizarHref(idioma, `/login?erro=${encodeURIComponent(erro)}`)}`);
   }
 
   const resposta = NextResponse.redirect(data.url);

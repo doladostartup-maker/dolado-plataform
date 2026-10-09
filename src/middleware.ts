@@ -3,6 +3,16 @@ import { updateSession } from "@/lib/supabase/middleware";
 import { COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM, COOKIE_ORIGEM, dominioCookiesOrigem, estadoConsentimentoOrigem } from "@/lib/origemAquisicao";
 import { COOKIE_INDICACAO } from "@/lib/indicacoes/regras";
 import { cookiebotAceitouMarketing } from "@/lib/indicacoes/consentimento";
+import {
+  CABECALHO_IDIOMA,
+  COOKIE_IDIOMA,
+  SEGMENTO,
+  VALIDADE_COOKIE_IDIOMA_S,
+  caminhoNoIdioma,
+  dominioCookieIdioma,
+  ehCaminhoSemIdioma,
+  separarIdioma,
+} from "@/i18n/config";
 
 // Páginas públicas sem estado de sessão — poupam a chamada de rede à
 // Supabase feita em updateSession, que é o maior custo de latência por
@@ -130,6 +140,9 @@ function semOrigemSemConsentimento(request: NextRequest, resposta: NextResponse)
 async function encaminhar(request: NextRequest): Promise<NextResponse> {
   const host = request.headers.get("host")?.split(":")[0] ?? "";
   const { pathname, search } = request.nextUrl;
+  // Idioma: português sem prefixo, inglês em /en. Todas as regras abaixo
+  // (domínios, páginas públicas, sessão) olham para o caminho sem o prefixo.
+  const { idioma, caminho, prefixado } = separarIdioma(pathname);
 
   // cleverapps.io é só para testes internos (nunca deve ficar exposto em
   // links partilhados, emails, ou redirects para clientes reais).
@@ -140,16 +153,29 @@ async function encaminhar(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  if (host.startsWith("portal.") && ehLinkDeIndicacao(pathname)) {
+  // APIs, webhooks, /auth/*, backoffice e ficheiros nunca têm idioma: um
+  // prefixo /en é retirado (só em navegação) e o resto segue como sempre.
+  if (ehCaminhoSemIdioma(caminho)) {
+    if (prefixado && (request.method === "GET" || request.method === "HEAD")) {
+      return NextResponse.redirect(new URL(`${caminho}${search}`, request.url), 308);
+    }
+    return encaminharSemIdioma(request, host, pathname, search);
+  }
+
+  // O segmento interno do português nunca aparece no URL público.
+  if (!prefixado && (pathname === "/pt" || pathname.startsWith("/pt/"))) {
+    return NextResponse.redirect(new URL(`${pathname.slice(3) || "/"}${search}`, request.url), 308);
+  }
+
+  if (host.startsWith("portal.") && ehLinkDeIndicacao(caminho)) {
     return NextResponse.redirect(new URL(`${pathname}${search}`, "https://dolado.pt"), 308);
   }
 
   if (
     (host === "dolado.pt" || host === "www.dolado.pt") &&
-    !PAGINAS_SO_MARKETING.includes(pathname) &&
-    !ehVersaoDosTermos(pathname) &&
-    !ehLinkDeIndicacao(pathname) &&
-    !ehApiIndicacao(pathname)
+    !PAGINAS_SO_MARKETING.includes(caminho) &&
+    !ehVersaoDosTermos(caminho) &&
+    !ehLinkDeIndicacao(caminho)
   ) {
     return NextResponse.redirect(
       new URL(`${pathname}${search}`, "https://portal.dolado.pt"),
@@ -159,7 +185,7 @@ async function encaminhar(request: NextRequest): Promise<NextResponse> {
 
   // portal.dolado.pt é o subdomínio da aplicação — a raiz deve cair no
   // acesso (login/registo), não na landing de marketing servida em dolado.pt.
-  if (pathname === "/" && host.startsWith("portal.")) {
+  if (caminho === "/" && host.startsWith("portal.")) {
     // Ligação de confirmação de e-mail antiga (enviada para o "Site URL" do
     // projeto, sem /auth/callback): troca o código pela sessão em vez de o
     // perder no redirecionamento para /entrar.
@@ -169,17 +195,72 @@ async function encaminhar(request: NextRequest): Promise<NextResponse> {
     // Ligação de recuperação da palavra-passe com o redirectTo não autorizado
     // (a Supabase usa então o "Site URL"): segue para a página certa.
     if (request.nextUrl.searchParams.has("token_hash")) {
-      return NextResponse.redirect(new URL(`/redefinir-palavra-passe${search}`, process.env.NEXT_PUBLIC_SITE_URL ?? request.url));
+      return NextResponse.redirect(new URL(`${caminhoNoIdioma(idioma, "/redefinir-palavra-passe")}${search}`, process.env.NEXT_PUBLIC_SITE_URL ?? request.url));
     }
-    return NextResponse.redirect(new URL("/entrar", request.url));
+    return NextResponse.redirect(new URL(caminhoNoIdioma(idioma, "/entrar"), request.url));
   }
 
+  // Preferência guardada: quem escolheu inglês e abre uma página sem prefixo
+  // (ligação antiga, e-mail, regresso do Stripe ou do login) continua em
+  // inglês. Só navegação (GET/HEAD): Server Actions e formulários nunca são
+  // redirecionados. Sem cookie, o português é o idioma por omissão — o
+  // idioma do browser nunca é usado.
+  const preferido = request.cookies.get(COOKIE_IDIOMA)?.value;
+  if (!prefixado && preferido === "en-GB" && (request.method === "GET" || request.method === "HEAD")) {
+    return NextResponse.redirect(new URL(`${caminhoNoIdioma("en-GB", caminho)}${search}`, request.url), 307);
+  }
+
+  // Pedido para a página no segmento interno [idioma], com o idioma num
+  // cabeçalho (Server Actions e páginas dinâmicas leem-no em obterIdioma()).
+  const destino = request.nextUrl.clone();
+  destino.pathname = `/${SEGMENTO[idioma]}${caminho === "/" ? "" : caminho}`;
+  const criarResposta = (pedido: NextRequest) => {
+    const cabecalhos = new Headers(pedido.headers);
+    cabecalhos.set(CABECALHO_IDIOMA, idioma);
+    return prefixado
+      ? NextResponse.next({ request: { headers: cabecalhos } })
+      : NextResponse.rewrite(destino, { request: { headers: cabecalhos } });
+  };
+
+  const resposta =
+    ROTAS_SEM_REFRESH_DE_SESSAO.includes(caminho) ||
+    ehVersaoDosTermos(caminho) ||
+    ehPaginaDeRevisaoDoTexto(caminho) ||
+    ehLinkDeIndicacao(caminho)
+      ? criarResposta(request)
+      : await updateSession(request, criarResposta);
+
+  // Quem abre uma página em inglês fica com o inglês como preferência (para
+  // os regressos sem prefixo: login, Stripe, e-mails). Cookie funcional, só
+  // com o idioma.
+  if (prefixado && preferido !== idioma) {
+    const dominio = dominioCookieIdioma(host);
+    resposta.cookies.set(COOKIE_IDIOMA, idioma, {
+      path: "/",
+      maxAge: VALIDADE_COOKIE_IDIOMA_S,
+      sameSite: "lax",
+      secure: request.nextUrl.protocol === "https:",
+      ...(dominio ? { domain: dominio } : {}),
+    });
+  }
+  return resposta;
+}
+
+// Rotas sem idioma (APIs, webhooks, /auth/*, backoffice): as regras de
+// sempre, sem prefixo e sem reescrita.
+async function encaminharSemIdioma(request: NextRequest, host: string, pathname: string, search: string): Promise<NextResponse> {
   if (
-    ROTAS_SEM_REFRESH_DE_SESSAO.includes(pathname) ||
-    ehVersaoDosTermos(pathname) ||
-    ehPaginaDeRevisaoDoTexto(pathname) ||
-    ehLinkDeIndicacao(pathname)
+    (host === "dolado.pt" || host === "www.dolado.pt") &&
+    !PAGINAS_SO_MARKETING.includes(pathname) &&
+    !ehApiIndicacao(pathname)
   ) {
+    return NextResponse.redirect(
+      new URL(`${pathname}${search}`, "https://portal.dolado.pt"),
+      308,
+    );
+  }
+
+  if (ROTAS_SEM_REFRESH_DE_SESSAO.includes(pathname)) {
     return NextResponse.next();
   }
 

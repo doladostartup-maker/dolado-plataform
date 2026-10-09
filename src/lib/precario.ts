@@ -1,5 +1,5 @@
-import { LIMITE_CASOS_ACUMULADOS, type PlanoId } from "@/lib/planos";
-import { urlComprar, urlTratarCaso } from "@/lib/site";
+import { LIMITE_CASOS_ACUMULADOS, type PlanoId } from "./planos.ts";
+import { urlComprar, urlTratarCaso } from "./site.ts";
 
 // O que cada plano inclui, como é apresentado no preçário. Partilhado entre
 // o preçário da homepage (Precario.tsx) e a página V2 /precario, para os

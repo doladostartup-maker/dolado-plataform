@@ -97,7 +97,7 @@ describe("links de revisão do texto (contrato)", { skip: !ATIVO && "só em npm 
     const { createAdminClient } = await import("@/lib/supabase/admin");
     admin = createAdminClient();
     ({ consultarLink } = await import("@/lib/textoCasoServidor"));
-    ({ autorizarPorLink, pedirAlteracoesPorLink } = await import("@/app/texto/actions"));
+    ({ autorizarPorLink, pedirAlteracoesPorLink } = await import("@/app/[idioma]/texto/actions"));
     ({ gerarToken, hashToken, hashConteudo } = await import("@/lib/textoCasoTokens"));
   });
 

@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import Link from "@/i18n/Link";
+import { useCaminho, useTextos } from "@/i18n/cliente";
+import { tIndicacoes } from "@/i18n/mensagens/indicacoes";
 
 type Estado = "a_aguardar" | "a_associar" | "associada" | "sem_consentimento" | "erro";
 const EVENTOS_COOKIEBOT = ["CookiebotOnConsentReady", "CookiebotOnAccept", "CookiebotOnDecline"] as const;
@@ -10,6 +12,8 @@ const EVENTOS_COOKIEBOT = ["CookiebotOnConsentReady", "CookiebotOnAccept", "Cook
 export function RegistarIndicacaoComConsentimento({ codigo }: { codigo: string }) {
   const router = useRouter();
   const [estado, setEstado] = useState<Estado>("a_aguardar");
+  const t = useTextos(tIndicacoes).pagina;
+  const c = useCaminho();
   const aEnviar = useRef(false);
 
   const associar = useCallback(async () => {
@@ -25,12 +29,12 @@ export function RegistarIndicacaoComConsentimento({ codigo }: { codigo: string }
       });
       if (!resposta.ok) throw new Error("A visita não foi associada.");
       setEstado("associada");
-      router.push("/");
+      router.push(c("/"));
     } catch {
       aEnviar.current = false;
       setEstado("erro");
     }
-  }, [codigo, router]);
+  }, [codigo, router, c]);
 
   useEffect(() => {
     const verificar = () => {
@@ -51,21 +55,18 @@ export function RegistarIndicacaoComConsentimento({ codigo }: { codigo: string }
 
   return (
     <section className="mx-auto flex min-h-[55vh] w-full max-w-2xl flex-col justify-center gap-5 px-5 py-16 text-center">
-      <h1 className="text-3xl font-semibold text-[var(--v2-navy)]">Uma pessoa recomendou a DoLado</h1>
+      <h1 className="text-3xl font-semibold text-[var(--v2-navy)]">{t.h1}</h1>
       {estado === "a_aguardar" && (
         <p className="text-base leading-relaxed text-[var(--v2-navy)]">
-          A associar a indicação apenas se o Cookiebot confirmar que autorizou cookies de marketing. Pode alterar a
-          escolha no banner ou continuar sem associar esta visita.
+          {t.aguardar}
         </p>
       )}
-      {estado === "a_associar" && <p>A registar a indicação…</p>}
-      {estado === "associada" && <p>A indicação foi associada. A redirecionar…</p>}
+      {estado === "a_associar" && <p>{t.aAssociar}</p>}
+      {estado === "associada" && <p>{t.associada}</p>}
       {estado === "sem_consentimento" && (
         <>
           <p className="text-base leading-relaxed text-[var(--v2-navy)]">
-            Para associar esta visita à indicação, é necessário consentir em cookies de marketing no Cookiebot. Se não
-            consentir, pode continuar a usar a DoLado, mas esta visita não será associada e não dará acesso aos
-            descontos do programa.
+            {t.semConsentimento}
           </p>
           <button
             type="button"
@@ -75,18 +76,18 @@ export function RegistarIndicacaoComConsentimento({ codigo }: { codigo: string }
             }}
             className="mx-auto rounded-lg bg-[var(--v2-navy)] px-5 py-3 font-medium text-white"
           >
-            Rever escolhas de cookies
+            {t.reverCookies}
           </button>
         </>
       )}
       {estado === "erro" && (
         <p className="text-base leading-relaxed text-[var(--v2-navy)]">
-          Não foi possível associar esta visita. Pode continuar para o site sem essa associação.
+          {t.erro}
         </p>
       )}
       {estado !== "associada" && (
         <Link className="text-[var(--color-brand)] underline" href="/">
-          Continuar sem associar a indicação
+          {t.continuarSem}
         </Link>
       )}
     </section>

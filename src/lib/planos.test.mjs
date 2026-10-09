@@ -105,9 +105,9 @@ describe("checkout: o browser só escolhe o plano, o servidor escolhe o preço",
     const precarioV2 = fonte("../components/precario-v2/PrecarioV2.tsx");
     const destino = fonte("./precario.ts");
     assert.match(destino, /urlComprar\(plano\)/);
-    const comprar = fonte("../app/comprar/page.tsx");
+    const comprar = fonte("../app/[idioma]/comprar/page.tsx");
     assert.match(comprar, /ehPlanoId\(plano\)/);
-    const confirmacao = fonte("../app/comprar/CompraConfirmacao.tsx");
+    const confirmacao = fonte("../app/[idioma]/comprar/CompraConfirmacao.tsx");
     assert.match(confirmacao, /<ConfirmarCompra/);
     const modal = fonte("../components/compra/ConfirmarCompra.tsx");
     assert.match(modal, /name="plano" value=\{plano\}/);
@@ -118,13 +118,15 @@ describe("checkout: o browser só escolhe o plano, o servidor escolhe o preço",
 describe("preçário público", () => {
   // O preçário é a página /precario (PrecarioV2); o que cada plano inclui
   // vive em src/lib/precario.ts.
-  const conteudo = fonte("./precario.ts");
+  // Textos visíveis em src/i18n (pt-PT reexpõe planos.ts/precario.ts).
+  const conteudo = fonte("./precario.ts") + fonte("../i18n/mensagens/pt-PT/paginas.ts") + fonte("../i18n/mensagens/pt-PT/planos.ts");
   const precarioV2 = fonte("../components/precario-v2/PrecarioV2.tsx");
   const precario = precarioV2 + conteudo;
 
   test("mostra os três planos, IVA incluído e preços da configuração central", () => {
-    assert.match(precario, /formatarPreco\(plano\.precoCentimos\)/);
-    assert.match(precario, /\$\{IVA_INCLUIDO\}/);
+    assert.match(precario, /precoNoIdioma\(idioma, plano\.precoCentimos\)/);
+    assert.match(precario, /\$\{tp\.ivaIncluido\}/);
+    assert.match(precario, /ivaIncluido: IVA_INCLUIDO/);
     assert.equal(IVA_INCLUIDO, "IVA incluído");
     assert.equal(/\+ ?IVA/.test(precario), false);
   });
@@ -148,19 +150,19 @@ describe("preçário público", () => {
 
   test("/precario (V2): mesmos planos, preços e conteúdo, organizados por necessidade", () => {
     for (const id of ["avulso", "caso_protecao", "protecao"]) assert.match(precarioV2, new RegExp(`plano: "${id}"`));
-    assert.match(precarioV2, /CONTEUDO_PLANOS\[id\]/);
-    assert.match(precarioV2, /formatarPreco\(plano\.precoCentimos\)/);
-    assert.match(precarioV2, /\$\{IVA_INCLUIDO\}/);
+    assert.match(precarioV2, /tp\.conteudo\[id\]/);
+    assert.match(precarioV2, /precoNoIdioma\(idioma, plano\.precoCentimos\)/);
+    assert.match(precarioV2, /\$\{tp\.ivaIncluido\}/);
     assert.equal(/\+ ?IVA|\d+,\d{2} ?€/.test(precarioV2), false);
     for (const n of ["Tenho um problema agora.", "Tenho um problema e quero continuar protegido.", "Não tenho um problema agora, mas quero acompanhamento."]) {
-      assert.ok(precarioV2.includes(n), n);
+      assert.ok(conteudo.includes(n), n);
     }
   });
 
   test("a homepage leva ao preçário e mantém os links antigos /#precario", () => {
     const home = fonte("../components/homepage-v2/HomepageV2.tsx");
     assert.match(home, /href=\{ROTAS_V2\.precario\}/);
-    assert.match(home, /window\.location\.hash === "#precario"\) window\.location\.replace\(ROTAS_V2\.precario\)/);
+    assert.match(home, /window\.location\.hash === "#precario"\) window\.location\.replace\(c\(ROTAS_V2\.precario\)\)/);
     assert.match(home, /addEventListener\("hashchange", irParaPrecario\)/);
     assert.match(fonte("../components/marketing-v2/rotas.ts"), /precario: "\/precario"/);
     assert.equal(home.includes("Assinatura Mensal"), false);
@@ -302,7 +304,7 @@ describe("pagamento pendente não concede acesso", () => {
   });
 
   test("o cartão do plano no portal só lê props calculadas no servidor", () => {
-    const painel = fonte("../app/portal/_components/PortalDashboard.tsx");
+    const painel = fonte("../app/[idioma]/portal/_components/PortalDashboard.tsx");
     assert.equal(/searchParams|useSearchParams/.test(painel), false);
   });
 });

@@ -63,7 +63,7 @@ describe("etapas reais da leitura", () => {
 });
 
 describe("a leitura não corre dentro do pedido do upload (código)", () => {
-  const acoes = fonte("../../app/portal/contratos/actions.ts");
+  const acoes = fonte("../../app/[idioma]/portal/contratos/actions.ts");
   test("registarDocumento agenda a leitura com after() e não chama a Claude API", () => {
     const corpo = acoes.slice(acoes.indexOf("export async function registarDocumento"), acoes.indexOf("async function documentoDoCliente"));
     assert.match(corpo, /after\(\(\) => processarDocumentoEmSegundoPlano\(doc\.id\)\)/);

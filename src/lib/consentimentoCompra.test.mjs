@@ -211,15 +211,15 @@ describe("pontos de entrada usam a confirmação", () => {
   const fonte = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
   const pontos = {
     "5. landing (preçário → portal /comprar)": [
-      "../app/comprar/page.tsx",
+      "../app/[idioma]/comprar/page.tsx",
       /<BotaoComprar[\s\S]*fluxo="publico"[\s\S]*origem="landing"[\s\S]*<CompraConfirmacao[\s\S]*fluxo="adesao"/,
     ],
-    "6. portal (painel)": ["../app/portal/_components/PortalDashboard.tsx", /<ConfirmarCompra[\s\S]*fluxo="adesao"[\s\S]*origem="portal"/],
+    "6. portal (painel)": ["../app/[idioma]/portal/_components/PortalDashboard.tsx", /<ConfirmarCompra[\s\S]*fluxo="adesao"[\s\S]*origem="portal"/],
     "7. pedido de caso (modalidade)": [
-      "../app/tratar-caso/modalidade/page.tsx",
+      "../app/[idioma]/tratar-caso/modalidade/page.tsx",
       /<BotaoComprar[\s\S]*fluxo="pedido_caso"[\s\S]*origem="tratar_caso"[\s\S]*pedidoId=\{pedido\.id\}/,
     ],
-    "tentar pagar novamente": ["../app/portal/page.tsx", /origem="repetir_pagamento"/],
+    "tentar pagar novamente": ["../app/[idioma]/portal/page.tsx", /origem="repetir_pagamento"/],
   };
   for (const [nome, [ficheiro, padrao]] of Object.entries(pontos)) {
     test(`${nome}: abre a confirmação e não chama ações de Checkout antigas`, () => {
@@ -237,7 +237,7 @@ describe("pontos de entrada usam a confirmação", () => {
       assert.equal(/ConfirmarCompra|confirmarCompra|BotaoComprar|stripe/i.test(f), false);
     }
     assert.match(precarioV2, /destinoPlano\(plano, "\/precario"\)/);
-    const confirmacao = fonte("../app/comprar/CompraConfirmacao.tsx");
+    const confirmacao = fonte("../app/[idioma]/comprar/CompraConfirmacao.tsx");
     assert.match(confirmacao, /<ConfirmarCompra[\s\S]*origem="landing"/);
   });
 

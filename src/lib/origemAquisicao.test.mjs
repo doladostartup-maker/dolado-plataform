@@ -202,7 +202,8 @@ describe("ligações e consentimento (o ?ref= nunca dá acesso)", () => {
     const s = fonte("./origemAquisicaoServidor.ts");
     assert.match(m, /request\.cookies\.has\(COOKIE_ORIGEM\)[\s\S]*estadoConsentimentoOrigem\([\s\S]*resposta\.cookies\.delete\(\{ name: COOKIE_ORIGEM/);
     assert.match(m, /request\.cookies\.has\(COOKIE_INDICACAO\)[\s\S]*cookiebotAceitouMarketing/);
-    assert.doesNotMatch(m, /cookies\.set\(/);
+    // O único cookie que o middleware cria é o do idioma (preferência de apresentação).
+    assert.deepEqual([...m.matchAll(/cookies\.set\(\s*(\w+)/g)].map((x) => x[1]), ["COOKIE_IDIOMA"]);
     assert.match(c, /Cookiebot\?\.hasResponse === true[\s\S]*consent\?\.statistics === true/);
     assert.match(c, /decidirCookiesOrigem\(/);
     assert.match(fonte("../components/AnalyticsScripts.tsx"), /origemAtiva=\{origemAquisicaoAtiva\(\)\}/);
@@ -214,14 +215,15 @@ describe("ligações e consentimento (o ?ref= nunca dá acesso)", () => {
   test("a origem não é enviada à Stripe (única chamada a sessions.create)", () => {
     const s = fonte("../app/actions/stripe.ts");
     assert.equal(s.match(/checkout\.sessions\.create\(/g)?.length, 1);
-    assert.match(s, /checkout\.sessions\.create\(parametros\(metadata\)\)/);
+    // Parâmetros do fluxo, só com o idioma de apresentação (comIdioma: locale e URLs de regresso).
+    assert.match(s, /checkout\.sessions\.create\(comIdioma\(parametros\(metadata\), await obterIdioma\(\)\)\)/);
     assert.doesNotMatch(s, /acquisition_source|origemParaCheckout|comOrigemNaMetadata/);
     // Nem a criação da conta lê a origem da metadata de uma sessão da Stripe.
-    assert.doesNotMatch(fonte("../app/criar-conta/actions.ts"), /origemDaMetadata|acquisition_source/);
+    assert.doesNotMatch(fonte("../app/[idioma]/criar-conta/actions.ts"), /origemDaMetadata|acquisition_source/);
   });
 
   test("a escolha de cookies é aplicada à conta na criação, no callback, no código, no início de sessão e no Checkout", () => {
-    for (const f of ["../app/auth/callback/route.ts", "../app/registo/actions.ts", "../app/tratar-caso/actions.ts", "../app/criar-conta/actions.ts", "../app/login/actions.ts", "../app/actions/stripe.ts"]) {
+    for (const f of ["../app/auth/callback/route.ts", "../app/[idioma]/registo/actions.ts", "../app/[idioma]/tratar-caso/actions.ts", "../app/[idioma]/criar-conta/actions.ts", "../app/[idioma]/login/actions.ts", "../app/actions/stripe.ts"]) {
       assert.match(fonte(f), /registarOrigemDaConta\(/, f);
     }
   });

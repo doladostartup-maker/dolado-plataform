@@ -1,4 +1,7 @@
-import Link from "next/link";
+import Link from "@/i18n/Link";
+import { rico } from "@/i18n/Rico";
+import { tInstitucional } from "@/i18n/mensagens/institucional";
+import { textos } from "@/i18n/servidor";
 import type { ReactNode } from "react";
 import { CTASection } from "@/components/marketing-v2/CTASection";
 import { FAQAccordionV2 } from "@/components/marketing-v2/FAQAccordionV2";
@@ -30,190 +33,67 @@ import { CONTACTO_EMAIL } from "@/lib/site";
 const CONTACTO_EMPRESAS = `${ROTAS_V2.contacto}#formulario`;
 const LINK = "font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline";
 
-function AcoesContacto({ secundaria }: { secundaria?: ReactNode }) {
+function AcoesContacto({ secundaria, falar }: { secundaria?: ReactNode; falar: string }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row">
       <Link prefetch={false} href={CONTACTO_EMPRESAS} className={BOTAO_PRIMARIO}>
-        Falar com a DoLado <IconeSeta tamanho={17} />
+        {falar} <IconeSeta tamanho={17} />
       </Link>
       {secundaria}
     </div>
   );
 }
 
-const PUBLICOS: { icone: ReactNode; titulo: string; texto: string; pontos: string[] }[] = [
-  {
-    icone: <IconePessoas tamanho={28} strokeWidth={1.6} />,
-    titulo: "Um benefício para colaboradores",
-    texto:
-      "Quando surge um problema com uma fatura, um serviço ou uma compra, o colaborador tem a quem recorrer. A DoLado ajuda a organizar a situação, prepara a reclamação e acompanha os próximos passos — sem que a pessoa tenha de descobrir tudo sozinha.",
-    pontos: [
-      "Apoio prático em problemas de consumo do dia a dia",
-      "Cada pessoa trata do seu caso diretamente com a DoLado",
-      "Menos tempo e preocupação com processos difíceis de perceber",
-    ],
-  },
-  {
-    icone: <IconeCirculoVisto tamanho={28} strokeWidth={1.6} />,
-    titulo: "Uma oferta para os seus clientes",
-    texto:
-      "Acrescente à relação com os seus clientes um apoio útil para quando algo corre mal com outra empresa. A DoLado pode ser apresentada como um recurso adicional, com comunicação adequada ao seu público.",
-    pontos: [
-      "Um serviço concreto, aplicado a situações reais",
-      "Valor acrescentado na relação que já tem com os clientes",
-      "Forma de acesso definida em conjunto",
-    ],
-  },
+// Textos: src/i18n/mensagens/*/institucional.ts ("empresas").
+const ICONES_PUBLICOS: ReactNode[] = [
+  <IconePessoas key="p" tamanho={28} strokeWidth={1.6} />,
+  <IconeCirculoVisto key="c" tamanho={28} strokeWidth={1.6} />,
 ];
-
-const PASSOS: Passo[] = [
-  {
-    titulo: "A pessoa explica o que aconteceu",
-    texto: "Uma cobrança, um cancelamento, um reembolso que não chega ou uma reclamação que ficou sem resposta.",
-    rotulo: { texto: "A pessoa", doCliente: true },
-  },
-  {
-    titulo: "A DoLado organiza a situação",
-    texto: "Percebemos a informação relevante e o que pode ser pedido, com base nos factos e nos documentos do caso.",
-    rotulo: { texto: "A DoLado", doCliente: false },
-  },
-  {
-    titulo: "A reclamação é preparada e revista",
-    texto: "A DoLado prepara o texto da reclamação. A pessoa revê-o e só depois de o autorizar é que ele segue.",
-    rotulo: { texto: "A pessoa decide", doCliente: true },
-  },
-  {
-    titulo: "Os próximos passos são acompanhados",
-    texto:
-      "A DoLado acompanha a resposta da empresa reclamada e mantém a pessoa informada sobre o estado do caso e as opções seguintes.",
-    rotulo: { texto: "A DoLado", doCliente: false },
-    final: true,
-  },
+const DO_CLIENTE = [true, false, true, false];
+const ICONES_EXEMPLOS: ReactNode[] = [
+  <IconeFatura key="f" tamanho={26} strokeWidth={1.6} />,
+  <IconeDocumentoVisto key="d" tamanho={26} strokeWidth={1.6} />,
+  <IconeEtiqueta key="e" tamanho={26} strokeWidth={1.6} />,
+  <IconeMensagem key="m" tamanho={26} strokeWidth={1.6} />,
 ];
+const IDS_PERGUNTAS = ["empresas-publico", "empresas-apoio", "empresas-casos", "empresas-condicoes", "empresas-resultado"];
 
-const EXEMPLOS: { icone: ReactNode; titulo: string; texto: string; contexto: string }[] = [
-  {
-    icone: <IconeFatura tamanho={26} strokeWidth={1.6} />,
-    titulo: "Cobranças inesperadas",
-    texto: "Uma fatura com um valor que não se percebe ou um serviço cobrado que não foi pedido.",
-    contexto: "Telecomunicações · energia · água",
-  },
-  {
-    icone: <IconeDocumentoVisto tamanho={26} strokeWidth={1.6} />,
-    titulo: "Cancelamentos",
-    texto: "Um pedido de cancelamento que não avança ou encargos de saída que levantam dúvidas.",
-    contexto: "Contratos de serviços · subscrições",
-  },
-  {
-    icone: <IconeEtiqueta tamanho={26} strokeWidth={1.6} />,
-    titulo: "Reembolsos",
-    texto: "Uma devolução aceite, mas um reembolso que continua por chegar.",
-    contexto: "Compras · serviços",
-  },
-  {
-    icone: <IconeMensagem tamanho={26} strokeWidth={1.6} />,
-    titulo: "Reclamações sem resposta",
-    texto: "A pessoa já tentou resolver diretamente com a empresa e não teve resposta ou solução.",
-    contexto: "Preparação · acompanhamento",
-  },
-];
-
-const FORMATOS: { titulo: string; texto: string }[] = [
-  {
-    titulo: "Para colaboradores",
-    texto: "Dar à equipa uma forma simples de conhecer e aceder ao apoio da DoLado.",
-  },
-  {
-    titulo: "Para clientes",
-    texto: "Apresentar a DoLado como um recurso adicional na relação com os seus clientes.",
-  },
-  {
-    titulo: "Para os dois públicos",
-    texto: "Combinar colaboradores e clientes, com a comunicação adequada a cada grupo.",
-  },
-  {
-    titulo: "Uma primeira experiência delimitada",
-    texto: "Começar com um âmbito definido, aprender com a utilização e decidir os passos seguintes.",
-  },
-];
-
-const CLAREZA: { titulo: string; texto: string }[] = [
-  {
-    titulo: "O caso começa com a pessoa",
-    texto: "É ela que explica a situação e decide se quer avançar.",
-  },
-  {
-    titulo: "A reclamação é revista antes do envio",
-    texto: "A pessoa vê o texto preparado pela DoLado e só autoriza o envio se concordar com ele.",
-  },
-  {
-    titulo: "O resultado depende da entidade reclamada",
-    texto: "A DoLado prepara e acompanha o processo, mas não promete uma resposta nem um resultado específico.",
-  },
-];
-
-const PERGUNTAS: Pergunta[] = [
-  {
-    id: "empresas-publico",
-    pergunta: "A quem pode a empresa disponibilizar a DoLado?",
-    resposta:
-      "A colaboradores, a clientes ou aos dois públicos. O público, a forma de acesso e a comunicação são definidos em conjunto, de acordo com o objetivo da sua empresa.",
-  },
-  {
-    id: "empresas-apoio",
-    pergunta: "Que tipo de apoio presta a DoLado?",
-    resposta:
-      "A DoLado ajuda a resolver problemas com empresas — por exemplo, de telecomunicações, energia ou água: organiza a situação, prepara a reclamação, que a pessoa revê antes do envio, e acompanha os próximos passos. Com a Proteção, a DoLado acompanha também as datas e as faturas indicadas pela pessoa, para ajudar a detetar um problema a tempo.",
-  },
-  {
-    id: "empresas-casos",
-    pergunta: "A empresa tem acesso aos casos individuais?",
-    resposta:
-      "Cada caso é tratado diretamente entre a pessoa e a DoLado. A solução não pressupõe que a empresa aceda aos casos individuais de quem utiliza a DoLado; qualquer informação a partilhar no âmbito de uma parceria é definida e explicada com clareza antes de começar.",
-  },
-  {
-    id: "empresas-condicoes",
-    pergunta: "Quais são os preços e as condições para empresas?",
-    resposta:
-      "Dependem do público, do formato e da utilização pretendida, e são definidos numa conversa com a DoLado. Fale connosco para explorarmos o que faz sentido para a sua empresa.",
-  },
-  {
-    id: "empresas-resultado",
-    pergunta: "A DoLado garante que a reclamação é resolvida?",
-    resposta:
-      "Não. A DoLado prepara e acompanha o processo, mas a resposta e o resultado dependem da entidade reclamada.",
-  },
-];
-
-export function EmpresasV2() {
+export async function EmpresasV2() {
+  const t = (await textos(tInstitucional)).empresas;
+  const PUBLICOS = t.publicos.map((p, i) => ({ ...p, icone: ICONES_PUBLICOS[i] }));
+  const PASSOS: Passo[] = t.passos.map((p, i) => ({
+    titulo: p.titulo,
+    texto: p.texto,
+    rotulo: { texto: p.rotulo, doCliente: DO_CLIENTE[i] },
+    final: i === t.passos.length - 1,
+  }));
+  const EXEMPLOS = t.exemplos.map((e, i) => ({ ...e, icone: ICONES_EXEMPLOS[i] }));
+  const FORMATOS = t.formatos;
+  const CLAREZA = t.clareza;
+  const PERGUNTAS: Pergunta[] = t.perguntas.map((p, i) => ({ id: IDS_PERGUNTAS[i], ...p }));
   return (
     <>
       {/* ===== Hero ===== */}
       <SectionV2 size="compact" recortar className="grid items-center gap-12 lg:grid-cols-[1.35fr_1fr] lg:gap-12 lg:py-20">
         <div>
-          <Eyebrow>DoLado para empresas</Eyebrow>
+          <Eyebrow>{t.eyebrow}</Eyebrow>
           <h1 className="mt-5 text-[clamp(32px,3.6vw,48px)] font-extrabold leading-[1.08] tracking-[-0.035em] text-[var(--v2-navy)]">
-            Tem uma empresa?
+            {t.titulo1}
             <br />
-            <span className="font-semibold">Fale com a DoLado sobre uma solução para colaboradores ou clientes.</span>
+            <span className="font-semibold">{t.titulo2}</span>
           </h1>
-          <p className={`${TEXTO} mt-6 max-w-[560px] text-[17.5px]`}>
-            Quando alguém tem um problema com uma empresa — uma cobrança, um cancelamento, um reembolso — a DoLado
-            ajuda a organizar a situação, prepara a reclamação e acompanha os próximos passos. A sua empresa pode
-            levar esse apoio a quem conta consigo.
-          </p>
+          <p className={`${TEXTO} mt-6 max-w-[560px] text-[17.5px]`}>{t.texto}</p>
           <div className="mt-8">
             <AcoesContacto
+              falar={t.falar}
               secundaria={
                 <a href="#como-funciona" className={BOTAO_CONTORNO}>
-                  Ver como funciona
+                  {t.verComoFunciona}
                 </a>
               }
             />
           </div>
-          <p className="mt-6 text-[14px] text-[var(--v2-muted)]">
-            Formatos e condições definidos numa conversa, de acordo com o público e o objetivo da sua empresa.
-          </p>
+          <p className="mt-6 text-[14px] text-[var(--v2-muted)]">{t.formatosNota}</p>
         </div>
         <VisualHero />
       </SectionV2>
@@ -221,9 +101,9 @@ export function EmpresasV2() {
       {/* ===== Proposta de valor ===== */}
       <SectionV2 id="solucao" tone="soft-blue">
         <SectionHeader
-          eyebrow="Uma solução, dois públicos"
-          titulo="Apoio aplicado a problemas concretos."
-          texto="Não é uma lista de funcionalidades: é um serviço que acompanha a pessoa desde o problema até aos próximos passos."
+          eyebrow={t.solucao.eyebrow}
+          titulo={t.solucao.titulo}
+          texto={t.solucao.texto}
         />
         <div className="mt-10 grid gap-6 md:grid-cols-2">
           {PUBLICOS.map((p) => (
@@ -251,9 +131,9 @@ export function EmpresasV2() {
       {/* ===== Como funciona ===== */}
       <SectionV2 id="como-funciona">
         <SectionHeader
-          eyebrow="Como funciona"
-          titulo="Do problema ao próximo passo."
-          texto="A experiência começa com aquilo que aconteceu à pessoa. A DoLado transforma a situação em apoio prático."
+          eyebrow={t.comoFunciona.eyebrow}
+          titulo={t.comoFunciona.titulo}
+          texto={t.comoFunciona.texto}
         />
         <div className="mt-12">
           <StepsTimeline passos={PASSOS} />
@@ -263,9 +143,9 @@ export function EmpresasV2() {
       {/* ===== Exemplos de utilização ===== */}
       <SectionV2 tone="soft-green">
         <SectionHeader
-          eyebrow="Exemplos de utilização"
-          titulo="Situações em que a ajuda faz diferença."
-          texto="Problemas de consumo comuns, que levam tempo e paciência a quem os tenta resolver sozinho."
+          eyebrow={t.exemplosCabecalho.eyebrow}
+          titulo={t.exemplosCabecalho.titulo}
+          texto={t.exemplosCabecalho.texto}
           sobreVerde
         />
         <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -285,9 +165,9 @@ export function EmpresasV2() {
       {/* ===== Formatos ===== */}
       <SectionV2 id="formatos" className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
         <SectionHeader
-          eyebrow="Formatos a explorar"
-          titulo="Uma conversa para encontrar o formato certo."
-          texto="O público, a forma de acesso e as condições definem-se em conjunto, de acordo com o objetivo da sua empresa. Estes são pontos de partida, não pacotes fechados."
+          eyebrow={t.formatosCabecalho.eyebrow}
+          titulo={t.formatosCabecalho.titulo}
+          texto={t.formatosCabecalho.texto}
         />
         <ol className="border-t border-[var(--v2-line)]">
           {FORMATOS.map((f, i) => (
@@ -307,9 +187,9 @@ export function EmpresasV2() {
       {/* ===== Confiança e clareza ===== */}
       <SectionV2 tone="soft-blue" className="grid gap-10 lg:grid-cols-2 lg:gap-16">
         <SectionHeader
-          eyebrow="Confiança e clareza"
-          titulo="A pessoa mantém o controlo do seu caso."
-          texto="A DoLado prepara e acompanha a situação. A pessoa revê a reclamação antes do envio e decide como quer avançar."
+          eyebrow={t.clarezaCabecalho.eyebrow}
+          titulo={t.clarezaCabecalho.titulo}
+          texto={t.clarezaCabecalho.texto}
         />
         <ul className="space-y-6">
           {CLAREZA.map((c) => (
@@ -329,30 +209,27 @@ export function EmpresasV2() {
       {/* ===== Perguntas frequentes ===== */}
       <SectionV2 id="perguntas" className="grid gap-10 lg:grid-cols-[0.7fr_1.3fr] lg:gap-16">
         <SectionHeader
-          eyebrow="Perguntas frequentes"
-          titulo="Antes de começarmos."
-          texto="Uma primeira conversa ajuda a esclarecer o que faz sentido para a sua empresa."
+          eyebrow={t.perguntasCabecalho.eyebrow}
+          titulo={t.perguntasCabecalho.titulo}
+          texto={t.perguntasCabecalho.texto}
         />
         <FAQAccordionV2 perguntas={PERGUNTAS} />
       </SectionV2>
 
       {/* ===== CTA final ===== */}
       <CTASection
-        eyebrow="Vamos conversar"
-        titulo="Tem uma empresa? Fale com a DoLado."
-        texto={
-          <>
-            Conte-nos o que tem em mente — colaboradores, clientes ou ambos — e exploramos o próximo passo consigo.
-            Também pode escrever para{" "}
+        eyebrow={t.ctaFinal.eyebrow}
+        titulo={t.ctaFinal.titulo}
+        texto={rico(t.ctaFinal.texto, {
+          email: () => (
             <a href={`mailto:${CONTACTO_EMAIL}`} className={LINK}>
               {CONTACTO_EMAIL}
             </a>
-            .
-          </>
-        }
+          ),
+        })}
         acao={
           <Link prefetch={false} href={CONTACTO_EMPRESAS} className={`${BOTAO_PRIMARIO} w-full md:w-auto`}>
-            Falar com a DoLado <IconeSeta tamanho={17} />
+            {t.falar} <IconeSeta tamanho={17} />
           </Link>
         }
       />
