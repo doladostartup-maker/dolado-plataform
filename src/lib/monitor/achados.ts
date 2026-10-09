@@ -16,3 +16,13 @@ export const ROTULO_ACHADO: Record<string, string> = {
   fidelizacao_diferente: "Fim da fidelização diferente do contrato",
   diferenca_nao_explicada: "Diferença não explicada",
 };
+
+/**
+ * Situações que ainda esperam uma decisão da DoLado (contadores do backoffice
+ * e lista "Só por decidir"). Comunicadas, descartadas e obsoletas já não contam.
+ */
+export const ESTADOS_ACHADO_POR_DECIDIR = ["detetado", "em_revisao", "confirmado"] as const;
+
+export function achadoPorDecidir(estado: string): boolean {
+  return (ESTADOS_ACHADO_POR_DECIDIR as readonly string[]).includes(estado);
+}

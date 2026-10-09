@@ -7,11 +7,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 import { enviarEmailBrevo } from "@/lib/email/brevo";
 import { ASSUNTO_ACHADO_MONITOR, montarHtmlAchadoMonitor } from "@/lib/email/achadoMonitor";
+import { ESTADOS_ACHADO_POR_DECIDIR } from "@/lib/monitor/achados";
 
 // Revisão humana dos achados do Monitor (F2/F4). Nada chega ao cliente sem
 // uma decisão aqui; cada decisão fica em achados_revisoes (só inserção).
 
-const POR_DECIDIR = ["detetado", "em_revisao", "confirmado"];
+const POR_DECIDIR: readonly string[] = ESTADOS_ACHADO_POR_DECIDIR;
 const TAMANHO_MAXIMO_TEXTO = 1500;
 
 function voltar(id: string, params: Record<string, string>): never {
