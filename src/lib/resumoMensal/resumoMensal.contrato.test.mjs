@@ -195,7 +195,7 @@ describe("resumo mensal (Supabase real)", { skip: !ATIVO && "só com npm run tes
     assert.equal(linhas.length, 2);
     for (const l of linhas) {
       assert.equal(l.estado, "enviado");
-      assert.equal(l.modelo_versao, "resumo_v1");
+      assert.equal(l.modelo_versao, "resumo_v2");
       assert.ok(!JSON.stringify(l.conteudo).includes("@"), "a fotografia não guarda e-mails");
     }
 

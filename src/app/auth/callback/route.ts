@@ -6,6 +6,7 @@ import { haPedidoPorPagarNoBrowser } from "@/lib/pedidoCasoServidor";
 import { createClient } from "@/lib/supabase/server";
 import { atribuirIndicacaoDoBrowser } from "@/lib/indicacoes/servidor";
 import { registarOrigemDaConta } from "@/lib/origemAquisicaoServidor";
+import { gravarIdiomaDeContaNova } from "@/lib/idiomaContaServidor";
 import { COOKIE_IDIOMA, localizarHref, normalizarIdioma } from "@/i18n/config";
 import { traduzirMensagemConta } from "@/i18n/mensagens/conta";
 
@@ -51,6 +52,10 @@ export async function GET(request: Request) {
       await atribuirIndicacaoDoBrowser(data.user.id).catch(() => undefined);
       // Origem de aquisição (?ref=): só para contas criadas depois da visita.
       await registarOrigemDaConta(data.user.id);
+      // Conta nova pelo Google: guarda o idioma do percurso em que foi
+      // criada (idioma dos e-mails). Contas antigas e contas por e-mail (já
+      // gravado no signUp) não mudam.
+      await gravarIdiomaDeContaNova(data.user, idioma);
       // Destino: ?next= explícito → destino guardado ao criar a conta ou ao
       // sair para o Google (ex.: continuar a compra em /comprar) → pedido de
       // caso por pagar neste browser → /portal/casos (ou backoffice, admin).

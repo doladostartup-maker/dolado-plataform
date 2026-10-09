@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { montarHtmlBoasVindas } from "@/lib/email/boas-vindas";
+import { assuntoBoasVindas, montarHtmlBoasVindas } from "@/lib/email/boas-vindas";
+import { idiomaDaConta } from "@/lib/idiomaContaServidor";
 import { CONTACTO_EMAIL } from "@/lib/site";
 
 export async function POST(
@@ -31,7 +32,7 @@ export async function POST(
 
   const { data: caso, error: erroCaso } = await supabase
     .from("casos")
-    .select("nome, email")
+    .select("nome, email, utilizador_id")
     .eq("id", id)
     .single();
 
@@ -46,6 +47,8 @@ export async function POST(
     );
   }
 
+  // Idioma do cliente (só apresentação; sem idioma guardado → português).
+  const idioma = await idiomaDaConta(caso.utilizador_id as string | null);
   const resposta = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
@@ -56,8 +59,8 @@ export async function POST(
       sender: { name: "Thiago - DoLado", email: process.env.BREVO_SENDER_EMAIL },
       replyTo: { email: CONTACTO_EMAIL, name: "DoLado" },
       to: [{ email: caso.email, name: caso.nome }],
-      subject: "Recebemos a sua submissão — Vamos tratar pessoalmente ✓",
-      htmlContent: montarHtmlBoasVindas(caso.nome),
+      subject: assuntoBoasVindas(idioma),
+      htmlContent: montarHtmlBoasVindas(caso.nome, idioma),
     }),
   });
 

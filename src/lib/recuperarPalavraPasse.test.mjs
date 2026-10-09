@@ -130,16 +130,20 @@ describe("integração com a autenticação existente", () => {
     assert.equal(ROTA_RECUPERAR, "/recuperar-palavra-passe");
   });
   test("template do e-mail: ligação com token_hash para a página da DoLado, em português europeu", () => {
-    const html = fonte("../../supabase/templates/recuperacao.html");
+    // Ramo português (o template tem também o ramo en-GB, testado em templatesAuth.test.mjs).
+    const html = fonte("../../supabase/templates/recuperacao.html").replace(
+      /\{\{ if eq \(print \.Data\.idioma\) "en-GB" \}\}[\s\S]*?\{\{ else \}\}([\s\S]*?)\{\{ end \}\}/g,
+      "$1",
+    );
     assert.match(html, /href="\{\{ \.RedirectTo \}\}\?token_hash=\{\{ \.TokenHash \}\}"/);
     assert.doesNotMatch(html, /ConfirmationURL/);
     assert.match(html, /a sua conta na DoLado|da sua conta na DoLado/);
     assert.match(html, /contacto@dolado\.pt/);
     assert.doesNotMatch(html, /\b(você|seu email|email)\b/i);
     const config = fonte("../../supabase/config.toml");
-    assert.match(config, /\[auth\.email\.template\.recovery\]\nsubject = "Defina uma nova palavra-passe na DoLado"\ncontent_path = "\.\/supabase\/templates\/recuperacao\.html"/);
+    assert.match(config, /\[auth\.email\.template\.recovery\]\nsubject = '\{\{ if eq \(print \.Data\.idioma\) "en-GB" \}\}Set a new password for DoLado\{\{ else \}\}Defina uma nova palavra-passe na DoLado\{\{ end \}\}'\ncontent_path = "\.\/supabase\/templates\/recuperacao\.html"/);
   });
-  test("o redirectTo enviado à Supabase é a página de redefinição", () => {
-    assert.match(fonte("../app/[idioma]/recuperar-palavra-passe/actions.ts"), /redirectTo: `\$\{process\.env\.NEXT_PUBLIC_SITE_URL\}\$\{ROTA_REDEFINIR\}`/);
+  test("o redirectTo enviado à Supabase é a página de redefinição (no idioma do pedido: /en em inglês)", () => {
+    assert.match(fonte("../app/[idioma]/recuperar-palavra-passe/actions.ts"), /redirectTo: `\$\{process\.env\.NEXT_PUBLIC_SITE_URL\}\$\{await caminho\(ROTA_REDEFINIR\)\}`/);
   });
 });

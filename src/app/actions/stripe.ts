@@ -26,6 +26,7 @@ import {
 } from "@/lib/consentimentoCompra";
 import { PRECO_AVULSO_ID, PRECO_CASO_EXTRA_ID, casoExtraConfigurado, planoDoPreco, precoDoPlano } from "@/lib/stripe/planos";
 import { parametrosCheckoutCasoExtra } from "@/lib/stripe/casoExtra";
+import { mensagemCheckout, type ProdutoCheckout } from "@/lib/stripe/textoCheckout";
 import { idDe } from "@/lib/stripe/webhook";
 import { direitoCasoExtra, subscricaoStripeConfirmaCasoExtra } from "@/lib/casoExtra";
 import { DIAS_VALIDADE_PEDIDO, pedidoPorPagar } from "@/lib/pedidoCaso";
@@ -82,12 +83,24 @@ function urlsDoPedido(ctx: ContextoPedido) {
  */
 function comIdioma(p: Stripe.Checkout.SessionCreateParams, idioma: Idioma): Stripe.Checkout.SessionCreateParams {
   if (idioma === "pt-PT") return p;
+  // Nome inglês do produto, por cima do botão de pagar (o produto no Stripe
+  // só tem o nome português — ver src/lib/stripe/textoCheckout.ts).
+  const mensagem = mensagemCheckout(produtoDoCheckout(p.line_items?.[0]?.price), idioma);
   return {
     ...p,
+    ...(mensagem && !p.custom_text ? { custom_text: { submit: { message: mensagem } } } : {}),
     locale: LOCALE_STRIPE[idioma],
     ...(p.success_url ? { success_url: localizarHref(idioma, p.success_url) } : {}),
     ...(p.cancel_url ? { cancel_url: localizarHref(idioma, p.cancel_url) } : {}),
   };
+}
+
+/** Produto de um Price ID desta conta Stripe (null = desconhecido: sem texto). */
+function produtoDoCheckout(priceId: string | undefined): ProdutoCheckout | null {
+  if (!priceId) return null;
+  if (priceId === PRECO_AVULSO_ID) return "avulso";
+  if (priceId === PRECO_CASO_EXTRA_ID) return "caso_extra";
+  return planoDoPreco(priceId);
 }
 
 function dependenciasCheckout(

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IDIOMAS, caminhoNoIdioma, type Idioma } from "./config";
+import { IDIOMAS, caminhoNoIdioma, type Idioma } from "./config.ts";
 
 // Metadata das páginas públicas indexáveis: canonical no próprio idioma,
 // hreflang pt-PT / en-GB / x-default (português, o idioma por omissão) e

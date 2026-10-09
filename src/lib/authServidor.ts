@@ -17,6 +17,8 @@ import {
   destinoSeguro,
   escolherDestino,
 } from "./destinoAuth.ts";
+import { CHAVE_IDIOMA_CONTA } from "./idiomaConta.ts";
+import type { Idioma } from "../i18n/config.ts";
 
 export function urlCallbackAuth() {
   return `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`;
@@ -38,13 +40,17 @@ export async function guardarDestinoPosLogin(destino: string, validadeS = VALIDA
  * `mostrarCodigo`: só no fluxo que tem um campo para o código ("Tratar o
  * meu caso"). O template do e-mail (supabase/templates/confirmacao.html) só
  * mostra o código quando a conta tem `mostrar_codigo` nos metadados.
+ * `idioma`: idioma do percurso em que a conta é criada (/ ou /en) — fica
+ * em user_metadata.idioma e decide o idioma dos e-mails (só apresentação;
+ * ver idiomaConta.ts). Os templates da Supabase leem-no em `.Data.idioma`.
  */
-export function dadosContaNova(dados: { nome?: string | null; mostrarCodigo?: boolean }) {
+export function dadosContaNova(dados: { nome?: string | null; mostrarCodigo?: boolean; idioma: Idioma }) {
   return {
     emailRedirectTo: urlCallbackAuth(),
     data: {
       ...(dados.nome ? { nome: dados.nome } : {}),
       ...(dados.mostrarCodigo ? { mostrar_codigo: true } : {}),
+      [CHAVE_IDIOMA_CONTA]: dados.idioma,
     },
   };
 }

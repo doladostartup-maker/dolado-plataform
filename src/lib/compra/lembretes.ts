@@ -10,6 +10,7 @@
 // esse lembrete — nunca o repete.
 
 import { assuntoLembreteCompra, montarHtmlLembreteCompra, type MarcoLembrete } from "../email/compraSemConta.ts";
+import { IDIOMA_PADRAO, type Idioma } from "../../i18n/config.ts";
 
 export type CompraPendente = {
   stripe_session_id: string;
@@ -25,6 +26,11 @@ export interface DependenciasLembretes {
   reservar(sessionId: string, marco: MarcoLembrete, agora: Date): Promise<boolean>;
   contaExisteComEmail(email: string): Promise<boolean>;
   enviarEmail(destinatario: string, assunto: string, html: string): Promise<void>;
+  /**
+   * Idioma do lembrete (só apresentação): o da Checkout Session ("en-GB" nas
+   * compras feitas em /en); qualquer falha → português. Opcional (testes antigos).
+   */
+  idiomaDaCompra?(sessionId: string): Promise<Idioma>;
   notificarAdmin(assunto: string, texto: string): Promise<void>;
 }
 
@@ -41,10 +47,11 @@ export async function enviarLembretesCompraSemConta(
     const associar = await deps.contaExisteComEmail(compra.email);
     const id = encodeURIComponent(compra.stripe_session_id);
     const ligacao = associar ? `${siteUrl}/associar-compra?session_id=${id}` : `${siteUrl}/criar-conta?session_id=${id}`;
+    const idioma = deps.idiomaDaCompra ? await deps.idiomaDaCompra(compra.stripe_session_id).catch(() => IDIOMA_PADRAO) : IDIOMA_PADRAO;
     await deps.enviarEmail(
       compra.email,
-      assuntoLembreteCompra(compra.marco),
-      montarHtmlLembreteCompra({ plano: compra.plano, marco: compra.marco, ligacao, associarCompra: associar }),
+      assuntoLembreteCompra(compra.marco, idioma),
+      montarHtmlLembreteCompra({ plano: compra.plano, marco: compra.marco, ligacao, associarCompra: associar }, idioma),
     );
     enviados += 1;
 

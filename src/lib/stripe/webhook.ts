@@ -348,6 +348,10 @@ export interface DependenciasWebhook {
     /** Próxima renovação (ISO), nas subscrições, se conhecida. */
     renovacao: string | null;
     consentimento: ConsentimentoLigado | null;
+    /** Só apresentação (idioma do e-mail): conta ligada à compra, se houver. */
+    userId?: string | null;
+    /** Só apresentação (idioma do e-mail): `locale` da Checkout Session ("en-GB" em /en). */
+    localeCheckout?: string | null;
   }): Promise<void>;
   registar(linha: LinhaLog): void;
   /** Programa de indicação (ausente = desligado, ex.: testes antigos). */
@@ -776,6 +780,8 @@ async function confirmarCompra(
       valorPagoCentimos: session.amount_total,
       renovacao,
       consentimento,
+      userId: contas[0] ?? null,
+      localeCheckout: session.locale ?? null,
     });
   }
   // Programa de indicação: no fim, com o acesso e o pagamento já gravados

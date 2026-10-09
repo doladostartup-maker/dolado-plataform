@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="color-scheme" content="light"><title>Confirme o seu e-mail — DoLado</title></head>
+<html lang="{{ if eq (print .Data.idioma) "en-GB" }}en-GB{{ else }}pt-PT{{ end }}">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="color-scheme" content="light"><title>{{ if eq (print .Data.idioma) "en-GB" }}Confirm your email — DoLado{{ else }}Confirme o seu e-mail — DoLado{{ end }}</title></head>
 <body style="margin:0; padding:0; background-color:#F4F8FC; font-family:'Plus Jakarta Sans', 'Segoe UI', Arial, Helvetica, sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F8FC; padding:32px 12px;">
     <tr>
@@ -13,20 +13,20 @@
           </tr>
           <tr>
             <td style="background-color:#FFFFFF; border:1px solid #E4EAF1; border-radius:16px; padding:32px 32px 16px 32px; color:#0B2545; font-size:16px; line-height:1.6;">
-              <p style="margin:0 0 16px 0;">Olá,</p>
-              <p style="margin:0 0 16px 0;">Para concluir a criação da sua conta na DoLado, confirme o seu endereço de e-mail.</p>
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px 0;"><tr><td style="border-radius:10px; background-color:#0A7A4F;"><a href="{{ .ConfirmationURL }}" style="display:inline-block; padding:13px 22px; font-size:15px; font-weight:700; color:#FFFFFF; text-decoration:none; border-radius:10px;">Confirmar o meu e-mail</a></td></tr></table>
-              {{ with .Data }}{{ if .mostrar_codigo }}
-              <p style="margin:0 0 8px 0;">Também pode introduzir este código na página onde criou a conta:</p>
-              <p style="margin:0 0 24px 0; padding:12px 16px; background-color:#F1F9F4; border-radius:12px; font-size:30px; font-weight:800; letter-spacing:6px; color:#08583A; text-align:center;">{{ $.Token }}</p>
-              {{ end }}{{ end }}
-              <p style="margin:0 0 16px 0; font-size:14px; color:#55657A;">Abra a ligação de preferência neste mesmo dispositivo e navegador. A ligação é válida durante um período limitado. Se não criou uma conta na DoLado, pode ignorar este e-mail.</p>
+              <p style="margin:0 0 16px 0;">{{ if eq (print .Data.idioma) "en-GB" }}Hello,{{ else }}Olá,{{ end }}</p>
+              <p style="margin:0 0 16px 0;">{{ if eq (print .Data.idioma) "en-GB" }}To finish creating your DoLado account, please confirm your email address.{{ else }}Para concluir a criação da sua conta na DoLado, confirme o seu endereço de e-mail.{{ end }}</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px 0;"><tr><td style="border-radius:10px; background-color:#0A7A4F;"><a href="{{ .ConfirmationURL }}" style="display:inline-block; padding:13px 22px; font-size:15px; font-weight:700; color:#FFFFFF; text-decoration:none; border-radius:10px;">{{ if eq (print .Data.idioma) "en-GB" }}Confirm my email{{ else }}Confirmar o meu e-mail{{ end }}</a></td></tr></table>
+              {{ if .Data.mostrar_codigo }}
+              <p style="margin:0 0 8px 0;">{{ if eq (print .Data.idioma) "en-GB" }}You can also enter this code on the page where you created your account:{{ else }}Também pode introduzir este código na página onde criou a conta:{{ end }}</p>
+              <p style="margin:0 0 24px 0; padding:12px 16px; background-color:#F1F9F4; border-radius:12px; font-size:30px; font-weight:800; letter-spacing:6px; color:#08583A; text-align:center;">{{ .Token }}</p>
+              {{ end }}
+              <p style="margin:0 0 16px 0; font-size:14px; color:#55657A;">{{ if eq (print .Data.idioma) "en-GB" }}Ideally, open the link on this same device and browser. The link is valid for a limited time. If you did not create a DoLado account, you can ignore this email.{{ else }}Abra a ligação de preferência neste mesmo dispositivo e navegador. A ligação é válida durante um período limitado. Se não criou uma conta na DoLado, pode ignorar este e-mail.{{ end }}</p>
             </td>
           </tr>
           <tr>
             <td style="padding:20px 8px 0 8px; font-size:13px; line-height:1.6; color:#55657A;">
-              <span style="font-weight:700; color:#0B2545;">DoLado</span> · Do lado dos consumidores.<br>
-              <a href="https://dolado.pt" style="color:#0A7A4F; text-decoration:none;">dolado.pt</a> · Dúvidas: <a href="mailto:contacto@dolado.pt" style="color:#0A7A4F; text-decoration:none;">contacto@dolado.pt</a>
+              <span style="font-weight:700; color:#0B2545;">DoLado</span> · {{ if eq (print .Data.idioma) "en-GB" }}On the consumer's side.{{ else }}Do lado dos consumidores.{{ end }}<br>
+              <a href="https://dolado.pt" style="color:#0A7A4F; text-decoration:none;">dolado.pt</a> · {{ if eq (print .Data.idioma) "en-GB" }}Questions:{{ else }}Dúvidas:{{ end }} <a href="mailto:contacto@dolado.pt" style="color:#0A7A4F; text-decoration:none;">contacto@dolado.pt</a>
             </td>
           </tr>
         </table>

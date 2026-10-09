@@ -1,9 +1,12 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  assuntoPagamentoConfirmado,
   montarHtmlBoasVindasPagamento,
   montarHtmlNotificacaoNovoPagamento,
 } from "@/lib/email/pagamento";
 import { CONTACTO_EMAIL } from "@/lib/site";
+import { idiomaDoEmailPagamento } from "@/lib/idiomaConta";
+import { preferenciaIdiomaDaConta } from "@/lib/idiomaContaServidor";
 import { agendarRascunhoIA } from "@/lib/rascunhoIA/servidor";
 import type Stripe from "stripe";
 import { getStripe as stripeReal } from "@/lib/stripe/client";
@@ -695,7 +698,7 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
       return (data?.length ?? 0) > 0;
     },
 
-    async enviarEmailPagamentoConfirmado({ email, plano, contaExiste, sessionId, valorPagoCentimos, renovacao, consentimento }) {
+    async enviarEmailPagamentoConfirmado({ email, plano, contaExiste, sessionId, valorPagoCentimos, renovacao, consentimento, userId, localeCheckout }) {
       // Sem conta ligada, mas o e-mail do Checkout já tem conta: iniciar
       // sessão e associar a compra (nunca criar uma segunda conta).
       let associar = false;
@@ -703,6 +706,9 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
         const { data, error } = await admin.rpc("conta_existe_com_email", { p_email: email });
         associar = !error && data === true;
       }
+      // Idioma do e-mail (só apresentação): o da conta; sem conta ou conta
+      // antiga sem idioma, o do Checkout (en-GB quando a compra foi feita em /en).
+      const idioma = idiomaDoEmailPagamento(await preferenciaIdiomaDaConta(userId), localeCheckout);
       const ligacao = contaExiste
         ? `${siteUrl}/entrar`
         : associar
@@ -710,20 +716,20 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
           : `${siteUrl}/criar-conta?session_id=${encodeURIComponent(sessionId)}`;
       await enviarEmailBrevo(
         email,
-        contaExiste
-          ? "Pagamento confirmado — o seu acesso está ativo ✓"
-          : associar
-            ? "Pagamento confirmado — Associe esta compra à sua conta ✓"
-            : "Pagamento confirmado — Falta criar a sua palavra-passe ✓",
-        montarHtmlBoasVindasPagamento(plano, {
-          contaExiste,
-          associarCompra: associar,
-          ligacao,
-          valorPagoCentimos,
-          renovacao,
-          consentimento,
-          portalUrl: siteUrl,
-        }),
+        assuntoPagamentoConfirmado({ contaExiste, associarCompra: associar }, idioma),
+        montarHtmlBoasVindasPagamento(
+          plano,
+          {
+            contaExiste,
+            associarCompra: associar,
+            ligacao,
+            valorPagoCentimos,
+            renovacao,
+            consentimento,
+            portalUrl: siteUrl,
+          },
+          idioma,
+        ),
       );
       if (process.env.BREVO_SENDER_EMAIL) {
         await enviarEmailBrevo(

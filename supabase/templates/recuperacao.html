@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="color-scheme" content="light"><title>Definir nova palavra-passe — DoLado</title></head>
+<html lang="{{ if eq (print .Data.idioma) "en-GB" }}en-GB{{ else }}pt-PT{{ end }}">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="color-scheme" content="light"><title>{{ if eq (print .Data.idioma) "en-GB" }}Set a new password — DoLado{{ else }}Definir nova palavra-passe — DoLado{{ end }}</title></head>
 <body style="margin:0; padding:0; background-color:#F4F8FC; font-family:'Plus Jakarta Sans', 'Segoe UI', Arial, Helvetica, sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F8FC; padding:32px 12px;">
     <tr>
@@ -13,17 +13,17 @@
           </tr>
           <tr>
             <td style="background-color:#FFFFFF; border:1px solid #E4EAF1; border-radius:16px; padding:32px 32px 16px 32px; color:#0B2545; font-size:16px; line-height:1.6;">
-              <p style="margin:0 0 16px 0;">Olá,</p>
-              <p style="margin:0 0 16px 0;">Recebemos um pedido para definir uma nova palavra-passe da sua conta na DoLado. Para continuar, carregue no botão abaixo e escolha a nova palavra-passe.</p>
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px 0;"><tr><td style="border-radius:10px; background-color:#0A7A4F;"><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}" style="display:inline-block; padding:13px 22px; font-size:15px; font-weight:700; color:#FFFFFF; text-decoration:none; border-radius:10px;">Definir nova palavra-passe</a></td></tr></table>
-              <p style="margin:0 0 16px 0; font-size:14px; color:#55657A;">A ligação é válida durante um período limitado e só pode ser usada uma vez. Se pedir mais do que uma, use a do e-mail mais recente.</p>
-              <p style="margin:0 0 16px 0; font-size:14px; color:#55657A;">Se não fez este pedido, pode ignorar este e-mail: a sua palavra-passe atual mantém-se. A DoLado nunca lhe pede a palavra-passe por e-mail ou telefone.</p>
+              <p style="margin:0 0 16px 0;">{{ if eq (print .Data.idioma) "en-GB" }}Hello,{{ else }}Olá,{{ end }}</p>
+              <p style="margin:0 0 16px 0;">{{ if eq (print .Data.idioma) "en-GB" }}We received a request to set a new password for your DoLado account. To continue, click the button below and choose your new password.{{ else }}Recebemos um pedido para definir uma nova palavra-passe da sua conta na DoLado. Para continuar, carregue no botão abaixo e escolha a nova palavra-passe.{{ end }}</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 24px 0;"><tr><td style="border-radius:10px; background-color:#0A7A4F;"><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}" style="display:inline-block; padding:13px 22px; font-size:15px; font-weight:700; color:#FFFFFF; text-decoration:none; border-radius:10px;">{{ if eq (print .Data.idioma) "en-GB" }}Set a new password{{ else }}Definir nova palavra-passe{{ end }}</a></td></tr></table>
+              <p style="margin:0 0 16px 0; font-size:14px; color:#55657A;">{{ if eq (print .Data.idioma) "en-GB" }}The link is valid for a limited time and can only be used once. If you request more than one, use the link in the most recent email.{{ else }}A ligação é válida durante um período limitado e só pode ser usada uma vez. Se pedir mais do que uma, use a do e-mail mais recente.{{ end }}</p>
+              <p style="margin:0 0 16px 0; font-size:14px; color:#55657A;">{{ if eq (print .Data.idioma) "en-GB" }}If you did not make this request, you can ignore this email: your current password stays the same. DoLado will never ask you for your password by email or phone.{{ else }}Se não fez este pedido, pode ignorar este e-mail: a sua palavra-passe atual mantém-se. A DoLado nunca lhe pede a palavra-passe por e-mail ou telefone.{{ end }}</p>
             </td>
           </tr>
           <tr>
             <td style="padding:20px 8px 0 8px; font-size:13px; line-height:1.6; color:#55657A;">
-              <span style="font-weight:700; color:#0B2545;">DoLado</span> · Do lado dos consumidores.<br>
-              <a href="https://dolado.pt" style="color:#0A7A4F; text-decoration:none;">dolado.pt</a> · Dúvidas: <a href="mailto:contacto@dolado.pt" style="color:#0A7A4F; text-decoration:none;">contacto@dolado.pt</a>
+              <span style="font-weight:700; color:#0B2545;">DoLado</span> · {{ if eq (print .Data.idioma) "en-GB" }}On the consumer's side.{{ else }}Do lado dos consumidores.{{ end }}<br>
+              <a href="https://dolado.pt" style="color:#0A7A4F; text-decoration:none;">dolado.pt</a> · {{ if eq (print .Data.idioma) "en-GB" }}Questions:{{ else }}Dúvidas:{{ end }} <a href="mailto:contacto@dolado.pt" style="color:#0A7A4F; text-decoration:none;">contacto@dolado.pt</a>
             </td>
           </tr>
         </table>

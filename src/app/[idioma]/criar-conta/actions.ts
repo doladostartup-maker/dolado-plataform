@@ -72,7 +72,7 @@ export async function criarContaComPagamento(formData: FormData) {
     password,
     // Sem campo para o código nesta página: o e-mail leva só a ligação,
     // que volta a /auth/callback e entra no portal.
-    options: dadosContaNova({ nome }),
+    options: dadosContaNova({ nome, idioma: await obterIdioma() }),
   });
 
   // Nunca o texto técnico da Supabase: a mesma mensagem do registo.
