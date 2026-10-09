@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
-import { alterarTipoDocumento as alterarTipo, processarDocumentoNaRevisao } from "@/lib/monitor/servidor";
+import { alterarTipoDocumento as alterarTipo, marcarDocumentoAdmin, reprocessarDocumentoAdmin } from "@/lib/monitor/servidor";
 import { MSG_ERRO_ALTERAR_TIPO } from "@/lib/monitor/tipoDocumento";
 import { SETORES_CONTRATO, lerEurosParaCents, lerMeses } from "@/lib/monitor/contratos";
 import { dataValida, type CampoContrato } from "@/lib/monitor/extracaoFatura";
@@ -45,11 +45,15 @@ function voltar(id: string, params: Record<string, string>): never {
 }
 
 export async function reprocessarDocumento(formData: FormData) {
-  const { admin, doc } = await documento(String(formData.get("documento_id") ?? ""));
-  await admin.from("documentos_monitor").update({ estado: "pendente" }).eq("id", doc.id);
-  const r = await processarDocumentoNaRevisao(doc.id);
+  const { doc } = await documento(String(formData.get("documento_id") ?? ""));
+  const r = await reprocessarDocumentoAdmin(doc.id);
   revalidatePath("/backoffice/monitor");
-  voltar(doc.id, { resultado: r.estado, ...(r.motivo ? { motivo: r.motivo } : {}), ...(r.detalhe ? { detalhe: r.detalhe } : {}) });
+  // Uma fatura repetida detetada nesta leitura fica "repetido", como no segundo plano.
+  const resultado = "repetido" in r && r.repetido ? "repetido" : r.estado;
+  const params: Record<string, string> = { resultado };
+  if ("motivo" in r && r.motivo) params.motivo = r.motivo;
+  if ("detalhe" in r && r.detalhe) params.detalhe = r.detalhe;
+  voltar(doc.id, params);
 }
 
 // O revisor corrige o tipo (ex.: contrato enviado como fatura) e o mesmo
@@ -63,16 +67,21 @@ export async function alterarTipoDocumento(formData: FormData) {
   const p = r.processamento;
   voltar(doc.id, {
     tipo_alterado: "1",
-    resultado: p.estado,
+    resultado: p.repetido ? "repetido" : p.estado,
     ...(p.motivo ? { motivo: p.motivo } : {}),
     ...(p.detalhe ? { detalhe: p.detalhe } : {}),
   });
 }
 
 export async function marcarDocumento(formData: FormData) {
-  const { admin, doc } = await documento(String(formData.get("documento_id") ?? ""));
+  const { doc } = await documento(String(formData.get("documento_id") ?? ""));
   const estado = formData.get("estado") === "ilegivel" ? "ilegivel" : "processado";
-  await admin.from("documentos_monitor").update({ estado }).eq("id", doc.id);
+  try {
+    await marcarDocumentoAdmin(doc.id, estado);
+  } catch (erro) {
+    console.error(erro instanceof Error ? erro.message : erro);
+    voltar(doc.id, { erro: MSG_ERRO_GUARDAR });
+  }
   revalidatePath("/backoffice/monitor");
   voltar(doc.id, { resultado: estado });
 }

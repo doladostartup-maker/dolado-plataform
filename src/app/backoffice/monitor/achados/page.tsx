@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ROTULO_ACHADO } from "@/lib/monitor/achados";
+import { ESTADOS_ACHADO_POR_DECIDIR, ROTULO_ACHADO, achadoPorDecidir } from "@/lib/monitor/achados";
 import type { TomBackoffice } from "@/lib/backoffice/triagem";
 import { CabecalhoPagina } from "@/components/backoffice/Cabecalho";
 import { Etiqueta } from "@/components/backoffice/Estado";
@@ -28,7 +28,7 @@ export default async function AchadosPage({ searchParams }: { searchParams: Prom
     .select("id, tipo, estado, created_at, contrato_id, utilizador_id")
     .order("created_at", { ascending: true })
     .limit(200);
-  if (!params.todos) consulta = consulta.in("estado", ["detetado", "em_revisao", "confirmado"]);
+  if (!params.todos) consulta = consulta.in("estado", ESTADOS_ACHADO_POR_DECIDIR);
   const { data: achados } = await consulta;
 
   const contratos = [...new Set((achados ?? []).map((a) => a.contrato_id))];
@@ -88,7 +88,7 @@ export default async function AchadosPage({ searchParams }: { searchParams: Prom
                     </td>
                     <td className={`${TABELA_TD} text-right`}>
                       <Link href={`/backoffice/monitor/achados/${a.id}`} prefetch={false} className={`${BOTAO_SECUNDARIO} ${BOTAO_PEQUENO}`}>
-                        {["detetado", "em_revisao", "confirmado"].includes(a.estado) ? "Rever" : "Ver"}
+                        {achadoPorDecidir(a.estado) ? "Rever" : "Ver"}
                       </Link>
                     </td>
                   </tr>

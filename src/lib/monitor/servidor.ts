@@ -21,7 +21,7 @@ import { MIME_ACEITES, lerDocumentoComClaude, type MimeAceite } from "./claudeDo
 import { avisosAtravessados, estadoOrcamento, lerTetoOrcamentoUsd } from "./custos";
 import { chaveFornecedor } from "./contratos";
 import { nomeComercial, type Fornecedor } from "./fornecedores";
-import { falhaTransitoria } from "./processamento";
+import { emCurso, etapaDepoisDaLeitura, parado } from "./processamento";
 import {
   TIPO_ACHADO,
   VERSAO_ACOMPANHAMENTO,
@@ -899,8 +899,7 @@ export async function processarDocumentoEmSegundoPlano(documentoId: string): Pro
       await marcarEtapa(admin, documentoId, "repetido", { tempos_ms: tempos });
       return;
     }
-    const transitoria = resultado.estado === "pendente" && falhaTransitoria(resultado.motivo);
-    await marcarEtapa(admin, documentoId, transitoria ? "falhou" : "concluido", { tempos_ms: tempos });
+    await marcarEtapa(admin, documentoId, etapaDepoisDaLeitura(resultado), { tempos_ms: tempos });
     console.log(
       JSON.stringify({ origem: "monitor_documento", documento: documentoId, estado: resultado.estado, motivo: resultado.motivo ?? null, tempos_ms: tempos }),
     );
@@ -909,6 +908,51 @@ export async function processarDocumentoEmSegundoPlano(documentoId: string): Pro
     console.error(`Falha no processamento do documento ${documentoId}:`, detalhe);
     await marcarEtapa(admin, documentoId, "falhou", { tempos_ms: { ...tempos, total: Date.now() - inicio } }).catch(() => {});
   }
+}
+
+/**
+ * "Ler de novo" no backoffice. Lê já (o admin espera pelo resultado) e deixa
+ * a etapa coerente com o estado — sem isto, um documento que tinha falhado
+ * ficava com a etapa "falhou" e o cliente continuava a ver "Não foi possível
+ * concluir a análise" depois de a leitura ter resultado. Não lê um documento
+ * repetido (o ficheiro já foi apagado) nem um que ainda está a ser lido.
+ */
+export async function reprocessarDocumentoAdmin(
+  documentoId: string,
+): Promise<ResultadoProcessamento | { estado: "em_leitura" | "repetido"; contratoId: string | null }> {
+  const admin = createAdminClient();
+  const { data: doc } = await admin
+    .from("documentos_monitor")
+    .select("id, etapa, etapa_atualizada_em, contrato_id")
+    .eq("id", documentoId)
+    .maybeSingle();
+  if (!doc) return { estado: "a_rever", contratoId: null };
+  if (doc.etapa === "repetido") return { estado: "repetido", contratoId: doc.contrato_id };
+  if (emCurso(doc.etapa) && !parado(doc.etapa, doc.etapa_atualizada_em, Date.now())) {
+    return { estado: "em_leitura", contratoId: doc.contrato_id };
+  }
+
+  await admin
+    .from("documentos_monitor")
+    .update({ estado: "pendente", etapa: "a_ler", etapa_atualizada_em: new Date().toISOString() })
+    .eq("id", doc.id);
+  return processarDocumentoNaRevisao(doc.id);
+}
+
+/**
+ * Decisão manual do admin ("Marcar como revisto" / "Marcar como ilegível"):
+ * a leitura fica concluída. Sem a etapa, um documento que tinha falhado
+ * continuava a aparecer ao cliente como "Não foi possível concluir a
+ * análise". Um documento repetido não muda.
+ */
+export async function marcarDocumentoAdmin(documentoId: string, estado: "processado" | "ilegivel") {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("documentos_monitor")
+    .update({ estado, etapa: "concluido", etapa_atualizada_em: new Date().toISOString() })
+    .eq("id", documentoId)
+    .or("etapa.is.null,etapa.neq.repetido");
+  if (error) throw new Error(`Falha ao marcar o documento ${documentoId}: ${error.message}`);
 }
 
 /**
@@ -977,12 +1021,19 @@ export async function alterarTipoDocumento(a: { documentoId: string; novoTipo: s
  * Leitura pedida no backoffice ("Ler de novo", alteração do tipo): o mesmo
  * pipeline do upload, a correr no próprio pedido. No fim, a etapa fica
  * concluída (ou "falhou", para o cliente poder tentar de novo) — sem isto o
- * documento ficava em "a_registar" e parecia parado no portal.
+ * documento ficava em "a_registar" e parecia parado no portal. Uma fatura
+ * repetida fica "repetido", como no segundo plano.
  */
 export async function processarDocumentoNaRevisao(documentoId: string): Promise<ResultadoProcessamento> {
+  const admin = createAdminClient();
   const r = await processarDocumento(documentoId);
-  const transitoria = r.estado === "pendente" && falhaTransitoria(r.motivo);
-  await marcarEtapa(createAdminClient(), documentoId, transitoria ? "falhou" : "concluido");
+  if (r.repetido) {
+    // Mesma fatura já registada (como no segundo plano): o ficheiro sai e a
+    // linha fica "repetido", que o backoffice deixa de contar.
+    const { data: doc } = await admin.from("documentos_monitor").select("bucket, storage_path").eq("id", documentoId).maybeSingle();
+    if (doc) await admin.storage.from(doc.bucket ?? BUCKET_MONITOR).remove([doc.storage_path]);
+  }
+  await marcarEtapa(admin, documentoId, etapaDepoisDaLeitura(r));
   return r;
 }
 
