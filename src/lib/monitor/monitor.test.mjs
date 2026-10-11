@@ -17,12 +17,12 @@ describe("custos da API", () => {
     assert.equal(custoEstimadoUsd("claude-sonnet-5-5", -5, Number.NaN), 0);
   });
 
-  test("teto: valor da variável ou 5 USD por omissão", () => {
+  test("teto: valor da variável ou 8 USD por omissão", () => {
     assert.equal(lerTetoOrcamentoUsd("7.5"), 7.5);
     assert.equal(lerTetoOrcamentoUsd("7,5"), 7.5);
-    assert.equal(lerTetoOrcamentoUsd(undefined), 5);
-    assert.equal(lerTetoOrcamentoUsd("0"), 5);
-    assert.equal(lerTetoOrcamentoUsd("abc"), 5);
+    assert.equal(lerTetoOrcamentoUsd(undefined), 8);
+    assert.equal(lerTetoOrcamentoUsd("0"), 8);
+    assert.equal(lerTetoOrcamentoUsd("abc"), 8);
   });
 
   test("bloqueado ao atingir o teto", () => {
