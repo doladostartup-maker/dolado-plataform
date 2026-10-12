@@ -155,6 +155,15 @@ describe("textos", () => {
     }
   });
 
+  test("página de problema gera os pares categoria/problema sem depender dos params do pai", () => {
+    // O generateStaticParams de [categoria] é de página (não de layout): o Next
+    // só passa { idioma } ao nível de baixo. Depender de params.categoria
+    // gerava 0 caminhos → 404 em produção (12/10/2026).
+    const src = ler("../../app/[idioma]/problemas/[categoria]/[problema]/page.tsx");
+    assert.match(src, /export function generateStaticParams\(\)/);
+    assert.match(src, /\{ categoria: c\.slug, problema: p\.slug \}/);
+  });
+
   test("componentes: um só H1 por página e trilho com BreadcrumbList", () => {
     for (const f of ["PaginaIndiceProblemas", "PaginaCategoria", "PaginaProblema"]) {
       const src = ler(`../../components/problemas/${f}.tsx`);

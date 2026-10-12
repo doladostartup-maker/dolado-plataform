@@ -12,9 +12,14 @@ import { caminhoProblema, categoriasComPagina, obterProblema } from "@/lib/probl
 
 export const dynamicParams = false;
 
-export function generateStaticParams({ params }: { params: { categoria: string } }) {
-  const c = categoriasComPagina().find((x) => x.slug === params.categoria);
-  return (c?.problemas ?? []).map((p) => ({ problema: p.slug }));
+// Gera os pares categoria/problema aqui: o generateStaticParams de
+// [categoria] está numa página (não num layout), por isso o Next só passa
+// { idioma } a este nível. Ler params.categoria dava undefined, nenhum
+// caminho era gerado e, com dynamicParams = false, todas as páginas de
+// problema davam 404 em produção — o next dev gera a pedido e escondia o
+// erro (incidente de 12/10/2026; testado em problemas.test.mjs).
+export function generateStaticParams() {
+  return categoriasComPagina().flatMap((c) => c.problemas.map((p) => ({ categoria: c.slug, problema: p.slug })));
 }
 
 type Params = ComIdioma<{ categoria: string; problema: string }>;
