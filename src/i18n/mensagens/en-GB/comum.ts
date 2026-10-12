@@ -40,6 +40,7 @@ export const comum: Traducao<typeof pt> = {
     dolado: "DoLado",
     legal: "Legal",
     comoFunciona: "How it works",
+    problemas: "Problems we handle",
     ferramentas: "Free tools",
     precario: "Pricing",
     sobreNos: "About us",

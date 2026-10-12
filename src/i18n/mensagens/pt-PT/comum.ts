@@ -41,6 +41,7 @@ export const comum = {
     dolado: "DoLado",
     legal: "Legal",
     comoFunciona: "Como funciona",
+    problemas: "Problemas que tratamos",
     ferramentas: "Ferramentas gratuitas",
     precario: "Preçário",
     sobreNos: "Sobre nós",

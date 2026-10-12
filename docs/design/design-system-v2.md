@@ -292,7 +292,7 @@ Principal: Como funciona · Ferramentas gratuitas · Preçário · Ajuda. Instit
 
 ## 31. Footer V2
 
-Logótipo + "Do lado dos consumidores." · **Produto:** Como funciona, Ferramentas gratuitas, Preçário · **DoLado:** Sobre nós, Ajuda, Contacto · **Legal:** Termos e Condições, Política de Privacidade, Livro de Reclamações, Resolução de Litígios, Livre Resolução. Não criar links que não existam.
+Logótipo + "Do lado dos consumidores." · **Produto:** Como funciona, Problemas que tratamos, Ferramentas gratuitas, Preçário · **DoLado:** Sobre nós, Ajuda, Contacto · **Legal:** Termos e Condições, Política de Privacidade, Livro de Reclamações, Resolução de Litígios, Livre Resolução. Não criar links que não existam.
 
 ## 32. Página Como Funciona
 

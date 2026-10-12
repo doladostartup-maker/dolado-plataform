@@ -3,6 +3,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 import { COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM, COOKIE_ORIGEM, dominioCookiesOrigem, estadoConsentimentoOrigem } from "@/lib/origemAquisicao";
 import { COOKIE_INDICACAO } from "@/lib/indicacoes/regras";
 import { cookiebotAceitouMarketing } from "@/lib/indicacoes/consentimento";
+import { ehCaminhoDeProblemas } from "@/lib/problemas/catalogo";
 import {
   CABECALHO_IDIOMA,
   COOKIE_IDIOMA,
@@ -95,6 +96,11 @@ const PAGINAS_SO_MARKETING = [
   "/empresas",
 ];
 
+// Páginas "Problemas que tratamos" (/problemas e /problemas/…): marketing
+// em dolado.pt, sem sessão, como as de PAGINAS_SO_MARKETING. Caminhos
+// desconhecidos dão 404 na própria página (dynamicParams = false).
+// ehCaminhoDeProblemas vem de src/lib/problemas/catalogo.ts.
+
 // Versões dos Termos e da Política de Privacidade (/termos/<versão>,
 // /privacidade/<versão>) — mesmas regras que /termos e /privacidade.
 function ehVersaoDosTermos(pathname: string) {
@@ -183,6 +189,7 @@ async function encaminhar(request: NextRequest): Promise<NextResponse> {
   if (
     (host === "dolado.pt" || host === "www.dolado.pt") &&
     !PAGINAS_SO_MARKETING.includes(caminho) &&
+    !ehCaminhoDeProblemas(caminho) &&
     !ehVersaoDosTermos(caminho) &&
     !ehLinkDeIndicacao(caminho)
   ) {
@@ -233,6 +240,7 @@ async function encaminhar(request: NextRequest): Promise<NextResponse> {
 
   const resposta =
     ROTAS_SEM_REFRESH_DE_SESSAO.includes(caminho) ||
+    ehCaminhoDeProblemas(caminho) ||
     ehVersaoDosTermos(caminho) ||
     ehPaginaDeRevisaoDoTexto(caminho) ||
     ehLinkDeIndicacao(caminho)
