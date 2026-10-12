@@ -127,6 +127,24 @@ export const IconeAntena = (p: PropsIcone) => (
   </IconeBase>
 );
 
+export const IconeRaio = (p: PropsIcone) => (
+  <IconeBase {...p}>
+    <path d="M13 3 5 13.5h6L10 21l8-10.5h-6z" />
+  </IconeBase>
+);
+
+export const IconeChama = (p: PropsIcone) => (
+  <IconeBase {...p}>
+    <path d="M12 3c.6 3.2 5 5.2 5 10a5 5 0 0 1-10 0c0-2.3 1.1-3.8 2.4-5 .1 2 1 3.2 2.3 3.6C11 9 11 6 12 3z" />
+  </IconeBase>
+);
+
+export const IconeGota = (p: PropsIcone) => (
+  <IconeBase {...p}>
+    <path d="M12 3s6.5 6.8 6.5 11.5a6.5 6.5 0 0 1-13 0C5.5 9.8 12 3 12 3z" />
+  </IconeBase>
+);
+
 export const IconeLista = (p: PropsIcone) => (
   <IconeBase {...p}>
     <rect x="4" y="3" width="16" height="18" rx="2" />

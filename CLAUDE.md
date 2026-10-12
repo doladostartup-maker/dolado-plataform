@@ -319,6 +319,15 @@ F3 de `docs/especificacoes/F3_MUDANCA_CASA_PUBLICA.md`: página pública e está
 - Sem login, sem formulários, sem IA, sem gravação. CTAs "Tratar o meu caso" → `/tratar-caso?origem=/mudanca-de-casa` (no cartão de telecomunicações também `setor=Telecomunicações`). Medição (gtag, só com consentimento): `mudanca_casa_clique_tratar_caso` (`local`).
 - Não criar conteúdo diferente para parceiros (Remax): os parceiros podem divulgar esta página e não recebem dados.
 
+## Páginas "Problemas que tratamos" — SEO (12/10/2026)
+
+Páginas estáticas de aquisição orgânica por problema (não blog, não guias "faça você mesmo"): `/problemas` → `/problemas/<categoria>` → `/problemas/<categoria>/<problema>`, nas duas línguas, SSG (`generateStaticParams`, `dynamicParams = false`). Primeira vaga: Telecomunicações (5), Energia (3), Compras e Reembolsos (5). Gás e Água preparados no catálogo sem problemas → sem página (em `/problemas` ligam a "Tratar o meu caso" com o setor).
+
+- **Estrutura:** `src/lib/problemas/catalogo.ts` (slugs, setor e tipo de problema para pré-preencher `/tratar-caso`, relacionados) — fonte única das rotas, do sitemap (`PAGINAS_PROBLEMAS` em `indexacao.ts`) e do middleware (`ehCaminhoDeProblemas`: servidas em dolado.pt, sem sessão). Textos em `src/i18n/mensagens/{pt-PT,en-GB}/problemas.ts`; componentes em `src/components/problemas/` (trilho visível + `BreadcrumbList` JSON-LD). Problema novo = linha no catálogo + texto nas duas línguas.
+- **Conteúdo:** informação geral e prudente ("pode depender", "pode haver fundamento", "é necessário verificar"); sem leis, artigos ou prazos concretos; sem cartas, moradas nem passos de envio; sem promessas de resultado; sem marcas. **Nunca páginas por marca** (`/reclamar/<empresa>`). O teste `src/lib/problemas/problemas.test.mjs` verifica estas regras, a metadata (única, 120–165 caracteres) e os relacionados.
+- **Conversão:** CTA principal = Simulador (`/simulador-elegibilidade`); secundário = "Tratar o meu caso" com `origem` = caminho da página (fica em `pedidos_caso.origem` — é assim que se mede o negócio), `setor` e, só com correspondência exata, `problema`. Eventos gtag (só com consentimento): `problemas_clique_simulador`, `problemas_clique_tratar_caso` (`categoria`, `problema`, `local`). O Simulador não recebe a origem (corre só no browser, nada gravado).
+- Entrada: "Problemas que tratamos" no rodapé (coluna Produto).
+
 ## Monitor de Proteção (02/10/2026)
 
 Especificação em `docs/especificacoes/` (F1/F2/F4 e Claude API); plano e decisões em `docs/especificacoes/PLANO_MONITOR_FASE1.md`. Princípio: **IA lê e estrutura; código calcula e aplica regras; humano revê exceções.**

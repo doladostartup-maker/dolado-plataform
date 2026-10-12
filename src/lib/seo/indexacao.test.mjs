@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
-import { CAMINHOS_BLOQUEADOS, PAGINAS_BILINGUES, PAGINAS_SO_PORTUGUES, entradasSitemap, regrasRobots } from "./indexacao.ts";
+import { CAMINHOS_BLOQUEADOS, PAGINAS_BILINGUES, PAGINAS_PROBLEMAS, PAGINAS_SO_PORTUGUES, entradasSitemap, regrasRobots } from "./indexacao.ts";
 import { alternativas } from "../../i18n/metadados.ts";
 
 const ler = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
@@ -12,7 +12,7 @@ describe("sitemap", () => {
   const urls = entradas.map((e) => e.url);
 
   test("páginas públicas em pt-PT e en-GB, URLs absolutas de produção, sem repetidos", () => {
-    assert.equal(urls.length, PAGINAS_BILINGUES.length * 2 + PAGINAS_SO_PORTUGUES.length);
+    assert.equal(urls.length, (PAGINAS_BILINGUES.length + PAGINAS_PROBLEMAS.length) * 2 + PAGINAS_SO_PORTUGUES.length);
     assert.equal(new Set(urls).size, urls.length);
     for (const u of urls) assert.match(u, /^https:\/\/dolado\.pt(\/|$)/);
     assert.ok(urls.includes("https://dolado.pt"));
@@ -22,7 +22,7 @@ describe("sitemap", () => {
   });
 
   test("correspondência PT/EN igual ao hreflang de cada página", () => {
-    for (const caminho of PAGINAS_BILINGUES) {
+    for (const caminho of [...PAGINAS_BILINGUES, ...PAGINAS_PROBLEMAS]) {
       const meta = alternativas("pt-PT", caminho).languages;
       for (const e of entradas.filter((x) => x.alternates?.languages["pt-PT"] === meta["pt-PT"])) {
         assert.deepEqual(e.alternates.languages, meta);
@@ -46,6 +46,19 @@ describe("sitemap", () => {
       const pagina = ler(`../../app/[idioma]${c === "/" ? "" : c}/page.tsx`);
       assert.match(pagina, new RegExp(`metadadosPublicos\\(idioma, "${c}"`), c);
     }
+  });
+
+  test("páginas de problemas no sitemap: /problemas, categorias e problemas, servidas em dolado.pt", () => {
+    assert.ok(urls.includes("https://dolado.pt/problemas"));
+    assert.ok(urls.includes("https://dolado.pt/en/problemas"));
+    assert.ok(urls.includes("https://dolado.pt/problemas/telecomunicacoes"));
+    assert.ok(urls.includes("https://dolado.pt/problemas/telecomunicacoes/aumento-preco"));
+    assert.ok(urls.includes("https://dolado.pt/en/problemas/compras-reembolsos/garantia"));
+    // Categorias sem problemas publicados (Gás, Água) não têm página.
+    assert.ok(!urls.some((u) => /\/problemas\/(gas|agua)(\/|$)/.test(u)));
+    const middleware = ler("../../middleware.ts");
+    assert.match(middleware, /!PAGINAS_SO_MARKETING\.includes\(caminho\) &&\s*!ehCaminhoDeProblemas\(caminho\)/);
+    assert.match(middleware, /ROTAS_SEM_REFRESH_DE_SESSAO\.includes\(caminho\) \|\|\s*ehCaminhoDeProblemas\(caminho\)/);
   });
 });
 

@@ -14,6 +14,7 @@
 
 import { IDIOMAS, type Idioma } from "../../i18n/config.ts";
 import { urlPublico } from "../../i18n/metadados.ts";
+import { CAMINHO_PROBLEMAS, caminhosProblemas } from "../problemas/catalogo.ts";
 
 export const SITE_PUBLICO = "https://dolado.pt";
 export const URL_SITEMAP = `${SITE_PUBLICO}/sitemap.xml`;
@@ -34,6 +35,13 @@ export const PAGINAS_BILINGUES = [
   "/contacto",
 ] as const;
 
+/**
+ * Páginas "Problemas que tratamos" (rotas dinâmicas e estáticas, bilingues):
+ * vêm do catálogo (src/lib/problemas/catalogo.ts), para uma página nova
+ * entrar no sitemap sem mais nada.
+ */
+export const PAGINAS_PROBLEMAS: readonly string[] = caminhosProblemas();
+
 /** Páginas legais: indexadas só em português (metadadosLegais). */
 export const PAGINAS_SO_PORTUGUES = ["/termos", "/privacidade", "/livre-resolucao", "/resolucao-de-litigios"] as const;
 
@@ -47,12 +55,14 @@ export type EntradaSitemap = {
 function prioridade(caminho: string) {
   if (caminho === "/") return 1;
   if (caminho === "/precario" || caminho === "/como-funciona") return 0.9;
+  if (caminho === CAMINHO_PROBLEMAS) return 0.8;
+  if (caminho.startsWith(`${CAMINHO_PROBLEMAS}/`)) return 0.6;
   return 0.7;
 }
 
 /** Entradas do sitemap: uma por URL, cada página bilingue com as duas alternativas e x-default. */
 export function entradasSitemap(): EntradaSitemap[] {
-  const bilingues = PAGINAS_BILINGUES.flatMap((caminho) => {
+  const bilingues = [...PAGINAS_BILINGUES, ...PAGINAS_PROBLEMAS].flatMap((caminho) => {
     const languages: Record<string, string> = {
       ...Object.fromEntries(IDIOMAS.map((i: Idioma) => [i, urlPublico(i, caminho)])),
       "x-default": urlPublico("pt-PT", caminho),
