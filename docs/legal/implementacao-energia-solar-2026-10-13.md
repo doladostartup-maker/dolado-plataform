@@ -1,6 +1,6 @@
 # Energia Solar / Autoconsumo — implementação (13/10/2026)
 
-Segue a auditoria `docs/legal/auditoria-regras-energia-solar-2026-10-13.md`. Tudo o que é base jurídica nova entra **inativo e por rever**: a IA só passa a recebê-lo depois de Thiago/advogada reverem e ativarem cada regra em `/backoffice/regras-juridicas`.
+Segue a auditoria `docs/legal/auditoria-regras-energia-solar-2026-10-13.md`. As 17 regras novas entraram inativas e foram **ativadas a 13/10/2026**, depois da revisão de Thiago (`20261013110000_ativar_regras_energia_solar.sql`, aplicada em produção; `revista_por = 'Thiago Pereira'`). Os pontos da secção 5 continuam por confirmar com a advogada.
 
 ## 1. O que muda
 
@@ -28,7 +28,7 @@ Sem campo `subsector`: o tipo de problema já é o subtipo. Schema: só a coluna
 
 Simulação com as regras de produção + as 17 novas ativadas (cenários A–G da auditoria): todos cobertos, sem nenhuma regra `ENE_`/`SPE_` (`src/lib/rascunhoIA/autoconsumo.test.mjs`).
 
-## 3. Regras novas (todas `ativa = false`)
+## 3. Regras novas (ativas desde 13/10/2026)
 
 | Código | Setor / categoria | Base |
 |---|---|---|
@@ -66,7 +66,7 @@ Fontes: versões consolidadas da PGDL (DL 84/2021 — sem alterações; DL 24/20
 
 ## 5. Antes de ativar (Thiago + advogada)
 
-1. Rever e ativar as 17 regras (texto, condições e datas). Até lá, os casos solares já recebem as regras existentes de conformidade, entrega, garantia, livre resolução, práticas comerciais e cláusulas — mas nada de UPAC, CAER, crédito coligado nem danos.
+1. ~~Rever e ativar as 17 regras~~ — ativadas por Thiago a 13/10/2026. A advogada deve ainda rever o texto, as condições e as datas; alterar o conteúdo de uma regra retira a revisão e desativa-a até nova data de revisão.
 2. Confirmar a qualificação "fornecimento e instalação" como empreitada de consumo com o DL 84/2021 aplicável (auditoria, H.6(a)).
 3. Confirmar a norma transitória do DL 130/2026 e o limiar anterior.
 4. Decidir sobre `ENE_SERVICOS_ADICIONAIS_17` (venda de UPAC pelo comercializador).
@@ -76,6 +76,6 @@ Fontes: versões consolidadas da PGDL (DL 84/2021 — sem alterações; DL 24/20
 
 1. `supabase db push --linked --dry-run`, depois `supabase db push --linked` (antes do merge que faz o deploy — o código novo lê `casos.detalhes_caso`).
 2. Merge → deploy na Clever Cloud.
-3. Revisão e ativação das regras no backoffice (passo 5.1).
+3. Ativação: `20261013110000_ativar_regras_energia_solar.sql` (13/10/2026).
 
 Testes: `src/lib/rascunhoIA/autoconsumo.test.mjs`, `src/lib/pedidoCaso.test.mjs`, `supabase/tests/database/energia_solar_autoconsumo.test.sql`.

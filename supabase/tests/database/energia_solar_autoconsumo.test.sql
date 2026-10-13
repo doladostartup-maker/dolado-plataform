@@ -5,7 +5,7 @@
 -- Prova que: detalhes_caso só aceita as chaves e valores das listas fechadas
 -- (pedidos_caso e casos); converter_pedido_em_caso() copia as respostas para
 -- o caso; o cliente lê as do próprio caso e não as altera; as 17 regras novas
--- entram inativas e por rever, sem tocar nas existentes. A seleção com as
+-- foram criadas inativas e ativadas depois de revistas, sem tocar nas existentes. A seleção com as
 -- regras reais está em src/lib/rascunhoIA/autoconsumo.test.mjs. Tudo numa
 -- transação revertida.
 
@@ -117,8 +117,9 @@ create temporary table solar_novas as
     'CAER_AMBITO_FORMA_2_4', 'CAER_INFORMACAO_5_6', 'CAER_EMPRESA_DGEG_3');
 
 select is((select count(*) from solar_novas), 17::bigint, '17 regras novas');
-select is((select count(*) from solar_novas where ativa or revista_em is not null or revista_por is not null), 0::bigint,
-  'nenhuma entra ativa ou revista');
+-- Criadas inativas (20261013100000) e ativadas depois da revisão de Thiago (20261013110000).
+select is((select count(*) from solar_novas where ativa and revista_em = '2026-10-13' and revista_por = 'Thiago Pereira'), 17::bigint,
+  'as 17 ativas, revistas a 13/10/2026 por Thiago Pereira');
 select is((select count(*) from solar_novas where setor is null), 9::bigint, '9 gerais');
 select is((select count(*) from solar_novas where setor = 'Energia' and categoria = 'Autoconsumo'), 5::bigint, '5 de Energia → Autoconsumo');
 select is((select count(*) from solar_novas where setor = 'Energia' and categoria = 'CAER'), 3::bigint, '3 de CAER');
