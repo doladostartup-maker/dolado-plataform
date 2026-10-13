@@ -51,9 +51,23 @@ const PROBLEMAS_ENERGIA_GAS = [
   "Outro",
 ];
 
+// Energia Solar / Autoconsumo (13/10/2026): venda, instalação e registo de
+// sistemas de painéis solares — não é fornecimento de eletricidade. Só em
+// Energia (setor) e com seleção de regras própria (perfilAutoconsumo.ts, em
+// src/lib/rascunhoIA/). O valor gravado é o texto completo.
+export const PROBLEMA_SOLAR_INSTALACAO = "Painéis solares: instalação, avaria ou garantia";
+export const PROBLEMA_SOLAR_CONTRATO = "Painéis solares: contrato, cancelamento ou promessa comercial";
+export const PROBLEMA_SOLAR_REGISTO = "Painéis solares: registo, ligação ou autoconsumo";
+export const PROBLEMAS_AUTOCONSUMO: readonly string[] = [PROBLEMA_SOLAR_INSTALACAO, PROBLEMA_SOLAR_CONTRATO, PROBLEMA_SOLAR_REGISTO];
+
+/** Caso de painéis solares (Energia → Autoconsumo)? */
+export function ehCasoAutoconsumo(setor: string | null | undefined, problema: string | null | undefined): boolean {
+  return setor === "Energia" && !!problema && PROBLEMAS_AUTOCONSUMO.includes(problema);
+}
+
 export const PROBLEMAS_POR_SETOR: Record<string, string[]> = {
   "Telecomunicações": PROBLEMAS_SERVICOS,
-  Energia: PROBLEMAS_ENERGIA_GAS,
+  Energia: [...PROBLEMAS_ENERGIA_GAS.filter((p) => p !== "Outro"), ...PROBLEMAS_AUTOCONSUMO, "Outro"],
   "Gás": PROBLEMAS_ENERGIA_GAS,
   "Água": PROBLEMAS_SERVICOS,
   "Compras & Reembolsos": [
@@ -105,6 +119,55 @@ export const SETORES_SERVICOS_PUBLICOS_ESSENCIAIS: readonly string[] = ["Telecom
 export function isServicoPublicoEssencial(setor: string | null | undefined): boolean {
   return !!setor && SETORES_SERVICOS_PUBLICOS_ESSENCIAIS.includes(setor);
 }
+// ---------------------------------------------------------------------------
+// Respostas adicionais (só casos de painéis solares; pedidos_caso/casos
+// .detalhes_caso, jsonb validado também na base de dados). Decidem que regras
+// jurídicas podem ser consideradas (contratação à distância/fora do
+// estabelecimento, crédito coligado, CAER) — nunca acesso, preço nem plano.
+// Valores fechados; os rótulos estão em src/i18n/mensagens/*/rotulos.ts.
+
+export const FORMAS_CONTRATACAO = ["estabelecimento", "domicilio", "distancia", "fora_estabelecimento", "nao_sei"] as const;
+export const FINANCIAMENTOS = ["nao", "sim_com_compra", "sim_separado", "nao_sei"] as const;
+export const TIPOS_CONTRATO_SOLAR = ["compra_instalacao", "caer", "nao_sei"] as const;
+
+export type DetalhesCaso = {
+  forma_contratacao: (typeof FORMAS_CONTRATACAO)[number];
+  financiamento: (typeof FINANCIAMENTOS)[number];
+  tipo_contrato_solar: (typeof TIPOS_CONTRATO_SOLAR)[number];
+};
+
+const OPCOES_DETALHES: { [K in keyof DetalhesCaso]: readonly string[] } = {
+  forma_contratacao: FORMAS_CONTRATACAO,
+  financiamento: FINANCIAMENTOS,
+  tipo_contrato_solar: TIPOS_CONTRATO_SOLAR,
+};
+export const CAMPOS_DETALHES = Object.keys(OPCOES_DETALHES) as (keyof DetalhesCaso)[];
+
+/**
+ * Lê as respostas adicionais de um valor desconhecido (base de dados ou
+ * formulário). Campo em falta ou inválido → "nao_sei"; sem nenhum campo
+ * válido → null. Nunca lança.
+ */
+export function lerDetalhesCaso(valor: unknown): DetalhesCaso | null {
+  if (!valor || typeof valor !== "object" || Array.isArray(valor)) return null;
+  const v = valor as Record<string, unknown>;
+  let algum = false;
+  const campo = <K extends keyof DetalhesCaso>(k: K): DetalhesCaso[K] => {
+    const x = v[k];
+    if (typeof x === "string" && OPCOES_DETALHES[k].includes(x)) {
+      algum = true;
+      return x as DetalhesCaso[K];
+    }
+    return "nao_sei" as DetalhesCaso[K];
+  };
+  const detalhes: DetalhesCaso = {
+    forma_contratacao: campo("forma_contratacao"),
+    financiamento: campo("financiamento"),
+    tipo_contrato_solar: campo("tipo_contrato_solar"),
+  };
+  return algum ? detalhes : null;
+}
+
 export const MOMENTOS = [
   "Sim, e não me responderam",
   "Sim, mas a resposta não resolveu",
@@ -173,6 +236,8 @@ export type DadosPedido = {
   origem: string;
   consentimento_alertas: boolean;
   anexo: { caminho: string; nome: string; tipo: string | null; tamanho: number | null } | null;
+  /** Só nos casos de painéis solares (ehCasoAutoconsumo); nos outros, null. */
+  detalhes_caso: DetalhesCaso | null;
 };
 
 /**
@@ -198,6 +263,16 @@ export function lerDadosPedido(ler: (campo: string) => unknown): { ok: true; dad
   if (!validTelemovel(telefone)) return { ok: false, erro: "Telemóvel inválido." };
   if (ler("autorizacao") !== "on") return { ok: false, erro: "Confirme o pedido para avançar." };
 
+  // Painéis solares: as três respostas são obrigatórias (todas têm "Não sei").
+  let detalhes: DetalhesCaso | null = null;
+  if (ehCasoAutoconsumo(sector, problemaTipo)) {
+    const respostas = Object.fromEntries(CAMPOS_DETALHES.map((c) => [c, texto(c, 40)]));
+    if (CAMPOS_DETALHES.some((c) => !OPCOES_DETALHES[c].includes(respostas[c]))) {
+      return { ok: false, erro: "Responda às perguntas sobre o contrato dos painéis solares." };
+    }
+    detalhes = lerDetalhesCaso(respostas);
+  }
+
   const caminho = texto("anexo_caminho", 400);
   const anexo =
     caminho && caminho.startsWith("pendentes/") && !caminho.includes("..")
@@ -222,6 +297,7 @@ export function lerDadosPedido(ler: (campo: string) => unknown): { ok: true; dad
       origem,
       consentimento_alertas: ler("consentimento_alertas") === "on",
       anexo,
+      detalhes_caso: detalhes,
     },
   };
 }

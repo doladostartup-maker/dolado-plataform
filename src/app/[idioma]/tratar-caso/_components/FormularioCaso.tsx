@@ -12,7 +12,18 @@ import { tTratarCaso, traduzirMensagemCaso } from "@/i18n/mensagens/tratarCaso";
 import { criarUploadAssinado } from "@/app/actions/formulario-guiado";
 import { track } from "@/lib/analytics";
 import { TEXTO_CONSENTIMENTO_COMUNICACOES } from "@/lib/legal";
-import { MOMENTOS, problemasDoSetor, SETORES, validNome, validTelemovel, type EntradaPedido } from "@/lib/pedidoCaso";
+import {
+  ehCasoAutoconsumo,
+  FINANCIAMENTOS,
+  FORMAS_CONTRATACAO,
+  MOMENTOS,
+  problemasDoSetor,
+  SETORES,
+  TIPOS_CONTRATO_SOLAR,
+  validNome,
+  validTelemovel,
+  type EntradaPedido,
+} from "@/lib/pedidoCaso";
 import { CASO_EXTRA, PLANOS } from "@/lib/planos";
 import { MARKETING_SITE_URL } from "@/lib/site";
 import { createClient } from "@/lib/supabase/client";
@@ -95,8 +106,33 @@ function BotaoEscolha({
   );
 }
 
+function PerguntaEscolha({
+  titulo,
+  opcoes,
+  valor,
+  escolher,
+}: {
+  titulo: string;
+  opcoes: { valor: string; label: string }[];
+  valor: string;
+  escolher: (v: string) => void;
+}) {
+  return (
+    <fieldset className="mb-4">
+      <legend className={LABEL_CLASS} style={{ color: COR.ink }}>
+        {titulo}
+      </legend>
+      <div className="flex flex-col gap-2">
+        {opcoes.map((o) => (
+          <BotaoEscolha key={o.valor} label={o.label} selecionado={valor === o.valor} onClick={() => escolher(o.valor)} />
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
 type ErrosPasso = Partial<
-  Record<"sector" | "empresa" | "problemaTipo" | "momentoCliente" | "nome" | "telefone" | "autorizacao", string>
+  Record<"sector" | "empresa" | "problemaTipo" | "solar" | "momentoCliente" | "nome" | "telefone" | "autorizacao", string>
 >;
 
 const ESTADO_INICIAL: EstadoPedidoForm = { erro: null };
@@ -141,6 +177,11 @@ export function FormularioCaso({
   const [problemaTipo, setProblemaTipo] = useState(inicial?.problemaTipo ?? "");
   const [descricao, setDescricao] = useState("");
   const [momentoCliente, setMomentoCliente] = useState(inicial?.momentoCliente ?? "");
+  // Painéis solares (só quando o problema escolhido é de Autoconsumo).
+  const [formaContratacao, setFormaContratacao] = useState("");
+  const [financiamento, setFinanciamento] = useState("");
+  const [tipoContratoSolar, setTipoContratoSolar] = useState("");
+  const solar = ehCasoAutoconsumo(sector, problemaTipo);
 
   const [anexo, setAnexo] = useState<{
     caminho: string;
@@ -228,6 +269,7 @@ export function FormularioCaso({
   function continuarPasso2() {
     const e: ErrosPasso = {};
     if (!problemaTipo) e.problemaTipo = t.erros.problema;
+    if (solar && (!formaContratacao || !financiamento || !tipoContratoSolar)) e.solar = t.passo2.solar.erro;
     if (Object.keys(e).length) return setErros(e);
     irPara(3);
   }
@@ -325,6 +367,13 @@ export function FormularioCaso({
         <input type="hidden" name="problema_tipo" value={problemaTipo} />
         <input type="hidden" name="descricao" value={descricao} />
         <input type="hidden" name="momento_cliente" value={momentoCliente} />
+        {solar && (
+          <>
+            <input type="hidden" name="forma_contratacao" value={formaContratacao} />
+            <input type="hidden" name="financiamento" value={financiamento} />
+            <input type="hidden" name="tipo_contrato_solar" value={tipoContratoSolar} />
+          </>
+        )}
         <input type="hidden" name="origem" value={origem} />
         {anexo && (
           <>
@@ -381,6 +430,39 @@ export function FormularioCaso({
               <p className="mb-4 text-[13px]" style={{ color: COR.erro }}>
                 {erros.problemaTipo}
               </p>
+            )}
+            {solar && (
+              <div className="mb-5 mt-4 rounded-[14px] border p-4" style={{ borderColor: COR.hairline, backgroundColor: COR.surfaceSunken }}>
+                <p className="text-[16px] font-bold" style={{ color: COR.ink }}>
+                  {t.passo2.solar.titulo}
+                </p>
+                <p className="mb-4 text-[14px]" style={{ color: COR.inkMuted }}>
+                  {t.passo2.solar.texto}
+                </p>
+                <PerguntaEscolha
+                  titulo={t.passo2.solar.forma}
+                  opcoes={FORMAS_CONTRATACAO.map((v) => ({ valor: v, label: rotulo(idioma, "formaContratacao", v) }))}
+                  valor={formaContratacao}
+                  escolher={setFormaContratacao}
+                />
+                <PerguntaEscolha
+                  titulo={t.passo2.solar.financiamento}
+                  opcoes={FINANCIAMENTOS.map((v) => ({ valor: v, label: rotulo(idioma, "financiamento", v) }))}
+                  valor={financiamento}
+                  escolher={setFinanciamento}
+                />
+                <PerguntaEscolha
+                  titulo={t.passo2.solar.tipoContrato}
+                  opcoes={TIPOS_CONTRATO_SOLAR.map((v) => ({ valor: v, label: rotulo(idioma, "tipoContratoSolar", v) }))}
+                  valor={tipoContratoSolar}
+                  escolher={setTipoContratoSolar}
+                />
+                {erros.solar && (
+                  <p className="text-[13px]" style={{ color: COR.erro }}>
+                    {erros.solar}
+                  </p>
+                )}
+              </div>
             )}
             <Campo label={t.passo2.descricao} htmlFor="descricao-field">
               <textarea

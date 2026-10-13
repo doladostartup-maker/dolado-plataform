@@ -34,6 +34,7 @@ import {
   SCHEMA_VERSAO,
   montarMensagem,
 } from "./prompt.ts";
+import { lerDetalhesCaso } from "../pedidoCaso.ts";
 import { paraEnvio, selecionarRegras, type RegraEnviada, type RegraJuridica, type SeletorRegras } from "./regras.ts";
 import { validarResposta, type RespostaRascunho } from "./validacao.ts";
 
@@ -164,7 +165,11 @@ export async function gerarRascunho(
     ]);
 
     const seletor = deps.seletor ?? selecionarRegras;
-    const regrasEnviadas = seletor({ setor: caso.sector, categoria: caso.problema_tipo }, regras, deps.hoje()).map(paraEnvio);
+    const regrasEnviadas = seletor(
+      { setor: caso.sector, categoria: caso.problema_tipo, detalhes: lerDetalhesCaso(caso.detalhes_caso) },
+      regras,
+      deps.hoje(),
+    ).map(paraEnvio);
     const base = construirContexto(caso, servicosDoCaso(caso, servicos, fornecedores));
     let contexto: unknown = base;
     if (finalidade === "nova_comunicacao") {

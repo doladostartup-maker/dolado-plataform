@@ -10,7 +10,8 @@
 // (ex.: subcategorias, palavras-chave, datas dos factos), basta outra função
 // com a mesma assinatura (SeletorRegras) — o resto do fluxo não muda.
 
-import { isServicoPublicoEssencial, SETORES } from "../pedidoCaso.ts";
+import { ehCasoAutoconsumo, isServicoPublicoEssencial, PROBLEMAS_AUTOCONSUMO, SETORES, type DetalhesCaso } from "../pedidoCaso.ts";
+import { categoriasAutoconsumo, CATEGORIAS_SO_AUTOCONSUMO, CATEGORIA_DANOS, selecionarRegrasAutoconsumo } from "./perfilAutoconsumo.ts";
 
 export type RegraJuridica = {
   id: string;
@@ -44,7 +45,10 @@ export type RegraEnviada = {
 
 export type CasoParaSelecao = {
   setor: string | null;
+  /** Tipo de problema do caso (casos.problema_tipo). */
   categoria: string | null;
+  /** Respostas adicionais (casos de painéis solares); sem elas, "não sei". */
+  detalhes?: DetalhesCaso | null;
 };
 
 export type SeletorRegras = (caso: CasoParaSelecao, regras: RegraJuridica[], dataReferencia: string) => RegraJuridica[];
@@ -91,6 +95,9 @@ export const CATEGORIAS_POR_PROBLEMA: Record<string, string[]> = {
   "Garantia recusada": ["Garantia", "Conformidade"],
   "Cobrança após cancelamento": ["Cancelamento", "Cobrança", "Pagamento"],
   "Serviço diferente do contratado": ["Contrato", "Alteração contratual", "Qualidade do serviço"],
+  // Energia → Autoconsumo (13/10/2026): só informativo — estes tipos usam o
+  // perfil próprio (perfilAutoconsumo.ts), com prioridades e condições.
+  ...Object.fromEntries(PROBLEMAS_AUTOCONSUMO.map((p) => [p, categoriasAutoconsumo(p)])),
 };
 
 /** Categorias sempre enviadas, além das do tipo de problema. */
@@ -98,7 +105,7 @@ export const CATEGORIAS_SEMPRE = ["Reclamação", "Resolução de conflitos", "P
 
 /** Categorias usadas pelas regras (formulário do backoffice). */
 export const CATEGORIAS_REGRAS: readonly string[] = [
-  ...new Set([...Object.values(CATEGORIAS_POR_PROBLEMA).flat(), ...CATEGORIAS_SEMPRE]),
+  ...new Set([...Object.values(CATEGORIAS_POR_PROBLEMA).flat(), ...CATEGORIAS_SEMPRE, ...CATEGORIAS_SO_AUTOCONSUMO, CATEGORIA_DANOS]),
 ].sort((a, b) => a.localeCompare(b, "pt"));
 
 // Lei n.º 23/96 (serviços públicos essenciais): identificada pelo diploma da
@@ -118,14 +125,22 @@ export function regraAplicavelAoSetor(regra: Pick<RegraJuridica, "codigo" | "dip
   return true;
 }
 
+// Categorias que só o perfil de Autoconsumo envia (UPAC, CAER, crédito
+// coligado): dependem de respostas que só esses casos têm.
+const SO_PERFIL = new Set(CATEGORIAS_SO_AUTOCONSUMO.map(normalizar));
+
 /**
  * Regras ativas, revistas e em vigor, do setor do caso (ou gerais), das
  * categorias do tipo de problema e das categorias sempre enviadas. Ordem:
  * do setor antes das gerais; do tipo de problema antes das sempre enviadas;
- * no máximo MAX_REGRAS_POR_PEDIDO.
+ * no máximo MAX_REGRAS_POR_PEDIDO. Casos de painéis solares (Energia →
+ * Autoconsumo) seguem o perfil próprio (selecionarRegrasAutoconsumo).
  */
 export const selecionarRegras: SeletorRegras = (caso, regras, dataReferencia) => {
   const problema = (caso.categoria ?? "").trim();
+  if (ehCasoAutoconsumo(caso.setor, problema)) {
+    return selecionarRegrasAutoconsumo(problema, caso.detalhes ?? null, regras.filter((r) => regraEmVigor(r, dataReferencia)));
+  }
   const doProblema = CATEGORIAS_POR_PROBLEMA[problema];
   // Uma regra com a categoria igual ao próprio tipo de problema também conta.
   const categorias = doProblema ? new Set([...doProblema, problema].map(normalizar)) : null;
@@ -133,6 +148,7 @@ export const selecionarRegras: SeletorRegras = (caso, regras, dataReferencia) =>
   return regras
     .filter((r) => regraEmVigor(r, dataReferencia))
     .filter((r) => regraAplicavelAoSetor(r, caso.setor))
+    .filter((r) => !SO_PERFIL.has(normalizar(r.categoria)))
     .map((r) => {
       const cat = normalizar(r.categoria);
       const relevante = !r.categoria ? 1 : categorias === null || categorias.has(cat) ? 1 : sempre.has(cat) ? 0 : -1;

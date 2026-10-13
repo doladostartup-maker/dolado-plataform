@@ -14,6 +14,7 @@
 
 import { encontrarFornecedor, normalizarNomeEmpresa, type Fornecedor } from "../monitor/fornecedores.ts";
 import { mascararTextoLivre, prepararParaIA } from "../ia/minimizacao.ts";
+import { ehCasoAutoconsumo, lerDetalhesCaso } from "../pedidoCaso.ts";
 
 export type CasoParaRascunho = {
   id: string;
@@ -27,6 +28,8 @@ export type CasoParaRascunho = {
   momento_cliente: string | null;
   data_fim_fidelidade: string | null;
   created_at: string;
+  /** Respostas adicionais dos casos de painéis solares (jsonb; lido com lerDetalhesCaso). */
+  detalhes_caso?: unknown;
 };
 
 export type FaturaMonitor = {
@@ -65,7 +68,7 @@ export type ServicoMonitor = {
 };
 
 /** Versão da forma do contexto (gravada na auditoria com o hash). */
-export const CONTEXTO_VERSAO = "contexto_v2";
+export const CONTEXTO_VERSAO = "contexto_v3";
 
 const MAX_DESCRICAO = 4000;
 const MAX_SERVICOS = 3;
@@ -136,6 +139,36 @@ function linhasFatura(linhas: unknown, nome: string | null) {
   });
 }
 
+// Respostas do cliente em linguagem simples ("não sei" fica explícito, para
+// a IA não presumir a forma de contratação, o crédito nem o tipo de contrato).
+const FORMA_PARA_IA: Record<string, string> = {
+  estabelecimento: "no estabelecimento da empresa",
+  domicilio: "no domicílio do consumidor, com um vendedor",
+  distancia: "à distância (online, telefone ou e-mail)",
+  fora_estabelecimento: "fora do estabelecimento, noutro local",
+  nao_sei: "não indicado pelo cliente",
+};
+const FINANCIAMENTO_PARA_IA: Record<string, string> = {
+  nao: "sem financiamento",
+  sim_com_compra: "financiamento apresentado ou contratado juntamente com a compra",
+  sim_separado: "crédito contratado pelo cliente separadamente",
+  nao_sei: "não indicado pelo cliente",
+};
+const TIPO_CONTRATO_PARA_IA: Record<string, string> = {
+  compra_instalacao: "compra (com ou sem instalação) — o cliente é dono dos painéis",
+  caer: "um terceiro instala e explora os painéis no imóvel do cliente (possível contrato de aproveitamento energético renovável)",
+  nao_sei: "não indicado pelo cliente",
+};
+
+export function detalhesParaIA(valor: unknown) {
+  const d = lerDetalhesCaso(valor);
+  return {
+    forma_de_contratacao: FORMA_PARA_IA[d?.forma_contratacao ?? "nao_sei"],
+    financiamento: FINANCIAMENTO_PARA_IA[d?.financiamento ?? "nao_sei"],
+    tipo_de_contrato: TIPO_CONTRATO_PARA_IA[d?.tipo_contrato_solar ?? "nao_sei"],
+  };
+}
+
 export type ContextoRascunho = ReturnType<typeof construirContexto>;
 
 export function construirContexto(caso: CasoParaRascunho, servicos: ServicoMonitor[]) {
@@ -150,6 +183,8 @@ export function construirContexto(caso: CasoParaRascunho, servicos: ServicoMonit
       descricao_do_cliente: descricao,
       contacto_anterior_com_a_empresa: caso.momento_cliente,
       data_do_pedido_a_dolado: caso.created_at.slice(0, 10),
+      // Painéis solares: valores fechados (sem dados pessoais).
+      ...(ehCasoAutoconsumo(caso.sector, caso.problema_tipo) ? { paineis_solares: detalhesParaIA(caso.detalhes_caso) } : {}),
     },
     dados_registados_pela_dolado: {
       data_fim_fidelizacao: caso.data_fim_fidelidade,

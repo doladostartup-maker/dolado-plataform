@@ -55,7 +55,7 @@ export function criarDependenciasRascunho(): DepsRascunho {
     async carregarCaso(casoId) {
       const { data, error } = await admin
         .from("casos")
-        .select("id, utilizador_id, nome, sector, empresa, problema_tipo, tipo_problema, descricao, momento_cliente, data_fim_fidelidade, created_at")
+        .select("id, utilizador_id, nome, sector, empresa, problema_tipo, tipo_problema, descricao, momento_cliente, data_fim_fidelidade, created_at, detalhes_caso")
         .eq("id", casoId)
         .maybeSingle<CasoParaRascunho>();
       falhou("casos", error);
