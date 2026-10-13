@@ -59,6 +59,10 @@ export const planos: Traducao<typeof pt> = {
   comUnidade: (preco: string, subscricao: boolean) => (subscricao ? `${preco}/month` : `${preco} / case`),
   subscricaoMensal: "Monthly subscription",
   pagamentoUnico: "One-off payment",
+  condicoesSubscricao: "Monthly subscription · renews automatically · cancel at any time",
+  condicoesPagamentoUnico: "One-off payment · no renewal",
+  notaCasoExtra: (preco: string) =>
+    `Need another case? If you have already used all your available cases, you can buy an Extra Case for ${preco}, without changing your subscription.`,
   casosDisponiveis: (n: number) => (n <= 0 ? "No cases available" : n === 1 ? "1 case available" : `${n} cases available`),
   conversaoAvulso: (mensalidade: string, plano: string, reembolso: string) =>
     `If you have already bought an eligible Single Case, we use ${mensalidade} of that payment to cover the first month of the ${plano} plan and refund the remaining ${reembolso} to your original payment method.`,

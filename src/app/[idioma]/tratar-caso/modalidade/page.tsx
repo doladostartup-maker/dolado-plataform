@@ -219,7 +219,7 @@ export default async function ModalidadePage({
                     <p className="mt-1 text-[24px] font-extrabold tracking-[-0.02em] text-[var(--v2-navy)]">{tp.comUnidade(preco(plano.precoCentimos), plano.subscricao)}</p>
                   )}
                   <p className={`${METADADOS} mb-3`}>
-                    {`${plano.subscricao ? tp.subscricaoMensal : tp.pagamentoUnico} · ${tp.ivaIncluido}`}
+                    {`${plano.subscricao ? tp.condicoesSubscricao : tp.condicoesPagamentoUnico} · ${tp.ivaIncluido}`}
                   </p>
                   <p className={`${TEXTO_SECUNDARIO} mb-5`}>{tp.descricaoCurta[id]}</p>
                   {id === "caso_protecao" && indicacao?.novoClienteIndicado && (

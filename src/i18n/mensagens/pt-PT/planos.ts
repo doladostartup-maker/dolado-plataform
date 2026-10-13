@@ -31,6 +31,12 @@ export const planos = {
   comUnidade: (preco: string, subscricao: boolean) => (subscricao ? `${preco}/mês` : `${preco} / caso`),
   subscricaoMensal: "Subscrição mensal",
   pagamentoUnico: "Pagamento único",
+  /** Condições junto ao preço, antes do pagamento (preçário, modalidade, portal). */
+  condicoesSubscricao: "Subscrição mensal · renovação automática · cancele quando quiser",
+  condicoesPagamentoUnico: "Pagamento único · sem renovação",
+  /** Caso Extra no contexto do Caso + Proteção (não é um plano do preçário). */
+  notaCasoExtra: (preco: string) =>
+    `Precisa de outro caso? Se já tiver utilizado todos os casos disponíveis, pode adquirir um Caso Extra por ${preco}, sem alterar a sua subscrição.`,
   casosDisponiveis: (n: number) => (n <= 0 ? "Sem casos disponíveis" : n === 1 ? "1 caso disponível" : `${n} casos disponíveis`),
   conversaoAvulso: (mensalidade: string, plano: string, reembolso: string) =>
     `Se já comprou um caso Avulso elegível, utilizamos ${mensalidade} desse pagamento para cobrir o primeiro mês do plano ${plano} e reembolsamos os restantes ${reembolso} para o método de pagamento original.`,

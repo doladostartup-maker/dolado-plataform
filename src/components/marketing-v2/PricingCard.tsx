@@ -18,6 +18,7 @@ export function PricingCard({
   resumo,
   inclui,
   naoInclui,
+  nota,
   destaque = false,
   acao,
 }: {
@@ -29,6 +30,8 @@ export function PricingCard({
   resumo: string;
   inclui: string[];
   naoInclui?: string;
+  /** Nota discreta por baixo do que inclui (ex.: Caso Extra no Caso + Proteção). */
+  nota?: string;
   destaque?: boolean;
   acao: ReactNode;
 }) {
@@ -49,6 +52,7 @@ export function PricingCard({
       <div className="mt-6 border-t border-[var(--v2-line)] pt-6">
         <ListaVistos compacta itens={inclui} />
         {naoInclui && <p className="mt-4 text-[14px] text-[var(--v2-muted)]">{naoInclui}</p>}
+        {nota && <p className="mt-4 text-[13.5px] leading-relaxed text-[var(--v2-muted)]">{nota}</p>}
       </div>
       <div className="mt-auto pt-8 lg:mt-0 lg:self-end">{acao}</div>
     </article>

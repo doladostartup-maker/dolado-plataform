@@ -15,7 +15,7 @@ import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/Sec
 import { BOTAO_CONTORNO, BOTAO_PRIMARIO, TEXTO } from "@/components/marketing-v2/estilos";
 import { track } from "@/lib/analytics";
 import { PRAZO_LIVRE_RESOLUCAO_DIAS, ROTAS_LEGAIS } from "@/lib/legal";
-import { PLANOS, type PlanoId } from "@/lib/planos";
+import { CASO_EXTRA, PLANOS, type PlanoId } from "@/lib/planos";
 import { destinoPlano } from "@/lib/precario";
 
 // Preçário no Design System V2 (/precario): organizado pela necessidade do
@@ -95,10 +95,11 @@ export function PrecarioV2() {
                 nome={tp.nome[id]}
                 preco={precoNoIdioma(idioma, plano.precoCentimos)}
                 unidade={plano.subscricao ? tp.unidadeMes : tp.unidadeCaso}
-                condicoes={`${plano.subscricao ? tp.subscricaoMensal : tp.pagamentoUnico} · ${tp.ivaIncluido}`}
+                condicoes={`${plano.subscricao ? tp.condicoesSubscricao : tp.condicoesPagamentoUnico} · ${tp.ivaIncluido}`}
                 resumo={conteudo.resumo}
                 inclui={conteudo.inclui}
                 naoInclui={conteudo.naoInclui}
+                nota={id === "caso_protecao" ? tp.notaCasoExtra(precoNoIdioma(idioma, CASO_EXTRA.precoCentimos)) : undefined}
                 destaque={destaque}
                 acao={
                   <button
