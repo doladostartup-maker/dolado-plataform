@@ -39,6 +39,14 @@ export const tratarCaso: Traducao<typeof pt> = {
       titulo: "What happened?",
       descricao: "Tell us in your own words",
       descricaoExemplo: "For example: in August my monthly bill went up from €35 to €42 and I wasn't told about it.",
+      solar: {
+        titulo: "About the solar panels",
+        texto: "These answers help us understand how we can handle your case.",
+        forma: "How was the contract for the panels made?",
+        financiamento: "Was the purchase financed?",
+        tipoContrato: "Are the panels yours?",
+        erro: "Please answer all three questions. If you are not sure, choose “I don't know”.",
+      },
     },
     passo3: {
       titulo: "Have you already complained to the company?",
@@ -176,6 +184,7 @@ export const tratarCaso: Traducao<typeof pt> = {
     "Demasiados pedidos. Tente novamente dentro de alguns minutos.": "Too many requests. Please try again in a few minutes.",
     "Não foi possível guardar o seu pedido. Tente novamente.": "We couldn't save your request. Please try again.",
     "Indique o setor e a empresa.": "Please enter the sector and the company.",
+    "Responda às perguntas sobre o contrato dos painéis solares.": "Please answer the questions about the solar panel contract.",
     "Selecione o que aconteceu.": "Please select what happened.",
     "Indique se já reclamou junto da empresa.": "Please say whether you have already complained to the company.",
     "Insira um nome válido.": "Please enter a valid name.",

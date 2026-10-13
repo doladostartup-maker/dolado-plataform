@@ -39,6 +39,14 @@ export const tratarCaso = {
       titulo: "O que aconteceu?",
       descricao: "Conte-nos por palavras suas",
       descricaoExemplo: "Por exemplo: em agosto a mensalidade subiu de 35 € para 42 € e não recebi nenhum aviso.",
+      solar: {
+        titulo: "Sobre os painéis solares",
+        texto: "Estas respostas ajudam-nos a perceber como podemos tratar o seu caso.",
+        forma: "Como foi feito o contrato dos painéis?",
+        financiamento: "A compra foi financiada?",
+        tipoContrato: "Os painéis são seus?",
+        erro: "Responda às três perguntas. Se não tiver a certeza, escolha “Não sei”.",
+      },
     },
     passo3: {
       titulo: "Já reclamou junto da empresa?",
@@ -177,6 +185,7 @@ export const tratarCaso = {
     "Demasiados pedidos. Tente novamente dentro de alguns minutos.": "Demasiados pedidos. Tente novamente dentro de alguns minutos.",
     "Não foi possível guardar o seu pedido. Tente novamente.": "Não foi possível guardar o seu pedido. Tente novamente.",
     "Indique o setor e a empresa.": "Indique o setor e a empresa.",
+    "Responda às perguntas sobre o contrato dos painéis solares.": "Responda às perguntas sobre o contrato dos painéis solares.",
     "Selecione o que aconteceu.": "Selecione o que aconteceu.",
     "Indique se já reclamou junto da empresa.": "Indique se já reclamou junto da empresa.",
     "Insira um nome válido.": "Insira um nome válido.",

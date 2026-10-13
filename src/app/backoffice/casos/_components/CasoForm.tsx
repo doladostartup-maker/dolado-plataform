@@ -1,5 +1,15 @@
 import { ESTADOS_CASO, estadoCaso } from "@/lib/backoffice/triagem";
-import { MOMENTOS, PROBLEMAS, PROBLEMAS_POR_SETOR, SETORES } from "@/lib/pedidoCaso";
+import {
+  ehCasoAutoconsumo,
+  FINANCIAMENTOS,
+  FORMAS_CONTRATACAO,
+  lerDetalhesCaso,
+  MOMENTOS,
+  PROBLEMAS,
+  PROBLEMAS_POR_SETOR,
+  SETORES,
+  TIPOS_CONTRATO_SOLAR,
+} from "@/lib/pedidoCaso";
 import { BotaoSubmeter } from "@/components/backoffice/BotaoSubmeter";
 import {
   AJUDA_CAMPO,
@@ -32,6 +42,27 @@ type CasoFormValues = {
   valor_indicado?: number | null;
   notas?: string | null;
   dossie_url?: string | null;
+  detalhes_caso?: unknown;
+};
+
+// Respostas adicionais dos casos de painéis solares (rótulos internos).
+const ROTULOS_FORMA: Record<string, string> = {
+  estabelecimento: "No estabelecimento da empresa",
+  domicilio: "No domicílio do cliente (vendedor em casa)",
+  distancia: "À distância (online, telefone, e-mail)",
+  fora_estabelecimento: "Noutro local fora do estabelecimento",
+  nao_sei: "Não sei",
+};
+const ROTULOS_FINANCIAMENTO: Record<string, string> = {
+  nao: "Sem financiamento",
+  sim_com_compra: "Financiamento apresentado/contratado com a compra",
+  sim_separado: "Crédito contratado separadamente",
+  nao_sei: "Não sei",
+};
+const ROTULOS_TIPO_CONTRATO: Record<string, string> = {
+  compra_instalacao: "Compra (cliente é dono dos painéis)",
+  caer: "Terceiro instala e explora (possível CAER)",
+  nao_sei: "Não sei",
 };
 
 function paraDatetimeLocal(iso: string | null | undefined): string {
@@ -63,6 +94,32 @@ function Grupo({ titulo, children }: { titulo: string; children: React.ReactNode
 // Formulário de criar/editar caso. Os nomes dos campos e os valores
 // gravados não mudam (a Server Action lê-os tal como antes); só a
 // apresentação, agrupada por tema e com rótulos reais.
+function CamposSolares({ detalhes }: { detalhes: unknown }) {
+  const d = lerDetalhesCaso(detalhes);
+  const select = (nome: string, valor: string | undefined, opcoes: readonly string[], rotulos: Record<string, string>) => (
+    <select name={nome} defaultValue={valor ?? "nao_sei"} className={CAMPO}>
+      {opcoes.map((o) => (
+        <option key={o} value={o}>
+          {rotulos[o]}
+        </option>
+      ))}
+    </select>
+  );
+  return (
+    <>
+      <Campo label="Painéis solares — forma de contratação" ajuda="Resposta do cliente. Decide se a IA pode considerar a livre resolução (DL 24/2014).">
+        {select("forma_contratacao", d?.forma_contratacao, FORMAS_CONTRATACAO, ROTULOS_FORMA)}
+      </Campo>
+      <Campo label="Painéis solares — financiamento" ajuda="Só “com a compra” permite considerar o crédito coligado.">
+        {select("financiamento", d?.financiamento, FINANCIAMENTOS, ROTULOS_FINANCIAMENTO)}
+      </Campo>
+      <Campo label="Painéis solares — tipo de contrato" ajuda="Só “terceiro instala e explora” permite considerar as regras do CAER (Lei 29/2026).">
+        {select("tipo_contrato_solar", d?.tipo_contrato_solar, TIPOS_CONTRATO_SOLAR, ROTULOS_TIPO_CONTRATO)}
+      </Campo>
+    </>
+  );
+}
+
 export function CasoForm({
   action,
   valores = {},
@@ -123,6 +180,7 @@ export function CasoForm({
         <Campo label="Tipo de problema" ajuda="Texto livre (casos antigos).">
           <input name="tipo_problema" defaultValue={valores.tipo_problema ?? ""} className={CAMPO} />
         </Campo>
+        {ehCasoAutoconsumo(valores.sector, valores.problema_tipo) && <CamposSolares detalhes={valores.detalhes_caso} />}
         <Campo label="Já reclamou junto da empresa?">
           <select name="momento_cliente" defaultValue={valores.momento_cliente ?? ""} className={CAMPO}>
             <option value="">Sem resposta</option>

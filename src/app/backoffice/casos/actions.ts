@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { problemaValidoParaSetor } from "@/lib/pedidoCaso";
+import { CAMPOS_DETALHES, ehCasoAutoconsumo, lerDetalhesCaso, problemaValidoParaSetor } from "@/lib/pedidoCaso";
 
 function parseCasoFormData(formData: FormData) {
   const valorIndicado = formData.get("valor_indicado") as string;
@@ -11,16 +11,25 @@ function parseCasoFormData(formData: FormData) {
   const dataFim = formData.get("data_fim_fidelidade") as string;
   const dataEnvioReclamacao = formData.get("data_envio_reclamacao") as string;
   const primeiraRespostaEm = formData.get("primeira_resposta_em") as string;
+  const sector = (formData.get("sector") as string) || null;
+  const problemaTipo = (formData.get("problema_tipo") as string) || null;
+  // Painéis solares: as respostas do cliente podem ser corrigidas aqui
+  // (decidem que regras jurídicas a IA pode considerar). Outros casos: null.
+  const detalhes = ehCasoAutoconsumo(sector, problemaTipo)
+    ? (lerDetalhesCaso(Object.fromEntries(CAMPOS_DETALHES.map((c) => [c, formData.get(c)]))) ??
+      { forma_contratacao: "nao_sei", financiamento: "nao_sei", tipo_contrato_solar: "nao_sei" })
+    : null;
 
   return {
     nome: formData.get("nome") as string,
     email: formData.get("email") as string,
     telefone: (formData.get("telefone") as string) || null,
     empresa_parceira: (formData.get("empresa_parceira") as string) || null,
-    sector: (formData.get("sector") as string) || null,
+    sector,
     empresa: (formData.get("empresa") as string) || null,
     tipo_problema: (formData.get("tipo_problema") as string) || null,
-    problema_tipo: (formData.get("problema_tipo") as string) || null,
+    problema_tipo: problemaTipo,
+    detalhes_caso: detalhes,
     momento_cliente: (formData.get("momento_cliente") as string) || null,
     descricao: (formData.get("descricao") as string) || null,
     status: formData.get("status") as string,

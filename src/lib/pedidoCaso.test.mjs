@@ -16,6 +16,9 @@ import {
   PROBLEMAS_POR_SETOR,
   problemasDoSetor,
   problemaValidoParaSetor,
+  PROBLEMAS_AUTOCONSUMO,
+  ehCasoAutoconsumo,
+  lerDetalhesCaso,
 } from "./pedidoCaso.ts";
 import { calcularAcesso } from "./acesso.ts";
 
@@ -72,9 +75,12 @@ describe("formulário do caso (lerDadosPedido)", () => {
     for (const setor of ["Telecomunicações", "Água"]) {
       assert.deepEqual(problemasDoSetor(setor), [...SERVICOS, "Outro"]);
     }
-    // Energia e Gás têm ainda a mudança de comercializador e a tarifa social (06/10/2026).
-    for (const setor of ["Energia", "Gás"]) {
-      assert.deepEqual(problemasDoSetor(setor), [...SERVICOS, "Mudança de comercializador", "Tarifa social", "Outro"]);
+    // Energia e Gás têm ainda a mudança de comercializador e a tarifa social (06/10/2026);
+    // Energia tem também os três tipos de painéis solares (13/10/2026), antes de "Outro".
+    assert.deepEqual(problemasDoSetor("Gás"), [...SERVICOS, "Mudança de comercializador", "Tarifa social", "Outro"]);
+    assert.deepEqual(problemasDoSetor("Energia"), [...SERVICOS, "Mudança de comercializador", "Tarifa social", ...PROBLEMAS_AUTOCONSUMO, "Outro"]);
+    for (const setor of SETORES.filter((s) => s !== "Energia")) {
+      for (const p of PROBLEMAS_AUTOCONSUMO) assert.ok(!problemasDoSetor(setor).includes(p), `${p} só em Energia (não em ${setor})`);
     }
     for (const p of ["Mudança de comercializador", "Tarifa social"]) {
       for (const setor of ["Telecomunicações", "Água", "Compras & Reembolsos", "Ginásios"]) {
@@ -103,6 +109,37 @@ describe("formulário do caso (lerDadosPedido)", () => {
       assert.equal(lerDadosPedido(formulario({ sector: "Telecomunicações", problema_tipo: p })).ok, false, p);
       assert.equal(lerDadosPedido(formulario({ sector: "Compras & Reembolsos", problema_tipo: p })).ok, false, p);
     }
+  });
+
+  test("painéis solares: três respostas obrigatórias (com \"Não sei\"), só nos tipos de Autoconsumo", () => {
+    const solar = { sector: "Energia", problema_tipo: PROBLEMAS_AUTOCONSUMO[0] };
+    const respostas = { forma_contratacao: "domicilio", financiamento: "sim_com_compra", tipo_contrato_solar: "compra_instalacao" };
+    const r = lerDadosPedido(formulario({ ...solar, ...respostas }));
+    assert.equal(r.ok, true);
+    assert.deepEqual(r.dados.detalhes_caso, respostas);
+    // Falta uma resposta, ou valor fora da lista → recusado.
+    assert.equal(lerDadosPedido(formulario({ ...solar, ...respostas, financiamento: "" })).ok, false);
+    assert.equal(lerDadosPedido(formulario({ ...solar, ...respostas, forma_contratacao: "porta" })).ok, false);
+    // "Não sei" é uma resposta válida.
+    const naoSei = { forma_contratacao: "nao_sei", financiamento: "nao_sei", tipo_contrato_solar: "nao_sei" };
+    assert.deepEqual(lerDadosPedido(formulario({ ...solar, ...naoSei })).dados.detalhes_caso, naoSei);
+    // Fora dos casos solares as respostas são ignoradas (nunca gravadas).
+    assert.equal(lerDadosPedido(formulario({ ...respostas })).dados.detalhes_caso, null);
+    assert.equal(lerDadosPedido(formulario({ sector: "Gás", problema_tipo: PROBLEMAS_AUTOCONSUMO[0], ...respostas })).ok, false);
+    assert.equal(ehCasoAutoconsumo("Energia", PROBLEMAS_AUTOCONSUMO[2]), true);
+    assert.equal(ehCasoAutoconsumo("Energia", "Cobrança indevida"), false);
+    assert.equal(ehCasoAutoconsumo("Compras & Reembolsos", PROBLEMAS_AUTOCONSUMO[0]), false);
+  });
+
+  test("lerDetalhesCaso: valores fora da lista → \"nao_sei\"; sem nada válido → null", () => {
+    assert.equal(lerDetalhesCaso(null), null);
+    assert.equal(lerDetalhesCaso([]), null);
+    assert.equal(lerDetalhesCaso({ outro: "x" }), null);
+    assert.deepEqual(lerDetalhesCaso({ financiamento: "nao", forma_contratacao: 3 }), {
+      forma_contratacao: "nao_sei",
+      financiamento: "nao",
+      tipo_contrato_solar: "nao_sei",
+    });
   });
 
   test("backoffice: o tipo de problema tem de pertencer ao setor (vazio continua válido)", () => {

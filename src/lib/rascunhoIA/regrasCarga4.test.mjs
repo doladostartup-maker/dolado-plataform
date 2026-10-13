@@ -5,80 +5,16 @@
 // preenchidos, nunca reescreve regras revistas) estão em
 // supabase/tests/database/regras_carga4.test.sql.
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { lerRegrasDaMigration } from "./lerRegrasMigration.mjs";
 import { describe, test } from "node:test";
-import { isServicoPublicoEssencial, PROBLEMAS, problemasDoSetor, SETORES } from "../pedidoCaso.ts";
+import { ehCasoAutoconsumo, isServicoPublicoEssencial, PROBLEMAS, problemasDoSetor, SETORES } from "../pedidoCaso.ts";
+import { MAX_REGRAS_AUTOCONSUMO } from "./perfilAutoconsumo.ts";
 import { CATEGORIAS_POR_PROBLEMA, regraAplicavelAoSetor, regraDaLeiServicosPublicosEssenciais, selecionarRegras } from "./regras.ts";
 
 const HOJE = "2026-10-06";
 const MIGRATION = new URL("../../../supabase/migrations/20261006140000_regras_juridicas_carga4.sql", import.meta.url);
 
-const COLUNAS = [
-  "codigo", "setor", "categoria", "subcategoria", "titulo", "diploma", "artigo", "resumo",
-  "condicoes_aplicabilidade", "fonte_url", "em_vigor_desde", "revogada_em", "ativa", "revista_em", "revista_por",
-  "efeito_juridico", "provas_necessarias", "resultado_pretendido", "palavras_chave",
-];
-
-/** Lê as tuplas do `insert … values (…), (…) on conflict` (só literais simples). */
-function lerCarga() {
-  const sql = readFileSync(MIGRATION, "utf8")
-    .split("\n")
-    .filter((l) => !l.trimStart().startsWith("--"))
-    .join("\n");
-  const corpo = sql.slice(sql.indexOf(") values") + ") values".length, sql.indexOf("on conflict (codigo)"));
-  const linhas = [];
-  let i = 0;
-  const espacos = () => {
-    while (i < corpo.length && /[\s,]/.test(corpo[i])) i++;
-  };
-  const texto = () => {
-    let s = "";
-    i++; // '
-    for (;;) {
-      if (corpo[i] === "'" && corpo[i + 1] === "'") {
-        s += "'";
-        i += 2;
-      } else if (corpo[i] === "'") {
-        i++;
-        return s;
-      } else {
-        s += corpo[i++];
-      }
-    }
-  };
-  const valor = () => {
-    espacos();
-    if (corpo[i] === "'") return texto();
-    if (corpo.startsWith("null", i)) return (i += 4), null;
-    if (corpo.startsWith("false", i)) return (i += 5), false;
-    if (corpo.startsWith("true", i)) return (i += 4), true;
-    if (corpo.startsWith("array[", i)) {
-      i += 6;
-      const lista = [];
-      for (;;) {
-        espacos();
-        if (corpo[i] === "]") return i++, lista;
-        lista.push(texto());
-      }
-    }
-    throw new Error(`Valor inesperado em ${i}: ${corpo.slice(i, i + 40)}`);
-  };
-  for (;;) {
-    espacos();
-    if (i >= corpo.length) break;
-    assert.equal(corpo[i], "(", `tupla em ${i}`);
-    i++;
-    const linha = {};
-    for (const c of COLUNAS) linha[c] = valor();
-    espacos();
-    assert.equal(corpo[i], ")", `fim da tupla ${linha.codigo}`);
-    i++;
-    linhas.push(linha);
-  }
-  return linhas;
-}
-
-const CARGA = lerCarga();
+const CARGA = lerRegrasDaMigration(MIGRATION);
 const porCodigo = Object.fromEntries(CARGA.map((r) => [r.codigo, r]));
 
 /** As regras como ficarão depois de revistas e ativadas por Thiago/advogada. */
@@ -269,9 +205,13 @@ describe("carga jurídica 4 — seleção por setor", () => {
     for (const setor of SETORES) {
       for (const problema of problemasDoSetor(setor)) {
         const enviadas = codigos(setor, problema);
-        if (setor !== "Compras & Reembolsos") assert.ok(!enviadas.some((c) => c.startsWith("COMPRA_")), `${setor} / ${problema}`);
+        // Exceção deliberada (13/10/2026): os casos de painéis solares
+        // (Energia → Autoconsumo) recebem as regras de Compras do DL 84/2021
+        // e do DL 24/2014 pelo perfil próprio — ver autoconsumo.test.mjs.
+        const solar = ehCasoAutoconsumo(setor, problema);
+        if (setor !== "Compras & Reembolsos" && !solar) assert.ok(!enviadas.some((c) => c.startsWith("COMPRA_")), `${setor} / ${problema}`);
         if (setor !== "Ginásios") assert.ok(!enviadas.some((c) => c.startsWith("GIN_")), `${setor} / ${problema}`);
-        assert.ok(enviadas.length <= 12);
+        assert.ok(enviadas.length <= (solar ? MAX_REGRAS_AUTOCONSUMO : 12));
       }
     }
   });

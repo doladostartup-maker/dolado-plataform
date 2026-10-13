@@ -29,7 +29,29 @@ export const rotulos = {
     "Garantia recusada": "Garantia recusada",
     "Cobrança após cancelamento": "Cobrança após cancelamento",
     "Serviço diferente do contratado": "Serviço diferente do contratado",
+    "Painéis solares: instalação, avaria ou garantia": "Painéis solares: instalação, avaria ou garantia",
+    "Painéis solares: contrato, cancelamento ou promessa comercial": "Painéis solares: contrato, cancelamento ou promessa comercial",
+    "Painéis solares: registo, ligação ou autoconsumo": "Painéis solares: registo, ligação ou autoconsumo",
     Outro: "Outro",
+  },
+  // Respostas adicionais dos casos de painéis solares (detalhes_caso).
+  formaContratacao: {
+    estabelecimento: "Numa loja ou nas instalações da empresa",
+    domicilio: "Em minha casa, com um vendedor",
+    distancia: "À distância (online, por telefone ou por e-mail)",
+    fora_estabelecimento: "Noutro local (feira, evento, local de trabalho…)",
+    nao_sei: "Não sei",
+  },
+  financiamento: {
+    nao: "Não",
+    sim_com_compra: "Sim, com um financiamento apresentado ou contratado juntamente com a compra",
+    sim_separado: "Sim, com um crédito que contratei separadamente",
+    nao_sei: "Não sei",
+  },
+  tipoContratoSolar: {
+    compra_instalacao: "Sim, comprei os painéis (com ou sem instalação)",
+    caer: "Não: uma empresa instala e explora os painéis no meu telhado ou terreno",
+    nao_sei: "Não sei",
   },
   momentos: {
     "Sim, e não me responderam": "Sim, e não me responderam",

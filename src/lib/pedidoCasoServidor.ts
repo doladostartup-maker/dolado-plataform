@@ -72,6 +72,7 @@ function linhaDoPedido(dados: DadosPedido) {
     anexo_nome: dados.anexo?.nome ?? null,
     anexo_tipo: dados.anexo?.tipo ?? null,
     anexo_tamanho: dados.anexo?.tamanho ?? null,
+    detalhes_caso: dados.detalhes_caso,
     expira_em: new Date(Date.now() + DIAS_VALIDADE_PEDIDO * 24 * 3600 * 1000).toISOString(),
   };
 }

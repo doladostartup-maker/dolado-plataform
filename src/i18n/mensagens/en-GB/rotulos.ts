@@ -26,7 +26,28 @@ export const rotulos: Traducao<typeof pt> = {
     "Garantia recusada": "Guarantee claim refused",
     "Cobrança após cancelamento": "Charged after cancelling",
     "Serviço diferente do contratado": "Service different from what was agreed",
+    "Painéis solares: instalação, avaria ou garantia": "Solar panels: installation, fault or guarantee",
+    "Painéis solares: contrato, cancelamento ou promessa comercial": "Solar panels: contract, cancellation or sales promise",
+    "Painéis solares: registo, ligação ou autoconsumo": "Solar panels: registration, grid connection or self-consumption",
     Outro: "Other",
+  },
+  formaContratacao: {
+    estabelecimento: "In a shop or at the company's premises",
+    domicilio: "At my home, with a salesperson",
+    distancia: "At a distance (online, by phone or by email)",
+    fora_estabelecimento: "Somewhere else (fair, event, workplace…)",
+    nao_sei: "I don't know",
+  },
+  financiamento: {
+    nao: "No",
+    sim_com_compra: "Yes, with finance offered or arranged together with the purchase",
+    sim_separado: "Yes, with a loan I took out separately",
+    nao_sei: "I don't know",
+  },
+  tipoContratoSolar: {
+    compra_instalacao: "Yes, I bought the panels (with or without installation)",
+    caer: "No: a company installs and runs the panels on my roof or land",
+    nao_sei: "I don't know",
   },
   momentos: {
     "Sim, e não me responderam": "Yes, and they didn't reply",
