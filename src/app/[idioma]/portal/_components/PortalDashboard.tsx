@@ -451,7 +451,7 @@ export function PortalDashboard({
                       <p className="text-[14px] font-semibold text-[var(--color-ink)]">
                         {tp.nome[opcao.plano]} — {tp.comUnidade(formatarPreco(PLANOS[opcao.plano].precoCentimos), true)}
                       </p>
-                      <p className="text-[12px] text-[var(--color-ink-faint)]">{tp.ivaIncluido}</p>
+                      <p className="text-[12px] text-[var(--color-ink-faint)]">{`${tp.condicoesSubscricao} · ${tp.ivaIncluido}`}</p>
                       <p className="mb-3 mt-1 text-[13px] leading-relaxed text-[var(--color-ink-muted)]">
                         {opcao.descricao}
                         {conversao && (
