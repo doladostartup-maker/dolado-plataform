@@ -6,6 +6,8 @@
 // a de cada serviço acompanhado. Determinístico, sem IA.
 //
 //   confirmada — um identificador estável coincide e nenhum é diferente
+//                (o número do serviço diferente, sozinho, é neutro desde
+//                14/10/2026, se o número de cliente/conta/contrato coincidir)
 //   possivel   — não há identificadores suficientes, ou há uma diferença
 //                isolada: o cliente decide (associação explícita e auditada)
 //   conflito   — fornecedor ou NIF diferente, ou duas diferenças: parece
@@ -180,6 +182,9 @@ export type IdentidadeServico = { id: string; fornecedorChave: string | null; id
 
 type Comparacao = "igual" | "diferente" | "sem_dados";
 
+/** CPE e CUI identificam o local de fornecimento (ao contrário do número do serviço). */
+const ehLocal = (i: Identificador) => i.tipo === "cpe" || i.tipo === "cui";
+
 function comparar(familia: "nif" | "titular" | "conta" | "servico", a: Identificador[], b: Identificador[]): Comparacao {
   const va = new Set(a.filter((i) => FAMILIA[i.tipo] === familia).map((i) => i.valorNormalizado));
   const vb = new Set(b.filter((i) => FAMILIA[i.tipo] === familia).map((i) => i.valorNormalizado));
@@ -228,7 +233,24 @@ export function avaliarAssociacao(doc: IdentidadeDocumento, servico: Omit<Identi
   if (r.nif === "diferente" || (fortesDiferentes >= 1 && (r.titular === "diferente" || fortesDiferentes >= 2))) {
     return { estado: "conflito", confianca: 0.1, motivos, conflitos };
   }
-  if (conflitos.length > 0) return { estado: "possivel", confianca: 0.4, motivos, conflitos };
+
+  // Número do serviço diferente, quando é a ÚNICA diferença, é neutro (desde
+  // 14/10/2026): o mesmo fornecimento pode aparecer com números de serviço
+  // diferentes no contrato e na fatura (ex.: EDP). Não vale para CPE/CUI
+  // diferentes (local de fornecimento): esses continuam a impedir. Com outra
+  // diferença, tudo fica como antes (regra de conflito acima, mensagens).
+  const numeroServicoNeutro =
+    r.servico === "diferente" && comparar("servico", doc.ids.filter(ehLocal), servico.ids.filter(ehLocal)) !== "diferente";
+  const conflitosRelevantes = numeroServicoNeutro ? conflitos.filter((c) => c !== TEXTO_DIFERENTE.servico) : conflitos;
+  if (conflitosRelevantes.length > 0) return { estado: "possivel", confianca: 0.4, motivos, conflitos };
+
+  // Com o número do serviço diferente, o NIF sozinho não basta (o mesmo
+  // cliente pode ter vários serviços no mesmo fornecedor): é preciso o mesmo
+  // número de cliente, de conta ou de contrato.
+  if (numeroServicoNeutro) {
+    if (r.conta !== "igual") return { estado: "possivel", confianca: 0.4, motivos, conflitos };
+    conflitos.length = 0; // não é mostrada como diferença
+  }
 
   const fortesIguais = (["nif", "conta", "servico"] as const).filter((f) => r[f] === "igual").length;
   if (fortesIguais > 0) {
@@ -268,6 +290,10 @@ export function escolherServico(doc: IdentidadeDocumento, servicos: IdentidadeSe
   }
 
   if (confirmados.length === 1) return { acao: "associar", servicoId: confirmados[0].id, resultado: confirmados[0].r };
+  // Vários confirmados (o número do serviço diferente é neutro): se só um
+  // coincide também no número do serviço, é esse.
+  const mesmoNumero = confirmados.filter((a) => a.r.motivos.includes(TEXTO_IGUAL.servico));
+  if (confirmados.length > 1 && mesmoNumero.length === 1) return { acao: "associar", servicoId: mesmoNumero[0].id, resultado: mesmoNumero[0].r };
   const candidatos = [...confirmados, ...avaliados.filter((a) => a.r.estado === "possivel")].sort((a, b) => b.r.confianca - a.r.confianca);
   if (candidatos.length > 0) {
     const r = confirmados.length > 1 ? { ...candidatos[0].r, estado: "possivel" as const, conflitos: ["Há mais de um serviço com esta identificação"] } : candidatos[0].r;
