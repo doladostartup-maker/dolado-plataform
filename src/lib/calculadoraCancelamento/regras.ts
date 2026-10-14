@@ -220,6 +220,56 @@ export function validarDados(dados: DadosCalculadora, hoje: string): Partial<Rec
   return erros;
 }
 
+// ---------------------------------------------------------------------------
+// Peças comuns (Monitor e Calculadora pública)
+// ---------------------------------------------------------------------------
+
+/** Cenário de fidelização: a regra geral (primeira fidelização ou refidelização com nova instalação) ou a refidelização sem nova instalação. */
+export type CenarioFidelizacao = "geral" | "refidelizacao_sem_instalacao";
+
+type Regime = "a_partir_de_2022_11_14" | "anterior_a_2022_11_14";
+
+type Periodo =
+  | { terminada: true; tempo: TempoFidelizacao }
+  | { terminada: false; tempo: TempoFidelizacao; diasEmFalta: number; diasTotais: number; anoFidelizacao: 1 | 2; regime: Regime };
+
+function periodoFidelizacao(dataInicio: string, D: number, hoje: string): Periodo {
+  const dataFim = somarMeses(dataInicio, D);
+  const decorrido = mesesEDias(dataInicio, hoje);
+  if (hoje >= dataFim) {
+    return { terminada: true, tempo: { dataFim, decorrido, emFalta: { meses: 0, dias: 0 }, mensalidadesEmFalta: 0 } };
+  }
+  // N: mensalidades do período de fidelização ainda não vencidas (a do mês
+  // em curso conta como em falta). 1 <= N <= D.
+  const N = D - decorrido.meses;
+  return {
+    terminada: false,
+    tempo: { dataFim, decorrido, emFalta: mesesEDias(hoje, dataFim), mensalidadesEmFalta: N },
+    // R / D em dias: 0 < R <= D.
+    diasEmFalta: diasEntre(hoje, dataFim),
+    diasTotais: diasEntre(dataInicio, dataFim),
+    anoFidelizacao: decorrido.meses < 12 ? 1 : 2,
+    regime: dataInicio < DATA_REGIME_LCE ? "anterior_a_2022_11_14" : "a_partir_de_2022_11_14",
+  };
+}
+
+/** Percentagem do limite pelas mensalidades; null quando esse limite não se aplica (regime anterior, regra geral). */
+function percentagemDoCenario(regime: Regime, cenario: CenarioFidelizacao, ano: 1 | 2): 50 | 30 | null {
+  // Refidelização sem nova instalação: sempre 30% (nos dois regimes).
+  if (cenario === "refidelizacao_sem_instalacao") return 30;
+  if (regime === "anterior_a_2022_11_14") return null;
+  return ano === 1 ? 50 : 30;
+}
+
+function criterioDe(A: number, B: number | null): "vantagem" | "limite" | "iguais" | "so_vantagem" {
+  if (B === null) return "so_vantagem";
+  return A === B ? "iguais" : A < B ? "vantagem" : "limite";
+}
+
+// ---------------------------------------------------------------------------
+// Cálculo com todos os dados (usado também pelo Monitor de Proteção)
+// ---------------------------------------------------------------------------
+
 export function calcularEncargoCancelamento(dados: DadosCalculadora, hoje: string): ResultadoCalculadora {
   if (!partesData(hoje)) throw new Error("data de hoje inválida");
   const erros = validarDados(dados, hoje);
@@ -230,66 +280,278 @@ export function calcularEncargoCancelamento(dados: DadosCalculadora, hoje: strin
   const M = lerEuros(dados.mensalidade)!;
   const equipamento = dados.equipamento === "sim";
 
-  const dataFim = somarMeses(dados.dataInicio, D);
-  const decorrido = mesesEDias(dados.dataInicio, hoje);
+  const p = periodoFidelizacao(dados.dataInicio, D, hoje);
+  if (p.terminada) return { ok: true, estado: "terminada", tempo: p.tempo, equipamento, resultadoCentimos: 0 };
 
-  if (hoje >= dataFim) {
-    return {
-      ok: true,
-      estado: "terminada",
-      tempo: { dataFim, decorrido, emFalta: { meses: 0, dias: 0 }, mensalidadesEmFalta: 0 },
-      equipamento,
-      resultadoCentimos: 0,
-    };
-  }
-
-  const emFalta = mesesEDias(hoje, dataFim);
-  // N: mensalidades do período de fidelização ainda não vencidas (a do mês
-  // em curso conta como em falta). 1 <= N <= D.
-  const N = D - decorrido.meses;
-  const tempo: TempoFidelizacao = { dataFim, decorrido, emFalta, mensalidadesEmFalta: N };
-
-  // R / D em dias: 0 < R <= D.
-  const diasEmFalta = diasEntre(hoje, dataFim);
-  const diasTotais = diasEntre(dados.dataInicio, dataFim);
-  const A = Math.round((V * diasEmFalta) / diasTotais);
-  const anoFidelizacao: 1 | 2 = decorrido.meses < 12 ? 1 : 2;
-
-  const refidelizacaoSemInstalacao = dados.tipo === "refidelizacao" && dados.novaInstalacao === "nao";
-
-  if (dados.dataInicio < DATA_REGIME_LCE && !refidelizacaoSemInstalacao) {
-    return {
-      ok: true,
-      estado: "calculado",
-      regime: "anterior_a_2022_11_14",
-      tempo,
-      equipamento,
-      vantagemProporcionalCentimos: A,
-      limiteMensalidadesCentimos: null,
-      percentagemLimite: null,
-      anoFidelizacao,
-      resultadoCentimos: A,
-      criterio: "so_vantagem",
-    };
-  }
-
-  // Refidelização sem nova instalação: sempre 30% (nos dois regimes).
-  const percentagemLimite: 50 | 30 = !refidelizacaoSemInstalacao && anoFidelizacao === 1 ? 50 : 30;
-  const B = Math.round((M * N * percentagemLimite) / 100);
-  const resultado = Math.min(A, B);
+  const A = Math.round((V * p.diasEmFalta) / p.diasTotais);
+  const cenario: CenarioFidelizacao =
+    dados.tipo === "refidelizacao" && dados.novaInstalacao === "nao" ? "refidelizacao_sem_instalacao" : "geral";
+  const percentagemLimite = percentagemDoCenario(p.regime, cenario, p.anoFidelizacao);
+  const B = percentagemLimite === null ? null : Math.round((M * p.tempo.mensalidadesEmFalta * percentagemLimite) / 100);
 
   return {
     ok: true,
     estado: "calculado",
-    regime: dados.dataInicio < DATA_REGIME_LCE ? "anterior_a_2022_11_14" : "a_partir_de_2022_11_14",
-    tempo,
+    regime: p.regime,
+    tempo: p.tempo,
     equipamento,
     vantagemProporcionalCentimos: A,
     limiteMensalidadesCentimos: B,
     percentagemLimite,
-    anoFidelizacao,
+    anoFidelizacao: p.anoFidelizacao,
+    resultadoCentimos: B === null ? A : Math.min(A, B),
+    criterio: criterioDe(A, B),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Calculadora pública (14/10/2026): "Não sei" nunca é um beco sem saída
+// ---------------------------------------------------------------------------
+//
+// O consumidor nem sempre conhece a vantagem associada à fidelização nem o
+// tipo de fidelização. Sem esses dados não se inventa um valor exato:
+//   * Calcula-se cada cenário ainda possível com as respostas dadas
+//     (regra geral / refidelização sem nova instalação).
+//   * Sem a vantagem (V), cada cenário só tem o limite pelas mensalidades (B):
+//     o encargo é no máximo B e poderá ser inferior (MIN(A, B) com A por
+//     conhecer).
+//   * O valor apresentado é o MAIOR dos cenários possíveis — nunca se
+//     subestima o limite.
+//   * O resultado só é "completo" quando todos os cenários possíveis dão o
+//     mesmo valor com a vantagem conhecida. Caso contrário é "parcial"
+//     ("Limite calculado: até X"), com a lista do que falta.
+//   * Regime anterior a 14/11/2022, regra geral, sem a vantagem: não há
+//     limite calculável (o encargo é só a vantagem proporcional) →
+//     "sem_limite", com a explicação do que falta.
+
+export type SimNaoNaoSei = "sim" | "nao" | "nao_sei";
+export type ConheceVantagem = "sim" | "nao_sei" | "ajuda";
+
+export type DadosCalculadoraPublica = {
+  /** AAAA-MM-DD */
+  dataInicio: string;
+  /** Meses, inteiro. */
+  duracaoMeses: string;
+  /** "Esta fidelização começou quando contratou este serviço pela primeira vez?" */
+  primeiraVez: SimNaoNaoSei | "";
+  /** Só quando primeiraVez = "nao". */
+  novaInstalacao: SimNaoNaoSei | "";
+  /** Euros, com vírgula ou ponto decimal. */
+  mensalidade: string;
+  /** "ajuda" com o valor preenchido conta como conhecido. */
+  conheceVantagem: ConheceVantagem | "";
+  /** Euros; só usado com conheceVantagem "sim" ou "ajuda". */
+  vantagem: string;
+  equipamento: SimNao | "";
+  /** Opcional: encargo indicado pela operadora (fatura, contrato, resposta). */
+  valorOperador: string;
+};
+
+export type CampoCalculadoraPublica = keyof DadosCalculadoraPublica;
+
+export type DadoEmFaltaCalculadora = "vantagem" | "tipo";
+
+export type LimiteCenario = { cenario: CenarioFidelizacao; percentagem: 50 | 30; centimos: number };
+
+/** Diferença tolerada face ao operador: 2 € ou 5% do limite, o que for maior (como no Monitor). */
+const TOLERANCIA_CENTIMOS = 200;
+const TOLERANCIA_PCT = 5;
+
+export type ComparacaoOperador = {
+  resultado: "superior" | "proximo" | "inferior";
+  operadorCentimos: number;
+  limiteCentimos: number;
+};
+
+export type ResultadoCalculadoraPublica =
+  | { ok: false; erros: Partial<Record<CampoCalculadoraPublica, string>> }
+  | {
+      ok: true;
+      estado: "terminada";
+      completo: true;
+      tempo: TempoFidelizacao;
+      equipamento: boolean;
+      resultadoCentimos: 0;
+      operador: ComparacaoOperador | null;
+    }
+  | {
+      ok: true;
+      estado: "calculado";
+      /** true: valor máximo estimado. false: só um limite ("até X"), o valor aplicável poderá ser inferior. */
+      completo: boolean;
+      faltam: DadoEmFaltaCalculadora[];
+      regime: Regime;
+      tempo: TempoFidelizacao;
+      equipamento: boolean;
+      anoFidelizacao: 1 | 2;
+      /** A — null quando a vantagem não é conhecida. */
+      vantagemProporcionalCentimos: number | null;
+      /** B de cada cenário possível que tem limite pelas mensalidades (sem repetir percentagens). */
+      limitesMensalidades: LimiteCenario[];
+      /** Só nos cenários do regime anterior em que conta apenas a vantagem. */
+      cenarioSoVantagem: boolean;
+      /** Completo: o valor máximo estimado. Parcial: o limite ("até"). */
+      resultadoCentimos: number;
+      /** Só no resultado completo. */
+      criterio: "vantagem" | "limite" | "iguais" | "so_vantagem" | null;
+      operador: ComparacaoOperador | null;
+    }
+  | {
+      ok: true;
+      estado: "sem_limite";
+      completo: false;
+      faltam: DadoEmFaltaCalculadora[];
+      regime: "anterior_a_2022_11_14";
+      tempo: TempoFidelizacao;
+      equipamento: boolean;
+    };
+
+/** Apresentação do resultado: só "completo" pode usar "Valor máximo estimado". */
+export function apresentacaoResultado(r: Exclude<ResultadoCalculadoraPublica, { ok: false }>): "terminada" | "completo" | "parcial" | "sem_limite" {
+  if (r.estado === "terminada") return "terminada";
+  if (r.estado === "sem_limite") return "sem_limite";
+  return r.completo ? "completo" : "parcial";
+}
+
+export function vantagemConhecida(dados: Pick<DadosCalculadoraPublica, "conheceVantagem" | "vantagem">) {
+  return dados.conheceVantagem === "sim" || (dados.conheceVantagem === "ajuda" && dados.vantagem.trim() !== "");
+}
+
+/** Cenários ainda possíveis com as respostas sobre o tipo de fidelização. */
+export function cenariosPossiveis(dados: Pick<DadosCalculadoraPublica, "primeiraVez" | "novaInstalacao">): CenarioFidelizacao[] {
+  if (dados.primeiraVez === "sim") return ["geral"];
+  if (dados.primeiraVez === "nao" && dados.novaInstalacao === "sim") return ["geral"];
+  if (dados.primeiraVez === "nao" && dados.novaInstalacao === "nao") return ["refidelizacao_sem_instalacao"];
+  return ["geral", "refidelizacao_sem_instalacao"];
+}
+
+export const ERRO_VANTAGEM_AJUDA = "Indique o valor ou escolha “Não encontro este valor”.";
+
+export function validarDadosPublicos(dados: DadosCalculadoraPublica, hoje: string): Partial<Record<CampoCalculadoraPublica, string>> {
+  // Datas, duração, mensalidade e equipamento: as validações de sempre.
+  const comuns = validarDados(
+    {
+      dataInicio: dados.dataInicio,
+      duracaoMeses: dados.duracaoMeses,
+      tipo: "primeira",
+      novaInstalacao: "",
+      mensalidade: dados.mensalidade,
+      vantagem: "0",
+      equipamento: dados.equipamento,
+    },
+    hoje,
+  );
+  const erros: Partial<Record<CampoCalculadoraPublica, string>> = {
+    dataInicio: comuns.dataInicio,
+    duracaoMeses: comuns.duracaoMeses,
+    mensalidade: comuns.mensalidade,
+    equipamento: comuns.equipamento,
+  };
+
+  const opcoes: string[] = ["sim", "nao", "nao_sei"];
+  if (!opcoes.includes(dados.primeiraVez)) {
+    erros.primeiraVez = "Escolha uma opção.";
+  } else if (dados.primeiraVez === "nao" && !opcoes.includes(dados.novaInstalacao)) {
+    erros.novaInstalacao = "Escolha uma opção.";
+  }
+
+  if (dados.conheceVantagem !== "sim" && dados.conheceVantagem !== "nao_sei" && dados.conheceVantagem !== "ajuda") {
+    erros.conheceVantagem = "Escolha uma opção.";
+  } else if (dados.conheceVantagem === "ajuda" && dados.vantagem.trim() === "") {
+    erros.vantagem = ERRO_VANTAGEM_AJUDA;
+  } else if (vantagemConhecida(dados)) {
+    const vantagem = lerEuros(dados.vantagem);
+    if (vantagem === null) erros.vantagem = "Indique um valor em euros, sem valores negativos (ex.: 120,00).";
+    else if (vantagem > VANTAGEM_MAXIMA_CENTIMOS) erros.vantagem = "Confirme o valor: a vantagem parece demasiado alta.";
+  }
+
+  if (dados.valorOperador.trim() !== "") {
+    const operador = lerEuros(dados.valorOperador);
+    if (operador === null) erros.valorOperador = "Indique um valor em euros, sem valores negativos (ex.: 125,00).";
+    else if (operador > VANTAGEM_MAXIMA_CENTIMOS) erros.valorOperador = "Confirme o valor: o valor indicado parece demasiado alto.";
+  }
+
+  for (const k of Object.keys(erros) as CampoCalculadoraPublica[]) if (!erros[k]) delete erros[k];
+  return erros;
+}
+
+export function compararComOperador(operadorCentimos: number, limiteCentimos: number): ComparacaoOperador {
+  const tolerancia = Math.max(TOLERANCIA_CENTIMOS, Math.round((limiteCentimos * TOLERANCIA_PCT) / 100));
+  const diferenca = operadorCentimos - limiteCentimos;
+  const resultado = diferenca > tolerancia ? "superior" : diferenca < -tolerancia ? "inferior" : "proximo";
+  return { resultado, operadorCentimos, limiteCentimos };
+}
+
+export function estimarEncargoCancelamento(dados: DadosCalculadoraPublica, hoje: string): ResultadoCalculadoraPublica {
+  if (!partesData(hoje)) throw new Error("data de hoje inválida");
+  const erros = validarDadosPublicos(dados, hoje);
+  if (Object.keys(erros).length > 0) return { ok: false, erros };
+
+  const D = Number(dados.duracaoMeses.trim());
+  const M = lerEuros(dados.mensalidade)!;
+  const V = vantagemConhecida(dados) ? lerEuros(dados.vantagem)! : null;
+  const operadorCentimos = dados.valorOperador.trim() === "" ? null : lerEuros(dados.valorOperador)!;
+  const equipamento = dados.equipamento === "sim";
+
+  const p = periodoFidelizacao(dados.dataInicio, D, hoje);
+  if (p.terminada) {
+    return {
+      ok: true,
+      estado: "terminada",
+      completo: true,
+      tempo: p.tempo,
+      equipamento,
+      resultadoCentimos: 0,
+      operador: operadorCentimos === null ? null : compararComOperador(operadorCentimos, 0),
+    };
+  }
+
+  const A = V === null ? null : Math.round((V * p.diasEmFalta) / p.diasTotais);
+  const N = p.tempo.mensalidadesEmFalta;
+  const calculos = cenariosPossiveis(dados).map((cenario) => {
+    const percentagem = percentagemDoCenario(p.regime, cenario, p.anoFidelizacao);
+    const B = percentagem === null ? null : Math.round((M * N * percentagem) / 100);
+    // Valor máximo do cenário; null = sem limite calculável (falta a vantagem).
+    const valor = A === null ? B : B === null ? A : Math.min(A, B);
+    return { cenario, percentagem, B, valor };
+  });
+
+  const faltam: DadoEmFaltaCalculadora[] = [];
+  if (A === null) faltam.push("vantagem");
+  const valores = calculos.map((c) => c.valor);
+  // O tipo de fidelização só falta quando mudaria o resultado.
+  if (new Set(valores).size > 1) faltam.push("tipo");
+
+  if (valores.some((v) => v === null)) {
+    return { ok: true, estado: "sem_limite", completo: false, faltam, regime: "anterior_a_2022_11_14", tempo: p.tempo, equipamento };
+  }
+
+  const resultado = Math.max(...(valores as number[]));
+  // Sem a vantagem só é definitivo um limite de 0 € (MIN(A, 0) = 0).
+  const completo = faltam.length === 0 || (resultado === 0 && !faltam.includes("tipo"));
+
+  const limitesMensalidades: LimiteCenario[] = [];
+  for (const c of calculos) {
+    if (c.percentagem !== null && c.B !== null && !limitesMensalidades.some((l) => l.percentagem === c.percentagem)) {
+      limitesMensalidades.push({ cenario: c.cenario, percentagem: c.percentagem, centimos: c.B });
+    }
+  }
+
+  return {
+    ok: true,
+    estado: "calculado",
+    completo,
+    faltam: completo ? [] : faltam,
+    regime: p.regime,
+    tempo: p.tempo,
+    equipamento,
+    anoFidelizacao: p.anoFidelizacao,
+    vantagemProporcionalCentimos: A,
+    limitesMensalidades,
+    cenarioSoVantagem: calculos.some((c) => c.percentagem === null),
     resultadoCentimos: resultado,
-    criterio: A === B ? "iguais" : A < B ? "vantagem" : "limite",
+    criterio: completo && A !== null ? criterioDe(A, calculos[0].B) : null,
+    operador: operadorCentimos === null ? null : compararComOperador(operadorCentimos, resultado),
   };
 }
 
