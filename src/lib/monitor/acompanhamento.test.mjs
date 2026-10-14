@@ -219,6 +219,117 @@ describe("associação de documentos a serviços", () => {
     assert.equal(escolherServico({ fornecedorChave: "vodafone", ids: outroServico }, [servicoMaria], "s1").acao, "perguntar");
   });
 
+  describe("número do serviço diferente (14/10/2026)", () => {
+    // Caso real: contrato EDP e fatura EDP do mesmo fornecimento, com NIF,
+    // titular e número de contrato iguais e números de serviço diferentes.
+    const contratoEdp = ids([
+      { tipo: "nif_titular", valor: "123456789" },
+      { tipo: "titular", valor: "Maria José Silva" },
+      { tipo: "referencia_contrato", valor: "1000234567" },
+      { tipo: "numero_servico", valor: "500123456" },
+    ]);
+    const servicoEdp = { id: "e1", fornecedorChave: "edp", ids: contratoEdp };
+    const faturaEdp = (extra = []) =>
+      ids([
+        { tipo: "nif_titular", valor: "123456789" },
+        { tipo: "titular", valor: "Maria Silva" },
+        { tipo: "referencia_conta", valor: "1000234567" },
+        { tipo: "numero_servico", valor: "700987654" },
+        ...extra,
+      ]);
+
+    test("1. contrato + fatura EDP, números de serviço diferentes, resto compatível: associa", () => {
+      const r = avaliarAssociacao({ fornecedorChave: "edp", ids: faturaEdp() }, servicoEdp);
+      assert.equal(r.estado, "confirmada");
+      assert.equal(r.conflitos.includes("O número do serviço é diferente"), false);
+      assert.deepEqual(escolherServico({ fornecedorChave: "edp", ids: faturaEdp() }, [servicoEdp]), {
+        acao: "associar",
+        servicoId: "e1",
+        resultado: r,
+      });
+      // Também quando carregada na página do serviço.
+      assert.equal(escolherServico({ fornecedorChave: "edp", ids: faturaEdp() }, [servicoEdp], "e1").acao, "associar");
+    });
+
+    test("2. número de serviço igual: comportamento de sempre", () => {
+      const doc = ids([
+        { tipo: "nif_titular", valor: "123456789" },
+        { tipo: "referencia_conta", valor: "1000234567" },
+        { tipo: "numero_servico", valor: "500123456" },
+      ]);
+      const r = avaliarAssociacao({ fornecedorChave: "edp", ids: doc }, servicoEdp);
+      assert.equal(r.estado, "confirmada");
+      assert.ok(r.motivos.includes("O número do serviço é o mesmo"));
+      assert.ok(r.confianca >= 0.95);
+    });
+
+    test("3a. número de serviço diferente + CPE diferente: não associa", () => {
+      const servico = { ...servicoEdp, ids: [...contratoEdp, ...ids([{ tipo: "cpe", valor: "PT0002000012345678AB" }])] };
+      const doc = faturaEdp([{ tipo: "cpe", valor: "PT0002000099999999ZZ" }]);
+      const r = avaliarAssociacao({ fornecedorChave: "edp", ids: doc }, servico);
+      assert.equal(r.estado, "possivel");
+      assert.ok(r.conflitos.includes("O número do serviço é diferente"));
+      assert.notEqual(escolherServico({ fornecedorChave: "edp", ids: doc }, [servico]).acao, "associar");
+    });
+
+    test("3b. número de serviço diferente + CUI diferente (gás): não associa", () => {
+      const servico = { ...servicoEdp, ids: [...contratoEdp, ...ids([{ tipo: "cui", valor: "PT1601000000123456AB" }])] };
+      const doc = faturaEdp([{ tipo: "cui", valor: "PT1601000000654321CD" }]);
+      assert.equal(avaliarAssociacao({ fornecedorChave: "edp", ids: doc }, servico).estado, "possivel");
+    });
+
+    test("3c. número de serviço diferente mas CPE igual: associa (como antes)", () => {
+      const servico = { ...servicoEdp, ids: [...contratoEdp, ...ids([{ tipo: "cpe", valor: "PT0002000012345678AB" }])] };
+      const doc = faturaEdp([{ tipo: "cpe", valor: "PT 0002 0000 1234 5678 AB" }]);
+      assert.equal(avaliarAssociacao({ fornecedorChave: "edp", ids: doc }, servico).estado, "confirmada");
+    });
+
+    test("3d. número de serviço diferente + número de conta/contrato diferente: conflito (como antes)", () => {
+      const doc = ids([
+        { tipo: "nif_titular", valor: "123456789" },
+        { tipo: "referencia_conta", valor: "2000999999" },
+        { tipo: "numero_servico", valor: "700987654" },
+      ]);
+      const r = avaliarAssociacao({ fornecedorChave: "edp", ids: doc }, servicoEdp);
+      assert.equal(r.estado, "conflito");
+      assert.ok(r.conflitos.includes("O número do serviço é diferente"));
+      assert.equal(escolherServico({ fornecedorChave: "edp", ids: doc }, [servicoEdp]).acao, "novo_servico");
+    });
+
+    test("3e. número de serviço diferente + titular diferente: conflito (como antes)", () => {
+      const doc = ids([
+        { tipo: "titular", valor: "João Pereira" },
+        { tipo: "referencia_conta", valor: "1000234567" },
+        { tipo: "numero_servico", valor: "700987654" },
+      ]);
+      assert.equal(avaliarAssociacao({ fornecedorChave: "edp", ids: doc }, servicoEdp).estado, "conflito");
+    });
+
+    test("3f. número de serviço diferente + só o NIF igual: não associa (mesmo cliente, pode ser outro serviço)", () => {
+      const doc = ids([
+        { tipo: "nif_titular", valor: "123456789" },
+        { tipo: "numero_servico", valor: "700987654" },
+      ]);
+      const r = avaliarAssociacao({ fornecedorChave: "edp", ids: doc }, servicoEdp);
+      assert.equal(r.estado, "possivel");
+      assert.ok(r.conflitos.includes("O número do serviço é diferente"));
+    });
+
+    test("4. fornecimentos diferentes (outro cliente / outro fornecedor): sem associação", () => {
+      assert.equal(escolherServico({ fornecedorChave: "edp", ids: OUTRO_CLIENTE }, [servicoEdp]).acao, "novo_servico");
+      assert.equal(avaliarAssociacao({ fornecedorChave: "galp", ids: faturaEdp() }, servicoEdp).estado, "conflito");
+    });
+
+    test("dois serviços da mesma conta: fica o que tem o mesmo número de serviço", () => {
+      const linha2 = { id: "e2", fornecedorChave: "edp", ids: faturaEdp() };
+      const doc = faturaEdp();
+      assert.deepEqual(
+        [escolherServico({ fornecedorChave: "edp", ids: doc }, [servicoEdp, linha2])].map((d) => [d.acao, d.servicoId])[0],
+        ["associar", "e2"],
+      );
+    });
+  });
+
   test("Q. fatura sem identificadores suficientes: possível (o cliente decide)", () => {
     const r = avaliarAssociacao({ fornecedorChave: "vodafone", ids: [] }, servicoMaria);
     assert.equal(r.estado, "possivel");
