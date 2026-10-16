@@ -1,9 +1,11 @@
 import Link from "@/i18n/Link";
+import { ApoioWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
 import { CTASection } from "@/components/marketing-v2/CTASection";
 import { Eyebrow, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { TEXTO } from "@/components/marketing-v2/estilos";
 import type { Idioma } from "@/i18n/config";
 import { tProblemas } from "@/i18n/mensagens/problemas";
+import { mensagemWhatsAppSetor, tWhatsApp } from "@/i18n/mensagens/whatsapp";
 import { CAMINHO_PROBLEMAS, caminhoCategoria, caminhoProblema, categoriasComPagina, type Categoria } from "@/lib/problemas/catalogo";
 import { AcoesProblema } from "./AcoesProblema";
 import { CartaoProblema, ICONES_CATEGORIA, TituloPagina } from "./partes";
@@ -59,6 +61,16 @@ export function PaginaCategoria({ idioma, categoria }: { idioma: Idioma; categor
         titulo={t.categoria.ctaTitulo}
         texto={t.categoria.ctaTexto}
         acao={<AcoesProblema contexto={{ origem: caminho, categoria: categoria.slug, problema: "categoria", setor: categoria.setor }} local="categoria" />}
+        apoio={
+          <ApoioWhatsApp
+            className="mx-auto mt-5 max-w-[1200px] px-7 sm:px-12"
+            pergunta={tWhatsApp[idioma].contextos.setor.pergunta}
+            mensagem={mensagemWhatsAppSetor(idioma, categoria.slug)}
+            pagina={caminho}
+            local="sector_page"
+            contexto={categoria.slug}
+          />
+        }
       />
 
       {outras.length > 0 && (

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { perguntasHomepage } from "@/components/landing/conteudoPerguntasFrequentes";
 import { useCaminho, useIdioma } from "@/i18n/cliente";
 import { tInicio } from "@/i18n/mensagens/inicio";
+import { tWhatsApp } from "@/i18n/mensagens/whatsapp";
 import { detectarOrigem, track } from "@/lib/analytics";
 import { urlTratarCaso } from "@/lib/site";
 import {
@@ -18,6 +19,7 @@ import {
   IconeSeta,
 } from "@/components/marketing-v2/Icones";
 import { PainelCaso, PainelProtecao, VisualHero } from "@/components/marketing-v2/Mockups";
+import { ApoioWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
 import { CTASection } from "@/components/marketing-v2/CTASection";
 import { FAQAccordionV2 } from "@/components/marketing-v2/FAQAccordionV2";
 import { FeatureCard } from "@/components/marketing-v2/FeatureCard";
@@ -65,6 +67,7 @@ export function HomepageV2() {
   const idioma = useIdioma();
   const c = useCaminho();
   const t = tInicio[idioma];
+  const tw = tWhatsApp[idioma].contextos.homepage;
   const GARANTIAS = t.hero.garantias.map((texto, i) => ({ icone: ICONES_GARANTIAS[i], texto }));
   const PASSOS: Passo[] = t.comoFunciona.passos.map((p, i) => ({ ...p, icone: ICONES_PASSOS[i] }));
 
@@ -122,6 +125,7 @@ export function HomepageV2() {
             ))}
           </ul>
           <p className="mt-4 text-[14px] text-[var(--v2-muted)]">{t.hero.resposta}</p>
+          <ApoioWhatsApp className="mt-5" pergunta={tw.pergunta} mensagem={tw.mensagem} pagina="/" local="homepage" contexto="hero" />
         </div>
         <VisualHero />
       </SectionV2>

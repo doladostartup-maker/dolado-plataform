@@ -1,5 +1,6 @@
 import Link from "@/i18n/Link";
 import type { ReactNode } from "react";
+import { ApoioWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
 import { CTASection } from "@/components/marketing-v2/CTASection";
 import { IconeSeta } from "@/components/marketing-v2/Icones";
 import { ListaVistos } from "@/components/marketing-v2/ListaVistos";
@@ -8,6 +9,7 @@ import { CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
 import type { Idioma } from "@/i18n/config";
 import { rico } from "@/i18n/Rico";
 import { tProblemas } from "@/i18n/mensagens/problemas";
+import { mensagemWhatsAppSetor, tWhatsApp } from "@/i18n/mensagens/whatsapp";
 import { CAMINHO_PROBLEMAS, caminhoCategoria, caminhoProblema, type Categoria, type Problema } from "@/lib/problemas/catalogo";
 import { AcoesProblema, type ContextoProblema } from "./AcoesProblema";
 import { CartaoProblema, LINK_SETA, LINK_TEXTO, TEXTO_PROBLEMAS, TituloPagina } from "./partes";
@@ -105,7 +107,21 @@ export function PaginaProblema({ idioma, categoria, problema }: { idioma: Idioma
       </SectionV2>
 
       {/* ===== 5. CTA ===== */}
-      <CTASection titulo={t.comum.ctaTitulo} texto={t.comum.ctaTexto} acao={<AcoesProblema contexto={contexto} local="final" />} />
+      <CTASection
+        titulo={t.comum.ctaTitulo}
+        texto={t.comum.ctaTexto}
+        acao={<AcoesProblema contexto={contexto} local="final" />}
+        apoio={
+          <ApoioWhatsApp
+            className="mx-auto mt-5 max-w-[1200px] px-7 sm:px-12"
+            pergunta={tWhatsApp[idioma].contextos.setor.pergunta}
+            mensagem={mensagemWhatsAppSetor(idioma, categoria.slug)}
+            pagina={contexto.origem}
+            local="sector_page"
+            contexto={categoria.slug}
+          />
+        }
+      />
 
       {/* ===== 6. Relacionados ===== */}
       <SectionV2 size="compact">

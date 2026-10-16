@@ -4,8 +4,10 @@ import Link from "@/i18n/Link";
 import { useCaminho, useIdioma } from "@/i18n/cliente";
 import { rico } from "@/i18n/Rico";
 import { tInstitucional } from "@/i18n/mensagens/institucional";
+import { tWhatsApp } from "@/i18n/mensagens/whatsapp";
 import { useActionState, useCallback, useState, type ReactNode } from "react";
 import { enviarContacto, type EstadoContacto } from "@/app/actions/contacto";
+import { IconeWhatsApp, LigacaoWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
 import { IconeDocumentoVisto, IconeEscudo, IconeFormulario, IconeSeta } from "@/components/marketing-v2/Icones";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
@@ -13,6 +15,7 @@ import { BOTAO_PRIMARIO, CAMPO, CARTAO, ROTULO_CAMPO, TEXTO } from "@/components
 import { detectarOrigem, track } from "@/lib/analytics";
 import { ROTAS_LEGAIS } from "@/lib/legal";
 import { CONTACTO_EMAIL, PRIVACIDADE_EMAIL, urlTratarCaso } from "@/lib/site";
+import { NUMERO_WHATSAPP } from "@/lib/whatsapp";
 
 // Contacto no Design System V2 (secção 39 de docs/design/design-system-v2.md):
 // caminhos claros e o mesmo formulário (enviarContacto, mesmos campos e
@@ -29,7 +32,9 @@ export function ContactoV2() {
   const [origem] = useState(detectarOrigem);
   const [state, formAction, pending] = useActionState(enviarContacto, ESTADO_INICIAL);
   const c = useCaminho();
-  const t = tInstitucional[useIdioma()].contacto;
+  const idioma = useIdioma();
+  const t = tInstitucional[idioma].contacto;
+  const tw = tWhatsApp[idioma].contextos.contacto;
   const email = (endereco: string) =>
     function LigacaoEmail() {
       return (
@@ -77,6 +82,21 @@ export function ContactoV2() {
         </Link>
       ),
     },
+    // WhatsApp: canal secundário, só por mensagem (src/lib/whatsapp.ts).
+    ...(NUMERO_WHATSAPP
+      ? [
+          {
+            icone: <IconeWhatsApp tamanho={28} strokeWidth={1.6} />,
+            titulo: tw.titulo,
+            texto: tw.texto,
+            acao: (
+              <LigacaoWhatsApp mensagem={tw.mensagem} pagina="/contacto" local="contact" contexto="caminhos" className={`${LINK} inline-flex items-center gap-1.5`}>
+                {tw.acao} <IconeSeta tamanho={15} />
+              </LigacaoWhatsApp>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -95,7 +115,7 @@ export function ContactoV2() {
       {/* ===== Caminhos ===== */}
       <SectionV2 tone="soft-blue">
         <SectionHeader eyebrow={t.caminhos.eyebrow} titulo={t.caminhos.titulo} />
-        <ul className="mt-10 grid gap-10 md:grid-cols-3 md:gap-8">
+        <ul className={`mt-10 grid gap-10 md:gap-8 ${CAMINHOS.length > 3 ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"}`}>
           {CAMINHOS.map((c) => (
             <li key={c.titulo} className="flex flex-col">
               <span className="text-[var(--v2-green)]">{c.icone}</span>

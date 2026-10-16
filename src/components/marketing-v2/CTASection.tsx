@@ -2,17 +2,21 @@ import type { ReactNode } from "react";
 import { SectionHeader } from "./SectionV2";
 import { TEXTO } from "./estilos";
 
-// Bloco de fecho de página: uma pergunta, uma frase e uma só ação.
+// Bloco de fecho de página: uma pergunta, uma frase e uma só ação. "apoio"
+// (ex.: ApoioWhatsApp) fica por baixo do bloco, fora dele, sem competir
+// com a ação.
 export function CTASection({
   eyebrow,
   titulo,
   texto,
   acao,
+  apoio,
 }: {
   eyebrow?: ReactNode;
   titulo: ReactNode;
   texto?: ReactNode;
   acao: ReactNode;
+  apoio?: ReactNode;
 }) {
   return (
     <section className="px-5 py-16 sm:px-8 sm:py-20">
@@ -23,6 +27,7 @@ export function CTASection({
         </div>
         <div className="w-full flex-none md:w-auto">{acao}</div>
       </div>
+      {apoio}
     </section>
   );
 }
