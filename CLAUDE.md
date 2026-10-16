@@ -246,6 +246,16 @@ Só atribuição: de onde veio uma conta (ex.: `https://dolado.pt/?ref=contabili
 - **Backoffice:** "origem: …" no cabeçalho do caso; nomes amigáveis em `NOMES_ORIGEM` (sem nome, o identificador técnico).
 - **Testes:** `src/lib/origemAquisicao.test.mjs` e `supabase/tests/database/origem_aquisicao.test.sql`.
 
+## WhatsApp — apoio secundário (16/10/2026)
+
+Canal secundário de apoio nas páginas públicas, **só por mensagem** (nunca "Ligue-nos", "Telefonar", chamada ou vídeo) e nunca alternativa ao fluxo da plataforma. Número em `NEXT_PUBLIC_WHATSAPP_NUMBER` (formato internacional, só dígitos; lido no build — mudar exige novo build; vazio/inválido = nenhum CTA). Regras e links em `src/lib/whatsapp.ts`; componente `ApoioWhatsApp`/`LigacaoWhatsApp` em `src/components/marketing-v2/ApoioWhatsApp.tsx` (linha discreta abaixo da ação principal, nova janela); mensagens fixas em `src/i18n/mensagens/{pt-PT,en-GB}/whatsapp.ts`.
+
+- **Onde:** homepage (hero), `/precario`, resultado da Calculadora e do Simulador, `/problemas/<categoria>` e páginas de problema (mensagem por categoria), `/perguntas-frequentes`, `/contacto` (4.º caminho). Sem botão flutuante (os CTAs contextuais chegam; o banner do Cookiebot fica no fundo). Portal sem área de ajuda → sem WhatsApp no portal.
+- **Nunca:** portal, `/tratar-caso`, `/comprar`, checkout, `/texto/…`, contas, backoffice, envio de documentos, autorização (teste estático em `src/lib/whatsapp.test.mjs`).
+- **Mensagens genéricas:** só identificam a página; nunca nome, e-mail, NIF, morada, n.º de caso/cliente/contrato, respostas nem resultados (testado).
+- **Medição:** `whatsapp_click` (`page`, `placement`, `context` — só valores fixos), só com consentimento (`track()`).
+- **Antes de ligar em produção:** Meta (WhatsApp) passa a receber as conversas — atualizar a matriz de subcontratantes e criar nova versão da Política de Privacidade (validar com a advogada).
+
 ## Páginas legais, Livro de Reclamações e RAL (01/10/2026)
 
 - **Por publicar (no código, em vigor com o próximo deploy):** Termos `2026-10-08` (secção 2: limites da revisão humana; secção 10: adesão Avulso → subscrição expressa, não automática, direitos imperativos preservados) e Política de Privacidade `2026-10-09` (arts. 6.º/9.º, terceiros, dossiês PDF 6 meses, Claude API, origem `?ref=` e cookies com consentimento, indicação com `dolado_indicacao`, sinais Stripe revistos por pessoa e retenção interna até 3 anos) — as decisões dos Termos e Política 2026-10-08 foram aprovadas pela advogada; a revisão do programa de indicação foi documentada em `docs/legal/rascunho-privacidade-programa-indicacoes-2026-10-09.md`. Edge Function `limpar-dossies-expirados` e migrations `20261008110000`–`20261008150000` aplicadas em produção a 08/10/2026.

@@ -6,7 +6,9 @@ import { categoriasPerguntas } from "@/components/landing/conteudoPerguntasFrequ
 import { useCaminho, useIdioma } from "@/i18n/cliente";
 import { rico } from "@/i18n/Rico";
 import { tPaginas } from "@/i18n/mensagens/paginas";
+import { tWhatsApp } from "@/i18n/mensagens/whatsapp";
 import { precoNoIdioma, tPlanos } from "@/i18n/mensagens/planos";
+import { ApoioWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
 import { CTASection } from "@/components/marketing-v2/CTASection";
 import { FAQAccordionV2 } from "@/components/marketing-v2/FAQAccordionV2";
 import { IconeCalendario, IconeDocumentoVisto, IconeEscudo, IconeSeta } from "@/components/marketing-v2/Icones";
@@ -119,6 +121,14 @@ export function PrecarioV2() {
           <p>{tp.notaConversaoAvulso}</p>
           <p>{t.precosLancamento}</p>
         </div>
+        <ApoioWhatsApp
+          className="mt-6"
+          pergunta={tWhatsApp[idioma].contextos.precario.pergunta}
+          mensagem={tWhatsApp[idioma].contextos.precario.mensagem}
+          pagina="/precario"
+          local="pricing"
+          contexto="planos"
+        />
       </SectionV2>
 
       {/* ===== Antes de decidir ===== */}

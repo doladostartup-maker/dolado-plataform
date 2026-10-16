@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
+import { ApoioWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
 import { IconeSeta } from "@/components/marketing-v2/Icones";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CAMPO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
@@ -23,6 +24,7 @@ import { urlTratarCaso } from "@/lib/site";
 import type { Idioma } from "@/i18n/config";
 import { useCaminho, useIdioma } from "@/i18n/cliente";
 import { formatarEurosCents } from "@/i18n/formatar";
+import { tWhatsApp } from "@/i18n/mensagens/whatsapp";
 import { tCalculadora } from "@/i18n/mensagens/calculadora";
 
 // Calculadora pública no Design System V2: formulário → estimativa do encargo
@@ -307,6 +309,16 @@ function Resultado({
           {t.calcularDeNovo}
         </button>
       </div>
+
+      {/* Apoio secundário: mensagem fixa, nunca os dados nem o valor calculado. */}
+      <ApoioWhatsApp
+        pergunta={tWhatsApp[idioma].contextos.calculadora.pergunta}
+        acao={tWhatsApp[idioma].contextos.calculadora.acao}
+        mensagem={tWhatsApp[idioma].contextos.calculadora.mensagem}
+        pagina="/calculadora-cancelamento"
+        local="fidelity_calculator_result"
+        contexto={resultado.estado}
+      />
 
       <ul className="flex list-disc flex-col gap-1 border-t border-[var(--v2-line)] pt-3 pl-4 text-[12.5px] leading-relaxed text-[var(--v2-muted)]">
         {t.notas.map((n) => (

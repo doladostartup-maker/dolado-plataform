@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { ApoioWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
 import { IconeSeta } from "@/components/marketing-v2/Icones";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
@@ -19,6 +20,7 @@ import { urlTratarCaso } from "@/lib/site";
 import { useCaminho, useIdioma } from "@/i18n/cliente";
 import { rotulo } from "@/i18n/mensagens/rotulos";
 import { tSimulador } from "@/i18n/mensagens/simulador";
+import { tWhatsApp } from "@/i18n/mensagens/whatsapp";
 
 // Simulador público no Design System V2: 4 perguntas de escolha → resultado
 // indicativo. Tudo acontece no browser — nada é gravado, enviado ou associado
@@ -52,7 +54,9 @@ function hrefTratarCaso(respostas: RespostasSimulador) {
 const ROTULO_PASSO = "text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]";
 
 function Resultado({ respostas, onRecomecar }: { respostas: RespostasSimulador; onRecomecar: () => void }) {
-  const t = tSimulador[useIdioma()];
+  const idioma = useIdioma();
+  const t = tSimulador[idioma];
+  const tw = tWhatsApp[idioma].contextos.simulador;
   const c = useCaminho();
   const { resultado, motivo } = avaliarSimulador(respostas);
   const texto = t.resultados[resultado];
@@ -80,6 +84,9 @@ function Resultado({ respostas, onRecomecar }: { respostas: RespostasSimulador; 
           {t.responderDeNovo}
         </button>
       </div>
+
+      {/* Apoio secundário: mensagem fixa, nunca as respostas do simulador. */}
+      <ApoioWhatsApp pergunta={tw.pergunta} mensagem={tw.mensagem} pagina={ORIGEM} local="eligibility_result" contexto={resultado} />
 
       <p className="mt-2 border-t border-[var(--v2-line)] pt-4 text-[13.5px] text-[var(--v2-muted)]">
         {t.indicativo}

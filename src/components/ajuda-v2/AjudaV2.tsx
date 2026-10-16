@@ -4,8 +4,10 @@ import Link from "@/i18n/Link";
 import { useCaminho, useIdioma } from "@/i18n/cliente";
 import { rico } from "@/i18n/Rico";
 import { tPaginas } from "@/i18n/mensagens/paginas";
+import { tWhatsApp } from "@/i18n/mensagens/whatsapp";
 import { useCallback, useId, useMemo, useState, type ReactNode } from "react";
 import { categoriasPerguntas } from "@/components/landing/conteudoPerguntasFrequentes";
+import { ApoioWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
 import { CTASection } from "@/components/marketing-v2/CTASection";
 import { FAQAccordionV2 } from "@/components/marketing-v2/FAQAccordionV2";
 import { IconeDocumentoVisto, IconeEscudo, IconeMensagem, IconeSeta } from "@/components/marketing-v2/Icones";
@@ -151,6 +153,14 @@ export function AjudaV2() {
             </li>
           ))}
         </ul>
+        <ApoioWhatsApp
+          className="mt-10 border-t border-[var(--v2-line)] pt-6"
+          pergunta={tWhatsApp[idioma].contextos.ajuda.pergunta}
+          mensagem={tWhatsApp[idioma].contextos.ajuda.mensagem}
+          pagina="/perguntas-frequentes"
+          local="faq"
+          contexto="ajuda"
+        />
       </SectionV2>
 
       {/* ===== CTA final ===== */}
