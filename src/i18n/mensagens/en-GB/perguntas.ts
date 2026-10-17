@@ -23,8 +23,10 @@ export const perguntas: Traducao<typeof pt> = {
   },
   quantoCusta: {
     pergunta: "How much does DoLado cost?",
-    resposta: (p: Precos): string =>
-      `DoLado has three options: Protection for ${p.protecao}, Case + Protection for ${p.casoProtecao} and the Single Case service for ${p.avulso} per case. All prices include VAT.`,
+    resposta: (p: Precos): string[] => [
+      `Single Case: ${p.avulso} per case, a one-off payment with no subscription. Case + Protection: ${p.casoProtecao}, with 1 case per month plus Protection. Protection: ${p.protecao}, just for keeping an eye on bills and contracts, without handling cases. All prices include VAT.`,
+      "To have a case handled, you fill in the form first and only choose the option and pay at the end. We only start working on the case once the payment is confirmed.",
+    ],
   },
   diferencaPlanos: {
     pergunta: "What is the difference between Protection, Case + Protection and Single Case?",
@@ -34,8 +36,10 @@ export const perguntas: Traducao<typeof pt> = {
   },
   prazo: {
     pergunta: "How long does it take?",
-    resposta:
-      "Once you have opened your case, we get back to you within 48 working hours at the latest to confirm the facts with you. The complaint is prepared on the basis of that confirmation.",
+    resposta: [
+      "Once your case is opened (that is, once the payment is confirmed), we contact you within a maximum of 2 working days to confirm the facts. The complaint is prepared on the basis of that confirmation.",
+      "How long the preparation takes depends on the information available and on any clarifications needed. How long the company takes to reply does not depend on DoLado: it varies with the sector, the company and the channel used.",
+    ],
   },
   substituiAdvogado: {
     pergunta: "Does DoLado replace a lawyer?",
@@ -65,7 +69,7 @@ export const perguntas: Traducao<typeof pt> = {
   enviamPorMim: {
     pergunta: "Does DoLado send the complaint for me?",
     resposta:
-      "Yes. Before it is sent, you receive the content prepared by DoLado to review. Only after your explicit authorisation do we submit the complaint on your behalf, through the right channel for the case — for example, Portugal's official Electronic Complaints Book (Livro de Reclamações Eletrónico) or the company's own complaints channel.",
+      "Yes. Before it is sent, you receive the text prepared by DoLado to review. Only after your explicit authorisation do we submit the complaint on your behalf, through the right channel for the case — for example, Portugal's official Electronic Complaints Book (Livro de Reclamações Eletrónico), e-mail or the company's complaints form.",
   },
   naoConcordo: {
     pergunta: "What if I don't agree with the text you prepare?",
@@ -75,12 +79,37 @@ export const perguntas: Traducao<typeof pt> = {
   documentos: {
     pergunta: "What information or documents might I need to send?",
     resposta:
-      "It depends on the case. We may ask for information such as dates, amounts, correspondence with the company, bills, contracts or other documents that help us understand and support the complaint.",
+      "It depends on the case. The most useful ones are usually the bill in question, the contract, e-mails or messages exchanged with the company, the order or previous complaint number and screenshots. Dates and amounts also help. You do not need to have everything: tell us what you have and, if anything is missing, we will ask you for it.",
+  },
+  precisaEscrever: {
+    pergunta: "Do I need to know how to write the complaint?",
+    resposta:
+      "No. Just tell us what happened, in your own words, as you would tell a friend. DoLado writes the complaint and shows it to you before anything is sent.",
+  },
+  informacaoComecar: {
+    pergunta: "What information do I need to get started?",
+    resposta:
+      "The type of company and its name, what happened, whether you have already complained and your name. If you have a bill, a contract, an e-mail or a screenshot, you can attach it straight away, but it is not required. It takes about 5 minutes.",
+  },
+  documentosInicio: {
+    pergunta: "Do I have to send all the documents at the start?",
+    resposta:
+      "No. Documents are optional in the form. If we need anything else, we will ask you by e-mail and you can reply and attach files in your account.",
+  },
+  atualizacoes: {
+    pergunta: "How will I get updates on my case?",
+    resposta:
+      "By e-mail, whenever there is news or we need you — for example, when the text is ready to review, when we are analysing the company's reply, when we need more information and when the case is closed. In your account you can check the status of the case, the next step and the history whenever you like.",
+  },
+  entrarRegularmente: {
+    pergunta: "Do I need to log in to my account regularly?",
+    resposta:
+      "No. Whenever we need you to do something — review the text, answer a request for information or confirm a solution — we e-mail you. Your account is there to check the case, the text sent, the proofs of submission and the history whenever it suits you.",
   },
   oQueIncluiProtecao: {
     pergunta: "What does the Protection plan include?",
     resposta:
-      "Protection helps you spot situations that could turn into a problem. We compare each bill with the previous ones to identify changes, keep an eye on important dates such as the end of promotions and minimum-term periods, and email you before those dates. We also let you know about relevant changes in the sectors you choose, such as announced price rises. Protection does not include handling complaints.",
+      "Protection helps you spot situations that could turn into a problem. We compare each bill with the previous ones to identify changes, keep an eye on important dates such as the end of promotions and minimum-term periods, and email you before those dates. We also let you know about relevant changes in the sectors you choose, such as announced price rises, and at the start of each month we e-mail you a summary of what we kept an eye on. Protection does not include handling complaints.",
   },
   comecarProtecao: {
     pergunta: "How do I start using Protection?",
@@ -108,6 +137,7 @@ export const perguntas: Traducao<typeof pt> = {
       "Yes. You can cancel your subscription at any time under <b>Subscription settings</b>. After you cancel, Protection stays active until the end of the period you have already paid for and you will not be charged again. When that period ends, Protection alerts are switched off and no longer sent.",
       "A normal cancellation does not entitle you to a pro rata refund of the monthly fee already paid. This does not affect your statutory rights, in particular the right of withdrawal where it applies.",
       "Cases you have already opened remain available in your account. If you have built up cases on the Case + Protection plan, they are kept for 90 days after the subscription ends. If you subscribe to Case + Protection again within that period, you get back the cases you had available.",
+      "If you have a subscription case still being followed up, we show you the choice before you cancel: you can keep your subscription until the case is finished, or cancel — in which case follow-up on that case also ends at the end of the period already paid. Cases handled with Single Case or Extra Case are not affected.",
     ],
   },
   livreResolucao: {
@@ -119,18 +149,22 @@ export const perguntas: Traducao<typeof pt> = {
   },
   depoisEnviada: {
     pergunta: "What happens after the complaint has been sent?",
-    resposta:
-      "DoLado follows the progress of your case and the response received. Depending on the outcome and the service that applies to your case, we help you understand the next steps available.",
+    resposta: [
+      "DoLado waits for the company's reply and analyses it when it arrives. We e-mail you when we are analysing a reply, when we need more information from you and when the company offers a solution that you need to confirm.",
+      "The case is only marked “Resolved” once you confirm that the problem has been solved. In your account you can always see the status of the case, the next step and the history.",
+    ],
   },
   empresaNaoResolve: {
     pergunta: "What if the company doesn't solve the problem?",
-    resposta:
-      "A complaint does not always end with the first response. Where the case allows and it falls within the service you have bought, DoLado helps you analyse the response and identify the next options available.",
+    resposta: [
+      "A complaint does not always end with the first reply. Where it makes sense and falls within the service you have bought, we prepare a new message to the company, which you also review and authorise before it is sent.",
+      "When DoLado has done what the service covers and the problem remains, we close the case on our side — which does not mean it has been solved. At that point we give you a case file with what has been done and a list of consumer dispute resolution bodies you can consult. DoLado does not represent you before those bodies.",
+    ],
   },
   copia: {
     pergunta: "Do I get a copy of the complaint that was sent?",
     resposta:
-      "Yes. After it has been sent, you can see in your case the exact text of the complaint submitted and, where available, the proof of submission. These are available in your account, together with the case history. When we finish following up your case, we also provide the case file.",
+      "Yes. After it has been sent, you can see in your case, in your account, the exact text of the complaint submitted and, where available, the proof of submission, together with the case history. If the case is closed without a solution from the company, we also provide a case file with what has been done.",
   },
   dadosSeguros: {
     pergunta: "Is my data safe?",

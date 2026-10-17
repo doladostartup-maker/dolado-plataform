@@ -42,6 +42,8 @@ export const subscricao = {
     erros: {
       indisponivel: "Não encontrámos uma subscrição ativa que possa ser alterada. Atualize a página.",
       falha: "Não foi possível concluir o pedido. Tente novamente dentro de alguns minutos.",
+      confirmar_casos:
+        "Tem um caso em acompanhamento. Para cancelar, confirme primeiro que o acompanhamento desse caso também termina no fim do período já pago.",
     },
     planoAtual: "Plano atual",
     estado: "Estado da subscrição",
@@ -62,6 +64,10 @@ export const subscricao = {
       `<b>Cancelamento agendado.</b> A sua Proteção está ativa até ${data}. Até lá, tudo continua a funcionar normalmente. Nessa data, deixamos de acompanhar os seus contratos e de enviar alertas.`,
     guardados: (n: number, data: string) =>
       `Tem ${n === 1 ? "1 caso disponível guardado" : `${n} casos disponíveis guardados`} até ${data}. Se voltar a subscrever o Caso + Proteção até essa data, recupera-os.`,
+    agendadoCasos: (n: number) =>
+      n === 1
+        ? "Nessa data termina também o acompanhamento do seu caso em curso. Se preferir que a DoLado continue a acompanhá-lo, mantenha a subscrição."
+        : `Nessa data termina também o acompanhamento dos seus ${n} casos em curso. Se preferir que a DoLado continue a acompanhá-los, mantenha a subscrição.`,
     verSubscricoes: "Ver subscrições",
     naoApaga:
       "Cancelar a subscrição não apaga os casos que já abriu, os documentos nem o histórico — continuam disponíveis em <casos>Os meus casos</casos>. Para questões sobre cobranças, contacte-nos através de <email/>.",
@@ -93,6 +99,16 @@ export const subscricao = {
     casosGuardados: (dias: number) =>
       `Os seus casos disponíveis ficam guardados durante ${dias} dias depois dessa data. Se voltar a subscrever o Caso + Proteção nesse período, recupera-os.`,
     naoApagados: "Os casos que já abriu, os documentos e o histórico não são apagados.",
+    casos: {
+      titulo: (n: number) => (n === 1 ? "Tem um caso em acompanhamento" : `Tem ${n} casos em acompanhamento`),
+      texto: (data: string) =>
+        `Pode manter a subscrição até o caso terminar e cancelar depois. Se cancelar agora, a subscrição termina a ${data} e, nessa data, a DoLado deixa também de acompanhar os casos em curso. Os casos tratados com Avulso ou Caso Extra não são afetados.`,
+      textoSemData:
+        "Pode manter a subscrição até o caso terminar e cancelar depois. Se cancelar agora, no fim do período já pago a DoLado deixa também de acompanhar os casos em curso. Os casos tratados com Avulso ou Caso Extra não são afetados.",
+      manter: "Manter a subscrição até o caso terminar",
+      confirmo: (data: string) => `Compreendo que o acompanhamento dos meus casos em curso termina a ${data}.`,
+      confirmoSemData: "Compreendo que o acompanhamento dos meus casos em curso termina no fim do período já pago.",
+    },
     aGuardar: "A guardar…",
   },
 };

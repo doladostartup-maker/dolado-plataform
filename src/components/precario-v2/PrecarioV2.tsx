@@ -17,7 +17,9 @@ import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/Sec
 import { BOTAO_CONTORNO, BOTAO_PRIMARIO, TEXTO } from "@/components/marketing-v2/estilos";
 import { track } from "@/lib/analytics";
 import { PRAZO_LIVRE_RESOLUCAO_DIAS, ROTAS_LEGAIS } from "@/lib/legal";
-import { CASO_EXTRA, PLANOS, type PlanoId } from "@/lib/planos";
+import { DIAS_CASOS_GUARDADOS } from "@/lib/acesso";
+import { CASO_EXTRA, LIMITE_CASOS_ACUMULADOS, PLANOS, type PlanoId } from "@/lib/planos";
+import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
 import { destinoPlano } from "@/lib/precario";
 
 // Preçário no Design System V2 (/precario): organizado pela necessidade do
@@ -68,6 +70,29 @@ export function PrecarioV2() {
       }),
     },
   ];
+  const preco = (centimos: number) => precoNoIdioma(idioma, centimos);
+  const ci = t.condicoes.itens;
+  // Condições reais de compra (Termos, secções 8–10 e 14; src/lib/planos.ts).
+  const CONDICOES: { titulo: string; texto: string }[] = [
+    {
+      titulo: ci.casoOuSubscricao.titulo,
+      texto: ci.casoOuSubscricao.texto(preco(PLANOS.avulso.precoCentimos), tp.comUnidade(preco(PLANOS.caso_protecao.precoCentimos), true)),
+    },
+    ci.renovacao,
+    { titulo: ci.casoPorMes.titulo, texto: ci.casoPorMes.texto(LIMITE_CASOS_ACUMULADOS) },
+    { titulo: ci.fimSubscricao.titulo, texto: ci.fimSubscricao.texto(DIAS_CASOS_GUARDADOS) },
+    {
+      titulo: ci.casoExtra.titulo,
+      texto: ci.casoExtra.texto(preco(CASO_EXTRA.precoCentimos), preco(CASO_EXTRA.precoReferenciaCentimos), CASO_EXTRA.descontoPercentagem),
+    },
+    {
+      titulo: ci.conversao.titulo,
+      texto: ci.conversao.texto(
+        preco(PLANOS.avulso.precoCentimos - PLANOS.protecao.precoCentimos),
+        preco(PLANOS.avulso.precoCentimos - PLANOS.caso_protecao.precoCentimos),
+      ),
+    },
+  ];
   const escolher = (plano: PlanoId) => {
     track(`click_precario_${plano}`, { pagina: "precario_v2" });
     window.location.assign(c(destinoPlano(plano, "/precario")));
@@ -104,13 +129,24 @@ export function PrecarioV2() {
                 nota={id === "caso_protecao" ? tp.notaCasoExtra(precoNoIdioma(idioma, CASO_EXTRA.precoCentimos)) : undefined}
                 destaque={destaque}
                 acao={
-                  <button
-                    type="button"
-                    onClick={() => escolher(id)}
-                    className={`${destaque ? BOTAO_PRIMARIO : BOTAO_CONTORNO} w-full`}
-                  >
-                    {cta} <IconeSeta tamanho={16} />
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => escolher(id)}
+                      className={`${destaque ? BOTAO_PRIMARIO : BOTAO_CONTORNO} w-full`}
+                    >
+                      {cta} <IconeSeta tamanho={16} />
+                    </button>
+                    {id === "protecao" && (
+                      <Link prefetch={false}
+                        href={ROTAS_V2.protecao}
+                        onClick={() => track("click_precario_saber_protecao")}
+                        className="mt-4 flex min-h-11 items-center justify-center gap-1.5 text-[14.5px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
+                      >
+                        {t.saberProtecao} <IconeSeta tamanho={15} />
+                      </Link>
+                    )}
+                  </>
                 }
               />
             );
@@ -118,7 +154,6 @@ export function PrecarioV2() {
         </div>
 
         <div className="mt-8 max-w-[760px] space-y-2 text-[14px] leading-relaxed text-[var(--v2-muted)]">
-          <p>{tp.notaConversaoAvulso}</p>
           <p>{t.precosLancamento}</p>
         </div>
         <ApoioWhatsApp
@@ -129,6 +164,19 @@ export function PrecarioV2() {
           local="pricing"
           contexto="planos"
         />
+      </SectionV2>
+
+      {/* ===== Pagamentos e condições ===== */}
+      <SectionV2>
+        <SectionHeader eyebrow={t.condicoes.eyebrow} titulo={t.condicoes.titulo} />
+        <dl className="mt-10 grid gap-x-10 gap-y-8 md:grid-cols-2">
+          {CONDICOES.map((item) => (
+            <div key={item.titulo} className="border-t border-[var(--v2-line)] pt-5">
+              <dt className="text-[18px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{item.titulo}</dt>
+              <dd className="mt-2 text-[15.5px] leading-relaxed text-[var(--v2-muted)]">{item.texto}</dd>
+            </div>
+          ))}
+        </dl>
       </SectionV2>
 
       {/* ===== Antes de decidir ===== */}

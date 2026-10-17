@@ -24,6 +24,7 @@ export const PAGINAS_BILINGUES = [
   "/",
   "/como-funciona",
   "/precario",
+  "/protecao",
   "/ferramentas-gratuitas",
   "/simulador-elegibilidade",
   "/calculadora-cancelamento",

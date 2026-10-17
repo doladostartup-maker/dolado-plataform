@@ -23,12 +23,12 @@ export type ConteudoPlano = {
 export const CONTEUDO_PLANOS: Record<PlanoId, ConteudoPlano> = {
   protecao: {
     resumo:
-      "Para quem quer identificar alterações importantes e antecipar problemas, antes de perder dinheiro ou a oportunidade de agir.",
+      "Para quem quer ser avisado a tempo de alterações nas faturas e de datas importantes dos contratos, mesmo sem ter um problema agora.",
     inclui: FUNCIONALIDADES_PROTECAO,
     naoInclui: "Não inclui o tratamento de casos.",
   },
   caso_protecao: {
-    resumo: "Tratamos dos problemas quando surgem e ajudamos a identificar outros antes que lhe causem prejuízo.",
+    resumo: "Para tratar o problema que tem agora e continuar com as faturas e os contratos acompanhados, com 1 caso por mês.",
     inclui: [
       "Tudo o que está incluído na Proteção",
       "1 novo caso por mês",

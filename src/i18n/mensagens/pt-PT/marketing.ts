@@ -6,8 +6,8 @@ export const marketing = {
     calculadora: {
       titulo: "Quanto custa cancelar antes do fim da fidelização?",
       texto:
-        "Para contratos de telecomunicações: com as datas e os valores do contrato, estime o encargo máximo de um cancelamento antecipado.",
-      cta: "Calcular o encargo grátis",
+        "Para contratos de telecomunicações: com as datas e os valores do contrato, estime o valor máximo que pode ter de pagar para cancelar antes do fim da fidelização.",
+      cta: "Calcular quanto pode pagar",
     },
     simulador: {
       titulo: "A DoLado pode tratar do meu caso?",
@@ -32,13 +32,13 @@ export const marketing = {
       autorizar: "Autorizar o envio",
       pedirAlteracoes: "Pedir alterações",
       enviada: "Reclamação enviada",
-      comprovativo: "Comprovativo disponível no portal",
+      comprovativo: "Comprovativo na sua área de cliente",
       lema1: "Menos burocracia.",
       lema2: "Mais tempo para si.",
     },
     fidelizacao: {
       calculada: "Calculada com os dados do contrato",
-      encargo: "Encargo máximo estimado",
+      encargo: "Valor máximo para cancelar",
     },
     simulador: ["Parece enquadrar-se no serviço", "Por confirmar", "Pode não se enquadrar"],
     mudanca: ["Antes da mudança", "No dia da saída", "Na casa nova", "Depois da mudança"],
@@ -66,14 +66,50 @@ export const marketing = {
       semSituacoes: "Neste momento não detetámos nenhuma situação que exija intervenção.",
     },
   },
+  exemplos: {
+    etiqueta: "Exemplo fictício",
+    reclamacao: {
+      titulo: "Como é um texto preparado pela DoLado",
+      aviso: "Exemplo fictício: empresa, datas, referências e valores inventados.",
+      assunto: "Assunto: Cobrança da mensalidade depois do cancelamento",
+      paragrafos: [
+        "No dia 3 de março, pedi o cancelamento do serviço de internet (cliente n.º 000000). A empresa confirmou o pedido por e-mail no mesmo dia.",
+        "Nas faturas de abril e de maio continua a ser cobrada a mensalidade de 32,90 €, num total de 65,80 €.",
+        "Peço que estas cobranças sejam anuladas e que me seja devolvido o valor de 65,80 €, para a mesma conta de onde foi pago.",
+      ],
+      nota:
+        "Num caso real, o texto é escrito a partir dos factos e dos documentos do seu caso, inclui as regras aplicáveis quando existam e só é enviado depois da sua autorização.",
+    },
+    avisoPromocao: {
+      titulo: "Exemplo de aviso por e-mail",
+      assunto: "A promoção do seu serviço termina daqui a 30 dias",
+      linhas: [
+        { rotulo: "Serviço", valor: "Internet e televisão" },
+        { rotulo: "Fim da promoção", valor: "15/12/2026" },
+        { rotulo: "Mensalidade com promoção", valor: "29,90 €" },
+      ],
+      texto: "Ainda tem tempo para confirmar quanto vai pagar depois desta data e decidir o que quer fazer.",
+    },
+    alteracaoFatura: {
+      titulo: "Exemplo de alteração na fatura",
+      antes: "Fatura de outubro",
+      agora: "Fatura de novembro",
+      valorAntes: "32,90 €",
+      valorAgora: "39,90 €",
+      diferenca: "Diferença: +7,00 €",
+      texto:
+        "A mensalidade aumentou e não encontrámos nos dados do seu contrato uma explicação para esta diferença. Pode valer a pena confirmar com a empresa.",
+      nota: "Antes de o avisarmos, uma pessoa da DoLado revê cada situação.",
+    },
+  },
   origem: {
     fotografia: "Thiago Pereira, fundador da DoLado",
     eyebrow: "A nossa origem",
     titulo: "“Eu próprio já passei por isto.”",
     paragrafos: [
-      "Tive uma penalização de fidelização de uma operadora depois de aumentos e só mais tarde descobri que poderia ter tido outras opções.",
-      "Percebi que muitas pessoas passam pelo mesmo, não porque não tenham direitos, mas porque nem sempre sabem quais são ou o que devem fazer.",
-      "Foi por isso que criei a DoLado: para que ninguém seja prejudicado simplesmente por desconhecer as leis, os caminhos ou as responsabilidades.",
+      "A minha operadora aumentou o preço do serviço que eu tinha e eu quis sair. Estive quase a pagar a penalização da fidelização. Foi então que reparei que o aviso do aumento me tinha chegado apenas 28 dias antes da alteração — e foi com base nisso que consegui que a cobrança da fidelização fosse anulada.",
+      "Percebi que muitas pessoas acabam por pagar sem verificar. Não por falta de vontade, mas porque nem sempre é claro o que verificar, a quem escrever ou que passo dar a seguir.",
+      "Foi por isso que criei a DoLado: para ajudar a pôr cada problema por escrito, com calma e com cuidado, e para que ninguém tenha de o tratar sozinho.",
     ],
     assinatura: "— Thiago Pereira, fundador da DoLado",
   },

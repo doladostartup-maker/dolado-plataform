@@ -17,14 +17,16 @@ import { urlTratarCaso } from "@/lib/site";
 
 // Como Funciona no Design System V2 (secção 32 de
 // docs/design/design-system-v2.md). Os passos e a nota de transparência são
-// os textos já publicados nesta página — mudar o processo descrito exige
-// rever o fluxo real (pedido → conta → pagamento → caso → texto → envio).
+// alinhados com o fluxo real (pedido → conta → pagamento → caso → contacto →
+// texto → autorização → envio → acompanhamento); mudar o processo descrito
+// exige rever esse fluxo. Revisão de 17/10/2026: canais de envio além do
+// Livro de Reclamações e sem prazos legais concretos.
 
 // Quem age em cada passo (o texto dos passos está em */paginas.ts, "comoFunciona").
-const DO_CLIENTE = [true, false, false, true, false, false, false];
+const DO_CLIENTE = [true, true, false, false, true, false, false];
 
 // Perguntas já publicadas em /perguntas-frequentes (mesmas respostas).
-const IDS_PERGUNTAS = ["prazo", "documentos", "nao-concordo", "depois-enviada", "empresa-nao-resolve", "copia"];
+const IDS_PERGUNTAS = ["prazo", "documentos-inicio", "nao-concordo", "atualizacoes", "depois-enviada", "empresa-nao-resolve", "copia"];
 
 export function ComoFuncionaV2() {
   const [origem] = useState(detectarOrigem);

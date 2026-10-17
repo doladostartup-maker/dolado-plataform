@@ -16,7 +16,9 @@ export const tratarCaso: Traducao<typeof pt> = {
     titulo: "Start my case",
     duracao: "About 5 minutes",
     nomesPasso: ["Company", "Problem", "Background", "Documents", "Your details"],
-    passoDe: (n: number, nome: string) => `Step ${n} of 5 · ${nome}`,
+    passoDe: (n: number, nome: string) => `Your case · question ${n} of 5: ${nome}`,
+    duvidas: "Any questions? See the FAQs",
+    novoSeparador: "(opens in a new tab; what you have filled in stays here)",
     entrada: {
       usarCaso: (casos: string) => `You have ${casos} in your account.`,
       usarCasoTexto: "At the end, this request will use one of them, with no new payment.",
@@ -54,7 +56,7 @@ export const tratarCaso: Traducao<typeof pt> = {
     },
     passo4: {
       titulo: "Do you have any documents?",
-      texto: "Optional. If you don't have them now, we will ask for them later.",
+      texto: "Optional. For example, the bill in question, the contract or an e-mail from the company. If you don't have them now, we will ask for them later.",
       aCarregar: "Uploading…",
       escolher: "Choose file",
       tipos: "Bill, contract, email or screenshot · PDF or image",

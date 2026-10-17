@@ -5,7 +5,7 @@ export const comum = {
   metadados: {
     titulo: "DoLado",
     descricao:
-      "A DoLado é uma plataforma criada para ajudar os consumidores a resolver problemas e a evitar prejuízos relacionados com serviços essenciais, como telecomunicações, energia e água.",
+      "A DoLado ajuda os consumidores a tratar problemas com empresas — telecomunicações, energia, gás, água, compras e ginásios — e acompanha faturas e contratos com a Proteção.",
   },
   acessibilidade: {
     saltarConteudo: "Saltar para o conteúdo",
@@ -27,6 +27,10 @@ export const comum = {
     },
   },
   navbar: {
+    problemas: "Problemas que tratamos",
+    problemasCurto: "Problemas",
+    ferramentasCurto: "Ferramentas",
+    protecao: "Proteção",
     comoFunciona: "Como funciona",
     ferramentas: "Ferramentas gratuitas",
     precario: "Preçário",
@@ -42,6 +46,7 @@ export const comum = {
     legal: "Legal",
     comoFunciona: "Como funciona",
     problemas: "Problemas que tratamos",
+    protecao: "Proteção",
     ferramentas: "Ferramentas gratuitas",
     precario: "Preçário",
     sobreNos: "Sobre nós",

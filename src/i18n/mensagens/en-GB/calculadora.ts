@@ -5,7 +5,7 @@ export const calculadora: Traducao<typeof pt> = {
   metadados: {
     titulo: "Cancellation Calculator - DoLado",
     descricao:
-      "Estimate the maximum charge for cancelling a telecoms contract with a minimum term early. Free, no account and no email needed.",
+      "Estimate the most you may have to pay to cancel a telecoms contract before the minimum term ends. Free, no account and no e-mail needed.",
   },
   eyebrow: "Free · no account · telecoms",
   titulo: "Cancellation Calculator",
@@ -75,9 +75,9 @@ export const calculadora: Traducao<typeof pt> = {
     rotulo: "Result",
     seloCompleto: "Complete result",
     seloParcial: "Partial result",
-    tituloCompleto: "Maximum estimated charge for ending the contract early:",
+    tituloCompleto: "Maximum estimated amount to pay for cancelling before the minimum term ends:",
     tituloParcial: "Calculated cap: up to",
-    tituloTerminada: "Charge for ending the contract early:",
+    tituloTerminada: "Amount to pay for cancelling before the minimum term ends:",
     tituloSemLimite: "It isn't yet possible to calculate a cap with the details you entered.",
     terminada: (data: string) =>
       `Based on the dates you entered, the minimum term ended on ${data}: there is no minimum-term period currently running.`,

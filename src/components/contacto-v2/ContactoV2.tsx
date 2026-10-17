@@ -19,8 +19,9 @@ import { NUMERO_WHATSAPP } from "@/lib/whatsapp";
 
 // Contacto no Design System V2 (secção 39 de docs/design/design-system-v2.md):
 // caminhos claros e o mesmo formulário (enviarContacto, mesmos campos e
-// honeypot). O aviso "Este formulário não abre casos" mantém-se: os casos
-// abrem-se só pelo fluxo "Tratar o meu caso".
+// honeypot). Uma mensagem não abre um caso: os casos abrem-se só pelo
+// formulário passo a passo de "Tratar o meu caso" (explicado no aviso, com
+// ligação direta — revisão de 17/10/2026).
 
 const LINK = "font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline";
 
@@ -146,6 +147,9 @@ export function ContactoV2() {
             className="mt-8 rounded-[14px] border-l-[3px] border-[var(--v2-aviso)] bg-[var(--v2-aviso-bg)] px-5 py-4 text-[15px] leading-relaxed text-[var(--v2-navy)]"
           >
             {rico(t.formulario.aviso, { b: (conteudo) => <span className="font-bold">{conteudo}</span> })}
+            <button type="button" onClick={tratarCaso} className={`${LINK} mt-2 flex min-h-11 items-center gap-1.5`}>
+              {t.formulario.avisoAcao} <IconeSeta tamanho={15} />
+            </button>
           </div>
         </div>
 

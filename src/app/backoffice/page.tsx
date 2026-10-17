@@ -124,7 +124,7 @@ export default async function BackofficeHoje() {
             id="prazos"
             titulo="Prazos a vigiar"
             contagem={comPrazo.length}
-            descricao="Casos à espera do cliente ou da empresa, fora do prazo ou perto dele: resposta da empresa (15 dias úteis), fim da fidelização (15 dias) e 1.ª resposta (48 horas úteis)."
+            descricao="Casos à espera do cliente ou da empresa, fora do prazo ou perto dele: resposta da empresa (15 dias úteis), fim da fidelização (15 dias) e 1.ª resposta (2 dias úteis)."
           />
           <Lista casos={comPrazo.slice(0, LIMITE_LISTA)} mostrar="prazo" />
         </section>

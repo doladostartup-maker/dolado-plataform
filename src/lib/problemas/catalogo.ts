@@ -111,6 +111,9 @@ export const CATEGORIAS: Categoria[] = [
   // a "Tratar o meu caso" com o setor pré-preenchido.
   { slug: "gas", setor: "Gás", problemas: [] },
   { slug: "agua", setor: "Água", problemas: [] },
+  // Ginásios: setor aceite em /tratar-caso (SETORES) e no Simulador; sem
+  // páginas de problema por agora, como Gás e Água (17/10/2026).
+  { slug: "ginasios", setor: "Ginásios", problemas: [] },
 ];
 
 /** Categoria com página própria (tem pelo menos um problema). */

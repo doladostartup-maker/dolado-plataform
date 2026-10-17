@@ -350,7 +350,14 @@ export function FormularioCaso({
         )}
       </div>
 
-      <div className="mb-6 h-1.5 overflow-hidden rounded-[999px]" style={{ backgroundColor: COR.hairline }}>
+      <p className="-mt-3 mb-6 text-[13.5px]" style={{ color: COR.inkMuted }}>
+        <Link href={`${MARKETING_SITE_URL}/perguntas-frequentes`} target="_blank" rel="noopener" prefetch={false} style={{ color: COR.brand }} className="font-semibold underline underline-offset-4">
+          {t.duvidas}
+        </Link>{" "}
+        <span>{t.novoSeparador}</span>
+      </p>
+
+      <div className="mb-6 h-1.5 overflow-hidden rounded-[999px]" style={{ backgroundColor: COR.hairline }} aria-hidden="true">
         <div
           className="h-full transition-all duration-300"
           style={{ width: `${(step / 5) * 100}%`, backgroundColor: COR.brand }}

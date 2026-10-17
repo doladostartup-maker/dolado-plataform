@@ -151,10 +151,10 @@ export const conta: Traducao<typeof pt> = {
       "We couldn't link the purchase. Please try again in a few minutes.",
     "A compra foi associada à sua conta.": "The purchase has been linked to your account.",
     "Esta compra já está associada à sua conta.": "This purchase is already linked to your account.",
-    "A sua conta já tem uma subscrição ativa, por isso esta compra não foi somada à conta. A DoLado vai analisar a situação e responder-lhe por e-mail no prazo máximo de 48 horas úteis.":
-      "Your account already has an active subscription, so this purchase has not been added to it. DoLado will look into the situation and reply to you by email within 48 working hours at the latest.",
-    "Esta compra já está em análise pela DoLado. A DoLado responde-lhe por e-mail no prazo máximo de 48 horas úteis.":
-      "DoLado is already looking into this purchase. DoLado will reply to you by email within 48 working hours at the latest.",
+    "A sua conta já tem uma subscrição ativa, por isso esta compra não foi somada à conta. A DoLado vai analisar a situação e responder-lhe por e-mail no prazo máximo de 2 dias úteis.":
+      "Your account already has an active subscription, so this purchase has not been added to it. DoLado will look into the situation and reply to you by email within 2 working days at the latest.",
+    "Esta compra já está em análise pela DoLado. A DoLado responde-lhe por e-mail no prazo máximo de 2 dias úteis.":
+      "DoLado is already looking into this purchase. DoLado will reply to you by email within 2 working days at the latest.",
     "Esta compra já está associada a outra conta. Se precisar de ajuda, contacte-nos.":
       "This purchase is already linked to another account. If you need help, please contact us.",
     "Ainda estamos a confirmar este pagamento. Tente novamente dentro de alguns minutos.":

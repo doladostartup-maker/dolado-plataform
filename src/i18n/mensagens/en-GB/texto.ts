@@ -80,7 +80,6 @@ export const texto: Traducao<typeof pt> = {
   canais: {
     livro_reclamacoes_eletronico: "Electronic Complaints Book (Livro de Reclamações Eletrónico)",
     email: "Email",
-    carta: "Letter",
     formulario_operador: "Company's form",
     outro: "Other",
   },
