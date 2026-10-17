@@ -86,7 +86,7 @@ export const paginas = {
     eyebrow: "Proteção",
     titulo: "Acompanhamos as suas faturas e contratos e avisamo-lo a tempo.",
     texto:
-      "A Proteção é para quem quer evitar surpresas, mesmo sem ter um problema agora. Envie-nos as faturas e, se tiver, o contrato dos serviços que quer acompanhar. Comparamos cada fatura com as anteriores e com o contrato, estamos atentos às datas importantes e avisamo-lo por e-mail quando alguma coisa merece a sua atenção.",
+      "A Proteção é para quem quer evitar surpresas, mesmo sem ter um problema agora. Envie-nos as faturas e, se tiver, o contrato dos serviços que quer acompanhar. Comparamos cada fatura com as anteriores e com o contrato, estamos atentos às datas importantes e avisamo-lo quando alguma coisa merece a sua atenção.",
     aderir: "Aderir à Proteção",
     verPrecario: "Ver preçário",
     tresPerguntas: {
@@ -106,9 +106,9 @@ export const paginas = {
           titulo: "Que informação e avisos recebe?",
           itens: [
             "Na área de cliente, logo depois do primeiro documento: o que verificámos, o que encontrámos e o que vamos acompanhar.",
-            "Avisos por e-mail 60 e 30 dias antes do fim de uma promoção ou da fidelização, e no próprio dia.",
+            "Avisos 60 e 30 dias antes do fim de uma promoção ou da fidelização, e no próprio dia.",
             "Um aviso quando uma fatura tem uma alteração que merece ser verificada, depois de revista por uma pessoa da DoLado.",
-            "No início de cada mês, um resumo por e-mail: o que acompanhámos, as alterações encontradas e a próxima data importante.",
+            "No início de cada mês, um resumo: o que acompanhámos, as alterações encontradas e a próxima data importante.",
             "Se quiser, avisos de alterações relevantes nos setores que escolher, como subidas de preços anunciadas.",
           ],
         },

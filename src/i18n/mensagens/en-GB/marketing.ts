@@ -80,7 +80,7 @@ export const marketing: Traducao<typeof pt> = {
         "In a real case, the text is written from the facts and documents of your case, includes the applicable rules where there are any, and is only sent once you authorise it.",
     },
     avisoPromocao: {
-      titulo: "Example of an e-mail reminder",
+      titulo: "Example of a reminder",
       assunto: "The promotion on your service ends in 30 days",
       linhas: [
         { rotulo: "Service", valor: "Broadband and TV" },

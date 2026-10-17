@@ -81,7 +81,7 @@ export const marketing = {
         "Num caso real, o texto é escrito a partir dos factos e dos documentos do seu caso, inclui as regras aplicáveis quando existam e só é enviado depois da sua autorização.",
     },
     avisoPromocao: {
-      titulo: "Exemplo de aviso por e-mail",
+      titulo: "Exemplo de aviso",
       assunto: "A promoção do seu serviço termina daqui a 30 dias",
       linhas: [
         { rotulo: "Serviço", valor: "Internet e televisão" },
