@@ -46,7 +46,7 @@ export const perguntas = {
   prazo: {
     pergunta: "Quanto tempo demora?",
     resposta: [
-      "Depois de o caso ser aberto (ou seja, depois de o pagamento ser confirmado), entramos em contacto consigo no prazo máximo de 48 horas úteis para confirmar os factos. A reclamação é preparada a partir dessa confirmação.",
+      "Depois de o caso ser aberto (ou seja, depois de o pagamento ser confirmado), entramos em contacto consigo no prazo máximo de 2 dias úteis para confirmar os factos. A reclamação é preparada a partir dessa confirmação.",
       "O tempo de preparação depende da informação disponível e de eventuais esclarecimentos. O tempo de resposta da empresa não depende da DoLado: varia conforme o setor, a empresa e o canal usado.",
     ] as Resposta,
   },
@@ -118,7 +118,7 @@ export const perguntas = {
   oQueIncluiProtecao: {
     pergunta: "O que inclui o plano Proteção?",
     resposta:
-      "A Proteção ajuda a identificar situações que possam tornar-se num problema. Comparamos as suas faturas com as anteriores para identificar alterações, estamos atentos a datas importantes, como o fim de promoções e de períodos de fidelização, e avisamo-lo por e-mail antes dessas datas. Também o avisamos de alterações relevantes nos setores que escolher, como subidas de preços anunciadas. A Proteção não inclui o tratamento de reclamações." as Resposta,
+      "A Proteção ajuda a identificar situações que possam tornar-se num problema. Comparamos as suas faturas com as anteriores para identificar alterações, estamos atentos a datas importantes, como o fim de promoções e de períodos de fidelização, e avisamo-lo por e-mail antes dessas datas. Também o avisamos de alterações relevantes nos setores que escolher, como subidas de preços anunciadas, e, no início de cada mês, enviamos-lhe por e-mail um resumo do que acompanhámos. A Proteção não inclui o tratamento de reclamações." as Resposta,
   },
   // Fluxo real: /portal/contratos (carregar fatura ou contrato, ou
   // /portal/contratos/novo sem documento) e setores no /portal/perfil.
@@ -148,6 +148,7 @@ export const perguntas = {
       "Sim. Pode cancelar a sua subscrição a qualquer momento na área <b>Gestão de Subscrição</b>. Depois de cancelar, continua a beneficiar da Proteção até ao fim do período que já pagou e não serão feitas novas cobranças. Quando esse período terminar, os alertas da Proteção ficam desativados e deixam de ser enviados.",
       "O cancelamento normal não dá direito ao reembolso proporcional da mensalidade já paga, sem prejuízo dos direitos que a lei lhe atribui, nomeadamente o direito de livre resolução quando aplicável.",
       "Os casos que já criou continuam disponíveis na sua conta. Se tiver casos acumulados no plano Caso + Proteção, estes ficam guardados durante 90 dias após o fim da subscrição. Se voltar a subscrever o Caso + Proteção dentro desse período, recupera os casos disponíveis que tinha.",
+      "Se tiver um caso da subscrição ainda em acompanhamento, mostramos-lhe a escolha antes de cancelar: pode manter a subscrição até o caso terminar ou cancelar e, nesse caso, o acompanhamento desse caso termina também no fim do período já pago. Os casos tratados com Avulso ou Caso Extra não são afetados.",
     ] as Resposta,
   },
   livreResolucao: {

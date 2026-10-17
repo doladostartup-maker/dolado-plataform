@@ -6,6 +6,7 @@ import { rico } from "@/i18n/Rico";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { casosGuardados, resumoPlanoPortal, type CongelamentoCasos } from "@/lib/acesso";
 import { obterAcesso, requireUser } from "@/lib/auth";
+import { casoAcompanhadoPelaSubscricao } from "@/lib/gestaoSubscricao";
 import { PLANOS } from "@/lib/planos";
 import { linhasDaCobranca } from "@/lib/proximaCobranca";
 import { obterResumoCobranca } from "@/lib/stripe/proximaCobranca";
@@ -34,13 +35,16 @@ export default async function GestaoSubscricaoPage({
   const params = await searchParams;
   const { supabase, user } = await requireUser();
 
-  const [acesso, { data: congelamentos }] = await Promise.all([
+  const [acesso, { data: congelamentos }, { data: casos }] = await Promise.all([
     obterAcesso(supabase, user.id),
     supabase
       .from("case_credit_freezes")
       .select("quantidade, expira_em, restaurado_em")
       .eq("user_id", user.id),
+    // RLS: só os casos da própria conta. Mesma regra que o servidor usa ao cancelar.
+    supabase.from("casos").select("status, origem_credito").eq("utilizador_id", user.id),
   ]);
+  const casosEmCurso = (casos ?? []).filter(casoAcompanhadoPelaSubscricao).length;
   const resumo = resumoPlanoPortal(acesso, idioma);
   const guardados = casosGuardados((congelamentos ?? []) as CongelamentoCasos[]);
   const comSubscricao = resumo.plano !== "sem_plano";
@@ -109,6 +113,7 @@ export default async function GestaoSubscricaoPage({
             <p className={TEXTO}>
               {rico(t.agendadoTexto(formatarData(resumo.fimAgendado)), { b: (c) => <span className="font-semibold">{c}</span> })}
             </p>
+            {casosEmCurso > 0 && <p className={TEXTO}>{t.agendadoCasos(casosEmCurso)}</p>}
             <form action={manterSubscricao}>
               <BotaoManter />
             </form>
@@ -121,6 +126,7 @@ export default async function GestaoSubscricaoPage({
               idioma={idioma}
               fimTexto={fimTexto}
               mostrarCasosGuardados={resumo.plano === "caso_protecao" && (resumo.casosDisponiveis ?? 0) > 0}
+              casosEmCurso={casosEmCurso}
             />
           </div>
         )}

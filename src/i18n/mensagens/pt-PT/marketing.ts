@@ -107,8 +107,8 @@ export const marketing = {
     eyebrow: "A nossa origem",
     titulo: "“Eu próprio já passei por isto.”",
     paragrafos: [
-      "A minha operadora aumentou o preço do serviço que eu tinha. Quando quis sair, tive de pagar uma penalização por ainda estar dentro do período de fidelização. Só mais tarde percebi que havia outras opções que podia ter verificado antes de pagar.",
-      "Percebi que muitas pessoas passam pelo mesmo. Não por falta de vontade, mas porque nem sempre é claro o que verificar, a quem escrever ou que passo dar a seguir.",
+      "A minha operadora aumentou o preço do serviço que eu tinha e eu quis sair. Estive quase a pagar a penalização da fidelização. Foi então que reparei que o aviso do aumento me tinha chegado apenas 28 dias antes da alteração — e foi com base nisso que consegui que a cobrança da fidelização fosse anulada.",
+      "Percebi que muitas pessoas acabam por pagar sem verificar. Não por falta de vontade, mas porque nem sempre é claro o que verificar, a quem escrever ou que passo dar a seguir.",
       "Foi por isso que criei a DoLado: para ajudar a pôr cada problema por escrito, com calma e com cuidado, e para que ninguém tenha de o tratar sozinho.",
     ],
     assinatura: "— Thiago Pereira, fundador da DoLado",

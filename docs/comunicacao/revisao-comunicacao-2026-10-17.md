@@ -17,12 +17,12 @@ Materiais relacionados nesta pasta:
 4. **Navegação:** "Problemas que tratamos" e "Proteção" no menu (computador e telemóvel). No computador, rótulos curtos ("Problemas", "Ferramentas") e menu completo a partir de 1280 px; "Empresas" passa para o menu do telemóvel e para o rodapé.
 5. **Preçário:** necessidades com a formulação pedida; nova secção **"Como funcionam os pagamentos"** (caso isolado vs. subscrição, renovação e cancelamento, "1 caso por mês", fim da subscrição, Caso Extra, passagem de Avulso para subscrição com os valores de reembolso calculados a partir de `src/lib/planos.ts`); ligação "O que é a Proteção?". Resumos dos cartões revistos. Preços, produtos, Price IDs e regras **não** foram alterados.
 6. **Contacto:** retirada a frase "Reclamações enviadas por e-mail ou por este formulário são ignoradas" e o termo "fluxo guiado"; o aviso explica com respeito que uma mensagem não abre um caso nem contrata o serviço, com botão direto para o formulário passo a passo. Texto do WhatsApp com os limites claros (só mensagem, sem análise de casos nem receção de documentos).
-7. **Como funciona:** os 7 passos seguem agora o fluxo real (formulário → conta e pagamento → contacto no prazo de 48 horas úteis → preparação → revisão e autorização → envio pelo canal adequado → acompanhamento e conclusão/encaminhamento). Removidos "mérito do caso", "resposta substantiva", "escalada", "estratégia legal", "Livro de Reclamações como canal único" e o prazo legal concreto de telecomunicações.
+7. **Como funciona:** os 7 passos seguem agora o fluxo real (formulário → conta e pagamento → contacto no prazo de 2 dias úteis → preparação → revisão e autorização → envio pelo canal adequado → acompanhamento e conclusão/encaminhamento). Removidos "mérito do caso", "resposta substantiva", "escalada", "estratégia legal", "Livro de Reclamações como canal único" e o prazo legal concreto de telecomunicações.
 8. **Transparência e Sobre nós:** canais de envio harmonizados; "acompanhamos o prazo / sabemos exatamente quando termina" substituído pelo que o sistema faz (prazo registado quando aplicável); afirmação categórica sobre advogado em arbitragem suavizada; "até à sua resolução" retirado.
 9. **Problemas que tratamos:** Ginásios acrescentado como área (setor já aceite no formulário e no Simulador), com ligação direta a "Tratar o meu caso", como Gás e Água.
 10. **Formulário de contratação:** o contador interno passou de "Passo 1 de 5" (confundível com as 4 etapas) para **"O seu caso · pergunta 1 de 5: Empresa"**; ligação discreta às perguntas frequentes num separador novo (não apaga o que foi preenchido); exemplos de documentos no passo opcional.
 11. **Linguagem:** Calculadora com "valor máximo a pagar por cancelar" nos títulos e na descrição (as notas jurídicas mantêm o termo "encargo"); "portal" → "área de cliente" nos textos públicos alterados; correção de formas que podiam ler-se como "tu" (o teste de regras de escrita apanhou "preenche").
-12. **Fundador:** episódio reescrito para se perceber sem contexto (aumento de preço → quis sair → penalização por estar na fidelização → só depois percebeu que havia opções a verificar). **Precisa de confirmação de Thiago** (ver secção 7).
+12. **Fundador:** episódio real reescrito para se perceber sem contexto (ver secção 7, ponto 3).
 13. **Empresas:** a Proteção aparece como serviço à parte, útil depois de uma mudança de casa, nos dois públicos e na pergunta "Que tipo de apoio presta a DoLado?". Sem preços, poupanças, logótipos nem acesso a casos individuais.
 14. **Acessibilidade:** foco de teclado visível (contorno verde) também nas páginas públicas (`.tema-v2`); exemplos legíveis como texto (não imagem); barra de progresso do formulário marcada como decorativa (o texto do progresso já a descreve).
 15. **SEO:** `/protecao` em `PAGINAS_BILINGUES` (sitemap com hreflang), nas duas listas do middleware, com canonical e alternates (verificado no browser). Títulos e descrições da página inicial, Como funciona, Contacto e Calculadora atualizados.
@@ -81,26 +81,26 @@ Estado: **Feito** · **N/A** (não aplicável, com justificação) · **Decisão
 | 6.3 | Resumo de preços na página inicial | Feito | Preço, único/mensal, inclui/exclui casos, ligações |
 | 6.4 | Não usar "desde 4,99 €" junto de tratar reclamações | Feito | Não existe no site |
 | 6.5 | Explicar renovação, cancelamento, fim da subscrição, "1 caso por mês", acumulação, Caso Extra, conversão | Feito | Secção "Como funcionam os pagamentos" |
-| 6.6 | Acompanhamento de caso aberto quando termina a subscrição | **Decisão** | Ver secção 7, ponto 1 |
+| 6.6 | Acompanhamento de caso aberto quando termina a subscrição | Feito | Escolha no cancelamento (secção 7, ponto 1); Termos por atualizar |
 | 7 | Contacto: acolher e encaminhar | Feito | |
 | 8.1 | WhatsApp: limites claros, só mensagem | Feito | Textos revistos; testes do WhatsApp passam |
 | 8.2 | Acessos na inicial, preçário, FAQ, contacto | Feito | Acrescentado também junto dos preços na inicial |
 | 8.3 | Ajuda discreta no 1.º passo da contratação | Feito (adaptado) | Regra do projeto e teste proíbem WhatsApp em `/tratar-caso`: usei ligação às perguntas frequentes num separador novo |
 | 8.4 | Sem elementos flutuantes | Feito | Não há botão flutuante (teste existente) |
-| 8.5 | Verificação visual do WhatsApp | **Decisão** | `NEXT_PUBLIC_WHATSAPP_NUMBER` vazio em local: o CTA não aparece. Ver secção 7, ponto 7 |
+| 8.5 | Verificação visual do WhatsApp | Feito | Testado por Thiago em produção |
 | 9 | Linguagem simples | Feito | Termos listados substituídos nas páginas revistas; textos jurídicos intactos |
 | 10.1 | Canais de envio harmonizados | Feito | LRE, e-mail ou formulário da empresa ("por exemplo") |
 | 10.2 | Acompanhamento ≠ resolução; sem "até à resolução" | Feito | |
 | 10.3 | Áreas abrangidas (Ginásios) | Feito | |
-| 10.4 | Prazos: primeiro contacto, preparação, resposta da empresa | Feito | "48 horas úteis" mantido (regra do projeto); ver secção 7, ponto 2 |
-| 10.5 | Limites jurídicos sem afirmações categóricas | Feito / **Validação** | Texto novo sobre arbitragem a validar pela advogada |
-| 11.1 | Fotografia e história real do fundador | Feito / **Decisão** | Reescrita a confirmar por Thiago |
+| 10.4 | Prazos: primeiro contacto, preparação, resposta da empresa | Feito | "2 dias úteis" em todo o site |
+| 10.5 | Limites jurídicos sem afirmações categóricas | Feito | Validado pela advogada |
+| 11.1 | Fotografia e história real do fundador | Feito | Episódio real confirmado por Thiago |
 | 11.2 | Demonstrações curtas e fictícias | Feito | Reclamação, aviso de promoção, alteração de fatura; acompanhamento já ilustrado em Como funciona |
 | 11.3 | Guião do vídeo; não publicar vídeo sem ficheiro | Feito | `guiao-video-fundador.md`; nenhum vídeo no site |
 | 11.4 | Entidade e contactos coerentes | Feito | Rodapé usa `ENTIDADE_LEGAL`/`NIPC` de `site.ts`; morada não alterada |
 | 12.1 | Percursos por origem | Feito | `entradas-por-origem.md` |
 | 12.2 | Proposta para flyers | Feito (proposta) | Usar a página inicial; sem página nova |
-| 12.3 | Parceria imobiliária: só estrutura e lista de condições | **Decisão** | Nada publicado; dependente de condições comerciais |
+| 12.3 | Parceria imobiliária: só estrutura e lista de condições | Feito (preparado) | Nada publicado; depende de condições comerciais |
 | 13 | Empresas: Proteção visível, sem dados individuais, sem condições | Feito | |
 | 14 | Ferramentas: gratuitas, sem conta, linguagem simples, próximo passo coerente | Feito | Sem alterações de lógica |
 | 15.1 | Progresso do formulário com hierarquia clara | Feito | |
@@ -121,6 +121,7 @@ Estado: **Feito** · **N/A** (não aplicável, com justificação) · **Decisão
 | Garantias | "Simples e seguro · Com a sua aprovação · Acompanhamos o processo" | "Revê o texto antes do envio · Nada é enviado sem a sua autorização · Preço à vista antes de pagar" |
 | Proteção na inicial | Eyebrow "**Depois de resolver o problema** — Podemos continuar atentos por si." | "Duas formas de ajudar": "Acompanhar faturas e contratos — Para quem quer ser avisado a tempo, mesmo sem ter um problema agora. Não precisa de abrir um caso." |
 | CTA final da inicial | "Conte-nos o que aconteceu." → botão para o Simulador | "Veja primeiro se a DoLado pode ajudar. São 4 perguntas rápidas…" → Simulador |
+| Prazo do primeiro contacto | "no prazo máximo de 48 horas úteis" | "no prazo máximo de 2 dias úteis" |
 | Contacto (aviso) | "Este formulário não abre casos. **Reclamações enviadas por e-mail ou por este formulário são ignoradas.** Para abrir um caso, use sempre o **fluxo guiado**…" | "Uma mensagem por aqui não abre um caso nem contrata o serviço. Este formulário serve para dúvidas, parcerias e outros assuntos. Para pedir à DoLado que trate de um problema, use o formulário passo a passo…" + botão |
 | Como funciona (passo 2) | "Analisamos o **mérito do caso** — Verificamos se há fundamento legal…" | "Crie a conta e escolha a modalidade — … Começamos a tratar do caso depois de o pagamento ser confirmado." |
 | Como funciona (prazo) | "Telecom: 15 dias úteis sem **resposta substantiva**…" | Removido; passo "Acompanhamos a resposta" descreve análise, confirmação da solução, nova comunicação ou encerramento com dossiê |
@@ -131,7 +132,7 @@ Estado: **Feito** · **N/A** (não aplicável, com justificação) · **Decisão
 | Preçário (necessidades) | "…quero continuar protegido." / "Não tenho um problema agora, mas quero acompanhamento." | "…quero acompanhamento contínuo." / "Quero acompanhar as minhas faturas e contratos." |
 | Formulário | "Passo 1 de 5 · Empresa" | "O seu caso · pergunta 1 de 5: Empresa" |
 | Calculadora | "Valor máximo estimado do **encargo por denúncia antecipada**:" | "Valor máximo estimado a pagar por cancelar antes do fim da fidelização:" |
-| Fundador | "Tive uma penalização de fidelização de uma operadora **depois de aumentos** e só mais tarde descobri que poderia ter tido outras opções." | "A minha operadora aumentou o preço do serviço que eu tinha. Quando quis sair, tive de pagar uma penalização por ainda estar dentro do período de fidelização. Só mais tarde percebi que havia outras opções que podia ter verificado antes de pagar." |
+| Fundador | "Tive uma penalização de fidelização de uma operadora **depois de aumentos** e só mais tarde descobri que poderia ter tido outras opções." | "A minha operadora aumentou o preço do serviço que eu tinha e eu quis sair. Estive quase a pagar a penalização da fidelização. Foi então que reparei que o aviso do aumento me tinha chegado apenas 28 dias antes da alteração — e foi com base nisso que consegui que a cobrança da fidelização fosse anulada." |
 | FAQ "E se a empresa não resolver?" | "…ajuda a analisar a resposta e a identificar os próximos mecanismos disponíveis." | Nova comunicação quando faz sentido; caso contrário, encerramento do lado da DoLado ("não significa que ficou resolvido"), dossiê e lista de entidades de resolução de conflitos; a DoLado não representa o cliente. |
 
 ## 5. Factos verificados no código antes de escrever
@@ -141,7 +142,7 @@ Estado: **Feito** · **N/A** (não aplicável, com justificação) · **Decisão
 | Documentos opcionais; pedidos depois | Passo 4 do formulário; `casos_pedidos_cliente` (cliente responde com texto/ficheiros no portal) |
 | E-mails quando o texto está pronto, resposta em análise, pedido de informação, solução a confirmar, encerramento | `src/lib/email/textoRevisao.ts`, `acompanhamento.ts`, e-mail `caso_encerrado_externo` |
 | Caso só "Resolvido" com confirmação do cliente | Decisão A em `caso_decidir_analise()` (CLAUDE.md, "Acompanhamento depois do envio") |
-| Canais de envio | `casos_textos_envios.canal`: `livro_reclamacoes_eletronico`, `email`, `carta`, `formulario_operador`, `outro` |
+| Canais de envio | `CANAIS_ENVIO` (`src/lib/textoCaso.ts`): Livro de Reclamações Eletrónico, e-mail, formulário do operador, outro |
 | Prazo de resposta só quando aplicável | `texto_registar_envio` (`prazo_resposta_em` + base; nunca calculado) |
 | Dossiê e entidades RAL no encerramento | `caso_encerrar_encaminhamento_externo()`, `src/lib/dossie/`, `ENTIDADES_RAL` |
 | Avisos 60 e 30 dias e no dia | Edge Function `verificar-monitor-datas` |
@@ -157,7 +158,7 @@ Estado: **Feito** · **N/A** (não aplicável, com justificação) · **Decisão
 | Verificação | Resultado |
 |---|---|
 | `npx tsc --noEmit` | Sem erros |
-| `npm test` (node --test, 1211 testes: i18n completo, inglês britânico, regras de escrita, preços, WhatsApp, desempenho/prefetch, problemas, sitemap…) | 1211 passam, 0 falham |
+| `npm test` (node --test, 1215 testes: i18n completo, inglês britânico, regras de escrita, preços, WhatsApp, desempenho/prefetch, problemas, sitemap…) | 1215 passam, 0 falham |
 | `eslint` nos ficheiros alterados | Sem erros nem avisos |
 | `npm run build` (webpack, como na Clever Cloud) | Passa; `/pt/protecao` e `/en/protecao` geradas estaticamente |
 | Browser, 360 px: `/`, `/protecao`, `/precario`, `/contacto`, `/como-funciona`, `/problemas`, `/tratar-caso` | Sem deslocação horizontal |
@@ -169,19 +170,24 @@ Estado: **Feito** · **N/A** (não aplicável, com justificação) · **Decisão
 
 Não foi feito: nenhum cliente, pagamento, mensagem de WhatsApp, contacto ou caso real (a navegação no formulário ficou no passo 2, sem envio). Testes de contrato (`npm run test:contrato`) não foram corridos: não houve alterações em webhooks, tabelas ou pagamentos.
 
-## 7. Pontos que precisam de decisão ou validação
+## 7. Decisões tomadas (17/10/2026)
 
-1. **Acompanhamento de um caso aberto quando a subscrição termina.** Os Termos `2026-10-08` (14.2) dizem que "os casos já abertos, os documentos e o histórico … continuam acessíveis na área de cliente", mas não dizem se a DoLado **continua a acompanhar** (analisar respostas, nova comunicação) um caso aberto depois do fim da subscrição. O site diz agora só o que está escrito ("continuam acessíveis"). Decisão de Thiago, e eventualmente nova versão dos Termos.
-2. **"48 horas úteis" para o primeiro contacto.** É a regra de escrita do projeto e o compromisso publicado, mas não há no código nenhum mecanismo que o meça. Mantive "no prazo máximo de 48 horas úteis" e não converti em "dois dias úteis". Confirmar se o compromisso operacional é mesmo este e se começa na confirmação do pagamento (é o que o site diz agora).
-3. **História do fundador.** A nova redação acrescenta "Quando quis sair" para tornar o episódio compreensível. Confirmar que corresponde ao que aconteceu (não foi acrescentado nenhum direito nem ilegalidade).
-4. **Prazo de telecomunicações removido de Como funciona** ("15 dias úteis sem resposta substantiva"). Era um prazo legal concreto sem fonte no site e contrário à regra das páginas de problemas. Se for para voltar, precisa de fonte oficial atual e validação da advogada.
-5. **Limites jurídicos (Transparência).** "Não o representamos em tribunal, arbitragem ou outras entidades … conforme o caso, pode precisar de apoio jurídico" substitui "precisa de um advogado". Validar com a advogada.
-6. **Canal "carta".** Existe na base de dados como canal de envio, mas não é mencionado no site (os exemplos são LRE, e-mail e formulário da empresa). Confirmar se o envio por carta é feito na prática.
-7. **WhatsApp.** O número não está configurado em local, por isso os CTA não foram vistos no browser (os testes estáticos passam). O CLAUDE.md pede, antes de ligar em produção, atualizar a matriz de subcontratantes e uma nova versão da Política de Privacidade (Meta). Confirmar o estado em produção.
-8. **"Empresas" saiu do menu do computador** (continua no menu do telemóvel e no rodapé) para dar lugar a "Problemas" e "Proteção". O CLAUDE.md dizia "na navbar sem prefetch e no rodapé" — confirmar a preferência.
-9. **Resumo mensal da Proteção.** Não é mencionado na página `/protecao` porque não consegui confirmar que está ativo em produção. Se estiver, pode ser acrescentado à lista "Que informação e avisos recebe?".
-10. **Traduções inglesas** dos textos novos seguem o inglês britânico do site; os textos legais não foram tocados.
-11. **Parceria imobiliária:** nada publicado; ver `entradas-por-origem.md` para a lista de condições necessárias.
+A advogada validou todos os pontos jurídicos (limites sobre advogado/arbitragem, prazo de telecomunicações retirado de Como funciona, textos novos). Decisões de Thiago e o que foi feito:
+
+1. **Fim da subscrição com um caso aberto.** Ao cancelar, a cliente vê a escolha: manter a subscrição até o caso terminar, ou cancelar — e, nesse caso, o acompanhamento dos casos em curso termina também no fim do período já pago. Implementado em `/portal/subscricao`:
+   - o servidor conta os casos em curso da subscrição (`casoAcompanhadoPelaSubscricao`, `src/lib/gestaoSubscricao.ts`) e recusa o cancelamento sem a caixa de confirmação marcada (nada muda no Stripe antes);
+   - a escolha fica em `subscricao_cancelamentos.casos_em_curso` / `acompanhamento_casos_termina` (migration `20261017090000_cancelamento_casos_em_curso.sql`: **aplicar com `supabase db push --linked` antes do merge**);
+   - o backoffice mostra no caso o aviso "Acompanhamento termina com a subscrição";
+   - preçário e perguntas frequentes explicam a regra.
+   - **Interpretação a confirmar:** contam só os casos abertos com um caso da subscrição ou sem compra única ligada (`origem_credito` `subscricao` ou vazio). Os casos pagos à parte (Avulso, Caso Extra) continuam a ser acompanhados.
+   - **Termos:** a versão `2026-10-08` (14.2) não descreve esta regra. Recomenda-se uma nova versão dos Termos (as publicadas não se editam).
+2. **Prazo:** todas as menções a "48 horas úteis" passaram a "2 dias úteis" (site, mensagens de compra, backoffice, regra de escrita no CLAUDE.md). No backoffice, o indicador da 1.ª resposta passou de 48 para 18 horas úteis (2 × 9h, a contagem existente). Sem funcionalidade nova. Mantém-se uma menção a "24 horas" na livre resolução: é um limite contra abuso ("vários pedidos nas últimas 24 horas"), não um prazo de resposta. Os Termos e a Política publicados não falam deste prazo.
+3. **História do fundador:** reescrita com o episódio real (quase pagou a penalização; o aviso do aumento chegou só 28 dias antes; com base nisso conseguiu que a cobrança fosse anulada). Também no guião do vídeo.
+4. **Envio por carta:** retirado das opções de canal de envio (`CANAIS_ENVIO`) e dos textos. A base de dados continua a aceitar o valor (sem migration); registos antigos, se existirem, mostram o valor técnico. A **receção** de respostas da empresa por carta (registo manual) mantém-se.
+5. **Empresas** fora do menu do computador: aprovado.
+6. **WhatsApp:** testado por Thiago em produção.
+7. **Resumo mensal da Proteção:** ativo. Acrescentado à página `/protecao` e à pergunta "O que inclui o plano Proteção?".
+8. **Parceria imobiliária:** fica como está (só estrutura e lista de condições).
 
 ## 8. Capturas
 

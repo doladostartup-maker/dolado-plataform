@@ -39,7 +39,7 @@ export const paginas = {
         fimSubscricao: {
           titulo: "Quando a subscrição termina",
           texto: (dias: number) =>
-            `Os casos já abertos, o texto enviado, os comprovativos e o histórico continuam acessíveis na área de cliente. A Proteção deixa de funcionar e os avisos param. Os casos disponíveis que vieram da subscrição ficam guardados ${dias} dias e só voltam a poder ser usados se subscrever de novo o Caso + Proteção nesse prazo. Casos Avulso e Caso Extra por usar continuam disponíveis.`,
+            `Os casos já abertos, o texto enviado, os comprovativos e o histórico continuam acessíveis na área de cliente. A Proteção deixa de funcionar e os avisos param. Se tiver um caso da subscrição em acompanhamento, pode manter a subscrição até o caso terminar; se cancelar, o acompanhamento desse caso termina no fim do período pago (casos Avulso e Caso Extra não são afetados). Os casos disponíveis que vieram da subscrição ficam guardados ${dias} dias e só voltam a poder ser usados se subscrever de novo o Caso + Proteção nesse prazo. Casos Avulso e Caso Extra por usar continuam disponíveis.`,
         },
         casoExtra: {
           titulo: "Caso Extra",
@@ -108,6 +108,7 @@ export const paginas = {
             "Na área de cliente, logo depois do primeiro documento: o que verificámos, o que encontrámos e o que vamos acompanhar.",
             "Avisos por e-mail 60 e 30 dias antes do fim de uma promoção ou da fidelização, e no próprio dia.",
             "Um aviso quando uma fatura tem uma alteração que merece ser verificada, depois de revista por uma pessoa da DoLado.",
+            "No início de cada mês, um resumo por e-mail: o que acompanhámos, as alterações encontradas e a próxima data importante.",
             "Se quiser, avisos de alterações relevantes nos setores que escolher, como subidas de preços anunciadas.",
           ],
         },
@@ -179,7 +180,7 @@ export const paginas = {
       {
         titulo: "Confirmamos os factos consigo",
         texto:
-          "No prazo máximo de 48 horas úteis, entramos em contacto para confirmar o que aconteceu. Se faltar alguma informação ou documento, pedimos-lho por e-mail.",
+          "No prazo máximo de 2 dias úteis, entramos em contacto para confirmar o que aconteceu. Se faltar alguma informação ou documento, pedimos-lho por e-mail.",
       },
       {
         titulo: "Preparamos a reclamação",

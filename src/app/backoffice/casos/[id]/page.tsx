@@ -37,6 +37,7 @@ import { EnviosCaso, type ComprovativoEquipa, type EnvioEquipa } from "../_compo
 import { EncerramentoCaso, type DossieResumo, type EncerramentoResumo } from "../_components/EncerramentoCaso";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rotuloOrigem } from "@/lib/origemAquisicao";
+import { casoAcompanhadoPelaSubscricao } from "@/lib/gestaoSubscricao";
 import { rascunhoIAAtivo } from "@/lib/rascunhoIA/servidor";
 import { documentosParaPreenchimento } from "@/lib/preenchimentoReclamacao/servidor";
 import type { GeracaoIA } from "../_components/RascunhoIA";
@@ -89,6 +90,20 @@ export default async function CasoDetalhePage({
         .maybeSingle()
     : { data: null };
   const voucher = (compraComVoucher?.codigo_desconto as string | null | undefined) ?? null;
+  // Cancelamento da subscrição com casos em curso (17/10/2026): a cliente
+  // escolheu terminar também o acompanhamento no fim do período pago.
+  const { data: fimAcompanhamento } =
+    caso.utilizador_id && casoAcompanhadoPelaSubscricao({ status: caso.status, origem_credito: caso.origem_credito })
+      ? await supabase
+          .from("subscricao_cancelamentos")
+          .select("fim_previsto_em, terminado_em")
+          .eq("user_id", caso.utilizador_id)
+          .eq("acompanhamento_casos_termina", true)
+          .is("revertido_em", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : { data: null };
 
   const { data: anexosData } = await supabase
     .from("anexos")
@@ -275,6 +290,17 @@ export default async function CasoDetalhePage({
         }
       />
 
+      {fimAcompanhamento && (
+        <Aviso tom="info" titulo="Acompanhamento termina com a subscrição">
+          A cliente cancelou a subscrição e escolheu terminar também o acompanhamento dos casos em curso
+          {fimAcompanhamento.terminado_em
+            ? ` (subscrição terminada a ${dataCurta(fimAcompanhamento.terminado_em as string)}).`
+            : fimAcompanhamento.fim_previsto_em
+              ? ` a ${dataCurta(fimAcompanhamento.fim_previsto_em as string)}.`
+              : " no fim do período pago."}{" "}
+          Se ela retirar o cancelamento, este aviso desaparece.
+        </Aviso>
+      )}
       {query.guardado && <Aviso tom="sucesso">Alterações guardadas.</Aviso>}
       {query.acomp_ok && <Aviso tom="sucesso">{query.acomp_ok}</Aviso>}
       {query.acomp_erro && <Aviso tom="erro">{query.acomp_erro}</Aviso>}

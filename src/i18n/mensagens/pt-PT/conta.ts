@@ -158,10 +158,10 @@ export const conta = {
       "Não foi possível associar a compra. Tente novamente dentro de alguns minutos.",
     "A compra foi associada à sua conta.": "A compra foi associada à sua conta.",
     "Esta compra já está associada à sua conta.": "Esta compra já está associada à sua conta.",
-    "A sua conta já tem uma subscrição ativa, por isso esta compra não foi somada à conta. A DoLado vai analisar a situação e responder-lhe por e-mail no prazo máximo de 48 horas úteis.":
-      "A sua conta já tem uma subscrição ativa, por isso esta compra não foi somada à conta. A DoLado vai analisar a situação e responder-lhe por e-mail no prazo máximo de 48 horas úteis.",
-    "Esta compra já está em análise pela DoLado. A DoLado responde-lhe por e-mail no prazo máximo de 48 horas úteis.":
-      "Esta compra já está em análise pela DoLado. A DoLado responde-lhe por e-mail no prazo máximo de 48 horas úteis.",
+    "A sua conta já tem uma subscrição ativa, por isso esta compra não foi somada à conta. A DoLado vai analisar a situação e responder-lhe por e-mail no prazo máximo de 2 dias úteis.":
+      "A sua conta já tem uma subscrição ativa, por isso esta compra não foi somada à conta. A DoLado vai analisar a situação e responder-lhe por e-mail no prazo máximo de 2 dias úteis.",
+    "Esta compra já está em análise pela DoLado. A DoLado responde-lhe por e-mail no prazo máximo de 2 dias úteis.":
+      "Esta compra já está em análise pela DoLado. A DoLado responde-lhe por e-mail no prazo máximo de 2 dias úteis.",
     "Esta compra já está associada a outra conta. Se precisar de ajuda, contacte-nos.":
       "Esta compra já está associada a outra conta. Se precisar de ajuda, contacte-nos.",
     "Ainda estamos a confirmar este pagamento. Tente novamente dentro de alguns minutos.":

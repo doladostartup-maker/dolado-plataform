@@ -109,10 +109,12 @@ export function mensagemComprovativoCliente(tipo: TipoComprovativo | null) {
 /** Limite da referência da reclamação (igual à base de dados). */
 export const MAX_REFERENCIA = 200;
 
+// Sem "carta": a DoLado não envia reclamações por carta (decisão de Thiago,
+// 17/10/2026). O valor continua aceite pela base de dados, mas deixa de
+// poder ser escolhido no backoffice e de ser mostrado.
 export const CANAIS_ENVIO = {
   livro_reclamacoes_eletronico: "Livro de Reclamações Eletrónico",
   email: "E-mail",
-  carta: "Carta",
   formulario_operador: "Formulário do operador",
   outro: "Outro",
 } as const;

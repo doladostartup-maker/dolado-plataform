@@ -19,7 +19,7 @@ export const inicio: Traducao<typeof pt> = {
     explicacaoBotoes:
       "“Start my case” opens a step-by-step form that takes about 5 minutes, and you only pay at the end. If you are still unsure, start with 4 quick questions, with no account or e-mail.",
     garantias: ["You review the text before it is sent", "Nothing is sent without your authorisation", "You see the price before paying"],
-    resposta: "Once your case is opened, we will contact you within a maximum of 48 working hours.",
+    resposta: "Once your case is opened, we will contact you within a maximum of 2 working days.",
   },
   problemas: {
     eyebrow: "Common situations",

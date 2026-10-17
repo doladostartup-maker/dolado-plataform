@@ -226,7 +226,7 @@ export function CasoForm({
         <Campo label="Data de envio da reclamação" ajuda="Conta o prazo de 15 dias úteis para a resposta da empresa.">
           <input type="date" name="data_envio_reclamacao" defaultValue={valores.data_envio_reclamacao ?? ""} className={CAMPO} />
         </Campo>
-        <Campo label="Primeira resposta ao cliente" ajuda="Prazo: 48 horas úteis desde a criação.">
+        <Campo label="Primeira resposta ao cliente" ajuda="Prazo: 2 dias úteis desde a criação.">
           <input type="datetime-local" name="primeira_resposta_em" defaultValue={paraDatetimeLocal(valores.primeira_resposta_em)} className={CAMPO} />
         </Campo>
       </Grupo>

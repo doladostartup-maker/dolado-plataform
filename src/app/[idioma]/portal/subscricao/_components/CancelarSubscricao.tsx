@@ -27,6 +27,7 @@ function BotaoConfirmar({ idioma }: { idioma: Idioma }) {
 export function CancelarSubscricao({
   fimTexto,
   mostrarCasosGuardados,
+  casosEmCurso = 0,
   idioma = "pt-PT",
 }: {
   idioma?: Idioma;
@@ -34,6 +35,8 @@ export function CancelarSubscricao({
   fimTexto: string | null;
   /** Caso + Proteção com casos disponíveis. */
   mostrarCasosGuardados: boolean;
+  /** Casos em curso acompanhados pela subscrição (o servidor volta a contar ao cancelar). */
+  casosEmCurso?: number;
 }) {
   const [passo, setPasso] = useState<"fechado" | "motivo" | "confirmar">("fechado");
   const t = tSubscricao[idioma].cancelar;
@@ -99,9 +102,24 @@ export function CancelarSubscricao({
           <p className="text-[13px] leading-relaxed text-[var(--color-ink-muted)]">
             {t.naoApagados}
           </p>
+          {casosEmCurso > 0 && (
+            // Decisão de 17/10/2026: com casos em curso, a cliente escolhe entre
+            // manter a subscrição até o caso terminar ou cancelar e terminar
+            // também o acompanhamento. Sem a caixa marcada, o servidor recusa.
+            <div role="note" className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-[var(--v2-aviso)] bg-[var(--v2-aviso-bg)] px-4 py-4">
+              <p className="text-[14px] font-semibold text-[var(--color-ink)]">{t.casos.titulo(casosEmCurso)}</p>
+              <p className="text-[13.5px] leading-relaxed text-[var(--color-ink)]">
+                {fimTexto ? t.casos.texto(fimTexto) : t.casos.textoSemData}
+              </p>
+              <label className="flex items-start gap-2.5 text-[13.5px] leading-relaxed text-[var(--color-ink)]">
+                <input type="checkbox" name="confirmar_casos" value="1" required className={`${CAIXA_SELECAO} mt-0.5`} />
+                {fimTexto ? t.casos.confirmo(fimTexto) : t.casos.confirmoSemData}
+              </label>
+            </div>
+          )}
           <div className="flex flex-wrap gap-3">
             <button type="button" onClick={() => setPasso("fechado")} className={BOTAO_PRIMARIO}>
-              {t.manter}
+              {casosEmCurso > 0 ? t.casos.manter : t.manter}
             </button>
             <BotaoConfirmar idioma={idioma} />
           </div>

@@ -106,8 +106,8 @@ export const marketing: Traducao<typeof pt> = {
     eyebrow: "Our story",
     titulo: "“I have been through this myself.”",
     paragrafos: [
-      "My telecoms provider put up the price of the service I had. When I wanted to leave, I had to pay an early termination fee because I was still within the minimum term. Only later did I realise there were other options I could have checked before paying.",
-      "I realised that many people go through the same thing. Not because they don't care, but because it is not always clear what to check, who to write to or what to do next.",
+      "My telecoms provider put up the price of the service I had, and I wanted to leave. I very nearly paid the early termination fee. Then I noticed that the notice of the price rise had reached me only 28 days before the change — and that is what allowed me to get the termination fee cancelled.",
+      "I realised that many people end up paying without checking. Not because they don't care, but because it is not always clear what to check, who to write to or what to do next.",
       "That is why I created DoLado: to help put each problem in writing, calmly and carefully, so that nobody has to deal with it alone.",
     ],
     assinatura: "— Thiago Pereira, founder of DoLado",

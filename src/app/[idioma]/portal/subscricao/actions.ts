@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "@/lib/stripe/client";
 import { snapshotDeSubscricao } from "@/lib/stripe/webhook";
 import {
+  casoAcompanhadoPelaSubscricao,
   lerMotivo,
   manterSubscricao as manterSubscricaoLogica,
   pedirCancelamento,
@@ -63,13 +64,21 @@ function criarDependencias(): DependenciasGestao {
       falhar("user_access.update", error);
     },
 
-    async registarPedido({ userId, subscriptionId, plano, motivo, pedidoEm, fimPrevisto }) {
+    async contarCasosEmCurso(userId) {
+      const { data, error } = await admin.from("casos").select("status, origem_credito").eq("utilizador_id", userId);
+      falhar("casos.select", error);
+      return (data ?? []).filter(casoAcompanhadoPelaSubscricao).length;
+    },
+
+    async registarPedido({ userId, subscriptionId, plano, motivo, pedidoEm, fimPrevisto, casosEmCurso }) {
       const linha = {
         origem: "cliente",
         motivo_codigo: motivo.codigo,
         motivo_texto: motivo.texto,
         pedido_em: pedidoEm,
         fim_previsto_em: fimPrevisto,
+        casos_em_curso: casosEmCurso,
+        acompanhamento_casos_termina: casosEmCurso > 0,
       };
       const { error } = await admin
         .from("subscricao_cancelamentos")
@@ -106,11 +115,12 @@ function registarErro(acao: string, erro: unknown) {
 export async function cancelarSubscricao(formData: FormData) {
   const { user } = await requireUser();
   const motivo = lerMotivo(formData.get("motivo"), formData.get("comentario"));
+  const confirmouCasos = formData.get("confirmar_casos") === "1";
 
   let destino = "/portal/subscricao?cancelada=1";
   try {
-    const r = await pedirCancelamento(user.id, motivo, criarDependencias());
-    if (!r.ok) destino = "/portal/subscricao?erro=indisponivel";
+    const r = await pedirCancelamento(user.id, motivo, criarDependencias(), new Date(), confirmouCasos);
+    if (!r.ok) destino = r.erro === "confirmar_casos" ? "/portal/subscricao?erro=confirmar_casos" : "/portal/subscricao?erro=indisponivel";
   } catch (erro) {
     registarErro("cancelar", erro);
     destino = "/portal/subscricao?erro=falha";

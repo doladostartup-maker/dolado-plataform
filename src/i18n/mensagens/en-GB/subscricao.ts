@@ -40,6 +40,8 @@ export const subscricao: Traducao<typeof pt> = {
     erros: {
       indisponivel: "We couldn't find an active subscription that can be changed. Please refresh the page.",
       falha: "We couldn't complete your request. Please try again in a few minutes.",
+      confirmar_casos:
+        "You have a case being followed up. To cancel, first confirm that follow-up on that case also ends at the end of the period already paid.",
     },
     planoAtual: "Current plan",
     estado: "Subscription status",
@@ -58,6 +60,10 @@ export const subscricao: Traducao<typeof pt> = {
     inativa: "Inactive",
     agendadoTexto: (data: string) =>
       `<b>Cancellation scheduled.</b> Your Protection is active until ${data}. Until then, everything keeps working as normal. On that date, we stop following your contracts and sending alerts.`,
+    agendadoCasos: (n: number) =>
+      n === 1
+        ? "Follow-up on your open case also ends on that date. If you would like DoLado to keep following it up, keep your subscription."
+        : `Follow-up on your ${n} open cases also ends on that date. If you would like DoLado to keep following them up, keep your subscription.`,
     guardados: (n: number, data: string) =>
       `You have ${n === 1 ? "1 available case saved" : `${n} available cases saved`} until ${data}. If you subscribe to Case + Protection again by that date, you get them back.`,
     verSubscricoes: "See subscriptions",
@@ -91,6 +97,16 @@ export const subscricao: Traducao<typeof pt> = {
     casosGuardados: (dias: number) =>
       `Your available cases are kept for ${dias} days after that date. If you subscribe to Case + Protection again within that period, you get them back.`,
     naoApagados: "The cases you have opened, your documents and your history are not deleted.",
+    casos: {
+      titulo: (n: number) => (n === 1 ? "You have a case being followed up" : `You have ${n} cases being followed up`),
+      texto: (data: string) =>
+        `You can keep your subscription until the case is finished and cancel afterwards. If you cancel now, your subscription ends on ${data} and, on that date, DoLado also stops following up your open cases. Cases handled with Single Case or Extra Case are not affected.`,
+      textoSemData:
+        "You can keep your subscription until the case is finished and cancel afterwards. If you cancel now, at the end of the period already paid DoLado also stops following up your open cases. Cases handled with Single Case or Extra Case are not affected.",
+      manter: "Keep my subscription until the case is finished",
+      confirmo: (data: string) => `I understand that follow-up on my open cases ends on ${data}.`,
+      confirmoSemData: "I understand that follow-up on my open cases ends at the end of the period already paid.",
+    },
     aGuardar: "Saving…",
   },
 };

@@ -37,7 +37,7 @@ export const perguntas: Traducao<typeof pt> = {
   prazo: {
     pergunta: "How long does it take?",
     resposta: [
-      "Once your case is opened (that is, once the payment is confirmed), we contact you within a maximum of 48 working hours to confirm the facts. The complaint is prepared on the basis of that confirmation.",
+      "Once your case is opened (that is, once the payment is confirmed), we contact you within a maximum of 2 working days to confirm the facts. The complaint is prepared on the basis of that confirmation.",
       "How long the preparation takes depends on the information available and on any clarifications needed. How long the company takes to reply does not depend on DoLado: it varies with the sector, the company and the channel used.",
     ],
   },
@@ -109,7 +109,7 @@ export const perguntas: Traducao<typeof pt> = {
   oQueIncluiProtecao: {
     pergunta: "What does the Protection plan include?",
     resposta:
-      "Protection helps you spot situations that could turn into a problem. We compare each bill with the previous ones to identify changes, keep an eye on important dates such as the end of promotions and minimum-term periods, and email you before those dates. We also let you know about relevant changes in the sectors you choose, such as announced price rises. Protection does not include handling complaints.",
+      "Protection helps you spot situations that could turn into a problem. We compare each bill with the previous ones to identify changes, keep an eye on important dates such as the end of promotions and minimum-term periods, and email you before those dates. We also let you know about relevant changes in the sectors you choose, such as announced price rises, and at the start of each month we e-mail you a summary of what we kept an eye on. Protection does not include handling complaints.",
   },
   comecarProtecao: {
     pergunta: "How do I start using Protection?",
@@ -137,6 +137,7 @@ export const perguntas: Traducao<typeof pt> = {
       "Yes. You can cancel your subscription at any time under <b>Subscription settings</b>. After you cancel, Protection stays active until the end of the period you have already paid for and you will not be charged again. When that period ends, Protection alerts are switched off and no longer sent.",
       "A normal cancellation does not entitle you to a pro rata refund of the monthly fee already paid. This does not affect your statutory rights, in particular the right of withdrawal where it applies.",
       "Cases you have already opened remain available in your account. If you have built up cases on the Case + Protection plan, they are kept for 90 days after the subscription ends. If you subscribe to Case + Protection again within that period, you get back the cases you had available.",
+      "If you have a subscription case still being followed up, we show you the choice before you cancel: you can keep your subscription until the case is finished, or cancel — in which case follow-up on that case also ends at the end of the period already paid. Cases handled with Single Case or Extra Case are not affected.",
     ],
   },
   livreResolucao: {

@@ -40,7 +40,7 @@ export const paginas: Traducao<typeof pt> = {
         fimSubscricao: {
           titulo: "When the subscription ends",
           texto: (dias: number) =>
-            `Cases already opened, the text sent, proofs of submission and the history remain available in your account. Protection stops and so do the reminders. Available cases from the subscription are kept for ${dias} days and can only be used again if you take out Case + Protection again within that time. Unused Single Cases and Extra Cases remain available.`,
+            `Cases already opened, the text sent, proofs of submission and the history remain available in your account. Protection stops and so do the reminders. If you have a subscription case being followed up, you can keep your subscription until the case is finished; if you cancel, follow-up on that case ends at the end of the paid period (Single Cases and Extra Cases are not affected). Available cases from the subscription are kept for ${dias} days and can only be used again if you take out Case + Protection again within that time. Unused Single Cases and Extra Cases remain available.`,
         },
         casoExtra: {
           titulo: "Extra Case",
@@ -108,6 +108,7 @@ export const paginas: Traducao<typeof pt> = {
             "In your account, straight after the first document: what we checked, what we found and what we will keep an eye on.",
             "E-mail reminders 60 and 30 days before a promotion or minimum term ends, and on the day itself.",
             "A notice when a bill has a change that is worth checking, after a person at DoLado has reviewed it.",
+            "At the start of each month, a summary by e-mail: what we kept an eye on, any changes we found and the next important date.",
             "If you wish, notices about relevant changes in the sectors you choose, such as announced price rises.",
           ],
         },
@@ -179,7 +180,7 @@ export const paginas: Traducao<typeof pt> = {
       {
         titulo: "We confirm the facts with you",
         texto:
-          "Within a maximum of 48 working hours, we get in touch to confirm what happened. If any information or document is missing, we ask you for it by e-mail.",
+          "Within a maximum of 2 working days, we get in touch to confirm what happened. If any information or document is missing, we ask you for it by e-mail.",
       },
       {
         titulo: "We prepare the complaint",

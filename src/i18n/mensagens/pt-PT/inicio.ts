@@ -24,7 +24,7 @@ export const inicio = {
     explicacaoBotoes:
       "“Tratar do meu caso” abre um formulário passo a passo, com cerca de 5 minutos, e só paga no fim. Se ainda tem dúvidas, comece por 4 perguntas rápidas, sem conta nem e-mail.",
     garantias: ["Revê o texto antes do envio", "Nada é enviado sem a sua autorização", "Preço à vista antes de pagar"],
-    resposta: "Depois de o caso ser aberto, entramos em contacto consigo no prazo máximo de 48 horas úteis.",
+    resposta: "Depois de o caso ser aberto, entramos em contacto consigo no prazo máximo de 2 dias úteis.",
   },
   problemas: {
     eyebrow: "Situações frequentes",
