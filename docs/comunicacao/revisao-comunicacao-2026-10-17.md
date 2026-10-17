@@ -176,11 +176,11 @@ A advogada validou todos os pontos jurídicos (limites sobre advogado/arbitragem
 
 1. **Fim da subscrição com um caso aberto.** Ao cancelar, a cliente vê a escolha: manter a subscrição até o caso terminar, ou cancelar — e, nesse caso, o acompanhamento dos casos em curso termina também no fim do período já pago. Implementado em `/portal/subscricao`:
    - o servidor conta os casos em curso da subscrição (`casoAcompanhadoPelaSubscricao`, `src/lib/gestaoSubscricao.ts`) e recusa o cancelamento sem a caixa de confirmação marcada (nada muda no Stripe antes);
-   - a escolha fica em `subscricao_cancelamentos.casos_em_curso` / `acompanhamento_casos_termina` (migration `20261017090000_cancelamento_casos_em_curso.sql`: **aplicar com `supabase db push --linked` antes do merge**);
+   - a escolha fica em `subscricao_cancelamentos.casos_em_curso` / `acompanhamento_casos_termina` (migration `20261017090000_cancelamento_casos_em_curso.sql`, **aplicada em produção a 17/10/2026** com `supabase db push --linked`, depois de `--dry-run`);
    - o backoffice mostra no caso o aviso "Acompanhamento termina com a subscrição";
    - preçário e perguntas frequentes explicam a regra.
-   - **Interpretação a confirmar:** contam só os casos abertos com um caso da subscrição ou sem compra única ligada (`origem_credito` `subscricao` ou vazio). Os casos pagos à parte (Avulso, Caso Extra) continuam a ser acompanhados.
-   - **Termos:** a versão `2026-10-08` (14.2) não descreve esta regra. Recomenda-se uma nova versão dos Termos (as publicadas não se editam).
+   - contam só os casos abertos com um caso da subscrição ou sem compra única ligada (`origem_credito` `subscricao` ou vazio); os casos pagos à parte (Avulso, Caso Extra) continuam a ser acompanhados;
+   - **Termos `2026-10-17`** (nova versão; a `2026-10-08` não se edita): regra acrescentada às secções 14.1 e 14.2, `TERMOS_VERSAO` atualizado. As compras novas passam a gravar esta versão no consentimento.
 2. **Prazo:** todas as menções a "48 horas úteis" passaram a "2 dias úteis" (site, mensagens de compra, backoffice, regra de escrita no CLAUDE.md). No backoffice, o indicador da 1.ª resposta passou de 48 para 18 horas úteis (2 × 9h, a contagem existente). Sem funcionalidade nova. Mantém-se uma menção a "24 horas" na livre resolução: é um limite contra abuso ("vários pedidos nas últimas 24 horas"), não um prazo de resposta. Os Termos e a Política publicados não falam deste prazo.
 3. **História do fundador:** reescrita com o episódio real (quase pagou a penalização; o aviso do aumento chegou só 28 dias antes; com base nisso conseguiu que a cobrança fosse anulada). Também no guião do vídeo.
 4. **Envio por carta:** retirado das opções de canal de envio (`CANAIS_ENVIO`) e dos textos. A base de dados continua a aceitar o valor (sem migration); registos antigos, se existirem, mostram o valor técnico. A **receção** de respostas da empresa por carta (registo manual) mantém-se.
