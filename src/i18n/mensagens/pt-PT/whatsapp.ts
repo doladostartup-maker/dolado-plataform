@@ -46,7 +46,8 @@ export const whatsapp = {
     },
     contacto: {
       titulo: "WhatsApp",
-      texto: "Para dúvidas rápidas sobre como começar ou que opção escolher. Atendimento exclusivamente por mensagem. Os casos tratam-se sempre pelo site e pelo portal.",
+      texto:
+        "Ajudamos a perceber por onde começar, a esclarecer dúvidas sobre o serviço e a escolher a opção mais adequada. Atendimento exclusivamente por mensagem. Não analisamos casos nem recebemos documentos por WhatsApp: o pedido faz-se no formulário passo a passo.",
       acao: "Enviar mensagem",
       mensagem: "Olá. Estou no site da DoLado e precisava de ajuda.",
     },

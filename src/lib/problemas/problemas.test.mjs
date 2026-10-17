@@ -36,7 +36,7 @@ describe("catálogo", () => {
   });
 
   test("Gás e Água preparados, sem página até terem problemas", () => {
-    assert.deepEqual(CATEGORIAS.map((c) => c.slug), ["telecomunicacoes", "energia", "compras-reembolsos", "gas", "agua"]);
+    assert.deepEqual(CATEGORIAS.map((c) => c.slug), ["telecomunicacoes", "energia", "compras-reembolsos", "gas", "agua", "ginasios"]);
     assert.equal(obterCategoria("gas"), null);
     assert.equal(obterCategoria("agua"), null);
     assert.equal(obterCategoria("inexistente"), null);

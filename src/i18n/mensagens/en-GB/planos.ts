@@ -18,7 +18,7 @@ export const planos: Traducao<typeof pt> = {
   conteudo: {
     protecao: {
       resumo:
-        "For people who want to spot important changes and get ahead of problems, before they lose money or the chance to act.",
+        "For anyone who wants to be warned in time about changes on their bills and important contract dates, even without a problem right now.",
       inclui: [
         "Month-by-month bill comparison, to identify changes",
         "Reminders before promotions end",
@@ -28,7 +28,7 @@ export const planos: Traducao<typeof pt> = {
       naoInclui: "Does not include handling cases.",
     },
     caso_protecao: {
-      resumo: "We deal with problems when they arise and help you spot others before they cost you.",
+      resumo: "To deal with the problem you have now and keep your bills and contracts monitored, with 1 case per month.",
       inclui: [
         "Everything included in Protection",
         "1 new case per month",

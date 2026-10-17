@@ -43,7 +43,8 @@ export const whatsapp: Traducao<typeof pt> = {
     },
     contacto: {
       titulo: "WhatsApp",
-      texto: "For quick questions about how to start or which option to choose. Support by message only. Cases are always handled through the website and the portal.",
+      texto:
+        "We help you work out where to start, answer questions about the service and choose the most suitable option. Messages only. We do not assess cases or receive documents on WhatsApp: requests are made through the step-by-step form.",
       acao: "Send a message",
       mensagem: "Hello. I'm on the DoLado website and would like some help.",
     },

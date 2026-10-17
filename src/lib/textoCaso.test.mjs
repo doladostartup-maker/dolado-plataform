@@ -263,7 +263,7 @@ describe("pós-envio: texto enviado e comprovativo", () => {
 
   test("FAQ e copy: sem \"acesso permanente\"", () => {
     const faq = fonte("../i18n/mensagens/pt-PT/perguntas.ts");
-    assert.match(faq, /pode consultar no seu caso o texto exato da reclamação submetida/);
+    assert.match(faq, /pode consultar no seu caso, na área de cliente, o texto exato da reclamação submetida/);
     for (const f of [faq, componente, portal]) assert.equal(/acesso permanente/i.test(f), false);
   });
 });

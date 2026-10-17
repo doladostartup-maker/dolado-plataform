@@ -6,7 +6,7 @@ export const calculadora = {
   metadados: {
     titulo: "Calculadora de Cancelamento - DoLado",
     descricao:
-      "Estime o encargo máximo de cancelar antecipadamente um contrato de telecomunicações com fidelização. Grátis, sem criar conta e sem deixar o seu e-mail.",
+      "Estime o valor máximo que pode ter de pagar para cancelar um contrato de telecomunicações antes do fim da fidelização. Grátis, sem criar conta e sem deixar o seu e-mail.",
   },
   eyebrow: "Grátis · sem conta · telecomunicações",
   titulo: "Calculadora de Cancelamento",
@@ -76,9 +76,11 @@ export const calculadora = {
     rotulo: "Resultado",
     seloCompleto: "Resultado completo",
     seloParcial: "Resultado parcial",
-    tituloCompleto: "Valor máximo estimado do encargo por denúncia antecipada:",
+    // "Encargo por denúncia antecipada" é o termo do regime legal; no título,
+    // linguagem corrente (revisão de 17/10/2026). As notas mantêm o termo.
+    tituloCompleto: "Valor máximo estimado a pagar por cancelar antes do fim da fidelização:",
     tituloParcial: "Limite calculado: até",
-    tituloTerminada: "Encargo por denúncia antecipada:",
+    tituloTerminada: "Valor a pagar por cancelar antes do fim da fidelização:",
     tituloSemLimite: "Ainda não é possível calcular um limite com os dados que indicou.",
     terminada: (data: string) =>
       `Com base nas datas introduzidas, a fidelização terminou a ${data}: já não existe período de fidelização em curso.`,

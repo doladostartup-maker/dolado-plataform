@@ -1,6 +1,6 @@
 import Link from "@/i18n/Link";
 import type { ReactNode } from "react";
-import { IconeAntena, IconeChama, IconeEtiqueta, IconeGota, IconeRaio, IconeSeta } from "@/components/marketing-v2/Icones";
+import { IconeAntena, IconeChama, IconeEtiqueta, IconeGota, IconePessoas, IconeRaio, IconeSeta } from "@/components/marketing-v2/Icones";
 import { CARTAO } from "@/components/marketing-v2/estilos";
 
 // Peças partilhadas das páginas "Problemas que tratamos".
@@ -14,6 +14,7 @@ export const ICONES_CATEGORIA: Record<string, ReactNode> = {
   "compras-reembolsos": <IconeEtiqueta tamanho={TAMANHO_ICONE} strokeWidth={1.6} />,
   gas: <IconeChama tamanho={TAMANHO_ICONE} strokeWidth={1.6} />,
   agua: <IconeGota tamanho={TAMANHO_ICONE} strokeWidth={1.6} />,
+  ginasios: <IconePessoas tamanho={TAMANHO_ICONE} strokeWidth={1.6} />,
 };
 
 export const TEXTO_PROBLEMAS = "text-[15.5px] leading-relaxed text-[var(--v2-muted)]";

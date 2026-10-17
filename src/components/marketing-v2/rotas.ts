@@ -10,6 +10,9 @@ export const ROTAS_V2 = {
   contacto: "/contacto",
   empresas: "/empresas",
   problemas: "/problemas",
+  protecao: "/protecao",
+  calculadora: "/calculadora-cancelamento",
+  simulador: "/simulador-elegibilidade",
   // Login vive em portal.dolado.pt (cookies host-only): URL absoluto e <a>
   // simples, nunca <Link> — um prefetch em dolado.pt dava 308 para o portal
   // e falhava por CORS em cada visita.

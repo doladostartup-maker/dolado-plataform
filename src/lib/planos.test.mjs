@@ -154,7 +154,7 @@ describe("preçário público", () => {
     assert.match(precarioV2, /precoNoIdioma\(idioma, plano\.precoCentimos\)/);
     assert.match(precarioV2, /\$\{tp\.ivaIncluido\}/);
     assert.equal(/\+ ?IVA|\d+,\d{2} ?€/.test(precarioV2), false);
-    for (const n of ["Tenho um problema agora.", "Tenho um problema e quero continuar protegido.", "Não tenho um problema agora, mas quero acompanhamento."]) {
+    for (const n of ["Tenho um problema agora.", "Tenho um problema e quero acompanhamento contínuo.", "Quero acompanhar as minhas faturas e contratos."]) {
       assert.ok(conteudo.includes(n), n);
     }
   });

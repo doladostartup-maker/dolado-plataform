@@ -16,7 +16,11 @@ export const tratarCaso = {
     titulo: "Tratar o meu caso",
     duracao: "Cerca de 5 minutos",
     nomesPasso: ["Empresa", "Problema", "Contexto", "Documentos", "Os seus dados"],
-    passoDe: (n: number, nome: string) => `Passo ${n} de 5 · ${nome}`,
+    // Dentro da etapa 1 ("O seu caso") há 5 perguntas: "pergunta", nunca
+    // "passo", para não parecer um segundo percurso ao lado das 4 etapas.
+    passoDe: (n: number, nome: string) => `O seu caso · pergunta ${n} de 5: ${nome}`,
+    duvidas: "Tem dúvidas? Ver perguntas frequentes",
+    novoSeparador: "(abre noutro separador; o que preencheu fica aqui)",
     entrada: {
       usarCaso: (casos: string) => `Tem ${casos} na sua conta.`,
       usarCasoTexto: "No final, este pedido usa um deles, sem novo pagamento.",
@@ -54,7 +58,7 @@ export const tratarCaso = {
     },
     passo4: {
       titulo: "Tem algum documento?",
-      texto: "Opcional. Se não tiver agora, pedimos-lho depois.",
+      texto: "Opcional. Por exemplo, a fatura em causa, o contrato ou um e-mail da empresa. Se não tiver agora, pedimos-lho depois.",
       aCarregar: "A carregar…",
       escolher: "Escolher ficheiro",
       tipos: "Fatura, contrato, e-mail ou captura de ecrã · PDF ou imagem",

@@ -21,9 +21,9 @@ export const institucional: Traducao<typeof pt> = {
         paragrafos: [
           "Our name says exactly what we believe in.",
           "“DoLado” is Portuguese for “on the side” — being on the consumer's side.",
-          "When a problem comes up with a telecoms provider or an energy or water supplier, it is not always easy to work out who to contact, how to present the situation, which rights apply or how long they have to reply.",
+          "When a problem comes up with a telecoms provider, an energy, gas or water supplier, a shop or a gym, it is not always easy to work out who to contact, how to present the situation, which rules apply or how long the company has to reply.",
           "With DoLado, consumers don't have to work it all out on their own.",
-          "We help you understand the situation, prepare the complaint and follow the whole process, from the first step to its resolution. We keep everyone informed about where their process stands, what comes next and which deadlines to bear in mind.",
+          "We help you understand the situation, prepare the complaint and follow up the company's reply, within the service you have bought. We keep everyone informed about where their process stands and what comes next. The outcome depends on the company, but nobody is left to deal with it alone.",
           "Because making a complaint shouldn't mean spending hours searching for legislation, contacts or procedures.",
         ],
       },
@@ -79,29 +79,32 @@ export const institucional: Traducao<typeof pt> = {
       "We know it is hard to trust someone with your case when you don't know exactly what you are paying for. So here we explain, in plain language, the limits of what DoLado can do.",
     fazemosTitulo: "What we do for you",
     fazemos: [
-      { titulo: "We identify the applicable law", descricao: "We read your case and identify the legislation that applies to your sector." },
       {
-        titulo: "We prepare the formal complaint",
-        descricao: "Citing the law and with a clear request. We show you the text before it is sent — we only go ahead once you confirm.",
+        titulo: "We organise the information",
+        descricao: "We read what you tell us and the documents you send, and confirm the facts with you. Where there are rules that apply to your sector, we set them out in the text.",
       },
       {
-        titulo: "We track the deadline",
-        descricao: "We know exactly when the response deadline ends and keep you informed at every step.",
+        titulo: "We prepare the complaint",
+        descricao: "With the facts, the applicable rules where there are any, and a clear request. We show you the text before it is sent — we only go ahead once you confirm.",
+      },
+      {
+        titulo: "We follow up the reply",
+        descricao: "We analyse the company's reply and e-mail you when there is news. Where a response deadline applies, it is recorded in your case.",
       },
       {
         titulo: "We only send it with your authorisation",
-        descricao: "Once you have reviewed and confirmed the text, we submit the complaint to the Complaints Book (Livro de Reclamações) on your behalf.",
+        descricao: "Once you have reviewed and confirmed the text, we send the complaint on your behalf through the right channel — for example, the Electronic Complaints Book (Livro de Reclamações Eletrónico), e-mail or the company's complaints form.",
       },
     ],
     naoFazemosTitulo: "What we don't do",
     naoFazemos: [
       {
         titulo: "We don't give individual legal advice",
-        descricao: "We organise the facts and cite the law — we don't decide your legal strategy.",
+        descricao: "We organise the facts and set out the applicable rules — we don't tell you which legal route to take.",
       },
       {
-        titulo: "We don't represent you in court or arbitration",
-        descricao: "If your case gets to that point, you need a lawyer — and we will tell you that in advance.",
+        titulo: "We don't represent you in court, arbitration or before other bodies",
+        descricao: "If your case moves to one of those routes, we tell you. The decision to go ahead is yours and, depending on the case, you may need legal support.",
       },
       {
         titulo: "We never charge a percentage of what you recover",
@@ -115,11 +118,11 @@ export const institucional: Traducao<typeof pt> = {
       lista: [
         {
           q: "Does this replace a lawyer?",
-          a: "No. We provide administrative support — organising your case and citing the law. For legal strategy or formal representation, you need a lawyer.",
+          a: "No. We provide administrative support: we organise the facts, prepare the complaint and follow up the reply. If you need legal advice on your specific case or to be represented, you should see a lawyer.",
         },
         {
           q: "What if the company doesn't respond?",
-          a: "We track the response deadline and, if there is no useful response, we tell you the possible next routes — such as the regulator or an arbitration centre — with the full case file.",
+          a: "We follow up the reply and, where it makes sense, prepare a new message. If the problem remains after what the service covers, we close the case on our side and give you a case file with what has been done and a list of consumer dispute resolution bodies you can consult.",
         },
         {
           q: "Does DoLado sign for me or represent me legally?",
@@ -136,7 +139,7 @@ export const institucional: Traducao<typeof pt> = {
   contacto: {
     metadados: {
       titulo: "Contact - DoLado",
-      descricao: 'Get in touch for press, partnerships or general questions. To open a case, use "Start my case".',
+      descricao: "Get in touch with questions, partnerships, press or other matters. To ask DoLado to deal with a problem, use the step-by-step form.",
     },
     eyebrow: "Contact",
     titulo: "Talk to us.",
@@ -146,7 +149,7 @@ export const institucional: Traducao<typeof pt> = {
       titulo: "What is it about?",
       caso: {
         titulo: "Got a problem with a company?",
-        texto: "Cases can only be opened through the guided process: tell us what happened, step by step.",
+        texto: "To ask DoLado to deal with a problem, use the step-by-step form. It takes about 5 minutes and you see the price before paying.",
         acao: "Start my case",
       },
       casoAberto: {
@@ -161,12 +164,13 @@ export const institucional: Traducao<typeof pt> = {
       },
     },
     formulario: {
-      eyebrow: "Press, partnerships and other matters",
+      eyebrow: "Questions, partnerships and other matters",
       titulo: "Send us a message.",
       texto:
         "You can also write to <email/>. Complaints about DoLado itself: please also see the <litigios>Dispute resolution</litigios> page.",
       aviso:
-        "<b>This form does not open cases.</b> Complaints sent by email or through this form are not processed. To open a case, always use the guided process under “Start my case”.",
+        "<b>A message sent here does not open a case or sign you up for the service.</b> This form is for questions, partnerships and other matters. To ask DoLado to deal with a problem, use the step-by-step form: that is where we collect the information we need and where you can follow your case.",
+      avisoAcao: "Go to the step-by-step form",
       enviada: "Message sent.",
       obrigado: "Thank you for getting in touch — we will reply as soon as we can.",
       nome: "Name",
@@ -176,7 +180,7 @@ export const institucional: Traducao<typeof pt> = {
       assunto: "Subject",
       assuntoPlaceholder: "What would you like to talk about?",
       mensagem: "Message",
-      mensagemPlaceholder: "Write here — press, partnerships, general questions…",
+      mensagemPlaceholder: "Write here — questions, partnerships, press…",
       aEnviar: "Sending…",
       enviar: "Send message",
     },
@@ -217,6 +221,7 @@ export const institucional: Traducao<typeof pt> = {
           "Practical help with everyday consumer problems",
           "Each person deals with their case directly with DoLado",
           "Less time and worry spent on hard-to-follow processes",
+          "With Protection, an eye kept on bills and contract dates — useful, for example, after moving home",
         ],
       },
       {
@@ -227,6 +232,7 @@ export const institucional: Traducao<typeof pt> = {
           "A concrete service, applied to real situations",
           "Added value in the relationship you already have with your customers",
           "Access arrangements agreed together",
+          "Protection can keep an eye on new broadband, electricity, gas or water contracts, for example after moving home",
         ],
       },
     ],
@@ -330,7 +336,7 @@ export const institucional: Traducao<typeof pt> = {
       {
         pergunta: "What kind of support does DoLado provide?",
         resposta:
-          "DoLado helps resolve problems with companies — for example telecoms, energy or water companies: it organises the situation, prepares the complaint, which the person reviews before it is sent, and follows the next steps. With Protection, DoLado also keeps track of the dates and bills the person provides, to help spot a problem in time.",
+          "DoLado helps deal with problems with companies — for example telecoms, energy, water, shops or gyms: it organises the situation, prepares the complaint, which the person reviews before it is sent, and follows the next steps. Protection is a separate service that does not require a problem: it keeps an eye on the bills and contract dates the person sends — for example, new contracts after moving home — and warns them when something deserves attention.",
       },
       {
         pergunta: "Does the business have access to individual cases?",

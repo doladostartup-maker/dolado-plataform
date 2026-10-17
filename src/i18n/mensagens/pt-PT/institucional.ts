@@ -20,9 +20,9 @@ export const institucional = {
         paragrafos: [
           "O nosso nome diz exatamente aquilo em que acreditamos.",
           "DoLado é estar do lado do consumidor.",
-          "Quando surge um problema com um operador de telecomunicações ou com um fornecedor de energia ou água, nem sempre é fácil perceber quem contactar, como apresentar a situação, quais são os direitos aplicáveis ou quais os prazos de resposta.",
+          "Quando surge um problema com uma operadora de telecomunicações, um fornecedor de energia, gás ou água, uma loja ou um ginásio, nem sempre é fácil perceber quem contactar, como apresentar a situação, que regras se aplicam ou quanto tempo a empresa tem para responder.",
           "Na DoLado, o consumidor não tem de descobrir tudo sozinho.",
-          "Ajudamos a compreender a situação, a preparar a reclamação e a acompanhar todo o processo, desde o primeiro passo até à sua resolução. Mantemos cada pessoa informada sobre o estado do processo, os passos seguintes e os prazos a ter em conta.",
+          "Ajudamos a compreender a situação, preparamos a reclamação e acompanhamos a resposta da empresa, dentro do serviço contratado. Mantemos cada pessoa informada sobre o estado do processo e os passos seguintes. O resultado depende da empresa, mas a pessoa não fica sozinha a tratar do assunto.",
           "Porque apresentar uma reclamação não deve significar passar horas à procura de legislação, contactos ou procedimentos.",
         ],
       },
@@ -71,7 +71,7 @@ export const institucional = {
     metadados: {
       titulo: "Transparência - DoLado",
       descricao:
-        "O que a DoLado faz por si e o que não faz, sem letras miúdas: identificamos a legislação aplicável, preparamos a reclamação e acompanhamos o prazo — nunca damos aconselhamento jurídico individualizado nem representamos em tribunal.",
+        "O que a DoLado faz por si e o que não faz, sem letras miúdas: organizamos a informação, preparamos a reclamação e acompanhamos a resposta — não damos aconselhamento jurídico individualizado nem o representamos em tribunal.",
     },
     eyebrow: "Transparência",
     titulo: "O que fazemos por si — e o que não fazemos. Sem letras miúdas.",
@@ -79,29 +79,32 @@ export const institucional = {
       "Sabemos que confiar o seu caso a alguém é difícil quando não sabe exatamente o que está a contratar. Por isso explicamos aqui, em linguagem simples, os limites do que a DoLado pode fazer.",
     fazemosTitulo: "O que fazemos por si",
     fazemos: [
-      { titulo: "Identificamos a lei aplicável", descricao: "Lemos o seu caso e identificamos a legislação aplicável ao seu setor." },
       {
-        titulo: "Preparamos a reclamação formal",
-        descricao: "Com a lei citada e o pedido claro. Mostramos-lhe o texto antes do envio — só avançamos com a sua confirmação.",
+        titulo: "Organizamos a informação",
+        descricao: "Lemos o que nos conta e os documentos que envia e confirmamos os factos consigo. Quando existem regras aplicáveis ao seu setor, indicamo-las no texto.",
       },
       {
-        titulo: "Acompanhamos o prazo",
-        descricao: "Sabemos exatamente quando o prazo de resposta termina e mantemo-lo informado em cada passo.",
+        titulo: "Preparamos a reclamação",
+        descricao: "Com os factos, as regras aplicáveis quando existam e um pedido claro. Mostramos-lhe o texto antes do envio — só avançamos com a sua confirmação.",
+      },
+      {
+        titulo: "Acompanhamos a resposta",
+        descricao: "Analisamos a resposta da empresa e avisamo-lo por e-mail quando há novidades. Quando existe um prazo de resposta aplicável, fica registado no seu caso.",
       },
       {
         titulo: "Enviamos só com a sua autorização",
-        descricao: "Depois de rever e confirmar o texto, submetemos a reclamação ao Livro de Reclamações em seu nome.",
+        descricao: "Depois de rever e confirmar o texto, enviamos a reclamação em seu nome pelo canal adequado — por exemplo, o Livro de Reclamações Eletrónico, o e-mail ou o formulário de reclamações da empresa.",
       },
     ],
     naoFazemosTitulo: "O que não fazemos",
     naoFazemos: [
       {
         titulo: "Não damos aconselhamento jurídico individualizado",
-        descricao: "Organizamos factos e citamos a lei — não decidimos a sua estratégia legal.",
+        descricao: "Organizamos os factos e indicamos as regras aplicáveis — não lhe dizemos que caminho jurídico deve seguir.",
       },
       {
-        titulo: "Não representamos em tribunal ou arbitragem",
-        descricao: "Se o caso chegar a esse ponto, precisa de um advogado — dizemos-lhe isso com antecedência.",
+        titulo: "Não o representamos em tribunal, arbitragem ou outras entidades",
+        descricao: "Se o caso seguir para uma dessas vias, avisamo-lo. A decisão de avançar é sua e, conforme o caso, pode precisar de apoio jurídico.",
       },
       {
         titulo: "Nunca cobramos uma percentagem do que recuperar",
@@ -115,11 +118,11 @@ export const institucional = {
       lista: [
         {
           q: "Isto substitui um advogado?",
-          a: "Não. Prestamos apoio administrativo — organização e citação da lei. Para estratégia jurídica ou representação formal, precisa de um advogado.",
+          a: "Não. Prestamos apoio administrativo: organizamos os factos, preparamos a reclamação e acompanhamos a resposta. Se precisar de aconselhamento jurídico sobre o seu caso concreto ou de ser representado, deve procurar um advogado.",
         },
         {
           q: "E se a empresa não responder?",
-          a: "Acompanhamos o prazo de resposta e, sem resposta útil, indicamos-lhe as vias seguintes possíveis — como a entidade reguladora ou um centro de arbitragem — com o dossiê completo do caso.",
+          a: "Acompanhamos a resposta e, quando faz sentido, preparamos uma nova comunicação. Se o problema continuar depois do que o serviço prevê, encerramos o caso do nosso lado e entregamos-lhe um dossiê com o que foi feito e uma lista de entidades de resolução de conflitos de consumo que pode consultar.",
         },
         {
           q: "A DoLado assina ou representa-me legalmente?",
@@ -136,7 +139,7 @@ export const institucional = {
   contacto: {
     metadados: {
       titulo: "Contacto - DoLado",
-      descricao: 'Fale connosco para imprensa, parcerias ou dúvidas gerais. Para abrir um caso, use "Tratar o meu caso".',
+      descricao: "Fale connosco para dúvidas, parcerias, imprensa ou outros assuntos. Para pedir à DoLado que trate de um problema, use o formulário passo a passo.",
     },
     eyebrow: "Contacto",
     titulo: "Fale connosco.",
@@ -146,7 +149,7 @@ export const institucional = {
       titulo: "Qual é o seu assunto?",
       caso: {
         titulo: "Tem um problema com uma empresa?",
-        texto: "Os casos abrem-se só pelo fluxo guiado: conte-nos o que aconteceu, passo a passo.",
+        texto: "Para pedir à DoLado que trate de um problema, use o formulário passo a passo. Leva cerca de 5 minutos e o preço aparece antes de pagar.",
         acao: "Tratar do meu caso",
       },
       casoAberto: {
@@ -161,12 +164,13 @@ export const institucional = {
       },
     },
     formulario: {
-      eyebrow: "Imprensa, parcerias e outros assuntos",
+      eyebrow: "Dúvidas, parcerias e outros assuntos",
       titulo: "Envie-nos uma mensagem.",
       texto:
         "Também pode escrever para <email/>. Reclamações sobre a própria DoLado: veja também a página <litigios>Resolução de litígios</litigios>.",
       aviso:
-        "<b>Este formulário não abre casos.</b> Reclamações enviadas por e-mail ou por este formulário são ignoradas. Para abrir um caso, use sempre o fluxo guiado em “Tratar o meu caso”.",
+        "<b>Uma mensagem por aqui não abre um caso nem contrata o serviço.</b> Este formulário serve para dúvidas, parcerias e outros assuntos. Para pedir à DoLado que trate de um problema, use o formulário passo a passo: é por lá que recolhemos a informação de que precisamos e que pode acompanhar o caso.",
+      avisoAcao: "Ir para o formulário passo a passo",
       enviada: "Mensagem enviada.",
       obrigado: "Obrigado pelo contacto — responderemos assim que possível.",
       nome: "Nome",
@@ -176,7 +180,7 @@ export const institucional = {
       assunto: "Assunto",
       assuntoPlaceholder: "Sobre o que quer falar?",
       mensagem: "Mensagem",
-      mensagemPlaceholder: "Escreva aqui — imprensa, parcerias, dúvidas gerais…",
+      mensagemPlaceholder: "Escreva aqui — dúvidas, parcerias, imprensa…",
       aEnviar: "A enviar…",
       enviar: "Enviar mensagem",
     },
@@ -218,6 +222,7 @@ export const institucional = {
           "Apoio prático em problemas de consumo do dia a dia",
           "Cada pessoa trata do seu caso diretamente com a DoLado",
           "Menos tempo e preocupação com processos difíceis de perceber",
+          "Com a Proteção, acompanhamento das faturas e das datas dos contratos — útil, por exemplo, depois de uma mudança de casa",
         ],
       },
       {
@@ -228,6 +233,7 @@ export const institucional = {
           "Um serviço concreto, aplicado a situações reais",
           "Valor acrescentado na relação que já tem com os clientes",
           "Forma de acesso definida em conjunto",
+          "A Proteção pode acompanhar os novos contratos de internet, eletricidade, gás ou água, por exemplo depois de uma mudança de casa",
         ],
       },
     ],
@@ -331,7 +337,7 @@ export const institucional = {
       {
         pergunta: "Que tipo de apoio presta a DoLado?",
         resposta:
-          "A DoLado ajuda a resolver problemas com empresas — por exemplo, de telecomunicações, energia ou água: organiza a situação, prepara a reclamação, que a pessoa revê antes do envio, e acompanha os próximos passos. Com a Proteção, a DoLado acompanha também as datas e as faturas indicadas pela pessoa, para ajudar a detetar um problema a tempo.",
+          "A DoLado ajuda a tratar problemas com empresas — por exemplo, de telecomunicações, energia, água, compras ou ginásios: organiza a situação, prepara a reclamação, que a pessoa revê antes do envio, e acompanha os próximos passos. A Proteção é um serviço à parte, que não exige um problema: acompanha as faturas e as datas dos contratos que a pessoa envia — por exemplo, os novos contratos depois de uma mudança de casa — e avisa quando algo merece atenção.",
       },
       {
         pergunta: "A empresa tem acesso aos casos individuais?",

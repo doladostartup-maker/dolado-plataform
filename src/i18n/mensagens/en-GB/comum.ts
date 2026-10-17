@@ -5,7 +5,7 @@ export const comum: Traducao<typeof pt> = {
   metadados: {
     titulo: "DoLado",
     descricao:
-      "DoLado is a platform that helps consumers resolve problems and avoid losses with essential services such as telecoms, energy and water.",
+      "DoLado helps consumers deal with problems with companies — telecoms, energy, gas, water, purchases and gyms — and keeps an eye on bills and contracts with Protection.",
   },
   acessibilidade: {
     saltarConteudo: "Skip to content",
@@ -26,6 +26,10 @@ export const comum: Traducao<typeof pt> = {
     },
   },
   navbar: {
+    problemas: "Problems we handle",
+    problemasCurto: "Problems",
+    ferramentasCurto: "Tools",
+    protecao: "Protection",
     comoFunciona: "How it works",
     ferramentas: "Free tools",
     precario: "Pricing",
@@ -41,6 +45,7 @@ export const comum: Traducao<typeof pt> = {
     legal: "Legal",
     comoFunciona: "How it works",
     problemas: "Problems we handle",
+    protecao: "Protection",
     ferramentas: "Free tools",
     precario: "Pricing",
     sobreNos: "About us",

@@ -83,6 +83,11 @@ function montar(idioma: Idioma) {
     enviamPorMim: q("enviam-por-mim", t.enviamPorMim.pergunta, t.enviamPorMim.resposta),
     naoConcordo: q("nao-concordo", t.naoConcordo.pergunta, t.naoConcordo.resposta),
     documentos: q("documentos", t.documentos.pergunta, t.documentos.resposta),
+    precisaEscrever: q("precisa-escrever", t.precisaEscrever.pergunta, t.precisaEscrever.resposta),
+    informacaoComecar: q("informacao-comecar", t.informacaoComecar.pergunta, t.informacaoComecar.resposta),
+    documentosInicio: q("documentos-inicio", t.documentosInicio.pergunta, t.documentosInicio.resposta),
+    atualizacoes: q("atualizacoes", t.atualizacoes.pergunta, t.atualizacoes.resposta),
+    entrarRegularmente: q("entrar-regularmente", t.entrarRegularmente.pergunta, t.entrarRegularmente.resposta),
     oQueIncluiProtecao: q("o-que-inclui-protecao", t.oQueIncluiProtecao.pergunta, t.oQueIncluiProtecao.resposta),
     comecarProtecao: q("comecar-protecao", t.comecarProtecao.pergunta, t.comecarProtecao.resposta),
     oQueIncluiCasoProtecao: q("o-que-inclui-caso-protecao", t.oQueIncluiCasoProtecao.pergunta, t.oQueIncluiCasoProtecao.resposta(p)),
@@ -100,7 +105,18 @@ function montar(idioma: Idioma) {
 
 export function perguntasHomepage(idioma: Idioma): Pergunta[] {
   const p = montar(idioma);
-  return [p.oQueE, p.comoFunciona, p.semAutorizacao, p.quantoCusta, p.diferencaPlanos, p.prazo, p.garanteResultado, p.substituiAdvogado];
+  // Dúvidas práticas de quem ainda não começou (revisão de 17/10/2026). O
+  // processo e a autorização já estão explicados nos passos da homepage.
+  return [
+    p.precisaEscrever,
+    p.informacaoComecar,
+    p.documentosInicio,
+    p.atualizacoes,
+    p.entrarRegularmente,
+    p.empresaNaoResolve,
+    p.semSubscricao,
+    p.quantoCusta,
+  ];
 }
 
 export type CategoriaPerguntas = {
@@ -113,11 +129,22 @@ export function categoriasPerguntas(idioma: Idioma): CategoriaPerguntas[] {
   const p = montar(idioma);
   const c = tPerguntas[idioma].categorias;
   return [
-    { id: "sobre-a-dolado", titulo: c.sobre, perguntas: [p.oQueE, p.escritorioAdvogados, p.garanteGanhar] },
+    { id: "sobre-a-dolado", titulo: c.sobre, perguntas: [p.oQueE, p.escritorioAdvogados, p.garanteGanhar, p.substituiAdvogado] },
     {
       id: "como-funciona",
       titulo: c.comoFunciona,
-      perguntas: [p.comoFunciona, p.comoFuncionaReclamacao, p.enviamPorMim, p.semAutorizacaoCompleta, p.naoConcordo, p.prazo, p.documentos],
+      perguntas: [
+        p.comoFunciona,
+        p.precisaEscrever,
+        p.informacaoComecar,
+        p.documentosInicio,
+        p.comoFuncionaReclamacao,
+        p.enviamPorMim,
+        p.semAutorizacaoCompleta,
+        p.naoConcordo,
+        p.prazo,
+        p.documentos,
+      ],
     },
     {
       id: "planos",
@@ -134,7 +161,11 @@ export function categoriasPerguntas(idioma: Idioma): CategoriaPerguntas[] {
         p.livreResolucao,
       ],
     },
-    { id: "depois-do-envio", titulo: c.depoisEnvio, perguntas: [p.depoisEnviada, p.empresaNaoResolve, p.copia] },
+    {
+      id: "depois-do-envio",
+      titulo: c.depoisEnvio,
+      perguntas: [p.depoisEnviada, p.atualizacoes, p.entrarRegularmente, p.empresaNaoResolve, p.copia],
+    },
     { id: "privacidade", titulo: c.privacidade, perguntas: [p.dadosSeguros, p.partilhaDados] },
   ];
 }

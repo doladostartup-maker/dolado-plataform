@@ -10,11 +10,48 @@ export const paginas = {
     eyebrow: "Preçário",
     titulo: "De que tipo de ajuda precisa?",
     texto: (iva: string) =>
-      `Escolha conforme a sua situação: tratar um problema agora, tratar e continuar protegido, ou só acompanhamento. Todos os preços têm ${iva}.`,
+      `Escolha conforme a sua situação. O Avulso é um pagamento único para um caso; as subscrições são mensais. Todos os preços têm ${iva}.`,
     necessidades: {
       avulso: { necessidade: "Tenho um problema agora.", cta: "Tratar do meu caso" },
-      caso_protecao: { necessidade: "Tenho um problema e quero continuar protegido.", cta: "Escolher Caso + Proteção" },
-      protecao: { necessidade: "Não tenho um problema agora, mas quero acompanhamento.", cta: "Aderir à Proteção" },
+      caso_protecao: { necessidade: "Tenho um problema e quero acompanhamento contínuo.", cta: "Escolher Caso + Proteção" },
+      protecao: { necessidade: "Quero acompanhar as minhas faturas e contratos.", cta: "Aderir à Proteção" },
+    },
+    saberProtecao: "O que é a Proteção?",
+    condicoes: {
+      eyebrow: "Pagamentos e condições",
+      titulo: "Como funcionam os pagamentos.",
+      itens: {
+        casoOuSubscricao: {
+          titulo: "Um caso isolado ou uma subscrição?",
+          texto: (avulso: string, casoProtecao: string) =>
+            `O Avulso (${avulso}) é um pagamento único para tratar um caso, sem renovação. O Caso + Proteção (${casoProtecao}) é uma subscrição: paga todos os meses enquanto a mantiver, recebe 1 caso por mês e tem a Proteção. Se só tem um problema e não quer um pagamento mensal, o Avulso é a opção mais simples.`,
+        },
+        renovacao: {
+          titulo: "Renovação e cancelamento",
+          texto:
+            "As subscrições renovam-se automaticamente todos os meses. Pode cancelar a qualquer momento na área de cliente: não há novas cobranças e o serviço mantém-se até ao fim do período já pago, sem reembolso proporcional desse período.",
+        },
+        casoPorMes: {
+          titulo: "O que significa “1 caso por mês”",
+          texto: (limite: number) =>
+            `No Caso + Proteção, recebe 1 caso disponível sempre que o pagamento do mês é confirmado, incluindo o primeiro. Cada caso disponível permite pedir à DoLado que trate um novo problema. Os casos que não usar acumulam até ${limite}; a partir daí, a renovação desse mês não acrescenta outro.`,
+        },
+        fimSubscricao: {
+          titulo: "Quando a subscrição termina",
+          texto: (dias: number) =>
+            `Os casos já abertos, o texto enviado, os comprovativos e o histórico continuam acessíveis na área de cliente. A Proteção deixa de funcionar e os avisos param. Os casos disponíveis que vieram da subscrição ficam guardados ${dias} dias e só voltam a poder ser usados se subscrever de novo o Caso + Proteção nesse prazo. Casos Avulso e Caso Extra por usar continuam disponíveis.`,
+        },
+        casoExtra: {
+          titulo: "Caso Extra",
+          texto: (preco: string, precoAvulso: string, desconto: number) =>
+            `Se tem o Caso + Proteção e já usou todos os casos disponíveis, pode tratar mais um caso por ${preco} em vez de ${precoAvulso} (${desconto}% de desconto), com pagamento único. A subscrição não muda.`,
+        },
+        conversao: {
+          titulo: "Passar de Avulso para uma subscrição",
+          texto: (reembolsoProtecao: string, reembolsoCasoProtecao: string) =>
+            `Se comprou um Avulso e ainda não usou o caso, pode aderir a uma subscrição na área de cliente: parte do valor pago cobre o primeiro mês e o restante é reembolsado para o método de pagamento original (${reembolsoProtecao} na Proteção, ${reembolsoCasoProtecao} no Caso + Proteção). Se já usou o caso, a adesão é uma compra nova.`,
+        },
+      },
     },
     precosLancamento: "Preços de lançamento — sujeitos a alteração.",
     antesDeDecidir: {
@@ -40,16 +77,90 @@ export const paginas = {
       acao: "Ver se a DoLado pode ajudar",
     },
   },
+  protecao: {
+    metadados: {
+      titulo: "Proteção: acompanhamento de faturas e contratos - DoLado",
+      descricao:
+        "Com a Proteção, a DoLado compara as faturas que nos envia, avisa antes do fim de promoções e da fidelização e assinala alterações que merecem ser verificadas.",
+    },
+    eyebrow: "Proteção",
+    titulo: "Acompanhamos as suas faturas e contratos e avisamo-lo a tempo.",
+    texto:
+      "A Proteção é para quem quer evitar surpresas, mesmo sem ter um problema agora. Envie-nos as faturas e, se tiver, o contrato dos serviços que quer acompanhar. Comparamos cada fatura com as anteriores e com o contrato, estamos atentos às datas importantes e avisamo-lo por e-mail quando alguma coisa merece a sua atenção.",
+    aderir: "Aderir à Proteção",
+    verPrecario: "Ver preçário",
+    tresPerguntas: {
+      eyebrow: "Como funciona",
+      titulo: "A Proteção em três perguntas.",
+      blocos: [
+        {
+          titulo: "O que acompanhamos?",
+          itens: [
+            "As faturas dos serviços que nos envia — por exemplo, internet e telemóvel, eletricidade, gás ou água —, comparadas com as anteriores.",
+            "As condições do contrato, quando nos envia o contrato: mensalidade, promoções e fidelização.",
+            "As datas importantes, como o fim de uma promoção e o fim da fidelização.",
+            "Nos contratos de telecomunicações, uma estimativa do valor máximo a pagar se cancelar antes do fim da fidelização.",
+          ],
+        },
+        {
+          titulo: "Que informação e avisos recebe?",
+          itens: [
+            "Na área de cliente, logo depois do primeiro documento: o que verificámos, o que encontrámos e o que vamos acompanhar.",
+            "Avisos por e-mail 60 e 30 dias antes do fim de uma promoção ou da fidelização, e no próprio dia.",
+            "Um aviso quando uma fatura tem uma alteração que merece ser verificada, depois de revista por uma pessoa da DoLado.",
+            "Se quiser, avisos de alterações relevantes nos setores que escolher, como subidas de preços anunciadas.",
+          ],
+        },
+        {
+          titulo: "O que precisa de nos disponibilizar?",
+          itens: [
+            "Uma fatura de cada serviço, em PDF ou imagem. É o suficiente para começar.",
+            "O contrato, se o tiver, para compararmos as faturas com o que foi contratado.",
+            "Se não tiver documentos à mão, o nome do fornecedor e uma data, como o fim da fidelização.",
+            "As faturas seguintes, à medida que chegam: a comparação depende dos documentos que nos envia.",
+          ],
+        },
+      ],
+    },
+    exemplos: {
+      eyebrow: "Exemplos",
+      titulo: "O tipo de informação que recebe.",
+      texto: "Dois exemplos fictícios. Os textos reais dependem dos seus documentos e podem ser diferentes.",
+    },
+    limites: {
+      eyebrow: "Com clareza",
+      titulo: "O que a Proteção não é.",
+      itens: [
+        "Não é um seguro: não paga prejuízos nem reembolsa valores.",
+        "Não acede às suas contas nos fornecedores: só analisamos os documentos e as informações que nos dá.",
+        "Não acompanha em tempo real nem deteta todas as cobranças incorretas: a análise depende de nos enviar as faturas e de as manter atualizadas.",
+        "Não renegocia contratos nem muda de fornecedor por si.",
+        "Não inclui o tratamento de reclamações. Se encontrarmos algo e quiser que a DoLado trate do problema, pode fazê-lo com o Avulso ou com o Caso + Proteção.",
+      ],
+    },
+    comparar: {
+      titulo: "Proteção ou Caso + Proteção?",
+      protecao: (preco: string) => `<b>Proteção (${preco})</b>: acompanhamento de faturas e contratos. Não inclui o tratamento de casos.`,
+      casoProtecao: (preco: string, limite: number) =>
+        `<b>Caso + Proteção (${preco})</b>: tudo o que a Proteção inclui e 1 caso por mês para tratar problemas, acumulável até ${limite}.`,
+    },
+    perguntas: { eyebrow: "Perguntas frequentes", titulo: "Sobre a Proteção.", verTodas: "Ver todas as perguntas" },
+    ctaFinal: {
+      titulo: "Quer começar a acompanhar as suas faturas?",
+      texto: "Adira à Proteção e carregue a primeira fatura na sua área de cliente.",
+      acao: "Aderir à Proteção",
+    },
+  },
   comoFunciona: {
     metadados: {
       titulo: "Como funciona - DoLado",
       descricao:
-        "Do problema à reclamação enviada, passo a passo: veja como a DoLado prepara a reclamação com a legislação aplicável, pede a sua autorização antes do envio e acompanha o prazo de resposta até ao desfecho.",
+        "Do problema à reclamação enviada, passo a passo: conte o que aconteceu, a DoLado prepara a reclamação, só a envia com a sua autorização e acompanha a resposta da empresa.",
     },
     eyebrow: "Como funciona",
     titulo: "Do problema à reclamação enviada, passo a passo.",
     texto:
-      "A DoLado prepara a reclamação com a lei do seu lado. Recebe o texto primeiro e só com a sua autorização explícita fazemos o envio para o Livro de Reclamações.",
+      "Conte-nos o que aconteceu. A DoLado prepara a reclamação, mostra-lhe o texto e só o envia, pelo canal adequado, depois da sua autorização. Depois, acompanha a resposta da empresa consigo.",
     tratarCaso: "Tratar do meu caso",
     verSeAjuda: "Ver se a DoLado pode ajudar",
     seuPasso: "O seu passo",
@@ -58,36 +169,37 @@ export const paginas = {
       {
         titulo: "Conte o que aconteceu",
         texto:
-          "Descreva o problema e anexe a fatura ou o contrato. Sem formulários intermináveis — perguntas guiadas, uma de cada vez.",
+          "Um formulário passo a passo, com 5 perguntas simples: a empresa, o que aconteceu, se já reclamou e como falamos consigo. Se tiver uma fatura, um contrato ou um e-mail, pode juntá-lo; não é obrigatório.",
       },
       {
-        titulo: "Analisamos o mérito do caso",
-        texto: "Verificamos se há fundamento legal e identificamos a legislação aplicável ao seu setor.",
+        titulo: "Crie a conta e escolha a modalidade",
+        texto:
+          "É na sua conta que acompanha o caso. Escolha o Avulso ou o Caso + Proteção e só então pague. Começamos a tratar do caso depois de o pagamento ser confirmado.",
+      },
+      {
+        titulo: "Confirmamos os factos consigo",
+        texto:
+          "No prazo máximo de 48 horas úteis, entramos em contacto para confirmar o que aconteceu. Se faltar alguma informação ou documento, pedimos-lho por e-mail.",
       },
       {
         titulo: "Preparamos a reclamação",
         texto:
-          "Reclamação formal, com a legislação aplicável e o pedido claro. Mostramos-lhe o texto que pretendemos enviar para o Livro de Reclamações antes de qualquer envio.",
+          "Escrevemos um texto claro: descrevemos os factos, indicamos as regras aplicáveis quando existam e fazemos um pedido concreto à empresa.",
       },
       {
         titulo: "Reveja e autorize o envio",
         texto:
-          "Leia o texto com calma e confirme explicitamente se autoriza o envio. Sem a sua confirmação, nada é enviado.",
+          "Recebe o texto por e-mail e na área de cliente. Leia-o com calma e, se quiser, peça alterações. Sem a sua autorização, nada é enviado.",
       },
       {
-        titulo: "Enviamos para o Livro de Reclamações",
+        titulo: "Enviamos pelo canal adequado",
         texto:
-          "Só depois da sua autorização submetemos a reclamação ao Livro de Reclamações em seu nome — esta é a única etapa em que agimos diretamente por si.",
+          "Por exemplo, o Livro de Reclamações Eletrónico, o e-mail ou o formulário de reclamações da empresa. O texto enviado e o comprovativo, quando existe, ficam no seu caso.",
       },
       {
-        titulo: "Acompanhamos o prazo de resposta",
+        titulo: "Acompanhamos a resposta",
         texto:
-          "Telecom: 15 dias úteis sem resposta substantiva. Energia e água seguem os prazos regulatórios próprios de cada setor.",
-      },
-      {
-        titulo: "Acompanhamos até ao fim",
-        texto:
-          "Seguimos os passos seguintes e uma eventual escalada, até haver desfecho — correção, reembolso ou resposta formal da empresa.",
+          "Analisamos a resposta da empresa e avisamo-lo por e-mail. Se houver uma solução, confirma connosco se o problema ficou resolvido. Se não houver, preparamos uma nova comunicação, quando faz sentido, ou encerramos o caso do nosso lado com um dossiê e a indicação de entidades que pode consultar.",
       },
     ],
     passoAPasso: {
@@ -99,7 +211,7 @@ export const paginas = {
       eyebrow: "Com a sua autorização",
       titulo: "Só agimos em seu nome quando autoriza.",
       texto:
-        "Nos passos 1 a 4, apenas organizamos factos e citamos a lei — nunca decidimos a sua estratégia legal. A submissão ao Livro de Reclamações (passo 5) é a única ação que fazemos diretamente em seu nome, e só com autorização explícita.",
+        "Até à sua autorização, a DoLado organiza a informação e prepara o texto. O envio da reclamação (passo 6) é o momento em que agimos em seu nome, e só acontece depois de autorizar essa versão do texto. Quando houver opções a escolher, explicamos-lhas: a decisão é sempre sua.",
     },
     perguntas: { eyebrow: "Perguntas frequentes", titulo: "Antes e depois do envio.", verTodas: "Ver todas as perguntas" },
     ctaFinal: {

@@ -17,6 +17,7 @@ const COLUNAS_RODAPE: { titulo: ChaveRodape; links: { href: string; label: Chave
     links: [
       { href: ROTAS_V2.comoFunciona, label: "comoFunciona" },
       { href: ROTAS_V2.problemas, label: "problemas" },
+      { href: ROTAS_V2.protecao, label: "protecao" },
       { href: ROTAS_V2.ferramentas, label: "ferramentas" },
       { href: ROTAS_V2.precario, label: "precario" },
     ],
