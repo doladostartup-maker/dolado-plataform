@@ -6,7 +6,9 @@ import { ENTIDADE_LEGAL, NIPC } from "@/lib/site";
 import { Logotipo } from "./Logotipo";
 import { ROTAS_V2 } from "./rotas";
 
-// Rodapé do Design System V2. Só links para páginas que existem.
+// Rodapé do Design System V2. Só links para páginas que existem. Desde a
+// simplificação do menu (17/10/2026) é aqui que vivem as páginas que saíram
+// da navbar ("Como funciona", perguntas frequentes, "Empresas").
 
 type Rodape = (typeof tComum)["pt-PT"]["rodape"];
 type ChaveRodape = Exclude<keyof Rodape, "lema" | "cidade">;
@@ -15,21 +17,26 @@ const COLUNAS_RODAPE: { titulo: ChaveRodape; links: { href: string; label: Chave
   {
     titulo: "produto",
     links: [
-      { href: ROTAS_V2.comoFunciona, label: "comoFunciona" },
       { href: ROTAS_V2.problemas, label: "problemas" },
       { href: ROTAS_V2.protecao, label: "protecao" },
-      { href: ROTAS_V2.ferramentas, label: "ferramentas" },
       { href: ROTAS_V2.precario, label: "precario" },
+      { href: ROTAS_V2.ferramentas, label: "ferramentas" },
+    ],
+  },
+  {
+    titulo: "apoio",
+    links: [
+      { href: ROTAS_V2.comoFunciona, label: "comoFunciona" },
+      { href: ROTAS_V2.ajuda, label: "ajuda" },
+      { href: ROTAS_V2.contacto, label: "contacto" },
     ],
   },
   {
     titulo: "dolado",
     links: [
       { href: ROTAS_V2.sobreNos, label: "sobreNos" },
-      { href: ROTAS_V2.transparencia, label: "transparencia" },
-      { href: ROTAS_V2.ajuda, label: "ajuda" },
       { href: ROTAS_V2.empresas, label: "empresas" },
-      { href: ROTAS_V2.contacto, label: "contacto" },
+      { href: ROTAS_V2.transparencia, label: "transparencia" },
     ],
   },
   {
@@ -48,11 +55,13 @@ export async function FooterV2() {
   const t = (await textos(tComum)).rodape;
   return (
     <footer className="border-t border-[var(--v2-line)] bg-white">
-      <div className="mx-auto grid max-w-[1200px] gap-10 px-5 py-14 sm:grid-cols-2 sm:px-8 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
-        <div>
+      <div className="mx-auto grid max-w-[1200px] grid-cols-2 gap-x-6 gap-y-10 px-5 py-14 sm:px-8 lg:grid-cols-[1.5fr_1fr_1fr_1fr_1.2fr]">
+        <div className="col-span-2 lg:col-span-1">
           <Logotipo />
-          <p className="mt-4 max-w-[260px] text-[14px] leading-relaxed text-[var(--v2-muted)]">
-            {t.lema}
+          <p className="mt-4 max-w-[280px] text-[14px] leading-relaxed text-[var(--v2-muted)]">
+            {t.lema[0]}
+            <br />
+            {t.lema[1]}
           </p>
         </div>
         {COLUNAS_RODAPE.map((c) => (

@@ -1,86 +1,72 @@
 "use client";
 
+import Image from "next/image";
 import Link from "@/i18n/Link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { perguntasHomepage } from "@/components/landing/conteudoPerguntasFrequentes";
 import { useCaminho, useIdioma } from "@/i18n/cliente";
 import { tInicio } from "@/i18n/mensagens/inicio";
 import { tWhatsApp } from "@/i18n/mensagens/whatsapp";
+import { tMarketing } from "@/i18n/mensagens/marketing";
 import { detectarOrigem, track } from "@/lib/analytics";
 import { urlTratarCaso } from "@/lib/site";
+import { caminhoProblema } from "@/lib/problemas/catalogo";
 import {
-  IconeCirculoVisto,
+  IconeCalendario,
+  IconeCasa,
   IconeDocumentoVisto,
   IconeEscudo,
-  IconeFormulario,
-  IconeLupaDocumento,
-  IconeMensagem,
-  IconePessoas,
+  IconePergunta,
   IconeSeta,
 } from "@/components/marketing-v2/Icones";
-import { ExemploReclamacao } from "@/components/marketing-v2/Exemplos";
 import { VisualHero } from "@/components/marketing-v2/Mockups";
-import { precoNoIdioma, tPlanos } from "@/i18n/mensagens/planos";
-import { PLANOS, type PlanoId } from "@/lib/planos";
-import { caminhoProblema } from "@/lib/problemas/catalogo";
 import { ApoioWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
 import { CTASection } from "@/components/marketing-v2/CTASection";
-import { FAQAccordionV2 } from "@/components/marketing-v2/FAQAccordionV2";
-import { FeatureCard } from "@/components/marketing-v2/FeatureCard";
 import { ferramentas } from "@/components/marketing-v2/ferramentas";
-import { ListaVistos } from "@/components/marketing-v2/ListaVistos";
-import { OrigemFundador } from "@/components/marketing-v2/OrigemFundador";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
-import { StepsTimeline, type Passo } from "@/components/marketing-v2/StepsTimeline";
-import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
+import { SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
 
 // Homepage "/" no Design System V2 (docs/design/design-system-v2.md). Navbar,
 // rodapé, tokens e secções vêm de src/components/marketing-v2/ (moldura em
-// PaginaV2). Os eventos de medição mantêm os nomes da homepage anterior
-// quando a ação é a mesma (click_nav_reclamacao, click_hero_reclamacao,
-// click_hero_simulador).
+// PaginaV2). Os eventos de medição mantêm os nomes anteriores quando a ação
+// é a mesma (click_hero_reclamacao, click_hero_simulador, click_home_*).
 //
-// Regras de conteúdo: gratuito só a Calculadora de Cancelamento (fidelização)
-// e o Simulador de Elegibilidade; a comparação de faturas só na Proteção; sem
-// logótipos de terceiros; sem testemunhos inventados.
+// Simplificação de 17/10/2026: uma ideia por secção, pouco texto, um CTA
+// principal por secção. Ordem: abertura → situações reais → as duas
+// vertentes → como funciona (3 passos) → ferramentas → fundador → CTA final.
+// O preçário, as perguntas frequentes e o processo em detalhe vivem nas
+// páginas próprias (navbar e rodapé).
+//
+// Regras de conteúdo: gratuitas só as ferramentas de /ferramentas-gratuitas;
+// a comparação de faturas só na Proteção; sem logótipos de terceiros; sem
+// testemunhos inventados.
 
-// Na homepage, as duas ferramentas de "existe um problema?"; o Guia de
-// Mudança fica na página de ferramentas gratuitas.
-const EVENTOS_FERRAMENTAS = {
-  calculadora: "click_home_calculadora",
-  simulador: "click_home_simulador",
-} as const;
+const LIGACAO = "inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green-dark)] underline-offset-4 hover:underline";
 
-// Situações concretas logo a seguir à abertura: cada uma leva à página já
-// existente mais próxima (catálogo em src/lib/problemas/catalogo.ts).
-type IdSituacao = "cobrancaCancelamento" | "faturaLuz" | "reembolso" | "fidelizacao" | "servicoNaoPedido" | "semResposta";
+// Situações reais: cada uma leva à página já existente mais próxima
+// (catálogo em src/lib/problemas/catalogo.ts), nunca a um destino genérico.
+type IdSituacao = "faturaAlta" | "promocao" | "fidelizacao" | "reembolso" | "naoReconhece" | "semResposta";
 const SITUACOES: { id: IdSituacao; href: string }[] = [
-  { id: "cobrancaCancelamento", href: caminhoProblema("telecomunicacoes", "cobranca-apos-cancelamento") },
-  { id: "faturaLuz", href: caminhoProblema("energia", "fatura-muito-alta") },
+  { id: "faturaAlta", href: caminhoProblema("energia", "fatura-muito-alta") },
+  { id: "promocao", href: caminhoProblema("telecomunicacoes", "aumento-preco") },
+  { id: "fidelizacao", href: caminhoProblema("telecomunicacoes", "cancelar-fidelizacao") },
   { id: "reembolso", href: caminhoProblema("compras-reembolsos", "loja-nao-devolve-dinheiro") },
-  { id: "fidelizacao", href: ROTAS_V2.calculadora },
-  { id: "servicoNaoPedido", href: caminhoProblema("telecomunicacoes", "cobranca-indevida") },
+  { id: "naoReconhece", href: caminhoProblema("telecomunicacoes", "cobranca-indevida") },
   { id: "semResposta", href: ROTAS_V2.simulador },
 ];
 
-// Resumo dos três serviços pela ordem do preçário por necessidade. Preços
-// sempre de src/lib/planos.ts.
-const ORDEM_RESUMO: PlanoId[] = ["avulso", "caso_protecao", "protecao"];
-
-// Textos: src/i18n/mensagens/*/inicio.ts (pt-PT e en-GB).
-const ICONES_GARANTIAS: ReactNode[] = [
-  <IconeEscudo key="e" tamanho={20} />,
-  <IconeDocumentoVisto key="d" tamanho={20} />,
-  <IconePessoas key="p" tamanho={20} />,
-];
-
-const ICONES_PASSOS: ReactNode[] = [
-  <IconeFormulario key="f" tamanho={34} strokeWidth={1.5} />,
-  <IconeLupaDocumento key="l" tamanho={34} strokeWidth={1.5} />,
-  <IconeCirculoVisto key="c" tamanho={34} strokeWidth={1.5} />,
-  <IconeMensagem key="m" tamanho={34} strokeWidth={1.5} />,
-];
+// As três ferramentas gratuitas (destinos de src/components/marketing-v2/
+// ferramentas.tsx; aqui só com texto curto).
+const EVENTOS_FERRAMENTAS = {
+  calculadora: "click_home_calculadora",
+  simulador: "click_home_simulador",
+  mudanca: "click_home_mudanca",
+} as const;
+const ICONES_FERRAMENTAS: Record<keyof typeof EVENTOS_FERRAMENTAS, ReactNode> = {
+  calculadora: <IconeCalendario tamanho={26} strokeWidth={1.6} />,
+  simulador: <IconePergunta tamanho={26} strokeWidth={1.6} />,
+  mudanca: <IconeCasa tamanho={26} strokeWidth={1.6} />,
+};
 
 export function HomepageV2() {
   const [origem] = useState(detectarOrigem);
@@ -88,9 +74,6 @@ export function HomepageV2() {
   const c = useCaminho();
   const t = tInicio[idioma];
   const tw = tWhatsApp[idioma].contextos.homepage;
-  const tp = tPlanos[idioma];
-  const GARANTIAS = t.hero.garantias.map((texto, i) => ({ icone: ICONES_GARANTIAS[i], texto }));
-  const PASSOS: Passo[] = t.comoFunciona.passos.map((p, i) => ({ ...p, icone: ICONES_PASSOS[i] }));
 
   // O preçário saiu da homepage para /precario. Os links antigos para
   // "/#precario" (portal, regresso do Stripe, /criar-conta, e-mails já
@@ -114,269 +97,181 @@ export function HomepageV2() {
 
   return (
     <>
-      {/* ===== Hero ===== */}
-      <SectionV2 size="compact" recortar className="grid items-center gap-12 lg:grid-cols-[1.35fr_1fr] lg:gap-12 lg:py-20">
+      {/* ===== Abertura ===== */}
+      <SectionV2 size="compact" recortar className="grid items-center gap-12 lg:grid-cols-[1.3fr_1fr] lg:py-24">
         <div>
-          <Eyebrow>{t.hero.eyebrow}</Eyebrow>
-          <h1 className="mt-5 text-[clamp(34px,3.7vw,50px)] font-extrabold leading-[1.06] tracking-[-0.035em] text-[var(--v2-navy)]">
-            {t.hero.titulo1} <br className="hidden sm:inline" />
-            {t.hero.titulo2}
-            <br />
-            <span className="font-semibold">{t.hero.titulo3}</span>
+          <h1 className="text-[clamp(36px,4.2vw,56px)] font-extrabold leading-[1.05] tracking-[-0.035em] text-[var(--v2-navy)]">
+            {t.hero.titulo}
           </h1>
-          <p className={`${TEXTO} mt-6 max-w-[540px] text-[17.5px]`}>{t.hero.texto}</p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <button type="button" onClick={() => tratarCaso("click_hero_reclamacao")} className={BOTAO_PRIMARIO}>
+          <p className={`${TEXTO} mt-6 max-w-[520px] text-[18px]`}>{t.hero.texto}</p>
+          <p className="mt-3 max-w-[520px] text-[18px] font-semibold leading-[1.5] text-[var(--v2-navy)]">{t.hero.destaque}</p>
+          <div className="mt-9 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:gap-7">
+            <button type="button" onClick={() => tratarCaso("click_hero_reclamacao")} className={`${BOTAO_PRIMARIO} w-full sm:w-auto`}>
               {t.hero.tratarCaso} <IconeSeta tamanho={17} />
             </button>
-            <Link prefetch={false}
-              href={ROTAS_V2.simulador}
-              onClick={() => track("click_hero_simulador")}
-              className={BOTAO_CONTORNO}
-            >
-              {t.hero.verSeAjuda}
+            <Link prefetch={false} href={ROTAS_V2.simulador} onClick={() => track("click_hero_simulador")} className={LIGACAO}>
+              {t.hero.verSeAjuda} <IconeSeta tamanho={15} />
             </Link>
           </div>
-          <p className="mt-4 max-w-[540px] text-[14px] leading-relaxed text-[var(--v2-muted)]">{t.hero.explicacaoBotoes}</p>
-          <ul className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-7">
-            {GARANTIAS.map((g) => (
-              <li key={g.texto} className="flex items-center gap-2.5 text-[14px] font-medium text-[var(--v2-muted)]">
-                <span className="text-[var(--v2-navy)]">{g.icone}</span>
-                {g.texto}
-              </li>
-            ))}
-          </ul>
-          <p className="mt-4 text-[14px] text-[var(--v2-muted)]">{t.hero.resposta}</p>
-          <ApoioWhatsApp className="mt-5" pergunta={tw.pergunta} mensagem={tw.mensagem} pagina="/" local="homepage" contexto="hero" />
         </div>
-        {/* Decorativo: no telemóvel fica escondido para as situações concretas
+        {/* Decorativo: no telemóvel fica escondido para as situações reais
             aparecerem logo a seguir à abertura. */}
         <div className="hidden lg:block">
           <VisualHero />
         </div>
       </SectionV2>
 
-      {/* ===== Situações concretas ===== */}
-      {/* Cada situação leva à página mais próxima que já existe (problema,
-          calculadora ou simulador), nunca a um destino genérico. */}
+      {/* ===== Situações reais ===== */}
       <SectionV2 id="situacoes" tone="soft-blue">
-        <SectionHeader eyebrow={t.problemas.eyebrow} titulo={t.problemas.titulo} texto={t.problemas.texto} />
+        <SectionHeader titulo={t.problemas.titulo} />
         <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {SITUACOES.map((s) => {
-            const item = t.problemas.itens[s.id];
-            return (
-              <li key={s.id}>
-                <Link
-                  prefetch={false}
-                  href={s.href}
-                  onClick={() => track("click_home_situacao", { situacao: s.id })}
-                  className={`${CARTAO} group flex h-full flex-col p-6 transition-colors hover:border-[var(--v2-green)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--v2-green)]`}
-                >
-                  <span className="text-[18px] font-bold leading-snug tracking-[-0.01em] text-[var(--v2-navy)]">{item.pergunta}</span>
-                  <span className="mt-2 text-[15px] leading-relaxed text-[var(--v2-muted)]">{item.texto}</span>
-                  <span className="mt-auto inline-flex items-center gap-1.5 pt-5 text-[14.5px] font-semibold text-[var(--v2-green)] group-hover:underline group-hover:underline-offset-4">
-                    {t.problemas.saberMais} <IconeSeta tamanho={15} />
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
+          {SITUACOES.map((s) => (
+            <li key={s.id}>
+              <Link
+                prefetch={false}
+                href={s.href}
+                onClick={() => track("click_home_situacao", { situacao: s.id })}
+                className={`${CARTAO} group flex h-full items-center justify-between gap-4 p-6 transition-colors hover:border-[var(--v2-green)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--v2-green)]`}
+              >
+                <span className="text-[17px] font-semibold leading-snug text-[var(--v2-navy)]">{t.problemas.itens[s.id]}</span>
+                <span aria-hidden="true" className="flex-none text-[var(--v2-green)] transition-transform group-hover:translate-x-0.5">
+                  <IconeSeta tamanho={18} />
+                </span>
+              </Link>
+            </li>
+          ))}
         </ul>
-        <Link prefetch={false}
-          href={ROTAS_V2.problemas}
-          onClick={() => track("click_home_problemas")}
-          className="mt-8 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
-        >
-          {t.problemas.verTodos} <IconeSeta tamanho={15} />
-        </Link>
+        <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
+          <p className="text-[18px] font-bold text-[var(--v2-navy)]">{t.problemas.fecho}</p>
+          <Link prefetch={false} href={ROTAS_V2.problemas} onClick={() => track("click_home_problemas")} className={LIGACAO}>
+            {t.problemas.verTodos} <IconeSeta tamanho={15} />
+          </Link>
+        </div>
       </SectionV2>
 
-      {/* ===== Duas formas de ajudar: tratar um problema / Proteção ===== */}
+      {/* ===== As duas vertentes: tratar um problema / Proteção ===== */}
       {/* A Proteção é um serviço autónomo: não depende de ter aberto um caso. */}
       <SectionV2>
-        <SectionHeader eyebrow={t.servicos.eyebrow} titulo={t.servicos.titulo} />
-        <div className="mt-10 grid gap-6 lg:grid-cols-2">
-          <article className={`${CARTAO} flex flex-col p-7 sm:p-8`}>
+        <SectionHeader
+          titulo={
+            <>
+              {t.vertentes.titulo1}
+              <br />
+              <span className="text-[var(--v2-green-dark)]">{t.vertentes.titulo2}</span>
+            </>
+          }
+        />
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          <article className={`${CARTAO} flex flex-col p-8 sm:p-10`}>
             <span className="text-[var(--v2-green)]">
-              <IconeDocumentoVisto tamanho={30} strokeWidth={1.6} />
+              <IconeDocumentoVisto tamanho={32} strokeWidth={1.6} />
             </span>
-            <h3 className="mt-4 text-[22px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">{t.servicos.tratar.titulo}</h3>
-            <p className="mt-2 text-[15.5px] leading-relaxed text-[var(--v2-muted)]">{t.servicos.tratar.texto}</p>
-            <div className="mt-6">
-              <ListaVistos itens={t.servicos.tratar.itens} />
-            </div>
+            <h3 className="mt-5 text-[24px] font-bold tracking-[-0.015em] text-[var(--v2-navy)]">{t.vertentes.tratar.titulo}</h3>
+            <p className="mt-2 text-[17px] leading-relaxed text-[var(--v2-muted)]">{t.vertentes.tratar.texto}</p>
             <div className="mt-auto pt-8">
               <button type="button" onClick={() => tratarCaso("click_home_servico_tratar")} className={`${BOTAO_PRIMARIO} w-full sm:w-auto`}>
-                {t.servicos.tratar.cta} <IconeSeta tamanho={17} />
+                {t.vertentes.tratar.cta} <IconeSeta tamanho={17} />
               </button>
             </div>
           </article>
-          <article className={`${CARTAO} flex flex-col p-7 sm:p-8`}>
+          <article className={`${CARTAO} flex flex-col p-8 sm:p-10`}>
             <span className="text-[var(--v2-green)]">
-              <IconeEscudo tamanho={30} strokeWidth={1.6} />
+              <IconeEscudo tamanho={32} strokeWidth={1.6} />
             </span>
-            <h3 className="mt-4 text-[22px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">{t.servicos.protecao.titulo}</h3>
-            <p className="mt-2 text-[15.5px] leading-relaxed text-[var(--v2-muted)]">{t.servicos.protecao.texto}</p>
-            <div className="mt-6">
-              <ListaVistos itens={t.servicos.protecao.itens} />
-            </div>
+            <h3 className="mt-5 text-[24px] font-bold tracking-[-0.015em] text-[var(--v2-navy)]">{t.vertentes.protecao.titulo}</h3>
+            <p className="mt-2 text-[17px] leading-relaxed text-[var(--v2-muted)]">{t.vertentes.protecao.texto}</p>
             <div className="mt-auto pt-8">
               <Link prefetch={false} href={ROTAS_V2.protecao} onClick={() => track("click_home_protecao")} className={`${BOTAO_CONTORNO} w-full sm:w-auto`}>
-                {t.servicos.protecao.cta} <IconeSeta tamanho={17} />
+                {t.vertentes.protecao.cta} <IconeSeta tamanho={17} />
               </Link>
             </div>
           </article>
         </div>
-        <p className="mt-8 max-w-[760px] border-l-[3px] border-[var(--v2-green)] pl-4 text-[14px] leading-relaxed text-[var(--v2-muted)]">
-          {t.servicos.nota}
-        </p>
       </SectionV2>
 
-      {/* ===== Como funciona (explicação principal do processo) ===== */}
+      {/* ===== Como funciona: a única explicação do processo na homepage ===== */}
       <SectionV2 id="como-funciona" tone="soft-blue">
-        <SectionHeader eyebrow={t.comoFunciona.eyebrow} titulo={t.comoFunciona.titulo} />
-        <div className="mt-12">
-          <StepsTimeline passos={PASSOS} />
-        </div>
-        <div className="mt-12 grid items-start gap-8 lg:grid-cols-[1.2fr_1fr]">
-          <ExemploReclamacao />
-          <Link prefetch={false}
-            href={ROTAS_V2.comoFunciona}
-            className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline lg:mt-6"
-          >
-            {t.comoFunciona.verTodos} <IconeSeta tamanho={15} />
-          </Link>
-        </div>
+        <SectionHeader titulo={t.comoFunciona.titulo} />
+        <ol className="mt-10 grid gap-8 md:grid-cols-3 md:gap-10">
+          {t.comoFunciona.passos.map((passo, i) => (
+            <li key={passo} className="flex gap-4 md:flex-col md:gap-5">
+              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-[var(--v2-green)] text-[16px] font-bold text-white">
+                {i + 1}
+              </span>
+              <p className="pt-1.5 text-[18px] font-semibold leading-snug text-[var(--v2-navy)] md:pt-0">{passo}</p>
+            </li>
+          ))}
+        </ol>
+        <Link prefetch={false} href={ROTAS_V2.comoFunciona} onClick={() => track("click_home_como_funciona")} className={`${LIGACAO} mt-10`}>
+          {t.comoFunciona.verMais} <IconeSeta tamanho={15} />
+        </Link>
       </SectionV2>
 
-      {/* ===== Preços (resumo; condições completas em /precario) ===== */}
-      <SectionV2 id="precos">
-        <SectionHeader eyebrow={t.precos.eyebrow} titulo={t.precos.titulo} texto={t.precos.texto} />
+      {/* ===== Ferramentas gratuitas ===== */}
+      <SectionV2 id="ferramentas">
+        <SectionHeader titulo={t.ferramentas.titulo} />
         <ul className="mt-10 grid gap-4 md:grid-cols-3">
-          {ORDEM_RESUMO.map((id) => {
-            const plano = PLANOS[id];
-            const r = t.precos.planos[id];
+          {ferramentas(idioma).map((f) => {
+            const id = f.id;
+            const item = t.ferramentas.itens[id];
             return (
-              <li key={id} className={`${CARTAO} flex flex-col p-6`}>
-                <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]">{tp.nome[id]}</p>
-                <p className="mt-2 text-[16.5px] font-bold leading-snug text-[var(--v2-navy)]">{r.necessidade}</p>
-                <p className="mt-4">
-                  <span className="text-[30px] font-extrabold tracking-[-0.03em] text-[var(--v2-navy)]">
-                    {precoNoIdioma(idioma, plano.precoCentimos)}
-                  </span>
-                  <span className="text-[15px] font-medium text-[var(--v2-muted)]"> {plano.subscricao ? tp.unidadeMes : tp.unidadeCaso}</span>
-                </p>
-                <p className="mt-1 text-[13.5px] text-[var(--v2-muted)]">{plano.subscricao ? tp.subscricaoMensal : tp.pagamentoUnico}</p>
-                <p className="mt-3 text-[15px] leading-relaxed text-[var(--v2-navy)]">{r.detalhe}</p>
+              <li key={id}>
+                <Link
+                  prefetch={false}
+                  href={f.href}
+                  onClick={() => track(EVENTOS_FERRAMENTAS[id])}
+                  className={`${CARTAO} group flex h-full flex-col p-6 transition-colors hover:border-[var(--v2-green)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--v2-green)]`}
+                >
+                  <span className="text-[var(--v2-green)]">{ICONES_FERRAMENTAS[id]}</span>
+                  <span className="mt-4 text-[18px] font-bold text-[var(--v2-navy)]">{item.titulo}</span>
+                  <span className="mt-1.5 text-[15.5px] leading-relaxed text-[var(--v2-muted)]">{item.texto}</span>
+                </Link>
               </li>
             );
           })}
         </ul>
-        <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-8">
-          <Link prefetch={false} href={ROTAS_V2.precario} onClick={() => track("click_home_precos")} className={BOTAO_CONTORNO}>
-            {t.precos.verPrecario} <IconeSeta tamanho={16} />
-          </Link>
-          <Link prefetch={false}
-            href={ROTAS_V2.protecao}
-            onClick={() => track("click_home_precos_protecao")}
-            className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
-          >
-            {t.precos.conhecerProtecao} <IconeSeta tamanho={15} />
-          </Link>
-        </div>
-        <ApoioWhatsApp className="mt-6" pergunta={tWhatsApp[idioma].contextos.precario.pergunta} mensagem={tWhatsApp[idioma].contextos.precario.mensagem} pagina="/" local="homepage" contexto="precos" />
+        <Link prefetch={false} href={ROTAS_V2.ferramentas} className={`${LIGACAO} mt-8`}>
+          {t.ferramentas.verTodas} <IconeSeta tamanho={15} />
+        </Link>
       </SectionV2>
 
-      {/* ===== Ferramentas gratuitas ===== */}
-      <SectionV2 id="ferramentas" tone="soft-blue">
-        <SectionHeader
-          eyebrow={t.ferramentas.eyebrow}
-          titulo={t.ferramentas.titulo}
-          texto={t.ferramentas.texto}
+      {/* ===== Fundador (história completa em /sobre-nos) ===== */}
+      {/* Fotografia real (já publicada; 600 px, imagens não otimizadas no
+          servidor — images.unoptimized, next.config.ts). */}
+      <SectionV2 tone="soft-blue" className="grid items-center gap-8 sm:grid-cols-[180px_1fr] sm:gap-10 lg:grid-cols-[220px_1fr]">
+        <Image
+          src="/landing/founder-thiago-600.webp"
+          alt={tMarketing[idioma].origem.fotografia}
+          width={220}
+          height={260}
+          className="aspect-[4/5] w-full max-w-[180px] rounded-[18px] object-cover lg:max-w-[220px]"
         />
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
-          {ferramentas(idioma).filter((f) => f.id in EVENTOS_FERRAMENTAS).map((f) => (
-            <FeatureCard
-              key={f.id}
-              icone={f.icone}
-              titulo={f.titulo}
-              texto={f.texto}
-              visual={f.visual}
-              acao={
-                <Link prefetch={false}
-                  href={f.href}
-                  onClick={() => track(EVENTOS_FERRAMENTAS[f.id as keyof typeof EVENTOS_FERRAMENTAS])}
-                  className={BOTAO_CONTORNO}
-                >
-                  {f.cta} <IconeSeta tamanho={16} />
-                </Link>
-              }
-            />
-          ))}
-        </div>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[13.5px] text-[var(--v2-muted)]">{t.ferramentas.semConta}</p>
-          <Link prefetch={false}
-            href={ROTAS_V2.ferramentas}
-            className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
-          >
-            {t.ferramentas.verTodas} <IconeSeta tamanho={15} />
+        <div className="max-w-[620px]">
+          <h2 className="text-[clamp(26px,3vw,34px)] font-extrabold leading-[1.15] tracking-[-0.025em] text-[var(--v2-navy)]">{t.fundador.titulo}</h2>
+          <p className={`${TEXTO} mt-4`}>{t.fundador.texto}</p>
+          <p className="mt-5 text-[15.5px] font-bold text-[var(--v2-navy)]">{t.fundador.nome}</p>
+          <p className="text-[14.5px] text-[var(--v2-muted)]">{t.fundador.cargo}</p>
+          <Link prefetch={false} href={ROTAS_V2.sobreNos} className={`${LIGACAO} mt-5`}>
+            {t.fundador.cta} <IconeSeta tamanho={15} />
           </Link>
         </div>
-      </SectionV2>
-
-      {/* ===== A nossa origem ===== */}
-      <OrigemFundador
-        tone="white"
-        aside={
-          <aside className="rounded-[18px] bg-[var(--v2-mint)] p-7 md:col-span-2 xl:col-span-1">
-            <span className="text-[var(--v2-green)]">
-              <IconePessoas tamanho={32} strokeWidth={1.6} />
-            </span>
-            <h3 className="mt-4 text-[20px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">
-              {t.origem.titulo}
-            </h3>
-            <p className="mt-3 text-[15px] leading-relaxed text-[var(--v2-muted)]">{t.origem.texto}</p>
-            <Link prefetch={false} href={ROTAS_V2.sobreNos} className="mt-5 inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline">
-              {t.origem.saberMais} <IconeSeta tamanho={15} />
-            </Link>
-          </aside>
-        }
-      />
-
-      {/*
-        Prova social: sem testemunhos reais aprovados no projeto, a secção não
-        é mostrada. Quando existirem, entram aqui (três cartões com texto curto
-        e nome; sem fotografias, estrelas nem resultados inventados).
-      */}
-
-      {/* ===== Perguntas frequentes ===== */}
-      <SectionV2 tone="soft-blue" className="grid gap-10 lg:grid-cols-[1fr_1.6fr] lg:gap-16">
-        <div>
-          <SectionHeader eyebrow={t.perguntas.eyebrow} titulo={t.perguntas.titulo} />
-          <Link prefetch={false}
-            href={ROTAS_V2.ajuda}
-            className="mt-6 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
-          >
-            {t.perguntas.verTodas} <IconeSeta tamanho={15} />
-          </Link>
-        </div>
-        <FAQAccordionV2 perguntas={perguntasHomepage(idioma)} />
       </SectionV2>
 
       {/* ===== CTA final ===== */}
       <CTASection
-        eyebrow={t.ctaFinal.eyebrow}
         titulo={t.ctaFinal.titulo}
-        texto={t.ctaFinal.texto}
         acao={
-          <Link prefetch={false}
-            href={ROTAS_V2.simulador}
-            onClick={() => track("click_home_cta_final")}
-            className={`${BOTAO_PRIMARIO} w-full md:w-auto`}
-          >
-            {t.ctaFinal.acao} <IconeSeta tamanho={17} />
-          </Link>
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <button type="button" onClick={() => tratarCaso("click_home_cta_final")} className={`${BOTAO_PRIMARIO} w-full sm:w-auto`}>
+              {t.ctaFinal.acao} <IconeSeta tamanho={17} />
+            </button>
+            <Link prefetch={false} href={ROTAS_V2.simulador} onClick={() => track("click_home_cta_final_simulador")} className={LIGACAO}>
+              {t.ctaFinal.secundaria}
+            </Link>
+          </div>
+        }
+        apoio={
+          <ApoioWhatsApp className="mx-auto mt-6 max-w-[1200px]" pergunta={tw.pergunta} mensagem={tw.mensagem} pagina="/" local="homepage" contexto="cta_final" />
         }
       />
     </>

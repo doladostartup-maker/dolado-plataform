@@ -13,23 +13,20 @@ import { Logotipo } from "./Logotipo";
 import { ROTAS_V2 } from "./rotas";
 
 // Navbar do Design System V2 (todas as páginas públicas). Só existe dentro de
-// PaginaV2. Prefetch: só os 4 links principais (navegação mais provável);
-// "Problemas que tratamos", "Proteção", "Empresas", logótipo e "Iniciar
-// sessão" (portal, outro domínio) sem prefetch.
-// Revisão de 17/10/2026: "Problemas que tratamos" e "Proteção" entram no
-// menu; "Empresas" fica no menu do telemóvel e no rodapé, para o menu do
-// computador não ficar sobrecarregado; no computador, rótulos curtos
-// ("Problemas", "Ferramentas") e menu completo só a partir de 1280 px
-// (abaixo disso, o menu do telemóvel, com os nomes completos).
+// PaginaV2. Prefetch: só os links principais (navegação mais provável);
+// "Problemas que tratamos", "Proteção", logótipo e "Entrar" (portal, outro
+// domínio) sem prefetch.
+// Simplificação de 17/10/2026: o menu fica só com Problemas, Proteção,
+// Preços, Ferramentas e "Tratar do meu caso"; "Entrar" e PT/EN ficam
+// discretos. "Como funciona", "Ajuda" (perguntas frequentes) e "Empresas"
+// saíram do menu (computador e telemóvel) e continuam no rodapé, no sitemap
+// e nas ligações internas.
 
 const LINKS = [
   { href: ROTAS_V2.problemas, chave: "problemas", curta: "problemasCurto", prefetch: false },
-  { href: ROTAS_V2.comoFunciona, chave: "comoFunciona" },
   { href: ROTAS_V2.protecao, chave: "protecao", prefetch: false },
   { href: ROTAS_V2.precario, chave: "precario" },
   { href: ROTAS_V2.ferramentas, chave: "ferramentas", curta: "ferramentasCurto" },
-  { href: ROTAS_V2.ajuda, chave: "ajuda" },
-  { href: ROTAS_V2.empresas, chave: "empresas", prefetch: false, soTelemovel: true },
 ] as const;
 
 export function NavbarV2({ eventoCta, parametrosCta }: { eventoCta: string; parametrosCta?: Record<string, string> }) {
@@ -49,23 +46,23 @@ export function NavbarV2({ eventoCta, parametrosCta }: { eventoCta: string; para
         <div className="flex-none">
           <Logotipo />
         </div>
-        <nav aria-label={t.acessibilidade.navPrincipal} className="hidden items-center gap-5 xl:flex 2xl:gap-6">
-          {LINKS.filter((l) => !("soTelemovel" in l)).map((l) => (
-            <Link key={l.chave} href={l.href} prefetch={"prefetch" in l ? l.prefetch : undefined} className="whitespace-nowrap text-[14px] font-medium text-[var(--v2-muted)] hover:text-[var(--v2-navy)]">
+        <nav aria-label={t.acessibilidade.navPrincipal} className="hidden items-center gap-7 lg:flex">
+          {LINKS.map((l) => (
+            <Link key={l.chave} href={l.href} prefetch={"prefetch" in l ? l.prefetch : undefined} className="whitespace-nowrap text-[15px] font-medium text-[var(--v2-navy)] hover:text-[var(--v2-green)]">
               {t.navbar["curta" in l ? l.curta : l.chave]}
             </Link>
           ))}
         </nav>
-        <div className="hidden items-center gap-4 xl:flex xl:gap-5">
+        <div className="hidden items-center gap-4 lg:flex">
           <SeletorIdioma compacto />
-          <a href={c(ROTAS_V2.entrar)} className="whitespace-nowrap text-[14px] font-semibold text-[var(--v2-navy)] hover:text-[var(--v2-green)]">
+          <a href={c(ROTAS_V2.entrar)} className="whitespace-nowrap text-[14px] font-medium text-[var(--v2-muted)] hover:text-[var(--v2-navy)]">
             {t.navbar.iniciarSessao}
           </a>
           <button type="button" onClick={tratarCaso} className={`${BOTAO_PRIMARIO} min-h-10 whitespace-nowrap px-5 text-[14px]`}>
             {t.navbar.tratarCaso} <IconeSeta tamanho={16} />
           </button>
         </div>
-        <div className="flex items-center gap-1 xl:hidden">
+        <div className="flex items-center gap-1 lg:hidden">
           <SeletorIdioma compacto />
           <button
             type="button"
@@ -80,7 +77,7 @@ export function NavbarV2({ eventoCta, parametrosCta }: { eventoCta: string; para
         </div>
       </div>
       {aberto && (
-        <div id="menu-v2" className="border-t border-[var(--v2-line)] bg-white px-5 pb-6 pt-2 xl:hidden">
+        <div id="menu-v2" className="border-t border-[var(--v2-line)] bg-white px-5 pb-6 pt-2 lg:hidden">
           <nav aria-label={t.acessibilidade.navPrincipalTelemovel} className="flex flex-col">
             {LINKS.map((l) => (
               <Link
@@ -93,7 +90,7 @@ export function NavbarV2({ eventoCta, parametrosCta }: { eventoCta: string; para
                 {t.navbar[l.chave]}
               </Link>
             ))}
-            <a href={c(ROTAS_V2.entrar)} className="flex min-h-12 items-center text-[16px] font-semibold text-[var(--v2-navy)]">
+            <a href={c(ROTAS_V2.entrar)} className="flex min-h-12 items-center text-[15px] font-medium text-[var(--v2-muted)]">
               {t.navbar.iniciarSessao}
             </a>
           </nav>
