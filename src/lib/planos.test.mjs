@@ -159,9 +159,9 @@ describe("preçário público", () => {
     }
   });
 
-  test("a homepage leva ao preçário e mantém os links antigos /#precario", () => {
+  test("o preçário está na navbar e a homepage mantém os links antigos /#precario", () => {
     const home = fonte("../components/homepage-v2/HomepageV2.tsx");
-    assert.match(home, /href=\{ROTAS_V2\.precario\}/);
+    assert.match(fonte("../components/marketing-v2/NavbarV2.tsx"), /href: ROTAS_V2\.precario/);
     assert.match(home, /window\.location\.hash === "#precario"\) window\.location\.replace\(c\(ROTAS_V2\.precario\)\)/);
     assert.match(home, /addEventListener\("hashchange", irParaPrecario\)/);
     assert.match(fonte("../components/marketing-v2/rotas.ts"), /precario: "\/precario"/);
