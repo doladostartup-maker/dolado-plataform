@@ -86,7 +86,7 @@ export const paginas: Traducao<typeof pt> = {
     eyebrow: "Protection",
     titulo: "We keep an eye on your bills and contracts and warn you in time.",
     texto:
-      "Protection is for anyone who wants to avoid surprises, even without a problem right now. You send us the bills and, if you have it, the contract for the services you want us to follow. We compare each bill with the previous ones and with the contract, keep track of important dates and e-mail you when something deserves your attention.",
+      "Protection is for anyone who wants to avoid surprises, even without a problem right now. You send us the bills and, if you have it, the contract for the services you want us to follow. We compare each bill with the previous ones and with the contract, keep track of important dates and let you know when something deserves your attention.",
     aderir: "Get Protection",
     verPrecario: "See pricing",
     tresPerguntas: {
@@ -106,9 +106,9 @@ export const paginas: Traducao<typeof pt> = {
           titulo: "What information and reminders do you get?",
           itens: [
             "In your account, straight after the first document: what we checked, what we found and what we will keep an eye on.",
-            "E-mail reminders 60 and 30 days before a promotion or minimum term ends, and on the day itself.",
+            "Reminders 60 and 30 days before a promotion or minimum term ends, and on the day itself.",
             "A notice when a bill has a change that is worth checking, after a person at DoLado has reviewed it.",
-            "At the start of each month, a summary by e-mail: what we kept an eye on, any changes we found and the next important date.",
+            "At the start of each month, a summary: what we kept an eye on, any changes we found and the next important date.",
             "If you wish, notices about relevant changes in the sectors you choose, such as announced price rises.",
           ],
         },

@@ -109,7 +109,7 @@ export const perguntas: Traducao<typeof pt> = {
   oQueIncluiProtecao: {
     pergunta: "What does the Protection plan include?",
     resposta:
-      "Protection helps you spot situations that could turn into a problem. We compare each bill with the previous ones to identify changes, keep an eye on important dates such as the end of promotions and minimum-term periods, and email you before those dates. We also let you know about relevant changes in the sectors you choose, such as announced price rises, and at the start of each month we e-mail you a summary of what we kept an eye on. Protection does not include handling complaints.",
+      "Protection helps you spot situations that could turn into a problem. We compare each bill with the previous ones to identify changes, keep an eye on important dates such as the end of promotions and minimum-term periods, and let you know before those dates. We also let you know about relevant changes in the sectors you choose, such as announced price rises, and at the start of each month we send you a summary of what we kept an eye on. Protection does not include handling complaints.",
   },
   comecarProtecao: {
     pergunta: "How do I start using Protection?",

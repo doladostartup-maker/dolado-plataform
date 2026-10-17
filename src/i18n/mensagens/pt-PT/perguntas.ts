@@ -118,7 +118,7 @@ export const perguntas = {
   oQueIncluiProtecao: {
     pergunta: "O que inclui o plano Proteção?",
     resposta:
-      "A Proteção ajuda a identificar situações que possam tornar-se num problema. Comparamos as suas faturas com as anteriores para identificar alterações, estamos atentos a datas importantes, como o fim de promoções e de períodos de fidelização, e avisamo-lo por e-mail antes dessas datas. Também o avisamos de alterações relevantes nos setores que escolher, como subidas de preços anunciadas, e, no início de cada mês, enviamos-lhe por e-mail um resumo do que acompanhámos. A Proteção não inclui o tratamento de reclamações." as Resposta,
+      "A Proteção ajuda a identificar situações que possam tornar-se num problema. Comparamos as suas faturas com as anteriores para identificar alterações, estamos atentos a datas importantes, como o fim de promoções e de períodos de fidelização, e avisamo-lo antes dessas datas. Também o avisamos de alterações relevantes nos setores que escolher, como subidas de preços anunciadas, e, no início de cada mês, enviamos-lhe um resumo do que acompanhámos. A Proteção não inclui o tratamento de reclamações." as Resposta,
   },
   // Fluxo real: /portal/contratos (carregar fatura ou contrato, ou
   // /portal/contratos/novo sem documento) e setores no /portal/perfil.
