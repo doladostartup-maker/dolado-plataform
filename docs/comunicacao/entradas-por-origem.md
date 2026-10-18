@@ -21,7 +21,7 @@ Não é preciso uma página nova: a página inicial já responde às quatro perg
 - **Texto sugerido para o flyer:**
   - "Tem um problema com uma empresa? Cobranças depois de cancelar, faturas que não percebe, reembolsos que não chegam."
   - "A DoLado prepara a reclamação, mostra-lhe o texto antes de enviar e acompanha a resposta."
-  - "Avulso: 14,99 € por caso, sem subscrição." (confirmar o preço em `src/lib/planos.ts` antes de imprimir)
+  - "Avulso: 11,99 € por caso, sem subscrição." (confirmar o preço em `src/lib/planos.ts` antes de imprimir)
   - "Comece em dolado.pt — ou veja primeiro, em 4 perguntas gratuitas, se podemos ajudar."
 - Se mais tarde se quiser uma página curta própria (ex.: `/comecar`), deve reutilizar os blocos da página inicial (situações, preços, ajuda) e entrar em `PAGINAS_BILINGUES` e no middleware.
 

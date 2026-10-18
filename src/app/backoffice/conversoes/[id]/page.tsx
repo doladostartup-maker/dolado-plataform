@@ -152,7 +152,7 @@ export default async function ConversaoDetalhePage({
                   name="nota"
                   required
                   rows={3}
-                  placeholder="Ex.: reembolso de 10,00 € criado manualmente no Stripe (re_…) em 02/10."
+                  placeholder="Ex.: reembolso de 7,00 € criado manualmente no Stripe (re_…) em 02/10."
                   className={CAMPO}
                 />
               </label>

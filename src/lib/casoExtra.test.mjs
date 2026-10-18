@@ -35,11 +35,11 @@ function conta(extra = {}) {
 }
 
 describe("preço do Caso Extra", () => {
-  test("11,99 € em vez dos 14,99 € do Avulso (cerca de 20%)", () => {
-    assert.equal(CASO_EXTRA.precoCentimos, 1199);
+  test("9,59 € em vez dos 11,99 € do Avulso (cerca de 20%)", () => {
+    assert.equal(CASO_EXTRA.precoCentimos, 959);
     assert.equal(CASO_EXTRA.precoReferenciaCentimos, PLANOS.avulso.precoCentimos);
-    assert.equal(formatarPreco(CASO_EXTRA.precoReferenciaCentimos), "14,99 €");
-    assert.equal(formatarPreco(CASO_EXTRA.precoCentimos), "11,99 €");
+    assert.equal(formatarPreco(CASO_EXTRA.precoReferenciaCentimos), "11,99 €");
+    assert.equal(formatarPreco(CASO_EXTRA.precoCentimos), "9,59 €");
     const desconto = 1 - CASO_EXTRA.precoCentimos / CASO_EXTRA.precoReferenciaCentimos;
     assert.ok(Math.abs(desconto - CASO_EXTRA.descontoPercentagem / 100) < 0.005);
   });

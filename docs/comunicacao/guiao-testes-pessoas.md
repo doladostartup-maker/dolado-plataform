@@ -27,7 +27,7 @@ Não escolher por idade, escolaridade ou rendimento: escolher pela forma como us
 |---|---|---|
 | 1 | "Cancelou a internet, mas continuam a cobrar-lhe a mensalidade. Encontre no site ajuda para isso." | Chega à página de cobrança depois do cancelamento ou começa o formulário com esse problema |
 | 2 | "Depois de ver a página inicial, explique-me por palavras suas o que a DoLado faz." | Refere preparar a reclamação, autorização antes do envio e acompanhamento; não diz que "resolvem garantidamente" |
-| 3 | "Quanto custa tratar um único caso?" | Diz 14,99 € e pagamento único |
+| 3 | "Quanto custa tratar um único caso?" | Diz 11,99 € e pagamento único |
 | 4 | "Qual é a diferença entre a Proteção e o Caso + Proteção?" | Diz que a Proteção só acompanha faturas e contratos e que o Caso + Proteção inclui casos |
 | 5 | "Imagine que tem uma dúvida e não sabe por onde começar. Onde pediria ajuda?" | Encontra o WhatsApp, o Contacto ou as perguntas frequentes |
 | 6 | "Comece a pedir ajuda para o seu problema, sem a minha orientação." (parar antes da conta) | Chega à etapa "Conta" sem bloqueios; percebe que só paga no fim |

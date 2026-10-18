@@ -8,6 +8,7 @@ import { TermosV20261007 } from "./v2026-10-07";
 import { TermosV20261008 } from "./v2026-10-08";
 import { TermosV20261017 } from "./v2026-10-17";
 import { TermosV20261018 } from "./v2026-10-18";
+import { TermosV20261018b } from "./v2026-10-18b";
 
 // Todas as versões publicadas dos Termos (AAAA-MM-DD, com sufixo de letra
 // para uma segunda versão no mesmo dia). Nunca remover uma versão: cada
@@ -25,4 +26,5 @@ export const VERSOES_TERMOS: Record<string, () => React.JSX.Element> = {
   "2026-10-08": TermosV20261008,
   "2026-10-17": TermosV20261017,
   "2026-10-18": TermosV20261018,
+  "2026-10-18b": TermosV20261018b,
 };

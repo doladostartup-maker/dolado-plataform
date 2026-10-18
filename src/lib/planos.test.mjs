@@ -4,6 +4,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { TERMOS_VERSAO } from "./legal.ts";
 import { avisoDoPortal, calcularAcesso, casosGuardados, estadoReembolsoCliente, resumoPlanoPortal } from "./acesso.ts";
 import {
   CASO_EXTRA,
@@ -27,8 +28,13 @@ describe("configuração central dos planos", () => {
   test("Caso + Proteção aponta para o Price ID correto", () => {
     assert.equal(PLANOS.caso_protecao.stripePriceId, "price_1UJYnPBtJL9VeDPfnQTlVwsq");
   });
-  test("Avulso aponta para o Price ID correto", () => {
-    assert.equal(PLANOS.avulso.stripePriceId, "price_1UJYwzBtJL9VeDPfrAiguI1Z");
+  test("Avulso aponta para o Price ID de 11,99 € (nunca o antigo de 14,99 €)", () => {
+    assert.match(PLANOS.avulso.stripePriceId, /^price_[A-Za-z0-9]{10,}$/);
+    assert.notEqual(PLANOS.avulso.stripePriceId, "price_1UJYwzBtJL9VeDPfrAiguI1Z");
+  });
+  test("Caso Extra aponta para o Price ID de 9,59 € (nunca o antigo de 11,99 €)", () => {
+    assert.match(CASO_EXTRA.stripePriceId, /^price_[A-Za-z0-9]{10,}$/);
+    assert.notEqual(CASO_EXTRA.stripePriceId, "price_1UNGPnBtJL9VeDPfJUIG2ZvK");
   });
 
   test("nomes oficiais e ordem do preçário", () => {
@@ -38,13 +44,13 @@ describe("configuração central dos planos", () => {
     );
   });
 
-  test("preços apresentados: 4,99 €/mês, 7,99 €/mês, 14,99 € / caso", () => {
+  test("preços apresentados: 4,99 €/mês, 7,99 €/mês, 11,99 € / caso", () => {
     assert.equal(formatarPreco(PLANOS.protecao.precoCentimos), "4,99 €");
     assert.equal(formatarPreco(PLANOS.caso_protecao.precoCentimos), "7,99 €");
-    assert.equal(formatarPreco(PLANOS.avulso.precoCentimos), "14,99 €");
+    assert.equal(formatarPreco(PLANOS.avulso.precoCentimos), "11,99 €");
     assert.equal(precoComUnidade("protecao"), "4,99 €/mês");
     assert.equal(precoComUnidade("caso_protecao"), "7,99 €/mês");
-    assert.equal(precoComUnidade("avulso"), "14,99 € / caso");
+    assert.equal(precoComUnidade("avulso"), "11,99 € / caso");
   });
 
   test("Avulso é pagamento único; os outros são subscrição", () => {
@@ -78,8 +84,8 @@ describe("configuração central dos planos", () => {
   });
 
   test("texto de conversão: cobre o 1.º mês e reembolsa o resto", () => {
-    assert.match(textoConversaoAvulso("protecao"), /utilizamos 4,99 € .* reembolsamos os restantes 10,00 €/);
-    assert.match(textoConversaoAvulso("caso_protecao"), /utilizamos 7,99 € .* reembolsamos os restantes 7,00 €/);
+    assert.match(textoConversaoAvulso("protecao"), /utilizamos 4,99 € .* reembolsamos os restantes 7,00 €/);
+    assert.match(textoConversaoAvulso("caso_protecao"), /utilizamos 7,99 € .* reembolsamos os restantes 4,00 €/);
   });
 });
 
@@ -360,5 +366,33 @@ describe("casos guardados depois do fim do Caso + Proteção", () => {
 
   test("depois dos 90 dias: nada para recuperar", () => {
     assert.equal(casosGuardados([{ quantidade: 3, expira_em: "2026-09-30T10:00:00.000Z", restaurado_em: null }], AGORA), null);
+  });
+});
+
+describe("versões publicadas dos Termos não mudam com o preço", () => {
+  const dir = fileURLToPath(new URL("../app/[idioma]/(legal)/termos/_versoes/", import.meta.url));
+  const publicadas = readdirSync(dir).filter((f) => /^v\d{4}-\d{2}-\d{2}[a-z]?\.tsx$/.test(f) && f.slice(1, -4) <= "2026-10-18");
+
+  test("até 2026-10-18 os preços vêm de precosAte20261018.ts, nunca de planos.ts", () => {
+    for (const f of publicadas) {
+      const c = readFileSync(join(dir, f), "utf8");
+      if (!/PLANOS|CASO_EXTRA/.test(c)) continue;
+      assert.match(c, /from "\.\/precosAte20261018"/, f);
+      assert.doesNotMatch(c, /import \{[^}]*\b(PLANOS|CASO_EXTRA)\b[^}]*\} from "@\/lib\/planos"/, f);
+    }
+  });
+
+  test("preços fixados: Avulso 14,99 €, Caso Extra 11,99 €, Proteção 4,99 €, Caso + Proteção 7,99 €", () => {
+    const c = readFileSync(join(dir, "precosAte20261018.ts"), "utf8");
+    assert.match(c, /avulso: \{ \.\.\.PLANOS_ATUAIS\.avulso, precoCentimos: 1499 \}/);
+    assert.match(c, /protecao: \{ \.\.\.PLANOS_ATUAIS\.protecao, precoCentimos: 499 \}/);
+    assert.match(c, /caso_protecao: \{ \.\.\.PLANOS_ATUAIS\.caso_protecao, precoCentimos: 799 \}/);
+    assert.match(c, /precoCentimos: 1199, descontoPercentagem: 20/);
+  });
+
+  test("a versão em vigor lê os preços atuais", () => {
+    const c = readFileSync(join(dir, `v${TERMOS_VERSAO}.tsx`), "utf8");
+    assert.match(c, /from "@\/lib\/planos"/);
+    assert.doesNotMatch(c, /precosAte20261018/);
   });
 });

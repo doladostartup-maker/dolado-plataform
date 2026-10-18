@@ -27,7 +27,7 @@ export const planos = {
   ivaIncluido: IVA_INCLUIDO,
   unidadeMes: "/mês",
   unidadeCaso: "/ caso",
-  /** "4,99 €/mês" ou "14,99 € / caso" (sem espaço antes de "/mês", como em planos.ts). */
+  /** "4,99 €/mês" ou "11,99 € / caso" (sem espaço antes de "/mês", como em planos.ts). */
   comUnidade: (preco: string, subscricao: boolean) => (subscricao ? `${preco}/mês` : `${preco} / caso`),
   subscricaoMensal: "Subscrição mensal",
   pagamentoUnico: "Pagamento único",

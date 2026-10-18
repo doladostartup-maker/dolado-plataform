@@ -168,7 +168,7 @@ export function camposDescontoCheckout<T extends { discounts?: unknown; expires_
   return parametros ? { ...parametros } : { allow_promotion_codes: true as const };
 }
 
-/** Preço com 20% (o Stripe arredonda o desconto ao cêntimo): 1499 → 1199, 499 → 399. */
+/** Preço com 20% (o Stripe arredonda o desconto ao cêntimo): 1199 → 959, 499 → 399. */
 export function precoComDescontoCentimos(centimos: number) {
   const desconto = Math.round((centimos * INDICACAO_PERCENTAGEM) / 100);
   return centimos - desconto;
