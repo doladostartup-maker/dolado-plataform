@@ -1,4 +1,4 @@
-# Termos 2026-10-18b — novo preço do Avulso (rascunho para validação)
+# Termos 2026-10-18b — novo preço do Avulso
 
 Decisão comercial de Thiago (18/10/2026): o Avulso passa, de forma permanente, de 14,99 € para 11,99 € (IVA incluído). Não é uma campanha promocional. A Proteção (4,99 €/mês) e o Caso + Proteção (7,99 €/mês) não mudam.
 
@@ -22,6 +22,6 @@ As versões publicadas até 2026-10-18 liam os preços de `src/lib/planos.ts`: m
 - Um Avulso comprado a 14,99 € continua válido. Se for convertido numa subscrição, o reembolso é calculado sobre o valor pago (10,00 € / 7,00 €). O código (`calcularConversao`) já fazia este cálculo.
 - Não há reembolso da diferença de preço a quem comprou a 14,99 €. Se se quiser oferecer esse reembolso, é uma decisão à parte.
 
-## A validar
+## Validação
 
-- [ ] Texto da secção 10 (parágrafo novo) — advogada
+- [x] Texto da secção 10 (parágrafo novo) — validado pela advogada a 18/10/2026

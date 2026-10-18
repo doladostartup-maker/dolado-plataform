@@ -2,7 +2,7 @@
 // preço do Avulso de 14,99 € para 11,99 € e o do Caso Extra de 11,99 € para
 // 9,59 € (mantém os 20% de desconto de subscritor), com os reembolsos da
 // passagem Avulso → subscrição que daí resultam (secção 10). Decisão
-// comercial de Thiago, 18/10/2026; texto por validar pela advogada.
+// comercial de Thiago, 18/10/2026; texto validado pela advogada a 18/10/2026.
 //
 // Uma versão publicada não se edita: alterações vão para uma versão nova
 // (ficheiro novo em _versoes/, registo em index.ts e TERMOS_VERSAO).
