@@ -154,7 +154,7 @@ export const monitor = {
     porConfirmarTexto: "Encontrámos as condições abaixo. Confirme-as para começarmos a acompanhá-las: só as usamos depois da sua confirmação.",
     emVerificacaoTitulo: "Estamos a verificar uma alteração",
     emVerificacaoTexto: (mes: V) =>
-      `Encontrámos uma diferença na fatura de ${mes} e a DoLado está a revê-la. Se merecer a sua atenção, avisamo-lo por e-mail. Não precisa de fazer nada por agora.`,
+      `Encontrámos uma diferença na fatura de ${mes} e a DoLado está a revê-la. Se merecer a sua atenção, avisamos por e-mail. Não precisa de fazer nada por agora.`,
     primeiraFaturaTitulo: "Já verificámos a sua primeira fatura",
     novaFaturaTitulo: "Verificámos a sua nova fatura",
     semMensalidadeTexto:
@@ -181,7 +181,7 @@ export const monitor = {
     seguinteSemContrato:
       "Comparamos cada nova fatura com as anteriores. Se adicionar o contrato, passamos também a comparar o que é cobrado com o que foi contratado.",
     seguinteComContrato:
-      "A partir daqui, ficamos atentos por si. Vamos comparar as próximas faturas com o contrato e avisá-lo se alguma coisa mudar ou merecer a sua atenção.",
+      "A partir daqui, ficamos atentos por si. Vamos comparar as próximas faturas com o contrato e avisar se alguma coisa mudar ou merecer a sua atenção.",
     encontramosUmaSituacao: "1 situação que merece a sua atenção",
     encontramosSituacoes: (n: number) => `${n} situações que merecem a sua atenção`,
     alteracaoVerificacao: "Uma alteração em verificação pela DoLado",
@@ -213,7 +213,7 @@ export const monitor = {
     porConfirmarTexto: (servico: V, nota: V) =>
       `Lemos o contrato de ${servico}. Confirme as condições que encontrámos para começarmos a acompanhá-las.${nota}`,
     emVerificacaoTexto: (servico: V, nota: V) =>
-      `Encontrámos uma diferença numa fatura de ${servico} e a DoLado está a revê-la. Se merecer a sua atenção, avisamo-lo por e-mail.${nota}`,
+      `Encontrámos uma diferença numa fatura de ${servico} e a DoLado está a revê-la. Se merecer a sua atenção, avisamos por e-mail.${nota}`,
     verificadoTexto: (verificados: number, total: number) =>
       `Verificámos ${verificados === total ? `os seus ${total} serviços` : `${verificados} dos seus ${total} serviços`} e não encontrámos nada que exija a sua atenção neste momento.`,
   },

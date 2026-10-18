@@ -55,7 +55,7 @@ export const portal = {
     prevenir: "Prevenir antes de ser um problema",
     protecaoInativa: "Proteção inativa",
     comProtecao:
-      "Com a Proteção, a DoLado acompanha as suas faturas, avisa-o antes do fim de promoções e de períodos de fidelização e informa-o de alterações relevantes no seu setor.",
+      "Com a Proteção, a DoLado acompanha as suas faturas, envia-lhe avisos antes do fim de promoções e de períodos de fidelização e dá-lhe conta de alterações relevantes no seu setor.",
     conhecerProtecao: "Conhecer a Proteção",
     proximoPasso: "Próximo passo: ",
     abertoA: (data: string) => `Aberto a ${data}`,

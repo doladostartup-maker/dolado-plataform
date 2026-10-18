@@ -25,7 +25,7 @@ import { IDIOMA_PADRAO, type Idioma } from "../../i18n/config.ts";
 import { tEmails } from "../../i18n/mensagens/emails.ts";
 
 /** Subir quando a estrutura ou os textos do resumo mudarem (fica gravada com cada envio). */
-export const RESUMO_MODELO_VERSAO = "resumo_v2";
+export const RESUMO_MODELO_VERSAO = "resumo_v3";
 
 /** Só se envia nos primeiros dias do mês (o cron corre nos dias 1 a 3). */
 export const ULTIMO_DIA_ENVIO = 5;

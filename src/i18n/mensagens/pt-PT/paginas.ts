@@ -5,7 +5,7 @@ export const paginas = {
     metadados: {
       titulo: "Preçário - DoLado",
       descricao:
-        "Avulso, Caso + Proteção ou Proteção: escolha a ajuda de que precisa para tratar um problema com uma empresa ou continuar protegido. Preços com IVA incluído.",
+        "Avulso, Caso + Proteção ou Proteção: escolha a ajuda de que precisa para tratar um problema com uma empresa ou prevenir os próximos. Preços com IVA incluído.",
     },
     eyebrow: "Preçário",
     titulo: "De que tipo de ajuda precisa?",
@@ -84,9 +84,9 @@ export const paginas = {
         "Com a Proteção, a DoLado compara as faturas que nos envia, avisa antes do fim de promoções e da fidelização e assinala alterações que merecem ser verificadas.",
     },
     eyebrow: "Proteção",
-    titulo: "Acompanhamos as suas faturas e contratos e avisamo-lo a tempo.",
+    titulo: "Acompanhamos as suas faturas e contratos e avisamos a tempo.",
     texto:
-      "A Proteção é para quem quer evitar surpresas, mesmo sem ter um problema agora. Envie-nos as faturas e, se tiver, o contrato dos serviços que quer acompanhar. Comparamos cada fatura com as anteriores e com o contrato, estamos atentos às datas importantes e avisamo-lo quando alguma coisa merece a sua atenção.",
+      "A Proteção é para quem quer evitar surpresas, mesmo sem ter um problema agora. Envie-nos as faturas e, se tiver, o contrato dos serviços que quer acompanhar. Comparamos cada fatura com as anteriores e com o contrato, estamos atentos às datas importantes e avisamos quando alguma coisa merece a sua atenção.",
     aderir: "Aderir à Proteção",
     verPrecario: "Ver preçário",
     tresPerguntas: {
@@ -200,7 +200,7 @@ export const paginas = {
       {
         titulo: "Acompanhamos a resposta",
         texto:
-          "Analisamos a resposta da empresa e avisamo-lo por e-mail. Se houver uma solução, confirma connosco se o problema ficou resolvido. Se não houver, preparamos uma nova comunicação, quando faz sentido, ou encerramos o caso do nosso lado com um dossiê e a indicação de entidades que pode consultar.",
+          "Analisamos a resposta da empresa e avisamos por e-mail. Se houver uma solução, confirma connosco se o problema ficou resolvido. Se não houver, preparamos uma nova comunicação, quando faz sentido, ou encerramos o caso do nosso lado com um dossiê e a indicação de entidades que pode consultar.",
       },
     ],
     passoAPasso: {

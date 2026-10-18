@@ -149,7 +149,7 @@ export const problemas = {
           "Se a sua mensalidade subiu ou recebeu um aviso de atualização de preço, vale a pena confirmar se o que está a ser aplicado corresponde ao contrato e às regras aplicáveis.",
         contestar: [
           "Pode depender do que está no contrato e da forma como a alteração foi comunicada. Alguns contratos preveem atualizações de preço; noutras situações, uma alteração das condições tem de ser comunicada com antecedência e pode permitir ao cliente reagir.",
-          "É necessário verificar o seu caso concreto: a mesma subida pode ter enquadramentos diferentes consoante as condições que aceitou e a data em que foi informado.",
+          "É necessário verificar o seu caso concreto: a mesma subida pode ter enquadramentos diferentes consoante as condições que aceitou e a data em que lhe foi comunicada.",
         ],
         verificar: [
           "O contrato e as condições que aceitou, incluindo o que dizem sobre atualização de preços",

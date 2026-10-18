@@ -97,12 +97,20 @@ describe("dicionários", () => {
     }
   });
 
-  test("português segue as regras de escrita (e-mail, sem tu)", async () => {
+  test("português europeu: regras de escrita (e-mail, sem tu, sem Brasil, cliente por si)", async () => {
     for (const d of dominios) {
       const { pt } = await par(d);
       for (const t of textos(pt)) {
         assert.doesNotMatch(t, /(?<![\p{L}{<-])emails?(?![\p{L}}/])/iu, `${d}: "${t}"`);
         assert.doesNotMatch(t, /(?<!\p{L})(você|o teu|a tua|preenche|tela|celular|cadastro)(?!\p{L})/iu, `${d}: "${t}"`);
+        // Português do Brasil: vocabulário e gerúndio progressivo ("estamos verificando").
+        assert.doesNotMatch(
+          t,
+          /(?<!\p{L})(vocês|a gente|em até|arquivo|contato|equipe|usuári[oa]s?|cadastrar|registrar|deletar|senha)(?!\p{L})|(?<!\p{L})(estamos|está|estão|vamos|vai) [\p{L}]+ndo(?!\p{L})/iu,
+          `${d}: "${t}"`,
+        );
+        // O cliente é tratado por "si", sem género: "avisamos", "envia-lhe", nunca "avisamo-lo" nem "avisa-o".
+        assert.doesNotMatch(t, /(?<!\p{L})(avisamo-lo|avisá-lo|avisa-o|informamo-lo|informá-lo|informa-o|contactamo-lo|contactá-lo)(?!\p{L})/iu, `${d}: "${t}"`);
       }
     }
   });

@@ -21,7 +21,7 @@ export const perguntas = {
   comoFunciona: {
     pergunta: "Como funciona a DoLado?",
     resposta:
-      "Se tiver um problema com uma empresa, pode abrir um caso: analisamos o que aconteceu, preparamos a reclamação e só a enviamos depois da sua autorização. Depois do envio, acompanhamos o que acontece a seguir. Com a Proteção, a DoLado usa as informações das suas faturas e contratos para identificar alterações ou datas que possam tornar-se num problema e avisa-o a tempo de agir." as Resposta,
+      "Se tiver um problema com uma empresa, pode abrir um caso: analisamos o que aconteceu, preparamos a reclamação e só a enviamos depois da sua autorização. Depois do envio, acompanhamos o que acontece a seguir. Com a Proteção, a DoLado usa as informações das suas faturas e contratos para identificar alterações ou datas que possam tornar-se num problema e envia-lhe um aviso a tempo de agir." as Resposta,
   },
   semAutorizacao: {
     pergunta: "A DoLado envia alguma coisa sem a minha autorização?",
@@ -113,12 +113,12 @@ export const perguntas = {
   entrarRegularmente: {
     pergunta: "Preciso de entrar regularmente na área de cliente?",
     resposta:
-      "Não. Quando precisarmos de uma ação sua — rever o texto, responder a um pedido de informação ou confirmar uma solução —, avisamo-lo por e-mail. A área de cliente serve para consultar o caso, o texto enviado, os comprovativos e o histórico quando lhe der jeito." as Resposta,
+      "Não. Quando precisarmos de uma ação sua — rever o texto, responder a um pedido de informação ou confirmar uma solução —, avisamos por e-mail. A área de cliente serve para consultar o caso, o texto enviado, os comprovativos e o histórico quando lhe der jeito." as Resposta,
   },
   oQueIncluiProtecao: {
     pergunta: "O que inclui o plano Proteção?",
     resposta:
-      "A Proteção ajuda a identificar situações que possam tornar-se num problema. Comparamos as suas faturas com as anteriores para identificar alterações, estamos atentos a datas importantes, como o fim de promoções e de períodos de fidelização, e avisamo-lo antes dessas datas. Também o avisamos de alterações relevantes nos setores que escolher, como subidas de preços anunciadas, e, no início de cada mês, enviamos-lhe um resumo do que acompanhámos. A Proteção não inclui o tratamento de reclamações." as Resposta,
+      "A Proteção ajuda a identificar situações que possam tornar-se num problema. Comparamos as suas faturas com as anteriores para identificar alterações, estamos atentos a datas importantes, como o fim de promoções e de períodos de fidelização, e avisamos antes dessas datas. Também o avisamos de alterações relevantes nos setores que escolher, como subidas de preços anunciadas, e, no início de cada mês, enviamos-lhe um resumo do que acompanhámos. A Proteção não inclui o tratamento de reclamações." as Resposta,
   },
   // Fluxo real: /portal/contratos (carregar fatura ou contrato, ou
   // /portal/contratos/novo sem documento) e setores no /portal/perfil.
@@ -161,7 +161,7 @@ export const perguntas = {
   depoisEnviada: {
     pergunta: "O que acontece depois de a reclamação ser enviada?",
     resposta: [
-      "A DoLado fica à espera da resposta da empresa e analisa-a quando chega. Avisamo-lo por e-mail quando estamos a analisar uma resposta, quando precisamos de mais informação sua e quando a empresa apresenta uma solução que precisa de confirmar.",
+      "A DoLado fica à espera da resposta da empresa e analisa-a quando chega. Avisamos por e-mail quando estamos a analisar uma resposta, quando precisamos de mais informação sua e quando a empresa apresenta uma solução que precisa de confirmar.",
       "O caso só fica “Resolvido” quando nos confirma que o problema ficou resolvido. Na área de cliente vê sempre o estado do caso, o próximo passo e o histórico.",
     ] as Resposta,
   },
