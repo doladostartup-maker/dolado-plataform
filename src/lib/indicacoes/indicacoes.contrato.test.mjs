@@ -139,7 +139,7 @@ describe("programa de indicação (Supabase real)", { skip: !ATIVO }, () => {
     assert.equal(await srv.registarVisita("ZZZZ9999", null), null, "código inexistente: sem visita");
     const { data } = await admin.rpc("indicacao_atribuir", { p_referred: bruno, p_visita: visita, p_janela_dias: 30 });
     assert.equal(data, "atribuida");
-    assert.deepEqual(await srv.estadoIndicacaoDaConta(bruno), { novoClienteIndicado: true, recompensasDisponiveis: 0 });
+    assert.deepEqual(await srv.estadoIndicacaoDaConta(bruno), { novoClienteIndicado: true, recompensasDisponiveis: 0, usouProtecaoGratuita: false });
   });
 
   test("quem indica tem Proteção ativa", async () => {

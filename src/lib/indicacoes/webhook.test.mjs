@@ -542,3 +542,56 @@ describe("descontos de quem indicou: um por cobrança", () => {
     assert.equal(recompensasDe(ANA)[0].estado, "disponivel");
   });
 });
+
+describe("Proteção gratuita: adesão com a 1.ª cobrança no fim do período", () => {
+  const comAdesaoDiferida = (sessionId) => {
+    const deps = depsWebhook();
+    deps.adesaoComCobrancaDiferida = async () => ({ sessionId });
+    return deps;
+  };
+  const primeiraCobranca = (sessao, valor, motivo = "subscription_cycle") =>
+    evento("invoice.paid", {
+      id: novoId("in"),
+      customer: sessao.customer,
+      amount_paid: valor,
+      billing_reason: motivo,
+      parent: { subscription_details: { subscription: sessao.subscription } },
+    });
+
+  test("Checkout a 0 € não decide a indicação; a 1.ª cobrança real recompensa quem indicou (uma vez)", async () => {
+    atribuir(BRUNO, ANA);
+    const s = sessaoSubscricao(BRUNO, PRECO_PROTECAO, { valor: 0, meta: { protecao_gratuita: "1" } });
+    e.subsStripe.get(s.subscription).status = "trialing";
+    await processar(evento("checkout.session.completed", s));
+    assert.equal(e.indicacoes.get(BRUNO).estado, "registada", "a 0 € a indicação fica por decidir");
+    assert.equal(recompensasDe(ANA).length, 0);
+
+    e.subsStripe.get(s.subscription).status = "active";
+    const deps = comAdesaoDiferida(s.id);
+    await processarEventoStripe(primeiraCobranca(s, 499), deps);
+    assert.equal(e.indicacoes.get(BRUNO).estado, "compra_confirmada");
+    assert.equal(e.indicacoes.get(BRUNO).produto, "protecao");
+    assert.equal(e.indicacoes.get(BRUNO).com_desconto, false);
+    assert.equal(recompensasDe(ANA).length, 1);
+
+    // Renovações seguintes e reenvios: nunca uma segunda recompensa.
+    await processarEventoStripe(primeiraCobranca(s, 499), comAdesaoDiferida(s.id));
+    assert.equal(recompensasDe(ANA).length, 1);
+  });
+
+  test("Sem cobrança real (fatura a 0 €) não decide nada", async () => {
+    atribuir(BRUNO, ANA);
+    const s = sessaoSubscricao(BRUNO, PRECO_PROTECAO, { valor: 0, meta: { protecao_gratuita: "1" } });
+    await processar(evento("checkout.session.completed", s));
+    await processarEventoStripe(primeiraCobranca(s, 0), comAdesaoDiferida(s.id));
+    assert.equal(e.indicacoes.get(BRUNO).estado, "registada");
+    assert.equal(recompensasDe(ANA).length, 0);
+  });
+
+  test("Adesão com pagamento logo (menos de 49 h ou Caso + Proteção) decide no Checkout, como sempre", async () => {
+    atribuir(BRUNO, ANA);
+    await processar(evento("checkout.session.completed", sessaoSubscricao(BRUNO, PRECO_PROTECAO, { valor: 499, meta: { protecao_gratuita: "1" } })));
+    assert.equal(e.indicacoes.get(BRUNO).estado, "compra_confirmada");
+    assert.equal(recompensasDe(ANA).length, 1);
+  });
+});

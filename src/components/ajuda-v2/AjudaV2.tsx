@@ -28,14 +28,15 @@ const LINK = "font-semibold text-[var(--v2-green)] underline-offset-4 hover:unde
 
 
 
-export function AjudaV2() {
+/** `protecaoGratuita`: oferta dos 30 dias ligada (PROTECAO_GRATUITA_ATIVA, lido no build). */
+export function AjudaV2({ protecaoGratuita = false }: { protecaoGratuita?: boolean }) {
   const [origem] = useState(detectarOrigem);
   const [pesquisa, setPesquisa] = useState("");
     const idPesquisa = useId();
   const idioma = useIdioma();
   const caminho = useCaminho();
   const t = tPaginas[idioma].ajuda;
-  const todas = useMemo(() => categoriasPerguntas(idioma), [idioma]);
+  const todas = useMemo(() => categoriasPerguntas(idioma, { protecaoGratuita }), [idioma, protecaoGratuita]);
   const APOIO: { icone: ReactNode; titulo: string; texto: string; href: string; cta: string }[] = [
     { icone: <IconeMensagem tamanho={28} strokeWidth={1.6} />, ...t.apoio.contacto, href: ROTAS_V2.contacto },
     { icone: <IconeEscudo tamanho={28} strokeWidth={1.6} />, ...t.apoio.privacidade, href: ROTAS_LEGAIS.privacidade },

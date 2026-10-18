@@ -4,6 +4,7 @@ import { PaginaV2 } from "@/components/marketing-v2/PaginaV2";
 import { metadadosPublicos } from "@/i18n/metadados";
 import { tInicio } from "@/i18n/mensagens/inicio";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
+import { ofertaProtecaoGratuitaPublica } from "@/lib/site";
 
 export async function generateMetadata({ params }: ComIdioma): Promise<Metadata> {
   const idioma = await idiomaDaPagina(params);
@@ -15,7 +16,7 @@ export default async function LandingPage({ params }: ComIdioma) {
   await idiomaDaPagina(params);
   return (
     <PaginaV2 eventoCtaNavbar="click_nav_reclamacao">
-      <HomepageV2 />
+      <HomepageV2 protecaoGratuita={ofertaProtecaoGratuitaPublica()} />
     </PaginaV2>
   );
 }

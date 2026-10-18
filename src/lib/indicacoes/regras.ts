@@ -134,6 +134,12 @@ export type ContextoDescontoCheckout = {
   recompensasDisponiveis: number;
   /** O cliente preferiu usar um código promocional. */
   prescindiu: boolean;
+  /**
+   * A conta já ativou a Proteção gratuita de 30 dias. Na Proteção não
+   * acumula com nenhum desconto de indicação (decisão de Thiago, 18/10/2026);
+   * um desconto de quem indicou continua disponível para uma renovação.
+   */
+  usouProtecaoGratuita?: boolean;
 };
 
 /**
@@ -141,11 +147,13 @@ export type ContextoDescontoCheckout = {
  * Ordem determinística: primeiro o de novo cliente (só vale na primeira
  * compra), depois um desconto de quem indicou. Sem desconto em: compra sem
  * conta (o servidor não sabe quem compra), Caso Extra (já tem desconto),
- * conversão de um Avulso (1.ª mensalidade já coberta) e Caso + Proteção.
+ * conversão de um Avulso (1.ª mensalidade já coberta), Caso + Proteção e
+ * Proteção de quem já usou a Proteção gratuita (não acumula).
  */
 export function escolherDescontoCheckout(c: ContextoDescontoCheckout): TipoDescontoIndicacao | null {
   if (c.fluxo === "publico" || c.fluxo === "caso_extra" || c.conversao || c.prescindiu) return null;
   if (!produtoComDescontoIndicacao(c.plano)) return null;
+  if (c.plano === "protecao" && c.usouProtecaoGratuita) return null;
   if (c.novoClienteIndicado) return "novo_cliente";
   if (c.recompensasDisponiveis > 0) return "recompensa";
   return null;

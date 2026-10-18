@@ -241,7 +241,7 @@ export default async function ModalidadePage({
           </div>
         )}
 
-        {acesso.temProtecao && !opcoes.usarCasoDisponivel && !opcoes.casoExtra && (
+        {acesso.temSubscricao && !opcoes.usarCasoDisponivel && !opcoes.casoExtra && (
           <p className={METADADOS}>{t.soAvulsoNota(tp.nome.avulso)}</p>
         )}
       </div>

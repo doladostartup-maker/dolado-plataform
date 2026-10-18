@@ -25,6 +25,7 @@
 // Textos apresentados (pt-PT/en-GB): src/i18n/mensagens/*/subscricao.ts.
 import type { Idioma } from "../i18n/config.ts";
 import { tSubscricao } from "../i18n/mensagens/subscricao.ts";
+import { protecaoGratuitaDe, type LinhaProtecaoGratuita, type ProtecaoGratuita } from "./protecaoGratuita.ts";
 
 export type PlanoSubscricao = "none" | "protecao" | "caso_protecao";
 
@@ -48,8 +49,15 @@ export type Acesso = {
   casosComprados: number;
   /** Casos incluídos na subscrição ainda por usar (creditos - casosComprados). */
   casosSubscricao: number;
-  /** Funcionalidades de proteção desbloqueadas. */
+  /** Funcionalidades de proteção desbloqueadas (subscrição ou período gratuito). */
   temProtecao: boolean;
+  /**
+   * Subscrição Proteção / Caso + Proteção paga e em vigor no Stripe. É isto
+   * (e não temProtecao) que impede abrir um segundo Checkout de subscrição.
+   */
+  temSubscricao: boolean;
+  /** Proteção gratuita de 30 dias (null = nunca ativada). */
+  protecaoGratuita: ProtecaoGratuita | null;
   /** Pode abrir um caso novo no portal agora (tem casos disponíveis). */
   podeCriarCaso: boolean;
   /** Abrir um caso gasta um crédito (sempre — não há casos sem pagamento). */
@@ -73,7 +81,13 @@ function lerPlano(valor: string | null | undefined): PlanoSubscricao {
   return valor === "protecao" || valor === "caso_protecao" ? valor : "none";
 }
 
-export function calcularAcesso(linha: LinhaAcesso | null): Acesso {
+export function calcularAcesso(
+  linha: LinhaAcesso | null,
+  linhaGratuita: LinhaProtecaoGratuita | null = null,
+  agora: Date = new Date(),
+): Acesso {
+  const protecaoGratuita = protecaoGratuitaDe(linhaGratuita, agora);
+  const gratuitaEmCurso = !!protecaoGratuita?.emCurso;
   if (!linha) {
     return {
       temPlanoStripe: false,
@@ -82,7 +96,9 @@ export function calcularAcesso(linha: LinhaAcesso | null): Acesso {
       creditos: 0,
       casosComprados: 0,
       casosSubscricao: 0,
-      temProtecao: false,
+      temProtecao: gratuitaEmCurso,
+      temSubscricao: false,
+      protecaoGratuita,
       podeCriarCaso: false,
       casoConsomeCredito: true,
       fimPeriodo: null,
@@ -93,6 +109,7 @@ export function calcularAcesso(linha: LinhaAcesso | null): Acesso {
   const plano = lerPlano(linha.subscription_plan);
   const creditos = Math.max(0, linha.case_credits ?? 0);
   const casosComprados = Math.min(creditos, Math.max(0, linha.avulso_credits ?? 0));
+  const temSubscricao = plano !== "none" && estadoComAcesso(linha.subscription_status);
   return {
     temPlanoStripe: true,
     plano,
@@ -100,7 +117,9 @@ export function calcularAcesso(linha: LinhaAcesso | null): Acesso {
     creditos,
     casosComprados,
     casosSubscricao: creditos - casosComprados,
-    temProtecao: plano !== "none" && estadoComAcesso(linha.subscription_status),
+    temProtecao: temSubscricao || gratuitaEmCurso,
+    temSubscricao,
+    protecaoGratuita,
     podeCriarCaso: creditos > 0,
     casoConsomeCredito: true,
     fimPeriodo: linha.current_period_end ?? null,
@@ -126,7 +145,7 @@ export function avisoDoPortal({
 }): AvisoPortal {
   if (ultimoPagamentoEstado === "pendente") return "pagamento_pendente";
   if (ultimoPagamentoEstado === "falhado") return "pagamento_falhado";
-  if (regressoDoCheckout && acesso.temProtecao) return "plano_ativo";
+  if (regressoDoCheckout && acesso.temSubscricao) return "plano_ativo";
   return null;
 }
 

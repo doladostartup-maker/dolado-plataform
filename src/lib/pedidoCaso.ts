@@ -338,14 +338,14 @@ export function pedidoPorPagar(estado: EstadoPedido) {
  * o Checkout.
  */
 export function opcoesDoPedido(
-  acesso: Pick<Acesso, "creditos" | "temProtecao" | "plano" | "estadoSubscricao">,
+  acesso: Pick<Acesso, "creditos" | "temSubscricao" | "plano" | "estadoSubscricao">,
   casoExtraConfigurado = false,
 ) {
   const casoExtra = casoExtraConfigurado && elegivelCasoExtra(acesso);
   return {
     usarCasoDisponivel: acesso.creditos > 0,
     casoExtra,
-    modalidades: (casoExtra ? [] : acesso.temProtecao ? ["avulso"] : ["avulso", "caso_protecao"]) as ModalidadeCaso[],
+    modalidades: (casoExtra ? [] : acesso.temSubscricao ? ["avulso"] : ["avulso", "caso_protecao"]) as ModalidadeCaso[],
   };
 }
 
@@ -361,7 +361,7 @@ export function opcoesDoPedido(
 export type EntradaPedido = "usar_caso" | "caso_extra" | "so_avulso" | "escolher";
 
 export function entradaDoPedido(
-  acesso: Pick<Acesso, "creditos" | "temProtecao" | "plano" | "estadoSubscricao"> | null,
+  acesso: Pick<Acesso, "creditos" | "temSubscricao" | "plano" | "estadoSubscricao"> | null,
   casoExtraConfigurado = false,
 ): EntradaPedido {
   if (!acesso) return "escolher";

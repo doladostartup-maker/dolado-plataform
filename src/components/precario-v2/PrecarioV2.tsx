@@ -21,6 +21,8 @@ import { DIAS_CASOS_GUARDADOS } from "@/lib/acesso";
 import { CASO_EXTRA, LIMITE_CASOS_ACUMULADOS, PLANOS, type PlanoId } from "@/lib/planos";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
 import { destinoPlano } from "@/lib/precario";
+import { urlExperimentarProtecao } from "@/lib/site";
+import { tProtecaoGratuita } from "@/i18n/mensagens/protecaoGratuita";
 
 // Preçário no Design System V2 (/precario): organizado pela necessidade do
 // cliente (secção 35 de docs/design/design-system-v2.md), não por plano.
@@ -44,13 +46,16 @@ const IDS_PERGUNTAS = [
   "livre-resolucao",
 ];
 
-export function PrecarioV2() {
+/** `protecaoGratuita`: oferta dos 30 dias ligada (PROTECAO_GRATUITA_ATIVA, lido no build). */
+export function PrecarioV2({ protecaoGratuita = false }: { protecaoGratuita?: boolean }) {
   const idioma = useIdioma();
   const c = useCaminho();
   const t = tPaginas[idioma].precario;
   const tp = tPlanos[idioma];
-  const PERGUNTAS = (categoriasPerguntas(idioma).find((cat) => cat.id === "planos")?.perguntas ?? []).filter((p) =>
-    IDS_PERGUNTAS.includes(p.id),
+  const tg = tProtecaoGratuita[idioma].precario;
+  const idsPerguntas = protecaoGratuita ? ["fim-protecao-gratuita", ...IDS_PERGUNTAS] : IDS_PERGUNTAS;
+  const PERGUNTAS = (categoriasPerguntas(idioma, { protecaoGratuita }).find((cat) => cat.id === "planos")?.perguntas ?? []).filter((p) =>
+    idsPerguntas.includes(p.id),
   );
   const ANTES_DE_DECIDIR: { icone: ReactNode; titulo: string; texto: ReactNode }[] = [
     { icone: <IconeDocumentoVisto tamanho={28} strokeWidth={1.6} />, ...t.antesDeDecidir.reve },
@@ -85,6 +90,9 @@ export function PrecarioV2() {
       titulo: ci.casoExtra.titulo,
       texto: ci.casoExtra.texto(preco(CASO_EXTRA.precoCentimos), preco(CASO_EXTRA.precoReferenciaCentimos), CASO_EXTRA.descontoPercentagem),
     },
+    ...(protecaoGratuita
+      ? [{ titulo: tg.condicao.titulo, texto: tg.condicao.texto(preco(PLANOS.protecao.precoCentimos)) }]
+      : []),
     {
       titulo: ci.conversao.titulo,
       texto: ci.conversao.texto(
@@ -115,28 +123,62 @@ export function PrecarioV2() {
             const plano = PLANOS[id];
             const conteudo = tp.conteudo[id];
             const { necessidade, cta } = t.necessidades[id];
+            // Proteção com a oferta dos 30 dias: 0 € no destaque, o preço normal
+            // logo a seguir e sem cartão / sem cobrança automática.
+            const gratis = protecaoGratuita && id === "protecao";
+            const precoNormal = precoNoIdioma(idioma, plano.precoCentimos);
             return (
               <PricingCard
                 key={id}
                 necessidade={necessidade}
                 nome={tp.nome[id]}
-                preco={precoNoIdioma(idioma, plano.precoCentimos)}
-                unidade={plano.subscricao ? tp.unidadeMes : tp.unidadeCaso}
-                condicoes={`${plano.subscricao ? tp.condicoesSubscricao : tp.condicoesPagamentoUnico} · ${tp.ivaIncluido}`}
+                preco={gratis ? tg.preco : precoNormal}
+                unidade={gratis ? tg.unidade : plano.subscricao ? tp.unidadeMes : tp.unidadeCaso}
+                condicoes={
+                  gratis
+                    ? `${tg.depois(precoNormal)} · ${tp.ivaIncluido}`
+                    : `${plano.subscricao ? tp.condicoesSubscricao : tp.condicoesPagamentoUnico} · ${tp.ivaIncluido}`
+                }
+                selo={gratis ? tg.selo : undefined}
                 resumo={conteudo.resumo}
                 inclui={conteudo.inclui}
                 naoInclui={conteudo.naoInclui}
-                nota={id === "caso_protecao" ? tp.notaCasoExtra(precoNoIdioma(idioma, CASO_EXTRA.precoCentimos)) : undefined}
+                nota={
+                  id === "caso_protecao"
+                    ? tp.notaCasoExtra(precoNoIdioma(idioma, CASO_EXTRA.precoCentimos))
+                    : gratis
+                      ? tg.garantias.join(" · ")
+                      : undefined
+                }
                 destaque={destaque}
                 acao={
                   <>
-                    <button
-                      type="button"
-                      onClick={() => escolher(id)}
-                      className={`${destaque ? BOTAO_PRIMARIO : BOTAO_CONTORNO} w-full`}
-                    >
-                      {cta} <IconeSeta tamanho={16} />
-                    </button>
+                    {gratis ? (
+                      <>
+                        <a
+                          href={c(urlExperimentarProtecao("precario"))}
+                          onClick={() => track("protecao_gratuita_clique", { local: "precario" })}
+                          className={`${BOTAO_CONTORNO} w-full`}
+                        >
+                          {tProtecaoGratuita[idioma].oferta.cta} <IconeSeta tamanho={16} />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => escolher(id)}
+                          className="mt-3 flex min-h-11 w-full items-center justify-center text-[14.5px] font-semibold text-[var(--v2-navy)] underline-offset-4 hover:underline"
+                        >
+                          {tg.subscreverJa(precoNormal)}
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => escolher(id)}
+                        className={`${destaque ? BOTAO_PRIMARIO : BOTAO_CONTORNO} w-full`}
+                      >
+                        {cta} <IconeSeta tamanho={16} />
+                      </button>
+                    )}
                     {id === "protecao" && (
                       <Link prefetch={false}
                         href={ROTAS_V2.protecao}

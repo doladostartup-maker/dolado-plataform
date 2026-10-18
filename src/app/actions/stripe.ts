@@ -33,6 +33,7 @@ import { DIAS_VALIDADE_PEDIDO, pedidoPorPagar } from "@/lib/pedidoCaso";
 import { pedidoDaConta } from "@/lib/pedidoCasoServidor";
 import { camposDesconto, prepararDescontoCheckout } from "@/lib/indicacoes/servidor";
 import { registarOrigemDaConta } from "@/lib/origemAquisicaoServidor";
+import { inicioCobrancaAdesao, trialEndStripe } from "@/lib/protecaoGratuita";
 import { LOCALE_STRIPE, localizarHref, type Idioma } from "@/i18n/config";
 import { tCompra } from "@/i18n/mensagens/compra";
 import { caminho, obterIdioma, textos } from "@/i18n/servidor";
@@ -252,7 +253,7 @@ async function adesao(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Desti
 
   // Já tem uma subscrição ativa (na conta ou no Stripe, no Customer da
   // conta): não abre uma segunda.
-  if (acesso.temProtecao || (await subscricoesAtivasDoCustomer(customerId)).length > 0) {
+  if (acesso.temSubscricao || (await subscricoesAtivasDoCustomer(customerId)).length > 0) {
     if (ctx) return { destino: `/tratar-caso/modalidade?pedido=${encodeURIComponent(ctx.pedidoId)}` };
     return { destino: pedido.origem === "landing" ? `/comprar?plano=${plano}` : "/portal" };
   }
@@ -284,6 +285,13 @@ async function adesao(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Desti
 
   if (!escolha) {
     // Sem Avulso por converter: adesão normal, cobrada desde o 1.º mês.
+    // Durante a Proteção gratuita, a Proteção só é cobrada no dia em que o
+    // período gratuito terminaria (trial_end; o cartão fica registado no
+    // Checkout). Decidido aqui, pela data gravada na base de dados — nunca
+    // pelo browser. Com menos de 49 h por correr, ou no Caso + Proteção, a
+    // cobrança é no dia da adesão, como sempre.
+    const inicioCobranca = inicioCobrancaAdesao(acesso.protecaoGratuita, plano);
+    const metadataGratuita: Record<string, string> = inicioCobranca ? { protecao_gratuita: "1" } : {};
     const registo = montarRegistoConsentimento({
       plano,
       tipo: "subscricao",
@@ -306,7 +314,10 @@ async function adesao(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Desti
           mode: "subscription",
           ...cliente,
           line_items: [{ price: precoId, quantity: 1 }],
-          ...camposDesconto(desconto),
+          // Cobrança adiada pela Proteção gratuita: sem códigos promocionais
+          // (não acumula com outras campanhas); o desconto de indicação já é
+          // recusado em escolherDescontoCheckout.
+          ...(inicioCobranca ? {} : camposDesconto(desconto)),
           ...(ctx
             ? urlsDoPedido(ctx)
             : { success_url: `${SITE_URL}/portal?upgraded=true`, cancel_url: `${SITE_URL}/portal` }),
@@ -314,11 +325,15 @@ async function adesao(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Desti
             ...metadata,
             ...metadataPedido,
             ...(desconto?.metadata ?? {}),
+            ...metadataGratuita,
             plano: "assinatura",
             upgrade: "false",
             user_id: user.id,
           },
-          subscription_data: { metadata },
+          subscription_data: {
+            metadata: { ...metadata, ...metadataGratuita },
+            ...(inicioCobranca ? { trial_end: trialEndStripe(inicioCobranca) } : {}),
+          },
         })),
       );
       await desconto?.aposCriar(sessionId);

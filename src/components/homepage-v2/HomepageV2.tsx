@@ -20,6 +20,7 @@ import {
 } from "@/components/marketing-v2/Icones";
 import { VisualHero } from "@/components/marketing-v2/Mockups";
 import { ApoioWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
+import { OfertaProtecaoGratuita } from "@/components/marketing-v2/OfertaProtecaoGratuita";
 import { CTASection } from "@/components/marketing-v2/CTASection";
 import { ferramentas } from "@/components/marketing-v2/ferramentas";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
@@ -68,7 +69,8 @@ const ICONES_FERRAMENTAS: Record<keyof typeof EVENTOS_FERRAMENTAS, ReactNode> = 
   mudanca: <IconeCasa tamanho={26} strokeWidth={1.6} />,
 };
 
-export function HomepageV2() {
+/** `protecaoGratuita`: oferta dos 30 dias ligada (PROTECAO_GRATUITA_ATIVA, lido no build). */
+export function HomepageV2({ protecaoGratuita = false }: { protecaoGratuita?: boolean }) {
   const [origem] = useState(detectarOrigem);
   const idioma = useIdioma();
   const c = useCaminho();
@@ -113,6 +115,7 @@ export function HomepageV2() {
               {t.hero.verSeAjuda} <IconeSeta tamanho={15} />
             </Link>
           </div>
+          {protecaoGratuita && <OfertaProtecaoGratuita origem="homepage" className="mt-8" />}
         </div>
         {/* Decorativo: no telemóvel fica escondido para as situações reais
             aparecerem logo a seguir à abertura. */}

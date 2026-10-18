@@ -1,4 +1,5 @@
 // Extensões .ts explícitas: o módulo é testado diretamente com `node --test`.
+import { tProtecaoGratuita } from "../../i18n/mensagens/protecaoGratuita.ts";
 import { CASO_EXTRA, PLANOS } from "../planos.ts";
 import { ROTAS_LEGAIS, rotaTermosVersao } from "../legal.ts";
 import { CONTACTO_EMAIL, MARKETING_SITE_URL } from "../site.ts";
@@ -33,6 +34,11 @@ export type DadosEmailPagamento = {
   valorPagoCentimos: number | null;
   /** Próxima renovação (ISO) nas subscrições, se conhecida. */
   renovacao: string | null;
+  /**
+   * Adesão durante a Proteção gratuita: data (ISO) da 1.ª cobrança, no fim do
+   * período gratuito — nada foi cobrado agora.
+   */
+  primeiraCobranca?: string | null;
   /** Registo de consentimento ligado a esta compra (null em compras sem registo). */
   consentimento: { termos_versao: string; pediu_inicio_imediato: boolean } | null;
   /** https://portal.dolado.pt — para a Gestão de Subscrição. */
@@ -59,7 +65,8 @@ const P_LEGAL = 'style="margin:0 0 16px 0; font-size:14px; line-height:1.6;"';
  * ser a versão vinculativa); preços de planos.ts.
  */
 export function montarHtmlBoasVindasPagamento(plano: PlanoEmail, dados: DadosEmailPagamento, idioma: Idioma = IDIOMA_PADRAO) {
-  const { contaExiste, associarCompra = false, ligacao, valorPagoCentimos, renovacao, consentimento, portalUrl } = dados;
+  const { contaExiste, associarCompra = false, ligacao, valorPagoCentimos, renovacao, primeiraCobranca = null, consentimento, portalUrl } = dados;
+  const tg = tProtecaoGratuita[idioma].pagamento;
   const t = tEmails[idioma];
   const tp = t.pagamento;
   const tpl = tPlanos[idioma];
@@ -91,7 +98,17 @@ export function montarHtmlBoasVindasPagamento(plano: PlanoEmail, dados: DadosEma
   if (info.subscricao) {
     linhas.push([tp.rotuloTipo, tp.tipoSubscricao]);
     linhas.push([tp.rotuloPrecoPlano, `${tpl.comUnidade(precoNoIdioma(idioma, info.precoCentimos), true)} (${tpl.ivaIncluido})`]);
-    if (renovacao) linhas.push([tp.rotuloRenovacao, formatarData(idioma, renovacao, { day: "2-digit", month: "long", year: "numeric" })]);
+    if (primeiraCobranca) {
+      linhas.push([
+        tg.rotuloPrimeiraCobranca,
+        tg.primeiraCobranca(
+          precoNoIdioma(idioma, info.precoCentimos),
+          formatarData(idioma, primeiraCobranca, { day: "2-digit", month: "long", year: "numeric" }),
+        ),
+      ]);
+    } else if (renovacao) {
+      linhas.push([tp.rotuloRenovacao, formatarData(idioma, renovacao, { day: "2-digit", month: "long", year: "numeric" })]);
+    }
   } else {
     linhas.push([tp.rotuloTipo, tp.tipoUnico]);
   }
@@ -122,6 +139,7 @@ export function montarHtmlBoasVindasPagamento(plano: PlanoEmail, dados: DadosEma
               ${tabela}
               <p ${P}>${passo}</p>
               ${botaoEmail(destinoBotao, botao)}
+              ${primeiraCobranca ? `<p ${P_LEGAL}>${tg.nota}</p>` : ""}
               ${blocoSubscricao}
               ${blocoInicio}
               <p ${P_LEGAL}><strong>${tp.livreResolucao}</strong> ${tJuridico[idioma].resumoLivreResolucao} ${tJuridico[idioma].comoExercer} <a href="${livreResolucaoUrl}" ${LINK}>${tp.saibaMais}</a>.</p>

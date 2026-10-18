@@ -1,3 +1,5 @@
+import { ProtecaoGratuitaPortal } from "@/components/portal/ProtecaoGratuita";
+import { estadoProtecaoGratuitaDaConta } from "@/lib/protecaoGratuitaServidor";
 import Link from "@/i18n/Link";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { tProtecao, traduzirMensagemProtecao } from "@/i18n/mensagens/protecao";
@@ -51,7 +53,7 @@ export default async function ContratosPage({
   params: parametros,
   searchParams,
 }: ComIdioma & {
-  searchParams: Promise<{ erro?: string; removido?: string; aviso?: string; documento?: string }>;
+  searchParams: Promise<{ erro?: string; removido?: string; aviso?: string; documento?: string; gratuita?: string }>;
 }) {
   const idioma: Idioma = await idiomaDaPagina(parametros);
   const t = tProtecao[idioma].lista;
@@ -95,6 +97,7 @@ export default async function ContratosPage({
   const hoje = hojeLisboa();
   const ilegiveis = docs.filter((d) => d.estado === "ilegivel" && diasAte(diaLisboa(d.created_at), hoje) >= -DIAS_DOCUMENTO_ILEGIVEL);
   const fimAgendado = resumoPlanoPortal(acesso, idioma).fimAgendado;
+  const gratuita = acesso.protecaoGratuita?.emCurso ? await estadoProtecaoGratuitaDaConta(acesso, user) : null;
   const chaveMensagem = params.removido ? (params.removido === "ultimo" ? "ultimo" : "removido") : params.aviso ?? params.documento;
   const mensagem =
     chaveMensagem && TOM_MENSAGEM[chaveMensagem]
@@ -209,6 +212,8 @@ export default async function ContratosPage({
       />
 
       {mensagem && <Aviso tom={tomMensagem[mensagem.tom]}>{mensagem.texto}</Aviso>}
+      {/* Proteção gratuita: estado do período (datas reais) e adesão. */}
+      {gratuita && <ProtecaoGratuitaPortal estado={gratuita} />}
       {params.erro && <Aviso tom="erro">{traduzirMensagemProtecao(idioma, params.erro)}</Aviso>}
       {fimAgendado && (
         <Aviso tom="info">
