@@ -14,7 +14,7 @@ export const protecao = {
     titulo: "Proteção",
     ativa: "Proteção ativa",
     descricao:
-      "Verificamos a sua situação atual e, a partir daí, ficamos atentos por si: comparamos as faturas, acompanhamos as datas importantes e avisamo-lo quando alguma coisa merece a sua atenção.",
+      "Verificamos a sua situação atual e, a partir daí, ficamos atentos por si: comparamos as faturas, acompanhamos as datas importantes e avisamos quando alguma coisa merece a sua atenção.",
     mensagens: {
       removido: "Deixámos de acompanhar o serviço e apagámos os documentos e os dados associados.",
       ultimo:
@@ -70,8 +70,8 @@ export const protecao = {
     contratoAjuda: " O contrato ajuda-nos a confirmar.",
     verDetalhe: "Ver o serviço em detalhe",
     atentosA: "Estamos atentos a",
-    atentosDatas: "Comparamos cada nova fatura e avisamo-lo por e-mail antes destas datas.",
-    atentosFaturas: "Comparamos cada nova fatura e avisamo-lo se alguma coisa mudar ou merecer a sua atenção.",
+    atentosDatas: "Comparamos cada nova fatura e avisamos por e-mail antes destas datas.",
+    atentosFaturas: "Comparamos cada nova fatura e avisamos se alguma coisa mudar ou merecer a sua atenção.",
     cadaFatura: (nomes: V) => `Cada nova fatura de ${nomes}: mensalidade, descontos e cobranças novas ou repetidas`,
     proximaData: (servico: V | null, oque: V, data: V) => `Próxima data importante${servico ? ` (${servico})` : ""}: ${oque.toLowerCase()}, a ${data}.`,
     osSeusServicos: "Os seus serviços",
@@ -101,7 +101,7 @@ export const protecao = {
     ok: "Sem alteração",
     info: "Informação",
     atencao: "Merece atenção",
-    emVerificacao: "Estamos a verificar uma alteração nesta fatura. Se merecer a sua atenção, avisamo-lo por e-mail.",
+    emVerificacao: "Estamos a verificar uma alteração nesta fatura. Se merecer a sua atenção, avisamos por e-mail.",
   },
   servico: {
     fornecedorPorConfirmar: "Fornecedor por confirmar",

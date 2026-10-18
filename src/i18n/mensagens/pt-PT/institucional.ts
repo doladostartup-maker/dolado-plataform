@@ -89,7 +89,7 @@ export const institucional = {
       },
       {
         titulo: "Acompanhamos a resposta",
-        descricao: "Analisamos a resposta da empresa e avisamo-lo por e-mail quando há novidades. Quando existe um prazo de resposta aplicável, fica registado no seu caso.",
+        descricao: "Analisamos a resposta da empresa e avisamos por e-mail quando há novidades. Quando existe um prazo de resposta aplicável, fica registado no seu caso.",
       },
       {
         titulo: "Enviamos só com a sua autorização",
@@ -104,7 +104,7 @@ export const institucional = {
       },
       {
         titulo: "Não o representamos em tribunal, arbitragem ou outras entidades",
-        descricao: "Se o caso seguir para uma dessas vias, avisamo-lo. A decisão de avançar é sua e, conforme o caso, pode precisar de apoio jurídico.",
+        descricao: "Se o caso seguir para uma dessas vias, avisamos. A decisão de avançar é sua e, conforme o caso, pode precisar de apoio jurídico.",
       },
       {
         titulo: "Nunca cobramos uma percentagem do que recuperar",

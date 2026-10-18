@@ -151,14 +151,14 @@ describe("conteúdo do resumo", () => {
       HOJE,
     );
     assert.deepEqual(r.acompanhamento, ["Vodafone — fim da promoção a 14 de março de 2027", "Comparação de faturas — Vodafone"]);
-    assert.equal(r.proximaData, "Vodafone: a promoção termina a 14 de março de 2027. Avisamo-lo por e-mail antes dessa data.");
+    assert.equal(r.proximaData, "Vodafone: a promoção termina a 14 de março de 2027. Avisamos por e-mail antes dessa data.");
     assert.equal(r.contagens.alertasDatas, 1);
     assert.match(r.introducao, /manteve 1 alerta de datas ativo/);
   });
 
   test("data próxima (até 30 dias): aviso na própria data", () => {
     const r = montarResumoMensal([servico({ campos: { data_fim_fidelizacao: data("2026-10-20") } })], MES, HOJE);
-    assert.equal(r.proximaData, "Vodafone: a fidelização termina a 20 de outubro de 2026. Avisamo-lo por e-mail nessa data.");
+    assert.equal(r.proximaData, "Vodafone: a fidelização termina a 20 de outubro de 2026. Avisamos por e-mail nessa data.");
   });
 
   test("sem data conhecida não inventa nenhuma", () => {

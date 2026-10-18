@@ -211,7 +211,7 @@ export const emails = {
       por_confirmar: ["Falta a sua confirmação", "Lemos as condições de um documento. Confirme-as no portal para começarmos a acompanhá-las."],
       em_verificacao: [
         "Estamos a verificar uma alteração",
-        "Encontrámos uma diferença numa fatura e a DoLado está a revê-la. Se merecer a sua atenção, avisamo-lo por e-mail. Não precisa de fazer nada por agora.",
+        "Encontrámos uma diferença numa fatura e a DoLado está a revê-la. Se merecer a sua atenção, avisamos por e-mail. Não precisa de fazer nada por agora.",
       ],
       sem_servicos: [
         "A sua Proteção está ativa",
@@ -236,11 +236,11 @@ export const emails = {
     atividadeAvisos: (n: number) => `${n === 1 ? "1 aviso de data enviado" : `${n} avisos de datas enviados`} por e-mail`,
     atividadeServicos: (n: number) => (n === 1 ? "1 serviço acompanhado" : `${n} serviços acompanhados`),
     atividadeAlertas: (n: number) => (n === 1 ? "1 alerta de datas ativo" : `${n} alertas de datas ativos`),
-    semAlteracoesVerificacao: "Estamos a verificar uma alteração numa fatura. Se merecer a sua atenção, avisamo-lo por e-mail.",
+    semAlteracoesVerificacao: "Estamos a verificar uma alteração numa fatura. Se merecer a sua atenção, avisamos por e-mail.",
     semAlteracoes: (mes: string) => `Não detetámos alterações que exijam a sua atenção em ${mes}.`,
     semProximaData: "Neste momento não há nenhuma data que exija a sua atenção.",
     terminaHoje: (servico: string, promocao: boolean) => `${servico}: ${promocao ? "a promoção" : "a fidelização"} termina hoje.`,
     terminaA: (servico: string, promocao: boolean, data: string, antes: boolean) =>
-      `${servico}: ${promocao ? "a promoção" : "a fidelização"} termina a ${data}. ${antes ? "Avisamo-lo por e-mail antes dessa data." : "Avisamo-lo por e-mail nessa data."}`,
+      `${servico}: ${promocao ? "a promoção" : "a fidelização"} termina a ${data}. ${antes ? "Avisamos por e-mail antes dessa data." : "Avisamos por e-mail nessa data."}`,
   },
 };
