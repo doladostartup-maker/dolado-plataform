@@ -2,6 +2,7 @@ import { BotaoComprar } from "@/components/compra/BotaoComprar";
 import { avisoDoPortal, estadoReembolsoCliente, resumoPlanoPortal } from "@/lib/acesso";
 import { obterAcesso, requireUser } from "@/lib/auth";
 import { casosDoMes } from "@/lib/casoExtra";
+import { estadoProtecaoGratuitaDaConta } from "@/lib/protecaoGratuitaServidor";
 import { obterResumoCobranca } from "@/lib/stripe/proximaCobranca";
 import {
   escolherAvulsoParaConversao,
@@ -48,6 +49,7 @@ export default async function PortalIndex({
   // Só leitura: o acesso é dado pelo webhook Stripe quando o pagamento é
   // confirmado. ?upgraded=true apenas escolhe a mensagem de regresso.
   const acesso = await obterAcesso(supabase, user.id);
+  const gratuita = await estadoProtecaoGratuitaDaConta(acesso, user);
 
   const [{ data: pagamentos }, { data: conversoes }, { data: creditos }] = await Promise.all([
     supabase
@@ -256,7 +258,7 @@ export default async function PortalIndex({
           {reembolso && <p className="mt-1">{reembolso.texto}</p>}
         </Aviso>
       )}
-      {conversaoAnulada && !acesso.temProtecao && (
+      {conversaoAnulada && !acesso.temSubscricao && (
         <Aviso tom="info" titulo={t.avisos.adesaoNaoConcluida}>
           {t.avisos.adesaoNaoConcluidaTexto}
         </Aviso>
@@ -318,6 +320,7 @@ export default async function PortalIndex({
         cobranca={cobranca}
         temProtecao={acesso.temProtecao}
         temPlanoStripe={acesso.temPlanoStripe}
+        gratuita={gratuita}
         pagamentoPendente={aviso === "pagamento_pendente"}
         conversaoProtecao={ofertaConversao("protecao")}
         conversaoCasoProtecao={ofertaConversao("caso_protecao")}

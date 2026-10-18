@@ -205,17 +205,17 @@ describe("posse do pedido", () => {
 
 describe("modalidades oferecidas (opcoesDoPedido)", () => {
   test("conta sem compras: Avulso e Caso + Proteção, nada de graça", () => {
-    assert.deepEqual(opcoesDoPedido({ creditos: 0, temProtecao: false }), {
+    assert.deepEqual(opcoesDoPedido({ creditos: 0, temSubscricao: false }), {
       usarCasoDisponivel: false,
       casoExtra: false,
       modalidades: ["avulso", "caso_protecao"],
     });
   });
   test("com casos disponíveis já pagos: pode usar um", () => {
-    assert.equal(opcoesDoPedido({ creditos: 2, temProtecao: true }).usarCasoDisponivel, true);
+    assert.equal(opcoesDoPedido({ creditos: 2, temSubscricao: true }).usarCasoDisponivel, true);
   });
   test("com proteção ativa (sem casos): não abre segunda subscrição, só Avulso", () => {
-    assert.deepEqual(opcoesDoPedido({ creditos: 0, temProtecao: true }).modalidades, ["avulso"]);
+    assert.deepEqual(opcoesDoPedido({ creditos: 0, temSubscricao: true }).modalidades, ["avulso"]);
   });
 });
 

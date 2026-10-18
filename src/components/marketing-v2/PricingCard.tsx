@@ -20,6 +20,7 @@ export function PricingCard({
   naoInclui,
   nota,
   destaque = false,
+  selo,
   acao,
 }: {
   necessidade: string;
@@ -33,13 +34,22 @@ export function PricingCard({
   /** Nota discreta por baixo do que inclui (ex.: Caso Extra no Caso + Proteção). */
   nota?: string;
   destaque?: boolean;
+  /** Selo discreto junto ao nome (ex.: "30 dias grátis"). */
+  selo?: string;
   acao: ReactNode;
 }) {
   return (
     <article
       className={`${CARTAO} flex flex-col p-7 sm:p-8 lg:row-span-6 lg:grid lg:grid-rows-subgrid ${destaque ? "border-2 border-[var(--v2-green)]" : ""}`}
     >
-      <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]">{nome}</p>
+      <p className="flex flex-wrap items-center gap-2 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]">
+        {nome}
+        {selo && (
+          <span className="rounded-full bg-[var(--v2-mint)] px-2.5 py-0.5 text-[11.5px] normal-case tracking-normal text-[var(--v2-green-dark)]">
+            {selo}
+          </span>
+        )}
+      </p>
       <h2 className="mt-3 text-[22px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">{necessidade}</h2>
       <p className="mt-3 text-[15px] leading-relaxed text-[var(--v2-muted)]">{resumo}</p>
       <div className="mt-6 self-end">

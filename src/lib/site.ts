@@ -38,6 +38,16 @@ export function urlTratarCaso(origem?: string) {
 // sempre tomada em portal.dolado.pt, onde está a sessão (cookies host-only):
 // quem já tem conta compra com o Customer da conta e nunca abre uma segunda
 // subscrição desligada dela.
+/** Ativação da Proteção gratuita (portal.dolado.pt), com a página de origem (só métricas). */
+export function urlExperimentarProtecao(origem: "homepage" | "precario" | "protecao") {
+  return `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/experimentar-protecao?origem=${origem}`;
+}
+
+/** Oferta da Proteção gratuita ligada nas páginas públicas (lido no build). */
+export function ofertaProtecaoGratuitaPublica() {
+  return process.env.PROTECAO_GRATUITA_ATIVA === "1";
+}
+
 export function urlComprar(plano: string) {
   return `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/comprar?plano=${encodeURIComponent(plano)}`;
 }

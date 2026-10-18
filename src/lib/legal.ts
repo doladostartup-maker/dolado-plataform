@@ -68,6 +68,16 @@ export const ACEITACAO_TERMOS = {
 } as const;
 export const TEXTO_ACEITACAO_TERMOS = `${ACEITACAO_TERMOS.antes}${ACEITACAO_TERMOS.ligacao}${ACEITACAO_TERMOS.depois}`;
 
+/**
+ * Ativação da Proteção gratuita (30 dias): a mesma aceitação dos Termos e o
+ * que o cliente declara compreender. O texto completo fica registado em
+ * protecao_gratuita.texto_aceite, com a versão dos Termos. Mudar o texto não
+ * altera os registos já gravados.
+ */
+export const ACEITACAO_PROTECAO_GRATUITA_COMPLEMENTO =
+  " Compreendo que a Proteção gratuita termina ao fim de 30 dias sem qualquer cobrança.";
+export const TEXTO_ACEITACAO_PROTECAO_GRATUITA = `${TEXTO_ACEITACAO_TERMOS}${ACEITACAO_PROTECAO_GRATUITA_COMPLEMENTO}`;
+
 const TEXTO_INICIO_IMEDIATO_BASE =
   "Peço expressamente que a DoLado inicie a prestação do serviço imediatamente, antes do fim do prazo legal de 14 dias de livre resolução. Compreendo que, se exercer esse direito depois de a prestação ter começado, poderá ser devido o valor proporcional ao serviço já prestado e que, se o contrato for integralmente executado durante esse período, poderei perder o direito de livre resolução nos termos legalmente aplicáveis.";
 

@@ -133,11 +133,13 @@ export async function visitaDeIndicacaoNoBrowser(): Promise<boolean> {
 /** Situação da conta para escolher o desconto (sem dados de terceiros). */
 export async function estadoIndicacaoDaConta(userId: string) {
   const admin = createAdminClient();
-  const [{ data: ind, error }, recompensas] = await Promise.all([
+  const [{ data: ind, error }, recompensas, { data: gratuita, error: erroGratuita }] = await Promise.all([
     admin.from("indicacoes").select("estado").eq("referred_user_id", userId).maybeSingle(),
     contarRecompensasUsaveis(admin, userId),
+    admin.from("protecao_gratuita").select("id").eq("user_id", userId).maybeSingle(),
   ]);
   falhar("indicacoes.select", error);
+  falhar("protecao_gratuita.select", erroGratuita);
   let novoClienteIndicado = ind?.estado === "registada";
   if (novoClienteIndicado) {
     // Uma compra feita por outra via (ex.: associada depois) também conta.
@@ -145,7 +147,7 @@ export async function estadoIndicacaoDaConta(userId: string) {
     falhar("indicacao_conta_ja_cliente", erroCliente);
     novoClienteIndicado = jaCliente !== true;
   }
-  return { novoClienteIndicado, recompensasDisponiveis: recompensas };
+  return { novoClienteIndicado, recompensasDisponiveis: recompensas, usouProtecaoGratuita: !!gratuita };
 }
 
 /** Área "Indique a DoLado" do portal: só números da própria conta. */

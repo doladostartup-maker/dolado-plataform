@@ -12,6 +12,8 @@ import { linhasDaCobranca } from "@/lib/proximaCobranca";
 import { obterResumoCobranca } from "@/lib/stripe/proximaCobranca";
 import { PRAZO_LIVRE_RESOLUCAO_DIAS, ROTAS_LEGAIS } from "@/lib/legal";
 import { CONTACTO_EMAIL, MARKETING_SITE_URL } from "@/lib/site";
+import { estadoProtecaoGratuitaDaConta } from "@/lib/protecaoGratuitaServidor";
+import { ProtecaoGratuitaPortal } from "@/components/portal/ProtecaoGratuita";
 import { manterSubscricao } from "./actions";
 import { BotaoManter } from "./_components/BotaoManter";
 import { CancelarSubscricao } from "./_components/CancelarSubscricao";
@@ -45,6 +47,7 @@ export default async function GestaoSubscricaoPage({
     supabase.from("casos").select("status, origem_credito").eq("utilizador_id", user.id),
   ]);
   const casosEmCurso = (casos ?? []).filter(casoAcompanhadoPelaSubscricao).length;
+  const gratuita = await estadoProtecaoGratuitaDaConta(acesso, user);
   const resumo = resumoPlanoPortal(acesso, idioma);
   const guardados = casosGuardados((congelamentos ?? []) as CongelamentoCasos[]);
   const comSubscricao = resumo.plano !== "sem_plano";
@@ -70,7 +73,7 @@ export default async function GestaoSubscricaoPage({
     linhas.push({ label: t.casosDisponiveis, valor: tp.casosDisponiveis(resumo.casosDisponiveis) });
   }
 
-  const podeCancelar = comSubscricao && !resumo.fimAgendado && acesso.temProtecao;
+  const podeCancelar = comSubscricao && !resumo.fimAgendado && acesso.temSubscricao;
   const fimTexto = resumo.renovacao ? formatarData(resumo.renovacao) : null;
 
   return (
@@ -89,14 +92,16 @@ export default async function GestaoSubscricaoPage({
       )}
       {params.erro && <Aviso tom="erro">{MENSAGENS_ERRO[params.erro] ?? MENSAGENS_ERRO.falha}</Aviso>}
 
+      {gratuita && <ProtecaoGratuitaPortal estado={gratuita} />}
+
       <section aria-labelledby="plano" className={`${CARTAO} flex flex-col gap-5`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id="plano" className={TITULO_CARTAO}>
             {nomePlano ?? t.semSubscricao}
           </h2>
           {comSubscricao && (
-            <Etiqueta tom={resumo.fimAgendado ? "espera" : acesso.temProtecao ? "concluido" : "neutro"}>
-              {resumo.fimAgendado ? t.canceladaTitulo : acesso.temProtecao ? t.protecaoAtiva : (resumo.estado ?? t.inativa)}
+            <Etiqueta tom={resumo.fimAgendado ? "espera" : acesso.temSubscricao ? "concluido" : "neutro"}>
+              {resumo.fimAgendado ? t.canceladaTitulo : acesso.temSubscricao ? t.protecaoAtiva : (resumo.estado ?? t.inativa)}
             </Etiqueta>
           )}
         </div>

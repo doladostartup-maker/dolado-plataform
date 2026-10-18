@@ -1,5 +1,6 @@
 "use client";
 
+import { OfertaProtecaoGratuita } from "@/components/marketing-v2/OfertaProtecaoGratuita";
 import Link from "@/i18n/Link";
 import { categoriasPerguntas } from "@/components/landing/conteudoPerguntasFrequentes";
 import { useCaminho, useIdioma } from "@/i18n/cliente";
@@ -34,15 +35,17 @@ const ICONES = [
 
 const IDS_PERGUNTAS = ["o-que-inclui-protecao", "comecar-protecao", "diferenca-planos", "cancelar-protecao"];
 
-export function ProtecaoV2() {
+/** `protecaoGratuita`: oferta dos 30 dias ligada (PROTECAO_GRATUITA_ATIVA, lido no build). */
+export function ProtecaoV2({ protecaoGratuita = false }: { protecaoGratuita?: boolean }) {
   const idioma = useIdioma();
   const c = useCaminho();
   const t = tPaginas[idioma].protecao;
   const tp = tPlanos[idioma];
   const precoProtecao = tp.comUnidade(precoNoIdioma(idioma, PLANOS.protecao.precoCentimos), true);
   const precoCasoProtecao = tp.comUnidade(precoNoIdioma(idioma, PLANOS.caso_protecao.precoCentimos), true);
-  const TODAS = categoriasPerguntas(idioma).flatMap((cat) => cat.perguntas);
-  const PERGUNTAS = IDS_PERGUNTAS.flatMap((id) => TODAS.filter((p) => p.id === id).slice(0, 1));
+  const TODAS = categoriasPerguntas(idioma, { protecaoGratuita }).flatMap((cat) => cat.perguntas);
+  const ids = protecaoGratuita ? [...IDS_PERGUNTAS.slice(0, 2), "experimentar-protecao", "fim-protecao-gratuita", ...IDS_PERGUNTAS.slice(2)] : IDS_PERGUNTAS;
+  const PERGUNTAS = ids.flatMap((id) => TODAS.filter((p) => p.id === id).slice(0, 1));
   const negrito = (texto: string) => rico(texto, { b: (conteudo) => <strong className="text-[var(--v2-navy)]">{conteudo}</strong> });
 
   const aderir = (evento: string) => {
@@ -77,6 +80,7 @@ export function ProtecaoV2() {
               {t.verPrecario}
             </Link>
           </div>
+          {protecaoGratuita && <OfertaProtecaoGratuita origem="protecao" className="mt-7" />}
         </div>
         <PainelProtecao />
       </SectionV2>

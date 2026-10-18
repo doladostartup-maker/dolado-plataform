@@ -194,6 +194,35 @@ export async function indicacaoAoPagamentoFalhado(session: Stripe.Checkout.Sessi
  * Fatura paga de uma subscrição ativa: marca como usado o desconto que lá
  * estava (se o cupão foi aplicado nesta fatura) e põe o seguinte, se houver.
  */
+/**
+ * Adesão feita durante a Proteção gratuita com a 1.ª cobrança adiada: o
+ * Checkout foi a 0 € e não decidiu a indicação. Decide-a agora, na 1.ª
+ * cobrança real, com a sessão dessa adesão (a mesma chave de idempotência)
+ * e os valores da fatura. Sem desconto de indicação (não acumula com a
+ * Proteção gratuita).
+ */
+export async function indicacaoNaPrimeiraCobrancaDiferida(
+  invoice: Pick<Stripe.Invoice, "id" | "amount_paid" | "customer">,
+  sessionId: string,
+  subscriptionId: string,
+  userId: string | null,
+  planoSubscricao: string | null,
+  deps: DependenciasIndicacoes,
+) {
+  const sessao = {
+    id: sessionId,
+    mode: "subscription",
+    metadata: { plano: "assinatura" },
+    amount_total: invoice.amount_paid ?? 0,
+    total_details: { amount_discount: 0 },
+    customer: invoice.customer,
+    subscription: subscriptionId,
+    payment_intent: null,
+    invoice: invoice.id ?? null,
+  } as unknown as Stripe.Checkout.Session;
+  return indicacaoAoConfirmarPagamento(sessao, userId, planoSubscricao, deps);
+}
+
 export async function indicacaoAoPagarFatura(
   invoiceId: string,
   subscriptionId: string,

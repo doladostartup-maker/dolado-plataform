@@ -698,7 +698,24 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
       return (data?.length ?? 0) > 0;
     },
 
-    async enviarEmailPagamentoConfirmado({ email, plano, contaExiste, sessionId, valorPagoCentimos, renovacao, consentimento, userId, localeCheckout }) {
+    async adesaoComCobrancaDiferida(subscriptionId) {
+      // Só subscrições criadas durante a Proteção gratuita com a 1.ª cobrança
+      // adiada (metadata decidida no servidor, em confirmarCompra).
+      const sub = await getStripe().subscriptions.retrieve(subscriptionId);
+      if (sub.metadata?.protecao_gratuita !== "1") return null;
+      const { data, error } = await admin
+        .from("stripe_payments")
+        .select("stripe_session_id")
+        .eq("stripe_subscription_id", subscriptionId)
+        .not("stripe_session_id", "is", null)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      falhar("stripe_payments.select", error);
+      return data?.stripe_session_id ? { sessionId: data.stripe_session_id as string } : null;
+    },
+
+    async enviarEmailPagamentoConfirmado({ email, plano, contaExiste, sessionId, valorPagoCentimos, renovacao, cobrancaDiferida, consentimento, userId, localeCheckout }) {
       // Sem conta ligada, mas o e-mail do Checkout já tem conta: iniciar
       // sessão e associar a compra (nunca criar uma segunda conta).
       let associar = false;
@@ -725,6 +742,7 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
             ligacao,
             valorPagoCentimos,
             renovacao,
+            primeiraCobranca: cobrancaDiferida ? renovacao : null,
             consentimento,
             portalUrl: siteUrl,
           },

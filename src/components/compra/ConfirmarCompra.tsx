@@ -8,6 +8,8 @@ import { tCompra } from "@/i18n/mensagens/compra";
 import { tIndicacoes } from "@/i18n/mensagens/indicacoes";
 import { tJuridico } from "@/i18n/mensagens/juridico";
 import { precoNoIdioma, tPlanos } from "@/i18n/mensagens/planos";
+import { tProtecaoGratuita } from "@/i18n/mensagens/protecaoGratuita";
+import { formatarData } from "@/i18n/formatar";
 import { useActionState, useEffect, useState } from "react";
 import { confirmarCompra, type EstadoCompra } from "@/app/actions/stripe";
 import { ofertaIndicacaoNaCompra, type OfertaIndicacaoCompra } from "@/app/actions/indicacoes";
@@ -34,6 +36,13 @@ import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAIXA_SELECAO } from "@/components/po
 
 export type OfertaConversao = { mensalidade: number; reembolso: number } | null;
 
+/**
+ * A conta está na Proteção gratuita: data da 1.ª cobrança da Proteção (fim do
+ * período; null = cobrada no dia da adesão). Só apresentação — o servidor
+ * volta a decidir ao abrir o Checkout (confirmarCompra).
+ */
+export type InfoProtecaoGratuita = { primeiraCobranca: string | null } | null;
+
 const LINK = "font-semibold text-[var(--v2-green)] underline underline-offset-4";
 
 /**
@@ -53,6 +62,7 @@ export function ConfirmarCompra({
   origem,
   conversao = null,
   pedidoId,
+  protecaoGratuita = null,
   onFechar,
 }: {
   plano: PlanoId;
@@ -62,6 +72,7 @@ export function ConfirmarCompra({
   conversao?: OfertaConversao;
   /** Pedido de caso a pagar (fluxo "pedido_caso"); a posse é validada no servidor. */
   pedidoId?: string;
+  protecaoGratuita?: InfoProtecaoGratuita;
   onFechar: () => void;
 }) {
   const [estado, submeter, aSubmeter] = useActionState<EstadoCompra, FormData>(confirmarCompra, { erro: null });
@@ -77,6 +88,7 @@ export function ConfirmarCompra({
   const tp = tPlanos[idioma];
   const ti = tIndicacoes[idioma];
   const tj = tJuridico[idioma];
+  const tg = tProtecaoGratuita[idioma].confirmarCompra;
   const formatarPreco = (c: number) => precoNoIdioma(idioma, c);
   const nome = casoExtra ? tp.casoExtra.nome : tp.nome[plano];
   const descricaoCurta = casoExtra ? tp.casoExtra.descricaoCurta : tp.descricaoCurta[plano];
@@ -151,6 +163,22 @@ export function ConfirmarCompra({
               {t.conversaoFim}
             </p>
           )}
+          {protecaoGratuita && !casoExtra && plano !== "avulso" && (
+            <p className="font-semibold text-[var(--v2-navy)]">
+              {plano === "caso_protecao"
+                ? tg.casoProtecao
+                : protecaoGratuita.primeiraCobranca
+                  ? tg.cobrancaNoFim(
+                      formatarData(idioma, protecaoGratuita.primeiraCobranca, {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                        timeZone: "Europe/Lisbon",
+                      }),
+                    )
+                  : tg.cobrancaHoje}
+            </p>
+          )}
           {info.subscricao && (
             <p>{t.cancelar}</p>
           )}
@@ -182,7 +210,7 @@ export function ConfirmarCompra({
           {oferta?.semContaComIndicacao && (
             <p className="font-semibold text-[var(--v2-navy)]">{ti.textos.semConta}</p>
           )}
-          {!conversao && !casoExtra && !descontoIndicacao && (
+          {!conversao && !casoExtra && !descontoIndicacao && !(plano === "protecao" && protecaoGratuita?.primeiraCobranca) && (
             <p>
               {info.subscricao ? t.codigoSubscricao : t.codigoCompra}
             </p>

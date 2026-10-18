@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { FluxoCompra, OrigemCompra } from "@/lib/consentimentoCompra";
 import { track } from "@/lib/analytics";
 import type { PlanoId } from "@/lib/planos";
-import { ConfirmarCompra, type OfertaConversao } from "./ConfirmarCompra";
+import { ConfirmarCompra, type InfoProtecaoGratuita, type OfertaConversao } from "./ConfirmarCompra";
 
 /** Botão de compra para páginas de servidor: abre sempre a confirmação antes do Stripe. */
 export function BotaoComprar({
@@ -13,6 +13,7 @@ export function BotaoComprar({
   origem,
   conversao = null,
   pedidoId,
+  protecaoGratuita = null,
   className,
   children,
 }: {
@@ -21,6 +22,8 @@ export function BotaoComprar({
   origem: OrigemCompra;
   conversao?: OfertaConversao;
   pedidoId?: string;
+  /** A conta está na Proteção gratuita (só apresentação; o servidor decide). */
+  protecaoGratuita?: InfoProtecaoGratuita;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -44,6 +47,7 @@ export function BotaoComprar({
           origem={origem}
           conversao={conversao}
           pedidoId={pedidoId}
+          protecaoGratuita={protecaoGratuita}
           onFechar={() => setAberto(false)}
         />
       )}

@@ -1,3 +1,4 @@
+import { ofertaProtecaoGratuitaPublica } from "@/lib/site";
 import type { Metadata } from "next";
 import { AjudaV2 } from "@/components/ajuda-v2/AjudaV2";
 import { PaginaV2 } from "@/components/marketing-v2/PaginaV2";
@@ -15,7 +16,7 @@ export default async function PerguntasFrequentesPage({ params }: ComIdioma) {
   await idiomaDaPagina(params);
   return (
     <PaginaV2 eventoCtaNavbar="click_nav_perguntas_frequentes">
-      <AjudaV2 />
+      <AjudaV2 protecaoGratuita={ofertaProtecaoGratuitaPublica()} />
     </PaginaV2>
   );
 }
