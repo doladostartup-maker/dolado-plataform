@@ -32,7 +32,7 @@ export const protecaoGratuita = {
     eyebrow: "Proteção · 30 dias grátis",
     titulo: "Experimente a Proteção durante 30 dias",
     texto:
-      "A Proteção compara as suas faturas para detetar alterações e envia avisos antes do fim de promoções e períodos de fidelização, para poder agir antes de o problema crescer.",
+      "A Proteção verifica se as suas faturas correspondem às condições que contratou: compara cada fatura com o contrato que adicionar e com as faturas anteriores, para detetar aumentos de preço ou cobranças que não esperava. Envia também avisos antes do fim de promoções e de períodos de fidelização, para poder agir antes de o problema crescer.",
     resumoTitulo: "Como funciona",
     resumo: {
       inicio: "Começa hoje, quando confirmar.",

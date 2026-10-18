@@ -30,7 +30,7 @@ export const protecaoGratuita: Traducao<typeof pt> = {
     eyebrow: "Protection · 30 days free",
     titulo: "Try Protection for 30 days",
     texto:
-      "Protection compares your bills to spot changes and sends reminders before promotions and minimum terms end, so you can act before a problem grows.",
+      "Protection checks whether your bills match the terms you signed up to: it compares each bill with the contract you add and with your previous bills, to spot price increases or charges you did not expect. It also sends reminders before promotions and minimum terms end, so you can act before a problem grows.",
     resumoTitulo: "How it works",
     resumo: {
       inicio: "It starts today, when you confirm.",
