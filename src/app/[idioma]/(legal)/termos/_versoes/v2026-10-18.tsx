@@ -19,7 +19,8 @@ import {
   consentimentoInicioImediato,
 } from "@/lib/legal";
 import { ROTULO_CONFIRMAR, ROTULO_RESOLVER } from "@/lib/livreResolucao";
-import { CASO_EXTRA, LIMITE_CASOS_ACUMULADOS, PLANOS, formatarPreco } from "@/lib/planos";
+import { LIMITE_CASOS_ACUMULADOS, formatarPreco } from "@/lib/planos";
+import { CASO_EXTRA, PLANOS } from "./precosAte20261018";
 import { DIAS_CASOS_GUARDADOS, MESES_ALERTAS_GUARDADOS } from "@/lib/acesso";
 import { DIAS_PROTECAO_GRATUITA } from "@/lib/protecaoGratuita";
 import { VALOR_MENSALIDADE_CENTIMOS } from "@/lib/stripe/conversao";

@@ -9,8 +9,11 @@ import { tSubscricao } from "../../i18n/mensagens/subscricao.ts";
 // `node --test` (quem fala com o Stripe e a Supabase é app/actions/stripe.ts
 // e o webhook).
 //
-//   Avulso 14,99 € → Proteção 4,99 €:        1.ª fatura 0 €, reembolso 10,00 €
-//   Avulso 14,99 € → Caso + Proteção 7,99 €: 1.ª fatura 0 €, reembolso  7,00 €
+//   Avulso 11,99 € → Proteção 4,99 €:        1.ª fatura 0 €, reembolso 7,00 €
+//   Avulso 11,99 € → Caso + Proteção 7,99 €: 1.ª fatura 0 €, reembolso 4,00 €
+//
+// O reembolso parte sempre do valor efetivamente pago: um Avulso comprado
+// antes de 18/10/2026 a 14,99 € continua a dar 10,00 € / 7,00 €.
 //
 // Sem Customer Balance e sem saldo para meses seguintes: a 1.ª fatura leva
 // um cupão de 100% "once" (só essa fatura) e a diferença é devolvida ao

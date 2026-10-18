@@ -74,9 +74,9 @@ describe("código e link", () => {
 });
 
 describe("desconto no Checkout", () => {
-  test("Avulso: 20% para o novo cliente indicado (≈ 11,99 €)", () => {
+  test("Avulso: 20% para o novo cliente indicado (≈ 9,59 €)", () => {
     assert.equal(escolherDescontoCheckout({ ...base, plano: "avulso", novoClienteIndicado: true }), "novo_cliente");
-    assert.equal(precoComDescontoCentimos(PLANOS.avulso.precoCentimos), 1199);
+    assert.equal(precoComDescontoCentimos(PLANOS.avulso.precoCentimos), 959);
   });
 
   test("Proteção: 20% só na primeira mensalidade (≈ 3,99 €)", () => {

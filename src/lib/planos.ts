@@ -58,13 +58,16 @@ export const PLANOS: Record<PlanoId, Plano> = {
   avulso: {
     id: "avulso",
     nome: "Avulso",
-    precoCentimos: 1499,
+    precoCentimos: 1199,
     subscricao: false,
     protecao: false,
     casosPorMes: 0,
     casosPorCompra: 1,
     descricaoCurta: "Tratamento de 1 caso, sem subscrição. Não inclui as funcionalidades de proteção.",
-    stripePriceId: "price_1UJYwzBtJL9VeDPfrAiguI1Z",
+    // 11,99 € desde 18/10/2026 (antes 14,99 €; o Price antigo fica na Stripe
+    // para o histórico e nunca é reutilizado).
+    // TODO(Thiago): Price ID do novo preço de 11,99 € (mesmo produto Avulso).
+    stripePriceId: "",
   },
 };
 
@@ -79,14 +82,19 @@ export const PLANOS: Record<PlanoId, Plano> = {
  */
 export const CASO_EXTRA = {
   nome: "Caso Extra",
-  precoCentimos: 1199,
+  precoCentimos: 959,
   /** Preço normal (Avulso) — só para mostrar o desconto. */
   precoReferenciaCentimos: PLANOS.avulso.precoCentimos,
   descontoPercentagem: 20,
   descricaoCurta:
     "Tratamento de mais 1 caso, com pagamento único. A sua subscrição continua ativa e não é alterada.",
-  /** Price ID oficial (11,99 €, pagamento único; produto "Caso Extra", criado no Stripe a 05/10/2026). */
-  stripePriceId: "price_1UNGPnBtJL9VeDPfJUIG2ZvK",
+  /**
+   * Price ID oficial (9,59 € desde 18/10/2026, pagamento único; produto "Caso
+   * Extra"). O de 11,99 € (05/10/2026) fica na Stripe para
+   * o histórico e nunca é reutilizado. Vazio = oferta desligada (fica o Avulso).
+   * TODO(Thiago): Price ID do novo preço de 9,59 €.
+   */
+  stripePriceId: "",
 } as const;
 
 export const TEXTO_BENEFICIO_SUBSCRITOR = `Benefício de subscritor — ${CASO_EXTRA.descontoPercentagem}% de desconto`;
@@ -103,7 +111,7 @@ export function formatarPreco(centimos: number) {
   return `${(centimos / 100).toFixed(2).replace(".", ",")} €`;
 }
 
-/** Preço com a unidade: "4,99 €/mês" ou "14,99 € / caso". */
+/** Preço com a unidade: "4,99 €/mês" ou "11,99 € / caso". */
 export function precoComUnidade(id: PlanoId) {
   const plano = PLANOS[id];
   return plano.subscricao ? `${formatarPreco(plano.precoCentimos)}/mês` : `${formatarPreco(plano.precoCentimos)} / caso`;

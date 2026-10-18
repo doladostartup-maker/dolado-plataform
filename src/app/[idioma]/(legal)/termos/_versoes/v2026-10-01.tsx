@@ -15,7 +15,8 @@ import {
   ROTAS_LEGAIS,
   consentimentoInicioImediato,
 } from "@/lib/legal";
-import { LIMITE_CASOS_ACUMULADOS, PLANOS, formatarPreco } from "@/lib/planos";
+import { LIMITE_CASOS_ACUMULADOS, formatarPreco } from "@/lib/planos";
+import { PLANOS } from "./precosAte20261018";
 import { DIAS_CASOS_GUARDADOS } from "@/lib/acesso";
 import { VALOR_MENSALIDADE_CENTIMOS } from "@/lib/stripe/conversao";
 import { CONTACTO_EMAIL, PRIVACIDADE_EMAIL } from "@/lib/site";

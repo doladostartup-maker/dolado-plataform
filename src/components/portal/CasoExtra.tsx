@@ -14,7 +14,7 @@ import { BOTAO_PRIMARIO, CARTAO, CARTAO_ACAO, METADADOS, TEXTO_SECUNDARIO, TITUL
 // e o servidor volta a decidir ao abrir o Checkout. Textos em
 // src/i18n/mensagens/*/tratarCaso.ts ("casoExtra").
 
-/** "Tratar um Caso Extra — 11,99 €" no idioma pedido. */
+/** "Tratar um Caso Extra — 9,59 €" no idioma pedido. */
 export function ctaCasoExtra(idioma: Idioma) {
   return tTratarCaso[idioma].casoExtra.cta(precoNoIdioma(idioma, CASO_EXTRA.precoCentimos));
 }
@@ -24,7 +24,7 @@ function data(idioma: Idioma, iso: string) {
   return idioma === "pt-PT" ? dataCasoExtra(iso) : formatarData(idioma, iso);
 }
 
-/** "Benefício de subscritor — 20% de desconto" + ~~14,99 €~~ 11,99 €. */
+/** "Benefício de subscritor — 20% de desconto" + ~~11,99 €~~ 9,59 €. */
 export function PrecoCasoExtra({ idioma }: { idioma: Idioma }) {
   const t = tTratarCaso[idioma].casoExtra;
   const tp = tPlanos[idioma];
