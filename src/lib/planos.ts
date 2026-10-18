@@ -66,8 +66,7 @@ export const PLANOS: Record<PlanoId, Plano> = {
     descricaoCurta: "Tratamento de 1 caso, sem subscrição. Não inclui as funcionalidades de proteção.",
     // 11,99 € desde 18/10/2026 (antes 14,99 €; o Price antigo fica na Stripe
     // para o histórico e nunca é reutilizado).
-    // TODO(Thiago): Price ID do novo preço de 11,99 € (mesmo produto Avulso).
-    stripePriceId: "",
+    stripePriceId: "price_1URyUDBtJL9VeDPfp4elEsf7",
   },
 };
 
@@ -92,9 +91,8 @@ export const CASO_EXTRA = {
    * Price ID oficial (9,59 € desde 18/10/2026, pagamento único; produto "Caso
    * Extra"). O de 11,99 € (05/10/2026) fica na Stripe para
    * o histórico e nunca é reutilizado. Vazio = oferta desligada (fica o Avulso).
-   * TODO(Thiago): Price ID do novo preço de 9,59 €.
    */
-  stripePriceId: "",
+  stripePriceId: "price_1URyVxBtJL9VeDPfHqAVjgAS",
 } as const;
 
 export const TEXTO_BENEFICIO_SUBSCRITOR = `Benefício de subscritor — ${CASO_EXTRA.descontoPercentagem}% de desconto`;
