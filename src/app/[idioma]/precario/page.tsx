@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: ComIdioma): Promise<Metadata>
 export default async function PrecarioPage({ params }: ComIdioma) {
   await idiomaDaPagina(params);
   return (
-    <PaginaV2 eventoCtaNavbar="click_precario_v2_nav">
+    <PaginaV2 eventoCtaNavbar="click_precario_v2_nav" chatEmDireto>
       <PrecarioV2 protecaoGratuita={ofertaProtecaoGratuitaPublica()} />
     </PaginaV2>
   );

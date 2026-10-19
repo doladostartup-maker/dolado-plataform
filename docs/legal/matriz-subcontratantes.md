@@ -27,6 +27,7 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 | Stripe | Pagamentos, subscrições, faturação, reembolsos | Subcontratante; responsável autónomo para finalidades próprias | A validar (entidade contratante) | Possíveis | A validar no DPA (SCCs / DPF) | Obtido |
 | Google | GA4, Tag Manager, Google Ads (com consentimento); início de sessão com Google | Subcontratante na medição; responsável autónomo para fins próprios e no início de sessão | A validar | Possíveis | A validar no DPA (SCCs / DPF) | Obtido |
 | Cookiebot (Usercentrics) | Gestão do consentimento de cookies | Subcontratante | A validar | A validar | A validar | **Por confirmar** |
+| Crisp (Crisp IM SAS) — **ainda não ligado** | Chat em direto nas páginas públicas (homepage, preçário, simulador), só com consentimento de preferências | Subcontratante | UE (sede em França) — região de alojamento a validar | A validar (subcontratantes ulteriores) | A validar no DPA | **Por obter** |
 
 ## Detalhe por fornecedor
 
@@ -184,6 +185,23 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 - **Localização, transferências, mecanismo:** **a validar**.
 - **DPA:** **por confirmar** — único fornecedor sem DPA confirmado.
 
+### Crisp (Crisp IM SAS) — por ligar (19/10/2026)
+
+- **Serviço / finalidade:** chat em direto nas páginas públicas `/`, `/precario` e
+  `/simulador-elegibilidade` (`client.crisp.chat`), atendido só por Thiago, sem IA nem respostas
+  automáticas. Só carrega com consentimento de "preferências" no Cookiebot (`src/lib/crisp.ts`);
+  desligado por omissão (`CRISP_ATIVO`).
+- **Categorias de dados:** o que o visitante escrever na conversa (e o e-mail, se o deixar quando a
+  conversa está offline); endereço IP (guardado pelo Crisp ~30 min sem conversa, mais tempo com
+  conversa); dados técnicos do browser, página visitada e localização aproximada pelo IP (funcionamento
+  normal do serviço — a validar); cookies `crisp-client/…` (6 meses). A DoLado não envia ao Crisp
+  dados da conta, de casos, contratos ou faturas.
+- **Papel:** subcontratante.
+- **Localização / transferências / mecanismo:** **a validar** no DPA (empresa francesa; confirmar região
+  de alojamento e subcontratantes ulteriores).
+- **DPA:** **por obter** antes de ligar em produção. Rascunho da Política:
+  `docs/legal/rascunho-privacidade-crisp.md`.
+
 ## Pontos a validar (resumo)
 
 1. Onde estão arquivadas as cópias dos DPA.
@@ -194,3 +212,4 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 5. Entidade Stripe contratante e região.
 6. DPA, região e transferências da Cookiebot.
 7. Prazo de conservação dos registos na Clever Cloud e na Brevo.
+8. Crisp: DPA, região de alojamento, subcontratantes ulteriores e prazo de conservação das conversas.
