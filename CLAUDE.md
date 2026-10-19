@@ -256,6 +256,10 @@ Canal secundário de apoio nas páginas públicas, **só por mensagem** (nunca "
 - **Medição:** `whatsapp_click` (`page`, `placement`, `context` — só valores fixos), só com consentimento (`track()`).
 - **Antes de ligar em produção:** Meta (WhatsApp) passa a receber as conversas — atualizar a matriz de subcontratantes e criar nova versão da Política de Privacidade (validar com a advogada).
 
+## Chat em direto — Crisp (19/10/2026)
+
+Chat do Crisp (Website ID em `src/lib/crisp.ts`) só em `/`, `/precario` e `/simulador-elegibilidade` (prop `chatEmDireto` da `PaginaV2` → `ChatCrisp`, `src/components/marketing-v2/ChatCrisp.tsx`). **Desligado por omissão** (`CRISP_ATIVO=1` liga; lido no build). Só carrega depois de o Cookiebot confirmar **"preferências"** (falha fechada, como a medição); retirada → apaga os cookies `crisp-client/…` e recarrega. Uma só inserção do script por página; ao navegar para outra página pública o widget é escondido. Nunca enviar dados ao Crisp (`user:*`, `session:data`, segmentos) nem abrir a conversa sozinho. Nunca no portal, backoffice, `/tratar-caso`, `/comprar`, checkout, `/texto/…` nem contas (teste `src/lib/crisp.test.mjs`). Só funcionalidades gratuitas do Crisp; atendimento só humano (Thiago), sem IA nem respostas automáticas. O WhatsApp continua independente. **Antes de ligar em produção:** DPA do Crisp, nova versão da Política (rascunho `docs/legal/rascunho-privacidade-crisp.md`, validar com a advogada), cookies do Crisp declarados no Cookiebot como "Preferências" e configuração do painel do Crisp (ver rascunho).
+
 ## Páginas legais, Livro de Reclamações e RAL (01/10/2026)
 
 - **Termos `2026-10-18b`** (no código, em vigor com o próximo deploy; validados pela advogada a 18/10/2026): parte da `2026-10-18` e muda só os preços — Avulso 11,99 € (antes 14,99 €), Caso Extra 9,59 € (antes 11,99 €, mantém 20%) e os reembolsos da secção 10 (7,00 € / 4,00 €), com a nota de que um Avulso pago a outro preço é reembolsado pelo valor pago menos a 1.ª mensalidade. Decisão comercial de Thiago, 18/10/2026; nota em `docs/legal/rascunho-termos-preco-avulso-2026-10-18.md`.
