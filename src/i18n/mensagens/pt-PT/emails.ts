@@ -128,26 +128,27 @@ export const emails = {
   },
 
   boasVindas: {
-    assunto: "Recebemos a sua submissão — Vamos tratar pessoalmente ✓",
-    titulo: "Recebemos a sua submissão — DoLado",
-    obrigado: "Obrigado por confiar na DoLado com a sua reclamação.",
-    pessoal:
-      "Já recebemos a sua submissão e está aqui comigo para ser tratada pessoalmente. Não é um formulário que desaparece numa caixa infinita. Eu vou rever o seu caso, contactar o operador com a sua autorização e acompanhar até à resolução.",
-    agora: "O que acontece agora:",
+    assunto: "Recebemos o seu caso",
+    titulo: "Recebemos o seu caso — DoLado",
+    obrigado: "Obrigado por confiar na DoLado para tratar da sua reclamação.",
+    recebemos:
+      "Recebemos o seu caso e vamos agora rever os elementos e documentos que nos enviou, para preparar os próximos passos.",
+    aSeguir: "O que acontece a seguir:",
     passos: [
-      "1. Leio os detalhes que forneceu",
-      "2. Contacto-o(a) nos próximos dias para confirmar tudo",
-      "3. Contacto o operador e faço a fundamentação necessária",
-      "4. Acompanho até ao final",
+      "1. Revemos os dados e documentos associados ao seu caso.",
+      "2. Verificamos a situação e a fundamentação aplicável.",
+      "3. Se for necessário algum esclarecimento ou documento adicional, receberá um e-mail nosso com essa indicação.",
+      "4. Poderá acrescentar os documentos em falta diretamente na sua área DoLado.",
+      "5. Quando a reclamação estiver preparada, receberá um aviso para a rever e autorizar o envio.",
     ],
-    preciso: "O que preciso de si:",
-    tenhaAMao: "Quando eu contactar, tenha à mão:",
-    itens: [
-      "— Fatura ou comprovativo do problema",
-      "— Qualquer e-mail/SMS da empresa em questão",
-      "— Disponibilidade para uma breve chamada (5-10 minutos), caso ainda falte esclarecer algum ponto para além do que já enviou",
-    ],
-    espere: "Espere por um contacto meu nos próximos 1-2 dias úteis. Se tiver dúvidas entretanto, responda a este e-mail.",
+    autorizacao: "A DoLado só enviará a reclamação depois de receber a sua autorização.",
+    depoisEnvio:
+      "Após o envio, poderá acompanhar a evolução do caso na sua área DoLado, onde ficará disponível o texto enviado, o comprovativo de submissão e a restante informação do processo.",
+    porAgora:
+      "Por agora, não precisa de fazer mais nada. Se precisarmos de algum elemento adicional, entraremos em contacto consigo por e-mail.",
+    duvidas: "Se tiver alguma dúvida, pode responder a este e-mail.",
+    lema: "Estamos do seu lado.",
+    equipa: "Equipa DoLado",
   },
 
   livreResolucao: {

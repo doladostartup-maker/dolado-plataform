@@ -126,26 +126,27 @@ export const emails: Traducao<typeof pt> = {
   },
 
   boasVindas: {
-    assunto: "We have received your submission — We'll handle it personally ✓",
-    titulo: "We have received your submission — DoLado",
-    obrigado: "Thank you for trusting DoLado with your complaint.",
-    pessoal:
-      "We have received your submission and it is here with me to be handled personally. It is not a form that disappears into an endless inbox. I will review your case, contact the provider with your authorisation and follow it through to resolution.",
-    agora: "What happens now:",
+    assunto: "We have received your case",
+    titulo: "We have received your case — DoLado",
+    obrigado: "Thank you for trusting DoLado to handle your complaint.",
+    recebemos:
+      "We have received your case and will now review the details and documents you sent us, to prepare the next steps.",
+    aSeguir: "What happens next:",
     passos: [
-      "1. I read the details you provided",
-      "2. I contact you in the next few days to confirm everything",
-      "3. I contact the provider and set out the necessary grounds",
-      "4. I follow it through to the end",
+      "1. We review the details and documents linked to your case.",
+      "2. We check the situation and the applicable grounds.",
+      "3. If any clarification or additional document is needed, you will receive an email from us saying so.",
+      "4. You can add any missing documents directly in your DoLado area.",
+      "5. When the complaint is ready, you will receive a notice to review it and authorise it to be sent.",
     ],
-    preciso: "What I need from you:",
-    tenhaAMao: "When I get in touch, please have to hand:",
-    itens: [
-      "— The bill or proof of the problem",
-      "— Any email/text message from the company concerned",
-      "— Availability for a short call (5-10 minutes), in case anything still needs clarifying beyond what you have already sent",
-    ],
-    espere: "Expect to hear from me within the next 1-2 working days. If you have any questions in the meantime, reply to this email.",
+    autorizacao: "DoLado will only send the complaint once it has received your authorisation.",
+    depoisEnvio:
+      "Once it has been sent, you can follow the progress of your case in your DoLado area, where the text sent, the proof of submission and the rest of the case information will be available.",
+    porAgora:
+      "For now, there is nothing else you need to do. If we need anything further, we will contact you by email.",
+    duvidas: "If you have any questions, you can reply to this email.",
+    lema: "We're on your side.",
+    equipa: "The DoLado team",
   },
 
   livreResolucao: {
