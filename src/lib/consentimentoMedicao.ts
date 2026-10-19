@@ -4,6 +4,8 @@
 //
 // - Estatística → GA4 (G-B4PQKLZ2BF, G-KD6C514Q1Q).
 // - Marketing → Google Ads (AW-…) e conversões melhoradas (e-mail em hash).
+// - Marketing → Pixel da Meta (só com NEXT_PUBLIC_META_PIXEL_ID definido;
+//   ver metaPixelId()).
 // - GTM: o contentor carrega etiquetas de GA4 e de Google Ads, por isso só
 //   corre com as duas categorias.
 
@@ -25,5 +27,15 @@ export function scriptsDeMedicao({ estatisticas, marketing }: ConsentimentoMedic
     ga4: estatisticas,
     ads: marketing,
     gtm: estatisticas && marketing,
+    meta: marketing,
   };
+}
+
+/**
+ * ID do Pixel da Meta (só dígitos). Lido no build: mudar exige novo build.
+ * Vazio ou inválido = Pixel desligado, mesmo com consentimento.
+ */
+export function metaPixelId(valor: string | undefined = process.env.NEXT_PUBLIC_META_PIXEL_ID): string | null {
+  const id = valor?.trim() ?? "";
+  return /^\d{10,20}$/.test(id) ? id : null;
 }
