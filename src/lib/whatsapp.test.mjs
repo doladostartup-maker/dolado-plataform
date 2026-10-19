@@ -72,7 +72,7 @@ describe("links", () => {
 });
 
 describe("mensagens", () => {
-  test("as duas línguas têm uma mensagem por setor", () => {
+  test("as duas línguas têm uma mensagem por sector", () => {
     assert.deepEqual(Object.keys(en.contextos.setor.mensagens), Object.keys(pt.contextos.setor.mensagens));
     assert.deepEqual(Object.keys(pt.contextos.setor.mensagens).sort(), ["agua", "compras-reembolsos", "energia", "gas", "telecomunicacoes"]);
   });

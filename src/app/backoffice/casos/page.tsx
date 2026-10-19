@@ -123,7 +123,7 @@ export default async function CasosPage({ searchParams }: { searchParams: Promis
           </select>
         </label>
         <label className={ROTULO}>
-          Setor
+          Sector
           <select name="sector" defaultValue={params.sector ?? ""} className={CAMPO}>
             <option value="">Todos</option>
             {SETORES.map((s) => (

@@ -16,7 +16,7 @@ export const SETOR_FORA_DO_AMBITO = "Outro tipo de empresa";
 export const OPCOES_SETOR = [...SETORES, SETOR_FORA_DO_AMBITO];
 
 export const TITULAR_PARTICULAR = "Sim, é um contrato pessoal ou da minha casa";
-export const TITULAR_EMPRESA = "Não, é de uma empresa ou atividade profissional";
+export const TITULAR_EMPRESA = "Não, é de uma empresa ou actividade profissional";
 export const TITULAR_NAO_SEI = "Não tenho a certeza";
 export const OPCOES_TITULAR = [TITULAR_PARTICULAR, TITULAR_EMPRESA, TITULAR_NAO_SEI];
 
@@ -44,9 +44,9 @@ export type AvaliacaoSimulador = {
 
 export const MOTIVOS = {
   setor: "Neste momento, a DoLado trata apenas situações de telecomunicações, energia, gás, água, compras e reembolsos e ginásios.",
-  empresa: "O serviço atual da DoLado é dirigido a consumidores particulares, não a contratos de empresas ou atividades profissionais.",
+  empresa: "O serviço actual da DoLado é dirigido a consumidores particulares, não a contratos de empresas ou actividades profissionais.",
   resolvido: "Pelas suas respostas, a situação parece já ter sido resolvida com a empresa.",
-  titular: "Não é claro se o contrato é pessoal ou de uma empresa ou atividade profissional.",
+  titular: "Não é claro se o contrato é pessoal ou de uma empresa ou actividade profissional.",
   problema: "O tipo de situação não está entre os que a DoLado trata com mais frequência.",
 } as const;
 

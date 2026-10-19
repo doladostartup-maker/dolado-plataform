@@ -28,7 +28,7 @@ export default async function RegraJuridicaPage({
         voltar={{ href: "/backoffice/regras-juridicas", texto: "Base jurídica" }}
         contexto="Regra jurídica"
         titulo={<span className="font-mono">{regra.codigo}</span>}
-        estado={<Etiqueta tom={regra.ativa ? "sucesso" : "neutro"}>{regra.ativa ? "Ativa" : "Inativa"}</Etiqueta>}
+        estado={<Etiqueta tom={regra.ativa ? "sucesso" : "neutro"}>{regra.ativa ? "Activa" : "Inactiva"}</Etiqueta>}
         descricao="As sugestões já geradas guardam a versão da regra que receberam; esta alteração só vale para as próximas."
       />
       {query.erro && <Aviso tom="erro">{query.erro}</Aviso>}

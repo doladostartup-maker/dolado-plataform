@@ -60,7 +60,7 @@ export async function enviarTextoParaRevisao(casoId: string, textoId: string) {
 const ERROS_ENVIO: Record<string, string> = {
   nao_autorizado: "Envio bloqueado: esta versão não tem autorização do cliente.",
   versao_antiga: "Envio bloqueado: existe uma versão mais recente.",
-  conteudo_diferente: "Envio bloqueado: o texto mudou desde que abriu a página. Atualize e confirme de novo.",
+  conteudo_diferente: "Envio bloqueado: o texto mudou desde que abriu a página. Actualize e confirme de novo.",
   ja_enviado: "Esta versão já tinha sido registada como enviada.",
   prazo_sem_base: "Indique a base do prazo de resposta.",
   invalido: "Versão inexistente.",

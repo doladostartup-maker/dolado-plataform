@@ -26,8 +26,8 @@ describe("escape de conteúdo do cliente", () => {
   });
 
   test("texto normal continua legível (acentos não são alterados)", () => {
-    const html = htmlAlertaMonitor({ ...BASE, regra: "promocao_30d", dias: 1, fornecedor: "Operadora Ação & Cª", descricaoPromocao: "Fibra 1 Gbps" });
-    assert.ok(html.includes("Operadora Ação &amp; Cª"));
+    const html = htmlAlertaMonitor({ ...BASE, regra: "promocao_30d", dias: 1, fornecedor: "Operadora Acção & Cª", descricaoPromocao: "Fibra 1 Gbps" });
+    assert.ok(html.includes("Operadora Acção &amp; Cª"));
     assert.ok(html.includes("termina amanhã"));
   });
 
@@ -56,7 +56,7 @@ describe("destinatário dos alertas diários", () => {
   });
 });
 
-describe("e-mails do Monitor de Proteção", async () => {
+describe("e-mails do Monitor de Protecção", async () => {
   const { assuntoAlertaMonitor, htmlAlertaMonitor } = await import("../../supabase/functions/_shared/emailAlertas.ts");
   const base = { nome: "Ana", fornecedor: "Vodafone", descricaoPromocao: null, dataFim: "2027-02-28", contratoId: "abc" };
 

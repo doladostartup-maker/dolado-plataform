@@ -85,14 +85,14 @@ describe("texto livre", () => {
   });
 });
 
-describe("prepararParaIA: objetos", () => {
+describe("prepararParaIA: objectos", () => {
   for (const chave of ["nome", "email", "telefone", "nif", "morada", "iban", "user_id", "utilizador_id", "caso_id", "id", "stripe_customer_id", "stripe_subscription_id", "customer", "subscription", "ip"]) {
     test(`recusa a chave "${chave}"`, () => {
       assert.throws(() => prepararParaIA({ pedido: { setor: "Telecomunicações", [chave]: "x" } }), ErroPayloadIA);
     });
   }
 
-  test("recusa objetos completos de utilizador (Supabase) e do Stripe", () => {
+  test("recusa objectos completos de utilizador (Supabase) e do Stripe", () => {
     assert.throws(() => prepararParaIA({ conta: { aud: "authenticated", app_metadata: {}, role: "authenticated" } }), ErroPayloadIA);
     assert.throws(() => prepararParaIA({ pagamento: { object: "customer", livemode: true } }), ErroPayloadIA);
     assert.throws(() => prepararParaIA({ pagamento: { object: "subscription" } }), ErroPayloadIA);
@@ -139,7 +139,7 @@ const DESCRICAO_COM_IDENTIDADE = `Chamo-me ${CLIENTE.nome}, o meu NIF é ${CLIEN
 
 const TEXTO_ENVIADO = `Nome: ${CLIENTE.nome}\nNIF: ${CLIENTE.nifPontos}\nMorada: ${CLIENTE.morada}, ${CLIENTE.codigoPostal} Lisboa\nN.º de cliente: ${CLIENTE.numeroCliente}\n\nAssunto: Aumento da mensalidade\nA mensalidade subiu de 39,99 € para 44,99 €. Peço a reposição do valor.`;
 
-const RESPOSTA_EMPRESA = `Exma. Senhora ${CLIENTE.nome},\nRelativamente à conta ${CLIENTE.numeroCliente}, informamos que o aumento de 44,99 € resulta da atualização anual. Contacte-nos para ${CLIENTE.telefone}.`;
+const RESPOSTA_EMPRESA = `Exma. Senhora ${CLIENTE.nome},\nRelativamente à conta ${CLIENTE.numeroCliente}, informamos que o aumento de 44,99 € resulta da actualização anual. Contacte-nos para ${CLIENTE.telefone}.`;
 
 function casoRascunho() {
   return {
@@ -180,7 +180,7 @@ describe("payload do rascunho da reclamação", () => {
     );
     const m = mensagemRascunho({ ...base, seguimento }, [], "nova_comunicacao");
     semProibidos(m);
-    assert.match(m, /atualização anual/);
+    assert.match(m, /actualização anual/);
   });
 });
 
@@ -207,7 +207,7 @@ describe("payload da análise da resposta da empresa", () => {
     );
     semProibidos(m, ["apoio@meo.pt", "REC-2026-1"]);
     assert.match(m, /"dominio_do_remetente": "meo\.pt"/);
-    assert.match(m, /atualização anual/);
+    assert.match(m, /actualização anual/);
   });
 });
 

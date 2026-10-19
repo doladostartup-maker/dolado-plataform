@@ -525,10 +525,10 @@ export async function sinalizarSubscricaoDuplicada(deps: DependenciasWebhook, da
   if (!(await deps.registarSubscricaoDuplicada(dados))) return;
   await deps.notificarAdmin(
     "Subscrição duplicada por rever — DoLado",
-    `A conta ${dados.userId} já tem a subscrição ativa ${dados.subscricaoExistenteId} e foi paga uma segunda subscrição, ${dados.novaSubscriptionId}` +
-      `${dados.sessionId ? ` (compra ${dados.sessionId})` : ""}, detetada em: ${dados.origem}. ` +
+    `A conta ${dados.userId} já tem a subscrição activa ${dados.subscricaoExistenteId} e foi paga uma segunda subscrição, ${dados.novaSubscriptionId}` +
+      `${dados.sessionId ? ` (compra ${dados.sessionId})` : ""}, detectada em: ${dados.origem}. ` +
       "A segunda subscrição NÃO foi aplicada à conta; nada foi cancelado nem reembolsado. " +
-      "Ação recomendada: confirmar com o cliente, cancelar no Stripe Dashboard a subscrição a mais e, se houve cobrança, decidir o reembolso; depois marcar como resolvida no backoffice.",
+      "Acção recomendada: confirmar com o cliente, cancelar no Stripe Dashboard a subscrição a mais e, se houve cobrança, decidir o reembolso; depois marcar como resolvida no backoffice.",
   );
 }
 
@@ -636,7 +636,7 @@ async function converterAvulso(
   await deps.marcarIntervencaoConversao(conversao.id, `o Stripe recusou o reembolso (${reembolso.motivo})`);
   await deps.notificarAdmin(
     "Reembolso de conversão falhou — DoLado",
-    `O reembolso da conversão ${conversao.id} não foi criado (${reembolso.motivo}). A subscrição continua ativa. Resolver manualmente no Stripe.`,
+    `O reembolso da conversão ${conversao.id} não foi criado (${reembolso.motivo}). A subscrição continua activa. Resolver manualmente no Stripe.`,
   );
 }
 
@@ -1079,7 +1079,7 @@ async function tratarReembolso(event: Stripe.Event, deps: DependenciasWebhook): 
     );
     await deps.notificarAdmin(
       "Reembolso de conversão falhou — DoLado",
-      `O reembolso ${refund.id} (conversão ${atualizado.conversaoId}) ficou "${refund.status}". A subscrição continua ativa. Resolver manualmente no Stripe.`,
+      `O reembolso ${refund.id} (conversão ${atualizado.conversaoId}) ficou "${refund.status}". A subscrição continua activa. Resolver manualmente no Stripe.`,
     );
     return { resultado: "reembolso_falhado_intervencao" };
   }

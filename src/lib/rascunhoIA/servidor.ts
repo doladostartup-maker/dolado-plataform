@@ -123,7 +123,7 @@ export function criarDependenciasRascunho(): DepsRascunho {
     async orcamentoBloqueado() {
       gastoAntes = await gastoApiUsd(admin);
       const bloqueado = estadoOrcamento(gastoAntes, teto).bloqueado;
-      if (bloqueado) await avisarAdmin("Orçamento da Claude API atingido", `A sugestão do texto não foi gerada: o gasto (${gastoAntes.toFixed(2)} USD) atingiu o teto de ${teto} USD.`);
+      if (bloqueado) await avisarAdmin("Orçamento da Claude API atingido", `A sugestão do texto não foi gerada: o gasto (${gastoAntes.toFixed(2)} USD) atingiu o tecto de ${teto} USD.`);
       return bloqueado;
     },
 

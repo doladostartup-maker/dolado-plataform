@@ -4,7 +4,8 @@ import { correspondeAPesquisa, normalizar, textoDe } from "./pesquisa.ts";
 
 describe("pesquisa nas perguntas frequentes", () => {
   test("ignora maiúsculas e acentos", () => {
-    assert.equal(normalizar("  Proteção e FATURA "), "protecao e fatura");
+    assert.equal(normalizar("  Protecção e FACTURA "), "protecao e fatura");
+    assert.equal(normalizar("proteção fatura"), normalizar("protecção factura"));
   });
 
   test("extrai o texto de respostas em JSX", () => {
@@ -13,7 +14,7 @@ describe("pesquisa nas perguntas frequentes", () => {
   });
 
   test("todas as palavras têm de aparecer na pergunta ou na resposta", () => {
-    const p = { pergunta: "Posso cancelar a Proteção?", resposta: "Sim, na Gestão de Subscrição." };
+    const p = { pergunta: "Posso cancelar a Protecção?", resposta: "Sim, na Gestão de Subscrição." };
     assert.equal(correspondeAPesquisa(p, "cancelar protecao"), true);
     assert.equal(correspondeAPesquisa(p, "GESTAO subscricao"), true);
     assert.equal(correspondeAPesquisa(p, "cancelar reembolso"), false);

@@ -114,7 +114,7 @@ describe("3. abrir o link (GET) nunca muda nada", () => {
     assert.match(fonte("../app/[idioma]/texto/rever/[token]/page.tsx"), /\{t\.reverTexto\}/);
     assert.match(fonte("../app/[idioma]/texto/alterar/[token]/page.tsx"), /\{t\.alterarTexto\}/);
     assert.match(textos, /Abrir este link não\s+autorizou nada/);
-    assert.match(textos, /O pedido só fica registado quando selecionar/);
+    assert.match(textos, /O pedido só fica registado quando seleccionar/);
   });
 
   test("a função de leitura do link é STABLE (o Postgres recusa escritas nela)", () => {
@@ -153,7 +153,7 @@ describe("3. abrir o link (GET) nunca muda nada", () => {
 describe("22. a equipa não consegue contornar a autorização", () => {
   const backoffice = fonte("../app/backoffice/casos/texto-actions.ts");
 
-  test("ações do backoffice: guardar, enviar para revisão e registar envio — nenhuma autoriza", () => {
+  test("acções do backoffice: guardar, enviar para revisão e registar envio — nenhuma autoriza", () => {
     const exportadas = [...backoffice.matchAll(/export async function (\w+)/g)].map((m) => m[1]);
     assert.deepEqual(exportadas, ["guardarTexto", "enviarTextoParaRevisao", "registarEnvioTexto", "registarComprovativo"]);
     assert.equal(/autoriz.*\.rpc|texto_autorizar|casos_textos_autorizacoes|estado: "autorizado"/.test(backoffice), false);
@@ -168,7 +168,7 @@ describe("22. a equipa não consegue contornar a autorização", () => {
     assert.match(backoffice, /p_conteudo_sha256: hash/);
   });
 
-  test("nenhum código escreve diretamente nas tabelas de prova", () => {
+  test("nenhum código escreve directamente nas tabelas de prova", () => {
     const ficheiros = [
       "../app/backoffice/casos/texto-actions.ts",
       "../app/[idioma]/portal/casos/texto-actions.ts",
@@ -192,7 +192,7 @@ describe("22. a equipa não consegue contornar a autorização", () => {
 describe("17. FAQ", () => {
   test("E se eu não concordar com o texto preparado?", () => {
     const faq = fonte("../i18n/mensagens/pt-PT/perguntas.ts");
-    assert.match(faq, /selecione “Pedir alterações”/);
+    assert.match(faq, /seleccione “Pedir alterações”/);
     assert.match(faq, /só procede ao envio depois de receber a sua autorização explícita/);
   });
 });
@@ -263,7 +263,7 @@ describe("pós-envio: texto enviado e comprovativo", () => {
 
   test("FAQ e copy: sem \"acesso permanente\"", () => {
     const faq = fonte("../i18n/mensagens/pt-PT/perguntas.ts");
-    assert.match(faq, /pode consultar no seu caso, na área de cliente, o texto exato da reclamação submetida/);
+    assert.match(faq, /pode consultar no seu caso, na área de cliente, o texto exacto da reclamação submetida/);
     for (const f of [faq, componente, portal]) assert.equal(/acesso permanente/i.test(f), false);
   });
 });

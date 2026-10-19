@@ -67,12 +67,12 @@ export default async function MonitorBackofficePage() {
   return (
     <div className="flex flex-col gap-6">
       <CabecalhoPagina
-        contexto="Proteção"
+        contexto="Protecção"
         titulo="Documentos por tratar"
         descricao="Documentos que precisam da DoLado: leituras que falharam ou pararam, leituras por fazer à mão e dados por rever. A leitura automática nunca decide sozinha: os casos duvidosos ficam aqui."
         acoes={
           <Link href="/backoffice/monitor/achados" prefetch={false} className={BOTAO_SECUNDARIO}>
-            Situações detetadas
+            Situações detectadas
             {!!achados && <span className="rounded-full bg-[var(--v2-navy)] px-1.5 text-[12px] font-bold text-white">{achados}</span>}
           </Link>
         }
@@ -80,7 +80,7 @@ export default async function MonitorBackofficePage() {
 
       {orcamento.bloqueado && (
         <Aviso tom="erro" titulo="Orçamento da Claude API atingido.">
-          Nenhum documento é lido automaticamente até o teto (ANTHROPIC_ORCAMENTO_USD) ser aumentado. Os documentos ficam pendentes, sem erro para o cliente.
+          Nenhum documento é lido automaticamente até o tecto (ANTHROPIC_ORCAMENTO_USD) ser aumentado. Os documentos ficam pendentes, sem erro para o cliente.
         </Aviso>
       )}
       {semChave && (
@@ -99,7 +99,7 @@ export default async function MonitorBackofficePage() {
                 <th scope="col" className={TABELA_TH}>Situação</th>
                 <th scope="col" className={TABELA_TH}>Recebido em</th>
                 <th scope="col" className={TABELA_TH}>
-                  <span className="sr-only">Ação</span>
+                  <span className="sr-only">Acção</span>
                 </th>
               </tr>
             </thead>
@@ -142,7 +142,7 @@ export default async function MonitorBackofficePage() {
       )}
       {emLeitura > 0 && (
         <p className="text-[13px] text-[var(--v2-muted)]">
-          {emLeitura === 1 ? "1 documento em leitura automática" : `${emLeitura} documentos em leitura automática`} (sem ação necessária; se a
+          {emLeitura === 1 ? "1 documento em leitura automática" : `${emLeitura} documentos em leitura automática`} (sem acção necessária; se a
           leitura parar, o documento aparece acima).
         </p>
       )}

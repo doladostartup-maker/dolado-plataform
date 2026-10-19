@@ -39,7 +39,7 @@ describe("período gratuito", () => {
     assert.equal(protecaoGratuitaDe(linha(29.9), AGORA).diasRestantes, 1);
   });
 
-  test("termina pela data, mesmo com o estado ainda 'ativa' (job atrasado)", () => {
+  test("termina pela data, mesmo com o estado ainda 'activa' (job atrasado)", () => {
     const g = protecaoGratuitaDe(linha(31), AGORA);
     assert.equal(g.emCurso, false);
     assert.equal(g.diasRestantes, 0);
@@ -53,7 +53,7 @@ describe("período gratuito", () => {
 });
 
 describe("adesão durante o período: quando começa a cobrança", () => {
-  test("Proteção: 1.ª cobrança no fim do período (trial_end)", () => {
+  test("Protecção: 1.ª cobrança no fim do período (trial_end)", () => {
     const g = protecaoGratuitaDe(linha(10), AGORA);
     const d = inicioCobrancaAdesao(g, "protecao", AGORA);
     assert.equal(d.toISOString(), g.fim);
@@ -65,7 +65,7 @@ describe("adesão durante o período: quando começa a cobrança", () => {
     assert.ok(inicioCobrancaAdesao(protecaoGratuitaDe(linha(27.9), AGORA), "protecao", AGORA));
   });
 
-  test("Caso + Proteção e Avulso são cobrados logo; sem período em curso também", () => {
+  test("Caso + Protecção e Avulso são cobrados logo; sem período em curso também", () => {
     const g = protecaoGratuitaDe(linha(1), AGORA);
     assert.equal(inicioCobrancaAdesao(g, "caso_protecao", AGORA), null);
     assert.equal(inicioCobrancaAdesao(g, "avulso", AGORA), null);
@@ -82,7 +82,7 @@ describe("adesão durante o período: quando começa a cobrança", () => {
 });
 
 describe("acesso", () => {
-  test("período em curso dá Proteção, sem subscrição nem casos", () => {
+  test("período em curso dá Protecção, sem subscrição nem casos", () => {
     const a = calcularAcesso(null, linha(3), AGORA);
     assert.equal(a.temProtecao, true);
     assert.equal(a.temSubscricao, false);
@@ -91,7 +91,7 @@ describe("acesso", () => {
     assert.equal(a.plano, "none");
   });
 
-  test("período terminado: sem Proteção", () => {
+  test("período terminado: sem Protecção", () => {
     assert.equal(calcularAcesso(null, linha(40, "terminada"), AGORA).temProtecao, false);
     assert.equal(calcularAcesso(null, linha(40), AGORA).temProtecao, false);
   });
@@ -104,12 +104,12 @@ describe("acesso", () => {
     assert.equal(a.creditos, 1);
   });
 
-  test("regresso do Checkout só mostra 'plano ativo' com subscrição paga", () => {
+  test("regresso do Checkout só mostra 'plano activo' com subscrição paga", () => {
     const a = calcularAcesso(null, linha(3), AGORA);
     assert.equal(avisoDoPortal({ regressoDoCheckout: true, acesso: a, ultimoPagamentoEstado: null }), null);
   });
 
-  test("durante o período pode aderir à Proteção ou ao Caso + Proteção (não é uma subscrição)", () => {
+  test("durante o período pode aderir à Protecção ou ao Caso + Protecção (não é uma subscrição)", () => {
     const a = calcularAcesso(null, linha(3), AGORA);
     assert.deepEqual(decidirCompra({ plano: "protecao", autenticado: true, acesso: a, subscricoesAtivasStripe: [] }), { acao: "adesao" });
     assert.deepEqual(opcoesDoPedido(a).modalidades, ["avulso", "caso_protecao"]);
@@ -118,7 +118,7 @@ describe("acesso", () => {
 
 describe("não acumula com a indicação", () => {
   const base = { fluxo: "adesao", conversao: false, novoClienteIndicado: true, recompensasDisponiveis: 1, prescindiu: false };
-  test("Proteção de quem usou o período gratuito: sem desconto de indicação", () => {
+  test("Protecção de quem usou o período gratuito: sem desconto de indicação", () => {
     assert.equal(escolherDescontoCheckout({ ...base, plano: "protecao", usouProtecaoGratuita: true }), null);
   });
   test("sem período gratuito: tudo como antes", () => {
@@ -170,14 +170,14 @@ describe("estado no portal", () => {
     assert.equal(e.diasRestantes, 20);
     assert.equal(e.primeiraCobranca, g.fim);
   });
-  test("terminada: só nos 60 dias seguintes e sem Proteção paga", () => {
+  test("terminada: só nos 60 dias seguintes e sem Protecção paga", () => {
     const g = protecaoGratuitaDe(linha(40, "terminada"), AGORA);
     assert.equal(estadoPortal({ gratuita: g, temSubscricao: false, temProtecao: false, elegivel: false }, AGORA).tipo, "terminada");
     assert.equal(estadoPortal({ gratuita: g, temSubscricao: true, temProtecao: true, elegivel: false }, AGORA), null);
     const antiga = protecaoGratuitaDe(linha(120, "terminada"), AGORA);
     assert.equal(estadoPortal({ gratuita: antiga, temSubscricao: false, temProtecao: false, elegivel: false }, AGORA), null);
   });
-  test("convite só a quem é elegível e nunca a quem já tem Proteção", () => {
+  test("convite só a quem é elegível e nunca a quem já tem Protecção", () => {
     assert.equal(estadoPortal({ gratuita: null, temSubscricao: false, temProtecao: false, elegivel: true }, AGORA).tipo, "oferta");
     assert.equal(estadoPortal({ gratuita: null, temSubscricao: false, temProtecao: false, elegivel: false }, AGORA), null);
     assert.equal(estadoPortal({ gratuita: null, temSubscricao: true, temProtecao: true, elegivel: true }, AGORA), null);
@@ -231,7 +231,7 @@ describe("e-mails do período", () => {
     assert.match(m.assunto, /5 days left/);
     assert.ok(m.html.includes('lang="en-GB"'));
     assert.ok(m.html.includes("https://portal.dolado.pt/en/portal/subscricao"));
-    assert.doesNotMatch(m.texto, /cobrança|Proteção gratuita/);
+    assert.doesNotMatch(m.texto, /cobrança|Protecção gratuita/);
   });
 });
 
@@ -292,7 +292,7 @@ describe("job: e-mails idempotentes", () => {
     assert.deepEqual(incerto.registo.concluidos[0], { id: "aviso-1", enviado: false, erro: "envio_incerto", repetir: false });
   });
 
-  test("logo depois da ativação: só o período ativado, sem manutenção", async () => {
+  test("logo depois da activação: só o período activado, sem manutenção", async () => {
     const d = deps();
     const r = await processarProtecaoGratuita(d, "https://portal.dolado.pt", { soGratuita: "g1", semManutencao: true });
     assert.equal(r.terminadas, 0);

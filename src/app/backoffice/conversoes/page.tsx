@@ -47,7 +47,7 @@ function Tabela({ linhas, resolvidas }: { linhas: Linha[]; resolvidas?: boolean 
             <th scope="col" className={TABELA_TH}>Reembolso</th>
             <th scope="col" className={TABELA_TH}>{resolvidas ? "Resolvida em" : "Motivo"}</th>
             <th scope="col" className={TABELA_TH}>
-              <span className="sr-only">Ação</span>
+              <span className="sr-only">Acção</span>
             </th>
           </tr>
         </thead>
@@ -117,7 +117,7 @@ export default async function ConversoesPage({
       <CabecalhoPagina
         contexto="Pagamentos"
         titulo="Conversões com intervenção"
-        descricao="Conversões de um Avulso numa subscrição cujo reembolso parcial falhou ou foi recusado pelo Stripe. A subscrição do cliente continua ativa e nenhum reembolso é repetido automaticamente: resolva no Stripe e registe aqui o que foi feito."
+        descricao="Conversões de um Avulso numa subscrição cujo reembolso parcial falhou ou foi recusado pelo Stripe. A subscrição do cliente continua activa e nenhum reembolso é repetido automaticamente: resolva no Stripe e registe aqui o que foi feito."
       />
 
       {params.resolvida && <Aviso tom="sucesso">Conversão marcada como resolvida.</Aviso>}

@@ -235,7 +235,7 @@ export function prepararParaIA<T>(valor: T, opcoes: { nomes?: (string | null | u
 }
 
 function percorrer(valor: unknown, opcoes: { nomes?: (string | null | undefined)[] }, caminho: string, nivel: number): unknown {
-  if (nivel > 12) throw new ErroPayloadIA(`${caminho}: objeto demasiado profundo`);
+  if (nivel > 12) throw new ErroPayloadIA(`${caminho}: objecto demasiado profundo`);
   if (valor === null || valor === undefined || typeof valor === "boolean") return valor ?? null;
   if (typeof valor === "number") {
     if (!Number.isFinite(valor)) return null;
@@ -248,8 +248,8 @@ function percorrer(valor: unknown, opcoes: { nomes?: (string | null | undefined)
   if (Array.isArray(valor)) return valor.map((v, i) => percorrer(v, opcoes, `${caminho}[${i}]`, nivel + 1));
   if (typeof valor === "object") {
     const obj = valor as Record<string, unknown>;
-    if (typeof obj.object === "string") throw new ErroPayloadIA(`${caminho}: objeto Stripe (${obj.object})`);
-    if ("aud" in obj || "app_metadata" in obj || "user_metadata" in obj) throw new ErroPayloadIA(`${caminho}: objeto de utilizador`);
+    if (typeof obj.object === "string") throw new ErroPayloadIA(`${caminho}: objecto Stripe (${obj.object})`);
+    if ("aud" in obj || "app_metadata" in obj || "user_metadata" in obj) throw new ErroPayloadIA(`${caminho}: objecto de utilizador`);
     const saida: Record<string, unknown> = {};
     for (const [chave, v] of Object.entries(obj)) {
       const k = normalizarChave(chave);
@@ -314,6 +314,6 @@ const URL_DOCUMENTO_MONITOR = /^https:\/\/[a-z0-9.-]+\/storage\/v1\/object\/sign
 
 export function documentoParaIA(urlAssinada: string): DocumentoIA {
   const local = /^http:\/\/(?:127\.0\.0\.1|localhost):\d+\/storage\/v1\/object\/sign\/documentos-monitor\//.test(urlAssinada);
-  if (!local && !URL_DOCUMENTO_MONITOR.test(urlAssinada)) throw new ErroPayloadIA("documento fora do bucket do Monitor de Proteção");
+  if (!local && !URL_DOCUMENTO_MONITOR.test(urlAssinada)) throw new ErroPayloadIA("documento fora do bucket do Monitor de Protecção");
   return urlAssinada as DocumentoIA;
 }

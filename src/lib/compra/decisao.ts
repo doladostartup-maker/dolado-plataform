@@ -47,6 +47,6 @@ export function decidirCompra(dados: {
   return { acao: "adesao" };
 }
 
-export const MENSAGEM_MESMA_SUBSCRICAO = "Já tem esta subscrição ativa.";
+export const MENSAGEM_MESMA_SUBSCRICAO = "Já tem esta subscrição activa.";
 export const MENSAGEM_OUTRA_SUBSCRICAO =
-  "Já tem uma subscrição ativa. Pode consultá-la em Gestão de Subscrição, na sua área de cliente.";
+  "Já tem uma subscrição activa. Pode consultá-la em Gestão de Subscrição, na sua área de cliente.";

@@ -5,8 +5,8 @@
 
 export const subscricao = {
   estados: {
-    active: "Ativa",
-    trialing: "Ativa",
+    active: "Activa",
+    trialing: "Activa",
     past_due: "Pagamento em atraso",
     incomplete: "Pagamento em confirmação",
     unpaid: "Suspensa por falta de pagamento",
@@ -14,7 +14,7 @@ export const subscricao = {
   },
   cancelamentoAgendado: "Cancelamento agendado",
   reembolso: {
-    efetuado: { titulo: "Reembolso efetuado", texto: "O reembolso foi processado para o método de pagamento original." },
+    efetuado: { titulo: "Reembolso efectuado", texto: "O reembolso foi processado para o método de pagamento original." },
     verificar: {
       titulo: "Estamos a verificar o reembolso",
       texto: "Houve um problema no processamento do reembolso. Não precisa de fazer nada neste momento.",
@@ -25,7 +25,7 @@ export const subscricao = {
     vitalicio: (quanto: string) => `${quanto} vitalício`,
     proximaCobranca: (quanto: string) => `${quanto} na próxima cobrança`,
     ate: (quanto: string, data: string) => `${quanto} até ${data}`,
-    semCobrancaVitalicio: (valor: string) => `${valor} — sem cobrança prevista, desconto de 100% vitalício ativo`,
+    semCobrancaVitalicio: (valor: string) => `${valor} — sem cobrança prevista, desconto de 100% vitalício activo`,
     semCobranca: (valor: string) => `${valor} — sem cobrança prevista`,
     desconto: "Desconto",
     descontos: "Descontos",
@@ -40,30 +40,30 @@ export const subscricao = {
     titulo: "Subscrição",
     descricao: "O seu plano, a próxima renovação e os casos disponíveis.",
     erros: {
-      indisponivel: "Não encontrámos uma subscrição ativa que possa ser alterada. Atualize a página.",
+      indisponivel: "Não encontrámos uma subscrição activa que possa ser alterada. Actualize a página.",
       falha: "Não foi possível concluir o pedido. Tente novamente dentro de alguns minutos.",
       confirmar_casos:
         "Tem um caso em acompanhamento. Para cancelar, confirme primeiro que o acompanhamento desse caso também termina no fim do período já pago.",
     },
-    planoAtual: "Plano atual",
+    planoAtual: "Plano actual",
     estado: "Estado da subscrição",
     precoPlano: "Preço do plano",
     precoMes: (preco: string, iva: string) => `${preco}/mês (${iva})`,
     proximaRenovacao: "Próxima renovação",
-    terminaEm: "A Proteção termina em",
+    terminaEm: "A Protecção termina em",
     subscricao: "Subscrição",
-    semSubscricao: "Sem subscrição ativa",
+    semSubscricao: "Sem subscrição activa",
     casosDisponiveis: "Casos disponíveis",
     canceladaTitulo: "Cancelamento agendado",
-    cancelada: (data: string) => `A sua Proteção continua ativa até ${data}. Depois dessa data não haverá novas cobranças.`,
+    cancelada: (data: string) => `A sua Protecção continua activa até ${data}. Depois dessa data não haverá novas cobranças.`,
     mantidaTitulo: "Subscrição mantida",
     mantida: (data: string) => `O cancelamento foi retirado. A sua subscrição renova-se normalmente a ${data}.`,
-    protecaoAtiva: "Proteção ativa",
-    inativa: "Inativa",
+    protecaoAtiva: "Protecção activa",
+    inativa: "Inactiva",
     agendadoTexto: (data: string) =>
-      `<b>Cancelamento agendado.</b> A sua Proteção está ativa até ${data}. Até lá, tudo continua a funcionar normalmente. Nessa data, deixamos de acompanhar os seus contratos e de enviar alertas.`,
+      `<b>Cancelamento agendado.</b> A sua Protecção está activa até ${data}. Até lá, tudo continua a funcionar normalmente. Nessa data, deixamos de acompanhar os seus contratos e de enviar alertas.`,
     guardados: (n: number, data: string) =>
-      `Tem ${n === 1 ? "1 caso disponível guardado" : `${n} casos disponíveis guardados`} até ${data}. Se voltar a subscrever o Caso + Proteção até essa data, recupera-os.`,
+      `Tem ${n === 1 ? "1 caso disponível guardado" : `${n} casos disponíveis guardados`} até ${data}. Se voltar a subscrever o Caso + Protecção até essa data, recupera-os.`,
     agendadoCasos: (n: number) =>
       n === 1
         ? "Nessa data termina também o acompanhamento do seu caso em curso. Se preferir que a DoLado continue a acompanhá-lo, mantenha a subscrição."
@@ -79,7 +79,7 @@ export const subscricao = {
     confirmar: "Confirmar cancelamento",
     cancelar: "Cancelar subscrição",
     porque: "Pode dizer-nos porque pretende cancelar?",
-    opcional: "A resposta é opcional e não afeta o cancelamento.",
+    opcional: "A resposta é opcional e não afecta o cancelamento.",
     motivos: {
       ja_nao_preciso: "Já não preciso do serviço",
       preco: "O preço não se ajusta ao que procuro",
@@ -91,20 +91,20 @@ export const subscricao = {
     continuar: "Continuar",
     manter: "Manter subscrição",
     titulo: "Cancelar a subscrição?",
-    ativaAte: (data: string) => `A sua Proteção continuará ativa até ${data}. `,
-    ativaAteFim: "A sua Proteção continuará ativa até ao fim do período já pago. ",
+    ativaAte: (data: string) => `A sua Protecção continuará activa até ${data}. `,
+    ativaAteFim: "A sua Protecção continuará activa até ao fim do período já pago. ",
     naoRenovada: "Depois dessa data, a subscrição não será renovada e não haverá novas cobranças.",
     alertas: (meses: number) =>
-      `Ao cancelar a subscrição, deixamos de acompanhar os seus contratos e de enviar alertas quando a Proteção terminar. Conservaremos os contratos, os documentos e os dados associados durante ${meses} meses, caso decida voltar à DoLado. Após esse período, serão eliminados ou anonimizados.`,
+      `Ao cancelar a subscrição, deixamos de acompanhar os seus contratos e de enviar alertas quando a Protecção terminar. Conservaremos os contratos, os documentos e os dados associados durante ${meses} meses, caso decida voltar à DoLado. Após esse período, serão eliminados ou anonimizados.`,
     casosGuardados: (dias: number) =>
-      `Os seus casos disponíveis ficam guardados durante ${dias} dias depois dessa data. Se voltar a subscrever o Caso + Proteção nesse período, recupera-os.`,
+      `Os seus casos disponíveis ficam guardados durante ${dias} dias depois dessa data. Se voltar a subscrever o Caso + Protecção nesse período, recupera-os.`,
     naoApagados: "Os casos que já abriu, os documentos e o histórico não são apagados.",
     casos: {
       titulo: (n: number) => (n === 1 ? "Tem um caso em acompanhamento" : `Tem ${n} casos em acompanhamento`),
       texto: (data: string) =>
-        `Pode manter a subscrição até o caso terminar e cancelar depois. Se cancelar agora, a subscrição termina a ${data} e, nessa data, a DoLado deixa também de acompanhar os casos em curso. Os casos tratados com Avulso ou Caso Extra não são afetados.`,
+        `Pode manter a subscrição até o caso terminar e cancelar depois. Se cancelar agora, a subscrição termina a ${data} e, nessa data, a DoLado deixa também de acompanhar os casos em curso. Os casos tratados com Avulso ou Caso Extra não são afectados.`,
       textoSemData:
-        "Pode manter a subscrição até o caso terminar e cancelar depois. Se cancelar agora, no fim do período já pago a DoLado deixa também de acompanhar os casos em curso. Os casos tratados com Avulso ou Caso Extra não são afetados.",
+        "Pode manter a subscrição até o caso terminar e cancelar depois. Se cancelar agora, no fim do período já pago a DoLado deixa também de acompanhar os casos em curso. Os casos tratados com Avulso ou Caso Extra não são afectados.",
       manter: "Manter a subscrição até o caso terminar",
       confirmo: (data: string) => `Compreendo que o acompanhamento dos meus casos em curso termina a ${data}.`,
       confirmoSemData: "Compreendo que o acompanhamento dos meus casos em curso termina no fim do período já pago.",

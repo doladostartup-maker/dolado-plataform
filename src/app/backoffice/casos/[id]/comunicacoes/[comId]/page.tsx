@@ -134,7 +134,7 @@ export default async function ComunicacaoPage({
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-5">
-          <Seccao id="mensagem" titulo="Mensagem recebida" descricao="Conteúdo de fora da DoLado, mostrado só como texto (sem imagens, ligações ativas nem scripts).">
+          <Seccao id="mensagem" titulo="Mensagem recebida" descricao="Conteúdo de fora da DoLado, mostrado só como texto (sem imagens, ligações activas nem scripts).">
             <ListaDados>
               <Dado rotulo="Remetente">
                 {com.remetente_nome || "—"}
@@ -160,7 +160,7 @@ export default async function ComunicacaoPage({
             <div className="flex flex-wrap gap-2">
               {com.automatica && <Etiqueta tom="neutro">Parece uma resposta automática</Etiqueta>}
               {com.suspeita_spam && <Etiqueta tom="aviso">Possível spam (SPF, DKIM e DMARC sem validação)</Etiqueta>}
-              {com.cabecalhos?.autenticacao && <span className={METADADOS}>Autenticação na receção: {com.cabecalhos.autenticacao}</span>}
+              {com.cabecalhos?.autenticacao && <span className={METADADOS}>Autenticação na recepção: {com.cabecalhos.autenticacao}</span>}
               {com.truncado && <Etiqueta tom="aviso">Conteúdo muito longo: cortado na apresentação</Etiqueta>}
             </div>
             <div className={TEXTO_DOCUMENTO}>{com.corpo_apresentacao || com.corpo_texto || "(sem texto)"}</div>
@@ -219,7 +219,7 @@ export default async function ComunicacaoPage({
           >
             {aGerar && (
               <p className="text-[14px] text-[var(--v2-muted)]" role="status">
-                A gerar a análise (pedido {dataHora(ultima?.created_at)})… A página atualiza sozinha.
+                A gerar a análise (pedido {dataHora(ultima?.created_at)})… A página actualiza sozinha.
                 <AtualizarEnquanto />
               </p>
             )}
@@ -230,7 +230,7 @@ export default async function ComunicacaoPage({
             )}
             {!ultima && (
               <p className="text-[14px] text-[var(--v2-muted)]">
-                {iaAtiva ? "Ainda sem análise automática." : "A análise automática está desativada neste ambiente. Faça a análise manualmente."}
+                {iaAtiva ? "Ainda sem análise automática." : "A análise automática está desactivada neste ambiente. Faça a análise manualmente."}
               </p>
             )}
             {analise && (

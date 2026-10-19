@@ -8,7 +8,7 @@
 import { COR_EMAIL, P_EMAIL, P_NOTA, caixaEmail, emailV2 } from "./molduraEmail.ts";
 import { escaparHtml } from "./textoRevisao.ts";
 import { IDIOMA_PADRAO, localizarHref, type Idioma } from "../../i18n/config.ts";
-import { formatarData } from "../../i18n/formatar.ts";
+import { formatarData, mesesComMaiuscula } from "../../i18n/formatar.ts";
 import { tEmails } from "../../i18n/mensagens/emails.ts";
 import { rotulo } from "../../i18n/mensagens/rotulos.ts";
 
@@ -23,7 +23,7 @@ const PARAGRAFO_CAIXA = `margin:0; font-size:15px; line-height:1.65; color:${COR
 
 /** "5 de outubro de 2026" / "5 October 2026", na hora de Lisboa. */
 export function dataAvisoSetorial(data: Date, idioma: Idioma = IDIOMA_PADRAO): string {
-  if (idioma === "pt-PT") return data.toLocaleDateString("pt-PT", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Lisbon" });
+  if (idioma === "pt-PT") return mesesComMaiuscula(data.toLocaleDateString("pt-PT", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Lisbon" }));
   return formatarData(idioma, data);
 }
 

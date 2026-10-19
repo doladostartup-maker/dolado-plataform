@@ -90,7 +90,7 @@ export default async function IndicacoesBackofficePage({
       <CabecalhoPagina
         contexto="Pagamentos"
         titulo="Programa de indicação"
-        descricao="20% para quem indica e 20% para o novo cliente. Caso + Proteção não é elegível para o desconto de aquisição; uma recompensa já ganha pode ser usada numa renovação mensal futura do Caso + Proteção. Mesmo cartão = revisão manual, nunca bloqueio automático; o IP nunca é usado."
+        descricao="20% para quem indica e 20% para o novo cliente. Caso + Protecção não é elegível para o desconto de aquisição; uma recompensa já ganha pode ser usada numa renovação mensal futura do Caso + Protecção. Mesmo cartão = revisão manual, nunca bloqueio automático; o IP nunca é usado."
       />
       {!indicacoesAtivas() && (
         <Aviso tom="info">O programa está desligado (INDICACOES_ATIVO). Os links não registam visitas e não há descontos.</Aviso>

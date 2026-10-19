@@ -113,12 +113,12 @@ export const conta: Traducao<typeof pt> = {
     botao: "Link this purchase to my account",
   },
   mensagens: {
-    "E-mail ou palavra-passe incorretos.": "Incorrect email or password.",
+    "E-mail ou palavra-passe incorrectos.": "Incorrect email or password.",
     "Confirme o seu e-mail antes de entrar. Procure a mensagem que lhe enviámos na sua caixa de correio.":
       "Please confirm your email before signing in. Look for the message we sent to your inbox.",
     "Já existe uma conta com este e-mail. Inicie sessão com esse e-mail.":
       "There is already an account with this email. Please sign in with that email.",
-    "A nova palavra-passe tem de ser diferente da atual.": "Your new password must be different from your current one.",
+    "A nova palavra-passe tem de ser diferente da actual.": "Your new password must be different from your current one.",
     "A palavra-passe não cumpre os requisitos. Use pelo menos 8 caracteres, com letras e números.":
       "The password doesn't meet the requirements. Use at least 8 characters, with letters and numbers.",
     "Insira um e-mail válido.": "Please enter a valid email address.",
@@ -151,7 +151,7 @@ export const conta: Traducao<typeof pt> = {
       "We couldn't link the purchase. Please try again in a few minutes.",
     "A compra foi associada à sua conta.": "The purchase has been linked to your account.",
     "Esta compra já está associada à sua conta.": "This purchase is already linked to your account.",
-    "A sua conta já tem uma subscrição ativa, por isso esta compra não foi somada à conta. A DoLado vai analisar a situação e responder-lhe por e-mail no prazo máximo de 2 dias úteis.":
+    "A sua conta já tem uma subscrição activa, por isso esta compra não foi somada à conta. A DoLado vai analisar a situação e responder-lhe por e-mail no prazo máximo de 2 dias úteis.":
       "Your account already has an active subscription, so this purchase has not been added to it. DoLado will look into the situation and reply to you by email within 2 working days at the latest.",
     "Esta compra já está em análise pela DoLado. A DoLado responde-lhe por e-mail no prazo máximo de 2 dias úteis.":
       "DoLado is already looking into this purchase. DoLado will reply to you by email within 2 working days at the latest.",

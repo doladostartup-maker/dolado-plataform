@@ -92,7 +92,7 @@ export async function criarContratoParaDocumento(formData: FormData) {
   const setor = String(formData.get("setor") ?? "nao_indicado");
   const fornecedor = String(formData.get("fornecedor") ?? "").trim();
   if (!SETORES_CONTRATO.includes(setor as (typeof SETORES_CONTRATO)[number]) || !fornecedor) {
-    voltar(doc.id, { erro: "Indique o setor e o fornecedor." });
+    voltar(doc.id, { erro: "Indique o sector e o fornecedor." });
   }
   const { data: contrato, error } = await admin
     .from("contratos_monitorizados")

@@ -27,7 +27,7 @@ test("aviso sectorial: nome, título e descrição passam por escape", () => {
 test("aviso sectorial: quebras de linha da descrição mantêm-se, acentos intactos", () => {
   const html = montarHtmlAvisoSetorial("Ana", "Água", "Subida de preços", "Linha 1\nLinha 2");
   assert.ok(html.includes("Linha 1<br>Linha 2"));
-  assert.ok(html.includes("Publicámos um aviso sobre o setor de Água,"));
+  assert.ok(html.includes("Publicámos um aviso sobre o sector de Água,"));
 });
 
 test("boas-vindas: em nome da equipa, sem contacto pessoal, chamadas, operador nem prazo antigo", () => {

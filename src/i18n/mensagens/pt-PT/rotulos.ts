@@ -61,7 +61,7 @@ export const rotulos = {
   },
   titular: {
     "Sim, é um contrato pessoal ou da minha casa": "Sim, é um contrato pessoal ou da minha casa",
-    "Não, é de uma empresa ou atividade profissional": "Não, é de uma empresa ou atividade profissional",
+    "Não, é de uma empresa ou actividade profissional": "Não, é de uma empresa ou actividade profissional",
     "Não tenho a certeza": "Não tenho a certeza",
   },
 };

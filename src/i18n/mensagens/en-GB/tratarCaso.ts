@@ -185,9 +185,9 @@ export const tratarCaso: Traducao<typeof pt> = {
   mensagens: {
     "Demasiados pedidos. Tente novamente dentro de alguns minutos.": "Too many requests. Please try again in a few minutes.",
     "Não foi possível guardar o seu pedido. Tente novamente.": "We couldn't save your request. Please try again.",
-    "Indique o setor e a empresa.": "Please enter the sector and the company.",
+    "Indique o sector e a empresa.": "Please enter the sector and the company.",
     "Responda às perguntas sobre o contrato dos painéis solares.": "Please answer the questions about the solar panel contract.",
-    "Selecione o que aconteceu.": "Please select what happened.",
+    "Seleccione o que aconteceu.": "Please select what happened.",
     "Indique se já reclamou junto da empresa.": "Please say whether you have already complained to the company.",
     "Insira um nome válido.": "Please enter a valid name.",
     "Telemóvel inválido.": "Invalid mobile number. Please use a Portuguese mobile number.",
@@ -198,7 +198,7 @@ export const tratarCaso: Traducao<typeof pt> = {
       "The password doesn't meet the requirements. Use at least 8 characters, with letters and numbers.",
     "Demasiadas tentativas. Aguarde alguns minutos e tente novamente.":
       "Too many attempts. Please wait a few minutes and try again.",
-    "E-mail ou palavra-passe incorretos.": "Incorrect email or password.",
+    "E-mail ou palavra-passe incorrectos.": "Incorrect email or password.",
     "O código é inválido ou expirou. Peça um novo código.": "The code is invalid or has expired. Please request a new code.",
     "Não foi possível concluir. Tente novamente.": "We couldn't complete that. Please try again.",
     "Insira um e-mail válido.": "Please enter a valid email address.",

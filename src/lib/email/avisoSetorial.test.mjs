@@ -6,7 +6,7 @@ import { dataAvisoSetorial, montarHtmlAvisoSetorial } from "./avisoSetorial.ts";
 
 const DATA = new Date("2026-10-05T10:00:00Z");
 const aviso = (over = {}) => {
-  const a = { nome: "Ana", setor: "Energia", titulo: "Atualização das tarifas reguladas", descricao: "A ERSE publicou novas tarifas.", ...over };
+  const a = { nome: "Ana", setor: "Energia", titulo: "Actualização das tarifas reguladas", descricao: "A ERSE publicou novas tarifas.", ...over };
   return montarHtmlAvisoSetorial(a.nome, a.setor, a.titulo, a.descricao, DATA);
 };
 
@@ -24,23 +24,23 @@ function semValoresEstranhos(html) {
   assert.equal(/<p[^>]*>\s*<\/p>/.test(html), false, "parágrafo vazio");
 }
 
-test("identificação: rótulo, setor, título em destaque e data de envio", () => {
+test("identificação: rótulo, sector, título em destaque e data de envio", () => {
   const html = aviso();
-  assert.match(html, /Aviso setorial · Energia<\/p>/);
-  assert.match(html, /<h1 [^>]*>Atualização das tarifas reguladas<\/h1>/);
-  assert.ok(html.includes("Enviado a 5 de outubro de 2026"));
-  assert.ok(html.includes("<title>Aviso setorial: Energia — DoLado</title>"));
+  assert.match(html, /Aviso sectorial · Energia<\/p>/);
+  assert.match(html, /<h1 [^>]*>Actualização das tarifas reguladas<\/h1>/);
+  assert.ok(html.includes("Enviado a 5 de Outubro de 2026"));
+  assert.ok(html.includes("<title>Aviso sectorial: Energia — DoLado</title>"));
   semValoresEstranhos(html);
 });
 
 test("data na hora de Lisboa (UTC+1 no verão, UTC+0 no inverno)", () => {
-  assert.equal(dataAvisoSetorial(new Date("2026-07-31T23:30:00Z")), "1 de agosto de 2026");
-  assert.equal(dataAvisoSetorial(new Date("2026-12-31T23:30:00Z")), "31 de dezembro de 2026");
+  assert.equal(dataAvisoSetorial(new Date("2026-07-31T23:30:00Z")), "1 de Agosto de 2026");
+  assert.equal(dataAvisoSetorial(new Date("2026-12-31T23:30:00Z")), "31 de Dezembro de 2026");
 });
 
 test("título curto e título longo: sem truncar e com quebra de palavras longas", () => {
   assert.match(aviso({ titulo: "Água" }), /<h1 [^>]*>Água<\/h1>/);
-  const longo = "Alteração das condições gerais de vários operadores de telecomunicações a partir de janeiro, com impacto nas mensalidades e nos períodos de fidelização";
+  const longo = "Alteração das condições gerais de vários operadores de telecomunicações a partir de Janeiro, com impacto nas mensalidades e nos períodos de fidelização";
   const html = aviso({ titulo: longo });
   assert.ok(html.includes(`>${longo}</h1>`));
   assert.match(html, /<h1 style="[^"]*overflow-wrap:break-word;/);
@@ -76,12 +76,12 @@ test("nome vazio: cumprimento sem espaço solto; descrição vazia: sem caixa va
   semValoresEstranhos(html);
 });
 
-test("os três setores aparecem no texto, no rótulo e no motivo do rodapé", () => {
+test("os três sectores aparecem no texto, no rótulo e no motivo do rodapé", () => {
   for (const setor of ["Telecomunicações", "Energia", "Água"]) {
     const html = aviso({ setor });
-    assert.ok(html.includes(`Aviso setorial · ${setor}`));
-    assert.ok(html.includes(`aviso sobre o setor de ${setor},`));
-    assert.ok(html.includes(`receber avisos sobre o setor de ${setor}.`));
+    assert.ok(html.includes(`Aviso sectorial · ${setor}`));
+    assert.ok(html.includes(`aviso sobre o sector de ${setor},`));
+    assert.ok(html.includes(`receber avisos sobre o sector de ${setor}.`));
   }
 });
 

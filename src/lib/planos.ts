@@ -34,25 +34,25 @@ export const LIMITE_CASOS_ACUMULADOS = 4;
 export const PLANOS: Record<PlanoId, Plano> = {
   protecao: {
     id: "protecao",
-    nome: "Proteção",
+    nome: "Protecção",
     precoCentimos: 499,
     subscricao: true,
     protecao: true,
     casosPorMes: 0,
     casosPorCompra: 0,
     descricaoCurta:
-      "Ajuda a identificar situações que possam tornar-se num problema: comparação das suas faturas para identificar alterações, avisos antes do fim de promoções e de períodos de fidelização, e avisos de alterações relevantes no seu setor. Não inclui o tratamento de casos.",
+      "Ajuda a identificar situações que possam tornar-se num problema: comparação das suas facturas para identificar alterações, avisos antes do fim de promoções e de períodos de fidelização, e avisos de alterações relevantes no seu sector. Não inclui o tratamento de casos.",
     stripePriceId: "price_1ULUUeBtJL9VeDPfWuDk5XCo",
   },
   caso_protecao: {
     id: "caso_protecao",
-    nome: "Caso + Proteção",
+    nome: "Caso + Protecção",
     precoCentimos: 799,
     subscricao: true,
     protecao: true,
     casosPorMes: 1,
     casosPorCompra: 0,
-    descricaoCurta: `Tudo o que a Proteção inclui, mais 1 caso por mês. Os casos não utilizados acumulam até ao limite de ${LIMITE_CASOS_ACUMULADOS}.`,
+    descricaoCurta: `Tudo o que a Protecção inclui, mais 1 caso por mês. Os casos não utilizados acumulam até ao limite de ${LIMITE_CASOS_ACUMULADOS}.`,
     stripePriceId: "price_1UJYnPBtJL9VeDPfnQTlVwsq",
   },
   avulso: {
@@ -63,7 +63,7 @@ export const PLANOS: Record<PlanoId, Plano> = {
     protecao: false,
     casosPorMes: 0,
     casosPorCompra: 1,
-    descricaoCurta: "Tratamento de 1 caso, sem subscrição. Não inclui as funcionalidades de proteção.",
+    descricaoCurta: "Tratamento de 1 caso, sem subscrição. Não inclui as funcionalidades de protecção.",
     // 11,99 € desde 18/10/2026 (antes 14,99 €; o Price antigo fica na Stripe
     // para o histórico e nunca é reutilizado).
     stripePriceId: "price_1URyUDBtJL9VeDPfp4elEsf7",
@@ -86,7 +86,7 @@ export const CASO_EXTRA = {
   precoReferenciaCentimos: PLANOS.avulso.precoCentimos,
   descontoPercentagem: 20,
   descricaoCurta:
-    "Tratamento de mais 1 caso, com pagamento único. A sua subscrição continua ativa e não é alterada.",
+    "Tratamento de mais 1 caso, com pagamento único. A sua subscrição continua activa e não é alterada.",
   /**
    * Price ID oficial (9,59 € desde 18/10/2026, pagamento único; produto "Caso
    * Extra"). O de 11,99 € (05/10/2026) fica na Stripe para

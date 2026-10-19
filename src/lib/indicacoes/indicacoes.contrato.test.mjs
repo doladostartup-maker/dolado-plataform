@@ -142,7 +142,7 @@ describe("programa de indicação (Supabase real)", { skip: !ATIVO }, () => {
     assert.deepEqual(await srv.estadoIndicacaoDaConta(bruno), { novoClienteIndicado: true, recompensasDisponiveis: 0, usouProtecaoGratuita: false });
   });
 
-  test("quem indica tem Proteção ativa", async () => {
+  test("quem indica tem Protecção activa", async () => {
     subAna = "sub_ind_ana";
     stripe.subs.set(subAna, {
       id: subAna,

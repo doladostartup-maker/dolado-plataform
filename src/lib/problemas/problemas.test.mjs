@@ -53,7 +53,7 @@ describe("catálogo", () => {
     assert.ok(!ehCaminhoDeProblemas("/"));
   });
 
-  test("setor e tipo de problema existem nas listas fechadas de /tratar-caso", () => {
+  test("sector e tipo de problema existem nas listas fechadas de /tratar-caso", () => {
     for (const c of CATEGORIAS) {
       assert.ok(SETORES.includes(c.setor), c.slug);
       for (const p of c.problemas) {
@@ -80,7 +80,7 @@ describe("catálogo", () => {
     }
   });
 
-  test("Tratar o meu caso: origem da página, setor e (só se existir) o tipo de problema", () => {
+  test("Tratar o meu caso: origem da página, sector e (só se existir) o tipo de problema", () => {
     const q = new URLSearchParams(parametrosTratarCaso("/problemas/energia/fatura-muito-alta", "Energia"));
     assert.equal(q.get("origem"), "/problemas/energia/fatura-muito-alta");
     assert.equal(q.get("setor"), "Energia");

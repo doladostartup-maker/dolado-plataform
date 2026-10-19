@@ -45,7 +45,7 @@ function parseCasoFormData(formData: FormData) {
   };
 }
 
-const ERRO_PROBLEMA = "O tipo de problema não existe no setor escolhido.";
+const ERRO_PROBLEMA = "O tipo de problema não existe no sector escolhido.";
 
 export async function criarCaso(formData: FormData) {
   const supabase = await createClient();

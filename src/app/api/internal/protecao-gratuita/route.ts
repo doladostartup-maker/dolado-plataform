@@ -33,6 +33,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(resultado);
   } catch (erro) {
     console.error(JSON.stringify({ origem: "protecao_gratuita", erro_codigo: (erro as { code?: string })?.code ?? "erro" }));
-    return NextResponse.json({ erro: "Falha no processamento da Proteção gratuita." }, { status: 500 });
+    return NextResponse.json({ erro: "Falha no processamento da Protecção gratuita." }, { status: 500 });
   }
 }

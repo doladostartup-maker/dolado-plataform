@@ -78,9 +78,9 @@ describe("conteúdo do resumo", () => {
   test("cliente sem documentos no mês recebe um resumo válido", () => {
     const r = montarResumoMensal([servico({ faturas: [fatura("2026-08-10T10:00:00Z")] })], MES, HOJE);
     assert.equal(r.estado, "tudo_acompanhado");
-    assert.match(r.introducao, /^Em setembro não recebemos documentos novos, mas a DoLado continuou a acompanhar o seu serviço\./);
+    assert.match(r.introducao, /^Em Setembro não recebemos documentos novos, mas a DoLado continuou a acompanhar o seu serviço\./);
     assert.equal(r.contagens.faturas, 0);
-    assert.ok(!r.atividade.some((l) => /fatura/.test(l)), "sem métricas de faturas inventadas");
+    assert.ok(!r.atividade.some((l) => /factura/.test(l)), "sem métricas de facturas inventadas");
     assert.deepEqual(r.atividade, ["1 serviço acompanhado"]);
   });
 
@@ -90,11 +90,11 @@ describe("conteúdo do resumo", () => {
     assert.equal(r.semAlteracoes, null);
     assert.deepEqual(r.atividade, []);
     const html = montarHtmlResumoMensal(r, `${SITE}/portal/contratos`);
-    assert.ok(!html.includes("Alterações detetadas"));
+    assert.ok(!html.includes("Alterações detectadas"));
     assert.match(html, /Adicionar um documento/);
   });
 
-  test("sem alterações: mensagem correta e 'Tudo acompanhado'", () => {
+  test("sem alterações: mensagem correcta e 'Tudo acompanhado'", () => {
     const r = montarResumoMensal(
       [servico({ faturas: [fatura("2026-09-05T10:00:00Z"), fatura("2026-09-20T10:00:00Z")], documentos: [] })],
       MES,
@@ -102,9 +102,9 @@ describe("conteúdo do resumo", () => {
     );
     assert.equal(r.estado, "tudo_acompanhado");
     assert.equal(r.estadoTitulo, "Tudo acompanhado");
-    assert.equal(r.semAlteracoes, "Não detetámos alterações que exijam a sua atenção em setembro.");
-    assert.equal(r.introducao, "Em setembro, a DoLado verificou 2 faturas. Não detetámos nenhuma alteração que exija a sua atenção.");
-    assert.ok(r.atividade.includes("2 faturas verificadas"));
+    assert.equal(r.semAlteracoes, "Não detectámos alterações que exijam a sua atenção em Setembro.");
+    assert.equal(r.introducao, "Em Setembro, a DoLado verificou 2 facturas. Não detectámos nenhuma alteração que exija a sua atenção.");
+    assert.ok(r.atividade.includes("2 facturas verificadas"));
     assert.match(r.estadoTexto, /Com base nos documentos e nas datas que nos indicou/);
   });
 
@@ -114,7 +114,7 @@ describe("conteúdo do resumo", () => {
       faturas: [f],
       achados: [
         { id: "a1", faturaId: f.id, tipo: "aumento_nao_explicado", texto: "Texto livre da DoLado", comunicadoEm: "2026-09-12T10:00:00Z" },
-        { id: "a0", faturaId: null, tipo: "linha_nova", texto: "De agosto", comunicadoEm: "2026-08-20T10:00:00Z" },
+        { id: "a0", faturaId: null, tipo: "linha_nova", texto: "De Agosto", comunicadoEm: "2026-08-20T10:00:00Z" },
       ],
       eventos: [
         { faturaId: f.id, tipo: "mensalidade_alterada", base: "historico", severidade: "atencao", montanteCents: 640, dados: { anterior: 3000, atual: 3640 }, achadoId: "a1", criadoEm: "2026-09-05T10:00:00Z" },
@@ -122,17 +122,17 @@ describe("conteúdo do resumo", () => {
     });
     const r = montarResumoMensal([s], MES, HOJE);
     assert.equal(r.estado, "atencao");
-    assert.deepEqual(r.alteracoes.map(norm), ["Vodafone: um aumento de 6,40 € na mensalidade (comunicado a 12 de setembro)"]);
+    assert.deepEqual(r.alteracoes.map(norm), ["Vodafone: um aumento de 6,40 € na mensalidade (comunicado a 12 de Setembro)"]);
     assert.equal(r.semAlteracoes, null);
-    assert.match(r.introducao, /Detetámos 1 situação que merece a sua atenção\.$/);
+    assert.match(r.introducao, /Detectámos 1 situação que merece a sua atenção\.$/);
     // O texto livre do achado não vai no resumo (só a forma curta gerada pelo código).
     assert.ok(!JSON.stringify(r).includes("Texto livre da DoLado"));
   });
 
-  test("alteração em verificação: nunca 'não detetámos'", () => {
+  test("alteração em verificação: nunca 'não detectámos'", () => {
     const r = montarResumoMensal([servico({ faturas: [fatura("2026-09-05T10:00:00Z", { emVerificacao: true })] })], MES, HOJE);
     assert.equal(r.estado, "em_verificacao");
-    assert.ok(!/Não detetámos/.test(JSON.stringify(r)));
+    assert.ok(!/Não detectámos/.test(JSON.stringify(r)));
     assert.match(r.semAlteracoes, /Estamos a verificar uma alteração/);
   });
 
@@ -141,7 +141,7 @@ describe("conteúdo do resumo", () => {
     assert.equal(r.estado, "por_confirmar");
   });
 
-  test("datas futuras aparecem corretamente; passadas e de serviços terminados não", () => {
+  test("datas futuras aparecem correctamente; passadas e de serviços terminados não", () => {
     const r = montarResumoMensal(
       [
         servico({ campos: { data_fim_promocao: data("2027-03-14"), data_fim_fidelizacao: data("2026-09-01") }, faturas: [fatura("2026-09-05T10:00:00Z")] }),
@@ -150,15 +150,15 @@ describe("conteúdo do resumo", () => {
       MES,
       HOJE,
     );
-    assert.deepEqual(r.acompanhamento, ["Vodafone — fim da promoção a 14 de março de 2027", "Comparação de faturas — Vodafone"]);
-    assert.equal(r.proximaData, "Vodafone: a promoção termina a 14 de março de 2027. Avisamos por e-mail antes dessa data.");
+    assert.deepEqual(r.acompanhamento, ["Vodafone — fim da promoção a 14 de Março de 2027", "Comparação de facturas — Vodafone"]);
+    assert.equal(r.proximaData, "Vodafone: a promoção termina a 14 de Março de 2027. Avisamos por e-mail antes dessa data.");
     assert.equal(r.contagens.alertasDatas, 1);
-    assert.match(r.introducao, /manteve 1 alerta de datas ativo/);
+    assert.match(r.introducao, /manteve 1 alerta de datas activo/);
   });
 
   test("data próxima (até 30 dias): aviso na própria data", () => {
     const r = montarResumoMensal([servico({ campos: { data_fim_fidelizacao: data("2026-10-20") } })], MES, HOJE);
-    assert.equal(r.proximaData, "Vodafone: a fidelização termina a 20 de outubro de 2026. Avisamos por e-mail nessa data.");
+    assert.equal(r.proximaData, "Vodafone: a fidelização termina a 20 de Outubro de 2026. Avisamos por e-mail nessa data.");
   });
 
   test("sem data conhecida não inventa nenhuma", () => {
@@ -202,16 +202,16 @@ describe("e-mail", () => {
       MES,
       HOJE,
     );
-    assert.equal(assuntoResumoMensal(r), "A sua Proteção em setembro");
+    assert.equal(assuntoResumoMensal(r), "A sua Protecção em Setembro");
     const html = montarHtmlResumoMensal(r, `${SITE}/portal/contratos`);
     assert.ok(!html.includes("<b>Operador</b>"));
     assert.ok(html.includes("&lt;b&gt;Operador&lt;/b&gt;"));
-    for (const t of ["O que acompanhámos em setembro", "Alterações detetadas", "A sua Proteção continua ativa", "Próxima data relevante", "Tudo acompanhado"]) {
+    for (const t of ["O que acompanhámos em Setembro", "Alterações detectadas", "A sua Protecção continua activa", "Próxima data relevante", "Tudo acompanhado"]) {
       assert.ok(html.includes(t), t);
     }
     assert.match(html, /viewport/);
     const texto = montarTextoResumoMensal(r, `${SITE}/portal/contratos`);
-    assert.match(texto, /Próxima data relevante\n<b>Operador<\/b>: a promoção termina a 14 de março de 2027/);
+    assert.match(texto, /Próxima data relevante\n<b>Operador<\/b>: a promoção termina a 14 de Março de 2027/);
     assert.match(texto, /https:\/\/portal\.dolado\.pt\/portal\/contratos/);
   });
 
@@ -222,7 +222,7 @@ describe("e-mail", () => {
       montarResumoMensal([servico()], MES, HOJE),
     ].map((r) => montarTextoResumoMensal(r, SITE) + montarHtmlResumoMensal(r, SITE));
     for (const t of textos) {
-      assert.ok(!/\bemail\b|você|factura|detectámos|garantimos|não aconteceu nada|não fizemos nada/i.test(t.replace(/mailto:[^"]+|contacto@dolado\.pt/g, "")));
+      assert.ok(!/\bemail\b|você|\bfatura|detetámos|garantimos|não aconteceu nada|não fizemos nada/i.test(t.replace(/mailto:[^"]+|contacto@dolado\.pt/g, "")));
     }
   });
 });
@@ -288,7 +288,7 @@ describe("envio", () => {
 
   const conta = (uid, servicos = [], protecao = true) => contas.set(uid, { email: `${uid}@teste.invalid`, protecao, servicos });
 
-  test("Proteção e Caso + Proteção ativas recebem; contas sem Proteção (Avulso, cancelada, sem plano) não", async () => {
+  test("Protecção e Caso + Protecção activas recebem; contas sem Protecção (Avulso, cancelada, sem plano) não", async () => {
     // A elegibilidade por plano/estado é decidida na SQL (testada em pgTAP);
     // aqui: o envio só sai para quem a SQL devolve e reserva.
     conta("protecao");
@@ -299,11 +299,11 @@ describe("envio", () => {
     const r = await enviarResumosMensais(deps(), SITE, AGORA);
     assert.deepEqual(r, { foraDaJanela: false, mes: "2026-09", enviados: 2, falhados: 0, ignorados: 0 });
     assert.deepEqual(emails.map((e) => e.destinatario).sort(), ["caso_protecao@teste.invalid", "protecao@teste.invalid"]);
-    assert.equal(emails[0].assunto, "A sua Proteção em setembro");
+    assert.equal(emails[0].assunto, "A sua Protecção em Setembro");
     assert.ok(emails[0].texto.length > 0, "envia também a versão em texto");
   });
 
-  test("Proteção perdida entre a lista e o envio: a reserva recusa e nada sai", async () => {
+  test("Protecção perdida entre a lista e o envio: a reserva recusa e nada sai", async () => {
     conta("a");
     const d = deps();
     const lista = await d.destinatarios("2026-09-01");
@@ -383,7 +383,7 @@ describe("envio", () => {
     const para = (uid) => emails.find((e) => e.destinatario === `${uid}@teste.invalid`);
     assert.ok(para("a").html.includes("Operadora Alfa") && !para("a").html.includes("Operadora Beta"));
     assert.ok(para("b").html.includes("Operadora Beta") && !para("b").html.includes("Operadora Alfa"));
-    assert.ok(!para("a").texto.includes("30 de junho de 2027"));
+    assert.ok(!para("a").texto.includes("30 de Junho de 2027"));
     assert.ok(!JSON.stringify(linhas.get("a|2026-09-01").conteudo).includes("Beta"));
   });
 });

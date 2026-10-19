@@ -181,14 +181,14 @@ describe("associação segura depois de login", () => {
     assert.equal(estado.contas[USER].creditos, 2);
     assert.equal(estado.pagamentos.cs_pub.user_id, null, "o pagamento não fica ligado");
     assert.equal(estado.avisos.length, 1);
-    assert.match(estado.avisos[0].texto, /sub_antiga[\s\S]*Ação recomendada/);
+    assert.match(estado.avisos[0].texto, /sub_antiga[\s\S]*Acção recomendada/);
 
     // Repetir: em revisão, sem segundo aviso.
     assert.equal(await associarCompraAConta("cs_pub", deps()), "ja_em_revisao");
     assert.equal(estado.avisos.length, 1);
   });
 
-  test("Avulso numa conta com subscrição ativa: não é duplicado (soma um caso)", async () => {
+  test("Avulso numa conta com subscrição activa: não é duplicado (soma um caso)", async () => {
     estado.contas[USER] = { stripe_customer_id: "cus_antigo", plano: "protecao", sub: "sub_antiga", creditos: 0 };
     estado.pagamentos.cs_pub.subscription = null;
     sessao = sessaoSub({ mode: "payment", subscription: null, invoice: null, metadata: { plano: "avulso" } });

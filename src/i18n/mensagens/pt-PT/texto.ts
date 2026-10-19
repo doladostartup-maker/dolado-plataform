@@ -14,10 +14,10 @@ export const texto = {
   aSuaReclamacao: "A sua reclamação",
   versao: (n: number) => ` · versão ${n}`,
   reverTexto:
-    "Este é exatamente o texto que a DoLado vai enviar em seu nome. Leia-o com atenção. Abrir este link não autorizou nada: o envio só fica autorizado depois de selecionar “Autorizar envio”.",
+    "Este é exactamente o texto que a DoLado vai enviar em seu nome. Leia-o com atenção. Abrir este link não autorizou nada: o envio só fica autorizado depois de seleccionar “Autorizar envio”.",
   reverNota: "Se quiser mudar alguma coisa, não autorize: use o link “Pedir alterações” do e-mail ou a sua área de cliente.",
   alterarTexto:
-    "Este é o texto preparado pela DoLado. Indique-nos o que gostaria de rever — vamos preparar uma nova versão e enviá-la para a sua aprovação. O pedido só fica registado quando selecionar “Enviar pedido de alterações”, e nada é enviado sem a sua autorização.",
+    "Este é o texto preparado pela DoLado. Indique-nos o que gostaria de rever — vamos preparar uma nova versão e enviá-la para a sua aprovação. O pedido só fica registado quando seleccionar “Enviar pedido de alterações”, e nada é enviado sem a sua autorização.",
   /** Só em inglês: o texto da reclamação é escrito e enviado em português. */
   emPortugues: "",
   autorizarConfirma: "Ao autorizar, confirma que reviu este texto e autoriza a DoLado a enviá-lo em seu nome.",
@@ -40,7 +40,7 @@ export const texto = {
     nova: "Nova comunicação à empresa",
     reveTexto: "Reveja o texto da reclamação",
     textoReclamacao: "Texto da reclamação",
-    aRever: "Este é exatamente o texto que a DoLado vai enviar em seu nome. Reveja-o e autorize o envio, ou peça alterações.",
+    aRever: "Este é exactamente o texto que a DoLado vai enviar em seu nome. Reveja-o e autorize o envio, ou peça alterações.",
     alteracoesRecebidas: "Recebemos o seu pedido. Vamos preparar uma nova versão e mostrar-lha antes de qualquer envio.",
     pedirAlteracoes: "Pedir alterações",
     autorizouEm: (data: string) => `Autorizou o envio em ${data}.`,
@@ -59,9 +59,9 @@ export const texto = {
     por: "Por",
     destinatario: "Destinatário",
     referencia: "Referência",
-    textoExato: "Texto exato enviado",
+    textoExato: "Texto exacto enviado",
     versao: (n: number) => ` (versão ${n})`,
-    naoAlteravel: "Este é o texto exato que foi submetido. Não pode ser alterado.",
+    naoAlteravel: "Este é o texto exacto que foi submetido. Não pode ser alterado.",
     disponivel: "O texto enviado e o comprovativo ficam disponíveis no seu caso no portal.",
   },
 };

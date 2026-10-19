@@ -22,11 +22,11 @@ export type SetorContratoMonitor = (typeof SETORES_CONTRATO)[number];
 
 export const ROTULO_SETOR: Record<SetorContratoMonitor, string> = {
   telecomunicacoes: "Telecomunicações",
-  eletricidade: "Eletricidade",
+  eletricidade: "Electricidade",
   gas: "Gás",
   agua: "Água",
   outro: "Outro",
-  nao_indicado: "Setor por indicar",
+  nao_indicado: "Sector por indicar",
 };
 
 // Setor para pré-preencher "Tratar o meu caso" (listas de src/lib/pedidoCaso.ts).
@@ -81,7 +81,7 @@ export const ROTULO_CAMPO: Record<CampoContrato, string> = {
   descricao_promocao: "Promoção",
   mensalidade_cents: "Mensalidade",
   vantagem_cents: "Valor da vantagem da fidelização",
-  cessacao_operador_cents: "Valor de cessação indicado na fatura",
+  cessacao_operador_cents: "Valor de cessação indicado na factura",
   cessacao_operador_data: "Data desse valor",
   cpe: "CPE",
   cui: "CUI",
@@ -107,7 +107,7 @@ const ROTULO_OPCAO: Record<string, string> = {
 export const ROTULO_ORIGEM: Record<string, string> = {
   cliente: "Indicado por si",
   contrato: "Lido do contrato",
-  fatura: "Lido da fatura",
+  fatura: "Lido da factura",
   admin: "Corrigido pela DoLado",
   calculado: "Calculado a partir do início e da duração da fidelização",
 };

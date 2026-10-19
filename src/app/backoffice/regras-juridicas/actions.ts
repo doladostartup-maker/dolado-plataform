@@ -12,7 +12,7 @@ import { lerRegraDoFormulario } from "@/lib/rascunhoIA/regras";
 const LISTA = "/backoffice/regras-juridicas";
 
 const AVISO_REVISAO_RETIRADA =
-  "Regra guardada. Como o conteúdo jurídico mudou, deixou de estar revista e ficou inativa. Depois de rever o texto, indique a nova data de revisão e volte a ativá-la.";
+  "Regra guardada. Como o conteúdo jurídico mudou, deixou de estar revista e ficou inactiva. Depois de rever o texto, indique a nova data de revisão e volte a activá-la.";
 
 export async function criarRegra(formData: FormData) {
   const { supabase } = await requireAdmin();
@@ -43,5 +43,5 @@ export async function atualizarRegra(id: string, formData: FormData) {
     revalidatePath(`${LISTA}/${id}`);
     redirect(`${LISTA}/${id}?aviso=${encodeURIComponent(AVISO_REVISAO_RETIRADA)}`);
   }
-  redirect(`${LISTA}?ok=${encodeURIComponent("Regra atualizada.")}`);
+  redirect(`${LISTA}?ok=${encodeURIComponent("Regra actualizada.")}`);
 }

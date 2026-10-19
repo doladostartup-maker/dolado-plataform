@@ -50,7 +50,7 @@ export function EncerramentoCaso({
         id="encerramento"
         titulo="Encerramento e dossiê"
         estado={<Etiqueta tom="neutro">Encerrado na DoLado</Etiqueta>}
-        descricao="O acompanhamento terminou. Sem novas ações neste caso (textos, envios, pedidos, análises); para retomar, use “Corrigir estado”."
+        descricao="O acompanhamento terminou. Sem novas acções neste caso (textos, envios, pedidos, análises); para retomar, use “Corrigir estado”."
       >
         {encerramento && (
           <ListaDados colunas={2}>
@@ -102,7 +102,7 @@ export function EncerramentoCaso({
     <Seccao
       id="encerramento"
       titulo="Encerrar com encaminhamento externo"
-      descricao="Quando a DoLado já fez as ações previstas no serviço e o problema continua sem solução. O caso não fica “Resolvido”: o cliente recebe o dossiê e a informação pública sobre as entidades RAL."
+      descricao="Quando a DoLado já fez as acções previstas no serviço e o problema continua sem solução. O caso não fica “Resolvido”: o cliente recebe o dossiê e a informação pública sobre as entidades RAL."
     >
       {!disponivel ? (
         <p className={TEXTO_SECUNDARIO}>Disponível depois de a DoLado ter começado a tratar o caso (e nunca num caso resolvido).</p>

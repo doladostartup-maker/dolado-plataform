@@ -380,7 +380,7 @@ export function compararCessacao(
 
 export function textoCessacaoDivergente(operadorCents: number, dataOperador: string, estimativaCents: number): string {
   return (
-    `O valor indicado na fatura para terminar o contrato antecipadamente (${formatarEurosCents(operadorCents)}, a ${formatarDataPt(dataOperador)}) ` +
+    `O valor indicado na factura para terminar o contrato antecipadamente (${formatarEurosCents(operadorCents)}, a ${formatarDataPt(dataOperador)}) ` +
     `é diferente da estimativa da DoLado com os dados do contrato que temos registados (${formatarEurosCents(estimativaCents)}). ` +
     "A diferença merece ser verificada; outras condições do contrato podem explicar o valor."
   );

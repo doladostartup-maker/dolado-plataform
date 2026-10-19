@@ -24,13 +24,13 @@ export const estadoCaso = {
     "Resposta em análise": {
       rotulo: "Resposta recebida — em análise pela DoLado",
       explicacao:
-        "Recebemos uma comunicação relacionada com a sua reclamação. Estamos a analisá-la e entraremos em contacto consigo caso seja necessária alguma ação.",
+        "Recebemos uma comunicação relacionada com a sua reclamação. Estamos a analisá-la e entraremos em contacto consigo caso seja necessária alguma acção.",
       proximoPasso: NADA_A_FAZER,
     },
     "Aguardando cliente": {
       rotulo: "Precisamos de informação sua",
       explicacao: "Para continuarmos a tratar o seu caso, precisamos de informação ou documentos seus.",
-      proximoPasso: "Envie-nos a informação pedida. Indicamos abaixo exatamente o que precisamos.",
+      proximoPasso: "Envie-nos a informação pedida. Indicamos abaixo exactamente o que precisamos.",
     },
     "Aguardando decisão cliente": {
       rotulo: "A empresa apresentou uma solução",
@@ -69,7 +69,7 @@ export const estadoCaso = {
   analiseSemResposta: {
     rotulo: "Em análise pela DoLado",
     explicacao:
-      "Estamos a analisar a situação do seu caso para definir o próximo passo. Entraremos em contacto consigo se for necessária alguma ação.",
+      "Estamos a analisar a situação do seu caso para definir o próximo passo. Entraremos em contacto consigo se for necessária alguma acção.",
   },
   textoAguarda: {
     rotulo: "Precisamos da sua autorização",
@@ -112,7 +112,7 @@ export const estadoCaso = {
     caso_encerrado: "Caso encerrado",
     dossie_gerado: "Dossiê do caso preparado",
   },
-  eventoDesconhecido: "Atualização do caso",
+  eventoDesconhecido: "Actualização do caso",
   cronologia: {
     reclamacaoEnviada: "Reclamação enviada",
     novaEnviada: "Nova comunicação enviada à empresa",
