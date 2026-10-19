@@ -5,7 +5,7 @@ export const paginas = {
     metadados: {
       titulo: "Preçário - DoLado",
       descricao:
-        "Avulso, Caso + Proteção ou Proteção: escolha a ajuda de que precisa para tratar um problema com uma empresa ou prevenir os próximos. Preços com IVA incluído.",
+        "Avulso, Caso + Protecção ou Protecção: escolha a ajuda de que precisa para tratar um problema com uma empresa ou prevenir os próximos. Preços com IVA incluído.",
     },
     eyebrow: "Preçário",
     titulo: "De que tipo de ajuda precisa?",
@@ -13,10 +13,10 @@ export const paginas = {
       `Escolha conforme a sua situação. O Avulso é um pagamento único para um caso; as subscrições são mensais. Todos os preços têm ${iva}.`,
     necessidades: {
       avulso: { necessidade: "Tenho um problema agora.", cta: "Tratar do meu caso" },
-      caso_protecao: { necessidade: "Tenho um problema e quero acompanhamento contínuo.", cta: "Escolher Caso + Proteção" },
-      protecao: { necessidade: "Quero acompanhar as minhas faturas e contratos.", cta: "Aderir à Proteção" },
+      caso_protecao: { necessidade: "Tenho um problema e quero acompanhamento contínuo.", cta: "Escolher Caso + Protecção" },
+      protecao: { necessidade: "Quero acompanhar as minhas facturas e contratos.", cta: "Aderir à Protecção" },
     },
-    saberProtecao: "O que é a Proteção?",
+    saberProtecao: "O que é a Protecção?",
     condicoes: {
       eyebrow: "Pagamentos e condições",
       titulo: "Como funcionam os pagamentos.",
@@ -24,7 +24,7 @@ export const paginas = {
         casoOuSubscricao: {
           titulo: "Um caso isolado ou uma subscrição?",
           texto: (avulso: string, casoProtecao: string) =>
-            `O Avulso (${avulso}) é um pagamento único para tratar um caso, sem renovação. O Caso + Proteção (${casoProtecao}) é uma subscrição: paga todos os meses enquanto a mantiver, recebe 1 caso por mês e tem a Proteção. Se só tem um problema e não quer um pagamento mensal, o Avulso é a opção mais simples.`,
+            `O Avulso (${avulso}) é um pagamento único para tratar um caso, sem renovação. O Caso + Protecção (${casoProtecao}) é uma subscrição: paga todos os meses enquanto a mantiver, recebe 1 caso por mês e tem a Protecção. Se só tem um problema e não quer um pagamento mensal, o Avulso é a opção mais simples.`,
         },
         renovacao: {
           titulo: "Renovação e cancelamento",
@@ -34,22 +34,22 @@ export const paginas = {
         casoPorMes: {
           titulo: "O que significa “1 caso por mês”",
           texto: (limite: number) =>
-            `No Caso + Proteção, recebe 1 caso disponível sempre que o pagamento do mês é confirmado, incluindo o primeiro. Cada caso disponível permite pedir à DoLado que trate um novo problema. Os casos que não usar acumulam até ${limite}; a partir daí, a renovação desse mês não acrescenta outro.`,
+            `No Caso + Protecção, recebe 1 caso disponível sempre que o pagamento do mês é confirmado, incluindo o primeiro. Cada caso disponível permite pedir à DoLado que trate um novo problema. Os casos que não usar acumulam até ${limite}; a partir daí, a renovação desse mês não acrescenta outro.`,
         },
         fimSubscricao: {
           titulo: "Quando a subscrição termina",
           texto: (dias: number) =>
-            `Os casos já abertos, o texto enviado, os comprovativos e o histórico continuam acessíveis na área de cliente. A Proteção deixa de funcionar e os avisos param. Se tiver um caso da subscrição em acompanhamento, pode manter a subscrição até o caso terminar; se cancelar, o acompanhamento desse caso termina no fim do período pago (casos Avulso e Caso Extra não são afetados). Os casos disponíveis que vieram da subscrição ficam guardados ${dias} dias e só voltam a poder ser usados se subscrever de novo o Caso + Proteção nesse prazo. Casos Avulso e Caso Extra por usar continuam disponíveis.`,
+            `Os casos já abertos, o texto enviado, os comprovativos e o histórico continuam acessíveis na área de cliente. A Protecção deixa de funcionar e os avisos param. Se tiver um caso da subscrição em acompanhamento, pode manter a subscrição até o caso terminar; se cancelar, o acompanhamento desse caso termina no fim do período pago (casos Avulso e Caso Extra não são afectados). Os casos disponíveis que vieram da subscrição ficam guardados ${dias} dias e só voltam a poder ser usados se subscrever de novo o Caso + Protecção nesse prazo. Casos Avulso e Caso Extra por usar continuam disponíveis.`,
         },
         casoExtra: {
           titulo: "Caso Extra",
           texto: (preco: string, precoAvulso: string, desconto: number) =>
-            `Se tem o Caso + Proteção e já usou todos os casos disponíveis, pode tratar mais um caso por ${preco} em vez de ${precoAvulso} (${desconto}% de desconto), com pagamento único. A subscrição não muda.`,
+            `Se tem o Caso + Protecção e já usou todos os casos disponíveis, pode tratar mais um caso por ${preco} em vez de ${precoAvulso} (${desconto}% de desconto), com pagamento único. A subscrição não muda.`,
         },
         conversao: {
           titulo: "Passar de Avulso para uma subscrição",
           texto: (reembolsoProtecao: string, reembolsoCasoProtecao: string) =>
-            `Se comprou um Avulso e ainda não usou o caso, pode aderir a uma subscrição na área de cliente: parte do valor pago cobre o primeiro mês e o restante é reembolsado para o método de pagamento original (${reembolsoProtecao} na Proteção, ${reembolsoCasoProtecao} no Caso + Proteção). Se já usou o caso, a adesão é uma compra nova.`,
+            `Se comprou um Avulso e ainda não usou o caso, pode aderir a uma subscrição na área de cliente: parte do valor pago cobre o primeiro mês e o restante é reembolsado para o método de pagamento original (${reembolsoProtecao} na Protecção, ${reembolsoCasoProtecao} no Caso + Protecção). Se já usou o caso, a adesão é uma compra nova.`,
         },
       },
     },
@@ -79,24 +79,24 @@ export const paginas = {
   },
   protecao: {
     metadados: {
-      titulo: "Proteção: acompanhamento de faturas e contratos - DoLado",
+      titulo: "Protecção: acompanhamento de facturas e contratos - DoLado",
       descricao:
-        "Com a Proteção, a DoLado compara as faturas que nos envia, avisa antes do fim de promoções e da fidelização e assinala alterações que merecem ser verificadas.",
+        "Com a Protecção, a DoLado compara as facturas que nos envia, avisa antes do fim de promoções e da fidelização e assinala alterações que merecem ser verificadas.",
     },
-    eyebrow: "Proteção",
-    titulo: "Acompanhamos as suas faturas e contratos e avisamos a tempo.",
+    eyebrow: "Protecção",
+    titulo: "Acompanhamos as suas facturas e contratos e avisamos a tempo.",
     texto:
-      "A Proteção é para quem quer evitar surpresas, mesmo sem ter um problema agora. Envie-nos as faturas e, se tiver, o contrato dos serviços que quer acompanhar. Comparamos cada fatura com as anteriores e com o contrato, estamos atentos às datas importantes e avisamos quando alguma coisa merece a sua atenção.",
-    aderir: "Aderir à Proteção",
+      "A Protecção é para quem quer evitar surpresas, mesmo sem ter um problema agora. Envie-nos as facturas e, se tiver, o contrato dos serviços que quer acompanhar. Comparamos cada factura com as anteriores e com o contrato, estamos atentos às datas importantes e avisamos quando alguma coisa merece a sua atenção.",
+    aderir: "Aderir à Protecção",
     verPrecario: "Ver preçário",
     tresPerguntas: {
       eyebrow: "Como funciona",
-      titulo: "A Proteção em três perguntas.",
+      titulo: "A Protecção em três perguntas.",
       blocos: [
         {
           titulo: "O que acompanhamos?",
           itens: [
-            "As faturas dos serviços que nos envia — por exemplo, internet e telemóvel, eletricidade, gás ou água —, comparadas com as anteriores.",
+            "As facturas dos serviços que nos envia — por exemplo, internet e telemóvel, electricidade, gás ou água —, comparadas com as anteriores.",
             "As condições do contrato, quando nos envia o contrato: mensalidade, promoções e fidelização.",
             "As datas importantes, como o fim de uma promoção e o fim da fidelização.",
             "Nos contratos de telecomunicações, uma estimativa do valor máximo a pagar se cancelar antes do fim da fidelização.",
@@ -107,18 +107,18 @@ export const paginas = {
           itens: [
             "Na área de cliente, logo depois do primeiro documento: o que verificámos, o que encontrámos e o que vamos acompanhar.",
             "Avisos 60 e 30 dias antes do fim de uma promoção ou da fidelização, e no próprio dia.",
-            "Um aviso quando uma fatura tem uma alteração que merece ser verificada, depois de revista por uma pessoa da DoLado.",
+            "Um aviso quando uma factura tem uma alteração que merece ser verificada, depois de revista por uma pessoa da DoLado.",
             "No início de cada mês, um resumo: o que acompanhámos, as alterações encontradas e a próxima data importante.",
-            "Se quiser, avisos de alterações relevantes nos setores que escolher, como subidas de preços anunciadas.",
+            "Se quiser, avisos de alterações relevantes nos sectores que escolher, como subidas de preços anunciadas.",
           ],
         },
         {
           titulo: "O que precisa de nos disponibilizar?",
           itens: [
-            "Uma fatura de cada serviço, em PDF ou imagem. É o suficiente para começar.",
-            "O contrato, se o tiver, para compararmos as faturas com o que foi contratado.",
+            "Uma factura de cada serviço, em PDF ou imagem. É o suficiente para começar.",
+            "O contrato, se o tiver, para compararmos as facturas com o que foi contratado.",
             "Se não tiver documentos à mão, o nome do fornecedor e uma data, como o fim da fidelização.",
-            "As faturas seguintes, à medida que chegam: a comparação depende dos documentos que nos envia.",
+            "As facturas seguintes, à medida que chegam: a comparação depende dos documentos que nos envia.",
           ],
         },
       ],
@@ -130,26 +130,26 @@ export const paginas = {
     },
     limites: {
       eyebrow: "Com clareza",
-      titulo: "O que a Proteção não é.",
+      titulo: "O que a Protecção não é.",
       itens: [
         "Não é um seguro: não paga prejuízos nem reembolsa valores.",
         "Não acede às suas contas nos fornecedores: só analisamos os documentos e as informações que nos dá.",
-        "Não acompanha em tempo real nem deteta todas as cobranças incorretas: a análise depende de nos enviar as faturas e de as manter atualizadas.",
+        "Não acompanha em tempo real nem detecta todas as cobranças incorrectas: a análise depende de nos enviar as facturas e de as manter actualizadas.",
         "Não renegocia contratos nem muda de fornecedor por si.",
-        "Não inclui o tratamento de reclamações. Se encontrarmos algo e quiser que a DoLado trate do problema, pode fazê-lo com o Avulso ou com o Caso + Proteção.",
+        "Não inclui o tratamento de reclamações. Se encontrarmos algo e quiser que a DoLado trate do problema, pode fazê-lo com o Avulso ou com o Caso + Protecção.",
       ],
     },
     comparar: {
-      titulo: "Proteção ou Caso + Proteção?",
-      protecao: (preco: string) => `<b>Proteção (${preco})</b>: acompanhamento de faturas e contratos. Não inclui o tratamento de casos.`,
+      titulo: "Protecção ou Caso + Protecção?",
+      protecao: (preco: string) => `<b>Protecção (${preco})</b>: acompanhamento de facturas e contratos. Não inclui o tratamento de casos.`,
       casoProtecao: (preco: string, limite: number) =>
-        `<b>Caso + Proteção (${preco})</b>: tudo o que a Proteção inclui e 1 caso por mês para tratar problemas, acumulável até ${limite}.`,
+        `<b>Caso + Protecção (${preco})</b>: tudo o que a Protecção inclui e 1 caso por mês para tratar problemas, acumulável até ${limite}.`,
     },
-    perguntas: { eyebrow: "Perguntas frequentes", titulo: "Sobre a Proteção.", verTodas: "Ver todas as perguntas" },
+    perguntas: { eyebrow: "Perguntas frequentes", titulo: "Sobre a Protecção.", verTodas: "Ver todas as perguntas" },
     ctaFinal: {
-      titulo: "Quer começar a acompanhar as suas faturas?",
-      texto: "Adira à Proteção e carregue a primeira fatura na sua área de cliente.",
-      acao: "Aderir à Proteção",
+      titulo: "Quer começar a acompanhar as suas facturas?",
+      texto: "Adira à Protecção e carregue a primeira factura na sua área de cliente.",
+      acao: "Aderir à Protecção",
     },
   },
   comoFunciona: {
@@ -170,12 +170,12 @@ export const paginas = {
       {
         titulo: "Conte o que aconteceu",
         texto:
-          "Um formulário passo a passo, com 5 perguntas simples: a empresa, o que aconteceu, se já reclamou e como falamos consigo. Se tiver uma fatura, um contrato ou um e-mail, pode juntá-lo; não é obrigatório.",
+          "Um formulário passo a passo, com 5 perguntas simples: a empresa, o que aconteceu, se já reclamou e como falamos consigo. Se tiver uma factura, um contrato ou um e-mail, pode juntá-lo; não é obrigatório.",
       },
       {
         titulo: "Crie a conta e escolha a modalidade",
         texto:
-          "É na sua conta que acompanha o caso. Escolha o Avulso ou o Caso + Proteção e só então pague. Começamos a tratar do caso depois de o pagamento ser confirmado.",
+          "É na sua conta que acompanha o caso. Escolha o Avulso ou o Caso + Protecção e só então pague. Começamos a tratar do caso depois de o pagamento ser confirmado.",
       },
       {
         titulo: "Confirmamos os factos consigo",
@@ -195,7 +195,7 @@ export const paginas = {
       {
         titulo: "Enviamos pelo canal adequado",
         texto:
-          "Por exemplo, o Livro de Reclamações Eletrónico, o e-mail ou o formulário de reclamações da empresa. O texto enviado e o comprovativo, quando existe, ficam no seu caso.",
+          "Por exemplo, o Livro de Reclamações Electrónico, o e-mail ou o formulário de reclamações da empresa. O texto enviado e o comprovativo, quando existe, ficam no seu caso.",
       },
       {
         titulo: "Acompanhamos a resposta",
@@ -243,14 +243,14 @@ export const paginas = {
     metadados: {
       titulo: "Perguntas Frequentes - DoLado",
       descricao:
-        "Encontre respostas sobre como funciona a DoLado, reclamações de consumo, planos, proteção e acompanhamento do seu caso.",
+        "Encontre respostas sobre como funciona a DoLado, reclamações de consumo, planos, protecção e acompanhamento do seu caso.",
     },
     eyebrow: "Perguntas frequentes",
     titulo: "Como podemos ajudar?",
     texto:
-      "Encontre respostas sobre como funciona a DoLado, a Proteção, os nossos planos, o envio da reclamação e o que acontece depois.",
+      "Encontre respostas sobre como funciona a DoLado, a Protecção, os nossos planos, o envio da reclamação e o que acontece depois.",
     pesquisar: "Pesquisar nas perguntas",
-    exemplo: "Ex.: cancelar, fatura, autorização",
+    exemplo: "Ex.: cancelar, factura, autorização",
     encontradas: (n: number) => (n === 1 ? "1 pergunta encontrada." : `${n} perguntas encontradas.`),
     categorias: "Categorias",
     semResultados: "Não encontrámos perguntas com estes termos.",

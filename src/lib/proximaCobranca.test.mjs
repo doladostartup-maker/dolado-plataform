@@ -47,7 +47,7 @@ describe("100% vitalício", () => {
     assert.equal(r.valorProximaCobrancaCentimos, 0);
     assert.equal(r.mudaEm, null);
     assert.deepEqual(r.descontosAplicaveis.map(textoDesconto), ["100% vitalício"]);
-    assert.equal(textoProximaCobranca(r), "0,00 € — sem cobrança prevista, desconto de 100% vitalício ativo");
+    assert.equal(textoProximaCobranca(r), "0,00 € — sem cobrança prevista, desconto de 100% vitalício activo");
   });
 
   test("sem pré-visualização, calcula 0,00 € com o desconto — nunca o preço-base", () => {
@@ -86,7 +86,7 @@ describe("desconto temporário", () => {
     const r = cobrancaCom([discount({ percent_off: 50, duration: "repeating", end: fim })]);
     assert.equal(r.valorProximaCobrancaCentimos, 399); // desconto de 4,00 € (arredondado, como no Stripe)
     assert.equal(r.mudaEm, fim);
-    assert.equal(textoDesconto(r.descontosAplicaveis[0]), "50% até 5 de janeiro de 2027");
+    assert.equal(textoDesconto(r.descontosAplicaveis[0]), "50% até 5 de Janeiro de 2027");
   });
 
   test("termina antes da próxima cobrança: não se aplica", () => {
@@ -127,7 +127,7 @@ describe("desconto expirado", () => {
     assert.equal(textoProximaCobranca(r), "7,99 €");
   });
 
-  test("um expirado e um ativo: só conta o ativo", () => {
+  test("um expirado e um activo: só conta o activo", () => {
     const r = cobrancaCom([
       discount({ percent_off: 100, duration: "repeating", end: "2026-10-01T10:00:00.000Z" }),
       discount({ percent_off: 10, duration: "forever" }),
@@ -142,16 +142,16 @@ describe("linhas mostradas (Gestão de Subscrição e painel)", () => {
     const r = cobrancaCom([discount({ percent_off: 100, duration: "forever" })], 0);
     assert.deepEqual(linhasDaCobranca(r), [
       { label: "Desconto", valor: "100% vitalício" },
-      { label: "Próxima cobrança", valor: "0,00 € — sem cobrança prevista, desconto de 100% vitalício ativo" },
+      { label: "Próxima cobrança", valor: "0,00 € — sem cobrança prevista, desconto de 100% vitalício activo" },
     ]);
   });
 
   test("desconto temporário indica o valor depois de terminar", () => {
     const r = cobrancaCom([discount({ percent_off: 50, duration: "repeating", end: "2027-01-05T10:00:00.000Z" })]);
     assert.deepEqual(linhasDaCobranca(r), [
-      { label: "Desconto", valor: "50% até 5 de janeiro de 2027" },
+      { label: "Desconto", valor: "50% até 5 de Janeiro de 2027" },
       { label: "Próxima cobrança", valor: "3,99 €" },
-      { label: "Depois do desconto", valor: "7,99 €/mês a partir de 5 de janeiro de 2027" },
+      { label: "Depois do desconto", valor: "7,99 €/mês a partir de 5 de Janeiro de 2027" },
     ]);
   });
 

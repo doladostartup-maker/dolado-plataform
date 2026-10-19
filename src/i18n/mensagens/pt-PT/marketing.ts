@@ -16,7 +16,7 @@ export const marketing = {
     },
     mudanca: {
       titulo: "Vai mudar de casa?",
-      texto: "Veja o que deve tratar antes, durante e depois da mudança: telecomunicações, eletricidade, gás e água.",
+      texto: "Veja o que deve tratar antes, durante e depois da mudança: telecomunicações, electricidade, gás e água.",
       cta: "Ver Guia de Mudança",
     },
   },
@@ -55,15 +55,15 @@ export const marketing = {
       ],
     },
     protecao: {
-      rotulo: "Exemplo ilustrativo do estado de proteção, com dados fictícios",
-      titulo: "O seu estado de proteção",
+      rotulo: "Exemplo ilustrativo do estado de protecção, com dados fictícios",
+      titulo: "O seu estado de protecção",
       operadora: "Operadora",
       fidelizacao: "Fidelização termina em 14/03/2027",
-      faturaAtual: "Fatura atual",
+      faturaAtual: "Factura actual",
       valorFatura: "54,90 €",
       promocao: "Promoção identificada",
       condicoes: "Condições importantes identificadas",
-      semSituacoes: "Neste momento não detetámos nenhuma situação que exija intervenção.",
+      semSituacoes: "Neste momento não detectámos nenhuma situação que exija intervenção.",
     },
   },
   exemplos: {
@@ -73,8 +73,8 @@ export const marketing = {
       aviso: "Exemplo fictício: empresa, datas, referências e valores inventados.",
       assunto: "Assunto: Cobrança da mensalidade depois do cancelamento",
       paragrafos: [
-        "No dia 3 de março, pedi o cancelamento do serviço de internet (cliente n.º 000000). A empresa confirmou o pedido por e-mail no mesmo dia.",
-        "Nas faturas de abril e de maio continua a ser cobrada a mensalidade de 32,90 €, num total de 65,80 €.",
+        "No dia 3 de Março, pedi o cancelamento do serviço de internet (cliente n.º 000000). A empresa confirmou o pedido por e-mail no mesmo dia.",
+        "Nas facturas de Abril e de Maio continua a ser cobrada a mensalidade de 32,90 €, num total de 65,80 €.",
         "Peço que estas cobranças sejam anuladas e que me seja devolvido o valor de 65,80 €, para a mesma conta de onde foi pago.",
       ],
       nota:
@@ -91,9 +91,9 @@ export const marketing = {
       texto: "Ainda tem tempo para confirmar quanto vai pagar depois desta data e decidir o que quer fazer.",
     },
     alteracaoFatura: {
-      titulo: "Exemplo de alteração na fatura",
-      antes: "Fatura de outubro",
-      agora: "Fatura de novembro",
+      titulo: "Exemplo de alteração na factura",
+      antes: "Factura de Outubro",
+      agora: "Factura de Novembro",
       valorAntes: "32,90 €",
       valorAgora: "39,90 €",
       diferenca: "Diferença: +7,00 €",

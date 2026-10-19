@@ -254,7 +254,7 @@ describe("contrato Stripe ↔ Supabase real", { skip: !ATIVO && "corre com npm r
     assert.equal(sub.status, "active");
     assert.equal(sub.price_id, PRECO_CASO_PROTECAO);
     assert.equal(sub.ultimo_pagamento_estado, "pago");
-    assert.equal((await uma("user_access", { user_id: U1 })).case_credits, 1, "mesma fatura: sem crédito novo");
+    assert.equal((await uma("user_access", { user_id: U1 })).case_credits, 1, "mesma factura: sem crédito novo");
 
     await enviar(evento("invoice.paid", fatura("in_c1b", "cus_c1", "sub_c1", "subscription_cycle")));
     assert.equal((await uma("user_access", { user_id: U1 })).case_credits, 2);
@@ -352,7 +352,7 @@ describe("contrato Stripe ↔ Supabase real", { skip: !ATIVO && "corre com npm r
   });
 
   // 8 -------------------------------------------------------------------------
-  test("8. conversão Avulso → Proteção: convertida, reembolso de 10,00 € criado uma vez, caso do Avulso convertido", async () => {
+  test("8. conversão Avulso → Protecção: convertida, reembolso de 10,00 € criado uma vez, caso do Avulso convertido", async () => {
     sessao("cs_a4", {
       mode: "payment",
       customer: "cus_a4",
@@ -720,7 +720,7 @@ describe("contrato Stripe ↔ Supabase real", { skip: !ATIVO && "corre com npm r
     assert.equal((await uma("case_credit_grants", { origem: "checkout:cs_x12b" })).estado, "disponivel");
   });
 
-  test("permissões: anon e clientes autenticados não executam as funções novas nem leem as tabelas", async () => {
+  test("permissões: anon e clientes autenticados não executam as funções novas nem lêem as tabelas", async () => {
     const { createClient } = await import("@supabase/supabase-js");
     assert.ok(process.env.CONTRATO_ANON_KEY, "chave anon local em falta");
     const anon = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.CONTRATO_ANON_KEY, {

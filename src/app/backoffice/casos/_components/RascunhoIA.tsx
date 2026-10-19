@@ -145,7 +145,7 @@ export function PainelRascunhoIA({
 
       {aGerar && (
         <p className="text-[13.5px] text-[var(--v2-muted)]" role="status">
-          A gerar o rascunho (pedido {dataHora(ultima.created_at)})… A página atualiza sozinha.
+          A gerar o rascunho (pedido {dataHora(ultima.created_at)})… A página actualiza sozinha.
           <AtualizarEnquanto />
         </p>
       )}
@@ -161,7 +161,7 @@ export function PainelRascunhoIA({
       {porUsar && (
         <div className="flex flex-col gap-2 border-t border-[#F0E2CC] pt-3">
           <p className="text-[13.5px] text-[var(--v2-navy)]">
-            Há uma sugestão nova ({dataHora(porUsar.concluido_em)}) que não foi colocada no texto, porque o texto atual foi editado por uma pessoa ou já seguiu
+            Há uma sugestão nova ({dataHora(porUsar.concluido_em)}) que não foi colocada no texto, porque o texto actual foi editado por uma pessoa ou já seguiu
             para o cliente.
           </p>
           <details className="rounded-[10px] border border-[var(--v2-line)] bg-white">
@@ -174,7 +174,7 @@ export function PainelRascunhoIA({
           <form action={aplicarSugestaoIA.bind(null, casoId, porUsar.id)} className="flex flex-col gap-2">
             <label className={LINHA_SELECAO}>
               <input type="checkbox" name="confirmar" required className={CAIXA_SELECAO} />
-              Substituir o texto atual por esta sugestão. O texto atual fica guardado como versão anterior; a sugestão fica por rever.
+              Substituir o texto actual por esta sugestão. O texto actual fica guardado como versão anterior; a sugestão fica por rever.
             </label>
             <div>
               <button type="submit" className={BOTAO_SECUNDARIO}>
@@ -199,7 +199,7 @@ export function PainelRascunhoIA({
           <p className={AJUDA_CAMPO}>Nunca substitui texto editado sem confirmação.</p>
         </form>
       )}
-      {!ativa && <p className={AJUDA_CAMPO}>Sugestão por IA desativada neste ambiente.</p>}
+      {!ativa && <p className={AJUDA_CAMPO}>Sugestão por IA desactivada neste ambiente.</p>}
     </div>
   );
 }

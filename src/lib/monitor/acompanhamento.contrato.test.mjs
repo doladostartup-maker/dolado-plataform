@@ -146,7 +146,7 @@ describe("acompanhamento de serviços (Supabase real)", { skip: !ATIVO && "só c
     VERSAO_CONTRATO = { schema: ct.SCHEMA_CONTRATO_VERSAO, prompt: ct.PROMPT_CONTRATO_VERSAO };
   });
 
-  test("40. contrato Vodafone + fatura Vodafone de OUTRO cliente: nada é alterado e não há “Usar este”", async () => {
+  test("40. contrato Vodafone + factura Vodafone de OUTRO cliente: nada é alterado e não há “Usar este”", async () => {
     const maria = await criarCliente();
     const contrato = await processar(maria, "contrato", extracaoContrato(MARIA));
     assert.equal(contrato.doc.associacao_estado, "novo_servico");
@@ -156,7 +156,7 @@ describe("acompanhamento de serviços (Supabase real)", { skip: !ATIVO && "só c
 
     // Carregada na página do contrato (contrato_id escolhido no upload).
     const outra = await processar(maria, "fatura", extracaoFatura({ ...OUTRO, titular: "João Pereira", numero: "FT-9", emissao: "2026-08-18", mensal: 53.96 }), servico);
-    assert.equal(outra.doc.contrato_id, null, "a fatura não fica no serviço");
+    assert.equal(outra.doc.contrato_id, null, "a factura não fica no serviço");
     assert.equal(outra.doc.associacao_estado, "conflito");
     assert.equal(outra.doc.associacao_sugerida, servico);
     assert.ok(outra.doc.associacao_conflitos.includes("O NIF do titular é diferente"));
@@ -191,7 +191,7 @@ describe("acompanhamento de serviços (Supabase real)", { skip: !ATIVO && "só c
     assert.deepEqual(repetido, { ok: false, erro: "nao_encontrado" });
   });
 
-  test("J/L/R. faturas do mesmo cliente: associadas, comparadas com o contrato e sem duplicados", async () => {
+  test("J/L/R. facturas do mesmo cliente: associadas, comparadas com o contrato e sem duplicados", async () => {
     const maria = await criarCliente();
     const { r: rc } = await processar(maria, "contrato", extracaoContrato(MARIA));
     await aceitarTudo(maria, rc.contratoId);
@@ -205,7 +205,7 @@ describe("acompanhamento de serviços (Supabase real)", { skip: !ATIVO && "só c
     const eventos = await eventosAtivos(rc.contratoId);
     const out = eventos.filter((e) => e.fatura_id !== null && e.base).map((e) => `${e.tipo}:${e.base}`).sort();
     assert.ok(out.includes("consumo_adicional:historico"));
-    assert.equal(eventos.filter((e) => e.tipo === "mensalidade_conforme").length, 2, "J/L. mensalidade conforme nas duas faturas");
+    assert.equal(eventos.filter((e) => e.tipo === "mensalidade_conforme").length, 2, "J/L. mensalidade conforme nas duas facturas");
     assert.equal(eventos.some((e) => e.tipo === "diferenca_preco_contrato"), false, "L. consumo não é diferença de preço");
 
     // R. a mesma fatura outra vez (outro ficheiro, mesmo número).
@@ -226,14 +226,14 @@ describe("acompanhamento de serviços (Supabase real)", { skip: !ATIVO && "só c
     assert.equal(fatNov.em_verificacao, true);
   });
 
-  test("A/B/C/D/M. só faturas, depois o contrato: mesmo serviço e comparação retroativa", async () => {
+  test("A/B/C/D/M. só facturas, depois o contrato: mesmo serviço e comparação retroactiva", async () => {
     const cliente = await criarCliente();
     const meses = ["2026-07-10", "2026-08-10", "2026-09-10"];
     let servico = null;
     for (const [i, emissao] of meses.entries()) {
       const f = await processar(cliente, "fatura", extracaoFatura({ ...MARIA, numero: `F-${i}`, emissao }));
       servico ??= f.doc.contrato_id;
-      assert.equal(f.doc.contrato_id, servico, "todas as faturas no mesmo serviço");
+      assert.equal(f.doc.contrato_id, servico, "todas as facturas no mesmo serviço");
     }
     // A fatura não cria condições contratuais.
     const { count: versoes } = await admin.from("contratos_versoes").select("id", { count: "exact", head: true }).eq("contrato_id", servico);
@@ -258,15 +258,15 @@ describe("acompanhamento de serviços (Supabase real)", { skip: !ATIVO && "só c
     const r = await servidor.recalcularAcompanhamento(admin, servico);
     assert.equal(r.faturas, 4);
     eventos = await eventosAtivos(servico);
-    assert.equal(eventos.filter((e) => e.tipo === "diferenca_preco_contrato").length, 3, "julho–setembro abaixo do valor contratual");
-    assert.ok(eventos.some((e) => e.tipo === "mensalidade_conforme"), "outubro conforme o contrato");
+    assert.equal(eventos.filter((e) => e.tipo === "diferenca_preco_contrato").length, 3, "Julho–Setembro abaixo do valor contratual");
+    assert.ok(eventos.some((e) => e.tipo === "mensalidade_conforme"), "Outubro conforme o contrato");
     const { count: substituidos } = await admin.from("eventos_servico").select("id", { count: "exact", head: true }).eq("contrato_id", servico).not("substituido_em", "is", null);
     assert.ok(substituidos > 0, "os eventos anteriores ficam guardados");
     const { data: achados } = await admin.from("achados_monitor").select("tipo, estado").eq("contrato_id", servico);
     assert.ok(achados.some((a) => a.tipo === "mensalidade_alterada" && a.estado === "obsoleto"), "o aumento deixou de ser uma situação por rever");
   });
 
-  test("Q/I. fatura sem identificação ou de outro número: o cliente decide (associação explícita)", async () => {
+  test("Q/I. factura sem identificação ou de outro número: o cliente decide (associação explícita)", async () => {
     const cliente = await criarCliente();
     const primeira = await processar(cliente, "fatura", extracaoFatura({ ...MARIA, numero: "Q-1", emissao: "2026-08-10" }));
     const servico = primeira.doc.contrato_id;

@@ -7,7 +7,7 @@ export const ROTULO_ACHADO: Record<string, string> = {
   possivel_dupla_faturacao: "Possível cobrança em duplicado",
   cessacao_divergente: "Valor de cessação diferente da estimativa",
   // Acompanhamento de serviços (acomp_v1)
-  mensalidade_alterada: "Mensalidade diferente da fatura anterior",
+  mensalidade_alterada: "Mensalidade diferente da factura anterior",
   diferenca_preco_contrato: "Mensalidade diferente do contrato",
   promocao_em_falta: "Desconto não identificado",
   promocao_alterada: "Desconto alterado",

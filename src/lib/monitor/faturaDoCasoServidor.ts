@@ -44,7 +44,7 @@ export async function carregarFaturaDoCaso(supabase: SupabaseClient, userId: str
 
 export type ResultadoFaturaDoCaso = { ok: true; documentoId: string; novo: boolean } | { ok: false; erro: string };
 
-const ERRO_GERAL = "Não foi possível usar esta fatura. Carregue o documento.";
+const ERRO_GERAL = "Não foi possível usar esta factura. Carregue o documento.";
 
 /**
  * Cria o documento da Proteção a partir do anexo (cópia no Storage + linha em

@@ -28,7 +28,7 @@ type Metricas = {
 const NOMES_ORIGEM: Record<string, string> = {
   homepage: "Homepage",
   precario: "Preçário",
-  protecao: "Página da Proteção",
+  protecao: "Página da Protecção",
   portal: "Portal",
   outro: "Outra",
 };
@@ -56,12 +56,12 @@ export default async function ProtecaoGratuitaBackofficePage() {
     <div className="flex flex-col gap-7">
       <CabecalhoPagina
         contexto="Pagamentos"
-        titulo="Proteção gratuita"
-        descricao="30 dias de Proteção sem cartão, uma vez por conta e por e-mail. Termina sozinha, sem cobrança; a adesão é sempre expressa. Nada é criado no Stripe durante o período gratuito."
+        titulo="Protecção gratuita"
+        descricao="30 dias de Protecção sem cartão, uma vez por conta e por e-mail. Termina sozinha, sem cobrança; a adesão é sempre expressa. Nada é criado no Stripe durante o período gratuito."
       />
       {!protecaoGratuitaDisponivel() && (
         <Aviso tom="info">
-          A oferta está desligada (PROTECAO_GRATUITA_ATIVA e PROTECAO_GRATUITA_CHAVE). Os períodos já ativados continuam até ao fim.
+          A oferta está desligada (PROTECAO_GRATUITA_ATIVA e PROTECAO_GRATUITA_CHAVE). Os períodos já activados continuam até ao fim.
         </Aviso>
       )}
       {error && <Aviso tom="erro">Não foi possível ler as métricas.</Aviso>}
@@ -69,11 +69,11 @@ export default async function ProtecaoGratuitaBackofficePage() {
         <section aria-labelledby="numeros" className="flex flex-col gap-3">
           <TituloSeccao id="numeros" titulo="Números" />
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <Numero rotulo="Proteções gratuitas ativadas" valor={m.ativadas} detalhe={`${m.ativas_agora} em curso agora`} />
+            <Numero rotulo="Protecções gratuitas activadas" valor={m.ativadas} detalhe={`${m.ativas_agora} em curso agora`} />
             <Numero
               rotulo="Contas criadas para a oferta"
               valor={m.contas_novas}
-              detalhe={`Conta criada até 24 h antes da ativação · ${percentagem(m.contas_novas, m.ativadas)}`}
+              detalhe={`Conta criada até 24 h antes da activação · ${percentagem(m.contas_novas, m.ativadas)}`}
             />
             <Numero rotulo="Adicionaram documentos" valor={m.com_documentos} detalhe={percentagem(m.com_documentos, m.ativadas)} />
             <Numero rotulo="Receberam uma análise" valor={m.com_analise} detalhe={percentagem(m.com_analise, m.ativadas)} />
@@ -81,7 +81,7 @@ export default async function ProtecaoGratuitaBackofficePage() {
             <Numero
               rotulo="Conversões para subscrição paga"
               valor={m.convertidas}
-              detalhe={`${percentagem(m.convertidas, m.chegaram_ao_fim)} de quem chegou ao fim · ${m.convertidas_durante} durante o período · ${m.convertidas_caso_protecao} para Caso + Proteção`}
+              detalhe={`${percentagem(m.convertidas, m.chegaram_ao_fim)} de quem chegou ao fim · ${m.convertidas_durante} durante o período · ${m.convertidas_caso_protecao} para Caso + Protecção`}
             />
             <Numero
               rotulo="Cancelamentos posteriores"
@@ -89,7 +89,7 @@ export default async function ProtecaoGratuitaBackofficePage() {
               detalhe={percentagem(m.cancelamentos_posteriores, m.convertidas)}
             />
             <Numero
-              rotulo="Ativações por origem"
+              rotulo="Activações por origem"
               valor={m.ativadas}
               detalhe={Object.entries(m.por_origem)
                 .map(([o, n]) => `${NOMES_ORIGEM[o] ?? o}: ${n}`)

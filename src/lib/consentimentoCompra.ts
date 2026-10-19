@@ -64,7 +64,7 @@ const UUID_PEDIDO = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
 export type ErroConsentimento = "dados_invalidos" | "termos" | "inicio_imediato";
 
 export const MENSAGENS_ERRO_CONSENTIMENTO: Record<ErroConsentimento, string> = {
-  dados_invalidos: "Não foi possível iniciar a compra. Atualize a página e tente novamente.",
+  dados_invalidos: "Não foi possível iniciar a compra. Actualize a página e tente novamente.",
   termos: "Para avançar, tem de aceitar os Termos e Condições.",
   inicio_imediato: "Para avançar, tem de pedir o início imediato do serviço.",
 };

@@ -20,7 +20,7 @@ function voltar(casoId: string, chave: "ok" | "erro", msg: string): never {
 
 const MENSAGENS_ENCERRAR: Record<string, string> = {
   motivo_invalido: "Indique o motivo do encerramento (5 a 1000 caracteres).",
-  transicao_invalida: "Este caso não pode ser encerrado com encaminhamento externo no estado atual.",
+  transicao_invalida: "Este caso não pode ser encerrado com encaminhamento externo no estado actual.",
   comunicacoes_por_analisar: "Há comunicações recebidas por analisar. Analise-as antes de encerrar o caso.",
   invalido: "Caso inválido.",
 };

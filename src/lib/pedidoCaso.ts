@@ -256,8 +256,8 @@ export function lerDadosPedido(ler: (campo: string) => unknown): { ok: true; dad
   const telefone = texto("telefone", 30);
   const origem = texto("origem", 200) || "/";
 
-  if (!SETORES.includes(sector) || empresa.length < 2) return { ok: false, erro: "Indique o setor e a empresa." };
-  if (!problemasDoSetor(sector).includes(problemaTipo)) return { ok: false, erro: "Selecione o que aconteceu." };
+  if (!SETORES.includes(sector) || empresa.length < 2) return { ok: false, erro: "Indique o sector e a empresa." };
+  if (!problemasDoSetor(sector).includes(problemaTipo)) return { ok: false, erro: "Seleccione o que aconteceu." };
   if (!MOMENTOS.includes(momento)) return { ok: false, erro: "Indique se já reclamou junto da empresa." };
   if (!validNome(nome)) return { ok: false, erro: "Insira um nome válido." };
   if (!validTelemovel(telefone)) return { ok: false, erro: "Telemóvel inválido." };

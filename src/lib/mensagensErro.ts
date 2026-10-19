@@ -9,7 +9,7 @@ export const MSG_ERRO_GUARDAR = "Não foi possível concluir o pedido. Tente nov
 export function mensagemErroConta(codigo: string | undefined, mensagem: string | undefined) {
   const texto = mensagem ?? "";
   if (codigo === "invalid_credentials" || /invalid login credentials/i.test(texto)) {
-    return "E-mail ou palavra-passe incorretos.";
+    return "E-mail ou palavra-passe incorrectos.";
   }
   if (codigo === "email_not_confirmed" || /email not confirmed/i.test(texto)) {
     return "Confirme o seu e-mail antes de entrar. Procure a mensagem que lhe enviámos na sua caixa de correio.";
@@ -18,7 +18,7 @@ export function mensagemErroConta(codigo: string | undefined, mensagem: string |
     return "Já existe uma conta com este e-mail. Inicie sessão com esse e-mail.";
   }
   if (codigo === "same_password" || /different from the old password/i.test(texto)) {
-    return "A nova palavra-passe tem de ser diferente da atual.";
+    return "A nova palavra-passe tem de ser diferente da actual.";
   }
   if (codigo === "weak_password" || /password/i.test(texto)) {
     return "A palavra-passe não cumpre os requisitos. Use pelo menos 8 caracteres, com letras e números.";

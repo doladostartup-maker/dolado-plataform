@@ -31,7 +31,7 @@ const BASE = {
 };
 
 describe("resultado do simulador", () => {
-  test("caso típico dentro do âmbito é positivo, em todos os setores", () => {
+  test("caso típico dentro do âmbito é positivo, em todos os sectores", () => {
     for (const setor of SETORES) {
       for (const problema of problemasDoSetor(setor).filter((p) => p !== "Outro")) {
         for (const momento of MOMENTOS) {
@@ -41,13 +41,13 @@ describe("resultado do simulador", () => {
     }
   });
 
-  test("problema de outro setor não dá positivo (fica incerto)", () => {
+  test("problema de outro sector não dá positivo (fica incerto)", () => {
     assert.equal(avaliarSimulador({ ...BASE, setor: "Telecomunicações", problema: "Produto com defeito" }).resultado, "incerto");
     assert.equal(avaliarSimulador({ ...BASE, setor: "Compras & Reembolsos", problema: "Produto com defeito" }).resultado, "positivo");
     assert.equal(avaliarSimulador({ ...BASE, setor: "Ginásios", problema: "Cobrança após cancelamento" }).resultado, "positivo");
   });
 
-  test("setor fora do âmbito é negativo, com motivo", () => {
+  test("sector fora do âmbito é negativo, com motivo", () => {
     assert.deepEqual(avaliarSimulador({ ...BASE, setor: SETOR_FORA_DO_AMBITO }), {
       resultado: "negativo",
       motivo: MOTIVOS.setor,
@@ -191,6 +191,6 @@ describe("legado e privacidade", () => {
     const politica = ler(`src/app/[idioma]/(legal)/privacidade/_versoes/v${PRIVACIDADE_VERSAO}.tsx`);
     assert.match(politica, /Simulador de Elegibilidade<\/strong> é gratuito e funciona sem conta/);
     assert.match(politica, /não as\s+guarda/);
-    assert.doesNotMatch(politica, /respostas ao Simulador|Comparador de Faturas e o Simulador|no Simulador de\s+Elegibilidade, a análise/);
+    assert.doesNotMatch(politica, /respostas ao Simulador|Comparador de Facturas e o Simulador|no Simulador de\s+Elegibilidade, a análise/);
   });
 });

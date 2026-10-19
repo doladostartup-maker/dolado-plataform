@@ -8,8 +8,8 @@ describe("Checkout em inglês", () => {
   test("nome inglês do produto, com o nome português que o Stripe mostra", () => {
     for (const [produto, en, pt] of [
       ["avulso", "Single Case", "Avulso"],
-      ["protecao", "Protection", "Proteção"],
-      ["caso_protecao", "Case + Protection", "Caso + Proteção"],
+      ["protecao", "Protection", "Protecção"],
+      ["caso_protecao", "Case + Protection", "Caso + Protecção"],
       ["caso_extra", "Extra Case", "Caso Extra"],
     ]) {
       const m = mensagemCheckout(produto, "en-GB");

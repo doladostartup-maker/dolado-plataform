@@ -11,7 +11,7 @@ export const inicio = {
   metadados: {
     titulo: "Ajuda com problemas com empresas - DoLado",
     descricao:
-      "A DoLado ajuda a tratar problemas com empresas: prepara a reclamação, só a envia com a sua autorização e acompanha a resposta. Com a Proteção, acompanha também as suas faturas e contratos.",
+      "A DoLado ajuda a tratar problemas com empresas: prepara a reclamação, só a envia com a sua autorização e acompanha a resposta. Com a Protecção, acompanha também as suas facturas e contratos.",
   },
   hero: {
     titulo: "Tem um problema com uma empresa?",
@@ -23,7 +23,7 @@ export const inicio = {
   problemas: {
     titulo: "Já lhe aconteceu alguma destas situações?",
     itens: {
-      faturaAlta: "A fatura veio mais alta do que esperava.",
+      faturaAlta: "A factura veio mais alta do que esperava.",
       promocao: "A promoção terminou e o preço aumentou.",
       fidelizacao: "Quer cancelar, mas ainda está fidelizado.",
       reembolso: "Está à espera de um reembolso que não chega.",
@@ -35,7 +35,7 @@ export const inicio = {
   },
   vertentes: {
     titulo1: "Apoio para tratar problemas.",
-    titulo2: "Proteção para antecipar surpresas.",
+    titulo2: "Protecção para antecipar surpresas.",
     tratar: {
       titulo: "Tenho um problema",
       texto: "Tratamos a reclamação consigo.",
@@ -43,8 +43,8 @@ export const inicio = {
     },
     protecao: {
       titulo: "Quero evitar surpresas",
-      texto: "Acompanhamos faturas, contratos e datas importantes, para o avisar a tempo.",
-      cta: "Conhecer a Proteção",
+      texto: "Acompanhamos facturas, contratos e datas importantes, para o avisar a tempo.",
+      cta: "Conhecer a Protecção",
     },
   },
   comoFunciona: {

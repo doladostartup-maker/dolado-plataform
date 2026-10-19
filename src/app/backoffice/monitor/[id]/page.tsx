@@ -31,13 +31,13 @@ import {
 const MOTIVO: Record<string, string> = {
   api_nao_configurada: "A ANTHROPIC_API_KEY não está configurada no servidor (Clever Cloud). O documento fica pendente até haver chave.",
   erro_api: "A Claude API respondeu com erro. Verifique a chave e o modelo (ANTHROPIC_DOCUMENT_MODEL) no Clever Cloud.",
-  orcamento_atingido: "O orçamento da Claude API (ANTHROPIC_ORCAMENTO_USD) foi atingido. Aumente o teto para continuar a ler documentos automaticamente.",
+  orcamento_atingido: "O orçamento da Claude API (ANTHROPIC_ORCAMENTO_USD) foi atingido. Aumente o tecto para continuar a ler documentos automaticamente.",
   ficheiro_nao_encontrado: "O ficheiro não foi encontrado no Storage.",
   formato_nao_lido: "Este formato não é lido automaticamente.",
   recusa: "A Claude API recusou ler o documento.",
   resposta_invalida: "A leitura não devolveu um resultado válido.",
   validacao: "Os dados lidos não passaram a validação.",
-  nao_e_fatura: "A leitura indica que o documento não é uma fatura.",
+  nao_e_fatura: "A leitura indica que o documento não é uma factura.",
   nao_e_contrato: "A leitura indica que o documento não é um contrato.",
   erro_inesperado: "Erro inesperado no processamento.",
 };
@@ -118,7 +118,7 @@ export default async function DocumentoMonitorPage({
     <div className="flex flex-col gap-5">
       <CabecalhoPagina
         voltar={{ href: "/backoffice/monitor", texto: "Documentos por tratar" }}
-        contexto="Proteção · documento"
+        contexto="Protecção · documento"
         titulo={`${rotuloTipo(doc.tipo)} carregad${doc.tipo === "fatura" ? "a" : "o"}`}
         estado={<Etiqueta tom={estadoDoc.tom}>{estadoDoc.rotulo}</Etiqueta>}
         meta={
@@ -157,7 +157,7 @@ export default async function DocumentoMonitorPage({
             )}
             {repetido ? (
               <Aviso tom="info" titulo="Documento repetido.">
-                Este documento (ou a mesma fatura) já estava registado. O ficheiro foi apagado e o documento não é lido de novo.
+                Este documento (ou a mesma factura) já estava registado. O ficheiro foi apagado e o documento não é lido de novo.
               </Aviso>
             ) : situacao === "em_leitura" ? (
               <Aviso tom="info" titulo="Leitura automática a decorrer.">
@@ -196,7 +196,7 @@ export default async function DocumentoMonitorPage({
               <form action={criarContratoParaDocumento} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
                 <input type="hidden" name="documento_id" value={doc.id} />
                 <label className={ROTULO}>
-                  Setor
+                  Sector
                   <select name="setor" className={CAMPO} defaultValue="telecomunicacoes">
                     {SETORES_CONTRATO.map((s) => (
                       <option key={s} value={s}>
@@ -215,7 +215,7 @@ export default async function DocumentoMonitorPage({
           )}
 
           {contrato && (
-            <Seccao titulo="Valores do serviço" descricao="Valores atuais, propostos e em conflito, com a origem de cada um.">
+            <Seccao titulo="Valores do serviço" descricao="Valores actuais, propostos e em conflito, com a origem de cada um.">
               {(campos ?? []).length === 0 ? (
                 <p className="text-[14px] text-[var(--v2-muted)]">Sem valores registados.</p>
               ) : (
@@ -255,7 +255,7 @@ export default async function DocumentoMonitorPage({
                   <BotaoSubmeter className={BOTAO_SECUNDARIO}>Definir valor</BotaoSubmeter>
                 </div>
                 <p className={AJUDA_CAMPO}>
-                  Um valor definido aqui passa a ser o atual e fica marcado como corrigido pela DoLado. Não use para concluir sobre o cumprimento da lei ou do
+                  Um valor definido aqui passa a ser o actual e fica marcado como corrigido pela DoLado. Não use para concluir sobre o cumprimento da lei ou do
                   contrato.
                 </p>
               </form>
@@ -317,7 +317,7 @@ export default async function DocumentoMonitorPage({
                   quando: dataHora(a.created_at),
                   ator: revisor.get(a.alterado_por) ?? a.alterado_por,
                   titulo: `${rotuloTipo(a.tipo_anterior)} → ${rotuloTipo(a.tipo_novo)}`,
-                  detalhe: `${a.leituras_invalidadas} leitura(s) posta(s) de parte${a.fatura_removida ? " · fatura registada retirada" : ""}${
+                  detalhe: `${a.leituras_invalidadas} leitura(s) posta(s) de parte${a.fatura_removida ? " · factura registada retirada" : ""}${
                     a.valores_retirados ? ` · ${a.valores_retirados} valor(es) retirado(s)` : ""
                   }`,
                 }))}

@@ -32,12 +32,12 @@ export const SECCAO_ENTIDADES = {
   introducao:
     "Existem entidades oficiais de Resolução Alternativa de Litígios de Consumo, como os centros de arbitragem de conflitos de consumo, que prestam informação e podem tratar conflitos entre consumidores e empresas através de mediação, conciliação ou arbitragem, nos termos da competência e das regras de cada entidade.",
   rotuloLista: "Centros a consultar",
-  rotuloSetoriais: "Entidades setoriais a consultar",
+  rotuloSetoriais: "Entidades sectoriais a consultar",
   notaLista:
-    "Lista meramente informativa, baseada na informação pública da Direção-Geral do Consumidor. Não constitui indicação da entidade competente para o seu caso. A competência pode depender, entre outros aspetos, do setor, do valor, do local do contrato, da adesão das partes e das regras da entidade.",
+    "Lista meramente informativa, baseada na informação pública da Direcção-Geral do Consumidor. Não constitui indicação da entidade competente para o seu caso. A competência pode depender, entre outros aspectos, do sector, do valor, do local do contrato, da adesão das partes e das regras da entidade.",
   limites:
-    "A DoLado não representa o consumidor em processos de mediação, conciliação ou arbitragem, não apresenta pedidos em seu nome, não determina nem indica qual é a entidade competente para este caso e não presta aconselhamento jurídico. Confirme diretamente junto da entidade se pode apreciar o conflito.",
-  ligacaoOficial: "Ver a lista oficial completa das entidades RAL (Direção-Geral do Consumidor)",
+    "A DoLado não representa o consumidor em processos de mediação, conciliação ou arbitragem, não apresenta pedidos em seu nome, não determina nem indica qual é a entidade competente para este caso e não presta aconselhamento jurídico. Confirme directamente junto da entidade se pode apreciar o conflito.",
+  ligacaoOficial: "Ver a lista oficial completa das entidades RAL (Direcção-Geral do Consumidor)",
 } as const;
 
 /** Secção final do dossiê em PDF. */
@@ -45,8 +45,8 @@ export const OPCOES_CONFLITO = {
   titulo: "Opções para continuar a tratar o conflito",
   paragrafos: [
     "Este dossiê reúne informação e documentos registados durante o acompanhamento do caso pela DoLado.",
-    "Se pretender prosseguir por sua iniciativa, poderá consultar as entidades oficiais de Resolução Alternativa de Litígios de Consumo e as respetivas regras.",
-    "A lista incluída é meramente informativa e não identifica a entidade competente para este caso. O âmbito e a admissibilidade dependem das regras de cada entidade; confirme diretamente com a entidade escolhida, incluindo se é necessário contactar previamente a empresa reclamada.",
+    "Se pretender prosseguir por sua iniciativa, poderá consultar as entidades oficiais de Resolução Alternativa de Litígios de Consumo e as respectivas regras.",
+    "A lista incluída é meramente informativa e não identifica a entidade competente para este caso. O âmbito e a admissibilidade dependem das regras de cada entidade; confirme directamente com a entidade escolhida, incluindo se é necessário contactar previamente a empresa reclamada.",
     "A DoLado não representa o consumidor em processos de mediação, conciliação ou arbitragem, não apresenta pedidos em seu nome, não determina nem indica qual é a entidade competente para este caso e não presta aconselhamento jurídico.",
   ],
 } as const;

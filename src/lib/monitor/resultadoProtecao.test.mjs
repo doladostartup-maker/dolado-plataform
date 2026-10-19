@@ -78,24 +78,24 @@ const texto = (r) => JSON.stringify(r);
 
 describe("datas", () => {
   test("por extenso e curtas, em Lisboa", () => {
-    assert.equal(dataExtenso("2027-01-14"), "14 de janeiro de 2027");
-    assert.equal(dataExtenso("2026-10-04", HOJE), "4 de outubro");
-    assert.equal(dataCurta("2026-10-04T10:00:00Z", HOJE), "4 out.");
-    assert.equal(dataCurta("2025-12-04", HOJE), "4 dez. 2025");
+    assert.equal(dataExtenso("2027-01-14"), "14 de Janeiro de 2027");
+    assert.equal(dataExtenso("2026-10-04", HOJE), "4 de Outubro");
+    assert.equal(dataCurta("2026-10-04T10:00:00Z", HOJE), "4 Out.");
+    assert.equal(dataCurta("2025-12-04", HOJE), "4 Dez. 2025");
     // 23h30 UTC de 31/12 já é 1 de janeiro? Não: Lisboa está em UTC+0 no inverno.
-    assert.equal(dataCurta("2026-07-31T23:30:00Z", HOJE), "1 ago.");
+    assert.equal(dataCurta("2026-07-31T23:30:00Z", HOJE), "1 Ago.");
   });
 });
 
 describe("primeira utilização", () => {
-  test("A. primeira fatura sem contrato: resultado imediato, tudo certo", () => {
+  test("A. primeira factura sem contrato: resultado imediato, tudo certo", () => {
     const f = fatura("f1", 10, { desconto: 1000 });
     const r = resultadoServico(
       servico({ faturas: [f], eventos: [evento("f1", "primeira_fatura", { severidade: "info" })], documentos: [documento("d1", "fatura")] }),
       HOJE,
     );
     assert.equal(r.estado, "verificado");
-    assert.equal(r.titulo, "Já verificámos a sua primeira fatura");
+    assert.equal(r.titulo, "Já verificámos a sua primeira factura");
     assert.equal(r.conclusao, "Está tudo certo por agora.");
     assert.equal(r.primeira, true);
     assert.equal(r.encontramos, "Nenhum problema neste momento");
@@ -104,11 +104,11 @@ describe("primeira utilização", () => {
       ["Mensalidade", "Desconto", "Cobranças em duplicado"],
     );
     assert.equal(r.verificacoes[0].valor, "39,90 €");
-    assert.equal(r.verificacoes[0].detalhe, "Valor de referência para as próximas faturas.");
+    assert.equal(r.verificacoes[0].detalhe, "Valor de referência para as próximas facturas.");
     assert.ok(r.atentos.some((a) => a.texto === "Alterações à mensalidade de 39,90 €"));
     assert.ok(r.atentos.some((a) => a.texto === "Que o desconto de 10,00 € continua a ser aplicado"));
     assert.match(r.seguinte, /referência para acompanhar alterações futuras/);
-    assert.equal(r.documentoVerificado, "a fatura de outubro de 2026");
+    assert.equal(r.documentoVerificado, "a factura de Outubro de 2026");
     assert.equal(r.ultimaVerificacao, "2026-10-04T10:00:10Z");
     // Sem contrato nunca se fala de valores "contratados".
     assert.doesNotMatch(texto(r.verificacoes) + r.texto + texto(r.atentos), /contrat/i);
@@ -117,7 +117,7 @@ describe("primeira utilização", () => {
     assert.ok(r.lacunas.includes("Não conseguimos confirmar até quando se aplica o desconto."));
     assert.deepEqual(
       r.historico.map((h) => h.texto),
-      ["Verificámos a primeira fatura (outubro de 2026) — tudo certo."],
+      ["Verificámos a primeira factura (Outubro de 2026) — tudo certo."],
     );
   });
 
@@ -146,7 +146,7 @@ describe("primeira utilização", () => {
     assert.match(r.texto, /só as usamos depois da sua confirmação/);
   });
 
-  test("E. contrato confirmado, ainda sem faturas", () => {
+  test("E. contrato confirmado, ainda sem facturas", () => {
     const r = resultadoServico(
       servico({
         campos: {
@@ -162,12 +162,12 @@ describe("primeira utilização", () => {
     );
     assert.equal(r.estado, "verificado");
     assert.equal(r.titulo, "Já verificámos o seu contrato");
-    assert.equal(r.seguinte, "Quando recebermos uma fatura, vamos comparar o que está a ser cobrado com estas condições.");
+    assert.equal(r.seguinte, "Quando recebermos uma factura, vamos comparar o que está a ser cobrado com estas condições.");
     assert.deepEqual(
       r.atentos.map((a) => a.texto),
       [
-        "Fim da promoção a 14 de janeiro de 2027",
-        "Fim da fidelização a 14 de março de 2027",
+        "Fim da promoção a 14 de Janeiro de 2027",
+        "Fim da fidelização a 14 de Março de 2027",
         "Alterações à mensalidade de 39,90 €",
         "Que o desconto de 10,00 € continua a ser aplicado",
       ],
@@ -187,7 +187,7 @@ describe("primeira utilização", () => {
     assert.equal(r.verificacoes[0].detalhe, "Indicado por si");
   });
 
-  test("G. fatura sem mensalidade identificada: informação incompleta, sem inventar", () => {
+  test("G. factura sem mensalidade identificada: informação incompleta, sem inventar", () => {
     const f = fatura("f1", 10, { linhas: [] });
     const r = resultadoServico(
       servico({ faturas: [f], eventos: [evento("f1", "dados_insuficientes", { severidade: "info" })], documentos: [documento("d1", "fatura")] }),
@@ -203,7 +203,7 @@ describe("primeira utilização", () => {
 });
 
 describe("continuamos atentos", () => {
-  test("H. nova fatura sem alterações", () => {
+  test("H. nova factura sem alterações", () => {
     const f1 = fatura("f1", 9);
     const f2 = fatura("f2", 10);
     const r = resultadoServico(
@@ -215,16 +215,16 @@ describe("continuamos atentos", () => {
       HOJE,
     );
     assert.equal(r.titulo, "Continua tudo certo");
-    assert.equal(r.texto, "Comparámos a fatura de outubro de 2026 com as faturas anteriores e não encontrámos alterações relevantes.");
-    assert.equal(r.verificacoes.find((v) => v.rotulo === "Mensalidade").detalhe, "Igual à fatura anterior.");
-    assert.ok(r.verificacoes.some((v) => v.rotulo === "Cobranças novas" && v.valor === "Nenhuma face às faturas anteriores"));
+    assert.equal(r.texto, "Comparámos a factura de Outubro de 2026 com as facturas anteriores e não encontrámos alterações relevantes.");
+    assert.equal(r.verificacoes.find((v) => v.rotulo === "Mensalidade").detalhe, "Igual à factura anterior.");
+    assert.ok(r.verificacoes.some((v) => v.rotulo === "Cobranças novas" && v.valor === "Nenhuma face às facturas anteriores"));
     assert.deepEqual(
       r.historico.map((h) => h.texto),
-      ["Comparámos a fatura de outubro de 2026 — sem alterações relevantes.", "Verificámos a primeira fatura (setembro de 2026) — tudo certo."],
+      ["Comparámos a factura de Outubro de 2026 — sem alterações relevantes.", "Verificámos a primeira factura (Setembro de 2026) — tudo certo."],
     );
   });
 
-  test("I. com contrato e fatura conforme", () => {
+  test("I. com contrato e factura conforme", () => {
     const r = resultadoServico(
       servico({
         campos: { mensalidade_cents: { valor: 3990, origem: "contrato" } },
@@ -235,10 +235,10 @@ describe("continuamos atentos", () => {
       }),
       HOJE,
     );
-    assert.match(r.texto, /com as condições do contrato e com as faturas anteriores/);
+    assert.match(r.texto, /com as condições do contrato e com as facturas anteriores/);
     assert.equal(r.verificacoes[0].rotulo, "Mensalidade do contrato");
-    assert.equal(r.verificacoes[0].detalhe, "A fatura de outubro de 2026 está de acordo com este valor.");
-    assert.match(r.seguinte, /comparar as próximas faturas com o contrato/);
+    assert.equal(r.verificacoes[0].detalhe, "A factura de Outubro de 2026 está de acordo com este valor.");
+    assert.match(r.seguinte, /comparar as próximas facturas com o contrato/);
   });
 
   test("J. alteração em verificação: calma, sem afirmar que não encontrámos nada", () => {
@@ -258,7 +258,7 @@ describe("continuamos atentos", () => {
     assert.match(r.historico[0].texto, /estamos a verificar uma alteração/);
   });
 
-  test("K. dados da fatura por confirmar não escondem o resultado", () => {
+  test("K. dados da factura por confirmar não escondem o resultado", () => {
     const r = resultadoServico(
       servico({ faturas: [fatura("f1", 10)], porConfirmar: { campos: ["data_fim_fidelizacao"], doContrato: false }, documentos: [documento("d1", "fatura")] }),
       HOJE,
@@ -278,7 +278,7 @@ describe("continuamos atentos", () => {
       }),
       HOJE,
     );
-    assert.ok(r.historico.some((h) => h.texto === "Avisámo-lo por e-mail do fim da promoção (30 de novembro)."));
+    assert.ok(r.historico.some((h) => h.texto === "Avisámo-lo por e-mail do fim da promoção (30 de Novembro)."));
   });
 
   test("M. serviço terminado: nada a acompanhar", () => {
@@ -319,7 +319,7 @@ describe("encontrámos algo", () => {
     assert.equal(s.texto, achado.texto);
     assert.equal(s.problema, "Aumento de mensalidade");
     assert.match(s.causas, /Nem sempre é um erro/);
-    assert.equal(r.historico[0].texto, "Detetámos um aumento de 6,40 € na mensalidade na fatura de outubro de 2026.");
+    assert.equal(r.historico[0].texto, "Detectámos um aumento de 6,40 € na mensalidade na factura de Outubro de 2026.");
     assert.equal(r.historico[0].tom, "atencao");
   });
 
@@ -356,22 +356,22 @@ describe("encontrámos algo", () => {
       [evento("f1", "promocao_em_falta", { base: "contrato", severidade: "atencao", montanteCents: 1000, dados: { desconto: 1000 }, achadoId: "a3" })],
       { id: "s1", nome: "MEO" },
     );
-    assert.equal(s.resumo, "O desconto de 10,00 € previsto no seu contrato não aparece na fatura.");
+    assert.equal(s.resumo, "O desconto de 10,00 € previsto no seu contrato não aparece na factura.");
     assert.equal(s.valores.diferenca.valor, "+10,00 €/mês");
   });
 });
 
 describe("resultado geral", () => {
-  test("R. sem serviços: começar pela situação atual", () => {
+  test("R. sem serviços: começar pela situação actual", () => {
     const g = resultadoGeral([]);
     assert.equal(g.estado, "sem_dados");
-    assert.equal(g.titulo, "Comece pela sua situação atual");
+    assert.equal(g.titulo, "Comece pela sua situação actual");
   });
 
   test("S. um só serviço: o resultado é o do serviço", () => {
     const r = resultadoServico(servico({ faturas: [fatura("f1", 10)], documentos: [documento("d1", "fatura")] }), HOJE);
     const g = resultadoGeral([r]);
-    assert.equal(g.titulo, "Já verificámos a sua primeira fatura");
+    assert.equal(g.titulo, "Já verificámos a sua primeira factura");
     assert.equal(g.pontos, r.verificacoes.length);
   });
 

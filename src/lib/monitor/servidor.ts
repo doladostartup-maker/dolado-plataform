@@ -520,7 +520,7 @@ async function avaliarCessacao(admin: Admin, contratoId: string, faturaId: strin
       { onConflict: "chave_idempotencia", ignoreDuplicates: true },
     )
     .select("id");
-  if (inseridos?.length) await avisarAdmin("Situação por rever", `Valor de cessação divergente numa fatura nova (serviço ${contratoId}).`);
+  if (inseridos?.length) await avisarAdmin("Situação por rever", `Valor de cessação divergente numa factura nova (serviço ${contratoId}).`);
 }
 
 // ---------------------------------------------------------------------------
@@ -597,7 +597,7 @@ export async function recalcularAcompanhamento(admin: Admin, servicoId: string):
       })),
       p_resultado: resultadoFatura(eventos),
     });
-    if (error) console.error(`[monitor] falha ao gravar eventos da fatura ${atual.id}:`, error.message);
+    if (error) console.error(`[monitor] falha ao gravar eventos da factura ${atual.id}:`, error.message);
   }
 
   const { count: depois } = await admin
@@ -606,7 +606,7 @@ export async function recalcularAcompanhamento(admin: Admin, servicoId: string):
     .eq("contrato_id", servicoId)
     .eq("estado", "detetado");
   const novos = Math.max(0, (depois ?? 0) - (antes ?? 0));
-  if (novos > 0) await avisarAdmin("Situações por rever", `${novos} situação(ões) detetada(s) nas faturas do serviço ${servicoId}.`);
+  if (novos > 0) await avisarAdmin("Situações por rever", `${novos} situação(ões) detetada(s) nas facturas do serviço ${servicoId}.`);
   return { faturas: ordenadas.length, novosAchados: novos };
 }
 
@@ -658,7 +658,7 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
     const teto = tetoOrcamentoUsd();
     const gastoAntes = await gastoApiUsd(admin);
     if (estadoOrcamento(gastoAntes, teto).bloqueado) {
-      await avisarAdmin("Orçamento da Claude API atingido", `Documento ${doc.id} ficou pendente: o gasto (${gastoAntes.toFixed(2)} USD) atingiu o teto de ${teto} USD.`);
+      await avisarAdmin("Orçamento da Claude API atingido", `Documento ${doc.id} ficou pendente: o gasto (${gastoAntes.toFixed(2)} USD) atingiu o tecto de ${teto} USD.`);
       return { estado: "pendente", contratoId: doc.contrato_id, motivo: "orcamento_atingido" };
     }
 
@@ -763,7 +763,7 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
         })
         .select("id")
         .single();
-      if (erroExtracao || !extracao) throw new Error(`Falha ao gravar a extração: ${erroExtracao?.message}`);
+      if (erroExtracao || !extracao) throw new Error(`Falha ao gravar a extracção: ${erroExtracao?.message}`);
       extracaoId = extracao.id;
       bruto = protegido;
     }
@@ -1227,7 +1227,7 @@ export async function registarRespostaFatura(faturaId: string, utilizadorId: str
     .select("id, contrato_id")
     .maybeSingle();
   if (data && acao === "contestar") {
-    await avisarAdmin("Valores de fatura por rever", `O cliente indicou que os valores lidos da fatura ${data.id} (serviço ${data.contrato_id}) não estão corretos.`);
+    await avisarAdmin("Valores de factura por rever", `O cliente indicou que os valores lidos da factura ${data.id} (serviço ${data.contrato_id}) não estão correctos.`);
   }
   return !!data;
 }

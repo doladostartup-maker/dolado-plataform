@@ -76,7 +76,7 @@ describe("leitura do documento", () => {
   });
 });
 
-describe("regras de extração", () => {
+describe("regras de extracção", () => {
   test("NIF: dígito de controlo e só pessoa singular", () => {
     assert.ok(nifValido("123456789"));
     assert.ok(!nifValido("123456788"));
@@ -207,7 +207,7 @@ describe("privacidade", () => {
   });
 
   const TEXTO_ENVIADO =
-    "Exmos. Senhores,\n\nEu, Maria José da Silva, titular do NIF 123456789, residente em Rua das Flores 12 2 Esq, 4000-123 Porto, cliente n.º 1234567, venho apresentar reclamação sobre a fatura de setembro.\n\nCom os melhores cumprimentos,\nMaria José da Silva";
+    "Exmos. Senhores,\n\nEu, Maria José da Silva, titular do NIF 123456789, residente em Rua das Flores 12 2 Esq, 4000-123 Porto, cliente n.º 1234567, venho apresentar reclamação sobre a factura de Setembro.\n\nCom os melhores cumprimentos,\nMaria José da Silva";
   const DADOS = ["Maria", "Silva", "123456789", "Flores", "4000-123", "1234567"];
 
   test("texto já preenchido: mascarado quando segue para a IA (nova comunicação)", () => {

@@ -223,6 +223,6 @@ export function lerRegraDoFormulario(ler: (campo: string) => unknown): { ok: tru
   if (dados.em_vigor_desde && dados.revogada_em && dados.revogada_em <= dados.em_vigor_desde) {
     return { ok: false, erro: "A data de revogação tem de ser posterior à entrada em vigor." };
   }
-  if (dados.ativa && !dados.revista_em) return { ok: false, erro: "Uma regra só pode ficar ativa com a data da última revisão." };
+  if (dados.ativa && !dados.revista_em) return { ok: false, erro: "Uma regra só pode ficar activa com a data da última revisão." };
   return { ok: true, dados };
 }

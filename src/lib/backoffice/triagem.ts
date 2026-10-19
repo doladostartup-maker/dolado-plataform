@@ -113,7 +113,7 @@ export function proximaAcao(c: CasoTriagem): ProximaAcao {
       descricao:
         novas > 0
           ? `Chegou ${novas === 1 ? "uma comunicação" : `${novas} comunicações`} depois do encerramento. Para a analisar, retome o caso (corrigir o estado).`
-          : "Acompanhamento terminado; o cliente recebeu o dossiê e a informação sobre as entidades RAL. Sem novas ações (para retomar, corrigir o estado).",
+          : "Acompanhamento terminado; o cliente recebeu o dossiê e a informação sobre as entidades RAL. Sem novas acções (para retomar, corrigir o estado).",
       tom: "neutro",
       interna: false,
       aguarda: null,
@@ -351,7 +351,7 @@ export function prioridade(c: CasoTriagem, hoje: Date = new Date()): number {
 
 /** Vistas da lista de casos. */
 export const VISTAS_CASOS = {
-  acao: "Precisam de ação",
+  acao: "Precisam de acção",
   espera: "À espera de terceiros",
   concluidos: "Concluídos",
   todos: "Todos",

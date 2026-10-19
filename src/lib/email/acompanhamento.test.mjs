@@ -21,7 +21,7 @@ describe("e-mails ao cliente", () => {
     const html = montarHtmlRespostaRecebida({ empresa: "Operadora X", urlCaso: URL });
     assert.equal(ASSUNTO_RESPOSTA_RECEBIDA, "Recebemos uma resposta relacionada com o seu caso");
     assert.match(html, /Recebemos uma comunicação relacionada com a sua reclamação/);
-    assert.match(html, /Não precisa de fazer nada neste momento\. Entraremos em contacto consigo se for necessária alguma ação\./);
+    assert.match(html, /Não precisa de fazer nada neste momento\. Entraremos em contacto consigo se for necessária alguma acção\./);
     assert.match(html, /Operadora X/);
   });
 

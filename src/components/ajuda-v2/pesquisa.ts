@@ -6,7 +6,16 @@ import type { ReactNode } from "react";
 
 /** "Fatura Ação" → "fatura acao" */
 export function normalizar(texto: string) {
-  return texto.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+  return (
+    texto
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .toLowerCase()
+      .trim()
+      // Ortografia tradicional e do Acordo de 1990 dão o mesmo termo de pesquisa
+      // ("protecção"/"proteção", "factura"/"fatura", "óptimo"/"ótimo").
+      .replace(/c(?=[ct])|p(?=[ct])/g, "")
+  );
 }
 
 /** Texto visível de um nó React (strings, números, arrays e elementos com children). */

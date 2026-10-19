@@ -72,7 +72,7 @@ export function htmlConfirmacaoCliente(nome: string, idioma: IdiomaEmail = "pt-P
 }
 
 export function assuntoNotificacaoAdmin(caso: Pick<CasoNovo, "nome" | "sector">): string {
-  const sector = caso.sector?.trim() ? textoParaAssunto(caso.sector, 40) : "Sem setor";
+  const sector = caso.sector?.trim() ? textoParaAssunto(caso.sector, 40) : "Sem sector";
   const nome = textoParaAssunto(caso.nome ?? "", 60) || "Sem nome";
   return `[NOVO CASO] ${sector} – ${nome}`;
 }
@@ -90,7 +90,7 @@ export function htmlNotificacaoAdmin(caso: CasoNovo, siteUrl: string): string {
   ${linha("Nome", caso.nome)}
   ${linha("E-mail", caso.email)}
   ${linha("Telefone", caso.telefone)}
-  ${linha("Setor", caso.sector)}
+  ${linha("Sector", caso.sector)}
   ${linha("Tipo de problema", caso.tipo_problema)}
   ${linha("Problema (formulário guiado)", caso.problema_tipo)}
   ${linha("Empresa visada", caso.empresa)}

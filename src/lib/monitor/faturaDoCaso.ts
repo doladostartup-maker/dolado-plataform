@@ -68,7 +68,7 @@ export function escolherFaturaDoCaso(
   return {
     anexoId: candidato.id,
     casoId: candidato.caso_id,
-    nome: (candidato.nome_ficheiro ?? "").trim().slice(0, 200) || "Fatura enviada no caso",
+    nome: (candidato.nome_ficheiro ?? "").trim().slice(0, 200) || "Factura enviada no caso",
     empresa: empresaDoCaso(candidato.caso_id),
   };
 }

@@ -402,7 +402,7 @@ export function TextoCaso({
                 </div>
                 <details className="rounded-[10px] border border-[var(--v2-line)] bg-white">
                   <summary className="flex min-h-9 cursor-pointer items-center px-3 text-[13px] font-semibold text-[var(--v2-navy)]">
-                    Prazo de resposta (só se for efetivamente aplicável)
+                    Prazo de resposta (só se for efectivamente aplicável)
                   </summary>
                   <div className="grid gap-3 border-t border-[var(--v2-line)] p-3 sm:grid-cols-2">
                     <label className={ROTULO}>
@@ -448,7 +448,7 @@ export function TextoCaso({
                     rotulo={`Guardar como versão ${atual.versao + 1}`}
                     aviso={
                       atual.estado === "autorizado" || atual.estado === "aguardando_aprovacao"
-                        ? "A versão atual deixa de valer (incluindo qualquer autorização): a nova versão terá de ser enviada e autorizada pelo cliente."
+                        ? "A versão actual deixa de valer (incluindo qualquer autorização): a nova versão terá de ser enviada e autorizada pelo cliente."
                         : undefined
                     }
                     principal={atual.estado === "alteracoes_solicitadas"}

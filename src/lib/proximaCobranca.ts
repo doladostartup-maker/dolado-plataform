@@ -19,7 +19,7 @@
 import type Stripe from "stripe";
 import { formatarPreco } from "./planos.ts";
 import { normalizarIdioma, type Idioma } from "../i18n/config.ts";
-import { formatarData as formatarDataIdioma, formatarEurosCents } from "../i18n/formatar.ts";
+import { formatarData as formatarDataIdioma, formatarEurosCents, mesesComMaiuscula } from "../i18n/formatar.ts";
 import { tSubscricao } from "../i18n/mensagens/subscricao.ts";
 
 // Português exatamente como antes (formatarPreco, toLocaleDateString); inglês por Intl.
@@ -99,12 +99,14 @@ export function resumirCobranca(dados: DadosCobranca): ResumoCobranca {
 
 function formatarData(iso: string, idioma: Idioma = "pt-PT") {
   if (idioma !== "pt-PT") return formatarDataIdioma(idioma, iso);
-  return new Date(iso).toLocaleDateString("pt-PT", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "Europe/Lisbon",
-  });
+  return mesesComMaiuscula(
+    new Date(iso).toLocaleDateString("pt-PT", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "Europe/Lisbon",
+    }),
+  );
 }
 
 /** "100% vitalício", "50% até 5 de janeiro de 2027", "2,00 € na próxima cobrança". */

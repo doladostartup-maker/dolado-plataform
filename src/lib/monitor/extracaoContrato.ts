@@ -205,8 +205,8 @@ export function validarExtracaoContrato(original: unknown): ResultadoValidacaoCo
   const b = bruto as Record<(typeof CAMPOS)[number], Campo>;
   propor("fornecedor", b.fornecedor, textoCurto(b.fornecedor.valor, 120), "fornecedor");
   propor("data_assinatura", b.data_assinatura, data(b.data_assinatura), "data de assinatura");
-  propor("data_ativacao", b.data_ativacao, data(b.data_ativacao), "data de ativação");
-  propor("inicio_na_ativacao", b.inicio_na_ativacao, simNao(b.inicio_na_ativacao), "início na ativação");
+  propor("data_ativacao", b.data_ativacao, data(b.data_ativacao), "data de activação");
+  propor("inicio_na_ativacao", b.inicio_na_ativacao, simNao(b.inicio_na_ativacao), "início na activação");
   propor("data_inicio", b.data_inicio, data(b.data_inicio), "data de início");
   propor("duracao_fidelizacao_meses", b.duracao_fidelizacao_meses, meses(b.duracao_fidelizacao_meses), "duração da fidelização");
   propor("data_fim_fidelizacao", b.data_fim_fidelizacao, data(b.data_fim_fidelizacao), "data de fim de fidelização");
@@ -229,7 +229,7 @@ export function validarExtracaoContrato(original: unknown): ResultadoValidacaoCo
       const i = propostas.findIndex((p) => p.campo === campo && p.valor === assinatura);
       if (i >= 0) {
         propostas.splice(i, 1);
-        avisos.push(`${campo === "data_inicio" ? "data de início" : "data de ativação"} igual à data de assinatura, num contrato que começa na ativação`);
+        avisos.push(`${campo === "data_inicio" ? "data de início" : "data de activação"} igual à data de assinatura, num contrato que começa na activação`);
         precisaRevisao = true;
       }
     }

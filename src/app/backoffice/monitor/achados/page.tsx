@@ -45,9 +45,9 @@ export default async function AchadosPage({ searchParams }: { searchParams: Prom
   return (
     <div className="flex flex-col gap-5">
       <CabecalhoPagina
-        contexto="Proteção"
-        titulo="Situações detetadas"
-        descricao="Resultados das regras sobre as faturas. Nada chega ao cliente sem revisão: confirme os factos, ajuste o texto e comunique, ou descarte com o motivo."
+        contexto="Protecção"
+        titulo="Situações detectadas"
+        descricao="Resultados das regras sobre as facturas. Nada chega ao cliente sem revisão: confirme os factos, ajuste o texto e comunique, ou descarte com o motivo."
       />
 
       <nav aria-label="Filtro das situações" className="flex gap-1 border-b border-[var(--v2-line)]">
@@ -67,9 +67,9 @@ export default async function AchadosPage({ searchParams }: { searchParams: Prom
                 <th scope="col" className={TABELA_TH}>Situação</th>
                 <th scope="col" className={TABELA_TH}>Fornecedor</th>
                 <th scope="col" className={TABELA_TH}>Estado</th>
-                <th scope="col" className={TABELA_TH}>Detetada em</th>
+                <th scope="col" className={TABELA_TH}>Detectada em</th>
                 <th scope="col" className={TABELA_TH}>
-                  <span className="sr-only">Ação</span>
+                  <span className="sr-only">Acção</span>
                 </th>
               </tr>
             </thead>
@@ -99,7 +99,7 @@ export default async function AchadosPage({ searchParams }: { searchParams: Prom
         </div>
       ) : (
         <EstadoVazio icone={<IconeCirculoVisto tamanho={20} />} titulo="Sem situações por decidir.">
-          As situações novas aparecem aqui depois de cada fatura analisada.
+          As situações novas aparecem aqui depois de cada factura analisada.
         </EstadoVazio>
       )}
     </div>

@@ -44,17 +44,17 @@ export const problemas = {
     eyebrow: "Problemas que tratamos",
     titulo: "Problemas de consumo que a DoLado ajuda a resolver",
     texto:
-      "Quando uma fatura, um contrato ou uma compra não corre como esperado, a DoLado ajuda a perceber a situação e trata da reclamação consigo, sempre com o texto revisto e autorizado por si antes do envio.",
+      "Quando uma factura, um contrato ou uma compra não corre como esperado, a DoLado ajuda a perceber a situação e trata da reclamação consigo, sempre com o texto revisto e autorizado por si antes do envio.",
     categoriasTitulo: "Escolha a área do seu problema",
     exemplos: "Por exemplo:",
     ctaTitulo: "Não encontrou a sua situação?",
-    ctaTexto: "Veja gratuitamente se a DoLado pode ajudar ou conte-nos diretamente o que aconteceu.",
+    ctaTexto: "Veja gratuitamente se a DoLado pode ajudar ou conte-nos directamente o que aconteceu.",
   },
   categoria: {
     problemasTitulo: "Problemas frequentes",
     saberMais: "Saber mais",
     ctaTitulo: "Não encontrou a sua situação?",
-    ctaTexto: "Veja gratuitamente se a DoLado pode ajudar ou conte-nos diretamente o que aconteceu.",
+    ctaTexto: "Veja gratuitamente se a DoLado pode ajudar ou conte-nos directamente o que aconteceu.",
     outrasTitulo: "Outras áreas",
   },
   categorias: {
@@ -76,17 +76,17 @@ export const problemas = {
     energia: {
       nome: "Energia",
       nomeMinusculas: "energia",
-      descricao: "Eletricidade: faturas, leituras e cobranças.",
-      exemplos: ["Faturas muito altas", "Consumos estimados", "Cobranças que não reconhece", "Mudança de comercializador"],
+      descricao: "Electricidade: facturas, leituras e cobranças.",
+      exemplos: ["Facturas muito altas", "Consumos estimados", "Cobranças que não reconhece", "Mudança de comercializador"],
       ligacao: "Ver problemas de energia",
       metadados: {
-        titulo: "Problemas com a fatura de eletricidade - DoLado",
+        titulo: "Problemas com a factura de electricidade - DoLado",
         descricao:
-          "Fatura de eletricidade muito alta, consumos estimados ou cobranças que não reconhece? Veja os problemas de energia que a DoLado trata consigo.",
+          "Factura de electricidade muito alta, consumos estimados ou cobranças que não reconhece? Veja os problemas de energia que a DoLado trata consigo.",
       },
-      titulo: "Problemas com a eletricidade",
+      titulo: "Problemas com a electricidade",
       intro:
-        "Faturas que sobem sem explicação clara, leituras estimadas ou valores que não reconhece: a DoLado ajuda a perceber o que está a ser cobrado e trata da reclamação consigo.",
+        "Facturas que sobem sem explicação clara, leituras estimadas ou valores que não reconhece: a DoLado ajuda a perceber o que está a ser cobrado e trata da reclamação consigo.",
     },
     "compras-reembolsos": {
       nome: "Compras e Reembolsos",
@@ -106,8 +106,8 @@ export const problemas = {
     gas: {
       nome: "Gás",
       nomeMinusculas: "gás",
-      descricao: "Faturas, leituras, cobranças e cortes de fornecimento.",
-      exemplos: ["Faturas muito altas", "Cobranças que não reconhece", "Corte de fornecimento", "Mudança de comercializador"],
+      descricao: "Facturas, leituras, cobranças e cortes de fornecimento.",
+      exemplos: ["Facturas muito altas", "Cobranças que não reconhece", "Corte de fornecimento", "Mudança de comercializador"],
       ligacao: "Tratar um problema de gás",
       metadados: { titulo: "", descricao: "" },
       titulo: "",
@@ -116,8 +116,8 @@ export const problemas = {
     agua: {
       nome: "Água",
       nomeMinusculas: "água",
-      descricao: "Faturas, leituras e cobranças do serviço de água.",
-      exemplos: ["Faturas muito altas", "Consumos estimados", "Cobranças que não reconhece", "Corte de fornecimento"],
+      descricao: "Facturas, leituras e cobranças do serviço de água.",
+      exemplos: ["Facturas muito altas", "Consumos estimados", "Cobranças que não reconhece", "Corte de fornecimento"],
       ligacao: "Tratar um problema de água",
       metadados: { titulo: "", descricao: "" },
       titulo: "",
@@ -140,26 +140,26 @@ export const problemas = {
         metadados: {
           titulo: "A operadora aumentou o preço durante a fidelização? - DoLado",
           descricao:
-            "A mensalidade subiu durante a fidelização? Veja o que verificar no contrato e na fatura e como a DoLado pode tratar a reclamação consigo.",
+            "A mensalidade subiu durante a fidelização? Veja o que verificar no contrato e na factura e como a DoLado pode tratar a reclamação consigo.",
         },
         rotulo: "Aumento de preço",
         resumo: "A mensalidade subiu e não sabe se o aumento estava previsto no contrato.",
         titulo: "A operadora aumentou o preço durante a fidelização?",
         subtitulo:
-          "Se a sua mensalidade subiu ou recebeu um aviso de atualização de preço, vale a pena confirmar se o que está a ser aplicado corresponde ao contrato e às regras aplicáveis.",
+          "Se a sua mensalidade subiu ou recebeu um aviso de actualização de preço, vale a pena confirmar se o que está a ser aplicado corresponde ao contrato e às regras aplicáveis.",
         contestar: [
-          "Pode depender do que está no contrato e da forma como a alteração foi comunicada. Alguns contratos preveem atualizações de preço; noutras situações, uma alteração das condições tem de ser comunicada com antecedência e pode permitir ao cliente reagir.",
+          "Pode depender do que está no contrato e da forma como a alteração foi comunicada. Alguns contratos preveem actualizações de preço; noutras situações, uma alteração das condições tem de ser comunicada com antecedência e pode permitir ao cliente reagir.",
           "É necessário verificar o seu caso concreto: a mesma subida pode ter enquadramentos diferentes consoante as condições que aceitou e a data em que lhe foi comunicada.",
         ],
         verificar: [
-          "O contrato e as condições que aceitou, incluindo o que dizem sobre atualização de preços",
+          "O contrato e as condições que aceitou, incluindo o que dizem sobre actualização de preços",
           "A comunicação da operadora sobre a alteração e a data em que a recebeu",
-          "As faturas antes e depois do aumento",
+          "As facturas antes e depois do aumento",
           "As datas de início e de fim da fidelização",
           "Promoções ou descontos que tenham terminado entretanto",
         ],
         ajuda:
-          "A DoLado analisa o contrato, a comunicação recebida e as faturas, verifica as regras aplicáveis ao seu caso e prepara a reclamação adequada, com um pedido concreto à operadora.",
+          "A DoLado analisa o contrato, a comunicação recebida e as facturas, verifica as regras aplicáveis ao seu caso e prepara a reclamação adequada, com um pedido concreto à operadora.",
       },
       "cancelar-fidelizacao": {
         metadados: {
@@ -179,7 +179,7 @@ export const problemas = {
         verificar: [
           "O contrato, incluindo a duração e a data de início da fidelização",
           "O motivo pelo qual quer cancelar e o registo que tenha dele (avarias, alterações, mudança de casa)",
-          "A última fatura e o valor da mensalidade",
+          "A última factura e o valor da mensalidade",
           "Equipamentos ou benefícios recebidos com a fidelização",
           "As comunicações trocadas com a operadora",
         ],
@@ -188,48 +188,48 @@ export const problemas = {
       },
       "cobranca-indevida": {
         metadados: {
-          titulo: "Recebeu uma cobrança que não reconhece na fatura? - DoLado",
+          titulo: "Recebeu uma cobrança que não reconhece na factura? - DoLado",
           descricao:
-            "Encontrou na fatura da operadora um valor que não reconhece? Veja o que verificar e como a DoLado pode preparar e acompanhar a reclamação consigo.",
+            "Encontrou na factura da operadora um valor que não reconhece? Veja o que verificar e como a DoLado pode preparar e acompanhar a reclamação consigo.",
         },
         rotulo: "Cobrança indevida",
-        resumo: "Apareceu na fatura um serviço ou valor que não pediu ou não reconhece.",
-        titulo: "Recebeu uma cobrança que não reconhece na fatura?",
+        resumo: "Apareceu na factura um serviço ou valor que não pediu ou não reconhece.",
+        titulo: "Recebeu uma cobrança que não reconhece na factura?",
         subtitulo:
-          "Serviços adicionais, conteúdos, chamadas ou valores que não reconhece podem aparecer na fatura sem que se perceba de onde vêm. Vale a pena esclarecer antes que se repitam nos meses seguintes.",
+          "Serviços adicionais, conteúdos, chamadas ou valores que não reconhece podem aparecer na factura sem que se perceba de onde vêm. Vale a pena esclarecer antes que se repitam nos meses seguintes.",
         contestar: [
           "Pode haver fundamento para contestar quando a cobrança não corresponde a um serviço que pediu ou utilizou, ou não está prevista no contrato.",
-          "É necessário verificar a origem do valor: alguns encargos resultam das condições contratuais ou da utilização efetiva, outros podem resultar de um erro ou de um serviço ativado sem pedido.",
+          "É necessário verificar a origem do valor: alguns encargos resultam das condições contratuais ou da utilização efectiva, outros podem resultar de um erro ou de um serviço activado sem pedido.",
         ],
         verificar: [
-          "A fatura em que aparece a cobrança e as faturas anteriores",
-          "O detalhe da fatura, se estiver disponível (descrição e datas do valor)",
+          "A factura em que aparece a cobrança e as facturas anteriores",
+          "O detalhe da factura, se estiver disponível (descrição e datas do valor)",
           "O contrato e os serviços que pediu",
           "Se o mesmo valor se repete nos meses seguintes",
           "Contactos que já tenha feito com a operadora sobre o assunto",
         ],
         ajuda:
-          "A DoLado analisa as faturas e o contrato, identifica o que está a ser cobrado e com que base, e prepara a reclamação com o pedido concreto, por exemplo a anulação ou a devolução do valor.",
+          "A DoLado analisa as facturas e o contrato, identifica o que está a ser cobrado e com que base, e prepara a reclamação com o pedido concreto, por exemplo a anulação ou a devolução do valor.",
       },
       "cobranca-apos-cancelamento": {
         metadados: {
           titulo: "Continuam a cobrar depois de ter cancelado o serviço? - DoLado",
           descricao:
-            "Cancelou o serviço e continua a receber faturas ou débitos? Veja o que reunir e como a DoLado pode tratar a reclamação e acompanhar a resposta.",
+            "Cancelou o serviço e continua a receber facturas ou débitos? Veja o que reunir e como a DoLado pode tratar a reclamação e acompanhar a resposta.",
         },
         rotulo: "Cobrança após cancelamento",
-        resumo: "Pediu o cancelamento, mas continuam a chegar faturas ou débitos.",
+        resumo: "Pediu o cancelamento, mas continuam a chegar facturas ou débitos.",
         titulo: "Continuam a cobrar depois de ter cancelado o serviço?",
         subtitulo:
-          "Pediu o cancelamento e continuam a chegar faturas ou débitos na sua conta? Isto acontece, por exemplo, quando o pedido não ficou registado ou quando há valores finais por acertar.",
+          "Pediu o cancelamento e continuam a chegar facturas ou débitos na sua conta? Isto acontece, por exemplo, quando o pedido não ficou registado ou quando há valores finais por acertar.",
         contestar: [
-          "Pode depender da data em que o cancelamento produziu efeitos e do que está a ser cobrado. Alguns valores finais podem ser devidos, como dias de serviço até à data efetiva do fim do contrato ou encargos previstos no contrato.",
+          "Pode depender da data em que o cancelamento produziu efeitos e do que está a ser cobrado. Alguns valores finais podem ser devidos, como dias de serviço até à data efectiva do fim do contrato ou encargos previstos no contrato.",
           "Quando o valor diz respeito a um período posterior ao cancelamento, pode haver fundamento para contestar e pedir a devolução.",
         ],
         verificar: [
           "O comprovativo do pedido de cancelamento e a data em que foi feito",
           "A confirmação da operadora, se a recebeu",
-          "As faturas e os débitos posteriores ao pedido",
+          "As facturas e os débitos posteriores ao pedido",
           "O comprovativo de devolução dos equipamentos, se aplicável",
           "O contrato e a data de fim da fidelização",
         ],
@@ -246,7 +246,7 @@ export const problemas = {
         resumo: "Falhas, cortes ou velocidades muito abaixo do que foi contratado.",
         titulo: "O serviço contratado não está a funcionar como deveria?",
         subtitulo:
-          "Cortes frequentes, internet muito lenta, falta de rede ou avarias que não ficam resolvidas afetam o dia a dia, e a mensalidade continua a ser cobrada por inteiro.",
+          "Cortes frequentes, internet muito lenta, falta de rede ou avarias que não ficam resolvidas afectam o dia-a-dia, e a mensalidade continua a ser cobrada por inteiro.",
         contestar: [
           "Em determinadas situações, quando o serviço não é prestado nas condições contratadas, pode haver fundamento para pedir a reparação, um acerto no valor pago ou, nos casos mais persistentes, o fim do contrato.",
           "Pode depender da duração e da frequência das falhas, do que o contrato prevê e de as avarias terem sido comunicadas à operadora.",
@@ -256,7 +256,7 @@ export const problemas = {
           "Os números dos pedidos de assistência ou de avaria",
           "O contrato e as condições do serviço, como a velocidade anunciada",
           "Testes de velocidade ou capturas de ecrã, se os tiver",
-          "As faturas do período em que houve problemas",
+          "As facturas do período em que houve problemas",
         ],
         ajuda:
           "A DoLado organiza o histórico de falhas e de contactos, verifica as regras aplicáveis e prepara a reclamação com um pedido concreto à operadora.",
@@ -265,78 +265,78 @@ export const problemas = {
     energia: {
       "fatura-muito-alta": {
         metadados: {
-          titulo: "A sua fatura de eletricidade aumentou muito? - DoLado",
+          titulo: "A sua factura de electricidade aumentou muito? - DoLado",
           descricao:
-            "A fatura da luz subiu muito sem explicação clara? Veja o que comparar entre faturas e como a DoLado pode analisar e tratar a reclamação consigo.",
+            "A factura da luz subiu muito sem explicação clara? Veja o que comparar entre facturas e como a DoLado pode analisar e tratar a reclamação consigo.",
         },
-        rotulo: "Fatura muito alta",
-        resumo: "A fatura subiu muito em relação aos meses anteriores e não percebe porquê.",
-        titulo: "A sua fatura de eletricidade aumentou muito?",
+        rotulo: "Factura muito alta",
+        resumo: "A factura subiu muito em relação aos meses anteriores e não percebe porquê.",
+        titulo: "A sua factura de electricidade aumentou muito?",
         subtitulo:
-          "Uma subida grande na fatura de eletricidade pode ter várias explicações: mais consumo, um acerto de leituras, uma mudança de preço ou um erro. Antes de pagar ou contestar, vale a pena perceber de onde vem a diferença.",
+          "Uma subida grande na factura de electricidade pode ter várias explicações: mais consumo, um acerto de leituras, uma mudança de preço ou um erro. Antes de pagar ou contestar, vale a pena perceber de onde vem a diferença.",
         contestar: [
-          "Pode depender da origem do aumento. Se resulta de consumo real ou de uma alteração de preço comunicada, pode não haver fundamento para contestar o valor. Se resulta de um erro de leitura ou de faturação, ou de condições diferentes das acordadas, pode haver.",
-          "É necessário comparar faturas, leituras e condições para perceber em que situação está.",
+          "Pode depender da origem do aumento. Se resulta de consumo real ou de uma alteração de preço comunicada, pode não haver fundamento para contestar o valor. Se resulta de um erro de leitura ou de facturação, ou de condições diferentes das acordadas, pode haver.",
+          "É necessário comparar facturas, leituras e condições para perceber em que situação está.",
         ],
         verificar: [
-          "A fatura com o valor alto e as faturas dos meses anteriores",
+          "A factura com o valor alto e as facturas dos meses anteriores",
           "Se as leituras indicadas são reais ou estimadas",
-          "A leitura atual do contador (uma fotografia com data ajuda)",
+          "A leitura actual do contador (uma fotografia com data ajuda)",
           "O preço por kWh e a potência contratada",
           "Comunicações do comercializador sobre alterações de preço",
         ],
         ajuda:
-          "A DoLado compara as faturas e as leituras, identifica o que mudou e verifica se há fundamento para reclamar. Se houver, prepara a reclamação com o pedido concreto.",
+          "A DoLado compara as facturas e as leituras, identifica o que mudou e verifica se há fundamento para reclamar. Se houver, prepara a reclamação com o pedido concreto.",
       },
       "cobranca-indevida": {
         metadados: {
-          titulo: "Encontrou uma cobrança que não reconhece na fatura de energia? - DoLado",
+          titulo: "Encontrou uma cobrança que não reconhece na factura de energia? - DoLado",
           descricao:
-            "Um valor na fatura de eletricidade que não reconhece? Veja o que verificar e como a DoLado pode preparar e acompanhar a reclamação consigo.",
+            "Um valor na factura de electricidade que não reconhece? Veja o que verificar e como a DoLado pode preparar e acompanhar a reclamação consigo.",
         },
         rotulo: "Cobrança indevida",
-        resumo: "Um serviço, taxa ou valor na fatura que não pediu ou não reconhece.",
-        titulo: "Encontrou uma cobrança que não reconhece na fatura de energia?",
+        resumo: "Um serviço, taxa ou valor na factura que não pediu ou não reconhece.",
+        titulo: "Encontrou uma cobrança que não reconhece na factura de energia?",
         subtitulo:
-          "Serviços adicionais, acertos ou valores que não reconhece podem aparecer na fatura de energia sem explicação clara. Perceber a origem é o primeiro passo para os resolver.",
+          "Serviços adicionais, acertos ou valores que não reconhece podem aparecer na factura de energia sem explicação clara. Perceber a origem é o primeiro passo para os resolver.",
         contestar: [
           "Pode haver fundamento para contestar quando o valor não corresponde a um serviço que pediu, a um consumo real ou às condições acordadas.",
-          "É necessário verificar a descrição do valor: algumas parcelas da fatura resultam de regras do setor e não dependem do comercializador; outras resultam do contrato ou de serviços adicionais.",
+          "É necessário verificar a descrição do valor: algumas parcelas da factura resultam de regras do sector e não dependem do comercializador; outras resultam do contrato ou de serviços adicionais.",
         ],
         verificar: [
-          "A fatura onde aparece o valor e a respetiva descrição",
+          "A factura onde aparece o valor e a respectiva descrição",
           "O contrato e os serviços adicionais que subscreveu",
-          "As faturas anteriores, para ver se o valor se repete",
+          "As facturas anteriores, para ver se o valor se repete",
           "As leituras do contador e as datas de referência",
           "Contactos já feitos com o comercializador",
         ],
         ajuda:
-          "A DoLado analisa a fatura e o contrato, identifica o que está a ser cobrado e com que base, e prepara a reclamação com o pedido concreto ao comercializador.",
+          "A DoLado analisa a factura e o contrato, identifica o que está a ser cobrado e com que base, e prepara a reclamação com o pedido concreto ao comercializador.",
       },
       "consumos-estimados": {
         metadados: {
-          titulo: "A sua fatura foi calculada com consumos estimados? - DoLado",
+          titulo: "A sua factura foi calculada com consumos estimados? - DoLado",
           descricao:
-            "Fatura de eletricidade com consumos estimados ou um acerto que não percebe? Veja o que verificar e como a DoLado pode tratar a reclamação consigo.",
+            "Factura de electricidade com consumos estimados ou um acerto que não percebe? Veja o que verificar e como a DoLado pode tratar a reclamação consigo.",
         },
         rotulo: "Consumos estimados",
-        resumo: "A fatura usa estimativas em vez de leituras reais, ou um acerto trouxe um valor elevado.",
-        titulo: "A sua fatura foi calculada com consumos estimados?",
+        resumo: "A factura usa estimativas em vez de leituras reais, ou um acerto trouxe um valor elevado.",
+        titulo: "A sua factura foi calculada com consumos estimados?",
         subtitulo:
-          "Quando não há leituras reais, a fatura pode ser calculada com estimativas. Isso pode levar a valores acima ou abaixo do consumo real e, mais tarde, a acertos difíceis de perceber.",
+          "Quando não há leituras reais, a factura pode ser calculada com estimativas. Isso pode levar a valores acima ou abaixo do consumo real e, mais tarde, a acertos difíceis de perceber.",
         contestar: [
-          "A faturação por estimativa pode acontecer quando não há leitura disponível, e o valor é normalmente acertado mais tarde com base nas leituras reais.",
+          "A facturação por estimativa pode acontecer quando não há leitura disponível, e o valor é normalmente acertado mais tarde com base nas leituras reais.",
           "Pode haver fundamento para contestar quando as estimativas se afastam muito do consumo real, quando as leituras que comunicou não foram consideradas ou quando o acerto não é claro. Depende do histórico de leituras e do seu caso concreto.",
         ],
         verificar: [
-          "As faturas e a indicação de leitura real ou estimada em cada uma",
-          "A leitura atual do contador, com fotografia e data",
+          "As facturas e a indicação de leitura real ou estimada em cada uma",
+          "A leitura actual do contador, com fotografia e data",
           "As leituras que comunicou e quando o fez",
-          "A fatura de acerto, se a recebeu",
+          "A factura de acerto, se a recebeu",
           "O tipo de contador (com ou sem leitura à distância)",
         ],
         ajuda:
-          "A DoLado reconstitui o histórico de leituras e de faturas, verifica se o acerto corresponde ao consumo real e prepara a reclamação com o pedido concreto ao comercializador.",
+          "A DoLado reconstitui o histórico de leituras e de facturas, verifica se o acerto corresponde ao consumo real e prepara a reclamação com o pedido concreto ao comercializador.",
       },
     },
     "compras-reembolsos": {
@@ -377,7 +377,7 @@ export const problemas = {
         subtitulo:
           "Comprar online é prático até alguma coisa correr mal: o produto não chega, chega diferente do anunciado, a devolução é recusada ou a loja deixa de responder.",
         contestar: [
-          "As compras à distância têm regras próprias de proteção do consumidor, incluindo, em muitas situações, a possibilidade de desistir da compra. Pode depender do tipo de produto, da loja e do que aconteceu.",
+          "As compras à distância têm regras próprias de protecção do consumidor, incluindo, em muitas situações, a possibilidade de desistir da compra. Pode depender do tipo de produto, da loja e do que aconteceu.",
           "É necessário verificar onde a loja está estabelecida, as condições aceites na compra e as comunicações trocadas.",
         ],
         verificar: [
@@ -406,7 +406,7 @@ export const problemas = {
           "Pode depender da data da compra, de quando o defeito apareceu e da forma como o produto foi utilizado.",
         ],
         verificar: [
-          "A fatura ou o recibo da compra",
+          "A factura ou o recibo da compra",
           "A data em que o defeito apareceu e uma descrição do que acontece",
           "Fotografias ou vídeos do problema",
           "As comunicações com a loja ou com a assistência técnica",
@@ -431,7 +431,7 @@ export const problemas = {
           "Em determinadas situações, uma recusa ou uma reparação demorada pode ser contestada. É necessário analisar o seu caso concreto.",
         ],
         verificar: [
-          "A fatura ou o recibo da compra",
+          "A factura ou o recibo da compra",
           "A resposta da loja com o motivo da recusa",
           "O relatório da assistência técnica, se existir",
           "As datas em que entregou e levantou o produto",

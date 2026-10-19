@@ -19,7 +19,8 @@ import { CANAIS_ENVIO } from "../textoCaso.ts";
 import { ROTULO_CANAL_RECEBIDA } from "../acompanhamento/apresentacao.ts";
 
 /** Subir quando a estrutura ou os textos do dossiê mudarem (fica em casos_dossies.modelo_versao). */
-export const DOSSIE_MODELO_VERSAO = "dossie_v3";
+// v4 (19/10/2026): ortografia tradicional (docs/identidade-linguistica-dolado.md).
+export const DOSSIE_MODELO_VERSAO = "dossie_v4";
 
 /** Limite por comunicação recebida (o original completo fica guardado na DoLado). */
 export const MAX_CARACTERES_COMUNICACAO = 30000;
@@ -148,7 +149,7 @@ export function montarDossie(d: DadosDossie): DossieModelo {
     ["Referência do caso DoLado", referencia],
     ["Titular do caso", d.caso.nome?.trim() || "—"],
     ["Empresa reclamada", d.caso.empresa?.trim() || "—"],
-    ["Setor", d.caso.sector || "—"],
+    ["Sector", d.caso.sector || "—"],
     ["Categoria do problema", categoria],
     ["Caso aberto em", dataHoraPt(d.caso.created_at)],
     ["Estado final do acompanhamento", "Encerrado na DoLado"],
@@ -297,9 +298,9 @@ export function montarDossie(d: DadosDossie): DossieModelo {
       ...OPCOES_CONFLITO.paragrafos.map((texto) => ({ tipo: "paragrafo" as const, texto })),
       { tipo: "subtitulo", texto: "Centros a consultar (informação pública)" },
       { tipo: "lista", itens: CENTROS_RAL_GERAIS.map((e) => `${e.nome} — ${e.site}`) },
-      { tipo: "subtitulo", texto: "Entidades setoriais a consultar (informação pública)" },
+      { tipo: "subtitulo", texto: "Entidades sectoriais a consultar (informação pública)" },
       { tipo: "lista", itens: ENTIDADES_RAL_SETORIAIS.map((e) => `${e.nome} — ${e.site}`) },
-      { tipo: "paragrafo", texto: `Lista oficial completa das entidades RAL (Direção-Geral do Consumidor): ${LISTA_OFICIAL_RAL_URL}`, estilo: "nota" },
+      { tipo: "paragrafo", texto: `Lista oficial completa das entidades RAL (Direcção-Geral do Consumidor): ${LISTA_OFICIAL_RAL_URL}`, estilo: "nota" },
     ],
   });
 
@@ -309,7 +310,7 @@ export function montarDossie(d: DadosDossie): DossieModelo {
     nomeFicheiro: nomeFicheiroDossie(d.caso.id, d.versao),
     cabecalho,
     aviso:
-      "Este dossiê é um registo factual e cronológico da informação e das comunicações registadas pela DoLado durante o acompanhamento do caso, tal como constam do sistema na data da geração. Os elementos são atribuídos aos respetivos autores; a sua inclusão não significa que a DoLado confirme o seu conteúdo. Este documento não contém uma avaliação jurídica do conflito e não é um parecer jurídico nem uma peça processual.",
+      "Este dossiê é um registo factual e cronológico da informação e das comunicações registadas pela DoLado durante o acompanhamento do caso, tal como constam do sistema na data da geração. Os elementos são atribuídos aos respectivos autores; a sua inclusão não significa que a DoLado confirme o seu conteúdo. Este documento não contém uma avaliação jurídica do conflito e não é um parecer jurídico nem uma peça processual.",
     seccoes,
   };
 }

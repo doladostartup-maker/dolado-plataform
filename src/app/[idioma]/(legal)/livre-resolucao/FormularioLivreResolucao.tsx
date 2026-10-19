@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { mesesComMaiuscula } from "@/i18n/formatar";
 import { pedirLivreResolucao, type EstadoPedidoLivreResolucao } from "./actions";
 import { PLANOS_LIVRE_RESOLUCAO, ROTULO_CONFIRMAR, ROTULO_RESOLVER } from "@/lib/livreResolucao";
 import { CONTACTO_EMAIL } from "@/lib/site";
@@ -12,8 +13,8 @@ const BOTAO =
   "inline-flex min-h-11 items-center justify-center rounded-[var(--radius-button)] bg-[var(--color-brand)] px-5 py-2.5 text-[15px] font-semibold text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-60";
 
 function formatarDataHora(iso: string) {
-  return new Intl.DateTimeFormat("pt-PT", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Lisbon" }).format(
-    new Date(iso),
+  return mesesComMaiuscula(
+    new Intl.DateTimeFormat("pt-PT", { dateStyle: "long", timeStyle: "short", timeZone: "Europe/Lisbon" }).format(new Date(iso)),
   );
 }
 
@@ -76,7 +77,7 @@ export function FormularioLivreResolucao() {
         <span className={ROTULO}>Plano *</span>
         <select name="plano" required defaultValue="" className={CAMPO}>
           <option value="" disabled>
-            Selecione
+            Seleccione
           </option>
           {Object.entries(PLANOS_LIVRE_RESOLUCAO).map(([id, nome]) => (
             <option key={id} value={id}>

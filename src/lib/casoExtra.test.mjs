@@ -109,7 +109,7 @@ describe("cenário 2 — subscritor que já usou o caso do mês", () => {
 
 describe("cenário 10 — sem direito ao desconto", () => {
   const casos = [
-    ["Proteção (não inclui casos)", { subscription_plan: "protecao" }, "sem_caso_protecao"],
+    ["Protecção (não inclui casos)", { subscription_plan: "protecao" }, "sem_caso_protecao"],
     ["sem subscrição (Avulso comprado antes)", { subscription_plan: "none", subscription_status: "canceled" }, "sem_caso_protecao"],
     ["pagamento em atraso", { subscription_status: "past_due" }, "subscricao_nao_ativa"],
     ["subscrição suspensa", { subscription_status: "unpaid" }, "subscricao_nao_ativa"],
@@ -126,7 +126,7 @@ describe("cenário 10 — sem direito ao desconto", () => {
     assert.equal(casosDoMes(calcularAcesso(null)), null);
   });
 
-  test("subscrição no Stripe tem de ser ativa, Caso + Proteção e do Customer da conta", () => {
+  test("subscrição no Stripe tem de ser activa, Caso + Protecção e do Customer da conta", () => {
     const ok = { status: "active", customerId: "cus_a", plano: "caso_protecao" };
     assert.equal(subscricaoStripeConfirmaCasoExtra(ok, "cus_a"), true);
     assert.equal(subscricaoStripeConfirmaCasoExtra({ ...ok, customerId: "cus_outro" }, "cus_a"), false);
@@ -161,7 +161,7 @@ describe("cenário 10 — sem direito ao desconto", () => {
   });
 });
 
-describe("cenário 5 — Checkout com a conta e a sessão atuais", () => {
+describe("cenário 5 — Checkout com a conta e a sessão actuais", () => {
   const params = parametrosCheckoutCasoExtra({
     precoId: "price_caso_extra",
     customerId: "cus_existente",

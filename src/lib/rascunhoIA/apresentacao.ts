@@ -35,8 +35,8 @@ export const CONFIANCA: Record<string, string> = {
 
 export const MENSAGENS_APLICAR: Record<string, string> = {
   aplicado: "Sugestão colocada no texto do caso, por rever.",
-  requer_confirmacao: "O texto atual foi editado: confirme que quer substituí-lo (fica guardado como versão anterior).",
-  bloqueado: "O texto atual já foi enviado ao cliente: a sugestão fica só para consulta. Para a usar, crie uma nova versão.",
+  requer_confirmacao: "O texto actual foi editado: confirme que quer substituí-lo (fica guardado como versão anterior).",
+  bloqueado: "O texto actual já foi enviado ao cliente: a sugestão fica só para consulta. Para a usar, crie uma nova versão.",
   ja_aplicado: "Esta sugestão já está no texto do caso.",
   invalido: "Não foi possível usar esta sugestão.",
 };

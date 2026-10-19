@@ -92,7 +92,7 @@ export default async function ComprasBackofficePage({
                   <th scope="col" className={TABELA_TH}>Conta</th>
                   <th scope="col" className={TABELA_TH}>Subscrição existente</th>
                   <th scope="col" className={TABELA_TH}>Nova subscrição</th>
-                  <th scope="col" className={TABELA_TH}>Detetada</th>
+                  <th scope="col" className={TABELA_TH}>Detectada</th>
                   <th scope="col" className={TABELA_TH}>Resolução</th>
                 </tr>
               </thead>

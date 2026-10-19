@@ -134,8 +134,8 @@ export default async function AchadoPage({
   return (
     <div className="flex flex-col gap-5">
       <CabecalhoPagina
-        voltar={{ href: "/backoffice/monitor/achados", texto: "Situações detetadas" }}
-        contexto="Proteção · situação detetada"
+        voltar={{ href: "/backoffice/monitor/achados", texto: "Situações detectadas" }}
+        contexto="Protecção · situação detectada"
         titulo={ROTULO_ACHADO[a.tipo] ?? a.tipo}
         estado={<Etiqueta tom={decidido ? "neutro" : "acao"}>{decidido ? a.estado : "Por decidir"}</Etiqueta>}
         meta={
@@ -154,12 +154,12 @@ export default async function AchadoPage({
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="flex min-w-0 flex-col gap-5">
-          <Seccao titulo="Faturas" descricao="A fatura que originou a situação e as comparadas.">
-            {atual && <CartaoFatura titulo="Fatura atual" f={atual} atual />}
+          <Seccao titulo="Facturas" descricao="A factura que originou a situação e as comparadas.">
+            {atual && <CartaoFatura titulo="Factura actual" f={atual} atual />}
             {outras.map((f) => (
-              <CartaoFatura key={f.id} titulo="Fatura comparada" f={f} />
+              <CartaoFatura key={f.id} titulo="Factura comparada" f={f} />
             ))}
-            {!atual && outras.length === 0 && <p className="text-[14px] text-[var(--v2-muted)]">Sem faturas associadas.</p>}
+            {!atual && outras.length === 0 && <p className="text-[14px] text-[var(--v2-muted)]">Sem facturas associadas.</p>}
           </Seccao>
 
           <Seccao titulo="Dados do serviço registados">
@@ -229,7 +229,7 @@ export default async function AchadoPage({
                     <textarea name="notas" rows={2} className={CAMPO} />
                   </label>
                   <label className={LINHA_SELECAO}>
-                    <input type="checkbox" name="revisto" value="sim" required className={CAIXA_SELECAO} /> Revi a situação, as faturas e o texto
+                    <input type="checkbox" name="revisto" value="sim" required className={CAIXA_SELECAO} /> Revi a situação, as facturas e o texto
                   </label>
                   <div>
                     <ConfirmarAcao

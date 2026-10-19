@@ -18,7 +18,7 @@ const anexo = (extra = {}) => ({
   ...extra,
 });
 
-describe("fatura do caso: o que pode ser proposto", () => {
+describe("factura do caso: o que pode ser proposto", () => {
   test("só ficheiros enviados pelo cliente (formulário do caso ou resposta a um pedido)", () => {
     assert.equal(enviadoPeloCliente(anexo()), true);
     assert.equal(enviadoPeloCliente(anexo({ caminho_storage: "u1/x.pdf", pedido_cliente_id: "p1" })), true);
@@ -60,11 +60,11 @@ describe("fatura do caso: o que pode ser proposto", () => {
     assert.equal(escolherFaturaDoCaso([antiga, recente], ["a2"], empresa).anexoId, "a1");
     assert.equal(escolherFaturaDoCaso([antiga, recente], ["a1", "a2"], empresa), null);
     assert.equal(escolherFaturaDoCaso([], [], empresa), null);
-    assert.equal(escolherFaturaDoCaso([anexo({ nome_ficheiro: "  " })], [], empresa).nome, "Fatura enviada no caso");
+    assert.equal(escolherFaturaDoCaso([anexo({ nome_ficheiro: "  " })], [], empresa).nome, "Factura enviada no caso");
   });
 });
 
-describe("fatura do caso: servidor", () => {
+describe("factura do caso: servidor", () => {
   const servidor = fonte("./faturaDoCasoServidor.ts");
   const acoes = fonte("../../app/[idioma]/portal/contratos/actions.ts");
   const componente = fonte("../../app/[idioma]/portal/contratos/_components/FaturaDoCaso.tsx");
@@ -83,7 +83,7 @@ describe("fatura do caso: servidor", () => {
     assert.match(servidor, /`\$\{userId\}\/\$\{randomUUID\(\)\}\.\$\{EXTENSAO_FATURA_DO_CASO\[mime\]\}`/);
   });
 
-  test("nada é lido só por abrir a página: só o clique chama a ação", () => {
+  test("nada é lido só por abrir a página: só o clique chama a acção", () => {
     assert.match(componente, /onClick=\{usar\}/);
     assert.doesNotMatch(componente, /useEffect/);
   });

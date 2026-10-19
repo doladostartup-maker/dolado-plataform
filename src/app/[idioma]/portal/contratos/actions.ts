@@ -255,7 +255,7 @@ export async function confirmarDadosContrato(
   });
   if (error) {
     console.error("[monitor] falha ao gravar decisões:", error.code, error.message);
-    if (alteracao && error.code === "22023") return { ok: false, erro: "A data indicada tem de ser posterior ao início das condições atuais." };
+    if (alteracao && error.code === "22023") return { ok: false, erro: "A data indicada tem de ser posterior ao início das condições actuais." };
     return { ok: false, erro: MSG_ERRO_GUARDAR };
   }
   // Comparação retroativa das faturas com as condições confirmadas (sem IA).
@@ -311,7 +311,7 @@ export async function criarContratoManual(formData: FormData) {
   const setor = String(formData.get("setor") ?? "");
   if (!fornecedor) irPara(idioma, "/portal/contratos/novo", { erro: "Indique o fornecedor." });
   if (!SETORES_CONTRATO.includes(setor as (typeof SETORES_CONTRATO)[number])) {
-    irPara(idioma, "/portal/contratos/novo", { erro: "Escolha o setor." });
+    irPara(idioma, "/portal/contratos/novo", { erro: "Escolha o sector." });
   }
 
   const valores: [CampoContrato, string | number][] = [["fornecedor", fornecedor.slice(0, 200)]];

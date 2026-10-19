@@ -27,7 +27,7 @@ describe("etapas reais da leitura", () => {
     assert.deepEqual(PASSOS.map((p) => p.etapa), ["recebido", "a_verificar", "a_ler", "a_registar"]);
     assert.equal(indicePasso("a_ler"), 2);
   });
-  test("em curso mostra o passo atual", () => {
+  test("em curso mostra o passo actual", () => {
     assert.deepEqual(situacaoDocumento(doc({ etapa: "a_ler" }), AGORA), { tipo: "em_curso", passo: 2 });
   });
   test("concluído leva ao contrato com o estado do documento", () => {
@@ -122,7 +122,7 @@ describe("nome comercial dos fornecedores (sem IA)", () => {
   test("normalização ignora acentos, pontuação e formas jurídicas", () => {
     assert.equal(normalizarNomeEmpresa("Vodafone Portugal, Comunicações Pessoais, S.A."), "vodafone portugal comunicacoes pessoais");
   });
-  test("a migration semeia os principais fornecedores dos setores suportados", () => {
+  test("a migration semeia os principais fornecedores dos sectores suportados", () => {
     const sql = fonte("../../../supabase/migrations/20261003150000_monitor_processamento_lote_fornecedores.sql");
     for (const nome of ["MEO", "NOS", "Vodafone", "NOWO", "DIGI", "EDP", "Galp", "Endesa", "Iberdrola", "Goldenergy", "EPAL"]) {
       assert.match(sql, new RegExp(`\\('${nome}',`));
@@ -137,7 +137,7 @@ describe("backoffice: documentos por tratar", () => {
   const admin = (extra) => situacaoDocumentoAdmin(doc(extra), AGORA);
   const contaPorTratar = (extra) => documentoPorTratar(doc(extra), AGORA);
 
-  test("recebido e ainda não lido: em leitura automática, sem ação (não conta como por tratar)", () => {
+  test("recebido e ainda não lido: em leitura automática, sem acção (não conta como por tratar)", () => {
     for (const etapa of ["recebido", "a_verificar", "a_ler", "a_registar"]) {
       assert.equal(admin({ etapa }), "em_leitura");
       assert.equal(contaPorTratar({ etapa }), false);
@@ -169,11 +169,11 @@ describe("backoffice: documentos por tratar", () => {
     assert.equal(admin({ etapa: "repetido", estado: "a_rever", contrato_id: "c1" }), null);
     assert.equal(contaPorTratar({ etapa: "repetido" }), false);
   });
-  test("contrato e fatura seguem as mesmas regras (o tipo não muda a contagem)", () => {
+  test("contrato e factura seguem as mesmas regras (o tipo não muda a contagem)", () => {
     assert.equal(situacaoDocumentoAdmin({ ...doc({ etapa: "falhou" }), tipo: "contrato" }, AGORA), "falhou");
     assert.equal(situacaoDocumentoAdmin({ ...doc({ etapa: "falhou" }), tipo: "fatura" }, AGORA), "falhou");
   });
-  test("só a leitura automática a decorrer fica de fora das situações com ação", () => {
+  test("só a leitura automática a decorrer fica de fora das situações com acção", () => {
     assert.deepEqual([...SITUACOES_ADMIN_COM_ACAO].sort(), ["falhou", "leitura_parada", "por_processar", "por_rever"]);
   });
 });
@@ -189,7 +189,7 @@ describe("etapa final depois de uma leitura (segundo plano, 'Ler de novo' e alte
   test("sem chave ou orçamento: concluído, fica 'pendente' para a DoLado", () => {
     assert.equal(etapaDepoisDaLeitura({ estado: "pendente", motivo: "orcamento_atingido" }), "concluido");
   });
-  test("mesma fatura já registada: repetido", () => {
+  test("mesma factura já registada: repetido", () => {
     assert.equal(etapaDepoisDaLeitura({ estado: "processado", repetido: true }), "repetido");
   });
   test("ler de novo um documento que falhou deixa de o mostrar ao cliente como 'não concluído'", () => {
@@ -207,7 +207,7 @@ describe("etapa final depois de uma leitura (segundo plano, 'Ler de novo' e alte
       assert.equal(situacaoDocumentoAdmin(depois, AGORA), null);
     }
   });
-  test("o backoffice atualiza a etapa ao ler de novo e ao marcar à mão", () => {
+  test("o backoffice actualiza a etapa ao ler de novo e ao marcar à mão", () => {
     const servidor = fonte("./servidor.ts");
     const acoes = fonte("../../app/backoffice/monitor/actions.ts");
     assert.match(acoes, /reprocessarDocumentoAdmin\(/);
@@ -232,7 +232,7 @@ describe("backoffice: situações por decidir", () => {
     assert.deepEqual([...ESTADOS_ACHADO_POR_DECIDIR], ["detetado", "em_revisao", "confirmado"]);
     for (const decidido of ["comunicado", "descartado", "obsoleto"]) assert.equal(achadoPorDecidir(decidido), false);
   });
-  test("o contador, a lista e as ações usam a mesma definição", () => {
+  test("o contador, a lista e as acções usam a mesma definição", () => {
     for (const f of ["../../app/backoffice/monitor/page.tsx", "../../app/backoffice/monitor/achados/page.tsx", "../backoffice/filas.ts"]) {
       assert.match(fonte(f), /\.in\("estado", ESTADOS_ACHADO_POR_DECIDIR\)/, f);
     }

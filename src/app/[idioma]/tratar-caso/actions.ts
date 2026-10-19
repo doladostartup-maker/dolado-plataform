@@ -94,7 +94,7 @@ function mensagemErroAuth(codigo: string | undefined, mensagem: string | undefin
   if (codigo === "over_email_send_rate_limit" || codigo === "over_request_rate_limit" || /rate limit/i.test(mensagem ?? "")) {
     return MSG_LIMITE;
   }
-  if (codigo === "invalid_credentials") return "E-mail ou palavra-passe incorretos.";
+  if (codigo === "invalid_credentials") return "E-mail ou palavra-passe incorrectos.";
   if (codigo === "otp_expired" || /expired|invalid/i.test(mensagem ?? "")) {
     return "O código é inválido ou expirou. Peça um novo código.";
   }

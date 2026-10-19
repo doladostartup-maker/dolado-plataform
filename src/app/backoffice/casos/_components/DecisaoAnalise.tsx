@@ -75,7 +75,7 @@ export function DecisaoAnalise({
       {decisao === "pedir_informacao_cliente" && (
         <div className="grid gap-3">
           <label className={ROTULO}>
-            O que precisamos <span className={AJUDA_CAMPO}>(o cliente vê exatamente este texto)</span>
+            O que precisamos <span className={AJUDA_CAMPO}>(o cliente vê exactamente este texto)</span>
             <textarea name="pedido" rows={3} maxLength={2000} required defaultValue={sugestao?.pedido ?? ""} className={CAMPO_TEXTO_LONGO} />
           </label>
           <label className={ROTULO}>

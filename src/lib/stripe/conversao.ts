@@ -28,8 +28,8 @@ export const VALOR_MENSALIDADE_CENTIMOS: Record<PlanoDestino, number> = {
 };
 
 export const NOME_PLANO: Record<PlanoDestino, string> = {
-  protecao: "Proteção",
-  caso_protecao: "Caso + Proteção",
+  protecao: "Protecção",
+  caso_protecao: "Caso + Protecção",
 };
 
 /** Cupão Stripe da 1.ª mensalidade coberta pelo Avulso: 100%, só uma fatura. */
@@ -179,7 +179,7 @@ export function parametrosCheckoutConversao({
 
 const ESTADO_REEMBOLSO: Record<string, string> = {
   pending: "pendente",
-  requires_action: "requer ação",
+  requires_action: "requer acção",
   succeeded: "concluído",
   failed: "falhado",
   canceled: "cancelado",

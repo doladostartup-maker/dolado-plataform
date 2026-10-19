@@ -16,12 +16,12 @@ export const perguntas = {
   oQueE: {
     pergunta: "O que é a DoLado?",
     resposta:
-      "A DoLado ajuda os consumidores a tratar problemas com empresas de serviços como as telecomunicações, a energia, o gás e a água, e também com compras, reembolsos e ginásios. Quando é necessário reclamar, analisamos o caso, identificamos a informação relevante, preparamos a reclamação e acompanhamos o processo. Com a Proteção, também ajudamos a identificar situações que possam tornar-se num problema, antes que seja tarde para agir." as Resposta,
+      "A DoLado ajuda os consumidores a tratar problemas com empresas de serviços como as telecomunicações, a energia, o gás e a água, e também com compras, reembolsos e ginásios. Quando é necessário reclamar, analisamos o caso, identificamos a informação relevante, preparamos a reclamação e acompanhamos o processo. Com a Protecção, também ajudamos a identificar situações que possam tornar-se num problema, antes que seja tarde para agir." as Resposta,
   },
   comoFunciona: {
     pergunta: "Como funciona a DoLado?",
     resposta:
-      "Se tiver um problema com uma empresa, pode abrir um caso: analisamos o que aconteceu, preparamos a reclamação e só a enviamos depois da sua autorização. Depois do envio, acompanhamos o que acontece a seguir. Com a Proteção, a DoLado usa as informações das suas faturas e contratos para identificar alterações ou datas que possam tornar-se num problema e envia-lhe um aviso a tempo de agir." as Resposta,
+      "Se tiver um problema com uma empresa, pode abrir um caso: analisamos o que aconteceu, preparamos a reclamação e só a enviamos depois da sua autorização. Depois do envio, acompanhamos o que acontece a seguir. Com a Protecção, a DoLado usa as informações das suas facturas e contratos para identificar alterações ou datas que possam tornar-se num problema e envia-lhe um aviso a tempo de agir." as Resposta,
   },
   semAutorizacao: {
     pergunta: "A DoLado envia alguma coisa sem a minha autorização?",
@@ -33,21 +33,21 @@ export const perguntas = {
   quantoCusta: {
     pergunta: "Quanto custa a DoLado?",
     resposta: (p: Precos): Resposta => [
-      `Avulso: ${p.avulso} por caso, com pagamento único e sem subscrição. Caso + Proteção: ${p.casoProtecao}, com 1 caso por mês e a Proteção. Proteção: ${p.protecao}, só para acompanhar faturas e contratos, sem tratamento de casos. Todos os preços incluem IVA.`,
+      `Avulso: ${p.avulso} por caso, com pagamento único e sem subscrição. Caso + Protecção: ${p.casoProtecao}, com 1 caso por mês e a Protecção. Protecção: ${p.protecao}, só para acompanhar facturas e contratos, sem tratamento de casos. Todos os preços incluem IVA.`,
       "Para tratar um caso, o formulário vem primeiro: a modalidade e o pagamento só se escolhem no fim. O caso só começa a ser tratado depois de o pagamento ser confirmado.",
     ],
   },
   diferencaPlanos: {
-    pergunta: "Qual é a diferença entre Proteção, Caso + Proteção e Avulso?",
+    pergunta: "Qual é a diferença entre Protecção, Caso + Protecção e Avulso?",
     resposta:
-      "A Proteção ajuda a identificar alterações nas suas faturas, datas importantes e alterações relevantes no seu setor que possam tornar-se num problema, sem tratamento de casos. O Caso + Proteção junta essa prevenção ao tratamento de problemas, com 1 novo caso por mês. O Avulso serve para tratar um único problema, com pagamento único, sem subscrição nem funcionalidades da Proteção." as Resposta,
-    complementoLimite: (p: Precos) => `No Caso + Proteção, os casos não utilizados acumulam até ao limite de ${p.limite}.`,
+      "A Protecção ajuda a identificar alterações nas suas facturas, datas importantes e alterações relevantes no seu sector que possam tornar-se num problema, sem tratamento de casos. O Caso + Protecção junta essa prevenção ao tratamento de problemas, com 1 novo caso por mês. O Avulso serve para tratar um único problema, com pagamento único, sem subscrição nem funcionalidades da Protecção." as Resposta,
+    complementoLimite: (p: Precos) => `No Caso + Protecção, os casos não utilizados acumulam até ao limite de ${p.limite}.`,
   },
   prazo: {
     pergunta: "Quanto tempo demora?",
     resposta: [
       "Depois de o caso ser aberto (ou seja, depois de o pagamento ser confirmado), entramos em contacto consigo no prazo máximo de 2 dias úteis para confirmar os factos. A reclamação é preparada a partir dessa confirmação.",
-      "O tempo de preparação depende da informação disponível e de eventuais esclarecimentos. O tempo de resposta da empresa não depende da DoLado: varia conforme o setor, a empresa e o canal usado.",
+      "O tempo de preparação depende da informação disponível e de eventuais esclarecimentos. O tempo de resposta da empresa não depende da DoLado: varia conforme o sector, a empresa e o canal usado.",
     ] as Resposta,
   },
   substituiAdvogado: {
@@ -78,17 +78,17 @@ export const perguntas = {
   enviamPorMim: {
     pergunta: "A DoLado envia a reclamação por mim?",
     resposta:
-      "Sim. Antes do envio, recebe o texto preparado pela DoLado para rever. Só depois da sua autorização explícita submetemos a reclamação em seu nome, pelo canal adequado ao caso — por exemplo, o Livro de Reclamações Eletrónico, o e-mail ou o formulário de reclamações da empresa." as Resposta,
+      "Sim. Antes do envio, recebe o texto preparado pela DoLado para rever. Só depois da sua autorização explícita submetemos a reclamação em seu nome, pelo canal adequado ao caso — por exemplo, o Livro de Reclamações Electrónico, o e-mail ou o formulário de reclamações da empresa." as Resposta,
   },
   naoConcordo: {
     pergunta: "E se eu não concordar com o texto preparado?",
     resposta:
-      "Antes do envio, pode rever o texto preparado pela DoLado através do link que lhe enviamos por e-mail. Se pretender alguma alteração, selecione “Pedir alterações” e indique-nos o que gostaria de rever. A DoLado só procede ao envio depois de receber a sua autorização explícita." as Resposta,
+      "Antes do envio, pode rever o texto preparado pela DoLado através do link que lhe enviamos por e-mail. Se pretender alguma alteração, seleccione “Pedir alterações” e indique-nos o que gostaria de rever. A DoLado só procede ao envio depois de receber a sua autorização explícita." as Resposta,
   },
   documentos: {
     pergunta: "Que informações ou documentos posso precisar de enviar?",
     resposta:
-      "Depende do caso. Os mais úteis costumam ser a fatura em causa, o contrato, e-mails ou mensagens trocados com a empresa, o número do pedido ou da reclamação anterior e capturas de ecrã. Também ajudam datas e valores. Não precisa de ter tudo: indique o que tiver e, se faltar alguma coisa, pedimos-lha." as Resposta,
+      "Depende do caso. Os mais úteis costumam ser a factura em causa, o contrato, e-mails ou mensagens trocados com a empresa, o número do pedido ou da reclamação anterior e capturas de ecrã. Também ajudam datas e valores. Não precisa de ter tudo: indique o que tiver e, se faltar alguma coisa, pedimos-lha." as Resposta,
   },
   precisaEscrever: {
     pergunta: "Preciso de saber escrever a reclamação?",
@@ -98,7 +98,7 @@ export const perguntas = {
   informacaoComecar: {
     pergunta: "Que informação preciso de ter para começar?",
     resposta:
-      "O tipo de empresa e o nome dela, o que aconteceu, se já reclamou e o seu nome. Se tiver uma fatura, um contrato, um e-mail ou uma captura de ecrã, pode juntá-la logo, mas não é obrigatório. Demora cerca de 5 minutos." as Resposta,
+      "O tipo de empresa e o nome dela, o que aconteceu, se já reclamou e o seu nome. Se tiver uma factura, um contrato, um e-mail ou uma captura de ecrã, pode juntá-la logo, mas não é obrigatório. Demora cerca de 5 minutos." as Resposta,
   },
   documentosInicio: {
     pergunta: "Tenho de enviar todos os documentos logo no início?",
@@ -106,31 +106,31 @@ export const perguntas = {
       "Não. No formulário, os documentos são opcionais. Se precisarmos de mais alguma coisa, pedimos-lha por e-mail e pode responder e juntar ficheiros na área de cliente." as Resposta,
   },
   atualizacoes: {
-    pergunta: "Como recebo as atualizações do meu caso?",
+    pergunta: "Como recebo as actualizações do meu caso?",
     resposta:
       "Por e-mail, nos momentos em que há novidades ou precisamos de si — por exemplo, quando o texto está pronto para rever, quando estamos a analisar a resposta da empresa, quando precisamos de mais informação e quando o caso é encerrado. Na área de cliente pode consultar, quando quiser, o estado do caso, o próximo passo e o histórico." as Resposta,
   },
   entrarRegularmente: {
     pergunta: "Preciso de entrar regularmente na área de cliente?",
     resposta:
-      "Não. Quando precisarmos de uma ação sua — rever o texto, responder a um pedido de informação ou confirmar uma solução —, avisamos por e-mail. A área de cliente serve para consultar o caso, o texto enviado, os comprovativos e o histórico quando lhe der jeito." as Resposta,
+      "Não. Quando precisarmos de uma acção sua — rever o texto, responder a um pedido de informação ou confirmar uma solução —, avisamos por e-mail. A área de cliente serve para consultar o caso, o texto enviado, os comprovativos e o histórico quando lhe der jeito." as Resposta,
   },
   oQueIncluiProtecao: {
-    pergunta: "O que inclui o plano Proteção?",
+    pergunta: "O que inclui o plano Protecção?",
     resposta:
-      "A Proteção ajuda a identificar situações que possam tornar-se num problema. Comparamos as suas faturas com as anteriores para identificar alterações, estamos atentos a datas importantes, como o fim de promoções e de períodos de fidelização, e avisamos antes dessas datas. Também o avisamos de alterações relevantes nos setores que escolher, como subidas de preços anunciadas, e, no início de cada mês, enviamos-lhe um resumo do que acompanhámos. A Proteção não inclui o tratamento de reclamações." as Resposta,
+      "A Protecção ajuda a identificar situações que possam tornar-se num problema. Comparamos as suas facturas com as anteriores para identificar alterações, estamos atentos a datas importantes, como o fim de promoções e de períodos de fidelização, e avisamos antes dessas datas. Também o avisamos de alterações relevantes nos sectores que escolher, como subidas de preços anunciadas, e, no início de cada mês, enviamos-lhe um resumo do que acompanhámos. A Protecção não inclui o tratamento de reclamações." as Resposta,
   },
   // Fluxo real: /portal/contratos (carregar fatura ou contrato, ou
   // /portal/contratos/novo sem documento) e setores no /portal/perfil.
   comecarProtecao: {
-    pergunta: "Como começo a usar a Proteção?",
+    pergunta: "Como começo a usar a Protecção?",
     resposta:
-      "Depois de subscrever, entre na sua área de cliente e abra “Os meus serviços”. Basta carregar uma fatura, em PDF ou imagem: a DoLado começa a acompanhar a evolução desse serviço mês a mês. Se tiver o contrato, pode adicioná-lo para verificarmos também os preços contratados, as promoções e a fidelização. Se não tiver o documento à mão, pode indicar os dados manualmente — basta o fornecedor e uma data, como o fim da fidelização ou da promoção. Para receber alertas sobre alterações no seu setor, escolha os setores que lhe interessam em “Gestão de Perfil”." as Resposta,
+      "Depois de subscrever, entre na sua área de cliente e abra “Os meus serviços”. Basta carregar uma factura, em PDF ou imagem: a DoLado começa a acompanhar a evolução desse serviço mês a mês. Se tiver o contrato, pode adicioná-lo para verificarmos também os preços contratados, as promoções e a fidelização. Se não tiver o documento à mão, pode indicar os dados manualmente — basta o fornecedor e uma data, como o fim da fidelização ou da promoção. Para receber alertas sobre alterações no seu sector, escolha os sectores que lhe interessam em “Gestão de Perfil”." as Resposta,
   },
   oQueIncluiCasoProtecao: {
-    pergunta: "O que inclui o plano Caso + Proteção?",
+    pergunta: "O que inclui o plano Caso + Protecção?",
     resposta: (p: Precos): Resposta =>
-      `Inclui as funcionalidades do plano Proteção e 1 novo caso por mês. Os casos não utilizados acumulam até ao limite de ${p.limite}.`,
+      `Inclui as funcionalidades do plano Protecção e 1 novo caso por mês. Os casos não utilizados acumulam até ao limite de ${p.limite}.`,
   },
   semSubscricao: {
     pergunta: "Preciso de uma subscrição para tratar um caso?",
@@ -143,12 +143,12 @@ export const perguntas = {
       "Sim, a partir da sua área de cliente. Se ainda não tiver usado o caso do Avulso, parte do valor já pago cobre o primeiro mês da subscrição e o restante é reembolsado para o método de pagamento original. Se já o tiver usado, a adesão é feita como uma nova compra." as Resposta,
   },
   cancelarProtecao: {
-    pergunta: "Posso cancelar a Proteção?",
+    pergunta: "Posso cancelar a Protecção?",
     resposta: [
-      "Sim. Pode cancelar a sua subscrição a qualquer momento na área <b>Gestão de Subscrição</b>. Depois de cancelar, continua a beneficiar da Proteção até ao fim do período que já pagou e não serão feitas novas cobranças. Quando esse período terminar, os alertas da Proteção ficam desativados e deixam de ser enviados.",
+      "Sim. Pode cancelar a sua subscrição a qualquer momento na área <b>Gestão de Subscrição</b>. Depois de cancelar, continua a beneficiar da Protecção até ao fim do período que já pagou e não serão feitas novas cobranças. Quando esse período terminar, os alertas da Protecção ficam desactivados e deixam de ser enviados.",
       "O cancelamento normal não dá direito ao reembolso proporcional da mensalidade já paga, sem prejuízo dos direitos que a lei lhe atribui, nomeadamente o direito de livre resolução quando aplicável.",
-      "Os casos que já criou continuam disponíveis na sua conta. Se tiver casos acumulados no plano Caso + Proteção, estes ficam guardados durante 90 dias após o fim da subscrição. Se voltar a subscrever o Caso + Proteção dentro desse período, recupera os casos disponíveis que tinha.",
-      "Se tiver um caso da subscrição ainda em acompanhamento, mostramos-lhe a escolha antes de cancelar: pode manter a subscrição até o caso terminar ou cancelar e, nesse caso, o acompanhamento desse caso termina também no fim do período já pago. Os casos tratados com Avulso ou Caso Extra não são afetados.",
+      "Os casos que já criou continuam disponíveis na sua conta. Se tiver casos acumulados no plano Caso + Protecção, estes ficam guardados durante 90 dias após o fim da subscrição. Se voltar a subscrever o Caso + Protecção dentro desse período, recupera os casos disponíveis que tinha.",
+      "Se tiver um caso da subscrição ainda em acompanhamento, mostramos-lhe a escolha antes de cancelar: pode manter a subscrição até o caso terminar ou cancelar e, nesse caso, o acompanhamento desse caso termina também no fim do período já pago. Os casos tratados com Avulso ou Caso Extra não são afectados.",
     ] as Resposta,
   },
   livreResolucao: {
@@ -175,7 +175,7 @@ export const perguntas = {
   copia: {
     pergunta: "Recebo uma cópia da reclamação enviada?",
     resposta:
-      "Sim. Depois do envio, pode consultar no seu caso, na área de cliente, o texto exato da reclamação submetida e, quando disponível, o respetivo comprovativo de submissão, juntamente com o histórico do caso. Se o caso for encerrado sem solução da empresa, disponibilizamos também um dossiê com o que foi feito." as Resposta,
+      "Sim. Depois do envio, pode consultar no seu caso, na área de cliente, o texto exacto da reclamação submetida e, quando disponível, o respectivo comprovativo de submissão, juntamente com o histórico do caso. Se o caso for encerrado sem solução da empresa, disponibilizamos também um dossiê com o que foi feito." as Resposta,
   },
   dadosSeguros: {
     pergunta: "Os meus dados estão seguros?",
@@ -190,7 +190,7 @@ export const perguntas = {
   categorias: {
     sobre: "Sobre a DoLado",
     comoFunciona: "Como funciona",
-    planos: "Planos e proteção",
+    planos: "Planos e protecção",
     depoisEnvio: "Depois do envio",
     privacidade: "Privacidade e segurança",
   },

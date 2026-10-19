@@ -34,7 +34,7 @@ const CONFIANCA: Record<string, { tom: "sucesso" | "info" | "aviso" | "neutro"; 
   nenhum: { tom: "neutro", rotulo: "Não encontrado" },
 };
 
-const TIPO_DOCUMENTO: Record<DocumentoCandidato["tipo"], string> = { fatura: "Fatura", contrato: "Contrato", anexo: "Anexo do caso" };
+const TIPO_DOCUMENTO: Record<DocumentoCandidato["tipo"], string> = { fatura: "Factura", contrato: "Contrato", anexo: "Anexo do caso" };
 
 export function PreencherMarcadores({ casoId, documentos }: { casoId: string; documentos: DocumentoCandidato[] }) {
   const raiz = useRef<HTMLDivElement>(null);
@@ -92,7 +92,7 @@ export function PreencherMarcadores({ casoId, documentos }: { casoId: string; do
       <div className="flex flex-col gap-0.5">
         <p className={TITULO_BLOCO}>Dados do cliente a partir do documento</p>
         <p className={AJUDA_CAMPO}>
-          Lê a fatura ou o contrato no servidor da DoLado, sem IA, e propõe os valores para os marcadores. Nada fica guardado: confira os valores, insira-os no
+          Lê a factura ou o contrato no servidor da DoLado, sem IA, e propõe os valores para os marcadores. Nada fica guardado: confira os valores, insira-os no
           texto e guarde.
         </p>
       </div>
@@ -100,7 +100,7 @@ export function PreencherMarcadores({ casoId, documentos }: { casoId: string; do
       {legiveis.length === 0 ? (
         <p className={METADADOS}>
           {documentos.length === 0
-            ? "Este caso não tem fatura nem contrato carregado. Preencha os marcadores manualmente."
+            ? "Este caso não tem factura nem contrato carregado. Preencha os marcadores manualmente."
             : "Os documentos deste caso não estão num formato legível (PDF, JPG, PNG ou WEBP). Preencha os marcadores manualmente."}
         </p>
       ) : (

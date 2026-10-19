@@ -47,7 +47,7 @@ export default async function ResolucaoLitigiosPage({ params }: ComIdioma) {
         <p className={P}>
           Pode também apresentar uma reclamação no{" "}
           <a href={LIVRO_RECLAMACOES_URL} target="_blank" rel="noopener noreferrer" className={LINK}>
-            Livro de Reclamações Eletrónico
+            Livro de Reclamações Electrónico
           </a>
           .
         </p>
@@ -57,10 +57,10 @@ export default async function ResolucaoLitigiosPage({ params }: ComIdioma) {
         <h2 className={H2}>Resolução alternativa de litígios de consumo</h2>
         <p className={P}>
           Em caso de litígio de consumo, o consumidor pode recorrer a uma entidade de resolução alternativa de
-          litígios de consumo. A entidade adequada depende do setor, do âmbito territorial e material, do valor e das
+          litígios de consumo. A entidade adequada depende do sector, do âmbito territorial e material, do valor e das
           regras de cada entidade. A lista abaixo é informativa e não determina qual é competente para um caso
-          concreto; confirme diretamente com a entidade. A lista oficial inclui centros de competência geral e
-          entidades setoriais.
+          concreto; confirme directamente com a entidade. A lista oficial inclui centros de competência geral e
+          entidades sectoriais.
         </p>
         <h3 className={H2}>Centros de competência geral</h3>
         <ul className="flex flex-col gap-3 text-base leading-relaxed text-[var(--color-ink)]">
@@ -72,7 +72,7 @@ export default async function ResolucaoLitigiosPage({ params }: ComIdioma) {
             </li>
           ))}
         </ul>
-        <h3 className={H2}>Entidades setoriais</h3>
+        <h3 className={H2}>Entidades sectoriais</h3>
         <ul className="flex flex-col gap-3 text-base leading-relaxed text-[var(--color-ink)]">
           {ENTIDADES_RAL.filter((e) => e.tipo === "setorial").map((e) => (
             <li key={e.nome}>
@@ -83,7 +83,7 @@ export default async function ResolucaoLitigiosPage({ params }: ComIdioma) {
           ))}
         </ul>
         <p className={P}>
-          A lista oficial e atualizada das entidades de resolução alternativa de litígios de consumo está disponível
+          A lista oficial e actualizada das entidades de resolução alternativa de litígios de consumo está disponível
           no{" "}
           <a href={LISTA_OFICIAL_RAL_URL} target="_blank" rel="noopener noreferrer" className={LINK}>
             Portal do Consumidor

@@ -14,7 +14,7 @@ import {
 const leitura = (tipo_documento, estado = "sucesso") => ({ estado, resultado: { tipo_documento } });
 
 describe("tipo do documento", () => {
-  test("só fatura e contrato têm pipeline", () => {
+  test("só factura e contrato têm pipeline", () => {
     assert.equal(lerTipoDocumento("fatura"), "fatura");
     assert.equal(lerTipoDocumento("contrato"), "contrato");
     assert.equal(lerTipoDocumento("desconhecido"), null);
@@ -23,15 +23,15 @@ describe("tipo do documento", () => {
     assert.equal(tipoLido(null), null);
   });
 
-  test("contrato enviado como fatura: sugestão, nunca alteração", () => {
+  test("contrato enviado como factura: sugestão, nunca alteração", () => {
     const s = sugestaoTipoDocumento({ tipo: "fatura", tipo_indicado: "fatura" }, [leitura("contrato")]);
-    assert.deepEqual(s, { tipo: "contrato", texto: "O documento parece ser um contrato, mas foi enviado como fatura." });
+    assert.deepEqual(s, { tipo: "contrato", texto: "O documento parece ser um contrato, mas foi enviado como factura." });
   });
 
-  test("fatura enviada como contrato", () => {
+  test("factura enviada como contrato", () => {
     const s = sugestaoTipoDocumento({ tipo: "contrato", tipo_indicado: "contrato" }, [leitura("fatura")]);
     assert.equal(s.tipo, "fatura");
-    assert.equal(s.texto, "O documento parece ser uma fatura, mas foi enviado como contrato.");
+    assert.equal(s.texto, "O documento parece ser uma factura, mas foi enviado como contrato.");
   });
 
   test("sem sugestão quando a leitura confirma o tipo, falhou ou foi posta de parte", () => {
@@ -44,22 +44,22 @@ describe("tipo do documento", () => {
 
   test("usa a leitura válida mais recente", () => {
     const s = sugestaoTipoDocumento({ tipo: "contrato", tipo_indicado: "fatura" }, [leitura("fatura"), leitura("contrato", "invalidada")]);
-    assert.equal(s.texto, "O documento parece ser uma fatura, mas está a ser tratado como contrato.");
+    assert.equal(s.texto, "O documento parece ser uma factura, mas está a ser tratado como contrato.");
   });
 
-  test("documento que não é fatura nem contrato: sem tipo sugerido", () => {
+  test("documento que não é factura nem contrato: sem tipo sugerido", () => {
     const s = sugestaoTipoDocumento({ tipo: "fatura", tipo_indicado: "fatura" }, [leitura("outro")]);
     assert.equal(s.tipo, null);
   });
 
   test("confirmação antes de ler de novo", () => {
     assert.equal(textoConfirmacaoTipo("contrato"), "O documento será novamente analisado como Contrato. Continuar?");
-    assert.equal(textoConfirmacaoTipo("fatura"), "O documento será novamente analisado como Fatura. Continuar?");
+    assert.equal(textoConfirmacaoTipo("fatura"), "O documento será novamente analisado como Factura. Continuar?");
   });
 
   test("erros da função SQL", () => {
     assert.equal(erroAlterarTipo({ code: "P0002" }), "nao_encontrado");
-    assert.equal(erroAlterarTipo({ code: "22023", message: "O documento já é tratado como fatura" }), "mesmo_tipo");
+    assert.equal(erroAlterarTipo({ code: "22023", message: "O documento já é tratado como factura" }), "mesmo_tipo");
     assert.equal(erroAlterarTipo({ code: "22023", message: "Tipo de documento inválido" }), "tipo_invalido");
     assert.equal(erroAlterarTipo({ code: "P0001" }), "indisponivel");
     assert.equal(erroAlterarTipo({ code: "42501", message: "O documento tem dados já decididos pelo cliente ou pela DoLado" }), "dados_decididos");
