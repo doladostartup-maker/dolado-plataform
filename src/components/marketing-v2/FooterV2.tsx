@@ -3,6 +3,7 @@ import { textos } from "@/i18n/servidor";
 import { tComum } from "@/i18n/mensagens/comum";
 import { LIVRO_RECLAMACOES_URL, ROTAS_LEGAIS } from "@/lib/legal";
 import { ENTIDADE_LEGAL, NIPC } from "@/lib/site";
+import { DefinicoesCookies } from "./DefinicoesCookies";
 import { Logotipo } from "./Logotipo";
 import { ROTAS_V2 } from "./rotas";
 
@@ -11,7 +12,7 @@ import { ROTAS_V2 } from "./rotas";
 // da navbar ("Como funciona", perguntas frequentes, "Empresas").
 
 type Rodape = (typeof tComum)["pt-PT"]["rodape"];
-type ChaveRodape = Exclude<keyof Rodape, "lema" | "cidade">;
+type ChaveRodape = Exclude<keyof Rodape, "lema" | "cidade" | "definicoesCookies">;
 
 const COLUNAS_RODAPE: { titulo: ChaveRodape; links: { href: string; label: ChaveRodape; externo?: boolean }[] }[] = [
   {
@@ -81,6 +82,13 @@ export async function FooterV2() {
                   )}
                 </li>
               ))}
+              {c.titulo === "legal" && (
+                <li>
+                  <DefinicoesCookies className="text-left text-[14px] text-[var(--v2-muted)] hover:text-[var(--v2-green)]">
+                    {t.definicoesCookies}
+                  </DefinicoesCookies>
+                </li>
+              )}
             </ul>
           </div>
         ))}

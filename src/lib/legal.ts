@@ -25,7 +25,7 @@ import { CONTACTO_EMAIL, ENTIDADE_LEGAL, MORADA_SEDE } from "./site.ts";
 export const TERMOS_VERSAO = "2026-10-18b";
 
 /** Versão da Política de Privacidade em vigor. Cada versão fica acessível em /privacidade/<versão>. */
-export const PRIVACIDADE_VERSAO = "2026-10-18";
+export const PRIVACIDADE_VERSAO = "2026-10-19";
 
 /** Versão do texto de pedido expresso de início imediato. */
 export const CONSENTIMENTO_INICIO_IMEDIATO_VERSAO = "2026-10-01";

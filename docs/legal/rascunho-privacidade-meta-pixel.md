@@ -1,6 +1,6 @@
 # Rascunho — Política de Privacidade: Pixel da Meta
 
-Estado: **rascunho, por validar pela advogada** (19/10/2026). O Pixel está **ligado em produção desde
+Estado: **validado pela advogada (19/10/2026)**; texto da Política `2026-10-19` (em vigor com o próximo deploy). O Pixel está **ligado em produção desde
 19/10/2026** (PR #135, `NEXT_PUBLIC_META_PIXEL_ID` no Clever Cloud), só com consentimento de marketing.
 A Política em vigor (`2026-10-18`) não refere a Meta. Depois da validação: nova versão
 (`_versoes/v2026-10-19.tsx` ou a data da publicação), registar em `index.ts`, subir `PRIVACIDADE_VERSAO`

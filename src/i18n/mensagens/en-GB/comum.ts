@@ -56,6 +56,7 @@ export const comum: Traducao<typeof pt> = {
     livreResolucao: "Right of withdrawal",
     resolucaoLitigios: "Dispute resolution",
     livroReclamacoes: "Complaints Book (Livro de Reclamações)",
+    definicoesCookies: "Cookie settings",
     cidade: "Lisbon",
   },
   naoEncontrada: {

@@ -58,6 +58,7 @@ export const comum = {
     livreResolucao: "Livre resolução",
     resolucaoLitigios: "Resolução de litígios",
     livroReclamacoes: "Livro de Reclamações",
+    definicoesCookies: "Definições de cookies",
     cidade: "Lisboa",
   },
   naoEncontrada: {
