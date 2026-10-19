@@ -56,7 +56,7 @@ export async function POST(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      sender: { name: "Thiago - DoLado", email: process.env.BREVO_SENDER_EMAIL },
+      sender: { name: "DoLado", email: process.env.BREVO_SENDER_EMAIL },
       replyTo: { email: CONTACTO_EMAIL, name: "DoLado" },
       to: [{ email: caso.email, name: caso.nome }],
       subject: assuntoBoasVindas(idioma),

@@ -29,3 +29,13 @@ test("aviso sectorial: quebras de linha da descrição mantêm-se, acentos intac
   assert.ok(html.includes("Linha 1<br>Linha 2"));
   assert.ok(html.includes("Publicámos um aviso sobre o setor de Água,"));
 });
+
+test("boas-vindas: em nome da equipa, sem contacto pessoal, chamadas, operador nem prazo antigo", () => {
+  const html = montarHtmlBoasVindas("Ana");
+  assert.ok(html.includes("Recebemos o seu caso e vamos agora rever os elementos e documentos que nos enviou"));
+  assert.ok(html.includes("A DoLado só enviará a reclamação depois de receber a sua autorização."));
+  assert.ok(html.includes("Estamos do seu lado.") && html.includes("Equipa DoLado"));
+  for (const proibido of [/Thiago/, /pessoalmente/i, /vou rever/i, /chamada/i, /telef/i, /operador/i, /1-2 dias/, /confirmar tudo/i, /importar/i]) {
+    assert.equal(proibido.test(html), false, String(proibido));
+  }
+});
