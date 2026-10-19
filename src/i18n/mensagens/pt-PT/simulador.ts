@@ -15,7 +15,7 @@ export const simulador = {
     setor: { titulo: "Com que tipo de empresa é o problema?" },
     titular: {
       titulo: "O contrato é pessoal?",
-      ajuda: "Por exemplo, o telemóvel, a internet ou a eletricidade da sua casa.",
+      ajuda: "Por exemplo, o telemóvel, a internet ou a electricidade da sua casa.",
     },
     problema: { titulo: "O que aconteceu?" },
     momento: { titulo: "Já reclamou junto da empresa?" },
@@ -36,16 +36,16 @@ export const simulador = {
       cta: "Tratar do meu caso",
     },
     negativo: {
-      titulo: "Pelas suas respostas, este caso pode não se enquadrar no serviço atual da DoLado.",
+      titulo: "Pelas suas respostas, este caso pode não se enquadrar no serviço actual da DoLado.",
       texto: "",
       cta: "",
     },
   },
   motivos: {
     setor: "Neste momento, a DoLado trata apenas situações de telecomunicações, energia, gás, água, compras e reembolsos e ginásios.",
-    empresa: "O serviço atual da DoLado é dirigido a consumidores particulares, não a contratos de empresas ou atividades profissionais.",
+    empresa: "O serviço actual da DoLado é dirigido a consumidores particulares, não a contratos de empresas ou actividades profissionais.",
     resolvido: "Pelas suas respostas, a situação parece já ter sido resolvida com a empresa.",
-    titular: "Não é claro se o contrato é pessoal ou de uma empresa ou atividade profissional.",
+    titular: "Não é claro se o contrato é pessoal ou de uma empresa ou actividade profissional.",
     problema: "O tipo de situação não está entre os que a DoLado trata com mais frequência.",
   },
   responderDeNovo: "Responder de novo",

@@ -23,9 +23,9 @@ export function RegraForm({
           <span className={AJUDA}>Identificador enviado à IA. Maiúsculas, números, - e _.</span>
         </label>
         <label className={ROTULO}>
-          Setor
+          Sector
           <select name="setor" defaultValue={v.setor ?? ""} className={INPUT}>
-            <option value="">Todos os setores</option>
+            <option value="">Todos os sectores</option>
             {SETORES_REGRAS.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -80,7 +80,7 @@ export function RegraForm({
       <label className={ROTULO}>
         Texto/resumo jurídico aprovado
         <textarea name="resumo" required defaultValue={v.resumo ?? ""} rows={6} maxLength={4000} className={CAMPO_TEXTO_LONGO} />
-        <span className={AJUDA}>É exatamente isto que a IA recebe. Sem conclusões sobre casos concretos.</span>
+        <span className={AJUDA}>É exactamente isto que a IA recebe. Sem conclusões sobre casos concretos.</span>
       </label>
       <label className={ROTULO}>
         Condições de aplicabilidade
@@ -104,14 +104,14 @@ export function RegraForm({
           Última revisão
           <input name="revista_em" type="date" defaultValue={v.revista_em ?? ""} className={INPUT} />
           <span className={AJUDA}>
-            Se alterar o conteúdo jurídico sem indicar uma nova data, a regra deixa de estar revista e fica inativa.
+            Se alterar o conteúdo jurídico sem indicar uma nova data, a regra deixa de estar revista e fica inactiva.
           </span>
         </label>
       </div>
       <label className={`${LINHA_SELECAO} rounded-[12px] bg-[var(--v2-surface)] p-3`}>
         <input type="checkbox" name="ativa" defaultChecked={v.ativa ?? false} className={CAIXA_SELECAO} />
         <span>
-          <span className="font-semibold">Ativa</span> — pode ser enviada à IA (exige a data da última revisão).
+          <span className="font-semibold">Activa</span> — pode ser enviada à IA (exige a data da última revisão).
         </span>
       </label>
       <div className="border-t border-[var(--v2-line)] pt-4">

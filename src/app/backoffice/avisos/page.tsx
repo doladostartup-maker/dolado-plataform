@@ -38,8 +38,8 @@ export default async function AvisosSetoriaisPage({
     <div className="flex flex-col gap-6">
       <CabecalhoPagina
         contexto="Conteúdos"
-        titulo="Avisos setoriais"
-        descricao="Envia um aviso por e-mail a todos os clientes com Proteção ativa que subscreveram o setor escolhido."
+        titulo="Avisos sectoriais"
+        descricao="Envia um aviso por e-mail a todos os clientes com Protecção activa que subscreveram o sector escolhido."
       />
 
       {params.enviado && (

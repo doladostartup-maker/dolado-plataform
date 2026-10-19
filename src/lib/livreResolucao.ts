@@ -6,7 +6,8 @@
 // automáticos — a DoLado aprecia cada pedido nos termos da lei.
 
 /** Versão do formulário/textos apresentados (gravada em cada pedido). */
-export const FORMULARIO_LIVRE_RESOLUCAO_VERSAO = "2026-10-01";
+// 2026-10-19: só ortografia ("Protecção"; ortografia tradicional da DoLado).
+export const FORMULARIO_LIVRE_RESOLUCAO_VERSAO = "2026-10-19";
 
 /** Rótulo do botão que abre a função (art. 11.º-A da Diretiva 2011/83/UE). */
 export const ROTULO_RESOLVER = "Resolver o contrato aqui";
@@ -17,8 +18,8 @@ export const ROTULO_CONFIRMAR = "Confirmar a livre resolução";
 export const MAX_PEDIDOS_POR_EMAIL_24H = 3;
 
 export const PLANOS_LIVRE_RESOLUCAO = {
-  protecao: "Proteção",
-  caso_protecao: "Caso + Proteção",
+  protecao: "Protecção",
+  caso_protecao: "Caso + Protecção",
   avulso: "Avulso",
   nao_sei: "Não sei / mais do que um",
 } as const;

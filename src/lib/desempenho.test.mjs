@@ -22,7 +22,7 @@ function tsx(dir) {
 }
 
 describe("desempenho em produção", () => {
-  test("sem otimização de imagens no servidor (sharp bloqueava a instância)", () => {
+  test("sem optimização de imagens no servidor (sharp bloqueava a instância)", () => {
     assert.match(fonte("../../next.config.ts"), /images: \{ unoptimized: true \}/);
     assert.match(fonte("../components/marketing-v2/OrigemFundador.tsx"), /founder-thiago-600\.webp/);
   });

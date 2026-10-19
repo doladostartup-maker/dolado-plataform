@@ -60,7 +60,7 @@ export async function enviarLembretesCompraSemConta(
         "Compra paga continua sem conta (3 dias) — DoLado",
         `A compra ${compra.stripe_session_id} (${compra.plano}), confirmada em ${compra.confirmado_em}, continua sem conta associada. ` +
           `O cliente recebeu hoje o último lembrete${associar ? " (já existe uma conta com este e-mail: falta iniciar sessão e associar)" : ""}. ` +
-          "Ação recomendada: contactar o cliente.",
+          "Acção recomendada: contactar o cliente.",
       );
       avisosAdmin += 1;
     }

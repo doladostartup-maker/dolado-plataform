@@ -10,7 +10,7 @@ export const tratarCaso = {
     rotulo: "Etapas",
     nomes: ["O seu caso", "Conta", "Modalidade", "Pagamento"],
     concluida: " (concluída)",
-    atual: " (atual)",
+    atual: " (actual)",
   },
   formulario: {
     titulo: "Tratar o meu caso",
@@ -26,7 +26,7 @@ export const tratarCaso = {
       usarCasoTexto: "No final, este pedido usa um deles, sem novo pagamento.",
       casoExtra: "Já utilizou o caso incluído neste mês na sua subscrição.",
       casoExtraTexto: (nome: string, beneficio: string) => `No final, pode tratar este caso como ${nome} (${beneficio}):`,
-      casoExtraFim: (iva: string) => `(${iva}). A sua subscrição continua ativa e não é alterada. Só paga depois de rever o pedido.`,
+      casoExtraFim: (iva: string) => `(${iva}). A sua subscrição continua activa e não é alterada. Só paga depois de rever o pedido.`,
       soAvulso: "A sua subscrição não tem casos disponíveis neste momento.",
       soAvulsoTexto: (nome: string, preco: string, iva: string) =>
         `No final, pode tratar este caso com um caso ${nome}: ${preco} (${iva}). Só paga depois de rever a modalidade.`,
@@ -42,7 +42,7 @@ export const tratarCaso = {
     passo2: {
       titulo: "O que aconteceu?",
       descricao: "Conte-nos por palavras suas",
-      descricaoExemplo: "Por exemplo: em agosto a mensalidade subiu de 35 € para 42 € e não recebi nenhum aviso.",
+      descricaoExemplo: "Por exemplo: em Agosto a mensalidade subiu de 35 € para 42 € e não recebi nenhum aviso.",
       solar: {
         titulo: "Sobre os painéis solares",
         texto: "Estas respostas ajudam-nos a perceber como podemos tratar o seu caso.",
@@ -58,10 +58,10 @@ export const tratarCaso = {
     },
     passo4: {
       titulo: "Tem algum documento?",
-      texto: "Opcional. Por exemplo, a fatura em causa, o contrato ou um e-mail da empresa. Se não tiver agora, pedimos-lho depois.",
+      texto: "Opcional. Por exemplo, a factura em causa, o contrato ou um e-mail da empresa. Se não tiver agora, pedimos-lho depois.",
       aCarregar: "A carregar…",
       escolher: "Escolher ficheiro",
-      tipos: "Fatura, contrato, e-mail ou captura de ecrã · PDF ou imagem",
+      tipos: "Factura, contrato, e-mail ou captura de ecrã · PDF ou imagem",
       remover: "Remover",
     },
     passo5: {
@@ -77,10 +77,10 @@ export const tratarCaso = {
     voltar: "← Voltar",
     aGuardar: "A guardar…",
     erros: {
-      setor: "Selecione um tipo de empresa.",
+      setor: "Seleccione um tipo de empresa.",
       empresa: "Indique o nome da empresa.",
-      problema: "Selecione o que aconteceu.",
-      momento: "Selecione uma opção.",
+      problema: "Seleccione o que aconteceu.",
+      momento: "Seleccione uma opção.",
       nome: "Insira um nome válido.",
       telefone: "Telemóvel inválido.",
       autorizacao: "Confirme o pedido para continuar.",
@@ -131,14 +131,14 @@ export const tratarCaso = {
     usarCasoTitulo: "Usar um dos seus casos disponíveis",
     usarCasoTexto: (casos: string) => `${casos} na sua conta. Este pedido usa um deles, sem novo pagamento.`,
     usarCaso: "Usar um caso disponível",
-    cta: { avulso: "Escolher Avulso", caso_protecao: "Escolher Caso + Proteção" },
+    cta: { avulso: "Escolher Avulso", caso_protecao: "Escolher Caso + Protecção" },
     precoNormal: "Preço normal: ",
     descontoNovo: "Desconto de indicação",
     descontoRecompensa: "Com 1 dos seus descontos de indicação",
     casoExtraNota: (plano: string, nome: string) =>
-      `A sua subscrição ${plano} continua ativa e não é alterada: o ${nome} só acrescenta o tratamento deste caso.`,
+      `A sua subscrição ${plano} continua activa e não é alterada: o ${nome} só acrescenta o tratamento deste caso.`,
     soAvulsoNota: (nome: string) =>
-      `A sua subscrição atual não tem casos disponíveis neste momento. Pode tratar este caso com um caso ${nome}.`,
+      `A sua subscrição actual não tem casos disponíveis neste momento. Pode tratar este caso com um caso ${nome}.`,
   },
   recebido: {
     pagamentoConfirmado: "Pagamento confirmado",
@@ -153,10 +153,10 @@ export const tratarCaso = {
     escolherModalidade: "Escolher a modalidade",
     emConfirmacao: "Pagamento em confirmação",
     emConfirmacaoTexto:
-      "O pagamento ainda está a ser confirmado. Não precisa de voltar a pagar. Alguns métodos, como o débito direto SEPA, podem demorar alguns dias úteis; assim que o pagamento for confirmado, o seu caso é recebido e avisamos por e-mail.",
+      "O pagamento ainda está a ser confirmado. Não precisa de voltar a pagar. Alguns métodos, como o débito directo SEPA, podem demorar alguns dias úteis; assim que o pagamento for confirmado, o seu caso é recebido e avisamos por e-mail.",
     irPortal: "Ir para o portal",
     obrigado: "Obrigado. Estamos a confirmar o pagamento.",
-    obrigadoTexto: "Assim que o Stripe confirmar o pagamento, o seu caso é recebido e esta página é atualizada.",
+    obrigadoTexto: "Assim que o Stripe confirmar o pagamento, o seu caso é recebido e esta página é actualizada.",
     concluir: "Concluir o pedido",
     aConfirmar: "A confirmar o pagamento…",
     demora:
@@ -168,13 +168,13 @@ export const tratarCaso = {
     precoSubscritores: "Preço para subscritores: ",
     proximoCaso: (data: string) => `O seu próximo caso incluído ficará disponível em ${data}.`,
     cancelamentoAgendado: (data: string) =>
-      `A sua subscrição tem o cancelamento agendado para ${data}; até lá continua ativa, mas não haverá novo caso incluído.`,
+      `A sua subscrição tem o cancelamento agendado para ${data}; até lá continua activa, mas não haverá novo caso incluído.`,
     casosDoMes: "Casos deste mês",
     casoIncluido: "Caso incluído na subscrição",
     utilizacao: (utilizado: boolean) => (utilizado ? "1 de 1 utilizado" : "0 de 1 utilizado"),
     acumulados: (n: number) => ` · mais ${n === 1 ? "1 caso acumulado" : `${n} casos acumulados`}`,
     proximoIncluido: "Próximo caso incluído",
-    ativaAte: "Subscrição ativa até",
+    ativaAte: "Subscrição activa até",
     compradosPorUsar: "Casos comprados por usar",
     jaUtilizou: "Já utilizou o seu caso incluído neste mês",
     naoPodeEsperar: "Tem um problema que não pode esperar?",
@@ -182,15 +182,15 @@ export const tratarCaso = {
       `Como subscritor DoLado, pode tratar um ${nome} com ${percentagem}% de desconto.`,
     comoSubscritorEste: (nome: string, percentagem: number) =>
       `Como subscritor DoLado, pode tratar este caso como ${nome}, com ${percentagem}% de desconto.`,
-    primeiro: "Primeiro, conte-nos o que aconteceu; só paga no fim. A sua subscrição continua ativa e não é alterada.",
+    primeiro: "Primeiro, conte-nos o que aconteceu; só paga no fim. A sua subscrição continua activa e não é alterada.",
   },
   /** Mensagens das ações (servidor) e das regras de src/lib/pedidoCaso.ts. */
   mensagens: {
     "Demasiados pedidos. Tente novamente dentro de alguns minutos.": "Demasiados pedidos. Tente novamente dentro de alguns minutos.",
     "Não foi possível guardar o seu pedido. Tente novamente.": "Não foi possível guardar o seu pedido. Tente novamente.",
-    "Indique o setor e a empresa.": "Indique o setor e a empresa.",
+    "Indique o sector e a empresa.": "Indique o sector e a empresa.",
     "Responda às perguntas sobre o contrato dos painéis solares.": "Responda às perguntas sobre o contrato dos painéis solares.",
-    "Selecione o que aconteceu.": "Selecione o que aconteceu.",
+    "Seleccione o que aconteceu.": "Seleccione o que aconteceu.",
     "Indique se já reclamou junto da empresa.": "Indique se já reclamou junto da empresa.",
     "Insira um nome válido.": "Insira um nome válido.",
     "Telemóvel inválido.": "Telemóvel inválido.",
@@ -201,7 +201,7 @@ export const tratarCaso = {
       "A palavra-passe não cumpre os requisitos. Use pelo menos 8 caracteres, com letras e números.",
     "Demasiadas tentativas. Aguarde alguns minutos e tente novamente.":
       "Demasiadas tentativas. Aguarde alguns minutos e tente novamente.",
-    "E-mail ou palavra-passe incorretos.": "E-mail ou palavra-passe incorretos.",
+    "E-mail ou palavra-passe incorrectos.": "E-mail ou palavra-passe incorrectos.",
     "O código é inválido ou expirou. Peça um novo código.": "O código é inválido ou expirou. Peça um novo código.",
     "Não foi possível concluir. Tente novamente.": "Não foi possível concluir. Tente novamente.",
     "Insira um e-mail válido.": "Insira um e-mail válido.",

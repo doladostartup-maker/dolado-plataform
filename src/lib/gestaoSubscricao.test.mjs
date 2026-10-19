@@ -85,7 +85,7 @@ describe("pedir cancelamento", () => {
     assert.equal(estado.pedidos.length, 1);
   });
 
-  test("Proteção também pode ser cancelada", async () => {
+  test("Protecção também pode ser cancelada", async () => {
     criar({ subscription_plan: "protecao" });
     assert.equal((await pedirCancelamento(USER, lerMotivo(null, null), deps)).ok, true);
     assert.equal(estado.pedidos[0].plano, "protecao");
@@ -190,7 +190,7 @@ describe("o cancelamento normal não é livre resolução nem cancelamento imedi
   const acoes = readFileSync(new URL("../app/[idioma]/portal/subscricao/actions.ts", import.meta.url), "utf8");
   const pagina = readFileSync(new URL("../app/[idioma]/portal/subscricao/page.tsx", import.meta.url), "utf8");
 
-  test("as ações do cliente só usam cancel_at_period_end: sem reembolsos nem cancelamento imediato", () => {
+  test("as acções do cliente só usam cancel_at_period_end: sem reembolsos nem cancelamento imediato", () => {
     assert.match(acoes, /cancel_at_period_end: cancelar/);
     assert.equal(/refunds|subscriptions\.(cancel|del)\(|invoice_now|prorate/.test(acoes), false);
   });

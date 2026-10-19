@@ -5,7 +5,7 @@ export const institucional = {
     metadados: {
       titulo: "Sobre Nós | DoLado",
       descricao:
-        "Conheça a DoLado, uma plataforma criada para ajudar os consumidores a apresentar reclamações, acompanhar processos e evitar prejuízos, com informação, proteção e acompanhamento.",
+        "Conheça a DoLado, uma plataforma criada para ajudar os consumidores a apresentar reclamações, acompanhar processos e evitar prejuízos, com informação, protecção e acompanhamento.",
     },
     eyebrow: "Sobre nós",
     titulo: "Do lado do consumidor.",
@@ -18,7 +18,7 @@ export const institucional = {
       {
         titulo: "Estamos do seu lado",
         paragrafos: [
-          "O nosso nome diz exatamente aquilo em que acreditamos.",
+          "O nosso nome diz exactamente aquilo em que acreditamos.",
           "DoLado é estar do lado do consumidor.",
           "Quando surge um problema com uma operadora de telecomunicações, um fornecedor de energia, gás ou água, uma loja ou um ginásio, nem sempre é fácil perceber quem contactar, como apresentar a situação, que regras se aplicam ou quanto tempo a empresa tem para responder.",
           "Na DoLado, o consumidor não tem de descobrir tudo sozinho.",
@@ -31,7 +31,7 @@ export const institucional = {
         paragrafos: [
           "Muitos dos problemas enfrentados pelos consumidores poderiam ser evitados se a informação certa chegasse no momento certo.",
           "Por isso, a DoLado não existe apenas para ajudar quando algo corre mal.",
-          "Com a Proteção, a DoLado ajuda a identificar situações que podem tornar-se num problema e avisa com antecedência — como o fim de períodos promocionais, o termo de períodos de fidelização ou alterações significativas no valor das faturas — para que possa agir a tempo.",
+          "Com a Protecção, a DoLado ajuda a identificar situações que podem tornar-se num problema e avisa com antecedência — como o fim de períodos promocionais, o termo de períodos de fidelização ou alterações significativas no valor das facturas — para que possa agir a tempo.",
           "Queremos que cada consumidor tenha mais controlo e menos surpresas.",
         ],
       },
@@ -40,7 +40,7 @@ export const institucional = {
         paragrafos: [
           "Não esperamos que os nossos clientes conheçam legislação, procedimentos ou entidades reguladoras.",
           "Queremos que os nossos clientes não tenham de se preocupar com isso.",
-          "O nosso objetivo é transformar processos que podem parecer complexos numa experiência simples e clara, sem abdicar daquilo que consideramos essencial: transparência, rapidez e um preço acessível.",
+          "O nosso objectivo é transformar processos que podem parecer complexos numa experiência simples e clara, sem abdicar daquilo que consideramos essencial: transparência, rapidez e um preço acessível.",
           "Cada pessoa deve saber em que ponto se encontra o seu processo, o que está a ser feito e quais são os próximos passos.",
           "Sem linguagem desnecessariamente complicada. Sem ter de procurar sozinho todas as respostas.",
         ],
@@ -76,12 +76,12 @@ export const institucional = {
     eyebrow: "Transparência",
     titulo: "O que fazemos por si — e o que não fazemos. Sem letras miúdas.",
     texto:
-      "Sabemos que confiar o seu caso a alguém é difícil quando não sabe exatamente o que está a contratar. Por isso explicamos aqui, em linguagem simples, os limites do que a DoLado pode fazer.",
+      "Sabemos que confiar o seu caso a alguém é difícil quando não sabe exactamente o que está a contratar. Por isso explicamos aqui, em linguagem simples, os limites do que a DoLado pode fazer.",
     fazemosTitulo: "O que fazemos por si",
     fazemos: [
       {
         titulo: "Organizamos a informação",
-        descricao: "Lemos o que nos conta e os documentos que envia e confirmamos os factos consigo. Quando existem regras aplicáveis ao seu setor, indicamo-las no texto.",
+        descricao: "Lemos o que nos conta e os documentos que envia e confirmamos os factos consigo. Quando existem regras aplicáveis ao seu sector, indicamo-las no texto.",
       },
       {
         titulo: "Preparamos a reclamação",
@@ -93,7 +93,7 @@ export const institucional = {
       },
       {
         titulo: "Enviamos só com a sua autorização",
-        descricao: "Depois de rever e confirmar o texto, enviamos a reclamação em seu nome pelo canal adequado — por exemplo, o Livro de Reclamações Eletrónico, o e-mail ou o formulário de reclamações da empresa.",
+        descricao: "Depois de rever e confirmar o texto, enviamos a reclamação em seu nome pelo canal adequado — por exemplo, o Livro de Reclamações Electrónico, o e-mail ou o formulário de reclamações da empresa.",
       },
     ],
     naoFazemosTitulo: "O que não fazemos",
@@ -206,7 +206,7 @@ export const institucional = {
     texto:
       "Quando alguém tem um problema com uma empresa — uma cobrança, um cancelamento, um reembolso — a DoLado ajuda a organizar a situação, prepara a reclamação e acompanha os próximos passos. A sua empresa pode levar esse apoio a quem conta consigo.",
     verComoFunciona: "Ver como funciona",
-    formatosNota: "Formatos e condições definidos numa conversa, de acordo com o público e o objetivo da sua empresa.",
+    formatosNota: "Formatos e condições definidos numa conversa, de acordo com o público e o objectivo da sua empresa.",
     solucao: {
       eyebrow: "Uma solução, dois públicos",
       titulo: "Apoio aplicado a problemas concretos.",
@@ -217,12 +217,12 @@ export const institucional = {
       {
         titulo: "Um benefício para colaboradores",
         texto:
-          "Quando surge um problema com uma fatura, um serviço ou uma compra, o colaborador tem a quem recorrer. A DoLado ajuda a organizar a situação, prepara a reclamação e acompanha os próximos passos — sem que a pessoa tenha de descobrir tudo sozinha.",
+          "Quando surge um problema com uma factura, um serviço ou uma compra, o colaborador tem a quem recorrer. A DoLado ajuda a organizar a situação, prepara a reclamação e acompanha os próximos passos — sem que a pessoa tenha de descobrir tudo sozinha.",
         pontos: [
-          "Apoio prático em problemas de consumo do dia a dia",
-          "Cada pessoa trata do seu caso diretamente com a DoLado",
+          "Apoio prático em problemas de consumo do dia-a-dia",
+          "Cada pessoa trata do seu caso directamente com a DoLado",
           "Menos tempo e preocupação com processos difíceis de perceber",
-          "Com a Proteção, acompanhamento das faturas e das datas dos contratos — útil, por exemplo, depois de uma mudança de casa",
+          "Com a Protecção, acompanhamento das facturas e das datas dos contratos — útil, por exemplo, depois de uma mudança de casa",
         ],
       },
       {
@@ -233,7 +233,7 @@ export const institucional = {
           "Um serviço concreto, aplicado a situações reais",
           "Valor acrescentado na relação que já tem com os clientes",
           "Forma de acesso definida em conjunto",
-          "A Proteção pode acompanhar os novos contratos de internet, eletricidade, gás ou água, por exemplo depois de uma mudança de casa",
+          "A Protecção pode acompanhar os novos contratos de internet, electricidade, gás ou água, por exemplo depois de uma mudança de casa",
         ],
       },
     ],
@@ -273,7 +273,7 @@ export const institucional = {
     exemplos: [
       {
         titulo: "Cobranças inesperadas",
-        texto: "Uma fatura com um valor que não se percebe ou um serviço cobrado que não foi pedido.",
+        texto: "Uma factura com um valor que não se percebe ou um serviço cobrado que não foi pedido.",
         contexto: "Telecomunicações · energia · água",
       },
       {
@@ -288,7 +288,7 @@ export const institucional = {
       },
       {
         titulo: "Reclamações sem resposta",
-        texto: "A pessoa já tentou resolver diretamente com a empresa e não teve resposta ou solução.",
+        texto: "A pessoa já tentou resolver directamente com a empresa e não teve resposta ou solução.",
         contexto: "Preparação · acompanhamento",
       },
     ],
@@ -296,7 +296,7 @@ export const institucional = {
       eyebrow: "Formatos a explorar",
       titulo: "Uma conversa para encontrar o formato certo.",
       texto:
-        "O público, a forma de acesso e as condições definem-se em conjunto, de acordo com o objetivo da sua empresa. Estes são pontos de partida, não pacotes fechados.",
+        "O público, a forma de acesso e as condições definem-se em conjunto, de acordo com o objectivo da sua empresa. Estes são pontos de partida, não pacotes fechados.",
     },
     formatos: [
       { titulo: "Para colaboradores", texto: "Dar à equipa uma forma simples de conhecer e aceder ao apoio da DoLado." },
@@ -332,17 +332,17 @@ export const institucional = {
       {
         pergunta: "A quem pode a empresa disponibilizar a DoLado?",
         resposta:
-          "A colaboradores, a clientes ou aos dois públicos. O público, a forma de acesso e a comunicação são definidos em conjunto, de acordo com o objetivo da sua empresa.",
+          "A colaboradores, a clientes ou aos dois públicos. O público, a forma de acesso e a comunicação são definidos em conjunto, de acordo com o objectivo da sua empresa.",
       },
       {
         pergunta: "Que tipo de apoio presta a DoLado?",
         resposta:
-          "A DoLado ajuda a tratar problemas com empresas — por exemplo, de telecomunicações, energia, água, compras ou ginásios: organiza a situação, prepara a reclamação, que a pessoa revê antes do envio, e acompanha os próximos passos. A Proteção é um serviço à parte, que não exige um problema: acompanha as faturas e as datas dos contratos que a pessoa envia — por exemplo, os novos contratos depois de uma mudança de casa — e avisa quando algo merece atenção.",
+          "A DoLado ajuda a tratar problemas com empresas — por exemplo, de telecomunicações, energia, água, compras ou ginásios: organiza a situação, prepara a reclamação, que a pessoa revê antes do envio, e acompanha os próximos passos. A Protecção é um serviço à parte, que não exige um problema: acompanha as facturas e as datas dos contratos que a pessoa envia — por exemplo, os novos contratos depois de uma mudança de casa — e avisa quando algo merece atenção.",
       },
       {
         pergunta: "A empresa tem acesso aos casos individuais?",
         resposta:
-          "Cada caso é tratado diretamente entre a pessoa e a DoLado. A solução não pressupõe que a empresa aceda aos casos individuais de quem utiliza a DoLado; qualquer informação a partilhar no âmbito de uma parceria é definida e explicada com clareza antes de começar.",
+          "Cada caso é tratado directamente entre a pessoa e a DoLado. A solução não pressupõe que a empresa aceda aos casos individuais de quem utiliza a DoLado; qualquer informação a partilhar no âmbito de uma parceria é definida e explicada com clareza antes de começar.",
       },
       {
         pergunta: "Quais são os preços e as condições para empresas?",

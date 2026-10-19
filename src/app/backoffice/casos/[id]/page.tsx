@@ -269,7 +269,7 @@ export default async function CasoDetalhePage({
     <div className="flex flex-col gap-5">
       <CabecalhoPagina
         voltar={{ href: "/backoffice/casos", texto: "Casos" }}
-        contexto={`${caso.sector ?? "Sem setor"} · ${problema}`}
+        contexto={`${caso.sector ?? "Sem sector"} · ${problema}`}
         titulo={caso.nome}
         estado={<EstadoCaso status={caso.status} />}
         meta={
@@ -317,7 +317,7 @@ export default async function CasoDetalhePage({
         }`}
       >
         <div className="flex flex-col gap-1.5">
-          <p className={EYEBROW}>{acao.interna ? "Próxima ação da DoLado" : acao.aguarda ? "A aguardar" : "Estado"}</p>
+          <p className={EYEBROW}>{acao.interna ? "Próxima acção da DoLado" : acao.aguarda ? "A aguardar" : "Estado"}</p>
           <div>
             <Etiqueta tom={acao.tom}>{acao.rotulo}</Etiqueta>
           </div>
@@ -365,7 +365,7 @@ export default async function CasoDetalhePage({
             )}
             <ListaDados colunas={2}>
               <Dado rotulo="Empresa reclamada">{caso.empresa || "—"}</Dado>
-              <Dado rotulo="Setor">{caso.sector ?? "—"}</Dado>
+              <Dado rotulo="Sector">{caso.sector ?? "—"}</Dado>
               <Dado rotulo="O que aconteceu">{caso.problema_tipo || "—"}</Dado>
               <Dado rotulo="Tipo de problema">{caso.tipo_problema || "—"}</Dado>
               <Dado rotulo="Já reclamou?">{caso.momento_cliente || "—"}</Dado>
@@ -430,11 +430,11 @@ export default async function CasoDetalhePage({
             dossies={(dossies.data ?? []) as DossieResumo[]}
           />
 
-          <Seccao id="dados" titulo="Dados do caso" descricao="Editar os campos do caso. O estado muda com as ações do caso.">
+          <Seccao id="dados" titulo="Dados do caso" descricao="Editar os campos do caso. O estado muda com as acções do caso.">
             <CasoForm action={actualizarComId} valores={caso} submitLabel="Guardar alterações" edicao />
             <details className="rounded-[12px] border border-[var(--v2-line)]">
               <summary className="flex min-h-10 cursor-pointer items-center px-4 text-[14px] font-semibold text-[var(--v2-navy)]">
-                Corrigir estado (exceção)
+                Corrigir estado (excepção)
               </summary>
               <form action={corrigirEstado.bind(null, id)} className="flex flex-col gap-3 border-t border-[var(--v2-line)] p-4">
                 <p className={AJUDA_CAMPO}>
@@ -464,7 +464,7 @@ export default async function CasoDetalhePage({
                   <ConfirmarAcao
                     className={BOTAO_SECUNDARIO}
                     titulo="Corrigir o estado do caso?"
-                    descricao="A correção fica registada com o motivo. O cliente vê o novo estado no portal."
+                    descricao="A correcção fica registada com o motivo. O cliente vê o novo estado no portal."
                     confirmar="Corrigir estado"
                   >
                     Corrigir estado

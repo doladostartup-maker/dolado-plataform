@@ -17,7 +17,7 @@ describe("custos da API", () => {
     assert.equal(custoEstimadoUsd("claude-sonnet-5-5", -5, Number.NaN), 0);
   });
 
-  test("teto: valor da variável ou 8 USD por omissão", () => {
+  test("tecto: valor da variável ou 8 USD por omissão", () => {
     assert.equal(lerTetoOrcamentoUsd("7.5"), 7.5);
     assert.equal(lerTetoOrcamentoUsd("7,5"), 7.5);
     assert.equal(lerTetoOrcamentoUsd(undefined), 8);
@@ -25,7 +25,7 @@ describe("custos da API", () => {
     assert.equal(lerTetoOrcamentoUsd("abc"), 8);
   });
 
-  test("bloqueado ao atingir o teto", () => {
+  test("bloqueado ao atingir o tecto", () => {
     assert.equal(estadoOrcamento(4.99, 5).bloqueado, false);
     assert.equal(estadoOrcamento(5, 5).bloqueado, true);
     assert.equal(estadoOrcamento(2.5, 5).percentagem, 50);
@@ -71,8 +71,8 @@ function faturaBase(extra = {}) {
 
 const HOJE = "2026-10-02";
 
-describe("validação da extração de faturas", () => {
-  test("fatura completa: cêntimos, sem revisão e só informação contratual explícita proposta", () => {
+describe("validação da extracção de facturas", () => {
+  test("factura completa: cêntimos, sem revisão e só informação contratual explícita proposta", () => {
     const r = validarExtracaoFatura(faturaBase(), HOJE);
     assert.equal(r.ok, true);
     assert.equal(r.precisaRevisao, false);
@@ -102,7 +102,7 @@ describe("validação da extração de faturas", () => {
     assert.equal(r.fatura.mensalidadeLidaCents, null);
   });
 
-  test("v3: identificação do titular e número da fatura", () => {
+  test("v3: identificação do titular e número da factura", () => {
     const r = validarExtracaoFatura(
       faturaBase({
         identificacao: {
@@ -157,7 +157,7 @@ describe("validação da extração de faturas", () => {
     assert.equal(r.fatura.periodoFim, null);
   });
 
-  test("eletricidade: aceite, mas sem valor de cessação (regra só telecom)", () => {
+  test("electricidade: aceite, mas sem valor de cessação (regra só telecom)", () => {
     const r = validarExtracaoFatura(faturaBase({ setor: "eletricidade" }), HOJE);
     assert.equal(r.ok, true);
     assert.equal(r.setor, "eletricidade");
@@ -169,7 +169,7 @@ describe("validação da extração de faturas", () => {
     assert.ok(r.avisos.includes("total diferente da soma das linhas"));
   });
 
-  test("não é fatura, outro setor, outra moeda ou formato inválido", () => {
+  test("não é factura, outro sector, outra moeda ou formato inválido", () => {
     assert.deepEqual(validarExtracaoFatura(faturaBase({ tipo_documento: "contrato" }), HOJE), { ok: false, motivo: "nao_e_fatura" });
     assert.deepEqual(validarExtracaoFatura(faturaBase({ setor: "desconhecido" }), HOJE), { ok: false, motivo: "setor_nao_suportado" });
     assert.deepEqual(validarExtracaoFatura(faturaBase({ moeda: "USD" }), HOJE), { ok: false, motivo: "moeda_nao_suportada" });
@@ -230,7 +230,7 @@ describe("contratos: regras puras", async () => {
     assert.equal(c.lerEurosParaCents("abc"), null);
   });
 
-  test("formatação e setor para Tratar o meu caso", async () => {
+  test("formatação e sector para Tratar o meu caso", async () => {
     assert.equal(c.formatarValorCampo("data_fim_fidelizacao", "2027-02-28"), "28/02/2027");
     assert.match(c.formatarValorCampo("mensalidade_cents", 4299), /42,99/);
     // Gás é um setor próprio desde 06/10/2026 (antes ia para "Energia").
@@ -242,7 +242,7 @@ describe("contratos: regras puras", async () => {
   });
 });
 
-describe("validação da extração de contratos", async () => {
+describe("validação da extracção de contratos", async () => {
   const { validarExtracaoContrato } = await import("./extracaoContrato.ts");
   const contrato = (extra = {}) => ({
     tipo_documento: "contrato",
@@ -280,7 +280,7 @@ describe("validação da extração de contratos", async () => {
     assert.equal(r.precisaRevisao, true);
   });
 
-  test("v3: assinatura, ativação, duração e início na ativação lidos à parte", () => {
+  test("v3: assinatura, activação, duração e início na activação lidos à parte", () => {
     const r = validarExtracaoContrato(
       contrato({
         data_assinatura: campo("2025-04-08"),
@@ -299,7 +299,7 @@ describe("validação da extração de contratos", async () => {
     assert.equal(r.precisaRevisao, false);
   });
 
-  test("v3: assinatura repetida como início num contrato que começa na ativação é retirada", () => {
+  test("v3: assinatura repetida como início num contrato que começa na activação é retirada", () => {
     const r = validarExtracaoContrato(
       contrato({
         data_assinatura: campo("2025-04-08"),
@@ -319,7 +319,7 @@ describe("validação da extração de contratos", async () => {
     assert.equal(validarExtracaoContrato(contrato({ duracao_fidelizacao_meses: campo("24.5") })).precisaRevisao, true);
   });
 
-  test("setor desconhecido fica por indicar; fatura não é contrato", () => {
+  test("sector desconhecido fica por indicar; factura não é contrato", () => {
     assert.equal(validarExtracaoContrato(contrato({ setor: "desconhecido" })).setor, "nao_indicado");
     assert.deepEqual(validarExtracaoContrato(contrato({ tipo_documento: "fatura" })), { ok: false, motivo: "nao_e_contrato" });
   });
@@ -347,7 +347,7 @@ describe("F4: custo de saída a partir do contrato", async () => {
     assert.equal(duracaoEmMeses("2025-03-01", "2027-02-10"), null);
   });
 
-  test("dados em falta e setor", () => {
+  test("dados em falta e sector", () => {
     const r = dadosCalculoDoContrato(contrato({ vantagem_cents: null, tipo_fidelizacao: null }));
     assert.equal(r.motivo, "faltam_dados");
     assert.deepEqual(r.faltam, ["vantagem_cents", "tipo_fidelizacao"]);
@@ -365,7 +365,7 @@ describe("F4: custo de saída a partir do contrato", async () => {
     assert.ok(pontos[2].cents < hoje.resultadoCentimos);
   });
 
-  test("valor da fatura vs. estimativa: próximo, divergente, equipamento, sem dados", () => {
+  test("valor da factura vs. estimativa: próximo, divergente, equipamento, sem dados", () => {
     const d = dadosCalculoDoContrato(contrato());
     const { hoje } = evolucaoCustoSaida(d.dados, "2026-09-15");
     const est = hoje.resultadoCentimos;
@@ -466,7 +466,7 @@ describe("F4: datas da fidelização e detalhe do cálculo", async () => {
     assert.equal(com.percentagem, 50);
   });
 
-  test("E. data de início explícita: é o início considerado (a ativação fica como início do contrato)", () => {
+  test("E. data de início explícita: é o início considerado (a activação fica como início do contrato)", () => {
     const r = resolverDatasFidelizacao(vodafone({ data_ativacao: "2025-04-20", data_assinatura: "2025-04-08", inicio_na_ativacao: "sim" }));
     assert.equal(r.ok, true);
     assert.equal(r.datas.inicioFidelizacao, "2025-04-08");
@@ -486,7 +486,7 @@ describe("F4: datas da fidelização e detalhe do cálculo", async () => {
     assert.deepEqual(d.faltam, ["data_inicio"]);
   });
 
-  test("G. contrato começa na ativação e não há data de ativação: falta confirmar", () => {
+  test("G. contrato começa na activação e não há data de activação: falta confirmar", () => {
     const d = dadosCalculoDoContrato(vodafone({ data_inicio: null, data_assinatura: "2025-04-08", inicio_na_ativacao: "sim" }));
     assert.equal(d.problema, "falta_ativacao");
     assert.deepEqual(d.faltam, ["data_ativacao"]);
@@ -551,7 +551,7 @@ describe("F4: datas da fidelização e detalhe do cálculo", async () => {
     assert.equal(fim.semPeriodoEmCurso.mensalidades, 0);
   });
 
-  test("valor da fatura entre o mínimo e o máximo da estimativa não é divergência", () => {
+  test("valor da factura entre o mínimo e o máximo da estimativa não é divergência", () => {
     assert.equal(compararCessacao(vodafone(), 12863, "2026-10-03").resultado, "proximo");
     assert.equal(compararCessacao(vodafone(), 15007, "2026-10-03").resultado, "proximo");
     const acima = compararCessacao(vodafone(), 25000, "2026-10-03");
@@ -580,7 +580,7 @@ describe("schemas aceites pela Claude API (structured outputs)", async () => {
   }
 
   test("nenhum dos schemas passa o limite de 16 parâmetros em união", () => {
-    assert.ok(contarUnioes(SCHEMA_FATURA) <= 16, `fatura: ${contarUnioes(SCHEMA_FATURA)}`);
+    assert.ok(contarUnioes(SCHEMA_FATURA) <= 16, `factura: ${contarUnioes(SCHEMA_FATURA)}`);
     assert.ok(contarUnioes(SCHEMA_CONTRATO) <= 16, `contrato: ${contarUnioes(SCHEMA_CONTRATO)}`);
   });
 
@@ -594,13 +594,13 @@ describe("schemas aceites pela Claude API (structured outputs)", async () => {
   }
 
   test("nenhum dos schemas tem uma gramática do tamanho da que a API recusou", () => {
-    assert.ok(contarPropriedades(SCHEMA_FATURA) <= 60, `fatura: ${contarPropriedades(SCHEMA_FATURA)}`);
+    assert.ok(contarPropriedades(SCHEMA_FATURA) <= 60, `factura: ${contarPropriedades(SCHEMA_FATURA)}`);
     assert.ok(contarPropriedades(SCHEMA_CONTRATO) <= 60, `contrato: ${contarPropriedades(SCHEMA_CONTRATO)}`);
   });
 
   const c = (valor, confianca = "high", pagina = 1, evidencia = "texto") => ({ valor, confianca, pagina, evidencia });
 
-  test("fatura no formato v2 (tudo texto, vazio = em falta, página 0) é validada como antes", () => {
+  test("factura no formato v2 (tudo texto, vazio = em falta, página 0) é validada como antes", () => {
     const r = validarExtracaoFatura(
       {
         tipo_documento: "fatura",

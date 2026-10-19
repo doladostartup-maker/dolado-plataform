@@ -17,13 +17,18 @@ export { escaparHtml, textoParaAssunto };
 // Português: o texto de sempre. Inglês britânico: ao lado, mesma estrutura.
 const lingua = (idioma: IdiomaEmail | undefined): IdiomaEmail => (idioma === "en-GB" ? "en-GB" : "pt-PT");
 
+// Português: meses com maiúscula inicial ("3 de Outubro de 2026"), como no
+// resto da DoLado (ortografia tradicional; src/i18n/formatar.ts).
+const MESES_PT = /\b(janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b/g;
+
 function dataPt(dataIso: string, idioma: IdiomaEmail = "pt-PT"): string {
-  return new Date(`${dataIso}T00:00:00Z`).toLocaleDateString(lingua(idioma), {
+  const texto = new Date(`${dataIso}T00:00:00Z`).toLocaleDateString(lingua(idioma), {
     day: "2-digit",
     month: "long",
     year: "numeric",
     timeZone: "UTC",
   });
+  return lingua(idioma) === "pt-PT" ? texto.replace(MESES_PT, (m) => m[0].toUpperCase() + m.slice(1)) : texto;
 }
 
 // ---------------------------------------------------------------------------

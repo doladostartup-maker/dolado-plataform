@@ -37,7 +37,7 @@ export const whatsapp = {
         telecomunicacoes:
           "Olá. Estou a consultar a informação da DoLado sobre problemas com operadoras de telecomunicações e precisava de ajuda para perceber como começar.",
         energia:
-          "Olá. Estou a consultar a informação da DoLado sobre problemas com fornecedores de eletricidade e precisava de ajuda para perceber como começar.",
+          "Olá. Estou a consultar a informação da DoLado sobre problemas com fornecedores de electricidade e precisava de ajuda para perceber como começar.",
         gas: "Olá. Estou a consultar a informação da DoLado sobre problemas com fornecedores de gás e precisava de ajuda para perceber como começar.",
         agua: "Olá. Estou a consultar a informação da DoLado sobre problemas com o fornecimento de água e precisava de ajuda para perceber como começar.",
         "compras-reembolsos":

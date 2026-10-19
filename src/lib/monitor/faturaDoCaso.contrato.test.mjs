@@ -14,7 +14,7 @@ import { after, before, describe, test } from "node:test";
 import { createClient } from "@supabase/supabase-js";
 
 const ATIVO = process.env.CONTRATO_SUPABASE === "1";
-const PDF = new TextEncoder().encode("%PDF-1.4\n% fatura de teste da DoLado\n%%EOF\n");
+const PDF = new TextEncoder().encode("%PDF-1.4\n% factura de teste da DoLado\n%%EOF\n");
 
 let admin;
 let srv;
@@ -56,7 +56,7 @@ async function existe(bucket, caminho) {
   return data ? new Uint8Array(await data.arrayBuffer()) : null;
 }
 
-describe("fatura do caso na Proteção (Supabase real)", { skip: !ATIVO }, () => {
+describe("factura do caso na Protecção (Supabase real)", { skip: !ATIVO }, () => {
   let a;
   let b;
   let casoA;
@@ -87,7 +87,7 @@ describe("fatura do caso na Proteção (Supabase real)", { skip: !ATIVO }, () =>
     }
   });
 
-  test("a fatura do caso é proposta só ao dono", async () => {
+  test("a factura do caso é proposta só ao dono", async () => {
     const proposta = await srv.carregarFaturaDoCaso(a.sessao, a.id);
     assert.equal(proposta?.anexoId, casoA.anexo.id);
     assert.equal(proposta?.empresa, "Operadora X");
@@ -95,7 +95,7 @@ describe("fatura do caso na Proteção (Supabase real)", { skip: !ATIVO }, () =>
     assert.equal(await srv.carregarFaturaDoCaso(b.sessao, a.id), null);
   });
 
-  test("outro cliente não consegue usar a fatura", async () => {
+  test("outro cliente não consegue usar a factura", async () => {
     const r = await srv.criarDocumentoDaFaturaDoCaso(b.sessao, b.id, casoA.anexo.id);
     assert.equal(r.ok, false);
     const r2 = await srv.criarDocumentoDaFaturaDoCaso(b.sessao, a.id, casoA.anexo.id);
@@ -129,7 +129,7 @@ describe("fatura do caso na Proteção (Supabase real)", { skip: !ATIVO }, () =>
     assert.equal(await srv.carregarFaturaDoCaso(a.sessao, a.id), null);
   });
 
-  test("apagar o documento da Proteção não apaga o ficheiro do caso", async () => {
+  test("apagar o documento da Protecção não apaga o ficheiro do caso", async () => {
     const { data: doc } = await admin.from("documentos_monitor").select("id, storage_path").eq("anexo_origem_id", casoA.anexo.id).single();
     await admin.storage.from("documentos-monitor").remove([doc.storage_path]);
     await admin.from("documentos_monitor").delete().eq("id", doc.id);

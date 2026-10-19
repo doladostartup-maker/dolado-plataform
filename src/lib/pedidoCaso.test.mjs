@@ -49,7 +49,7 @@ describe("formulário do caso (lerDadosPedido)", () => {
     assert.equal(r.dados.anexo, null);
   });
 
-  test("aceita todos os setores, incluindo Gás, Compras & Reembolsos e Ginásios", () => {
+  test("aceita todos os sectores, incluindo Gás, Compras & Reembolsos e Ginásios", () => {
     assert.deepEqual(SETORES, ["Telecomunicações", "Energia", "Gás", "Água", "Compras & Reembolsos", "Ginásios"]);
     for (const sector of SETORES) {
       const r = lerDadosPedido(formulario({ sector }));
@@ -62,8 +62,8 @@ describe("formulário do caso (lerDadosPedido)", () => {
     }
   });
 
-  test("tipos de problema por setor", () => {
-    assert.deepEqual(Object.keys(PROBLEMAS_POR_SETOR).sort(), [...SETORES].sort(), "cada setor tem a sua lista");
+  test("tipos de problema por sector", () => {
+    assert.deepEqual(Object.keys(PROBLEMAS_POR_SETOR).sort(), [...SETORES].sort(), "cada sector tem a sua lista");
     for (const setor of SETORES) {
       const lista = problemasDoSetor(setor);
       assert.equal(lista.at(-1), "Outro", setor);
@@ -97,7 +97,7 @@ describe("formulário do caso (lerDadosPedido)", () => {
     assert.deepEqual(problemasDoSetor(""), PROBLEMAS);
   });
 
-  test("o problema tem de existir no setor escolhido", () => {
+  test("o problema tem de existir no sector escolhido", () => {
     assert.equal(lerDadosPedido(formulario({ sector: "Compras & Reembolsos", problema_tipo: "Produto com defeito" })).ok, true);
     assert.equal(lerDadosPedido(formulario({ sector: "Ginásios", problema_tipo: "Cobrança após cancelamento" })).ok, true);
     assert.equal(lerDadosPedido(formulario({ sector: "Energia", problema_tipo: "Produto com defeito" })).ok, false);
@@ -142,16 +142,16 @@ describe("formulário do caso (lerDadosPedido)", () => {
     });
   });
 
-  test("backoffice: o tipo de problema tem de pertencer ao setor (vazio continua válido)", () => {
+  test("backoffice: o tipo de problema tem de pertencer ao sector (vazio continua válido)", () => {
     assert.equal(problemaValidoParaSetor("Gás", "Tarifa social"), true);
     assert.equal(problemaValidoParaSetor("Ginásios", "Tarifa social"), false);
     assert.equal(problemaValidoParaSetor("Água", "Mudança de comercializador"), false);
     assert.equal(problemaValidoParaSetor("Ginásios", null), true);
-    assert.equal(problemaValidoParaSetor(null, "Tarifa social"), true, "sem setor: qualquer tipo da lista");
+    assert.equal(problemaValidoParaSetor(null, "Tarifa social"), true, "sem sector: qualquer tipo da lista");
     assert.equal(problemaValidoParaSetor(null, "x"), false);
   });
 
-  test("só aceita setores, problemas e momentos das listas", () => {
+  test("só aceita sectores, problemas e momentos das listas", () => {
     assert.equal(lerDadosPedido(formulario({ sector: "Banca" })).ok, false);
     assert.equal(lerDadosPedido(formulario({ problema_tipo: "x" })).ok, false);
     assert.equal(lerDadosPedido(formulario({ momento_cliente: "x" })).ok, false);
@@ -204,7 +204,7 @@ describe("posse do pedido", () => {
 });
 
 describe("modalidades oferecidas (opcoesDoPedido)", () => {
-  test("conta sem compras: Avulso e Caso + Proteção, nada de graça", () => {
+  test("conta sem compras: Avulso e Caso + Protecção, nada de graça", () => {
     assert.deepEqual(opcoesDoPedido({ creditos: 0, temSubscricao: false }), {
       usarCasoDisponivel: false,
       casoExtra: false,
@@ -214,7 +214,7 @@ describe("modalidades oferecidas (opcoesDoPedido)", () => {
   test("com casos disponíveis já pagos: pode usar um", () => {
     assert.equal(opcoesDoPedido({ creditos: 2, temSubscricao: true }).usarCasoDisponivel, true);
   });
-  test("com proteção ativa (sem casos): não abre segunda subscrição, só Avulso", () => {
+  test("com protecção activa (sem casos): não abre segunda subscrição, só Avulso", () => {
     assert.deepEqual(opcoesDoPedido({ creditos: 0, temSubscricao: true }).modalidades, ["avulso"]);
   });
 });
@@ -235,18 +235,18 @@ describe("direito a caso no fluxo Tratar o meu caso (acesso → opções)", () =
     return { opcoes: opcoesDoPedido(acesso), entrada: entradaDoPedido(acesso) };
   };
 
-  test("Caso + Proteção ativa, caso do ciclo por usar: usa-o, sem pagamento", () => {
+  test("Caso + Protecção activa, caso do ciclo por usar: usa-o, sem pagamento", () => {
     const { opcoes, entrada } = fluxo(linha({ case_credits: 1 }));
     assert.equal(opcoes.usarCasoDisponivel, true);
     assert.equal(entrada, "usar_caso");
   });
-  test("Caso + Proteção ativa, caso do ciclo já usado: só Avulso, nunca segunda subscrição", () => {
+  test("Caso + Protecção activa, caso do ciclo já usado: só Avulso, nunca segunda subscrição", () => {
     const { opcoes, entrada } = fluxo(linha({ case_credits: 0 }));
     assert.equal(opcoes.usarCasoDisponivel, false);
     assert.deepEqual(opcoes.modalidades, ["avulso"]);
     assert.equal(entrada, "so_avulso");
   });
-  test("Proteção ativa (não inclui casos): só Avulso", () => {
+  test("Protecção activa (não inclui casos): só Avulso", () => {
     const { opcoes, entrada } = fluxo(linha({ subscription_plan: "protecao", case_credits: 0 }));
     assert.equal(opcoes.usarCasoDisponivel, false);
     assert.deepEqual(opcoes.modalidades, ["avulso"]);
@@ -259,11 +259,11 @@ describe("direito a caso no fluxo Tratar o meu caso (acesso → opções)", () =
     assert.equal(opcoes.usarCasoDisponivel, true);
     assert.equal(entrada, "usar_caso");
   });
-  test("Proteção ativa com um Avulso comprado à parte: usa-o, sem pagamento", () => {
+  test("Protecção activa com um Avulso comprado à parte: usa-o, sem pagamento", () => {
     const { entrada } = fluxo(linha({ subscription_plan: "protecao", case_credits: 1, avulso_credits: 1 }));
     assert.equal(entrada, "usar_caso");
   });
-  test("sem subscrição e sem casos: escolhe Avulso ou Caso + Proteção e paga", () => {
+  test("sem subscrição e sem casos: escolhe Avulso ou Caso + Protecção e paga", () => {
     for (const l of [null, linha({ subscription_plan: "none", subscription_status: null })]) {
       const { opcoes, entrada } = fluxo(l);
       assert.equal(opcoes.usarCasoDisponivel, false);
@@ -305,7 +305,7 @@ describe("metadata e redirecionamentos", () => {
 describe("nenhuma rota pública cria casos sem pagamento (código)", () => {
   const fonte = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 
-  test("o formulário e as ações de conta só gravam pedidos — nunca casos", () => {
+  test("o formulário e as acções de conta só gravam pedidos — nunca casos", () => {
     for (const f of ["../app/[idioma]/tratar-caso/actions.ts", "../lib/pedidoCasoServidor.ts", "../app/actions/formulario-guiado.ts"]) {
       assert.equal(/from\("casos"\)/.test(fonte(f)), false, f);
     }

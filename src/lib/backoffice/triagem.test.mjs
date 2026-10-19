@@ -35,7 +35,7 @@ describe("estadoCaso", () => {
 });
 
 describe("proximaAcao", () => {
-  test("sem texto: preparar texto (ação da DoLado)", () => {
+  test("sem texto: preparar texto (acção da DoLado)", () => {
     const a = proximaAcao({ status: "Novo", email: "a@b.pt", texto: null });
     assert.equal(a.rotulo, "Analisar e preparar texto");
     assert.equal(a.interna, true);
@@ -55,7 +55,7 @@ describe("proximaAcao", () => {
     assert.equal(semEmail.tom, "erro");
   });
 
-  test("cada estado do texto tem a ação certa e de quem é", () => {
+  test("cada estado do texto tem a acção certa e de quem é", () => {
     const casos = {
       alteracoes_solicitadas: ["Rever pedido de alterações", true, "dolado"],
       aguardando_aprovacao: ["À espera da aprovação do cliente", false, "cliente"],
@@ -89,7 +89,7 @@ describe("proximaAcao", () => {
     assert.equal(proximaAcao({ status: "Encerrado sem resolução", texto: null }).aguarda, null);
   });
 
-  test("encerrado com encaminhamento externo: terminado, sem ação; avisa de mensagens chegadas depois", () => {
+  test("encerrado com encaminhamento externo: terminado, sem acção; avisa de mensagens chegadas depois", () => {
     const a = proximaAcao({ status: "Encerrado com encaminhamento externo", texto: texto("substituido") });
     assert.deepEqual([a.rotulo, a.interna, a.aguarda, a.ancora], ["Encerrado na DoLado", false, null, "encerramento"]);
     const b = proximaAcao({ status: "Encerrado com encaminhamento externo", texto: null, comunicacoesPorAnalisar: 1 });
@@ -149,7 +149,7 @@ describe("prazosCaso", () => {
 });
 
 describe("prioridade e vistas", () => {
-  test("ação interna antes de espera; finais no fim", () => {
+  test("acção interna antes de espera; finais no fim", () => {
     const acao = { status: "Novo", email: "a@b.pt", primeira_resposta_em: "x", texto: null, created_at: "2026-10-01T00:00:00Z" };
     const espera = { status: "Em investigação", primeira_resposta_em: "x", texto: texto("aguardando_aprovacao"), created_at: "2026-09-01T00:00:00Z" };
     const final = { status: "Resolvido", created_at: "2026-08-01T00:00:00Z" };
@@ -157,7 +157,7 @@ describe("prioridade e vistas", () => {
     assert.deepEqual(ordem, [acao, espera, final]);
   });
 
-  test("vistas separam ação, espera e concluídos", () => {
+  test("vistas separam acção, espera e concluídos", () => {
     const acao = { status: "Novo", email: "a@b.pt", texto: null };
     const espera = { status: "Aguardando operador", texto: texto("enviado") };
     const final = { status: "Bloqueado" };

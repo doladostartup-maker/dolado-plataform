@@ -26,11 +26,11 @@ const avulso = (extra = {}) => ({
 const DISPONIVEL = new Set(["cs_avulso"]);
 
 describe("montantes (sempre em cêntimos)", () => {
-  test("Avulso → Proteção: 1.ª mensalidade 4,99 € coberta, reembolso 10,00 €", () => {
+  test("Avulso → Protecção: 1.ª mensalidade 4,99 € coberta, reembolso 10,00 €", () => {
     assert.deepEqual(calcularConversao(1499, "protecao"), { valorAvulso: 1499, mensalidade: 499, reembolso: 1000 });
   });
 
-  test("Avulso → Caso + Proteção: 1.ª mensalidade 7,99 € coberta, reembolso 7,00 €", () => {
+  test("Avulso → Caso + Protecção: 1.ª mensalidade 7,99 € coberta, reembolso 7,00 €", () => {
     assert.deepEqual(calcularConversao(1499, "caso_protecao"), { valorAvulso: 1499, mensalidade: 799, reembolso: 700 });
   });
 
@@ -101,7 +101,7 @@ describe("Checkout de conversão", () => {
     siteUrl: "https://portal.dolado.pt",
   });
 
-  test("1.ª fatura a 0 €: cupão de 100% aplicado só uma vez (renovações cobram o preço normal)", () => {
+  test("1.ª factura a 0 €: cupão de 100% aplicado só uma vez (renovações cobram o preço normal)", () => {
     assert.deepEqual(params.discounts, [{ coupon: CUPAO_CONVERSAO.id }]);
     assert.equal(CUPAO_CONVERSAO.percent_off, 100);
     assert.equal(CUPAO_CONVERSAO.duration, "once");
@@ -127,17 +127,17 @@ describe("Checkout de conversão", () => {
 });
 
 describe("mensagem ao cliente (PT-PT, sem saldo nem crédito futuro)", () => {
-  test("Proteção", () => {
+  test("Protecção", () => {
     assert.equal(
       mensagemConversao("protecao", 499, 1000),
-      "Utilizámos 4,99 € do valor do seu pagamento Avulso para cobrir o primeiro mês do plano Proteção. Os restantes 10,00 € serão reembolsados para o método de pagamento original.",
+      "Utilizámos 4,99 € do valor do seu pagamento Avulso para cobrir o primeiro mês do plano Protecção. Os restantes 10,00 € serão reembolsados para o método de pagamento original.",
     );
   });
 
-  test("Caso + Proteção", () => {
+  test("Caso + Protecção", () => {
     assert.equal(
       mensagemConversao("caso_protecao", 799, 700),
-      "Utilizámos 7,99 € do valor do seu pagamento Avulso para cobrir o primeiro mês do plano Caso + Proteção. Os restantes 7,00 € serão reembolsados para o método de pagamento original.",
+      "Utilizámos 7,99 € do valor do seu pagamento Avulso para cobrir o primeiro mês do plano Caso + Protecção. Os restantes 7,00 € serão reembolsados para o método de pagamento original.",
     );
   });
 

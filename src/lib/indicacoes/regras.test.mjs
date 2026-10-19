@@ -79,14 +79,14 @@ describe("desconto no Checkout", () => {
     assert.equal(precoComDescontoCentimos(PLANOS.avulso.precoCentimos), 959);
   });
 
-  test("Proteção: 20% só na primeira mensalidade (≈ 3,99 €)", () => {
+  test("Protecção: 20% só na primeira mensalidade (≈ 3,99 €)", () => {
     assert.equal(escolherDescontoCheckout({ ...base, fluxo: "adesao", plano: "protecao", novoClienteIndicado: true }), "novo_cliente");
     assert.equal(precoComDescontoCentimos(PLANOS.protecao.precoCentimos), 399);
     assert.equal(CUPAO_INDICACAO_NOVO_CLIENTE.duration, "once");
     assert.equal(CUPAO_INDICACAO_RECOMPENSA.duration, "once");
   });
 
-  test("Caso + Proteção: sem desconto de aquisição (nem de novo cliente, nem de quem indicou, na adesão)", () => {
+  test("Caso + Protecção: sem desconto de aquisição (nem de novo cliente, nem de quem indicou, na adesão)", () => {
     assert.equal(produtoComDescontoIndicacao("caso_protecao"), false);
     assert.equal(
       escolherDescontoCheckout({ ...base, plano: "caso_protecao", novoClienteIndicado: true, recompensasDisponiveis: 3 }),
@@ -118,7 +118,7 @@ describe("desconto no Checkout", () => {
     assert.deepEqual(camposDescontoCheckout(null), { allow_promotion_codes: true });
   });
 
-  test("cupão no Stripe tem de ser exatamente 20%, uma cobrança, válido", () => {
+  test("cupão no Stripe tem de ser exactamente 20%, uma cobrança, válido", () => {
     assert.equal(cupaoConforme({ percent_off: 20, duration: "once", valid: true }, CUPAO_INDICACAO_RECOMPENSA), true);
     assert.equal(cupaoConforme({ percent_off: 40, duration: "once", valid: true }, CUPAO_INDICACAO_RECOMPENSA), false);
     assert.equal(cupaoConforme({ percent_off: 20, duration: "forever", valid: true }, CUPAO_INDICACAO_RECOMPENSA), false);
@@ -128,7 +128,7 @@ describe("desconto no Checkout", () => {
 
 describe("desconto de quem indicou na subscrição", () => {
   const ok = { plano: "protecao", status: "active", cancelamentoAgendado: false, outrosDescontos: 0 };
-  test("renovação da Proteção ou do Caso + Proteção ativa, sem cancelamento e sem outro desconto", () => {
+  test("renovação da Protecção ou do Caso + Protecção activa, sem cancelamento e sem outro desconto", () => {
     assert.equal(subscricaoAceitaRecompensa(ok), true);
     // REGRA_CASO_PROTECAO: uma recompensa já ganha pode ser usada numa renovação do Caso + Proteção.
     assert.equal(subscricaoAceitaRecompensa({ ...ok, plano: "caso_protecao" }), true);
@@ -139,7 +139,7 @@ describe("desconto de quem indicou na subscrição", () => {
     assert.equal(subscricaoAceitaRecompensa({ ...ok, outrosDescontos: 1 }), false);
   });
 
-  test("fatura: reconhece o cupão nos descontos expandidos (ids sozinhos não chegam)", () => {
+  test("factura: reconhece o cupão nos descontos expandidos (ids sozinhos não chegam)", () => {
     const id = CUPAO_INDICACAO_RECOMPENSA.id;
     assert.equal(faturaComCupao([{ source: { coupon: id } }], id), true);
     assert.equal(faturaComCupao([{ source: { coupon: { id } } }], id), true);
@@ -150,7 +150,7 @@ describe("desconto de quem indicou na subscrição", () => {
 });
 
 describe("produto da primeira compra", () => {
-  test("Avulso, Proteção, Caso + Proteção contam; Caso Extra não", () => {
+  test("Avulso, Protecção, Caso + Protecção contam; Caso Extra não", () => {
     assert.equal(produtoDaCompra("payment", "avulso", null), "avulso");
     assert.equal(produtoDaCompra("payment", "caso_extra", null), null);
     assert.equal(produtoDaCompra("subscription", "assinatura", "protecao"), "protecao");
@@ -168,12 +168,12 @@ describe("textos", () => {
     assert.match(TEXTOS_INDICACAO.casoProtecaoSemDesconto, /não acumula/);
   });
 
-  test("regra do Caso + Proteção escrita de forma explícita", () => {
+  test("regra do Caso + Protecção escrita de forma explícita", () => {
     assert.equal(
       REGRA_CASO_PROTECAO,
-      "Caso + Proteção não é elegível para o desconto de aquisição de 20%. Contudo, uma recompensa de indicação já ganha pelo cliente pode ser utilizada numa renovação mensal futura do Caso + Proteção.",
+      "Caso + Protecção não é elegível para o desconto de aquisição de 20%. Contudo, uma recompensa de indicação já ganha pelo cliente pode ser utilizada numa renovação mensal futura do Caso + Protecção.",
     );
-    assert.match(TEXTOS_INDICACAO.regras, /renovações mensais da Proteção e do Caso \+ Proteção/);
+    assert.match(TEXTOS_INDICACAO.regras, /renovações mensais da Protecção e do Caso \+ Protecção/);
     assert.match(TEXTOS_INDICACAO.regras, /Caso Extra/);
   });
 
@@ -183,7 +183,7 @@ describe("textos", () => {
     assert.match(TEXTOS_INDICACAO.regras, /12 meses/);
   });
 
-  test("sem conta: diz como ativar os 20% (criar conta ou iniciar sessão)", () => {
+  test("sem conta: diz como activar os 20% (criar conta ou iniciar sessão)", () => {
     assert.match(TEXTOS_INDICACAO.semConta, /crie conta ou inicie sessão/);
     assert.match(TEXTOS_INDICACAO.semConta, /sem o desconto de indicação/);
   });

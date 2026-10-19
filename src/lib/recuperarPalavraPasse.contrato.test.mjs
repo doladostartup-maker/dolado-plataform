@@ -124,7 +124,7 @@ describe("recuperação da palavra-passe (Supabase Auth real)", { skip: !ATIVO &
 
     const antiga = await novoCliente().auth.signInWithPassword({ email, password: "antiga123A" });
     assert.ok(antiga.error, "a palavra-passe antiga já não entra");
-    assert.equal(mensagemErroConta(antiga.error.code, antiga.error.message), "E-mail ou palavra-passe incorretos.");
+    assert.equal(mensagemErroConta(antiga.error.code, antiga.error.message), "E-mail ou palavra-passe incorrectos.");
     const nova = await novoCliente().auth.signInWithPassword({ email, password: "novaSenha2026" });
     assert.equal(nova.error, null, nova.error?.message);
   });
@@ -163,7 +163,7 @@ describe("recuperação da palavra-passe (Supabase Auth real)", { skip: !ATIVO &
 
     const igual = await cliente.auth.updateUser({ password: "antiga123A" });
     assert.ok(igual.error);
-    assert.equal(mensagemErroConta(igual.error.code, igual.error.message), "A nova palavra-passe tem de ser diferente da atual.");
+    assert.equal(mensagemErroConta(igual.error.code, igual.error.message), "A nova palavra-passe tem de ser diferente da actual.");
 
     // Nova tentativa na mesma sessão (?continuar=1), sem nova ligação.
     assert.equal((await cliente.auth.updateUser({ password: "outraSenha77" })).error, null);

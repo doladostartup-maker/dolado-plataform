@@ -28,7 +28,7 @@ function existente(codigo, setor, categoria, diploma) {
     em_vigor_desde: null, revogada_em: null, ativa: true, revista_em: "2026-10-06",
   };
 }
-const LEI_23_96 = "Lei n.º 23/96, de 26 de julho — Lei dos Serviços Públicos Essenciais";
+const LEI_23_96 = "Lei n.º 23/96, de 26 de Julho — Lei dos Serviços Públicos Essenciais";
 const PRODUCAO = [
   existente("SPE_PRESCRICAO_6M", null, "Cobrança", LEI_23_96),
   existente("SPE_ONUS_PROVA", null, "Prova", LEI_23_96),
@@ -36,7 +36,7 @@ const PRODUCAO = [
   existente("SPE_PREAVISO_CORTE_20D", null, "Suspensão", LEI_23_96),
   existente("SPE_ARBITRAGEM_NECESSARIA", null, "Resolução de conflitos", LEI_23_96),
   existente("CONS_NAO_SOLICITADO_9", null, "Cobrança", "Lei n.º 24/96, de 31 de julho — Lei de Defesa do Consumidor"),
-  existente("LRE_RESPOSTA_15DU", null, "Reclamação", "Decreto-Lei n.º 156/2005, de 15 de setembro"),
+  existente("LRE_RESPOSTA_15DU", null, "Reclamação", "Decreto-Lei n.º 156/2005, de 15 de Setembro"),
   existente("DIST_LIVRE_RESOLUCAO", null, "Contrato", "Decreto-Lei n.º 24/2014, de 14 de fevereiro"),
   existente("ENE_FIDELIZACAO_MAX_12M_19", "Energia", "Fidelização", "Regulamento n.º 827/2023"),
   existente("ENE_ELEC_REDUCAO_ANTES_CORTE_78", "Energia", "Suspensão", "Regulamento n.º 827/2023"),
@@ -60,7 +60,7 @@ describe("carga jurídica 4 — conteúdo", () => {
     for (const r of PRODUCAO) assert.ok(!porCodigo[r.codigo], `não reescreve ${r.codigo}`);
   });
 
-  test("11. nenhuma regra nova entra ativa ou revista", () => {
+  test("11. nenhuma regra nova entra activa ou revista", () => {
     for (const r of CARGA) {
       assert.equal(r.ativa, false, r.codigo);
       assert.equal(r.revista_em, null, r.codigo);
@@ -81,7 +81,7 @@ describe("carga jurídica 4 — conteúdo", () => {
     }
   });
 
-  test("Gás: gás natural, GPL canalizado e gás de garrafa distinguidos; sem regras só de eletricidade", () => {
+  test("Gás: gás natural, GPL canalizado e gás de garrafa distinguidos; sem regras só de electricidade", () => {
     for (const r of CARGA.filter((r) => r.setor === "Gás")) {
       assert.match(r.codigo, /^GAS_/);
       assert.match(r.condicoes_aplicabilidade, /garrafa/, r.codigo);
@@ -110,7 +110,7 @@ describe("carga jurídica 4 — conteúdo", () => {
     assert.doesNotMatch(loja.resumo, /tem direito a devolver/);
   });
 
-  test("6. exceções à livre resolução enviadas com as regras de livre resolução", () => {
+  test("6. excepções à livre resolução enviadas com as regras de livre resolução", () => {
     for (const setor of ["Compras & Reembolsos", "Ginásios"]) {
       const enviadas = codigos(setor, setor === "Ginásios" ? "Cancelamento recusado" : "Devolução ou reembolso em falta");
       assert.ok(enviadas.includes("DIST_EXCECOES_17"), setor);
@@ -147,7 +147,7 @@ describe("carga jurídica 4 — conteúdo", () => {
 
 // ---------------------------------------------------------------------------
 describe("Lei n.º 23/96 — só para serviços públicos essenciais", () => {
-  test("lista positiva de setores", () => {
+  test("lista positiva de sectores", () => {
     for (const s of ["Telecomunicações", "Energia", "Gás", "Água"]) assert.equal(isServicoPublicoEssencial(s), true, s);
     for (const s of ["Compras & Reembolsos", "Ginásios", "", null, undefined, "Correios", "Transportes"]) {
       assert.equal(isServicoPublicoEssencial(s), false, String(s));
@@ -156,9 +156,9 @@ describe("Lei n.º 23/96 — só para serviços públicos essenciais", () => {
 
   test("identificação pelo diploma (e pelo código como reforço)", () => {
     assert.equal(regraDaLeiServicosPublicosEssenciais({ codigo: "X_1", diploma: LEI_23_96 }), true);
-    assert.equal(regraDaLeiServicosPublicosEssenciais({ codigo: "NOVA_1", diploma: "Lei n.º 23/96, de 26 de julho" }), true);
+    assert.equal(regraDaLeiServicosPublicosEssenciais({ codigo: "NOVA_1", diploma: "Lei n.º 23/96, de 26 de Julho" }), true);
     assert.equal(regraDaLeiServicosPublicosEssenciais({ codigo: "SPE_X", diploma: "Lei dos Serviços Públicos Essenciais" }), true);
-    assert.equal(regraDaLeiServicosPublicosEssenciais({ codigo: "CONS_X", diploma: "Lei n.º 24/96, de 31 de julho" }), false);
+    assert.equal(regraDaLeiServicosPublicosEssenciais({ codigo: "CONS_X", diploma: "Lei n.º 24/96, de 31 de Julho" }), false);
     assert.equal(regraDaLeiServicosPublicosEssenciais({ codigo: "DIST_X", diploma: "Decreto-Lei n.º 24/2014" }), false);
   });
 
@@ -186,7 +186,7 @@ describe("Lei n.º 23/96 — só para serviços públicos essenciais", () => {
 });
 
 // ---------------------------------------------------------------------------
-describe("carga jurídica 4 — seleção por setor", () => {
+describe("carga jurídica 4 — selecção por sector", () => {
   test("1. regras de Gás chegam a casos de Gás", () => {
     assert.ok(codigos("Gás", "Fidelização ou penalização").includes("GAS_FIDELIZACAO_MAX_12M_19"));
     assert.ok(codigos("Gás", "Corte ou falha de serviço").includes("GAS_CORTE_DIA_UTIL_79"));
@@ -194,14 +194,14 @@ describe("carga jurídica 4 — seleção por setor", () => {
     assert.ok(codigos("Gás", "Tarifa social").includes("GAS_TARIFA_SOCIAL_DL101"));
   });
 
-  test("2. regras de Energia (incluindo as só de eletricidade) nunca chegam ao Gás; as de Gás nunca chegam à Energia", () => {
+  test("2. regras de Energia (incluindo as só de electricidade) nunca chegam ao Gás; as de Gás nunca chegam à Energia", () => {
     for (const problema of problemasDoSetor("Gás")) {
       assert.ok(!codigos("Gás", problema).some((c) => c.startsWith("ENE_")), problema);
       assert.ok(!codigos("Energia", problema).some((c) => c.startsWith("GAS_")), problema);
     }
   });
 
-  test("regras de Compras e Ginásios ficam no seu setor", () => {
+  test("regras de Compras e Ginásios ficam no seu sector", () => {
     for (const setor of SETORES) {
       for (const problema of problemasDoSetor(setor)) {
         const enviadas = codigos(setor, problema);
@@ -225,7 +225,7 @@ describe("carga jurídica 4 — seleção por setor", () => {
     }
   });
 
-  test("cada regra da carga é alcançável por algum tipo de problema do seu setor (sem depender só de \"Outro\")", () => {
+  test("cada regra da carga é alcançável por algum tipo de problema do seu sector (sem depender só de \"Outro\")", () => {
     for (const r of revistas) {
       const setores = r.setor ? [r.setor] : SETORES;
       const alcancavel = setores.some((s) =>

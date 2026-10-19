@@ -22,10 +22,10 @@ import { CONTACTO_EMAIL, ENTIDADE_LEGAL, MORADA_SEDE } from "./site.ts";
 // mesmo dia leva um sufixo de letra ("2026-10-01b").
 
 /** Versão dos Termos e Condições em vigor. Cada versão fica acessível em /termos/<versão>. */
-export const TERMOS_VERSAO = "2026-10-18b";
+export const TERMOS_VERSAO = "2026-10-19";
 
 /** Versão da Política de Privacidade em vigor. Cada versão fica acessível em /privacidade/<versão>. */
-export const PRIVACIDADE_VERSAO = "2026-10-19";
+export const PRIVACIDADE_VERSAO = "2026-10-19b";
 
 /** Versão do texto de pedido expresso de início imediato. */
 export const CONSENTIMENTO_INICIO_IMEDIATO_VERSAO = "2026-10-01";
@@ -36,9 +36,10 @@ export const CONSENTIMENTO_INICIO_IMEDIATO_VERSAO = "2026-10-01";
  * gravados com a autorização (consentimentos_comunicacoes). Mudar o texto =
  * nova versão. Cada e-mail enviado com base nela tem de permitir retirá-la.
  */
-export const CONSENTIMENTO_COMUNICACOES_VERSAO = "2026-10-02";
+// 2026-10-19: só ortografia ("Protecção"); a 2026-10-02 dizia "Proteção".
+export const CONSENTIMENTO_COMUNICACOES_VERSAO = "2026-10-19";
 export const TEXTO_CONSENTIMENTO_COMUNICACOES =
-  "Opcional: aceito receber e-mails da DoLado com novidades e ofertas, como a Proteção (alertas de fim de fidelização e de promoção). Pode cancelar a qualquer momento.";
+  "Opcional: aceito receber e-mails da DoLado com novidades e ofertas, como a Protecção (alertas de fim de fidelização e de promoção). Pode cancelar a qualquer momento.";
 
 export const ROTAS_LEGAIS = {
   termos: "/termos",
@@ -75,7 +76,7 @@ export const TEXTO_ACEITACAO_TERMOS = `${ACEITACAO_TERMOS.antes}${ACEITACAO_TERM
  * altera os registos já gravados.
  */
 export const ACEITACAO_PROTECAO_GRATUITA_COMPLEMENTO =
-  " Compreendo que a Proteção gratuita termina ao fim de 30 dias sem qualquer cobrança.";
+  " Compreendo que a Protecção gratuita termina ao fim de 30 dias sem qualquer cobrança.";
 export const TEXTO_ACEITACAO_PROTECAO_GRATUITA = `${TEXTO_ACEITACAO_TERMOS}${ACEITACAO_PROTECAO_GRATUITA_COMPLEMENTO}`;
 
 const TEXTO_INICIO_IMEDIATO_BASE =
@@ -117,7 +118,7 @@ export const PRAZO_LIVRE_RESOLUCAO_DIAS = 14;
  */
 export const MODELO_FORMULARIO_LIVRE_RESOLUCAO = [
   `Para: ${ENTIDADE_LEGAL} (marca DoLado), ${MORADA_SEDE}, ${CONTACTO_LIVRE_RESOLUCAO}`,
-  "Pela presente comunico que resolvo o meu contrato de prestação do seguinte serviço: [plano Proteção / Caso + Proteção / Avulso]",
+  "Pela presente comunico que resolvo o meu contrato de prestação do seguinte serviço: [plano Protecção / Caso + Protecção / Avulso]",
   "Celebrado em: [data da compra]",
   "Nome do consumidor: [nome]",
   "Endereço de e-mail usado na compra: [e-mail]",

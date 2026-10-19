@@ -459,7 +459,7 @@ function comConta(extra = {}) {
 }
 
 describe("subscrição paga de imediato (cartão)", () => {
-  test("checkout concluído e pago: ativa Caso + Proteção e credita o primeiro ciclo", async () => {
+  test("checkout concluído e pago: activa Caso + Protecção e credita o primeiro ciclo", async () => {
     comConta();
     estado.stripeSubscricao = snapshot("active");
     const r = await processarEventoStripe(evento("checkout.session.completed", sessaoSubscricao()), deps);
@@ -472,7 +472,7 @@ describe("subscrição paga de imediato (cartão)", () => {
     assert.equal(estado.emails[0].contaExiste, true);
   });
 
-  test("invoice.paid da mesma primeira fatura não credita outra vez", async () => {
+  test("invoice.paid da mesma primeira factura não credita outra vez", async () => {
     comConta();
     estado.stripeSubscricao = snapshot("active");
     await processarEventoStripe(evento("checkout.session.completed", sessaoSubscricao()), deps);
@@ -480,7 +480,7 @@ describe("subscrição paga de imediato (cartão)", () => {
     assert.equal(conta().case_credits, 1);
   });
 
-  test("Proteção: ativa proteção, sem créditos de caso", async () => {
+  test("Protecção: activa protecção, sem créditos de caso", async () => {
     comConta();
     estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
     await processarEventoStripe(evento("checkout.session.completed", sessaoSubscricao()), deps);
@@ -489,7 +489,7 @@ describe("subscrição paga de imediato (cartão)", () => {
     assert.equal(conta().case_credits, 0);
   });
 
-  test("price desconhecido: não ativa nenhum plano", async () => {
+  test("price desconhecido: não activa nenhum plano", async () => {
     comConta();
     estado.stripeSubscricao = snapshot("active", "price_outro");
     await processarEventoStripe(evento("invoice.paid", fatura("in_x")), deps);
@@ -524,11 +524,11 @@ describe("SEPA (pagamento assíncrono)", () => {
     await processarEventoStripe(evento("checkout.session.async_payment_succeeded", confirmado), deps);
     await processarEventoStripe(evento("checkout.session.async_payment_succeeded", confirmado), deps); // outro event.id
     assert.equal(conta().case_credits, 1);
-    assert.equal(conta().subscription_plan, "none", "Avulso não dá proteção");
+    assert.equal(conta().subscription_plan, "none", "Avulso não dá protecção");
     assert.equal(estado.emails.length, 1);
   });
 
-  test("confirmado depois: ativa a subscrição automaticamente", async () => {
+  test("confirmado depois: activa a subscrição automaticamente", async () => {
     comConta();
     estado.stripeSubscricao = snapshot("active");
     await processarEventoStripe(evento("checkout.session.completed", sessaoSubscricao({ payment_status: "unpaid" })), deps);
@@ -556,7 +556,7 @@ describe("SEPA (pagamento assíncrono)", () => {
     assert.equal(ultimoLog().resultado, "pagamento_confirmado_sem_conta");
   });
 
-  test("conta criada com pagamento pendente: sem acesso; o webhook ativa depois pela compra ligada", async () => {
+  test("conta criada com pagamento pendente: sem acesso; o webhook activa depois pela compra ligada", async () => {
     // /criar-conta criou a conta e ligou a compra enquanto estava pendente.
     comConta();
     estado.pagamentos.set("cs_avulso", { stripe_session_id: "cs_avulso", user_id: USER, estado: "pendente" });
@@ -580,7 +580,7 @@ describe("SEPA (pagamento assíncrono)", () => {
 // Piloto Remax: os colaboradores subscrevem Caso + Proteção com o cupão
 // duploprestigio26 (100%, "forever", limitado ao Caso + Proteção no Stripe).
 // Faturas a 0 € têm de dar o mesmo acesso e os mesmos casos que uma paga.
-describe("piloto Remax: Caso + Proteção com cupão de 100%", () => {
+describe("piloto Remax: Caso + Protecção com cupão de 100%", () => {
   const sessaoPiloto = () =>
     sessaoSubscricao({
       payment_status: "no_payment_required",
@@ -588,7 +588,7 @@ describe("piloto Remax: Caso + Proteção com cupão de 100%", () => {
       discounts: [{ coupon: "duploprestigio26", promotion_code: "promo_teste" }],
     });
 
-  test("checkout a 0 €: ativa Caso + Proteção e dá o caso do primeiro ciclo", async () => {
+  test("checkout a 0 €: activa Caso + Protecção e dá o caso do primeiro ciclo", async () => {
     comConta();
     estado.stripeSubscricao = snapshot("active");
     const r = await processarEventoStripe(evento("checkout.session.completed", sessaoPiloto()), deps);
@@ -599,7 +599,7 @@ describe("piloto Remax: Caso + Proteção com cupão de 100%", () => {
     assert.equal(estado.pagamentos.get("cs_sub").estado, "concluido");
   });
 
-  test("faturas mensais a 0 €: 1 caso por ciclo, até ao máximo de 4", async () => {
+  test("facturas mensais a 0 €: 1 caso por ciclo, até ao máximo de 4", async () => {
     comConta();
     estado.stripeSubscricao = snapshot("active");
     await processarEventoStripe(evento("checkout.session.completed", sessaoPiloto()), deps);
@@ -611,7 +611,7 @@ describe("piloto Remax: Caso + Proteção com cupão de 100%", () => {
   });
 });
 
-describe("Caso + Proteção: créditos mensais", () => {
+describe("Caso + Protecção: créditos mensais", () => {
   test("1 crédito por ciclo pago, até ao máximo de 4", async () => {
     comConta();
     estado.stripeSubscricao = snapshot("active");
@@ -629,7 +629,7 @@ describe("Caso + Proteção: créditos mensais", () => {
     assert.equal(conta().case_credits, 1);
   });
 
-  test("fatura de prorrateio (mudança de plano) não dá crédito", async () => {
+  test("factura de prorrateio (mudança de plano) não dá crédito", async () => {
     comConta();
     estado.stripeSubscricao = snapshot("active");
     await processarEventoStripe(evento("invoice.paid", fatura("in_pro", "subscription_update")), deps);
@@ -647,7 +647,7 @@ describe("Caso + Proteção: créditos mensais", () => {
   });
 });
 
-describe("invoice falhada / ação necessária", () => {
+describe("invoice falhada / acção necessária", () => {
   test("invoice.payment_failed: regista, mantém o acesso (Stripe ainda a tentar)", async () => {
     comConta({ subscription_plan: "caso_protecao", subscription_status: "active", stripe_subscription_id: SUB });
     estado.stripeSubscricao = snapshot("past_due");
@@ -667,14 +667,14 @@ describe("invoice falhada / ação necessária", () => {
 });
 
 describe("customer.subscription.*", () => {
-  test("updated nunca ativa uma conta que não tinha esta subscrição", async () => {
+  test("updated nunca activa uma conta que não tinha esta subscrição", async () => {
     comConta();
     await processarEventoStripe(evento("customer.subscription.updated", subscricao("active")), deps);
     assert.equal(conta().subscription_plan, "none");
     assert.equal(ultimoLog().resultado, "sincronizado_sem_conta");
   });
 
-  test("updated sincroniza plano e status de quem já a tem (Proteção → Caso + Proteção)", async () => {
+  test("updated sincroniza plano e status de quem já a tem (Protecção → Caso + Protecção)", async () => {
     comConta({ subscription_plan: "protecao", subscription_status: "active", stripe_subscription_id: SUB });
     await processarEventoStripe(evento("customer.subscription.updated", subscricao("past_due", PRECO_CASO_PROTECAO)), deps);
     assert.equal(conta().subscription_plan, "caso_protecao");
@@ -687,7 +687,7 @@ describe("customer.subscription.*", () => {
     assert.equal(conta().subscription_plan, "none");
   });
 
-  test("cancelamento de Proteção retira a proteção sem apagar a conta nem o histórico", async () => {
+  test("cancelamento de Protecção retira a protecção sem apagar a conta nem o histórico", async () => {
     comConta({ subscription_plan: "protecao", subscription_status: "active", stripe_subscription_id: SUB });
     estado.pagamentos.set("cs_sub", { stripe_session_id: "cs_sub", stripe_subscription_id: SUB, estado: "concluido" });
     await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled", PRECO_PROTECAO)), deps);
@@ -697,7 +697,7 @@ describe("customer.subscription.*", () => {
     assert.equal(estado.pagamentos.get("cs_sub").estado, "assinatura_cancelada");
   });
 
-  test("fim do Caso + Proteção: conta sem subscrição, casos da subscrição congelados (não perdidos)", async () => {
+  test("fim do Caso + Protecção: conta sem subscrição, casos da subscrição congelados (não perdidos)", async () => {
     comConta({ subscription_plan: "caso_protecao", subscription_status: "active", stripe_subscription_id: SUB, case_credits: 3 });
     await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled")), deps);
     assert.equal(conta().subscription_plan, "none");
@@ -797,7 +797,7 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
     });
   const conv = () => estado.conversoes.get("conv_1");
 
-  test("Avulso → Proteção: subscrição confirmada, reembolso de 10,00 €, sem créditos de caso", async () => {
+  test("Avulso → Protecção: subscrição confirmada, reembolso de 10,00 €, sem créditos de caso", async () => {
     comConta({ case_credits: 0 });
     await conversao("protecao", 1000);
     estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
@@ -811,7 +811,7 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
     assert.equal(conta().case_credits, 0);
   });
 
-  test("Avulso → Caso + Proteção: reembolso de 7,00 €; o caso do ciclo é gerido à parte", async () => {
+  test("Avulso → Caso + Protecção: reembolso de 7,00 €; o caso do ciclo é gerido à parte", async () => {
     comConta({ case_credits: 0 });
     await conversao("caso_protecao", 700);
     estado.stripeSubscricao = snapshot("active", PRECO_CASO_PROTECAO);
@@ -855,7 +855,7 @@ describe("conversão Avulso → assinatura com reembolso parcial", () => {
     assert.equal(estado.refundsStripe.length, 0);
   });
 
-  test("subscrição ainda não ativa: não converte (reembolso só depois da adesão confirmada)", async () => {
+  test("subscrição ainda não activa: não converte (reembolso só depois da adesão confirmada)", async () => {
     comConta();
     await conversao("protecao", 1000);
     estado.stripeSubscricao = snapshot("incomplete", PRECO_PROTECAO);
@@ -958,7 +958,7 @@ describe("gestão de subscrição (webhook)", () => {
     subscricao("active", PRECO_CASO_PROTECAO, { cancel_at_period_end: true, cancel_at: 1_702_592_000 });
   const aberto = () => estado.cancelamentos.filter((x) => x.sub === SUB && !x.revertido_em && !x.terminado_em);
 
-  test("1. subscrição ativa: sem cancelamento agendado", async () => {
+  test("1. subscrição activa: sem cancelamento agendado", async () => {
     comConta(ativa());
     await processarEventoStripe(evento("customer.subscription.updated", subscricao("active"), T0), deps);
     assert.equal(conta().cancel_at_period_end, false);
@@ -966,7 +966,7 @@ describe("gestão de subscrição (webhook)", () => {
     assert.equal(estado.cancelamentos.length, 0);
   });
 
-  test("2/3. cancelamento agendado: plano, proteção e casos intactos até ao fim do período", async () => {
+  test("2/3. cancelamento agendado: plano, protecção e casos intactos até ao fim do período", async () => {
     comConta(ativa());
     await processarEventoStripe(evento("customer.subscription.updated", agendada(), T0), deps);
     assert.equal(ultimoLog().resultado, "sincronizado_cancelamento_agendado");
@@ -997,7 +997,7 @@ describe("gestão de subscrição (webhook)", () => {
     assert.ok(estado.cancelamentos[0].revertido_em);
   });
 
-  test("5. fim efetivo: sem subscrição (não 'Avulso'), fim registado, casos congelados 90 dias", async () => {
+  test("5. fim efectivo: sem subscrição (não 'Avulso'), fim registado, casos congelados 90 dias", async () => {
     comConta(ativa());
     await processarEventoStripe(evento("customer.subscription.updated", agendada(), T0), deps);
     await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled"), T0 + 86_400), deps);
@@ -1012,14 +1012,14 @@ describe("gestão de subscrição (webhook)", () => {
     assert.ok(estado.cancelamentos[0].terminado_em);
   });
 
-  test("Proteção (sem casos): fim efetivo sem congelamento", async () => {
+  test("Protecção (sem casos): fim efectivo sem congelamento", async () => {
     comConta(ativa({ subscription_plan: "protecao", case_credits: 0 }));
     await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled", PRECO_PROTECAO), T0), deps);
     assert.equal(conta().subscription_plan, "none");
     assert.equal(estado.congelamentos.length, 0);
   });
 
-  test("6. depois do fim: nada reativa a subscrição terminada (sem renovação)", async () => {
+  test("6. depois do fim: nada reactiva a subscrição terminada (sem renovação)", async () => {
     comConta(ativa());
     await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled"), T0), deps);
     estado.stripeSubscricao = snapshot("canceled");
@@ -1063,7 +1063,7 @@ describe("gestão de subscrição (webhook)", () => {
     );
   }
 
-  test("9. nova subscrição Caso + Proteção dentro dos 90 dias: recupera os casos (até 4) na mesma conta", async () => {
+  test("9. nova subscrição Caso + Protecção dentro dos 90 dias: recupera os casos (até 4) na mesma conta", async () => {
     await terminarERessubscrever(30 * 86_400);
     assert.equal(conta().subscription_plan, "caso_protecao");
     assert.equal(conta().stripe_subscription_id, SUB_NOVA);
@@ -1081,7 +1081,7 @@ describe("gestão de subscrição (webhook)", () => {
     assert.equal(estado.congelamentos[0].restaurado_em, null);
   });
 
-  test("regressar com Proteção não recupera os casos; mudar depois para Caso + Proteção no prazo recupera", async () => {
+  test("regressar com Protecção não recupera os casos; mudar depois para Caso + Protecção no prazo recupera", async () => {
     await terminarERessubscrever(10 * 86_400, PRECO_PROTECAO);
     assert.equal(conta().subscription_plan, "protecao");
     assert.equal(conta().case_credits, 0);
@@ -1104,7 +1104,7 @@ describe("gestão de subscrição (webhook)", () => {
     assert.equal(estado.cancelamentos.filter((x) => x.terminado_em).length, 1);
   });
 
-  test("12. fora de ordem: um 'updated' antigo depois do fim não reativa nem desfaz nada", async () => {
+  test("12. fora de ordem: um 'updated' antigo depois do fim não reactiva nem desfaz nada", async () => {
     comConta(ativa());
     await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled"), T0 + 100), deps);
     await processarEventoStripe(evento("customer.subscription.updated", agendada(), T0), deps);
@@ -1121,7 +1121,7 @@ describe("gestão de subscrição (webhook)", () => {
     assert.equal(conta().subscription_plan, "caso_protecao");
   });
 
-  test("unpaid congela; se a dívida for paga e voltar a ativa, os casos voltam", async () => {
+  test("unpaid congela; se a dívida for paga e voltar a activa, os casos voltam", async () => {
     comConta(ativa());
     await processarEventoStripe(evento("customer.subscription.updated", subscricao("unpaid"), T0), deps);
     assert.equal(conta().case_credits, 0);
@@ -1221,7 +1221,7 @@ describe("consentimentos da compra (webhook)", () => {
     assert.equal(estado.emails[0].consentimento, null);
   });
 
-  test("16. cupão de 100% (0 €): ativa o plano, liga o consentimento e o e-mail mostra 0 €", async () => {
+  test("16. cupão de 100% (0 €): activa o plano, liga o consentimento e o e-mail mostra 0 €", async () => {
     comConta();
     comConsentimento();
     estado.stripeSubscricao = snapshot("active");
@@ -1271,14 +1271,14 @@ describe("pedido de caso pago no Checkout (metadata.pedido_id)", () => {
     assert.equal(estado.casos.length, 1);
     assert.equal(estado.pedidos.get(PEDIDO).estado, "convertido");
     assert.equal(conta().case_credits, 0, "o caso pago foi gasto neste pedido");
-    assert.equal(conta().subscription_plan, "none", "Avulso não dá proteção");
+    assert.equal(conta().subscription_plan, "none", "Avulso não dá protecção");
     assert.equal(estado.pagamentos.get("cs_avulso").estado, "concluido");
     assert.equal(estado.emails.length, 1);
     assert.equal(estado.emails[0].contaExiste, true);
     assert.equal(ultimoLog().resultado, "pagamento_confirmado_caso_criado");
   });
 
-  test("2. Caso + Proteção pago: subscrição ativa, proteção e caso criado com o caso do 1.º mês", async () => {
+  test("2. Caso + Protecção pago: subscrição activa, protecção e caso criado com o caso do 1.º mês", async () => {
     novoPedido();
     estado.stripeSubscricao = snapshot("active");
     await processarEventoStripe(evento("checkout.session.completed", subscricaoDoPedido()), deps);
@@ -1488,7 +1488,7 @@ describe("casos Avulso por usar vs. casos da subscrição", () => {
     assert.equal(estado.casos.length, 1);
   });
 
-  test("P. idempotência: webhook, fatura, reembolso e cancelamento repetidos não duplicam nem retiram duas vezes", async () => {
+  test("P. idempotência: webhook, factura, reembolso e cancelamento repetidos não duplicam nem retiram duas vezes", async () => {
     comConta();
     const compra = evento("checkout.session.completed", sessaoAvulso({ metadata: { plano: "avulso", user_id: USER } }));
     await processarEventoStripe(compra, deps);
@@ -1552,7 +1552,7 @@ describe("casos Avulso por usar vs. casos da subscrição", () => {
         requer_intervencao: false,
       });
 
-    test("7. Avulso por usar → Caso + Proteção: o Avulso sai do saldo, fica só o caso do 1.º ciclo", async () => {
+    test("7. Avulso por usar → Caso + Protecção: o Avulso sai do saldo, fica só o caso do 1.º ciclo", async () => {
       comConta();
       await avulsoPorUsar();
       abrirConversao("caso_protecao", 700);
@@ -1601,7 +1601,7 @@ describe("casos Avulso por usar vs. casos da subscrição", () => {
         assert.equal(conv.estado, "anulada");
         assert.match(conv.anulada_motivo, /consumido/, "motivo registado para auditoria");
         assert.deepEqual(estado.subscricoesCanceladasStripe, [SUB], "subscrição cancelada no Stripe");
-        assert.equal(conta().subscription_plan, "none", "sem proteção");
+        assert.equal(conta().subscription_plan, "none", "sem protecção");
         assert.equal(conta().case_credits, 0, "sem o caso do 1.º ciclo");
         assert.equal(estado.refundsStripe.length, 0, "sem reembolso parcial");
         assert.equal(estado.emails.length, emailsAntes, "sem e-mail de pagamento confirmado da adesão");
@@ -1753,7 +1753,7 @@ describe("compra sem conta e subscrições duplicadas", () => {
     assert.equal(estado.comprasSemConta.size, 0);
   });
 
-  test("conta com outra subscrição ativa: a nova não é aplicada por cima, fica por rever e o admin é avisado", async () => {
+  test("conta com outra subscrição activa: a nova não é aplicada por cima, fica por rever e o admin é avisado", async () => {
     comConta({ subscription_plan: "protecao", subscription_status: "active", stripe_subscription_id: "sub_antiga" });
     estado.stripeSubscricao = snapshot("active");
     const r = await processarEventoStripe(evento("checkout.session.completed", sessaoSubscricao()), deps);
@@ -1806,7 +1806,7 @@ describe("compra sem conta e subscrições duplicadas", () => {
   });
 });
 
-describe("Caso Extra (subscritor do Caso + Proteção que já usou o caso do mês)", () => {
+describe("Caso Extra (subscritor do Caso + Protecção que já usou o caso do mês)", () => {
   const PEDIDO = "20000000-0000-4000-a000-0000000000e1";
   const subscritorSemCasos = (extra = {}) => {
     comConta({
@@ -1828,7 +1828,7 @@ describe("Caso Extra (subscritor do Caso + Proteção que já usou o caso do mê
   const novoPedido = () =>
     estado.pedidos.set(PEDIDO, { id: PEDIDO, user_id: USER, estado: "aguarda_pagamento", caso_id: null });
 
-  test("3. compra confirmada: exatamente 1 caso a mais; plano, subscrição e Customer intactos", async () => {
+  test("3. compra confirmada: exactamente 1 caso a mais; plano, subscrição e Customer intactos", async () => {
     subscritorSemCasos();
     const antes = { ...conta() };
     const r = await processarEventoStripe(evento("checkout.session.completed", sessaoCasoExtra()), deps);
@@ -1937,7 +1937,7 @@ describe("Caso Extra (subscritor do Caso + Proteção que já usou o caso do mê
     subscritorSemCasos({ subscription_plan: "none", subscription_status: "canceled" });
     await processarEventoStripe(evento("checkout.session.completed", sessaoCasoExtra()), deps);
     assert.equal(conta().case_credits, 1);
-    assert.equal(conta().subscription_plan, "none", "não reativa nada");
+    assert.equal(conta().subscription_plan, "none", "não reactiva nada");
   });
 
   test("reembolso total do Caso Extra por usar: o caso sai; pagamento fica reembolsado", async () => {

@@ -36,7 +36,7 @@ const visivel = (html) => html.replace(/<style[\s\S]*?<\/style>/g, "").replace(/
 
 // Palavras portuguesas que nunca devem aparecer num e-mail em inglês (fora
 // de nomes próprios: DoLado, dolado.pt/livre-resolucao, "Avulso" na nota do Checkout…).
-const PORTUGUES = /\b(Olá|obrigad[oa]|caso\b|casos\b|fatura|subscrição|palavra-passe|reclamação|Proteção|Pagamento|Iniciar sessão|Ver o|consigo|precisamos|Recebemos|Termos e Condições|Política de Privacidade|Com os melhores|A equipa|Estamos juntos|Do lado dos consumidores)\b/i;
+const PORTUGUES = /\b(Olá|obrigad[oa]|caso\b|casos\b|factura|subscrição|palavra-passe|reclamação|Protecção|Pagamento|Iniciar sessão|Ver o|consigo|precisamos|Recebemos|Termos e Condições|Política de Privacidade|Com os melhores|A equipa|Estamos juntos|Do lado dos consumidores)\b/i;
 
 function semPortugues(nome, texto) {
   const m = visivel(texto).match(PORTUGUES);
@@ -136,7 +136,7 @@ describe("e-mails em inglês", () => {
     assert.equal(assuntoAchadoMonitor(EN), "We have spotted a change in your bill that is worth checking");
   });
 
-  test("boas-vindas, livre resolução e aviso setorial", () => {
+  test("boas-vindas, livre resolução e aviso sectorial", () => {
     const bv = montarHtmlBoasVindas("Ana <b>", EN);
     assert.match(bv, /Hello Ana &lt;b&gt;,/);
     semPortugues("boas-vindas", bv + assuntoBoasVindas(EN));
@@ -158,7 +158,7 @@ describe("e-mails em inglês", () => {
     assert.equal(assuntoAvisoSetorial("Telecomunicações", EN), "[DoLado notice] News in the Telecoms sector");
   });
 
-  test("resumo mensal da Proteção", () => {
+  test("resumo mensal da Protecção", () => {
     const r = montarResumoMensal([], "2026-09", "2026-10-01", EN);
     assert.equal(r.idioma, EN);
     assert.equal(assuntoResumoMensal(r), "Your Protection in September");

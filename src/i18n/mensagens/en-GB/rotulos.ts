@@ -57,7 +57,7 @@ export const rotulos: Traducao<typeof pt> = {
   },
   titular: {
     "Sim, é um contrato pessoal ou da minha casa": "Yes, it's a personal or household contract",
-    "Não, é de uma empresa ou atividade profissional": "No, it's for a business or professional activity",
+    "Não, é de uma empresa ou actividade profissional": "No, it's for a business or professional activity",
     "Não tenho a certeza": "I'm not sure",
   },
 };

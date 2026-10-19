@@ -144,7 +144,7 @@ describe("alterar o tipo de um documento (Supabase real)", { skip: !ATIVO && "s�
     revisor = await criarConta({ role: "admin" });
   });
 
-  test("Fatura → Contrato: contrato enviado como fatura, leitura falhada, corrigido e lido de novo", async () => {
+  test("Factura → Contrato: contrato enviado como factura, leitura falhada, corrigido e lido de novo", async () => {
     const cliente = await criarConta();
     // A leitura como fatura viu um contrato: "não é uma fatura" → por rever.
     const { id, caminho } = await documento(cliente, "fatura", extracaoFatura({ tipo_documento: "contrato" }), VERSAO_FATURA);
@@ -193,7 +193,7 @@ describe("alterar o tipo de um documento (Supabase real)", { skip: !ATIVO && "s�
     assert.deepEqual(await contagens(cliente), antes);
   });
 
-  test("Contrato → Fatura: valores propostos postos de parte e fatura registada no mesmo serviço", async () => {
+  test("Contrato → Factura: valores propostos postos de parte e factura registada no mesmo serviço", async () => {
     const cliente = await criarConta();
     const { id, caminho } = await documento(cliente, "contrato", extracaoContrato(), VERSAO_CONTRATO);
     const r0 = await servidor.processarDocumentoNaRevisao(id);
@@ -223,7 +223,7 @@ describe("alterar o tipo de um documento (Supabase real)", { skip: !ATIVO && "s�
     assert.deepEqual(await contagens(cliente), antes);
   });
 
-  test("fatura já registada passa a contrato: fatura e eventos retirados, histórico recalculado", async () => {
+  test("factura já registada passa a contrato: factura e eventos retirados, histórico recalculado", async () => {
     const cliente = await criarConta();
     const a = await documento(cliente, "fatura", extracaoFatura({ numero: "FT-1", emissao: "2026-08-10" }), VERSAO_FATURA);
     const ra = await servidor.processarDocumentoNaRevisao(a.id);

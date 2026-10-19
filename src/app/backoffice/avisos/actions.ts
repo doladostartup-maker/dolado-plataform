@@ -41,7 +41,7 @@ export async function enviarAvisoSectorial(formData: FormData) {
   const descricao = ((formData.get("descricao") as string) || "").trim();
 
   if (!SETORES.includes(setor)) {
-    redirect(`/backoffice/avisos?erro=${encodeURIComponent("Escolha um setor válido.")}`);
+    redirect(`/backoffice/avisos?erro=${encodeURIComponent("Escolha um sector válido.")}`);
   }
   if (!titulo || !descricao) {
     redirect(`/backoffice/avisos?erro=${encodeURIComponent("Preencha o título e a descrição.")}`);
@@ -91,7 +91,7 @@ export async function enviarAvisoSectorial(formData: FormData) {
       enviados += 1;
     } catch (erro) {
       // Uma falha de envio individual não pode travar os restantes.
-      console.error(`Falha ao enviar aviso setorial a ${destinatario.email}:`, erro);
+      console.error(`Falha ao enviar aviso sectorial a ${destinatario.email}:`, erro);
     }
   }
 

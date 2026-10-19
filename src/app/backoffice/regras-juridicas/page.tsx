@@ -33,7 +33,7 @@ export default async function RegrasJuridicasPage({
       <CabecalhoPagina
         contexto="Conteúdos"
         titulo="Base jurídica"
-        descricao="Regras que a IA pode usar na sugestão do texto da reclamação. A IA só recebe regras ativas, revistas e em vigor, do setor e da categoria do caso — e não pode citar mais nenhuma. As regras não se apagam: desative-as."
+        descricao="Regras que a IA pode usar na sugestão do texto da reclamação. A IA só recebe regras activas, revistas e em vigor, do sector e da categoria do caso — e não pode citar mais nenhuma. As regras não se apagam: desative-as."
         acoes={
           <a href="#nova-regra" className={BOTAO_PRIMARIO}>
             <IconeMais tamanho={17} />
@@ -55,7 +55,7 @@ export default async function RegrasJuridicasPage({
           <table className={TABELA}>
             <thead>
               <tr>
-                {["Código", "Setor / categoria", "Diploma", "Revista", "Estado"].map((h) => (
+                {["Código", "Sector / categoria", "Diploma", "Revista", "Estado"].map((h) => (
                   <th key={h} scope="col" className={TABELA_TH}>
                     {h}
                   </th>
@@ -81,7 +81,7 @@ export default async function RegrasJuridicasPage({
                   <td className={`${TABELA_TD} whitespace-nowrap text-[13px]`}>{r.revista_em ?? "—"}</td>
                   <td className={TABELA_TD}>
                     <Etiqueta tom={r.revogada_em ? "bloqueado" : r.ativa ? "sucesso" : "neutro"}>
-                      {r.ativa ? "Ativa" : "Inativa"}
+                      {r.ativa ? "Activa" : "Inactiva"}
                       {r.revogada_em ? ` · revogada em ${r.revogada_em}` : ""}
                     </Etiqueta>
                   </td>

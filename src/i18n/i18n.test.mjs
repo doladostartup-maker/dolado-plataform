@@ -78,7 +78,7 @@ describe("dicionários", () => {
   });
 
   test("inglês sem palavras portuguesas esquecidas", async () => {
-    const portugues = /(?<!\p{L})(você|não|está|são|também|fatura|faturas|mensalidade|subscrição|então|serviço|contrato)(?!\p{L})/iu;
+    const portugues = /(?<!\p{L})(você|não|está|são|também|factura|facturas|mensalidade|subscrição|então|serviço|contrato)(?!\p{L})/iu;
     for (const d of dominios) {
       if (d === "rotulos" || d === "monitor" || d === "juridico" || d === "legal") continue; // mapas indexados pelo valor gravado em português
       const { en } = await par(d);
@@ -139,17 +139,17 @@ describe("dicionários", () => {
     assert.match(avisos[0], /\[i18n\] teste: 3 tradução/);
   });
 
-  test("valores gravados em português têm rótulo inglês (setores, problemas, momentos)", () => {
-    for (const s of SETORES) assert.ok(tRotulos["en-GB"].setores[s], `setor ${s}`);
+  test("valores gravados em português têm rótulo inglês (sectores, problemas, momentos)", () => {
+    for (const s of SETORES) assert.ok(tRotulos["en-GB"].setores[s], `sector ${s}`);
     for (const p of PROBLEMAS) assert.ok(tRotulos["en-GB"].problemas[p], `problema ${p}`);
     for (const m of MOMENTOS) assert.ok(tRotulos["en-GB"].momentos[m], `momento ${m}`);
     assert.equal(rotulo("pt-PT", "setores", "Gás"), "Gás");
     assert.equal(rotulo("en-GB", "setores", "Gás"), "Gas");
     // Valor desconhecido (dado antigo): mostra-se tal como está, nunca uma chave.
-    assert.equal(rotulo("en-GB", "setores", "Setor antigo"), "Setor antigo");
+    assert.equal(rotulo("en-GB", "setores", "Sector antigo"), "Sector antigo");
   });
 
-  test("mensagens das ações traduzidas; desconhecidas ficam como estão", () => {
+  test("mensagens das acções traduzidas; desconhecidas ficam como estão", () => {
     assert.equal(traduzirMensagemProtecao("pt-PT", MSG_ERRO_GUARDAR), MSG_ERRO_GUARDAR);
     assert.match(traduzirMensagemProtecao("en-GB", MSG_ERRO_GUARDAR), /^We couldn't complete/);
     assert.equal(traduzirMensagemProtecao("en-GB", "Indique o fornecedor."), "Enter the provider.");
@@ -203,7 +203,7 @@ describe("URLs", () => {
     assert.equal(localizarHref("en-GB", "//cdn.exemplo.com/x"), "//cdn.exemplo.com/x");
   });
 
-  test("seletor: mesma página no outro idioma, com a pesquisa", () => {
+  test("selector: mesma página no outro idioma, com a pesquisa", () => {
     assert.equal(caminhoEquivalente("/portal/casos/1", "en-GB", "?ok=1"), "/en/portal/casos/1?ok=1");
     assert.equal(caminhoEquivalente("/en/portal/casos/1", "pt-PT"), "/portal/casos/1");
     assert.equal(caminhoEquivalente("/en", "pt-PT"), "/");

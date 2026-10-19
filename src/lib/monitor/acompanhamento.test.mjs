@@ -180,12 +180,12 @@ describe("leitura gravada sem NIF nem nome do titular em texto", () => {
 describe("associação de documentos a serviços", () => {
   const servicoMaria = { id: "s1", fornecedorChave: "vodafone", ids: MARIA };
 
-  test("A. primeira fatura sem serviços: cria um serviço novo", () => {
+  test("A. primeira factura sem serviços: cria um serviço novo", () => {
     const d = escolherServico({ fornecedorChave: "vodafone", ids: MARIA }, []);
     assert.equal(d.acao, "novo_servico");
   });
 
-  test("B. fatura do mesmo serviço (NIF e conta iguais): confirmada", () => {
+  test("B. factura do mesmo serviço (NIF e conta iguais): confirmada", () => {
     const r = avaliarAssociacao({ fornecedorChave: "vodafone", ids: MARIA }, servicoMaria);
     assert.equal(r.estado, "confirmada");
     assert.ok(r.confianca >= 0.9);
@@ -193,14 +193,14 @@ describe("associação de documentos a serviços", () => {
     assert.equal(escolherServico({ fornecedorChave: "vodafone", ids: MARIA }, [servicoMaria]).acao, "associar");
   });
 
-  test("H. mesmo fornecedor, fatura de outro cliente: conflito", () => {
+  test("H. mesmo fornecedor, factura de outro cliente: conflito", () => {
     const r = avaliarAssociacao({ fornecedorChave: "vodafone", ids: OUTRO_CLIENTE }, servicoMaria);
     assert.equal(r.estado, "conflito");
     assert.ok(r.conflitos.includes("O NIF do titular é diferente"));
     assert.ok(r.conflitos.includes("O número de cliente, de conta ou de contrato é diferente"));
   });
 
-  test("40. caso real: fatura Vodafone de outro cliente carregada na página do contrato → não associa", () => {
+  test("40. caso real: factura Vodafone de outro cliente carregada na página do contrato → não associa", () => {
     const d = escolherServico({ fornecedorChave: "vodafone", ids: OUTRO_CLIENTE }, [servicoMaria], "s1");
     assert.equal(d.acao, "perguntar");
     assert.equal(d.resultado.estado, "conflito");
@@ -238,7 +238,7 @@ describe("associação de documentos a serviços", () => {
         ...extra,
       ]);
 
-    test("1. contrato + fatura EDP, números de serviço diferentes, resto compatível: associa", () => {
+    test("1. contrato + factura EDP, números de serviço diferentes, resto compatível: associa", () => {
       const r = avaliarAssociacao({ fornecedorChave: "edp", ids: faturaEdp() }, servicoEdp);
       assert.equal(r.estado, "confirmada");
       assert.equal(r.conflitos.includes("O número do serviço é diferente"), false);
@@ -330,7 +330,7 @@ describe("associação de documentos a serviços", () => {
     });
   });
 
-  test("Q. fatura sem identificadores suficientes: possível (o cliente decide)", () => {
+  test("Q. factura sem identificadores suficientes: possível (o cliente decide)", () => {
     const r = avaliarAssociacao({ fornecedorChave: "vodafone", ids: [] }, servicoMaria);
     assert.equal(r.estado, "possivel");
     assert.ok(r.conflitos.some((c) => /suficientes/.test(c)));
@@ -350,7 +350,7 @@ describe("associação de documentos a serviços", () => {
     assert.equal(d.alternativaId, "s2");
   });
 
-  test("M. contrato carregado depois das faturas: associa ao serviço existente (sem duplicar)", () => {
+  test("M. contrato carregado depois das facturas: associa ao serviço existente (sem duplicar)", () => {
     const contrato = ids([
       { tipo: "nif_titular", valor: "123456789" },
       { tipo: "referencia_contrato", valor: "215960347" },
@@ -369,7 +369,7 @@ describe("associação de documentos a serviços", () => {
 // Componentes da fatura
 // ---------------------------------------------------------------------------
 
-describe("componentes da fatura", () => {
+describe("componentes da factura", () => {
   test("mensalidade recorrente ≠ total: consumos e pontuais à parte", () => {
     const c = componentesFatura(fatura("f", 10, { consumo: 500, pontual: 250, desconto: 2900 }));
     assert.equal(c.mensalidadeCents, 7146);
@@ -393,30 +393,30 @@ describe("sem contrato (nível 1)", () => {
   const ago = fatura("ago", 8);
   const set = fatura("set", 9);
 
-  test("A. primeira fatura: sem meses para comparar", () => {
+  test("A. primeira factura: sem meses para comparar", () => {
     const e = compararFatura(set, [], null);
     assert.deepEqual(tipos(e), ["primeira_fatura"]);
-    assert.equal(frase(e[0]), "Primeira fatura analisada. Ainda não temos meses anteriores suficientes para comparar.");
+    assert.equal(frase(e[0]), "Primeira factura analisada. Ainda não temos meses anteriores suficientes para comparar.");
   });
 
-  test("B. segunda fatura igual: mensalidade mantém-se", () => {
+  test("B. segunda factura igual: mensalidade mantém-se", () => {
     const e = compararFatura(ago, [jul], null);
     assert.deepEqual(tipos(e), ["mensalidade_mantida"]);
     assert.equal(resultadoFatura(e), "ok");
     assert.match(frase(e[0]), /mantém-se igual à do mês anterior \(71,46/);
   });
 
-  test("C. três faturas iguais: padrão recorrente", () => {
+  test("C. três facturas iguais: padrão recorrente", () => {
     const e = compararFatura(set, [jul, ago], null);
     assert.equal(e[0].dados.consecutivas, 3);
-    assert.match(frase(e[0]), /3\.ª fatura consecutiva com a mesma mensalidade/);
+    assert.match(frase(e[0]), /3\.ª factura consecutiva com a mesma mensalidade/);
     const p = padraoObservado([jul, ago, set]);
     assert.equal(p.mensalidadeHabitualCents, 7146);
     assert.equal(p.trechos.length, 1);
     assert.equal(p.trechos[0].faturas, 3);
   });
 
-  test("D. quarta fatura com +3 €: alteração detetada (para revisão)", () => {
+  test("D. quarta factura com +3 €: alteração detectada (para revisão)", () => {
     const out = fatura("out", 10, { mensal: 7446 });
     const e = compararFatura(out, [jul, ago, set], null);
     const alt = e.find((x) => x.tipo === "mensalidade_alterada");
@@ -429,12 +429,12 @@ describe("sem contrato (nível 1)", () => {
     assert.equal(p.mensalidadeHabitualCents, 7146);
   });
 
-  test("D'. o novo valor repete-se: segunda fatura consecutiva com este novo valor", () => {
+  test("D'. o novo valor repete-se: segunda factura consecutiva com este novo valor", () => {
     const out = fatura("out", 10, { mensal: 7446 });
     const nov = fatura("nov", 11, { mensal: 7446 });
     const e = compararFatura(nov, [jul, ago, set, out], null);
     assert.deepEqual(tipos(e), ["mensalidade_mantida"]);
-    assert.equal(frase(e[0]), "É a 2.ª fatura consecutiva com este novo valor (74,46 €).");
+    assert.equal(frase(e[0]), "É a 2.ª factura consecutiva com este novo valor (74,46 €).");
   });
 
   test("E/F. total superior mas mensalidade igual: não é aumento, é consumo adicional", () => {
@@ -442,8 +442,8 @@ describe("sem contrato (nível 1)", () => {
     const e = compararFatura(out, [jul, ago, set], null);
     assert.equal(e.some((x) => x.tipo === "mensalidade_alterada"), false);
     assert.deepEqual(tipos(e), ["consumo_adicional", "mensalidade_mantida"]);
-    assert.equal(frase(e.find((x) => x.tipo === "consumo_adicional")), "Esta fatura inclui 5,00 € de consumo adicional.");
-    assert.equal(fraseVariacaoTotal(out, set).replace(/\u00a0/g, " "), "Esta fatura é 5,00 € superior à anterior devido a consumo adicional.");
+    assert.equal(frase(e.find((x) => x.tipo === "consumo_adicional")), "Esta factura inclui 5,00 € de consumo adicional.");
+    assert.equal(fraseVariacaoTotal(out, set).replace(/\u00a0/g, " "), "Esta factura é 5,00 € superior à anterior devido a consumo adicional.");
     assert.equal(resultadoFatura(e), "info");
   });
 
@@ -457,7 +457,7 @@ describe("sem contrato (nível 1)", () => {
     const falta = e2.find((x) => x.tipo === "promocao_em_falta");
     assert.equal(falta.severidade, "atencao");
     assert.equal(falta.base, "historico");
-    assert.equal(frase(falta), "O desconto de 29,00 € que aparecia na fatura anterior deixou de aparecer nesta fatura.");
+    assert.equal(frase(falta), "O desconto de 29,00 € que aparecia na factura anterior deixou de aparecer nesta factura.");
     // O aumento da mensalidade é o próprio desconto: não aparece duas vezes.
     assert.equal(e2.some((x) => x.tipo === "mensalidade_alterada"), false);
   });
@@ -471,7 +471,7 @@ describe("sem contrato (nível 1)", () => {
     assert.equal(e.some((x) => x.tipo === "mensalidade_alterada"), false);
   });
 
-  test("R. outra fatura do mesmo período: possível duplicado", () => {
+  test("R. outra factura do mesmo período: possível duplicado", () => {
     const dup = { ...fatura("set2", 9), id: "set2" };
     const e = compararFatura(dup, [jul, ago, set], null);
     assert.ok(e.some((x) => x.tipo === "possivel_duplicado" && x.dados.outra_fatura === "set"));
@@ -498,7 +498,7 @@ describe("sem contrato (nível 1)", () => {
 // ---------------------------------------------------------------------------
 
 describe("com contrato (nível 3)", () => {
-  test("J. fatura conforme o contrato", () => {
+  test("J. factura conforme o contrato", () => {
     const e = compararFatura(fatura("set", 9), [], versao());
     assert.deepEqual(tipos(e), ["mensalidade_conforme"]);
     assert.equal(resultadoFatura(e), "ok");
@@ -529,7 +529,7 @@ describe("com contrato (nível 3)", () => {
     assert.equal(frase(f), "Não encontrámos o desconto de 29,00 € previsto no contrato.");
   });
 
-  test("fim de fidelização indicado na fatura diferente do contrato: para revisão, nunca substitui", () => {
+  test("fim de fidelização indicado na factura diferente do contrato: para revisão, nunca substitui", () => {
     const f = { ...fatura("set", 9), dataFimFidelizacao: "2027-06-30" };
     const e = compararFatura(f, [], versao({ dataFimFidelizacao: "2027-04-08" }));
     const d = e.find((x) => x.tipo === "fidelizacao_diferente");
@@ -537,7 +537,7 @@ describe("com contrato (nível 3)", () => {
     assert.match(frase(d), /30\/06\/2027.*08\/04\/2027/);
   });
 
-  test("N/O/P. duas versões do contrato: cada fatura com a versão válida no seu período", () => {
+  test("N/O/P. duas versões do contrato: cada factura com a versão válida no seu período", () => {
     const v1 = versao({ id: "v1", validoAte: "2026-06-30" });
     const v2 = versao({ id: "v2", validoDesde: "2026-07-01", mensalidadeCents: 7446 });
     const maio = fatura("mai", 5);
@@ -550,7 +550,7 @@ describe("com contrato (nível 3)", () => {
     assert.equal(e[0].contratoVersaoId, "v2");
   });
 
-  test("M. reanálise retroativa: o aumento passa a ser explicado pelo contrato", () => {
+  test("M. reanálise retroactiva: o aumento passa a ser explicado pelo contrato", () => {
     const anteriores = [fatura("mar", 3), fatura("abr", 4), fatura("mai", 5)];
     const junho = fatura("jun", 6, { mensal: 7646 });
     const antes = compararFatura(junho, anteriores, null);

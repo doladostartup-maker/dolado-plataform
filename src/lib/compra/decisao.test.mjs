@@ -22,21 +22,21 @@ describe("decidirCompra", () => {
     );
   });
 
-  test("autenticado com a mesma subscrição ativa: não abre Checkout", () => {
+  test("autenticado com a mesma subscrição activa: não abre Checkout", () => {
     assert.deepEqual(
       decidirCompra({ plano: "caso_protecao", autenticado: true, acesso: ativo("caso_protecao"), subscricoesAtivasStripe: [] }),
       { acao: "ja_tem_subscricao", mesmoPlano: true },
     );
   });
 
-  test("autenticado com outra subscrição ativa: não abre Checkout (sem regras novas de mudança de plano)", () => {
+  test("autenticado com outra subscrição activa: não abre Checkout (sem regras novas de mudança de plano)", () => {
     assert.deepEqual(
       decidirCompra({ plano: "caso_protecao", autenticado: true, acesso: ativo("protecao"), subscricoesAtivasStripe: [] }),
       { acao: "ja_tem_subscricao", mesmoPlano: false },
     );
   });
 
-  test("subscrição ativa só no Stripe (ainda não refletida na conta): também bloqueia", () => {
+  test("subscrição activa só no Stripe (ainda não refletida na conta): também bloqueia", () => {
     assert.deepEqual(
       decidirCompra({
         plano: "caso_protecao",
@@ -48,7 +48,7 @@ describe("decidirCompra", () => {
     );
   });
 
-  test("cancelamento agendado (ainda ativa até ao fim do período): bloqueia", () => {
+  test("cancelamento agendado (ainda activa até ao fim do período): bloqueia", () => {
     const acesso = calcularAcesso({
       subscription_plan: "protecao",
       subscription_status: "active",

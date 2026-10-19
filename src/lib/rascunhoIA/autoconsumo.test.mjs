@@ -84,7 +84,7 @@ describe("Energia → Autoconsumo: tipos de problema e regras novas", () => {
     }
   });
 
-  test("UPAC e CAER: setor Energia; UPAC na categoria Autoconsumo; datas de vigência do DL 130/2026 e da Lei 29/2026", () => {
+  test("UPAC e CAER: sector Energia; UPAC na categoria Autoconsumo; datas de vigência do DL 130/2026 e da Lei 29/2026", () => {
     const upac = NOVAS_MIGRATION.filter((r) => r.codigo.startsWith("UPAC_"));
     const caer = NOVAS_MIGRATION.filter((r) => r.codigo.startsWith("CAER_"));
     assert.equal(upac.length, 5);
@@ -132,8 +132,8 @@ describe("Energia → Autoconsumo: tipos de problema e regras novas", () => {
   });
 });
 
-describe("Energia → Autoconsumo: seleção por cenário (auditoria, secção F)", () => {
-  test("nenhum caso solar recebe regras de fornecimento de energia, da Lei 23/96 ou de outros setores", () => {
+describe("Energia → Autoconsumo: selecção por cenário (auditoria, secção F)", () => {
+  test("nenhum caso solar recebe regras de fornecimento de energia, da Lei 23/96 ou de outros sectores", () => {
     for (const problema of PROBLEMAS_AUTOCONSUMO) {
       for (const forma of ["estabelecimento", "domicilio", "distancia", "fora_estabelecimento", "nao_sei"]) {
         for (const fin of ["nao", "sim_com_compra", "sim_separado", "nao_sei"]) {
@@ -151,7 +151,7 @@ describe("Energia → Autoconsumo: seleção por cenário (auditoria, secção F
     for (const problema of PROBLEMAS_AUTOCONSUMO) assert.deepEqual(solar(problema, null).filter(proibida), []);
   });
 
-  test("A — instalação incorreta, quase não produz", () => {
+  test("A — instalação incorrecta, quase não produz", () => {
     const e = solar(PROBLEMA_SOLAR_INSTALACAO);
     contem(e, ["COMPRA_INSTALACAO_INCORRETA_9", "COMPRA_CONFORMIDADE_5_7", "COMPRA_DIREITOS_CONFORMIDADE_15", "COMPRA_REPARACAO_REGRAS_18", "GAR_BEM_3ANOS_12", "GAR_ONUS_2ANOS_13", "GAR_EMPREITADA_3", "UPAC_INSTALADOR_84"], "A");
   });
@@ -287,7 +287,7 @@ describe("Não regressão: os restantes tipos de problema", () => {
       .map(({ r }) => r.codigo);
   }
 
-  test("com as regras atuais de produção, a seleção dos outros tipos é exatamente a mesma", () => {
+  test("com as regras actuais de produção, a selecção dos outros tipos é exactamente a mesma", () => {
     for (const setor of [...SETORES, null]) {
       for (const problema of [...(setor ? problemasDoSetor(setor) : PROBLEMAS), null]) {
         if (PROBLEMAS_AUTOCONSUMO.includes(problema) && setor === "Energia") continue;
@@ -309,7 +309,7 @@ describe("Não regressão: os restantes tipos de problema", () => {
     }
   });
 
-  test("um tipo solar noutro setor não ativa o perfil", () => {
+  test("um tipo solar noutro sector não activa o perfil", () => {
     const e = selecionarRegras({ setor: "Gás", categoria: PROBLEMA_SOLAR_INSTALACAO, detalhes: detalhes() }, TODAS, HOJE);
     assert.ok(e.length <= MAX_REGRAS_POR_PEDIDO);
     assert.ok(!e.some((r) => r.codigo.startsWith("UPAC_")));

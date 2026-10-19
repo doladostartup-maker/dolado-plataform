@@ -11,32 +11,32 @@ const linha = (subscription_plan, subscription_status, case_credits = 0) => ({
 });
 
 describe("calcularAcesso", () => {
-  test("Proteção ativa: permite proteção, não permite criar caso sem crédito", () => {
+  test("Protecção activa: permite protecção, não permite criar caso sem crédito", () => {
     const a = calcularAcesso(linha("protecao", "active", 0));
     assert.equal(a.temProtecao, true);
     assert.equal(a.podeCriarCaso, false);
   });
 
-  test("Proteção com crédito Avulso comprado à parte: pode criar caso", () => {
+  test("Protecção com crédito Avulso comprado à parte: pode criar caso", () => {
     const a = calcularAcesso(linha("protecao", "active", 1));
     assert.equal(a.podeCriarCaso, true);
     assert.equal(a.casoConsomeCredito, true);
   });
 
-  test("Caso + Proteção: proteção e casos só com crédito", () => {
+  test("Caso + Protecção: protecção e casos só com crédito", () => {
     assert.equal(calcularAcesso(linha("caso_protecao", "active", 2)).podeCriarCaso, true);
     assert.equal(calcularAcesso(linha("caso_protecao", "active", 0)).podeCriarCaso, false);
     assert.equal(calcularAcesso(linha("caso_protecao", "active", 0)).temProtecao, true);
   });
 
-  test("past_due mantém a proteção; canceled/incomplete/unpaid não", () => {
+  test("past_due mantém a protecção; canceled/incomplete/unpaid não", () => {
     assert.equal(calcularAcesso(linha("caso_protecao", "past_due")).temProtecao, true);
     for (const s of ["canceled", "incomplete", "unpaid", "incomplete_expired", null]) {
       assert.equal(calcularAcesso(linha("caso_protecao", s)).temProtecao, false, String(s));
     }
   });
 
-  test("Avulso (sem subscrição) com 1 crédito: cria caso, sem proteção", () => {
+  test("Avulso (sem subscrição) com 1 crédito: cria caso, sem protecção", () => {
     const a = calcularAcesso(linha("none", null, 1));
     assert.equal(a.podeCriarCaso, true);
     assert.equal(a.temProtecao, false);
@@ -46,7 +46,7 @@ describe("calcularAcesso", () => {
     assert.equal(calcularAcesso(linha("none", null, 0)).podeCriarCaso, false);
   });
 
-  test("conta sem nenhuma compra (registo livre): sem casos disponíveis nem proteção — criar conta não dá direito a um caso", () => {
+  test("conta sem nenhuma compra (registo livre): sem casos disponíveis nem protecção — criar conta não dá direito a um caso", () => {
     const a = calcularAcesso(null);
     assert.equal(a.temPlanoStripe, false);
     assert.equal(a.podeCriarCaso, false);
@@ -55,13 +55,13 @@ describe("calcularAcesso", () => {
     assert.equal(a.temProtecao, false);
   });
 
-  test("dados antigos (plano desconhecido) nunca dão proteção", () => {
+  test("dados antigos (plano desconhecido) nunca dão protecção", () => {
     assert.equal(calcularAcesso(linha("assinatura", "active")).temProtecao, false);
   });
 });
 
 describe("regresso do Checkout (/portal?upgraded=true)", () => {
-  test("upgraded=true não concede acesso: sem plano ativo não mostra sucesso", () => {
+  test("upgraded=true não concede acesso: sem plano activo não mostra sucesso", () => {
     const acesso = calcularAcesso(linha("none", null));
     assert.equal(avisoDoPortal({ regressoDoCheckout: true, acesso, ultimoPagamentoEstado: null }), null);
     assert.equal(acesso.temProtecao, false);
@@ -77,7 +77,7 @@ describe("regresso do Checkout (/portal?upgraded=true)", () => {
     assert.equal(avisoDoPortal({ regressoDoCheckout: false, acesso, ultimoPagamentoEstado: "falhado" }), "pagamento_falhado");
   });
 
-  test("com o plano já ativo pelo webhook, mostra a mensagem de sucesso", () => {
+  test("com o plano já activo pelo webhook, mostra a mensagem de sucesso", () => {
     const acesso = calcularAcesso(linha("caso_protecao", "active", 1));
     assert.equal(avisoDoPortal({ regressoDoCheckout: true, acesso, ultimoPagamentoEstado: "concluido" }), "plano_ativo");
   });

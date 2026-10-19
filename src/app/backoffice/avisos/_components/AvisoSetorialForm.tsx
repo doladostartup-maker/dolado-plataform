@@ -24,7 +24,7 @@ export function AvisoSetorialForm({
   return (
     <form action={action} className="flex flex-col gap-4">
       <label className={`${ROTULO} max-w-xs`}>
-        Setor
+        Sector
         <select name="setor" value={setor} onChange={(e) => setSetor(e.target.value)} className={CAMPO}>
           {SETORES.map((s) => (
             <option key={s} value={s}>
@@ -32,7 +32,7 @@ export function AvisoSetorialForm({
             </option>
           ))}
         </select>
-        <span className={AJUDA_CAMPO}>Entre parênteses: clientes com Proteção ativa que subscreveram o setor.</span>
+        <span className={AJUDA_CAMPO}>Entre parênteses: clientes com Protecção activa que subscreveram o sector.</span>
       </label>
 
       <label className={ROTULO}>
@@ -53,7 +53,7 @@ export function AvisoSetorialForm({
 
       {mostrarPreview && (
         <div className="rounded-[12px] border border-[var(--v2-line)] bg-[var(--v2-surface)] p-4 text-[14px]">
-          <p className="mb-2 text-[12.5px] text-[var(--v2-muted)]">Assunto: [Aviso DoLado] Novidade no setor de {setor}</p>
+          <p className="mb-2 text-[12.5px] text-[var(--v2-muted)]">Assunto: [Aviso DoLado] Novidade no sector de {setor}</p>
           <div className="rounded-[10px] border-l-[3px] border-[var(--v2-green)] bg-white p-3">
             <p className="mb-1 font-semibold">{titulo || "(sem título)"}</p>
             <p className="whitespace-pre-line text-[var(--v2-muted)]">{descricao || "(sem descrição)"}</p>
@@ -65,7 +65,7 @@ export function AvisoSetorialForm({
         <ConfirmarAcao
           className={BOTAO_PRIMARIO}
           titulo={`Enviar o aviso a ${clientes}?`}
-          descricao={`Todos os clientes com Proteção ativa que subscreveram o setor ${setor} recebem este e-mail. O envio não pode ser anulado.`}
+          descricao={`Todos os clientes com Protecção activa que subscreveram o sector ${setor} recebem este e-mail. O envio não pode ser anulado.`}
           confirmar="Enviar aviso"
           aDecorrer="A enviar…"
         >

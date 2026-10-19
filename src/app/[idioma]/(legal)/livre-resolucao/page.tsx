@@ -50,7 +50,7 @@ export default async function LivreResolucaoPage({ params }: ComIdioma) {
         <h2 className={H2}>Início imediato do serviço</h2>
         <p className={P}>
           Antes de cada pagamento, a DoLado pede ao consumidor que confirme, de forma separada e sem opção
-          pré-selecionada, se pretende que o serviço comece de imediato, durante o prazo de livre resolução. O texto
+          pré-seleccionada, se pretende que o serviço comece de imediato, durante o prazo de livre resolução. O texto
           apresentado é o seguinte:
         </p>
         <blockquote className="border-l-[3px] border-[var(--color-hairline-strong)] pl-4 text-base leading-relaxed text-[var(--color-ink-muted)]">
@@ -60,7 +60,7 @@ export default async function LivreResolucaoPage({ params }: ComIdioma) {
         <ul className={UL}>
           <li>
             se o consumidor pediu o início imediato e exercer depois o direito de livre resolução, paga o montante
-            proporcional ao serviço efetivamente prestado até ao momento em que comunica a sua decisão;
+            proporcional ao serviço efectivamente prestado até ao momento em que comunica a sua decisão;
           </li>
           <li>
             se o serviço tiver sido integralmente prestado durante o prazo, depois do pedido expresso de início
@@ -68,7 +68,7 @@ export default async function LivreResolucaoPage({ params }: ComIdioma) {
             plenamente executado, o direito de livre resolução deixa de existir.
           </li>
         </ul>
-        <p className={P}>Cada pedido é apreciado caso a caso, tendo em conta o serviço efetivamente prestado.</p>
+        <p className={P}>Cada pedido é apreciado caso a caso, tendo em conta o serviço efectivamente prestado.</p>
       </section>
 
       <section id="reembolso" className="flex flex-col gap-3">

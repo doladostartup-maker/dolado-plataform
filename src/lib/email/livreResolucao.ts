@@ -6,7 +6,7 @@ import { CONTACTO_EMAIL } from "../site.ts";
 import { escaparHtml } from "./textoRevisao.ts";
 import { emailV2, tabelaEmail } from "./molduraEmail.ts";
 import { IDIOMA_PADRAO, type Idioma } from "../../i18n/config.ts";
-import { formatarDataHora } from "../../i18n/formatar.ts";
+import { formatarDataHora, mesesComMaiuscula } from "../../i18n/formatar.ts";
 import { tEmails } from "../../i18n/mensagens/emails.ts";
 import { tPlanos } from "../../i18n/mensagens/planos.ts";
 
@@ -19,11 +19,13 @@ export function assuntoConfirmacaoLivreResolucao(idioma: Idioma = IDIOMA_PADRAO)
 const P = 'style="margin:0 0 16px 0;"';
 
 function dataHora(iso: string) {
-  return new Intl.DateTimeFormat("pt-PT", {
-    dateStyle: "long",
-    timeStyle: "short",
-    timeZone: "Europe/Lisbon",
-  }).format(new Date(iso));
+  return mesesComMaiuscula(
+    new Intl.DateTimeFormat("pt-PT", {
+      dateStyle: "long",
+      timeStyle: "short",
+      timeZone: "Europe/Lisbon",
+    }).format(new Date(iso)),
+  );
 }
 
 /** Moldura simples dos avisos internos à DoLado. */
@@ -88,7 +90,7 @@ export function montarHtmlAvisoLivreResolucao(
       <li>Data da compra: ${escaparHtml(pedido.data_compra ?? "—")}</li>
       <li>Identificação: ${escaparHtml(pedido.identificacao ?? "—")}</li>
       <li>E-mail de cliente conhecido: ${contexto.contaConhecida ? "sim" : "não — confirmar a identidade antes de responder"}</li>
-      <li>Confirmação de receção enviada: ${contexto.confirmacaoEnviada ? "sim" : "não"}</li>
+      <li>Confirmação de recepção enviada: ${contexto.confirmacaoEnviada ? "sim" : "não"}</li>
     </ul>
     ${pedido.mensagem ? `<p ${P}>${escaparHtml(pedido.mensagem).replace(/\n/g, "<br>")}</p>` : ""}
     <p style="margin:0;">Sem efeitos automáticos: apreciar o pedido e tratar no Stripe Dashboard, se aplicável.</p>`);

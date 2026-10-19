@@ -16,12 +16,12 @@ export const legal = {
     livreResolucao:
       "Como exercer o direito de livre resolução nos serviços da DoLado: prazo, início imediato, formulário online e modelo de formulário.",
     resolucaoLitigios:
-      "Como apresentar uma reclamação sobre o serviço da DoLado: contacto, Livro de Reclamações Eletrónico e entidades de resolução alternativa de litígios de consumo.",
+      "Como apresentar uma reclamação sobre o serviço da DoLado: contacto, Livro de Reclamações Electrónico e entidades de resolução alternativa de litígios de consumo.",
   },
   /** Só mostrado nas páginas em inglês. */
   avisoSoPortugues: "",
   versaoAntigaTermos: (versao: string) =>
-    `Está a consultar a versão de ${versao} dos Termos e Condições, que já não está em vigor. <atual>Ver a versão em vigor</atual>.`,
+    `Está a consultar a versão de ${versao} dos Termos e Condições, que já não está em vigor. <actual>Ver a versão em vigor</atual>.`,
   versaoAntigaPrivacidade: (versao: string) =>
-    `Está a consultar a versão de ${versao} da Política de Privacidade, que já não está em vigor. <atual>Ver a versão em vigor</atual>.`,
+    `Está a consultar a versão de ${versao} da Política de Privacidade, que já não está em vigor. <actual>Ver a versão em vigor</atual>.`,
 };

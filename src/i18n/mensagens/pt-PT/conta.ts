@@ -19,7 +19,7 @@ export const conta = {
   entrar: {
     contexto: "Área de cliente",
     titulo: "Entre na sua conta",
-    descricao: "Acompanhe os seus casos, o que a DoLado está a fazer por si e a sua Proteção.",
+    descricao: "Acompanhe os seus casos, o que a DoLado está a fazer por si e a sua Protecção.",
     temProblema: "Tem um problema para tratar? <tratar>Comece aqui</tratar>",
     iniciarSessao: "Iniciar sessão",
     criarConta: "Criar conta",
@@ -47,7 +47,7 @@ export const conta = {
     contexto: "Conta criada",
     titulo: "Confirme o seu e-mail",
     texto:
-      "Enviámos-lhe uma mensagem. Para continuar, abra o e-mail e carregue em <b>Confirmar o meu e-mail</b>, de preferência neste mesmo dispositivo e navegador: continua exatamente onde estava.",
+      "Enviámos-lhe uma mensagem. Para continuar, abra o e-mail e carregue em <b>Confirmar o meu e-mail</b>, de preferência neste mesmo dispositivo e navegador: continua exactamente onde estava.",
     spam: "Não encontra a mensagem? Verifique a pasta de spam ou de promoções.",
     jaConfirmei: "Já confirmei — iniciar sessão",
   },
@@ -104,7 +104,7 @@ export const conta = {
     pagamentoEmConfirmacao: "Pagamento em confirmação",
     titulo: "Criar a sua conta",
     sepa:
-      "Alguns métodos de pagamento, como o débito direto SEPA, podem demorar alguns dias úteis a ser confirmados. Pode criar já a sua conta e não precisa de voltar a pagar: assim que o pagamento for confirmado, o acesso é ativado automaticamente e avisamos por e-mail.",
+      "Alguns métodos de pagamento, como o débito directo SEPA, podem demorar alguns dias úteis a ser confirmados. Pode criar já a sua conta e não precisa de voltar a pagar: assim que o pagamento for confirmado, o acesso é activado automaticamente e avisamos por e-mail.",
     nome: "Nome",
     email: "E-mail",
     palavraPasse: "Palavra-passe",
@@ -121,12 +121,12 @@ export const conta = {
     botao: "Associar esta compra à minha conta",
   },
   mensagens: {
-    "E-mail ou palavra-passe incorretos.": "E-mail ou palavra-passe incorretos.",
+    "E-mail ou palavra-passe incorrectos.": "E-mail ou palavra-passe incorrectos.",
     "Confirme o seu e-mail antes de entrar. Procure a mensagem que lhe enviámos na sua caixa de correio.":
       "Confirme o seu e-mail antes de entrar. Procure a mensagem que lhe enviámos na sua caixa de correio.",
     "Já existe uma conta com este e-mail. Inicie sessão com esse e-mail.":
       "Já existe uma conta com este e-mail. Inicie sessão com esse e-mail.",
-    "A nova palavra-passe tem de ser diferente da atual.": "A nova palavra-passe tem de ser diferente da atual.",
+    "A nova palavra-passe tem de ser diferente da actual.": "A nova palavra-passe tem de ser diferente da actual.",
     "A palavra-passe não cumpre os requisitos. Use pelo menos 8 caracteres, com letras e números.":
       "A palavra-passe não cumpre os requisitos. Use pelo menos 8 caracteres, com letras e números.",
     "Insira um e-mail válido.": "Insira um e-mail válido.",
@@ -158,8 +158,8 @@ export const conta = {
       "Não foi possível associar a compra. Tente novamente dentro de alguns minutos.",
     "A compra foi associada à sua conta.": "A compra foi associada à sua conta.",
     "Esta compra já está associada à sua conta.": "Esta compra já está associada à sua conta.",
-    "A sua conta já tem uma subscrição ativa, por isso esta compra não foi somada à conta. A DoLado vai analisar a situação e responder-lhe por e-mail no prazo máximo de 2 dias úteis.":
-      "A sua conta já tem uma subscrição ativa, por isso esta compra não foi somada à conta. A DoLado vai analisar a situação e responder-lhe por e-mail no prazo máximo de 2 dias úteis.",
+    "A sua conta já tem uma subscrição activa, por isso esta compra não foi somada à conta. A DoLado vai analisar a situação e responder-lhe por e-mail no prazo máximo de 2 dias úteis.":
+      "A sua conta já tem uma subscrição activa, por isso esta compra não foi somada à conta. A DoLado vai analisar a situação e responder-lhe por e-mail no prazo máximo de 2 dias úteis.",
     "Esta compra já está em análise pela DoLado. A DoLado responde-lhe por e-mail no prazo máximo de 2 dias úteis.":
       "Esta compra já está em análise pela DoLado. A DoLado responde-lhe por e-mail no prazo máximo de 2 dias úteis.",
     "Esta compra já está associada a outra conta. Se precisar de ajuda, contacte-nos.":

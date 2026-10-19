@@ -98,7 +98,7 @@ function Comprovativo({ casoId, envioId, comprovativos }: { casoId: string; envi
       )}
       <details open={!emVigor} className="rounded-[12px] border border-[var(--v2-line)]">
         <summary className="flex min-h-10 cursor-pointer items-center px-4 text-[14px] font-semibold text-[var(--v2-navy)]">
-          {emVigor ? "Corrigir comprovativo (o atual fica no histórico)" : "Associar comprovativo"}
+          {emVigor ? "Corrigir comprovativo (o actual fica no histórico)" : "Associar comprovativo"}
         </summary>
         <form action={registarComprovativo.bind(null, casoId, envioId)} className="flex flex-col gap-3 border-t border-[var(--v2-line)] p-4">
           <label className={ROTULO}>
@@ -166,7 +166,7 @@ export function EnviosCaso({
   }
 
   return (
-    <Seccao id="envio" titulo="Envio e comprovativo" descricao="Texto exato enviado à empresa (só leitura), data, canal e comprovativo.">
+    <Seccao id="envio" titulo="Envio e comprovativo" descricao="Texto exacto enviado à empresa (só leitura), data, canal e comprovativo.">
       {envios.map((e, i) => (
         <div key={e.id} className="flex flex-col gap-3">
           <Aviso tom="sucesso" titulo={`${i === 0 ? "Reclamação enviada" : "Nova comunicação enviada"}${e.versao ? ` — versão ${e.versao}` : ""}`}>

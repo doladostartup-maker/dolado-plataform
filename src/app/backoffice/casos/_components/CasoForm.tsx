@@ -153,9 +153,9 @@ export function CasoForm({
         <Campo label="Empresa reclamada" ajuda="Campo “Empresa” do formulário guiado.">
           <input name="empresa" defaultValue={valores.empresa ?? ""} className={CAMPO} />
         </Campo>
-        <Campo label="Setor">
+        <Campo label="Sector">
           <select name="sector" defaultValue={valores.sector ?? ""} className={CAMPO}>
-            <option value="">Sem setor</option>
+            <option value="">Sem sector</option>
             {SETORES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -163,7 +163,7 @@ export function CasoForm({
             ))}
           </select>
         </Campo>
-        <Campo label="O que aconteceu" ajuda="Categoria do formulário guiado. Tem de existir no setor escolhido.">
+        <Campo label="O que aconteceu" ajuda="Categoria do formulário guiado. Tem de existir no sector escolhido.">
           <select name="problema_tipo" defaultValue={valores.problema_tipo ?? ""} className={CAMPO}>
             <option value="">Sem categoria</option>
             {PROBLEMAS.map((p) => {
@@ -201,7 +201,7 @@ export function CasoForm({
 
       <Grupo titulo="Estado e prazos">
         {edicao ? (
-          <Campo label="Estado" ajuda="Muda com as ações do caso (envio, análise, confirmação do cliente). Exceções: “Corrigir estado”, abaixo.">
+          <Campo label="Estado" ajuda="Muda com as acções do caso (envio, análise, confirmação do cliente). Excepções: “Corrigir estado”, abaixo.">
             <input value={estadoCaso(valores.status ?? "Novo").rotulo} readOnly disabled className={CAMPO} />
           </Campo>
         ) : (

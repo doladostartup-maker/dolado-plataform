@@ -33,25 +33,25 @@ export const calculadora = {
     sim: "Sim",
     nao: "Não",
     naoSei: "Não sei",
-    mensalidade: "Valor atual da mensalidade (€)",
+    mensalidade: "Valor actual da mensalidade (€)",
     mensalidadeExemplo: "Ex.: 29,99",
     conheceVantagem: "Conhece o valor total da vantagem que recebeu por aceitar a fidelização?",
     conheceVantagemAjuda:
-      "Pode incluir, por exemplo, descontos na mensalidade, instalação ou ativação gratuitas ou outras vantagens identificadas no contrato.",
+      "Pode incluir, por exemplo, descontos na mensalidade, instalação ou activação gratuitas ou outras vantagens identificadas no contrato.",
     ajudeMe: "Ajude-me a encontrar",
     vantagem: "Valor total da vantagem associada à fidelização (€)",
     vantagemExemplo: "Ex.: 120,00",
     ajudaTitulo: "Onde posso encontrar este valor?",
     ajudaTexto: [
-      "Consulte o resumo do contrato ou o contrato e procure referências a vantagens associadas à fidelização, ofertas, descontos, instalação, ativação ou benefícios concedidos em troca do período de fidelização.",
-      "Se tiver uma fatura recente, procure a informação relativa ao período de fidelização e ao valor associado à denúncia antecipada do contrato.",
+      "Consulte o resumo do contrato ou o contrato e procure referências a vantagens associadas à fidelização, ofertas, descontos, instalação, activação ou benefícios concedidos em troca do período de fidelização.",
+      "Se tiver uma factura recente, procure a informação relativa ao período de fidelização e ao valor associado à denúncia antecipada do contrato.",
     ],
     naoEncontro: "Não encontro este valor",
     naoSeiVantagem:
       "Sem problema: calculamos o limite com base nas mensalidades que ainda faltam pagar. O resultado indica o que falta para um cálculo completo.",
     valorOperador: "Valor indicado pela operadora para a denúncia antecipada (€) — opcional",
     valorOperadorAjuda:
-      "Se a operadora já lhe indicou quanto teria de pagar (numa fatura, no contrato ou numa resposta), escreva-o aqui para o compararmos com o limite calculado.",
+      "Se a operadora já lhe indicou quanto teria de pagar (numa factura, no contrato ou numa resposta), escreva-o aqui para o compararmos com o limite calculado.",
     valorOperadorExemplo: "Ex.: 125,00",
     equipamento: "Recebeu equipamento subsidiado associado ao contrato?",
     equipamentoAjuda: "Por exemplo, um telemóvel ou outro equipamento oferecido ou com desconto por causa da fidelização.",
@@ -85,11 +85,11 @@ export const calculadora = {
     terminada: (data: string) =>
       `Com base nas datas introduzidas, a fidelização terminou a ${data}: já não existe período de fidelização em curso.`,
     parcialVantagem:
-      "Com os dados que indicou, este é o limite calculado com base nas mensalidades que ainda faltam pagar. O valor efetivamente aplicável poderá ser inferior, porque também deve ser considerada a parte da vantagem associada à fidelização que ainda não foi recuperada.",
+      "Com os dados que indicou, este é o limite calculado com base nas mensalidades que ainda faltam pagar. O valor efectivamente aplicável poderá ser inferior, porque também deve ser considerada a parte da vantagem associada à fidelização que ainda não foi recuperada.",
     parcialTipo:
       "O valor poderá variar consoante o tipo de fidelização. Mostramos o limite mais alto dos casos possíveis com as suas respostas; se a fidelização for uma renovação sem nova instalação, o limite poderá ser inferior.",
     semLimite:
-      "Num contrato com fidelização iniciada antes de 14 de novembro de 2022, o encargo corresponde, em regra, à parte da vantagem associada à fidelização ainda não recuperada. Sem conhecer essa vantagem, não conseguimos indicar um limite.",
+      "Num contrato com fidelização iniciada antes de 14 de Novembro de 2022, o encargo corresponde, em regra, à parte da vantagem associada à fidelização ainda não recuperada. Sem conhecer essa vantagem, não conseguimos indicar um limite.",
     semLimiteTipo:
       "Se a fidelização tiver sido renovada sem nova instalação, aplica-se também um limite de 30% das mensalidades em falta — mas sem conhecer o tipo de fidelização e a vantagem não conseguimos indicar um valor.",
     faltaTitulo: "Para um cálculo completo falta:",
@@ -108,7 +108,7 @@ export const calculadora = {
     menor: ", por ser o menor dos dois",
     iguais: ", por os dois valores serem iguais",
     soVantagem:
-      ". Num contrato iniciado antes de 14 de novembro de 2022, só se aplica a vantagem proporcional, exceto numa renovação sem nova instalação",
+      ". Num contrato iniciado antes de 14 de Novembro de 2022, só se aplica a vantagem proporcional, excepto numa renovação sem nova instalação",
     operadorSuperior: (operador: string, limite: string) =>
       `A operadora indica ${operador}. O valor indicado pela operadora parece ser superior ao limite calculado com os dados que forneceu (${limite}). Isto não significa, por si só, que a cobrança seja indevida: podem existir dados ou condições que esta calculadora não considera.`,
     operadorProximo: (operador: string, limite: string) =>
@@ -142,7 +142,7 @@ export const calculadora = {
       {
         titulo: "Como é feito o cálculo.",
         texto:
-          "Nos contratos com fidelização iniciada ou renovada a partir de 14 de novembro de 2022, o encargo corresponde ao menor de dois valores: a parte da vantagem ainda por recuperar, proporcional ao tempo de fidelização em falta, e uma percentagem das mensalidades em falta (50% no primeiro ano e 30% no segundo; 30% numa refidelização sem nova instalação). Nos contratos anteriores, conta a vantagem proporcional ao tempo em falta e, numa refidelização sem nova instalação, também o limite de 30% das mensalidades em falta.",
+          "Nos contratos com fidelização iniciada ou renovada a partir de 14 de Novembro de 2022, o encargo corresponde ao menor de dois valores: a parte da vantagem ainda por recuperar, proporcional ao tempo de fidelização em falta, e uma percentagem das mensalidades em falta (50% no primeiro ano e 30% no segundo; 30% numa refidelização sem nova instalação). Nos contratos anteriores, conta a vantagem proporcional ao tempo em falta e, numa refidelização sem nova instalação, também o limite de 30% das mensalidades em falta.",
       },
       {
         titulo: "Se não souber algum dado.",

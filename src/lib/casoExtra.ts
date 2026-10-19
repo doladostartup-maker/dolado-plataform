@@ -19,6 +19,7 @@
 // nunca com o que o browser envia.
 
 import { estadoComAcesso, type Acesso } from "./acesso.ts";
+import { mesesComMaiuscula } from "../i18n/formatar.ts";
 
 /** Só uma subscrição em dia dá o benefício (past_due mantém o acesso, mas não o desconto). */
 const ESTADOS_COM_BENEFICIO: ReadonlySet<string> = new Set(["active", "trialing"]);
@@ -103,10 +104,12 @@ export function casosAcumulados(c: Pick<CasosDoMes, "casosSubscricao">) {
 
 /** 2026-11-05T… → "5 de novembro de 2026" (hora de Lisboa). */
 export function dataCasoExtra(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-PT", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "Europe/Lisbon",
-  });
+  return mesesComMaiuscula(
+    new Date(iso).toLocaleDateString("pt-PT", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "Europe/Lisbon",
+    }),
+  );
 }

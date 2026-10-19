@@ -284,7 +284,7 @@ Linguagem baseada em problemas reais, não em nomes internos de funcionalidades:
 
 ## 29. Português
 
-Português europeu clássico (Acordo Ortográfico de 1990), com as regras de escrita do `CLAUDE.md`: subscrever, fatura, ficheiro, telemóvel, utilizador, proteção, connosco, consigo.
+Português europeu clássico na ortografia tradicional, anterior ao Acordo Ortográfico de 1990 (norma da DoLado desde 19/10/2026 — `docs/identidade-linguistica-dolado.md`), com as regras de escrita do `CLAUDE.md`: subscrever, factura, ficheiro, telemóvel, utilizador, Protecção, sector, connosco, consigo.
 
 ## 30. Navegação pública
 
