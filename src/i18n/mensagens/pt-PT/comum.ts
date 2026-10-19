@@ -32,7 +32,7 @@ export const comum = {
     ferramentasCurto: "Ferramentas",
     protecao: "Protecção",
     ferramentas: "Ferramentas gratuitas",
-    precario: "Preços",
+    precario: "Preçário",
     iniciarSessao: "Entrar",
     tratarCaso: "Tratar do meu caso",
   },
