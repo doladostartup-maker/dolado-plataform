@@ -44,12 +44,15 @@ export async function guardarDestinoPosLogin(destino: string, validadeS = VALIDA
  * em user_metadata.idioma e decide o idioma dos e-mails (só apresentação;
  * ver idiomaConta.ts). Os templates da Supabase leem-no em `.Data.idioma`.
  */
-export function dadosContaNova(dados: { nome?: string | null; mostrarCodigo?: boolean; idioma: Idioma }) {
+// origemRegisto: só métricas (funil da landing /30-dias-gratis) — nunca
+// acesso, porque o cliente pode alterar os próprios metadados.
+export function dadosContaNova(dados: { nome?: string | null; mostrarCodigo?: boolean; origemRegisto?: string | null; idioma: Idioma }) {
   return {
     emailRedirectTo: urlCallbackAuth(),
     data: {
       ...(dados.nome ? { nome: dados.nome } : {}),
       ...(dados.mostrarCodigo ? { mostrar_codigo: true } : {}),
+      ...(dados.origemRegisto ? { origem_registo: dados.origemRegisto } : {}),
       [CHAVE_IDIOMA_CONTA]: dados.idioma,
     },
   };

@@ -22,6 +22,7 @@ import { tProtecaoGratuita } from "@/i18n/mensagens/protecaoGratuita";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { contaComEmailConfirmado } from "@/lib/auth";
 import { destinoCompra } from "@/lib/destinoAuth";
+import { consultaUtm, lerUtm } from "@/lib/landing30Dias";
 import { PLANOS } from "@/lib/planos";
 import { ROTA_EXPERIMENTAR, fimSeAtivarAgora, lerOrigem, type MotivoElegibilidade } from "@/lib/protecaoGratuita";
 import { elegibilidadeDaConta, protecaoGratuitaDisponivel } from "@/lib/protecaoGratuitaServidor";
@@ -42,13 +43,16 @@ export const dynamic = "force-dynamic";
 export default async function ExperimentarProtecaoPage({
   searchParams,
   params,
-}: { searchParams: Promise<{ origem?: string }> } & ComIdioma) {
+}: { searchParams: Promise<Record<string, string | string[] | undefined>> } & ComIdioma) {
   const idioma = await idiomaDaPagina(params);
   const t = tProtecaoGratuita[idioma].ativar;
-  const origem = lerOrigem((await searchParams).origem);
+  const consulta = await searchParams;
+  const origem = lerOrigem(consulta.origem);
   const preco = precoNoIdioma(idioma, PLANOS.protecao.precoCentimos);
   const precario = localizarHref(idioma, `${MARKETING_SITE_URL}/precario`);
-  const aqui = localizarHref(idioma, `${ROTA_EXPERIMENTAR}?origem=${origem}`);
+  // Os UTM do anúncio (landing /30-dias-gratis) seguem pelo registo e pela
+  // confirmação do e-mail até voltar aqui — só no URL, nunca gravados.
+  const aqui = localizarHref(idioma, `${ROTA_EXPERIMENTAR}?origem=${origem}${consultaUtm(lerUtm(consulta))}`);
 
   const disponivel = protecaoGratuitaDisponivel();
   const conta = disponivel ? await contaComEmailConfirmado() : null;

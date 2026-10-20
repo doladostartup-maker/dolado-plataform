@@ -23,6 +23,8 @@ type Metricas = {
   convertidas_caso_protecao: number;
   cancelamentos_posteriores: number;
   por_origem: Record<string, number>;
+  /** Funil da landing /30-dias-gratis (migration 20261020090000; ausente antes dela). */
+  landing_30d?: { contas_criadas: number; emails_confirmados: number; ativadas_destas_contas: number; ativadas: number };
 };
 
 const NOMES_ORIGEM: Record<string, string> = {
@@ -30,6 +32,7 @@ const NOMES_ORIGEM: Record<string, string> = {
   precario: "Preçário",
   protecao: "Página da Protecção",
   portal: "Portal",
+  landing_30d: "Landing 30 dias (anúncios)",
   outro: "Outra",
 };
 
@@ -98,6 +101,27 @@ export default async function ProtecaoGratuitaBackofficePage() {
           </div>
           <p className={METADADOS}>
             Visitas à oferta e cliques no CTA: GA4, eventos protecao_gratuita_vista e protecao_gratuita_clique (só com consentimento).
+          </p>
+        </section>
+      )}
+      {m?.landing_30d && (
+        <section aria-labelledby="landing" className="flex flex-col gap-3">
+          <TituloSeccao id="landing" titulo="Funil da landing /30-dias-gratis" />
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Numero rotulo="Contas criadas (landing_30d_signup_start)" valor={m.landing_30d.contas_criadas} detalhe="Registo submetido a partir da landing" />
+            <Numero
+              rotulo="E-mail confirmado (landing_30d_signup_complete)"
+              valor={m.landing_30d.emails_confirmados}
+              detalhe={percentagem(m.landing_30d.emails_confirmados, m.landing_30d.contas_criadas)}
+            />
+            <Numero
+              rotulo="Activações (landing_30d_activation_complete)"
+              valor={m.landing_30d.ativadas}
+              detalhe={`${m.landing_30d.ativadas_destas_contas} das contas criadas na landing · ${percentagem(m.landing_30d.ativadas_destas_contas, m.landing_30d.emails_confirmados)} das confirmadas`}
+            />
+          </div>
+          <p className={METADADOS}>
+            Visitas e cliques: GA4, eventos landing_30d_view e landing_30d_cta_click (parâmetro local: topo, condicoes, barra), só com consentimento — uma amostra, não o total. As activações incluem quem já tinha conta e iniciou sessão a partir da landing.
           </p>
         </section>
       )}

@@ -124,7 +124,7 @@ export function lerMotivo(valor: unknown): MotivoElegibilidade {
 // ---------------------------------------------------------------------------
 // Origem (só métricas; valores fixos)
 
-export const ORIGENS_PROTECAO_GRATUITA = ["homepage", "precario", "protecao", "portal"] as const;
+export const ORIGENS_PROTECAO_GRATUITA = ["homepage", "precario", "protecao", "portal", "landing_30d"] as const;
 export type OrigemProtecaoGratuita = (typeof ORIGENS_PROTECAO_GRATUITA)[number] | "outro";
 
 export function lerOrigem(valor: unknown): OrigemProtecaoGratuita {

@@ -408,6 +408,14 @@ Oferta permanente, só no plano Proteção. Decisões de Thiago (18/10/2026): es
 - **Métricas:** `/backoffice/protecao-gratuita` (`protecao_gratuita_metricas()`, só admin, só contagens). GA4 em dolado.pt (só com consentimento): `protecao_gratuita_vista` e `protecao_gratuita_clique`.
 - **Testes:** `supabase/tests/database/protecao_gratuita.test.sql`, `src/lib/protecaoGratuita.test.mjs` e `src/lib/indicacoes/webhook.test.mjs` ("Proteção gratuita").
 
+## Landing das campanhas Meta Ads — `/30-dias-gratis` (20/10/2026)
+
+Destino dos anúncios do Facebook/Instagram para a Proteção gratuita. Componente `src/components/landing-30-dias/Landing30Dias.tsx`, textos `src/i18n/mensagens/{pt-PT,en-GB}/landing30Dias.ts`, regras sem I/O `src/lib/landing30Dias.ts`. Em dolado.pt (`PAGINAS_PUBLICAS`/`PAGINAS_SO_MARKETING`), **noindex, follow**, fora do menu e do sitemap; cabeçalho simplificado (`PaginaV2 cabecalho`), rodapé V2 normal. Com `PROTECAO_GRATUITA_ATIVA` desligado redirecciona para `/protecao`.
+
+- **Sem registo próprio:** o CTA leva a `portal.dolado.pt/experimentar-protecao?origem=landing_30d` (+ UTM) — registo, confirmação do e-mail, Termos e activação são os de sempre. "Iniciar sessão" no cabeçalho volta à activação (`/login?next=…`). Os UTM (`utm_source/medium/campaign/content/term`, `lerUtm`) seguem só no URL até à activação; nunca gravados.
+- **Funil:** em dolado.pt (só com consentimento) `landing_30d_view` (uma vez, também se o consentimento chegar depois) e `landing_30d_cta_click` (`local`: topo/condicoes/barra) no GA4 + `trackCustom Landing30dCtaClick` no Pixel (só com marketing). O portal não tem Cookiebot: conta criada (`user_metadata.origem_registo = 'landing_30d'`, gravado no `/registo` quando o `next` é a activação da landing — só métricas, o cliente pode alterar), e-mail confirmado e activação (`protecao_gratuita.origem = 'landing_30d'`) contam-se na base de dados — `protecao_gratuita_metricas() -> 'landing_30d'`, secção "Funil da landing" em `/backoffice/protecao-gratuita`. Contas novas pelo Google não levam `origem_registo` (a activação conta na mesma).
+- Migration `20261020090000_landing_30_dias_gratis.sql` (aplicar com `db push` antes do merge que faz o deploy). Testes: `src/lib/landing30Dias.test.mjs`, `supabase/tests/database/landing_30_dias.test.sql`.
+
 ## Uso de IA (decisão: 25/09/2026)
 
 A exclusão geral de IA da v1 foi revista. A Claude API está agora em escopo, mas só dentro destas regras — não é uma autorização em aberto para qualquer uso de IA sem mais:

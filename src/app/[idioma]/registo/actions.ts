@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { dadosContaNova, destinoDepoisDeAutenticar, guardarDestinoPosLogin } from "@/lib/authServidor";
 import { DESTINO_POS_LOGIN, ehDestinoSeguro, urlConfirmarEmail } from "@/lib/destinoAuth";
 import { mensagemErroConta } from "@/lib/mensagensErro";
+import { origemRegistoDoDestino } from "@/lib/landing30Dias";
 import { registarOrigemDaConta } from "@/lib/origemAquisicaoServidor";
 import { localizarHref } from "@/i18n/config";
 import { traduzirMensagemConta } from "@/i18n/mensagens/conta";
@@ -24,7 +25,8 @@ export async function registar(formData: FormData) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: dadosContaNova({ nome, idioma: await obterIdioma() }),
+    // Conta criada a partir da landing /30-dias-gratis: só para o funil.
+    options: dadosContaNova({ nome, idioma: await obterIdioma(), origemRegisto: origemRegistoDoDestino(next) }),
   });
 
   const idioma = await obterIdioma();
