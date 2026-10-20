@@ -41,7 +41,7 @@ insert into public.parceiros_oportunidades (id, parceiro_id, entidade, contacto)
 values ('00000000-0000-4000-f100-0000000000c1', '00000000-0000-4000-f100-0000000000b1', 'Empresa Aviso, Lda.', 'Ana · ana@empresa.invalid');
 
 insert into public.parceiros_oportunidades_avisos (oportunidade_id, destinatario_email, aviso_versao, assunto, texto, enviado_por)
-values ('00000000-0000-4000-f100-0000000000c1', 'ana@empresa.invalid', '2026-10-23', 'Assunto', 'Texto do aviso', '00000000-0000-4000-f100-0000000000aa');
+values ('00000000-0000-4000-f100-0000000000c1', 'ana@empresa.invalid', '2026-10-20', 'Assunto', 'Texto do aviso', '00000000-0000-4000-f100-0000000000aa');
 
 select is(testes.tenta($$insert into public.parceiros_oportunidades_avisos (oportunidade_id, destinatario_email, aviso_versao, assunto, texto)
   values ('00000000-0000-4000-f100-0000000000c1', 'nao-e-email', 'v', 'a', 't')$$), 'erro:23514', 'E-mail inválido recusado');

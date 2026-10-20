@@ -148,7 +148,7 @@ Ainda em aberto:
 
 ## 9. Pendências (actualizado a 20/10/2026)
 
-Estado: **em produção** desde 20/10/2026 (PR [#147](https://github.com/doladostartup-maker/dolado-plataform/pull/147) merged, migration aplicada, interruptores ligados). Por fazer: item 3. Feito a 23/10/2026 (decisões de Thiago): botão "Avisar primeiro contacto" nas oportunidades B2B (aviso do art. 14.º com prova em `parceiros_oportunidades_avisos`; texto por validar pela advogada) e `/parceiros` indexável (sitemap e rodapé).
+Estado: **em produção** desde 20/10/2026 (PR [#147](https://github.com/doladostartup-maker/dolado-plataform/pull/147) merged, migration aplicada, interruptores ligados). Por fazer: item 3. Feito a 20/10/2026 (decisões de Thiago): botão "Avisar primeiro contacto" nas oportunidades B2B (aviso do art. 14.º com prova em `parceiros_oportunidades_avisos`; texto por validar pela advogada) e `/parceiros` indexável (sitemap e rodapé).
 
 1. ~~Esclarecer o que a advogada aprovou~~ → **as regras do programa** (Thiago, 20/10/2026).
 2. **PR 4 — documentos legais:** ✅ redigidos a 20/10/2026 — Termos `2026-10-20` e Política `2026-10-20` (`TERMOS_VERSAO`/`PRIVACIDADE_VERSAO` já sobem neste ramo); texto validado pela advogada (Thiago, 20/10/2026). **Migration aplicada em produção a 20/10/2026** (`db push`). As condições comerciais ficam no contrato-tipo. Lista original:

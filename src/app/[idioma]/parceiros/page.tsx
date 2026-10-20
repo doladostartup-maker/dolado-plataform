@@ -9,7 +9,7 @@ import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { parceirosAtivos } from "@/lib/parceiros/regras";
 
 // /parceiros — Programa de Parceiros (Fase 1, ligado em produção a
-// 20/10/2026 com PARCEIROS_ATIVO, lido no build). Indexável desde 23/10/2026
+// 20/10/2026 com PARCEIROS_ATIVO, lido no build). Indexável desde 20/10/2026
 // (decisão de Thiago): no sitemap e no rodapé (só com o programa ligado), fora
 // do menu. Com o programa desligado leva a /empresas.
 export async function generateMetadata({ params }: ComIdioma): Promise<Metadata> {

@@ -62,7 +62,7 @@ export const TEXTO_CONSENTIMENTO_COMUNICACOES_GUIA = "Quero receber dicas, novid
  * a versão ficam gravados em parceiros_oportunidades_avisos. Mudar o texto =
  * nova versão. Texto por validar pela advogada (pendencias-juridicas.md).
  */
-export const AVISO_PRIMEIRO_CONTACTO_VERSAO = "2026-10-23";
+export const AVISO_PRIMEIRO_CONTACTO_VERSAO = "2026-10-20";
 
 export function textoAvisoPrimeiroContacto(d: { parceiro: string; entidade: string }) {
   return {
