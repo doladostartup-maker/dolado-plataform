@@ -68,8 +68,8 @@ export const problemas: Traducao<typeof pt> = {
     energia: {
       nome: "Energy",
       nomeMinusculas: "energy",
-      descricao: "Electricity: bills, meter readings, charges and power cuts.",
-      exemplos: ["Very high bills", "Estimated readings", "Charges you do not recognise", "Power cuts"],
+      descricao: "Electricity: bills, meter readings, charges, contracts and power cuts.",
+      exemplos: ["Very high bills", "Estimated readings", "Charges you do not recognise", "Supplier switches you did not ask for", "Power cuts"],
       ligacao: "See energy problems",
       metadados: {
         titulo: "Problems with electricity: bills and power cuts - DoLado",
@@ -78,7 +78,7 @@ export const problemas: Traducao<typeof pt> = {
       },
       titulo: "Problems with electricity",
       intro:
-        "Bills that rise without a clear explanation, estimated readings, amounts you do not recognise or power cuts: DoLado helps you understand what is going on and handles the complaint with you.",
+        "Bills that rise without a clear explanation, estimated readings, amounts you do not recognise, supplier switches you did not ask for or power cuts: DoLado helps you understand what is going on and handles the complaint with you.",
     },
     "compras-reembolsos": {
       nome: "Purchases and Refunds",
@@ -318,7 +318,7 @@ export const problemas: Traducao<typeof pt> = {
           "When there are no actual readings, your bill may be calculated on estimates. This can lead to amounts above or below your actual usage and, later on, to adjustments that are hard to understand.",
         contestar: [
           "Billing on estimates can happen when no reading is available, and the amount is normally adjusted later based on actual readings.",
-          "There may be grounds to dispute it when the estimates are far from actual usage, when readings you submitted were not taken into account or when the adjustment is unclear. It depends on the reading history and on your specific case.",
+          "There may be grounds to dispute it when the estimates are far from actual usage, when readings you submitted were not taken into account or when the adjustment is unclear. In an adjustment that includes older consumption, the dates also matter: the law sets time limits on charging for some amounts. It depends on the reading history, the dates and your specific case.",
         ],
         verificar: [
           "Your bills and whether each one shows an actual or estimated reading",
@@ -329,6 +329,32 @@ export const problemas: Traducao<typeof pt> = {
         ],
         ajuda:
           "DoLado reconstructs the history of readings and bills, checks whether the adjustment matches actual usage and prepares the complaint with a specific request to the supplier.",
+      },
+      "mudanca-de-comercializador-nao-autorizada": {
+        metadados: {
+          titulo: "Was your electricity supplier switched without your consent? - DoLado",
+          descricao:
+            "Started getting bills from another electricity supplier without having agreed to it? See what to check and how DoLado handles the complaint with you.",
+        },
+        rotulo: "Supplier switch you did not authorise",
+        resumo: "You now have a different electricity supplier without having agreed to the switch.",
+        titulo: "Was your electricity supplier switched without your consent?",
+        subtitulo:
+          "A phone call, a home visit or an offer you never actually accepted can end up in a supplier switch you did not ask for. Often you only notice when the first bill from the new company arrives.",
+        contestar: [
+          "Switching supplier depends on the consumer agreeing to it. When there was no such agreement, or it cannot be shown, there may be grounds to dispute the contract and the amounts charged.",
+          "How the contact happened also matters: the rules may be different for a contract made by phone, at a distance or in your home. In some of these cases, it may still be possible to withdraw from the contract within a set period.",
+          "What was said, signed or confirmed, and by whom, needs to be checked to understand where you stand.",
+        ],
+        verificar: [
+          "The first bill from the new supplier and the last one from the previous supplier",
+          "The date, the channel and who made the contact (phone, home visit, e-mail)",
+          "What you signed, received or confirmed, even by text message or e-mail",
+          "The messages and e-mails you received about the switch",
+          "Any contact you have already had with either supplier",
+        ],
+        ajuda:
+          "DoLado reconstructs how the switch happened, asks the company for proof of your agreement and prepares the complaint with a specific request: cancelling the switch, correcting the bills or refunding what you overpaid.",
       },
       "falta-de-luz": {
         metadados: {

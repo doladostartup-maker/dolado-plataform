@@ -76,8 +76,8 @@ export const problemas = {
     energia: {
       nome: "Energia",
       nomeMinusculas: "energia",
-      descricao: "Electricidade: facturas, leituras, cobranças e falhas de fornecimento.",
-      exemplos: ["Facturas muito altas", "Consumos estimados", "Cobranças que não reconhece", "Falhas de electricidade"],
+      descricao: "Electricidade: facturas, leituras, cobranças, contratos e falhas de fornecimento.",
+      exemplos: ["Facturas muito altas", "Consumos estimados", "Cobranças que não reconhece", "Mudanças de comercializador que não pediu", "Falhas de electricidade"],
       ligacao: "Ver problemas de energia",
       metadados: {
         titulo: "Problemas com a electricidade: facturas e falhas - DoLado",
@@ -86,7 +86,7 @@ export const problemas = {
       },
       titulo: "Problemas com a electricidade",
       intro:
-        "Facturas que sobem sem explicação clara, leituras estimadas, valores que não reconhece ou falhas de electricidade: a DoLado ajuda a perceber o que se passa e trata da reclamação consigo.",
+        "Facturas que sobem sem explicação clara, leituras estimadas, valores que não reconhece, mudanças de comercializador que não pediu ou falhas de electricidade: a DoLado ajuda a perceber o que se passa e trata da reclamação consigo.",
     },
     "compras-reembolsos": {
       nome: "Compras e Reembolsos",
@@ -326,7 +326,7 @@ export const problemas = {
           "Quando não há leituras reais, a factura pode ser calculada com estimativas. Isso pode levar a valores acima ou abaixo do consumo real e, mais tarde, a acertos difíceis de perceber.",
         contestar: [
           "A facturação por estimativa pode acontecer quando não há leitura disponível, e o valor é normalmente acertado mais tarde com base nas leituras reais.",
-          "Pode haver fundamento para contestar quando as estimativas se afastam muito do consumo real, quando as leituras que comunicou não foram consideradas ou quando o acerto não é claro. Depende do histórico de leituras e do seu caso concreto.",
+          "Pode haver fundamento para contestar quando as estimativas se afastam muito do consumo real, quando as leituras que comunicou não foram consideradas ou quando o acerto não é claro. Num acerto que inclua consumos antigos, as datas também contam: a lei prevê limites temporais para a cobrança de alguns valores. Depende do histórico de leituras, das datas e do seu caso concreto.",
         ],
         verificar: [
           "As facturas e a indicação de leitura real ou estimada em cada uma",
@@ -337,6 +337,34 @@ export const problemas = {
         ],
         ajuda:
           "A DoLado reconstitui o histórico de leituras e de facturas, verifica se o acerto corresponde ao consumo real e prepara a reclamação com o pedido concreto ao comercializador.",
+      },
+      // Contratação não autorizada (20/10/2026): auditoria de Energia —
+      // facturação e contratação, secção E.
+      "mudanca-de-comercializador-nao-autorizada": {
+        metadados: {
+          titulo: "Mudaram o seu comercializador de electricidade sem autorização? - DoLado",
+          descricao:
+            "Passou a receber facturas de outro comercializador de electricidade sem ter aceitado? Veja o que verificar e como a DoLado trata a reclamação consigo.",
+        },
+        rotulo: "Mudança de comercializador não autorizada",
+        resumo: "Passou a ter outro comercializador de electricidade sem ter aceitado a mudança.",
+        titulo: "Mudaram o seu comercializador de electricidade sem a sua autorização?",
+        subtitulo:
+          "Uma chamada, uma visita a casa ou uma proposta que não chegou a aceitar podem acabar numa mudança de comercializador que não pediu. Muitas vezes só se dá por isso quando chega a primeira factura da nova empresa.",
+        contestar: [
+          "A mudança de comercializador depende da aceitação do consumidor. Quando essa aceitação não existiu, ou não pode ser demonstrada, pode haver fundamento para contestar o contrato e os valores cobrados.",
+          "A forma como o contacto aconteceu também conta: as regras podem ser diferentes num contrato feito por telefone, à distância ou em sua casa. Em alguns destes casos, pode ainda ser possível desistir do contrato dentro de um prazo.",
+          "É necessário verificar o que foi dito, assinado ou confirmado, e por quem, para perceber em que situação está.",
+        ],
+        verificar: [
+          "A primeira factura do novo comercializador e a última do anterior",
+          "A data, o canal e quem fez o contacto (telefone, visita a casa, e-mail)",
+          "O que assinou, recebeu ou confirmou, mesmo que por SMS ou e-mail",
+          "As mensagens e os e-mails que recebeu sobre a mudança",
+          "Os contactos que já fez com qualquer um dos comercializadores",
+        ],
+        ajuda:
+          "A DoLado reconstitui como a mudança aconteceu, pede à empresa a prova da sua aceitação e prepara a reclamação com o pedido concreto: anular a mudança, corrigir as facturas ou devolver o que pagou a mais.",
       },
       "falta-de-luz": {
         metadados: {

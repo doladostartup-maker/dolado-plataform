@@ -28,3 +28,24 @@ Origem: [auditoria-interrupcoes-electricidade-2026-10-20.md](auditoria-interrupc
 
 - [ ] **Nova consolidação do RQS pela ERSE:** rever as 4 regras (sobretudo os padrões do Anexo I e os valores unitários) e a página `/problemas/energia/falta-de-luz` sempre que a ERSE publicar uma versão nova.
 - [ ] **Coerência da página `/problemas/energia/falta-de-luz` com as regras:** se uma regra de continuidade ou de danos mudar, rever o texto da página em pt e en (regra obrigatória das auditorias, no CLAUDE.md).
+
+## Energia e Gás: facturação, cobrança e contratação (20 de Outubro de 2026)
+
+Origem: [auditoria-energia-facturacao-contratacao-2026-10-20.md](auditoria-energia-facturacao-contratacao-2026-10-20.md), secções C, D, E e G.
+
+- [ ] **Regras ENE e o Regulamento n.º 8/2026:** confrontar os artigos das regras `ENE_*` com o RRC/RQS consolidados depois do Reg. 8/2026, incluindo os arts. 19.º e 81.º de `ENE_FIDELIZACAO_INDEMNIZACAO_19` e `ENE_DENUNCIA_SEM_ENCARGOS_81`. Trocar `fonte_url` pelo consolidado da ERSE com nova data de revisão (mudar o conteúdo sem nova data retira a revisão).
+- [ ] **Potência contratada:** identificar a norma no RRC e redigir a regra, inactiva, para revisão. Não indicar artigo sem leitura.
+- [x] **`ENE_GAS_TARIFA_SOCIAL_AUTO_6`** desactivada (20/10/2026, decisão de Thiago; `20261020150000_desativar_ene_gas_tarifa_social.sql`).
+- [x] **Ajuda de documentos por tipo de problema** no passo 4 de `/tratar-caso` (20/10/2026).
+- [x] **Limites temporais dos acertos** em `/problemas/energia/consumos-estimados` (20/10/2026, texto da secção E).
+- [x] **Página `/problemas/energia/mudanca-de-comercializador-nao-autorizada`** criada (20/10/2026, aprovada por Thiago).
+
+## Validações confirmadas (20 de Outubro de 2026)
+
+Confirmadas por Thiago a 20/10/2026:
+
+- [x] Termos `2026-10-07` (programa de indicação).
+- [x] Traduções inglesas dos textos legais e de consentimento.
+- [x] Textos da Calculadora de Cancelamento e resumo da regra.
+- [x] Energia Solar: os cinco pontos da secção 5 de [implementacao-energia-solar-2026-10-13.md](implementacao-energia-solar-2026-10-13.md).
+- [x] Sede: mantém-se a morada actual (`MORADA_SEDE`); a mudança prevista deixou de estar pendente.

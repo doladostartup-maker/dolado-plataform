@@ -13,6 +13,7 @@ import { criarUploadAssinado } from "@/app/actions/formulario-guiado";
 import { track } from "@/lib/analytics";
 import { TEXTO_CONSENTIMENTO_COMUNICACOES } from "@/lib/legal";
 import {
+  documentosEnergia,
   ehCasoAutoconsumo,
   ehContratacaoEnergia,
   FINANCIAMENTOS,
@@ -186,6 +187,7 @@ export function FormularioCaso({
   const solar = ehCasoAutoconsumo(sector, problemaTipo);
   const falhaEnergia = sector === "Energia" && problemaTipo === "Corte ou falha de serviço";
   const contratacaoEnergia = ehContratacaoEnergia(sector, problemaTipo);
+  const ajudaDocumentos = documentosEnergia(sector, problemaTipo);
 
   const [anexo, setAnexo] = useState<{
     caminho: string;
@@ -568,6 +570,14 @@ export function FormularioCaso({
             <p className="mb-4 text-[14px]" style={{ color: COR.inkMuted }}>
               {t.passo4.texto}
             </p>
+            {ajudaDocumentos && (
+              <p className="mb-4 text-[14px] leading-[1.5]" style={{ color: COR.inkMuted }}>
+                <strong className="font-semibold" style={{ color: COR.ink }}>
+                  {t.passo4.documentosEnergia.titulo}
+                </strong>{" "}
+                {t.passo4.documentosEnergia[ajudaDocumentos]}
+              </p>
+            )}
 
             {!anexo && (
               <button

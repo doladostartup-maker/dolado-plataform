@@ -22,7 +22,11 @@ import {
   ehContratacaoEnergia,
   PROBLEMAS_CONTRATACAO_ENERGIA,
   lerDetalhesCaso,
+  documentosEnergia,
+  DOCUMENTOS_ENERGIA_POR_PROBLEMA,
 } from "./pedidoCaso.ts";
+import { tratarCaso as tratarCasoPt } from "../i18n/mensagens/pt-PT/tratarCaso.ts";
+import { tratarCaso as tratarCasoEn } from "../i18n/mensagens/en-GB/tratarCaso.ts";
 import { calcularAcesso } from "./acesso.ts";
 
 const A = "00000000-0000-4000-a000-00000000000a";
@@ -405,5 +409,33 @@ describe("nome e telemóvel já conhecidos (contactoConhecido)", () => {
     assert.match(pagina, /\.from\("utilizadores"\)\.select\("nome"\)\.eq\("id", userId\)/);
     assert.match(pagina, /\.from\("casos"\)[^;]*\.eq\("utilizador_id", userId\)/);
     assert.match(pagina, /\.from\("pedidos_caso"\)[^;]*\.eq\("user_id", userId\)/);
+  });
+});
+
+describe("documentos por tipo de problema — Energia e Gás (pergunta 4)", () => {
+  test("só Energia e Gás, só os tipos da tabela; o resto fica com o texto geral", () => {
+    assert.equal(documentosEnergia("Energia", "Factura alta, estimativa ou acerto"), "factura_acerto");
+    assert.equal(documentosEnergia("Gás", "Cobrança após cancelamento"), "apos_cancelamento");
+    assert.equal(documentosEnergia("Energia", "Mudança de comercializador"), "contratacao");
+    assert.equal(documentosEnergia("Gás", "Contrato ou condições que não aceitei"), "contratacao");
+    assert.equal(documentosEnergia("Telecomunicações", "Cobrança indevida"), null);
+    assert.equal(documentosEnergia("Ginásios", "Cobrança após cancelamento"), null);
+    for (const p of ["Aumento de mensalidade", "Tarifa social", "Outro", ...PROBLEMAS_AUTOCONSUMO]) assert.equal(documentosEnergia("Energia", p), null, p);
+    assert.equal(documentosEnergia("Energia", ""), null);
+    assert.equal(documentosEnergia(null, "Cobrança indevida"), null);
+  });
+
+  test("cada tipo mapeado existe em Energia e Gás", () => {
+    for (const p of Object.keys(DOCUMENTOS_ENERGIA_POR_PROBLEMA)) {
+      assert.ok(problemaValidoParaSetor("Energia", p), p);
+      assert.ok(problemaValidoParaSetor("Gás", p), p);
+    }
+  });
+
+  test("cada orientação tem texto nas duas línguas", () => {
+    for (const chave of new Set(Object.values(DOCUMENTOS_ENERGIA_POR_PROBLEMA))) {
+      assert.ok(tratarCasoPt.formulario.passo4.documentosEnergia[chave], `pt ${chave}`);
+      assert.ok(tratarCasoEn.formulario.passo4.documentosEnergia[chave], `en ${chave}`);
+    }
   });
 });

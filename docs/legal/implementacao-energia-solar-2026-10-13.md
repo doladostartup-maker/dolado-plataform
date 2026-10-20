@@ -66,6 +66,8 @@ Fontes: versões consolidadas da PGDL (DL 84/2021 — sem alterações; DL 24/20
 
 ## 5. Antes de ativar (Thiago + advogada)
 
+**Validado (20/10/2026):** Thiago confirmou que os cinco pontos desta secção estão validados. Nada muda nas regras, na selecção nem nos textos legais; `ENE_SERVICOS_ADICIONAIS_17` fica como está.
+
 1. ~~Rever e ativar as 17 regras~~ — ativadas por Thiago a 13/10/2026. A advogada deve ainda rever o texto, as condições e as datas; alterar o conteúdo de uma regra retira a revisão e desativa-a até nova data de revisão.
 2. Confirmar a qualificação "fornecimento e instalação" como empreitada de consumo com o DL 84/2021 aplicável (auditoria, H.6(a)).
 3. Confirmar a norma transitória do DL 130/2026 e o limiar anterior.
