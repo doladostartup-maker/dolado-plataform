@@ -1,6 +1,7 @@
 import { ESTADOS_CASO, estadoCaso } from "@/lib/backoffice/triagem";
 import {
   ehCasoAutoconsumo,
+  ehContratacaoEnergia,
   FINANCIAMENTOS,
   FORMAS_CONTRATACAO,
   lerDetalhesCaso,
@@ -45,7 +46,8 @@ type CasoFormValues = {
   detalhes_caso?: unknown;
 };
 
-// Respostas adicionais dos casos de painéis solares (rótulos internos).
+// Respostas adicionais (painéis solares; forma de contratação também na
+// contratação de Energia/Gás) — rótulos internos.
 const ROTULOS_FORMA: Record<string, string> = {
   estabelecimento: "No estabelecimento da empresa",
   domicilio: "No domicílio do cliente (vendedor em casa)",
@@ -120,6 +122,26 @@ function CamposSolares({ detalhes }: { detalhes: unknown }) {
   );
 }
 
+// Contratação de Energia/Gás: só a forma de contratação (decide se a IA pode
+// considerar as regras do DL 24/2014).
+function CampoFormaContratacao({ detalhes }: { detalhes: unknown }) {
+  const d = lerDetalhesCaso(detalhes);
+  return (
+    <Campo
+      label="Forma de contratação"
+      ajuda="Resposta do cliente. Decide se a IA pode considerar a contratação à distância, por telefone ou fora do estabelecimento (DL 24/2014)."
+    >
+      <select name="forma_contratacao" defaultValue={d?.forma_contratacao ?? "nao_sei"} className={CAMPO}>
+        {FORMAS_CONTRATACAO.map((o) => (
+          <option key={o} value={o}>
+            {ROTULOS_FORMA[o]}
+          </option>
+        ))}
+      </select>
+    </Campo>
+  );
+}
+
 export function CasoForm({
   action,
   valores = {},
@@ -181,6 +203,7 @@ export function CasoForm({
           <input name="tipo_problema" defaultValue={valores.tipo_problema ?? ""} className={CAMPO} />
         </Campo>
         {ehCasoAutoconsumo(valores.sector, valores.problema_tipo) && <CamposSolares detalhes={valores.detalhes_caso} />}
+        {ehContratacaoEnergia(valores.sector, valores.problema_tipo) && <CampoFormaContratacao detalhes={valores.detalhes_caso} />}
         <Campo label="Já reclamou junto da empresa?">
           <select name="momento_cliente" defaultValue={valores.momento_cliente ?? ""} className={CAMPO}>
             <option value="">Sem resposta</option>

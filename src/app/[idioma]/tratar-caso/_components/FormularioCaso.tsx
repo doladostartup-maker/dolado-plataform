@@ -14,6 +14,7 @@ import { track } from "@/lib/analytics";
 import { TEXTO_CONSENTIMENTO_COMUNICACOES } from "@/lib/legal";
 import {
   ehCasoAutoconsumo,
+  ehContratacaoEnergia,
   FINANCIAMENTOS,
   FORMAS_CONTRATACAO,
   MOMENTOS,
@@ -177,12 +178,14 @@ export function FormularioCaso({
   const [problemaTipo, setProblemaTipo] = useState(inicial?.problemaTipo ?? "");
   const [descricao, setDescricao] = useState("");
   const [momentoCliente, setMomentoCliente] = useState(inicial?.momentoCliente ?? "");
-  // Painéis solares (só quando o problema escolhido é de Autoconsumo).
+  // Painéis solares (só quando o problema escolhido é de Autoconsumo) e, só a
+  // forma de contratação, os tipos de contratação de Energia e Gás.
   const [formaContratacao, setFormaContratacao] = useState("");
   const [financiamento, setFinanciamento] = useState("");
   const [tipoContratoSolar, setTipoContratoSolar] = useState("");
   const solar = ehCasoAutoconsumo(sector, problemaTipo);
   const falhaEnergia = sector === "Energia" && problemaTipo === "Corte ou falha de serviço";
+  const contratacaoEnergia = ehContratacaoEnergia(sector, problemaTipo);
 
   const [anexo, setAnexo] = useState<{
     caminho: string;
@@ -271,6 +274,7 @@ export function FormularioCaso({
     const e: ErrosPasso = {};
     if (!problemaTipo) e.problemaTipo = t.erros.problema;
     if (solar && (!formaContratacao || !financiamento || !tipoContratoSolar)) e.solar = t.passo2.solar.erro;
+    if (contratacaoEnergia && !formaContratacao) e.solar = t.passo2.contratacao.erro;
     if (Object.keys(e).length) return setErros(e);
     irPara(3);
   }
@@ -382,6 +386,7 @@ export function FormularioCaso({
             <input type="hidden" name="tipo_contrato_solar" value={tipoContratoSolar} />
           </>
         )}
+        {contratacaoEnergia && <input type="hidden" name="forma_contratacao" value={formaContratacao} />}
         <input type="hidden" name="origem" value={origem} />
         {anexo && (
           <>
@@ -465,6 +470,32 @@ export function FormularioCaso({
                   valor={tipoContratoSolar}
                   escolher={setTipoContratoSolar}
                 />
+                {erros.solar && (
+                  <p className="text-[13px]" style={{ color: COR.erro }}>
+                    {erros.solar}
+                  </p>
+                )}
+              </div>
+            )}
+            {contratacaoEnergia && (
+              <div className="mb-5 mt-4 rounded-[14px] border p-4" style={{ borderColor: COR.hairline, backgroundColor: COR.surfaceSunken }}>
+                <p className="text-[16px] font-bold" style={{ color: COR.ink }}>
+                  {t.passo2.contratacao.titulo}
+                </p>
+                <p className="mb-4 text-[14px]" style={{ color: COR.inkMuted }}>
+                  {t.passo2.contratacao.texto}
+                </p>
+                <PerguntaEscolha
+                  titulo={t.passo2.contratacao.forma}
+                  opcoes={FORMAS_CONTRATACAO.map((v) => ({ valor: v, label: rotulo(idioma, "formaContratacao", v) }))}
+                  valor={formaContratacao}
+                  escolher={setFormaContratacao}
+                />
+                {formaContratacao === "distancia" && (
+                  <p className="text-[13px] leading-[1.5]" style={{ color: COR.inkMuted }}>
+                    {t.passo2.contratacao.telefone}
+                  </p>
+                )}
                 {erros.solar && (
                   <p className="text-[13px]" style={{ color: COR.erro }}>
                     {erros.solar}

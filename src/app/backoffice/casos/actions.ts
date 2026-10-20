@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { CAMPOS_DETALHES, ehCasoAutoconsumo, lerDetalhesCaso, problemaValidoParaSetor } from "@/lib/pedidoCaso";
+import { camposDetalhes, problemaValidoParaSetor, respostaDetalheValida } from "@/lib/pedidoCaso";
 
 function parseCasoFormData(formData: FormData) {
   const valorIndicado = formData.get("valor_indicado") as string;
@@ -13,11 +13,18 @@ function parseCasoFormData(formData: FormData) {
   const primeiraRespostaEm = formData.get("primeira_resposta_em") as string;
   const sector = (formData.get("sector") as string) || null;
   const problemaTipo = (formData.get("problema_tipo") as string) || null;
-  // Painéis solares: as respostas do cliente podem ser corrigidas aqui
-  // (decidem que regras jurídicas a IA pode considerar). Outros casos: null.
-  const detalhes = ehCasoAutoconsumo(sector, problemaTipo)
-    ? (lerDetalhesCaso(Object.fromEntries(CAMPOS_DETALHES.map((c) => [c, formData.get(c)]))) ??
-      { forma_contratacao: "nao_sei", financiamento: "nao_sei", tipo_contrato_solar: "nao_sei" })
+  // Respostas adicionais (painéis solares; forma de contratação na
+  // contratação de Energia/Gás): podem ser corrigidas aqui — decidem que
+  // regras jurídicas a IA pode considerar. Só as do tipo de caso; valor
+  // inválido ou em falta → "nao_sei". Outros casos: null.
+  const campos = camposDetalhes(sector, problemaTipo);
+  const detalhes = campos.length
+    ? Object.fromEntries(
+        campos.map((c) => {
+          const v = formData.get(c);
+          return [c, respostaDetalheValida(c, v) ? v : "nao_sei"];
+        }),
+      )
     : null;
 
   return {
