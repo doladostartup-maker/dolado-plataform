@@ -50,6 +50,7 @@ export const comum: Traducao<typeof pt> = {
     transparencia: "Transparency",
     ajuda: "Frequently asked questions",
     empresas: "For businesses",
+    parceiros: "Partner programme",
     contacto: "Contact",
     termos: "Terms and Conditions",
     privacidade: "Privacy Policy",

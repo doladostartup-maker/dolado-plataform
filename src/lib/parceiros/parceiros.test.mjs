@@ -25,6 +25,7 @@ import {
   montarEmailCandidaturaAprovada,
   montarEmailCandidaturaRecebida,
   montarEmailPagamentoComissoes,
+  montarEmailPrimeiroContacto,
 } from "../email/parceiros.ts";
 import { TEXTO_ACEITACAO_CANDIDATURA_PARCEIROS } from "../legal.ts";
 import { parceiros as pt } from "../../i18n/mensagens/pt-PT/parceiros.ts";
@@ -122,6 +123,20 @@ describe("faturas, reembolsos e IVA", () => {
 });
 
 describe("e-mails", () => {
+  test("primeiro contacto: mensagem opcional antes do aviso do art. 14.º, com origem, oposição e escape", () => {
+    const e = montarEmailPrimeiroContacto({ parceiro: "Imobiliária <Teste>", entidade: "Empresa X", mensagem: "Bom dia,\n\nGostaríamos de apresentar a DoLado." });
+    assert.ok(e.texto.indexOf("Gostaríamos de apresentar") < e.texto.indexOf("Escrevemos-lhe porque"));
+    assert.match(e.texto, /um parceiro da DoLado, Imobiliária <Teste>, nos indicou/);
+    assert.match(e.texto, /Empresa X/);
+    assert.match(e.texto, /privacidade@dolado\.pt/);
+    assert.match(e.texto, /alínea f\)/);
+    assert.match(e.texto, /www\.cnpd\.pt/);
+    assert.match(e.html, /Imobiliária &lt;Teste&gt;/);
+    assert.doesNotMatch(e.html, /<Teste>/);
+    const sem = montarEmailPrimeiroContacto({ parceiro: "P", entidade: "E", mensagem: null });
+    assert.match(sem.texto, /^Olá,\n\nEscrevemos-lhe porque/);
+  });
+
   test("candidatura recebida: prazo de 2 dias úteis, nos dois idiomas", () => {
     assert.match(montarEmailCandidaturaRecebida("pt-PT").texto, /no prazo máximo de 2 dias úteis/);
     assert.match(montarEmailCandidaturaRecebida("en-GB").texto, /within 2 working days/);
@@ -155,10 +170,20 @@ describe("e-mails", () => {
 describe("integração (estática)", () => {
   const ler = (c) => readFileSync(new URL(c, import.meta.url), "utf8");
 
-  test("/parceiros fora do índice e só com o programa ligado", () => {
+  test("/parceiros indexável, no rodapé só com o programa ligado", () => {
     const pagina = ler("../../app/[idioma]/parceiros/page.tsx");
-    assert.match(pagina, /robots: \{ index: false, follow: true \}/);
+    assert.doesNotMatch(pagina, /index: false/);
     assert.match(pagina, /parceirosAtivos\(\)/);
+    assert.match(ler("../../components/marketing-v2/FooterV2.tsx"), /l\.href !== ROTAS_V2\.parceiros \|\| parceirosAtivos\(\)/);
+  });
+
+  test("primeiro contacto B2B: aviso só depois do admin, prova só depois da Brevo, um por oportunidade", () => {
+    const acoes = ler("../../app/backoffice/parceiros/actions.ts");
+    const corpo = acoes.slice(acoes.indexOf("export async function avisarPrimeiroContacto"), acoes.indexOf("export async function marcarOportunidadeGanha"));
+    assert.ok(corpo.indexOf("requireAdmin()") < corpo.indexOf("createAdminClient()"));
+    assert.ok(corpo.indexOf("enviarEmailBrevo(") < corpo.indexOf('.from("parceiros_oportunidades_avisos").insert'));
+    assert.match(corpo, /já foi avisado/);
+    assert.match(corpo, /AVISO_PRIMEIRO_CONTACTO_VERSAO/);
   });
 
   test("o cliente indicado por um parceiro nunca recebe desconto (a atribuição de parceiro não passa por indicacoes)", () => {

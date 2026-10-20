@@ -3,6 +3,7 @@ import { textos } from "@/i18n/servidor";
 import { tComum } from "@/i18n/mensagens/comum";
 import { LIVRO_RECLAMACOES_URL, ROTAS_LEGAIS } from "@/lib/legal";
 import { ENTIDADE_LEGAL, NIPC } from "@/lib/site";
+import { parceirosAtivos } from "@/lib/parceiros/regras";
 import { DefinicoesCookies } from "./DefinicoesCookies";
 import { Logotipo } from "./Logotipo";
 import { ROTAS_V2 } from "./rotas";
@@ -37,6 +38,7 @@ const COLUNAS_RODAPE: { titulo: ChaveRodape; links: { href: string; label: Chave
     links: [
       { href: ROTAS_V2.sobreNos, label: "sobreNos" },
       { href: ROTAS_V2.empresas, label: "empresas" },
+      { href: ROTAS_V2.parceiros, label: "parceiros" },
       { href: ROTAS_V2.transparencia, label: "transparencia" },
     ],
   },
@@ -69,7 +71,7 @@ export async function FooterV2() {
           <div key={c.titulo}>
             <p className="mb-4 text-[13px] font-bold uppercase tracking-[0.08em] text-[var(--v2-navy)]">{t[c.titulo]}</p>
             <ul className="space-y-3">
-              {c.links.map((l) => (
+              {c.links.filter((l) => l.href !== ROTAS_V2.parceiros || parceirosAtivos()).map((l) => (
                 <li key={l.label}>
                   {l.externo ? (
                     <a href={l.href} target="_blank" rel="noopener noreferrer" className="text-[14px] text-[var(--v2-muted)] hover:text-[var(--v2-green)]">

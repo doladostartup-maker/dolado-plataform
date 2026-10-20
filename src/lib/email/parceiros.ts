@@ -5,6 +5,7 @@
 // contagens e valores das comissões. O aviso interno ao admin é só em
 // português (backoffice) e sem o texto livre da candidatura.
 import { CONTACTO_EMAIL } from "../site.ts";
+import { textoAvisoPrimeiroContacto } from "../legal.ts";
 import { formatarPreco } from "../planos.ts";
 import { LIGACAO_EMAIL, P_EMAIL, P_NOTA, emailV2 } from "./molduraEmail.ts";
 import { escaparHtml } from "./textoRevisao.ts";
@@ -79,6 +80,21 @@ export function montarEmailPagamentoComissoes(d: {
   ];
   const extraHtml = `<p ${P_EMAIL}>${linhas.map(([r, v]) => `${escaparHtml(r)}: <strong>${escaparHtml(v)}</strong>`).join("<br>")}</p>`;
   return montar(d.idioma, t.assunto, t.titulo, [t.texto(d.comissoes)], extraHtml, [...linhas.map(([r, v]) => `${r}: ${v}`), ""]);
+}
+
+/**
+ * Primeiro contacto a uma pessoa indicada por um parceiro (oportunidade B2B):
+ * a mensagem opcional escrita no backoffice e, sempre, o aviso do art. 14.º
+ * (texto versionado em legal.ts). Só em português. O `texto` devolvido é o
+ * que fica gravado como prova.
+ */
+export function montarEmailPrimeiroContacto(d: { parceiro: string; entidade: string; mensagem?: string | null }): EmailMontado {
+  const aviso = textoAvisoPrimeiroContacto({ parceiro: d.parceiro, entidade: d.entidade });
+  const mensagem = (d.mensagem ?? "")
+    .split(/\n\s*\n/)
+    .map((p) => p.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  return montar("pt-PT", aviso.assunto, "O seu contacto na DoLado", [...mensagem, ...aviso.paragrafos]);
 }
 
 /** Aviso interno (português, sem o texto livre da candidatura). */

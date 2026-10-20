@@ -148,7 +148,7 @@ Ainda em aberto:
 
 ## 9. Pendências (actualizado a 20/10/2026)
 
-Estado: **em produção** desde 20/10/2026 (PR [#147](https://github.com/doladostartup-maker/dolado-plataform/pull/147) merged, migration aplicada, interruptores ligados). Por fazer: itens 3 e 5, o campo `contacto` das oportunidades B2B (aviso do art. 14.º manual, ou botão de primeiro contacto, ou retirar o campo) e decidir se `/parceiros` passa a indexável.
+Estado: **em produção** desde 20/10/2026 (PR [#147](https://github.com/doladostartup-maker/dolado-plataform/pull/147) merged, migration aplicada, interruptores ligados). Por fazer: item 3. Feito a 20/10/2026 (decisões de Thiago): botão "Avisar primeiro contacto" nas oportunidades B2B (aviso do art. 14.º com prova em `parceiros_oportunidades_avisos`; texto por validar pela advogada) e `/parceiros` indexável (sitemap e rodapé).
 
 1. ~~Esclarecer o que a advogada aprovou~~ → **as regras do programa** (Thiago, 20/10/2026).
 2. **PR 4 — documentos legais:** ✅ redigidos a 20/10/2026 — Termos `2026-10-20` e Política `2026-10-20` (`TERMOS_VERSAO`/`PRIVACIDADE_VERSAO` já sobem neste ramo); texto validado pela advogada (Thiago, 20/10/2026). **Migration aplicada em produção a 20/10/2026** (`db push`). As condições comerciais ficam no contrato-tipo. Lista original:
@@ -158,4 +158,4 @@ Estado: **em produção** desde 20/10/2026 (PR [#147](https://github.com/dolados
    - Contratos-tipo de Indicação e Distribuição (fora do código).
 3. **Fora do código (Thiago):** retenção na fonte de parceiros pessoa singular (contabilista); declaração do `dolado_indicacao` no Cookiebot a incluir parceiros; alinhar `/empresas` com `/parceiros`.
 4. ✅ **Produção** (feito a 20/10/2026): `supabase db push --linked --dry-run` e depois `db push` da migration **antes** do merge; push do ramo e PR no GitHub (o CI corre `test:contrato` e `supabase test db`); depois dos textos aprovados, `PARCEIROS_ATIVO=1`, `ACESSOS_PATROCINADOS_ATIVO=1` e `PARCEIROS_CHAVE` (≥ 32 caracteres) na Clever Cloud; decidir se `/parceiros` passa a indexável.
-5. **Limpeza local:** configuração `parceiros-local` no `.claude/launch.json` da pasta principal (porta 3007) e contas de teste locais `parceiros-admin@teste.invalid`, `parceiros-benef@teste.invalid`, `cliente-parceiro@teste.invalid` (só na Supabase local).
+5. ✅ **Limpeza local** (20/10/2026): configuração `parceiros-local` removida do `.claude/launch.json`, worktree `.claude/worktrees/parceiros` removido; as contas de teste locais já não existiam.

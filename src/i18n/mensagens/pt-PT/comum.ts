@@ -52,6 +52,7 @@ export const comum = {
     transparencia: "Transparência",
     ajuda: "Perguntas frequentes",
     empresas: "Para empresas",
+    parceiros: "Programa de Parceiros",
     contacto: "Contacto",
     termos: "Termos e Condições",
     privacidade: "Política de Privacidade",

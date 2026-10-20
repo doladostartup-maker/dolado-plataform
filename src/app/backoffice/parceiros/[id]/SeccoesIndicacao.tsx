@@ -5,6 +5,7 @@ import {
   alternarCodigoParceiro,
   aprovarComissoes,
   atualizarOportunidade,
+  avisarPrimeiroContacto,
   cancelarComissao,
   criarOportunidade,
   marcarOportunidadeGanha,
@@ -73,11 +74,14 @@ type Oportunidade = {
   valor_contratual_cents: number | null;
   prorrogacao_motivo: string | null;
   parceiros_oportunidades_receitas: { tipo: string; valor_sem_iva_cents: number; recebido_em: string }[];
+  parceiros_oportunidades_avisos: { destinatario_email: string; enviado_em: string }[];
 };
 
 const dataHora = (iso: string) => new Date(iso).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon" });
 const hojeLisboa = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Lisbon" });
 const instante = () => Date.now();
+// Primeiro e-mail escrito no contacto livre, para pré-preencher o aviso.
+const emailNoContacto = (contacto: string | null) => contacto?.match(/[^@\s<>(),;]+@[^@\s<>(),;]+\.[^@\s<>(),;]+/)?.[0] ?? "";
 const PRODUTOS: Record<string, string> = { protecao: "Protecção", caso_protecao: "Caso + Protecção" };
 
 export async function SeccoesIndicacao({ parceiroId }: { parceiroId: string }) {
@@ -91,7 +95,7 @@ export async function SeccoesIndicacao({ parceiroId }: { parceiroId: string }) {
       admin.from("parceiros_pagamentos").select("*").eq("parceiro_id", parceiroId).order("pago_em", { ascending: false }),
       admin
         .from("parceiros_oportunidades")
-        .select("*, parceiros_oportunidades_receitas(tipo, valor_sem_iva_cents, recebido_em)")
+        .select("*, parceiros_oportunidades_receitas(tipo, valor_sem_iva_cents, recebido_em), parceiros_oportunidades_avisos(destinatario_email, enviado_em)")
         .eq("parceiro_id", parceiroId)
         .order("created_at", { ascending: false }),
     ]);
@@ -294,6 +298,7 @@ export async function SeccoesIndicacao({ parceiroId }: { parceiroId: string }) {
         {((oportunidades ?? []) as Oportunidade[]).map((o) => {
           const recebido = o.parceiros_oportunidades_receitas.reduce((n, r) => n + (r.tipo === "reembolso" ? -1 : 1) * r.valor_sem_iva_cents, 0);
           const final = o.estado === "ganha" || o.estado === "perdida";
+          const aviso = o.parceiros_oportunidades_avisos[0] ?? null;
           return (
             <div key={o.id} className={`${PAINEL} ${PAINEL_CORPO} flex flex-col gap-3`}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -304,6 +309,23 @@ export async function SeccoesIndicacao({ parceiroId }: { parceiroId: string }) {
                 </span>
               </div>
               {o.contacto && <p className={TEXTO_SECUNDARIO}>{o.contacto}</p>}
+              {aviso ? (
+                <p className={METADADOS}>
+                  Primeiro contacto avisado a {dataHora(aviso.enviado_em)} ({aviso.destinatario_email})
+                </p>
+              ) : (
+                o.contacto && (
+                  <form action={avisarPrimeiroContacto.bind(null, parceiroId, o.id)} className="grid gap-2 border-t border-[var(--v2-line)] pt-3 sm:grid-cols-3">
+                    <p className={`${TITULO_BLOCO} sm:col-span-3`}>Primeiro contacto</p>
+                    <p className={`${TEXTO_SECUNDARIO} sm:col-span-3`}>
+                      Contacto indicado pelo parceiro: antes de o usar, envie o aviso (origem dos dados e como se pode opor). Pode juntar uma mensagem; o aviso segue sempre a seguir.
+                    </p>
+                    <label className={ROTULO}>E-mail do contacto<input type="email" name="email" required maxLength={254} defaultValue={emailNoContacto(o.contacto)} className={CAMPO} /></label>
+                    <label className={`${ROTULO} sm:col-span-2`}>Mensagem (opcional)<textarea name="mensagem" maxLength={2000} rows={3} className={CAMPO} /></label>
+                    <div className="sm:col-span-3"><BotaoSubmeter className={`${BOTAO_SECUNDARIO} ${BOTAO_PEQUENO}`}>Avisar primeiro contacto</BotaoSubmeter></div>
+                  </form>
+                )
+              )}
               {o.estado === "ganha" && (
                 <p className={METADADOS}>
                   {o.modo === "venda_ativa" ? "Venda activa" : "Indicada"} · {o.percentagem} % · contrato desde {o.contrato_inicio}

@@ -9,6 +9,7 @@ export const ROTAS_V2 = {
   transparencia: "/transparencia",
   contacto: "/contacto",
   empresas: "/empresas",
+  parceiros: "/parceiros",
   problemas: "/problemas",
   protecao: "/protecao",
   calculadora: "/calculadora-cancelamento",

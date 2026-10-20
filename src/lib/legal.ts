@@ -16,7 +16,7 @@
 
 // Extensão .ts explícita: o módulo é importado diretamente por `node --test`.
 import type { PlanoId } from "./planos.ts";
-import { CONTACTO_EMAIL, ENTIDADE_LEGAL, MORADA_SEDE } from "./site.ts";
+import { CONTACTO_EMAIL, ENTIDADE_LEGAL, MARKETING_SITE_URL, MORADA_SEDE, NIPC, PRIVACIDADE_EMAIL } from "./site.ts";
 
 // Identificador de versão = data AAAA-MM-DD; uma segunda versão publicada no
 // mesmo dia leva um sufixo de letra ("2026-10-01b").
@@ -54,6 +54,30 @@ export const TEXTO_CONSENTIMENTO_COMUNICACOES =
  */
 export const CONSENTIMENTO_COMUNICACOES_GUIA_VERSAO = "2026-10-22";
 export const TEXTO_CONSENTIMENTO_COMUNICACOES_GUIA = "Quero receber dicas, novidades e comunicações da DoLado por e-mail.";
+
+/**
+ * Aviso do artigo 14.º do RGPD enviado no primeiro contacto a uma pessoa
+ * indicada por um parceiro (oportunidades B2B; Política 2026-10-20, secções
+ * 3 e 8). Só em português (contacto comercial em Portugal). O texto exacto e
+ * a versão ficam gravados em parceiros_oportunidades_avisos. Mudar o texto =
+ * nova versão. Texto por validar pela advogada (pendencias-juridicas.md).
+ */
+export const AVISO_PRIMEIRO_CONTACTO_VERSAO = "2026-10-20";
+
+export function textoAvisoPrimeiroContacto(d: { parceiro: string; entidade: string }) {
+  return {
+    assunto: "O seu contacto foi indicado à DoLado por um parceiro",
+    paragrafos: [
+      `Escrevemos-lhe porque um parceiro da DoLado, ${d.parceiro}, nos indicou o seu contacto profissional como pessoa a contactar na ${d.entidade} sobre os serviços da DoLado para empresas.`,
+      `Quem trata os seus dados: ${ENTIDADE_LEGAL} (DoLado), NIPC ${NIPC}, ${MORADA_SEDE}.`,
+      "Que dados temos: o contacto profissional que nos foi indicado (por exemplo, nome, e-mail ou telefone) e a empresa onde trabalha.",
+      "Para quê e com que fundamento: apenas para dar seguimento a esta oportunidade comercial entre empresas, com base no interesse legítimo da DoLado (artigo 6.º, n.º 1, alínea f), do Regulamento Geral sobre a Protecção de Dados).",
+      "Por quanto tempo: enquanto a oportunidade estiver em curso e, depois, apenas enquanto for necessário para calcular e pagar a comissão do parceiro e para declarar, exercer ou defender direitos.",
+      `Se não quiser ser contactado, basta responder a este e-mail ou escrever para ${PRIVACIDADE_EMAIL}: deixamos de usar o seu contacto.`,
+      `Pode também pedir o acesso, a rectificação, o apagamento ou a limitação dos seus dados, pelo mesmo endereço, e apresentar reclamação à Comissão Nacional de Protecção de Dados (www.cnpd.pt). Mais informação na Política de Privacidade: ${MARKETING_SITE_URL}/privacidade.`,
+    ],
+  };
+}
 
 export const ROTAS_LEGAIS = {
   termos: "/termos",
