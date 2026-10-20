@@ -1,6 +1,6 @@
 # Programa de Parceiros — Fase 1: auditoria e arquitectura
 
-Estado (20/10/2026): **arquitectura aprovada; PR 1 (base de dados) e PR 2 (acesso patrocinado) feitos** — migration `20261021090000_programa_parceiros.sql`, testes `supabase/tests/database/programa_parceiros.test.sql` (113 verificações). PRs 3–4 por fazer.
+Estado (20/10/2026): **arquitectura aprovada; PR 1 (base de dados), PR 2 (acesso patrocinado) e PR 3 (Parceiro de Indicação) feitos** — migration `20261021090000_programa_parceiros.sql`, testes `supabase/tests/database/programa_parceiros.test.sql` (113 verificações). PR 4 (documentos legais e ligação em produção) por fazer.
 Origem: prompt "Programa de Parceiros DoLado" (Parceiro de Indicação + Parceiro de Distribuição).
 
 ---
@@ -111,7 +111,7 @@ Ainda em aberto:
 
 1. ✅ Base de dados + testes pgTAP (parceiros, condições, códigos, atribuições, comissões, pacotes, acessos, `conta_tem_protecao`).
 2. ✅ Acesso patrocinado: activação `/ativar-codigo`, `calcularAcesso`, manutenção, e-mails, backoffice de pacotes/códigos/relatório.
-3. Parceiro de Indicação: `/parceiros` + candidatura, aprovação, `/r/` partilhado, webhook (faturas, comissões, reversões), backoffice de comissões e pagamentos, oportunidades B2B.
+3. ✅ Parceiro de Indicação: `/parceiros` + candidatura, aprovação, `/r/` partilhado, webhook (faturas, comissões, reversões), backoffice de comissões e pagamentos, oportunidades B2B.
 4. Documentos legais (depois da advogada) e ligação em produção por interruptor (`PARCEIROS_ATIVO=1`, desligado por omissão).
 
 ## 6. Notas de implementação (PR 1)
@@ -134,3 +134,28 @@ Ainda em aberto:
 - **Portal:** cartão `AcessoPatrocinadoPortal` no painel, em `/portal/subscricao` e em `/portal/contratos` (nome comercial do parceiro, datas, adesão voluntária). O código nunca vai no URL.
 - **Backoffice:** `/backoffice/parceiros` (lista, novo Parceiro de Distribuição) e `/backoffice/parceiros/[id]` (estado, pacotes, confirmar pagamento, emitir códigos com descarga CSV única, alterar prazo de activação, anular código pelos 4 últimos caracteres, relatório exacto + CSV para a empresa com "menos de 5", histórico).
 - **Verificado no browser (base local):** criar parceiro → activar → pacote de 50 → pagamento → 50 códigos (só hash na base de dados) → activação com código errado (recusada) e certo (minúsculas e espaços aceites) → Protecção activa sem linha em `user_access` → cartão e modal de adesão com a 1.ª cobrança no fim da oferta.
+
+## 8. Notas de implementação (PR 3 — Parceiro de Indicação)
+
+- **Interruptor:** `PARCEIROS_ATIVO=1` liga a página `/parceiros` (candidatura), as ligações `/r/<código>` de parceiros e o campo "Código de parceiro". Desligado por omissão — a Política em vigor não descreve as candidaturas nem a atribuição a parceiros. `/parceiros` fica `noindex`, fora do menu e do sitemap; desligado, leva a `/empresas`. `PARCEIROS_CHAVE` (opcional, ≥ 32 caracteres): HMAC do e-mail na chave do limite de candidaturas (sem ela, SHA-256 simples; apagada aos 2 dias).
+- **Regras sem I/O:** `src/lib/parceiros/regras.ts`; servidor `src/lib/parceiros/servidor.ts`; webhook `src/lib/parceiros/webhook.ts`; e-mails `src/lib/email/parceiros.ts`; textos `src/i18n/mensagens/{pt-PT,en-GB}/parceiros.ts`; aceitação da candidatura `TEXTO_ACEITACAO_CANDIDATURA_PARCEIROS` / `CANDIDATURA_PARCEIROS_VERSAO` (`src/lib/legal.ts`).
+- **Atribuição:** a visita de parceiro usa o mesmo cookie `dolado_indicacao` (só com consentimento de marketing), com o valor `p.<uuid>` — o programa de amigos nunca a lê. O código escrito no registo fica no metadado `codigo_parceiro` da conta. As duas chegam por `atribuirIndicacaoDoBrowser` (callback, modal, Checkout), que chama primeiro `atribuirParceiroDoBrowser` — também com o programa de amigos desligado. No modal `ConfirmarCompra`, o campo aparece só a contas sem nenhuma atribuição; `confirmarCompra` atribui antes do Checkout e só pára a compra com um código inexistente (ou do próprio parceiro).
+- **Webhook:** `deps.parceiros` sempre ligado (contas já atribuídas continuam a contar). `invoice.paid` → `parceiro_registar_fatura` (valor pago, IVA de `total_taxes`, descontos, PaymentIntent por `invoicePayments`); reembolso integral → recontagem, parcial → aviso; disputa → em validação; `customer.subscription.deleted` (só o fim definitivo, nunca `unpaid`) → comissão por elegível cancelada; comissão já paga → aviso ao admin, nada automático.
+- **Backoffice:** `/backoffice/parceiros` (visão geral, novo parceiro de indicação e/ou distribuição), `/backoffice/parceiros/candidaturas` (aprovar → parceiro activo, condições iniciais, código e e-mail; rejeitar com motivo) e, no detalhe, códigos/ligações, condições (novas versões), contas atribuídas (só contagens), comissões (validar, aprovar, cancelar), pagamentos (IVA e documento do parceiro opcionais, e-mail ao parceiro) e oportunidades B2B (estado, prorrogação com motivo, ganha com percentagem/autorização, receitas e recálculo).
+- **E-mails:** candidatura recebida (candidato), aviso ao admin (sem o texto livre), aprovação com código e ligação, pagamento registado (valores e referência). Nunca dados de clientes.
+- **Verificado no browser (base local):** candidatura em `/parceiros` → aprovação no backoffice (parceiro activo, 5 €/8 €/3 mensalidades, código) → registo com código inválido (recusado antes de criar a conta) e válido → atribuição ao abrir a compra → campo deixa de aparecer; modal com código inválido pára antes do Checkout.
+- **Não testado localmente:** a ligação `/r/` de parceiro (o endpoint só aceita pedidos de `dolado.pt` com o Cookiebot); coberto pela lógica partilhada com os amigos e pelos testes de `regras.ts`.
+
+## 9. Pendências para a próxima sessão (20/10/2026)
+
+Estado: ramo `feat/parceiros-base` (worktree `.claude/worktrees/parceiros`), PR 1–3 com commit, **sem push nem PR no GitHub**. A migration `20261021090000_programa_parceiros.sql` só está aplicada na base **local**.
+
+1. ~~Esclarecer o que a advogada aprovou~~ → **as regras do programa** (Thiago, 20/10/2026).
+2. **PR 4 — documentos legais:** ✅ redigidos a 20/10/2026 — Termos `2026-10-20` e Política `2026-10-20` (`TERMOS_VERSAO`/`PRIVACIDADE_VERSAO` já sobem neste ramo); falta a revisão do texto pela advogada (pontos em `docs/legal/pendencias-juridicas.md`). As condições comerciais ficam no contrato-tipo. Lista original:
+   - Política de Privacidade (`_versoes/vAAAA-MM-DD.tsx` + `index.ts` + `PRIVACIDADE_VERSAO`): candidaturas (dados, finalidade, retenção de 12 meses das rejeitadas), atribuição de clientes a parceiros (ligação `/r/` com consentimento e código escrito; nunca dados do cliente ao parceiro), acessos patrocinados (a empresa só recebe contagens, "menos de 5"), registos financeiros das comissões, `limites_tentativas` (2 dias).
+   - Termos (`TERMOS_VERSAO`): acesso patrocinado (meses de calendário, sem cobrança, fim automático, sem conversão automática, recusa a quem tem subscrição paga, conta como "já teve Protecção"); transparência de que alguns clientes chegam por parceiros com comissão.
+   - Condições do Programa de Parceiros (texto aceite na candidatura; comissões sem IVA, "acresce IVA à taxa legal em vigor, quando aplicável"; 3 mensalidades; reversões; pagamento manual; mínimo 25 €; sem rendimentos garantidos).
+   - Contratos-tipo de Indicação e Distribuição (fora do código).
+3. **Fora do código (Thiago):** retenção na fonte de parceiros pessoa singular (contabilista); declaração do `dolado_indicacao` no Cookiebot a incluir parceiros; alinhar `/empresas` com `/parceiros`.
+4. **Produção:** `supabase db push --linked --dry-run` e depois `db push` da migration **antes** do merge; push do ramo e PR no GitHub (o CI corre `test:contrato` e `supabase test db`); depois dos textos aprovados, `PARCEIROS_ATIVO=1`, `ACESSOS_PATROCINADOS_ATIVO=1` e `PARCEIROS_CHAVE` (≥ 32 caracteres) na Clever Cloud; decidir se `/parceiros` passa a indexável.
+5. **Limpeza local:** configuração `parceiros-local` no `.claude/launch.json` da pasta principal (porta 3007) e contas de teste locais `parceiros-admin@teste.invalid`, `parceiros-benef@teste.invalid`, `cliente-parceiro@teste.invalid` (só na Supabase local).
