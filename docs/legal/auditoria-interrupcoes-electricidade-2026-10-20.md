@@ -7,7 +7,8 @@ Migrations (aplicadas em produção a 20/10/2026 com `supabase db push --linked`
 
 - `20261020100000_energia_continuidade_servico.sql` — 4 regras do RQS;
 - `20261020110000_ativar_continuidade_corrigir_104.sql` — activação das 4 regras e correcção da `ENE_QUALIDADE_COMPENSACAO_104` (aprovadas por Thiago a 20/10/2026);
-- `20261020120000_energia_danos_responsabilidade_civil.sql` — 2 regras do Código Civil sobre danos, **inactivas, por rever**.
+- `20261020120000_energia_danos_responsabilidade_civil.sql` — 2 regras do Código Civil sobre danos;
+- `20261020130000_ativar_regras_danos_cc.sql` — activação das 2 regras de danos (aprovada por Thiago a 20/10/2026).
 
 ## Fontes verificadas
 
@@ -84,7 +85,7 @@ Continuidade de serviço (RQS) — **activas desde 20/10/2026** (revistas por Th
 | `ENE_CONTINUIDADE_RESP_CIVIL_10` | 10.º; 9.º, n.os 1 e 3 | Compensação ≠ indemnização; só com dano concreto; prova; sem concluir responsabilidade. |
 | `ENE_ASSISTENCIA_AVARIA_83` | 82.º a 84.º; 45.º, n.º 3 | Prazo de chegada após avaria (4 h / 2 h; 0h–8h), compensação, avaria na instalação do cliente, informação da causa e da hora de restabelecimento. |
 
-Danos em aparelhos e outros bens (Código Civil) — **inactivas, por rever**:
+Danos em aparelhos e outros bens (Código Civil) — **activas desde 20/10/2026** (revistas por Thiago Pereira):
 
 | Código | Artigos | Conteúdo |
 |---|---|---|
@@ -103,7 +104,7 @@ Danos em aparelhos e outros bens (Código Civil) — **inactivas, por rever**:
    - Se o art. 45.º obriga o operador a comunicar ao cliente os **valores** dos indicadores individuais da sua instalação (a regra só diz "pedir esclarecimento", não afirma esse direito).
    - Menção ao apagão de 28/04/2025 nas condições (facto divulgado pela ERSE; manter ou retirar).
    - Interrupções de 2025 com pedido de evento excepcional ainda pendente: o prazo de crédito é 70 dias após a última decisão da ERSE.
-3. **Danos em aparelhos** — carregadas `ENE_DANOS_INSTALACAO_CC_509` e `ENE_DANOS_CULPA_CC_798` (inactivas). Antes de activar, confirmar: o alcance do art. 509.º, n.º 3 (danos *causados por* utensílios ≠ danos *sofridos* pelos aparelhos); a quem dirigir o pedido (operador de rede pelo art. 509.º; comercializador pelo contrato, incluindo os actos de auxiliares do art. 800.º); os limites do art. 510.º (remetem para o art. 508.º, n.º 1). Ficou de fora o regime da responsabilidade do produtor (DL n.º 383/89): não confirmei se a electricidade é "produto" no direito português.
+3. **Danos em aparelhos** — `ENE_DANOS_INSTALACAO_CC_509` e `ENE_DANOS_CULPA_CC_798` activadas a 20/10/2026. Pontos que ficam para confirmação da advogada: o alcance do art. 509.º, n.º 3 (danos *causados por* utensílios ≠ danos *sofridos* pelos aparelhos); a quem dirigir o pedido (operador de rede pelo art. 509.º; comercializador pelo contrato, incluindo os actos de auxiliares do art. 800.º); os limites do art. 510.º (remetem para o art. 508.º, n.º 1). Ficou de fora o regime da responsabilidade do produtor (DL n.º 383/89): não confirmei se a electricidade é "produto" no direito português.
 4. **Qualidade da tensão** (art. 66.º — reclamações sobre a qualidade da energia, com compensação pelo art. 61.º, n.º 1, al. d)): não carregada nesta auditoria (fora do âmbito "interrupções"); candidata a uma próxima carga, a par da `GAS_RECLAM_CARACTERISTICAS_RQS_67`.
 
 ## D. Impacto nas páginas de problemas e no conteúdo público
@@ -142,6 +143,6 @@ Pesquisa feita nas rotas e componentes existentes (`src/lib/problemas/catalogo.t
 
 **Validado neste trabalho:** o regime do RQS (fonte oficial consolidada de 2026) e a sua tradução em 4 regras factuais; a selecção (as regras chegam só a Energia + "Corte ou falha de serviço", sem perder as de corte por dívida); o prompt e a validação; a ajuda no formulário; o conteúdo público (sem afirmações incorrectas).
 
-**Depende de revisão jurídica humana:** a activação das 2 regras de danos do Código Civil (pendente 3), a confirmação dos pontos do pendente 2 pela advogada e a qualidade da tensão (pendente 4).
+**Depende de revisão jurídica humana:** a confirmação pela advogada dos pontos dos pendentes 2 e 3 e a qualidade da tensão (pendente 4).
 
-Com as 4 regras activas (20/10/2026) e o deploy deste trabalho (limite de 18 e prompt v5), a DoLado fica preparada para distinguir interrupções que podem gerar compensação, as que não contam, a compensação que devia ter sido creditada e o pedido de esclarecimento. A indemnização por danos fica separada da compensação; o fundamento civil concreto (Código Civil) só chega à IA depois de activadas as 2 regras de danos.
+Com as 4 regras activas (20/10/2026) e o deploy deste trabalho (limite de 18 e prompt v5), a DoLado fica preparada para distinguir interrupções que podem gerar compensação, as que não contam, a compensação que devia ter sido creditada e o pedido de esclarecimento. A indemnização por danos fica separada da compensação, com o fundamento civil (Código Civil) já disponível para a IA.

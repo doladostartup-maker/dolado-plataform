@@ -5,8 +5,8 @@
 -- Prova que as 4 regras da continuidade de serviço (20261020100000) ficaram
 -- revistas e ativas por 20261020110000, no setor Energia e na categoria
 -- "Qualidade de serviço", com diploma, artigo e fonte oficial (ERSE), e que
--- as 2 de danos do Código Civil (20261020120000) entram inativas e não podem
--- ser ativadas sem data de revisão. A seleção com as regras reais está em
+-- as 2 de danos do Código Civil (20261020120000) ficaram revistas e ativas
+-- por 20261020130000. A seleção com as regras reais está em
 -- src/lib/rascunhoIA/continuidadeEnergia.test.mjs. Tudo numa transação
 -- revertida.
 
@@ -34,17 +34,17 @@ select is((select ativa from public.regras_juridicas where codigo = 'ENE_CONTINU
   'mudar o conteúdo sem nova revisão desativa a regra');
 rollback to savepoint conteudo;
 
--- Danos (Código Civil): inativas e por rever.
+-- Danos (Código Civil): revistas e ativas a 20/10/2026.
 create temporary table danos as
   select * from public.regras_juridicas where codigo in ('ENE_DANOS_INSTALACAO_CC_509', 'ENE_DANOS_CULPA_CC_798');
 select is((select count(*) from danos), 2::bigint, '2 regras de danos');
-select is((select count(*) from danos where ativa or revista_em is not null or revista_por is not null), 0::bigint,
-  'as de danos entram inativas e sem revisão');
+select is((select count(*) from danos where ativa and revista_em = '2026-10-20' and revista_por = 'Thiago Pereira'), 2::bigint,
+  'as de danos ficaram revistas e ativas a 20/10/2026');
 select is((select count(*) from danos where setor = 'Energia' and categoria = 'Qualidade de serviço'
            and diploma like 'Código Civil — Decreto-Lei n.º 47344/66%' and fonte_url like 'https://%'), 2::bigint,
   'Energia / Qualidade de serviço, Código Civil, com fonte');
-select throws_ok($$update public.regras_juridicas set ativa = true where codigo = 'ENE_DANOS_INSTALACAO_CC_509'$$,
-  '23514', null, 'não pode ser ativada sem data de revisão');
+select throws_ok($$update public.regras_juridicas set ativa = true, revista_em = null where codigo = 'ENE_DANOS_INSTALACAO_CC_509'$$,
+  '23514', null, 'uma regra ativa não pode ficar sem data de revisão');
 
 select * from finish();
 rollback;

@@ -253,6 +253,15 @@ describe("Danos em aparelhos e outros bens (Código Civil)", () => {
   });
 });
 
+describe("Migration de activação das regras de danos", () => {
+  test("activa exactamente as 2 regras do Código Civil, com data e revisor", () => {
+    const sql = readFileSync(new URL("../../../supabase/migrations/20261020130000_ativar_regras_danos_cc.sql", import.meta.url), "utf8");
+    const lista = sql.match(/v_codigos text\[\] := array\[([^\]]+)\]/)[1].match(/'([A-Z0-9_]+)'/g).map((c) => c.slice(1, -1));
+    assert.deepEqual(lista.sort(), [...CODIGOS_DANOS].sort());
+    assert.match(sql, /set ativa = true, revista_em = '2026-10-20', revista_por = 'Thiago Pereira'/);
+  });
+});
+
 describe("Migration de activação e correcção da 104.º", () => {
   const sql = readFileSync(new URL("../../../supabase/migrations/20261020110000_ativar_continuidade_corrigir_104.sql", import.meta.url), "utf8");
   test("activa exactamente as 4 regras da continuidade, com data e revisor", () => {
