@@ -1973,3 +1973,85 @@ describe("Caso Extra (subscritor do Caso + Protecção que já usou o caso do m�
     assert.equal(estado.emails[0].plano, "avulso");
   });
 });
+
+describe("Programa de Parceiros (comissões no webhook)", () => {
+  // Dependências falsas: guardam as chamadas; a decisão real (contagem,
+  // elegibilidade, reversões) é testada em programa_parceiros.test.sql.
+  function parceirosFalsos({ atribuida = true, pago = 499 } = {}) {
+    const chamadas = { faturas: [], reversoes: [], terminadas: [], avisos: [] };
+    return {
+      chamadas,
+      deps: {
+        temAtribuicao: async () => atribuida,
+        paymentIntentDaFatura: async (id) => `pi_${id}`,
+        registarFatura: async (d) => {
+          chamadas.faturas.push(d);
+          return { resultado: chamadas.faturas.length >= 3 ? "elegivel" : "pendente" };
+        },
+        reverterFatura: async (pi, motivo) => {
+          chamadas.reversoes.push({ pi, motivo });
+          return { resultado: pi === "pi_paga" ? "ja_paga" : motivo === "disputa" ? "em_validacao" : "pendente" };
+        },
+        valorPagoDoPagamento: async () => pago,
+        subscricaoTerminada: async (sub) => {
+          chamadas.terminadas.push(sub);
+          return "cancelada";
+        },
+        notificarAdmin: async (assunto) => chamadas.avisos.push(assunto),
+        registar: () => undefined,
+      },
+    };
+  }
+
+  test("mensalidades pagas de uma conta atribuída: produto, valor, IVA e PaymentIntent", async () => {
+    comConta();
+    estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
+    const p = parceirosFalsos();
+    deps.parceiros = p.deps;
+    for (const i of [1, 2, 3]) {
+      await processarEventoStripe(
+        evento("invoice.paid", fatura(`in_p${i}`, "subscription_cycle", { amount_paid: 499, total_taxes: [{ amount: 93 }] })),
+        deps,
+      );
+    }
+    assert.equal(p.chamadas.faturas.length, 3, JSON.stringify(estado.logs.slice(-3)));
+    assert.deepEqual(
+      { produto: p.chamadas.faturas[0].produto, valor: p.chamadas.faturas[0].valorPagoCents, iva: p.chamadas.faturas[0].ivaCents, pi: p.chamadas.faturas[0].paymentIntentId, user: p.chamadas.faturas[0].userId },
+      { produto: "protecao", valor: 499, iva: 93, pi: "pi_in_p1", user: USER },
+    );
+  });
+
+  test("fatura de 0 € (Protecção gratuita, cupão de 100 %) e conta sem atribuição: nada registado", async () => {
+    comConta();
+    estado.stripeSubscricao = snapshot("active", PRECO_PROTECAO);
+    const p = parceirosFalsos();
+    deps.parceiros = p.deps;
+    await processarEventoStripe(evento("invoice.paid", fatura("in_zero", "subscription_cycle", { amount_paid: 0 })), deps);
+    const sem = parceirosFalsos({ atribuida: false });
+    deps.parceiros = sem.deps;
+    await processarEventoStripe(evento("invoice.paid", fatura("in_sem", "subscription_cycle", { amount_paid: 499 })), deps);
+    assert.equal(p.chamadas.faturas.length + sem.chamadas.faturas.length, 0);
+  });
+
+  test("reembolso integral reverte; parcial só avisa; já paga avisa o admin", async () => {
+    const p = parceirosFalsos();
+    deps.parceiros = p.deps;
+    await processarEventoStripe(evento("refund.created", { id: "re_1", object: "refund", status: "succeeded", amount: 499, payment_intent: "pi_x" }), deps);
+    assert.deepEqual(p.chamadas.reversoes, [{ pi: "pi_x", motivo: "reembolso" }]);
+    await processarEventoStripe(evento("refund.created", { id: "re_2", object: "refund", status: "succeeded", amount: 100, payment_intent: "pi_y" }), deps);
+    assert.equal(p.chamadas.reversoes.length, 1, "parcial não reverte");
+    assert.equal(p.chamadas.avisos.length, 1);
+    await processarEventoStripe(evento("refund.created", { id: "re_3", object: "refund", status: "succeeded", amount: 499, payment_intent: "pi_paga" }), deps);
+    assert.equal(p.chamadas.avisos.length, 2, "comissão já paga: aviso ao admin, nada automático");
+  });
+
+  test("disputa: em validação; subscrição eliminada: comissão por elegível cancelada", async () => {
+    comConta({ subscription_plan: "protecao", subscription_status: "active", stripe_subscription_id: SUB });
+    const p = parceirosFalsos();
+    deps.parceiros = p.deps;
+    await processarEventoStripe(evento("charge.dispute.created", { id: "dp_1", object: "dispute", payment_intent: "pi_d" }), deps);
+    assert.deepEqual(p.chamadas.reversoes, [{ pi: "pi_d", motivo: "disputa" }]);
+    await processarEventoStripe(evento("customer.subscription.deleted", subscricao("canceled", PRECO_PROTECAO)), deps);
+    assert.deepEqual(p.chamadas.terminadas, [SUB]);
+  });
+});

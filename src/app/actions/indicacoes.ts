@@ -1,6 +1,7 @@
 "use server";
 
 import { utilizadorAtual } from "@/lib/auth";
+import { podeUsarCodigoParceiro } from "@/lib/parceiros/servidor";
 import { FLUXOS_COMPRA, type FluxoCompra } from "@/lib/consentimentoCompra";
 import { produtoComDescontoIndicacao, type TipoDescontoIndicacao } from "@/lib/indicacoes/regras";
 import { ofertaIndicacaoParaConta, visitaDeIndicacaoNoBrowser } from "@/lib/indicacoes/servidor";
@@ -15,6 +16,8 @@ export type OfertaIndicacaoCompra = {
   novoClienteIndicado: boolean;
   /** Chegou por um link de indicação mas compra sem conta: avisar que precisa de conta para os 20%. */
   semContaComIndicacao?: boolean;
+  /** Mostrar o campo "Código de parceiro" (com sessão, programa ligado e conta sem atribuição). */
+  codigoParceiro?: boolean;
 };
 
 /**
@@ -38,7 +41,10 @@ export async function ofertaIndicacaoNaCompra(
     }
     // Com sessão, a compra "pública" segue os fluxos da conta (confirmarCompra).
     const fluxoDaConta: FluxoCompra = fluxo === "publico" ? (plano === "avulso" ? "avulso_conta" : "adesao") : fluxo;
-    return await ofertaIndicacaoParaConta(user.id, { plano, fluxo: fluxoDaConta, conversao: !!conversao });
+    const oferta = await ofertaIndicacaoParaConta(user.id, { plano, fluxo: fluxoDaConta, conversao: !!conversao });
+    // Depois da atribuição pelo browser (feita acima): só sem nenhuma atribuição.
+    const codigoParceiro = fluxo !== "caso_extra" && !conversao && (await podeUsarCodigoParceiro(user.id).catch(() => false));
+    return { ...oferta, codigoParceiro };
   } catch {
     return nada; // sem desconto mostrado; o Checkout decide de novo
   }

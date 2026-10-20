@@ -1,6 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { atribuirCodigoParceiro } from "@/lib/parceiros/servidor";
+import { codigoBloqueiaCompra } from "@/lib/parceiros/regras";
+import { tParceiros } from "@/i18n/mensagens/parceiros";
 import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { obterAcesso, requireUser, utilizadorAtual } from "@/lib/auth";
@@ -34,6 +37,7 @@ import { pedidoDaConta } from "@/lib/pedidoCasoServidor";
 import { camposDesconto, prepararDescontoCheckout } from "@/lib/indicacoes/servidor";
 import { registarOrigemDaConta } from "@/lib/origemAquisicaoServidor";
 import { inicioCobrancaAdesao, trialEndStripe } from "@/lib/protecaoGratuita";
+import { periodoSemCusto } from "@/lib/acessoPatrocinado";
 import { LOCALE_STRIPE, localizarHref, type Idioma } from "@/i18n/config";
 import { tCompra } from "@/i18n/mensagens/compra";
 import { caminho, obterIdioma, textos } from "@/i18n/servidor";
@@ -290,7 +294,10 @@ async function adesao(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Desti
     // Checkout). Decidido aqui, pela data gravada na base de dados — nunca
     // pelo browser. Com menos de 49 h por correr, ou no Caso + Proteção, a
     // cobrança é no dia da adesão, como sempre.
-    const inicioCobranca = inicioCobrancaAdesao(acesso.protecaoGratuita, plano);
+    // O mesmo durante uma Protecção oferecida por um parceiro (acesso
+    // patrocinado): o período sem custo que termina mais tarde. A metadata
+    // protecao_gratuita = "1" marca, para o webhook, a cobrança adiada.
+    const inicioCobranca = inicioCobrancaAdesao(periodoSemCusto(acesso.protecaoGratuita, acesso.acessoPatrocinado), plano);
     const metadataGratuita: Record<string, string> = inicioCobranca ? { protecao_gratuita: "1" } : {};
     const registo = montarRegistoConsentimento({
       plano,
@@ -548,6 +555,21 @@ export async function confirmarCompra(_anterior: EstadoCompra, formData: FormDat
   // Mensagens no idioma da página (o português é MENSAGENS_ERRO_CONSENTIMENTO).
   const mensagens = (await textos(tCompra)).mensagens;
   if (!lido.ok) return { erro: mensagens[lido.erro] };
+
+  // "Código de parceiro" escrito no modal (só com sessão; sem desconto — só
+  // atribuição, decidida na base de dados). Um código inexistente pára a
+  // compra para o cliente o corrigir ou apagar; os restantes casos (conta
+  // já cliente ou já atribuída) seguem sem atribuição.
+  const codigoParceiro = String(formData.get("codigo_parceiro") ?? "").trim();
+  if (codigoParceiro) {
+    const { user } = await utilizadorAtual();
+    if (user) {
+      const r = await atribuirCodigoParceiro(user.id, codigoParceiro).catch(() => "erro" as const);
+      if (r !== "erro" && r !== "desligado" && codigoBloqueiaCompra(r)) {
+        return { erro: (await textos(tParceiros)).codigo.invalido };
+      }
+    }
+  }
 
   let destino: string;
   try {

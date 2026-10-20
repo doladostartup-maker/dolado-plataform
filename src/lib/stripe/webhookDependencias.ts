@@ -13,6 +13,7 @@ import { getStripe as stripeReal } from "@/lib/stripe/client";
 import { planoDoPreco } from "@/lib/stripe/planos";
 import { indicacoesAtivas } from "@/lib/indicacoes/regras";
 import { criarDependenciasIndicacoes } from "@/lib/indicacoes/servidor";
+import { criarDependenciasParceiros } from "@/lib/parceiros/servidor";
 import {
   idDe,
   snapshotDeSubscricao,
@@ -773,5 +774,13 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
       ...(opcoes.stripeIndicacoes ? { stripe: opcoes.stripeIndicacoes } : {}),
     });
   }
+  // Programa de Parceiros: sempre ligado no webhook (contas já atribuídas
+  // continuam a contar mensalidades mesmo com PARCEIROS_ATIVO desligado);
+  // sem atribuição, uma consulta e nada mais.
+  deps.parceiros = criarDependenciasParceiros({
+    notificarAdmin: deps.notificarAdmin,
+    registar: (linha) => console.log(JSON.stringify({ origem: "stripe_webhook_parceiros", ...linha })),
+    ...(opcoes.stripeIndicacoes ? { stripe: opcoes.stripeIndicacoes } : {}),
+  });
   return deps;
 }

@@ -12,6 +12,13 @@ import {
   indicacaoNaPrimeiraCobrancaDiferida,
   type DependenciasIndicacoes,
 } from "../indicacoes/webhook.ts";
+import {
+  parceiroAoDisputar,
+  parceiroAoPagarFatura,
+  parceiroAoReembolso,
+  parceiroAoTerminarSubscricao,
+  type DependenciasParceiros,
+} from "../parceiros/webhook.ts";
 
 // Lógica do webhook Stripe, separada do route handler para ser testável sem
 // rede nem base de dados: tudo o que tem efeitos (Supabase, API Stripe,
@@ -362,6 +369,8 @@ export interface DependenciasWebhook {
   registar(linha: LinhaLog): void;
   /** Programa de indicação (ausente = desligado, ex.: testes antigos). */
   indicacoes?: DependenciasIndicacoes;
+  /** Programa de Parceiros — comissões (ausente = desligado, ex.: testes antigos). */
+  parceiros?: DependenciasParceiros;
   /**
    * Subscrição criada durante a Proteção gratuita com a 1.ª cobrança adiada
    * (metadata protecao_gratuita = "1"): devolve a sessão de Checkout dessa
@@ -979,6 +988,9 @@ async function tratarFatura(
       }
     }
   }
+  // Programa de Parceiros: mensalidade paga de uma conta atribuída a um
+  // parceiro (comissão elegível à 3.ª). Idempotente por fatura.
+  if (deps.parceiros) await parceiroAoPagarFatura(invoice, subscriptionId, contas, plano, deps.parceiros);
   return { resultado: creditou ? "acesso_e_credito" : "acesso_garantido", ...ids };
 }
 
@@ -1042,6 +1054,8 @@ async function tratarSubscricaoEliminada(event: Stripe.Event, deps: Dependencias
   await deps.gravarSubscricao({ ...snapshot, status: "canceled" }, Number.MAX_SAFE_INTEGER);
   await deps.marcarPagamentosDaSubscricao(snapshot.stripe_subscription_id, "assinatura_cancelada");
   if (deps.indicacoes) await indicacaoAoTerminarSubscricao(snapshot.stripe_subscription_id, deps.indicacoes);
+  // Só no fim definitivo (deleted): uma subscrição "unpaid" ainda pode recuperar.
+  if (deps.parceiros) await parceiroAoTerminarSubscricao(snapshot.stripe_subscription_id, deps.parceiros);
 
   const plano = deps.planoDoPreco(snapshot.price_id);
   const em = paraIso(event.created)!;
@@ -1097,6 +1111,7 @@ async function tratarReembolsoForaDeConversao(refund: Stripe.Refund, deps: Depen
   // Primeira compra de uma conta indicada reembolsada na totalidade: a
   // indicação é revertida (Avulso ou subscrição). Idempotente.
   if (deps.indicacoes) await indicacaoAoReembolso(paymentIntentId, deps.indicacoes);
+  if (deps.parceiros) await parceiroAoReembolso(refund, deps.parceiros);
   const avulso = await deps.avulsoDoPagamento(paymentIntentId);
   if (!avulso) return { resultado: "ignorado_sem_conversao" };
 
@@ -1113,12 +1128,14 @@ async function tratarReembolsoForaDeConversao(refund: Stripe.Refund, deps: Depen
   return { resultado: `reembolso_avulso_${credito}` };
 }
 
-/** Disputa (chargeback): só o programa de indicação reage (o resto é tratado à mão no Stripe). */
+/** Disputa (chargeback): só os programas de indicação e de parceiros reagem (o resto é tratado à mão no Stripe). */
 async function tratarDisputa(event: Stripe.Event, deps: DependenciasWebhook): Promise<Tratamento> {
   const disputa = event.data.object as Stripe.Dispute;
   const paymentIntentId = idDe(disputa.payment_intent);
-  if (!deps.indicacoes || !paymentIntentId) return { resultado: "ignorado_disputa" };
-  return { resultado: `disputa_indicacao_${await indicacaoAoDisputar(paymentIntentId, deps.indicacoes)}` };
+  if (!paymentIntentId || (!deps.indicacoes && !deps.parceiros)) return { resultado: "ignorado_disputa" };
+  const indicacao = deps.indicacoes ? await indicacaoAoDisputar(paymentIntentId, deps.indicacoes) : "desligado";
+  const parceiro = deps.parceiros ? await parceiroAoDisputar(paymentIntentId, deps.parceiros) : "desligado";
+  return { resultado: `disputa_indicacao_${indicacao}_parceiro_${parceiro}` };
 }
 
 const TRATAMENTOS: Record<string, (event: Stripe.Event, deps: DependenciasWebhook) => Promise<Tratamento>> = {

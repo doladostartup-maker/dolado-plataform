@@ -9,6 +9,8 @@ import { tIndicacoes } from "@/i18n/mensagens/indicacoes";
 import { tJuridico } from "@/i18n/mensagens/juridico";
 import { precoNoIdioma, tPlanos } from "@/i18n/mensagens/planos";
 import { tProtecaoGratuita } from "@/i18n/mensagens/protecaoGratuita";
+import { tAcessoPatrocinado } from "@/i18n/mensagens/acessoPatrocinado";
+import { tParceiros } from "@/i18n/mensagens/parceiros";
 import { formatarData } from "@/i18n/formatar";
 import { useActionState, useEffect, useState } from "react";
 import { confirmarCompra, type EstadoCompra } from "@/app/actions/stripe";
@@ -41,7 +43,8 @@ export type OfertaConversao = { mensalidade: number; reembolso: number } | null;
  * período; null = cobrada no dia da adesão). Só apresentação — o servidor
  * volta a decidir ao abrir o Checkout (confirmarCompra).
  */
-export type InfoProtecaoGratuita = { primeiraCobranca: string | null } | null;
+/** Período sem custo em curso (Protecção gratuita ou oferecida por um parceiro). */
+export type InfoProtecaoGratuita = { primeiraCobranca: string | null; tipo?: "gratuita" | "patrocinada" } | null;
 
 const LINK = "font-semibold text-[var(--v2-green)] underline underline-offset-4";
 
@@ -88,7 +91,10 @@ export function ConfirmarCompra({
   const tp = tPlanos[idioma];
   const ti = tIndicacoes[idioma];
   const tj = tJuridico[idioma];
-  const tg = tProtecaoGratuita[idioma].confirmarCompra;
+  // Textos da cobrança adiada: Protecção gratuita ou oferecida por um parceiro.
+  const tg = protecaoGratuita?.tipo === "patrocinada"
+    ? tAcessoPatrocinado[idioma].confirmarCompra
+    : tProtecaoGratuita[idioma].confirmarCompra;
   const formatarPreco = (c: number) => precoNoIdioma(idioma, c);
   const nome = casoExtra ? tp.casoExtra.nome : tp.nome[plano];
   const descricaoCurta = casoExtra ? tp.casoExtra.descricaoCurta : tp.descricaoCurta[plano];
@@ -263,6 +269,21 @@ export function ConfirmarCompra({
           <input type="hidden" name="origem" value={origem} />
           {pedidoId && <input type="hidden" name="pedido_id" value={pedidoId} />}
           {prescindiu && <input type="hidden" name={CAMPO_SEM_DESCONTO_INDICACAO} value={VALOR_ACEITE} />}
+
+          {/* Programa de Parceiros: código escrito pelo cliente (sem desconto; só atribuição). */}
+          {oferta?.codigoParceiro && (
+            <label className="flex flex-col gap-1.5 text-[14px] font-semibold text-[var(--v2-navy)]">
+              {tParceiros[idioma].codigo.campo}
+              <input
+                name="codigo_parceiro"
+                type="text"
+                autoComplete="off"
+                maxLength={20}
+                className="w-full rounded-[12px] border border-[var(--v2-line-strong)] bg-white px-3.5 py-2.5 text-[15px] font-normal uppercase text-[var(--v2-navy)]"
+              />
+              <span className="text-[12.5px] font-normal text-[var(--v2-muted)]">{tParceiros[idioma].codigo.ajuda}</span>
+            </label>
+          )}
 
           <label className="flex items-start gap-3 text-[14.5px] leading-relaxed text-[var(--v2-navy)]">
             <input
