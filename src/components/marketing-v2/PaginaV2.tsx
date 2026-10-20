@@ -21,6 +21,7 @@ export function PaginaV2({
   eventoCtaNavbar,
   parametrosCtaNavbar,
   chatEmDireto = false,
+  cabecalho,
   children,
 }: {
   eventoCtaNavbar: string;
@@ -28,12 +29,14 @@ export function PaginaV2({
   parametrosCtaNavbar?: Record<string, string>;
   /** Mostra o chat em direto (Crisp) — só nas páginas de PAGINAS_COM_CRISP. */
   chatEmDireto?: boolean;
+  /** Substitui a NavbarV2 (ex.: cabeçalho simplificado da landing /30-dias-gratis). */
+  cabecalho?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <div className={`tema-v2 ${fonte.className} min-h-screen bg-white text-[var(--v2-navy)] antialiased`}>
       <AnalyticsScripts />
-      <NavbarV2 eventoCta={eventoCtaNavbar} parametrosCta={parametrosCtaNavbar} />
+      {cabecalho ?? <NavbarV2 eventoCta={eventoCtaNavbar} parametrosCta={parametrosCtaNavbar} />}
       <main>{children}</main>
       <FooterV2 />
       {chatEmDireto && crispAtivo() && <ChatCrisp />}

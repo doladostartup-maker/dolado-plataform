@@ -43,6 +43,7 @@ const PAGINAS_PUBLICAS = [
   "/ferramentas-gratuitas",
   "/empresas",
   "/protecao",
+  "/30-dias-gratis",
 ];
 
 // robots.txt e sitemap.xml: servidos diretamente em dolado.pt (nunca
@@ -96,6 +97,7 @@ const PAGINAS_SO_MARKETING = [
   "/ferramentas-gratuitas",
   "/empresas",
   "/protecao",
+  "/30-dias-gratis",
 ];
 
 // Páginas "Problemas que tratamos" (/problemas e /problemas/…): marketing

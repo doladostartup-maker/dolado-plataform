@@ -1,3 +1,5 @@
+import { caminhoAtivacaoLanding, type Utm } from "./landing30Dias.ts";
+
 // dolado.pt serve só as páginas de marketing; tudo o resto (login, portal,
 // backoffice) corre em portal.dolado.pt — ver o comentário em
 // src/middleware.ts sobre PAGINAS_SO_MARKETING. Um link para "/" ou
@@ -41,6 +43,16 @@ export function urlTratarCaso(origem?: string) {
 /** Ativação da Proteção gratuita (portal.dolado.pt), com a página de origem (só métricas). */
 export function urlExperimentarProtecao(origem: "homepage" | "precario" | "protecao") {
   return `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/experimentar-protecao?origem=${origem}`;
+}
+
+/** Caminho absoluto em portal.dolado.pt (sessão, registo, activação). */
+export function urlPortal(caminho: string) {
+  return `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}${caminho}`;
+}
+
+/** Activação vinda da landing /30-dias-gratis, com os UTM do anúncio (src/lib/landing30Dias.ts). */
+export function urlAtivacaoLanding(utm: Utm = {}) {
+  return `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}${caminhoAtivacaoLanding(utm)}`;
 }
 
 /** Oferta da Proteção gratuita ligada nas páginas públicas (lido no build). */
