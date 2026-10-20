@@ -63,7 +63,7 @@ export default async function ContratosPage({
   const params = await searchParams;
   const { supabase, user } = await requireProtecao("contratos");
 
-  const [{ servicos, geral }, acesso, { data: semServico }, { data: porAssociar }, { data: identificadores }] = await Promise.all([
+  const [{ servicos, geral }, acesso, { data: semServico }, { data: porAssociar }, { data: identificadores }, { count: resumosEnviados }] = await Promise.all([
     carregarProtecao(supabase, user.id, undefined, idioma),
     obterAcesso(supabase, user.id),
     // Documentos ainda sem serviço: em leitura, por verificar ou ilegíveis.
@@ -88,6 +88,8 @@ export default async function ContratosPage({
       .eq("utilizador_id", user.id)
       .in("tipo", ["numero_servico", "cpe", "cui", "referencia_conta", "numero_cliente", "referencia_contrato"])
       .not("apresentacao", "is", null),
+    // Resumos mensais enviados (RLS: só os próprios, estado 'enviado').
+    supabase.from("protecao_resumos_mensais").select("id", { count: "exact", head: true }).eq("utilizador_id", user.id).eq("estado", "enviado"),
   ]);
   const referencia = new Map<string, string>();
   for (const i of identificadores ?? []) {
@@ -414,6 +416,16 @@ export default async function ContratosPage({
           <TituloBloco id="historico">{t.jaFizemos}</TituloBloco>
           <HistoricoProtecao itens={geral.historico} hoje={hoje} comServico={varios} idioma={idioma} />
         </section>
+      )}
+
+      {/* ===== Resumos mensais enviados ===== */}
+      {(resumosEnviados ?? 0) > 0 && (
+        <p>
+          <Link href="/portal/contratos/resumos" className={`${LIGACAO} inline-flex min-h-11 items-center gap-2 text-[14.5px]`}>
+            <IconeCalendario tamanho={18} />
+            {tProtecao[idioma].resumos.ligacao(resumosEnviados ?? 0)}
+          </Link>
+        </p>
       )}
 
       {/* ===== Adicionar documentos ===== */}

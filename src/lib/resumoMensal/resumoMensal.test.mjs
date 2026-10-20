@@ -387,3 +387,55 @@ describe("envio", () => {
     assert.ok(!JSON.stringify(linhas.get("a|2026-09-01").conteudo).includes("Beta"));
   });
 });
+
+// ---------------------------------------------------------------------------
+// Portal: leitura do resumo gravado (src/lib/resumoMensal/portal.ts)
+// ---------------------------------------------------------------------------
+import { mesDoParametro, resumoDoConteudo } from "./portal.ts";
+
+describe("resumos mensais no portal", () => {
+  test("mostra o resumo gravado tal como foi enviado", () => {
+    const enviado = montarResumoMensal([servico({ faturas: [fatura("2026-09-10T10:00:00Z")] })], MES, HOJE);
+    const r = resumoDoConteudo(JSON.parse(JSON.stringify(enviado)), "2026-09-01");
+    assert.ok(r);
+    assert.equal(r.mes, "2026-09");
+    assert.equal(r.estadoTitulo, enviado.estadoTitulo);
+    assert.equal(r.introducao, enviado.introducao);
+    assert.equal(r.idioma, enviado.idioma);
+    assert.deepEqual(r.acompanhamento, enviado.acompanhamento);
+  });
+
+  test("resumo antigo sem idioma → português; listas inválidas ficam vazias", () => {
+    const r = resumoDoConteudo(
+      { estado: "atencao", estadoTitulo: "T", estadoTexto: "X", atividade: ["a", 3, ""], alteracoes: "x", proximaData: 5 },
+      "2026-08-01",
+    );
+    assert.equal(r.idioma, "pt-PT");
+    assert.deepEqual(r.atividade, ["a"]);
+    assert.deepEqual(r.alteracoes, []);
+    assert.equal(r.proximaData, "");
+    assert.equal(r.mesNome, "2026-08");
+  });
+
+  test("sem o essencial não é mostrado (nunca um erro na página)", () => {
+    assert.equal(resumoDoConteudo(null, "2026-09-01"), null);
+    assert.equal(resumoDoConteudo([], "2026-09-01"), null);
+    assert.equal(resumoDoConteudo({ estado: "outro", estadoTitulo: "T", estadoTexto: "X" }, "2026-09-01"), null);
+    assert.equal(resumoDoConteudo({ estado: "atencao", estadoTitulo: "", estadoTexto: "X" }, "2026-09-01"), null);
+  });
+
+  test("mês do endereço: só AAAA-MM válido", () => {
+    assert.equal(mesDoParametro("2026-09"), "2026-09");
+    for (const v of ["2026-13", "2026-9", "2026-09-01", "x", "../2026-09"]) assert.equal(mesDoParametro(v), null);
+  });
+
+  test("páginas: leitura com a sessão do cliente, só resumos enviados", async () => {
+    const { readFileSync } = await import("node:fs");
+    for (const f of ["page.tsx", "[mes]/page.tsx"]) {
+      const src = readFileSync(new URL(`../../app/[idioma]/portal/contratos/resumos/${f}`, import.meta.url), "utf8");
+      assert.doesNotMatch(src, /createAdminClient/);
+      assert.match(src, /\.eq\("estado", "enviado"\)/);
+      assert.doesNotMatch(src, /dangerouslySetInnerHTML/);
+    }
+  });
+});

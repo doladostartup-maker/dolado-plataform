@@ -411,6 +411,21 @@ export const protecao = {
   },
   aGuardar: "A guardar…",
   /** Mensagens devolvidas pelas ações (gravadas em português; mostradas no idioma). */
+  resumos: {
+    titulo: "Resumos mensais",
+    voltar: "Protecção",
+    voltarLista: "Resumos mensais",
+    descricao:
+      "No início de cada mês, enviamos-lhe por e-mail um resumo do mês anterior: o que acompanhámos, o que detectámos e o que continua em acompanhamento. Os resumos enviados ficam aqui.",
+    vazioTitulo: "Ainda não lhe enviámos nenhum resumo mensal",
+    vazioTexto: "O resumo de cada mês é enviado nos primeiros dias do mês seguinte e passa a aparecer aqui.",
+    enviadoA: (data: V) => `Enviado a ${data}`,
+    ver: "Ver resumo",
+    ligacao: (n: number) => `Ver os resumos mensais (${n})`,
+    tituloResumo: (mes: V) => `A sua Protecção em ${mes}`,
+    noutroIdioma: "Este resumo foi enviado em inglês e aparece aqui como foi enviado.",
+    nota: "Este resumo mostra a situação no momento do envio, com base nos documentos e nas datas que nos indicou. A situação actual de cada serviço está na página da Protecção.",
+  },
   mensagens: {
     [MSG_ERRO_GUARDAR]: MSG_ERRO_GUARDAR,
     "Formato não suportado. Envie um PDF ou uma imagem JPG, PNG ou WebP.": "Formato não suportado. Envie um PDF ou uma imagem JPG, PNG ou WebP.",

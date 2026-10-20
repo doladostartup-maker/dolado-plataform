@@ -408,6 +408,21 @@ export const protecao: Traducao<typeof pt> = {
     nota: "We check the bill and show you the result straight away: what we found and what we will keep an eye on. The bill also stays in your case, as it was.",
   },
   aGuardar: "Saving…",
+  resumos: {
+    titulo: "Monthly summaries",
+    voltar: "Protection",
+    voltarLista: "Monthly summaries",
+    descricao:
+      "At the start of each month, we email you a summary of the previous month: what we followed, what we found and what we are still keeping an eye on. Summaries we have sent are kept here.",
+    vazioTitulo: "We haven't sent you a monthly summary yet",
+    vazioTexto: "Each month's summary is sent in the first days of the following month and will then appear here.",
+    enviadoA: (data: V) => `Sent on ${data}`,
+    ver: "View summary",
+    ligacao: (n: number) => `View monthly summaries (${n})`,
+    tituloResumo: (mes: V) => `Your Protection in ${mes}`,
+    noutroIdioma: "This summary was sent in Portuguese and is shown here as it was sent.",
+    nota: "This summary shows the situation when it was sent, based on the documents and dates you gave us. The current situation of each service is on the Protection page.",
+  },
   mensagens: {
     [MSG_ERRO_GUARDAR]: "We couldn't complete your request. Please try again in a few minutes.",
     "Formato não suportado. Envie um PDF ou uma imagem JPG, PNG ou WebP.": "Unsupported format. Send a PDF or a JPG, PNG or WebP image.",
