@@ -222,7 +222,9 @@ select is(
                            'protecao_desativar_dados', 'protecao_reativar_dados', 'protecao_gratuita_ja_teve_subscricao',
                            'protecao_gratuita_elegibilidade', 'protecao_gratuita_ativar', 'protecao_gratuita_desativar_lembretes',
                            'protecao_gratuita_manutencao', 'protecao_gratuita_marco_atual', 'protecao_gratuita_avisos_pendentes',
-                           'protecao_gratuita_aviso_reservar', 'protecao_gratuita_aviso_concluir', 'protecao_gratuita_metricas')), 0::bigint,
+                           'protecao_gratuita_aviso_reservar', 'protecao_gratuita_aviso_concluir', 'protecao_gratuita_metricas',
+                           -- Guia gratuito (20261022090000): registo e libertação só service_role, métricas só admin, limpeza pelo pg_cron.
+                           'guia_registar_pedido', 'guia_libertar_email', 'guia_metricas', 'limpar_guias_pedidos')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em

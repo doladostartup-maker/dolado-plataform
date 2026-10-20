@@ -236,4 +236,14 @@ export const emails: Traducao<typeof pt> = {
     terminaA: (servico: string, promocao: boolean, data: string, antes: boolean) =>
       `${servico}: the ${promocao ? "promotion" : "minimum term"} ends on ${data}. ${antes ? "We will let you know by email before that date." : "We will let you know by email on that date."}`,
   },
+  guiaFacturas: {
+    assunto: "Your free DoLado guide",
+    titulo: "Your guide is ready",
+    preheader: "Are you paying more than you should? 10 things to check in your bills and contracts.",
+    ola: "Hello,",
+    obrigado: "Thank you for your interest in the guide “Are you paying more than you should?” (written in Portuguese). You can download it here:",
+    botao: "Download the guide",
+    dica: "A tip: have a recent bill and the previous month's bill for the same service to hand. The first checks only take a few minutes.",
+    rodape: "You are receiving this email because you asked for the free guide on dolado.pt. It is not a subscription: we will not send you other messages because of this request.",
+  },
 };

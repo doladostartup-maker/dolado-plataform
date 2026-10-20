@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<!--
+  Fonte editável do e-book "Está a pagar mais do que devia?" (DoLado, 20/10/2026).
+  Gerar o PDF: node scripts/conteudos/gerar-guia-facturas.mjs
+  (Chrome headless imprime este ficheiro em A4; depois são gravados os metadados).
+  Ortografia: português europeu na grafia anterior ao Acordo de 1990
+  (docs/identidade-linguistica-dolado.md). Exemplos inteiramente fictícios.
+  Revisão jurídica: conteudos/guia-facturas/revisao-juridica.md.
+-->
+<title>Está a pagar mais do que devia? — Guia gratuito da DoLado</title>
+<meta name="author" content="DoLado">
+<meta name="description" content="10 coisas que deve verificar nas suas facturas e contratos.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=block" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0B2545;
+    --muted: #55657A;
+    --line: #E4EAF1;
+    --line-strong: #CBD5E1;
+    --green: #0A7A4F;
+    --green-dark: #08583A;
+    --mint: #E6F4EC;
+    --mint-bg: #F1F9F4;
+    --blue: #2563A8;
+    --blue-soft: #EEF4FB;
+    --surface: #F7F9FC;
+    --aviso: #9A4A12;
+    --aviso-bg: #FFF6E5;
+    --pt-verde: #046A38;
+    --pt-vermelho: #DA291C;
+  }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    color: var(--navy);
+    font-size: 10pt;
+    line-height: 1.5;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  a { color: var(--green-dark); text-decoration: underline; text-underline-offset: 2px; }
+
+  .pagina {
+    position: relative;
+    width: 210mm;
+    height: 297mm;
+    padding: 16mm 18mm 20mm 18mm;
+    overflow: hidden;
+    page-break-after: always;
+    break-after: page;
+    background: #fff;
+  }
+  .pagina:last-child { page-break-after: auto; break-after: auto; }
+
+  .rodape {
+    position: absolute;
+    left: 18mm; right: 18mm; bottom: 9mm;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 8pt; color: var(--muted);
+    border-top: 1px solid var(--line);
+    padding-top: 3mm;
+  }
+  .rodape .num { font-weight: 700; color: var(--navy); }
+
+  .marca { display: inline-flex; align-items: center; gap: 2.2mm; text-decoration: none; }
+  .marca svg { width: 9mm; height: 9mm; }
+  .marca span { font-weight: 800; font-size: 14pt; letter-spacing: -0.02em; color: var(--navy); }
+  .marca .p, .marca .t { font-size: inherit; }
+  .marca .p { color: var(--pt-verde); } .marca .t { color: var(--pt-vermelho); }
+  .grelha-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3.2mm; margin: 5mm 0 2mm; }
+
+  .eyebrow { font-size: 8.5pt; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); }
+  h1, h2, h3 { margin: 0; letter-spacing: -0.02em; line-height: 1.15; }
+  h2 { font-size: 19pt; font-weight: 800; margin-top: 2mm; }
+  h3 { font-size: 11.5pt; font-weight: 700; margin: 4.5mm 0 1.8mm; }
+  p { margin: 0 0 2.4mm; }
+  .lead { font-size: 11.2pt; color: var(--muted); line-height: 1.5; margin-top: 3mm; }
+  .muted { color: var(--muted); }
+  ul, ol { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1mm; }
+
+  .cabeca-verif { display: flex; gap: 4.5mm; align-items: flex-start; margin-bottom: 4mm; }
+  .num-verif {
+    flex: none; width: 13mm; height: 13mm; border-radius: 3.5mm;
+    background: var(--green); color: #fff; font-weight: 800; font-size: 17pt;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cabeca-verif h2 { margin-top: 0.6mm; }
+
+  .caixa { border-radius: 3.5mm; padding: 3.8mm 5mm; margin: 3.2mm 0; }
+  .caixa p:last-child, .caixa ul:last-child { margin-bottom: 0; }
+  .caixa-titulo { font-weight: 700; font-size: 10.2pt; margin-bottom: 1.6mm; display: flex; align-items: center; gap: 2mm; }
+  .dica { background: var(--mint-bg); border: 1px solid #CFE8DA; }
+  .dica .caixa-titulo { color: var(--green-dark); }
+  .info { background: var(--blue-soft); border: 1px solid #D6E3F3; }
+  .info .caixa-titulo { color: var(--blue); }
+  .atencao { background: var(--aviso-bg); border: 1px solid #F3DDB5; }
+  .atencao .caixa-titulo { color: var(--aviso); }
+
+  .grelha-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3.2mm; }
+  .cartao { border: 1px solid var(--line); border-radius: 3.5mm; padding: 3.6mm 4.4mm; background: #fff; }
+  .cartao h4 { margin: 0 0 1.5mm; font-size: 10.4pt; }
+  .cartao p, .cartao ul { font-size: 9.2pt; margin-bottom: 0; }
+  .etiqueta { display: inline-block; font-size: 7.6pt; font-weight: 700; padding: 0.6mm 2.2mm; border-radius: 10mm; background: var(--mint); color: var(--green-dark); margin-bottom: 1.6mm; }
+  .etiqueta.azul { background: var(--blue-soft); color: var(--blue); }
+  .etiqueta.laranja { background: var(--aviso-bg); color: var(--aviso); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 9.1pt; }
+  th { text-align: left; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 700; padding: 1.6mm 2.4mm; border-bottom: 1.5px solid var(--line-strong); }
+  td { padding: 1.7mm 2.4mm; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.v, th.v { text-align: right; white-space: nowrap; }
+  tr.total td { font-weight: 800; border-bottom: none; border-top: 1.5px solid var(--navy); }
+  .mais { color: var(--aviso); font-weight: 700; }
+  .menos { color: var(--green-dark); font-weight: 700; }
+
+  /* Exemplo de factura */
+  .factura { border: 1px solid var(--line-strong); border-radius: 3mm; padding: 4mm 4.5mm; background: #fff; font-size: 9pt; }
+  .factura .topo { display: flex; justify-content: space-between; font-size: 8pt; color: var(--muted); margin-bottom: 2mm; }
+  .factura .topo b { color: var(--navy); font-size: 9.4pt; }
+  .factura table { font-size: 8.8pt; }
+  .factura td { padding: 1.5mm 1mm; }
+  .ficticio { font-size: 7.6pt; color: var(--muted); font-style: italic; margin-top: 2mm; }
+
+  .passos { counter-reset: passo; list-style: none; padding: 0; }
+  .passos li { counter-increment: passo; position: relative; padding-left: 9mm; margin-bottom: 1.8mm; }
+  .passos li::before {
+    content: counter(passo); position: absolute; left: 0; top: -0.3mm;
+    width: 6.5mm; height: 6.5mm; border-radius: 50%; background: var(--mint); color: var(--green-dark);
+    font-weight: 800; font-size: 9pt; display: flex; align-items: center; justify-content: center;
+  }
+
+  .modelo { border: 1.5px dashed var(--line-strong); border-radius: 3.5mm; padding: 4mm 5mm; background: var(--surface); font-size: 9.2pt; line-height: 1.5; }
+  .modelo p { margin-bottom: 1.8mm; }
+  .campo { background: #FFF1C2; border-radius: 1mm; padding: 0 1mm; font-weight: 600; }
+
+  .lista-check { list-style: none; padding: 0; margin: 0; }
+  .lista-check li { display: flex; gap: 3.5mm; align-items: flex-start; padding: 2.6mm 0; border-bottom: 1px solid var(--line); margin: 0; }
+  .quadrado { flex: none; width: 5mm; height: 5mm; border: 1.6px solid var(--navy); border-radius: 1.2mm; margin-top: 0.4mm; }
+  .lista-check .linha-obs { flex: none; width: 46mm; border-bottom: 1px solid var(--line-strong); height: 5mm; }
+  .lista-check .txt { flex: 1; }
+  .lista-check .txt b { display: block; }
+  .lista-check .txt span { font-size: 8.8pt; color: var(--muted); }
+
+  .mapa th { font-size: 7.2pt; padding: 1.8mm 1.6mm; }
+  .mapa td { font-size: 8.4pt; padding: 1.8mm 1.6mm; }
+  .mapa.branco td { height: 13.5mm; }
+
+  .indice { list-style: none; padding: 0; margin: 6mm 0 0; }
+  .indice li { display: flex; align-items: baseline; gap: 2mm; padding: 2.2mm 0; border-bottom: 1px solid var(--line); margin: 0; }
+  .indice a { text-decoration: none; color: var(--navy); font-weight: 600; }
+  .indice .n { flex: none; width: 8mm; font-weight: 800; color: var(--green); }
+  .indice .pontos { flex: 1; border-bottom: 1px dotted var(--line-strong); transform: translateY(-1mm); }
+  .indice .pg { flex: none; font-weight: 700; color: var(--muted); }
+
+  /* Capa */
+  .capa { padding: 0; background: linear-gradient(165deg, #F1F9F4 0%, #FFFFFF 55%, #EEF4FB 100%); }
+  .capa-dentro { position: absolute; inset: 0; padding: 22mm 20mm; display: flex; flex-direction: column; }
+  .capa h1 { font-size: 40pt; font-weight: 800; letter-spacing: -0.04em; line-height: 1.02; margin-top: 18mm; }
+  .capa h1 em { font-style: normal; color: var(--green); }
+  .capa .sub { font-size: 16pt; font-weight: 500; color: var(--muted); margin-top: 6mm; max-width: 140mm; line-height: 1.35; }
+  .capa .selo { display: inline-block; margin-top: 8mm; background: var(--navy); color: #fff; font-weight: 700; font-size: 10pt; padding: 2.2mm 5mm; border-radius: 10mm; }
+  .capa .chips { list-style: none; padding: 0; margin: 7mm 0 0; display: flex; gap: 2.5mm; flex-wrap: wrap; }
+  .capa .chips li { margin: 0; font-size: 9.6pt; font-weight: 600; color: var(--green-dark); background: #fff; border: 1px solid #CFE8DA; border-radius: 10mm; padding: 1.6mm 4mm; }
+  .capa .ilustracao { margin-top: auto; align-self: center; width: 165mm; }
+  .capa .base { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8mm; font-size: 9pt; color: var(--muted); }
+
+  .fecho { background: linear-gradient(180deg, #F1F9F4 0%, #fff 60%); }
+  .cta { display: inline-block; margin-top: 3mm; background: var(--green); color: #fff !important; text-decoration: none; font-weight: 700; font-size: 11pt; padding: 3.4mm 7mm; border-radius: 3mm; }
+  .fontes li { font-size: 8.6pt; margin-bottom: 1.2mm; }
+  .nota-legal { font-size: 8pt; color: var(--muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<!-- Ícone oficial (public/brand/dolado-logo-icon.svg), repetido inline. -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <clipPath id="clipIcone"><rect x="8" y="8" width="64" height="64" rx="16"/></clipPath>
+    <symbol id="icone-dolado" viewBox="0 0 80 80">
+      <rect x="8" y="8" width="64" height="64" rx="16" fill="#E3F0EC"/>
+      <g clip-path="url(#clipIcone)">
+        <circle cx="24" cy="36" r="7" fill="#0E6B5C"/>
+        <circle cx="24" cy="66" r="15" fill="#0E6B5C"/>
+        <circle cx="56" cy="36" r="7" fill="#171A21"/>
+        <circle cx="56" cy="66" r="15" fill="#171A21"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ===================== 1. CAPA ===================== -->
+<section class="pagina capa">
+  <div class="capa-dentro">
+    <a class="marca" href="https://dolado.pt"><svg><use href="#icone-dolado"/></svg><span>DoLado.<span class="p">p</span><span class="t">t</span></span></a>
+    <h1>Está a pagar<br>mais do que <em>devia?</em></h1>
+    <p class="sub">10 coisas que deve verificar nas suas facturas e contratos.</p>
+    <div><span class="selo">Um guia gratuito da DoLado</span></div>
+    <ul class="chips">
+      <li>10 verificações práticas</li>
+      <li>Exemplos simples</li>
+      <li>Checklist e mapa de contratos</li>
+    </ul>
+
+    <svg class="ilustracao" viewBox="0 0 600 330" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <!-- factura de trás -->
+      <g transform="rotate(-7 190 170)">
+        <rect x="70" y="40" width="230" height="270" rx="16" fill="#fff" stroke="#CBD5E1" stroke-width="2"/>
+        <rect x="95" y="70" width="110" height="12" rx="6" fill="#E4EAF1"/>
+        <rect x="95" y="100" width="170" height="8" rx="4" fill="#E4EAF1"/>
+        <rect x="95" y="120" width="150" height="8" rx="4" fill="#E4EAF1"/>
+        <rect x="95" y="140" width="160" height="8" rx="4" fill="#E4EAF1"/>
+        <rect x="95" y="250" width="80" height="14" rx="7" fill="#EEF4FB"/>
+      </g>
+      <!-- factura da frente -->
+      <rect x="200" y="30" width="240" height="285" rx="18" fill="#fff" stroke="#0B2545" stroke-width="2.5"/>
+      <rect x="228" y="62" width="120" height="14" rx="7" fill="#0B2545"/>
+      <rect x="228" y="96" width="184" height="9" rx="4.5" fill="#E4EAF1"/>
+      <rect x="228" y="118" width="150" height="9" rx="4.5" fill="#E4EAF1"/>
+      <rect x="228" y="140" width="170" height="9" rx="4.5" fill="#E4EAF1"/>
+      <rect x="222" y="162" width="196" height="26" rx="8" fill="#FFF6E5"/>
+      <rect x="232" y="171" width="110" height="9" rx="4.5" fill="#E9B97A"/>
+      <rect x="378" y="171" width="30" height="9" rx="4.5" fill="#9A4A12"/>
+      <rect x="228" y="204" width="160" height="9" rx="4.5" fill="#E4EAF1"/>
+      <line x1="228" y1="244" x2="412" y2="244" stroke="#0B2545" stroke-width="2"/>
+      <rect x="228" y="260" width="70" height="14" rx="7" fill="#0B2545"/>
+      <rect x="352" y="260" width="60" height="14" rx="7" fill="#0A7A4F"/>
+      <!-- lupa -->
+      <circle cx="420" cy="178" r="56" fill="rgba(230,244,236,0.55)" stroke="#0A7A4F" stroke-width="10"/>
+      <line x1="460" y1="218" x2="512" y2="270" stroke="#0A7A4F" stroke-width="16" stroke-linecap="round"/>
+      <!-- calendário -->
+      <g transform="translate(470 40)">
+        <rect x="0" y="0" width="100" height="96" rx="14" fill="#fff" stroke="#2563A8" stroke-width="2.5"/>
+        <rect x="0" y="0" width="100" height="26" rx="13" fill="#2563A8"/>
+        <rect x="0" y="13" width="100" height="13" fill="#2563A8"/>
+        <circle cx="26" cy="48" r="6" fill="#E4EAF1"/><circle cx="50" cy="48" r="6" fill="#E4EAF1"/><circle cx="74" cy="48" r="6" fill="#E4EAF1"/>
+        <circle cx="26" cy="72" r="6" fill="#E4EAF1"/><circle cx="50" cy="72" r="9" fill="#0A7A4F"/><circle cx="74" cy="72" r="6" fill="#E4EAF1"/>
+      </g>
+      <!-- visto -->
+      <g transform="translate(60 230)">
+        <circle cx="34" cy="34" r="34" fill="#0A7A4F"/>
+        <path d="M19 35 l10 10 l20 -22" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+    </svg>
+
+    <div class="base">
+      <span>Para consumidores em Portugal · Telecomunicações, electricidade, gás e água</span>
+      <span>dolado.pt</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 2. INTRODUÇÃO ===================== -->
+<section class="pagina" id="introducao">
+  <div class="eyebrow">Introdução</div>
+  <h2>Sabe realmente o que está a pagar?</h2>
+  <p class="lead">A maioria das pessoas sabe quanto paga por mês pela internet, pela luz ou pela água. Menos pessoas sabem porque é que pagam esse valor — e o que o pode fazer mudar.</p>
+
+  <p>Uma factura não é só um total a pagar. É o resultado de um contrato, de um preço, de descontos que um dia terminam, de consumos medidos ou estimados e, por vezes, de serviços que foram acrescentados pelo caminho. Quando algum destes elementos muda, o valor muda — e nem sempre alguém nos avisa de forma clara.</p>
+  <p>Este guia não pretende pôr ninguém a desconfiar de todas as facturas. Muitas alterações têm uma explicação simples. O objectivo é outro: ajudar a <b>perceber o que está a pagar</b>, a <b>reparar no que mudou</b> e a <b>saber o que fazer</b> quando alguma coisa não bate certo.</p>
+
+  <div class="caixa dica">
+    <div class="caixa-titulo">Antes de começar</div>
+    <p>Tenha à mão uma factura recente e, se possível, a do mês anterior do mesmo serviço. Se tiver o contrato ou o resumo contratual que recebeu ao aderir, melhor ainda. Pode consultá-los normalmente na área de cliente da empresa ou na aplicação.</p>
+  </div>
+
+  <h3>Como usar este guia</h3>
+  <div class="grelha-2">
+    <div class="cartao"><h4>10 verificações</h4><p>Cada capítulo explica uma coisa a confirmar, onde encontrar a informação e o que significa. Pode lê-los por ordem ou ir directamente ao que o preocupa.</p></div>
+    <div class="cartao"><h4>2 ferramentas práticas</h4><p>No fim encontra uma checklist e um mapa de contratos para imprimir e preencher. Demoram poucos minutos e evitam muitas surpresas.</p></div>
+    <div class="cartao"><h4>Sectores abrangidos</h4><p>Telecomunicações (internet, televisão, telemóvel), electricidade, gás e água. As regras não são iguais em todos — assinalamos as diferenças quando importam.</p></div>
+    <div class="cartao"><h4>Linguagem simples</h4><p>Evitámos termos jurídicos sempre que possível. Quando há uma regra legal relevante, explicamos o que diz e de que depende.</p></div>
+  </div>
+
+  <div class="caixa info" style="margin-top:6mm">
+    <div class="caixa-titulo">Uma nota importante</div>
+    <p>Este guia tem carácter informativo e geral. As regras dependem do sector, do contrato e das datas de cada situação, e não substituem a análise do seu caso concreto. As fontes oficiais estão listadas na última página.</p>
+  </div>
+
+  <div class="rodape"><span>Está a pagar mais do que devia? · Guia DoLado</span><span class="num">2</span></div>
+</section>
+
+<!-- ===================== 3. ÍNDICE ===================== -->
+<section class="pagina" id="indice">
+  <div class="eyebrow">Índice</div>
+  <h2>O que vai encontrar</h2>
+  <ul class="indice">
+    <li><span class="n"></span><a href="#introducao">Sabe realmente o que está a pagar?</a><span class="pontos"></span><span class="pg">2</span></li>
+    <li><span class="n">1</span><a href="#v1">Compare a factura deste mês com a anterior</a><span class="pontos"></span><span class="pg">4</span></li>
+    <li><span class="n">2</span><a href="#v2">Descubra porque é que o valor mudou</a><span class="pontos"></span><span class="pg">5</span></li>
+    <li><span class="n">3</span><a href="#v3">Confirme quando terminam os seus descontos</a><span class="pontos"></span><span class="pg">6</span></li>
+    <li><span class="n">4</span><a href="#v4">Consulte o período de fidelização</a><span class="pontos"></span><span class="pg">7</span></li>
+    <li><span class="n">5</span><a href="#v5">Identifique serviços que não utiliza</a><span class="pontos"></span><span class="pg">8</span></li>
+    <li><span class="n">6</span><a href="#v6">Verifique os consumos e as leituras</a><span class="pontos"></span><span class="pg">9</span></li>
+    <li><span class="n">7</span><a href="#v7">Saiba quando e como os preços podem mudar</a><span class="pontos"></span><span class="pg">10</span></li>
+    <li><span class="n">8</span><a href="#v8">Compare as condições actuais com as contratadas</a><span class="pontos"></span><span class="pg">11</span></li>
+    <li><span class="n">9</span><a href="#v9">O que fazer perante uma cobrança inesperada</a><span class="pontos"></span><span class="pg">12</span></li>
+    <li><span class="n">10</span><a href="#v10">Crie o seu calendário de contratos</a><span class="pontos"></span><span class="pg">13</span></li>
+    <li><span class="n">✓</span><a href="#checklist">Checklist das 10 verificações</a><span class="pontos"></span><span class="pg">14</span></li>
+    <li><span class="n">✎</span><a href="#mapa">O meu mapa de contratos</a><span class="pontos"></span><span class="pg">15</span></li>
+    <li><span class="n">→</span><a href="#dolado">Como a DoLado pode ajudar · Fontes oficiais</a><span class="pontos"></span><span class="pg">16</span></li>
+  </ul>
+
+  <div class="caixa dica" style="margin-top:10mm">
+    <div class="caixa-titulo">Se só tiver cinco minutos</div>
+    <p>Faça três coisas: compare o total das duas últimas facturas (verificação 1), procure a data de fim do desconto ou da promoção (verificação 3) e confirme a data de fim da fidelização (verificação 4). Anote as datas — e já terá evitado a surpresa mais comum.</p>
+  </div>
+
+  <div class="rodape"><span>Está a pagar mais do que devia? · Guia DoLado</span><span class="num">3</span></div>
+</section>
+
+<!-- ===================== 4. V1 ===================== -->
+<section class="pagina" id="v1">
+  <div class="cabeca-verif"><div class="num-verif">1</div><div><div class="eyebrow">Verificação 1</div><h2>Compare a factura deste mês com a anterior</h2></div></div>
+  <p>É a verificação mais simples e a que revela mais coisas. Coloque lado a lado duas facturas seguidas do mesmo serviço e compare, linha a linha:</p>
+  <ul>
+    <li><b>O valor total</b> — subiu, desceu ou manteve-se?</li>
+    <li><b>O período facturado</b> — as duas facturas cobrem o mesmo número de dias? Uma factura com mais dias é naturalmente mais alta.</li>
+    <li><b>O preço base ou mensalidade</b> — é o mesmo valor do mês anterior?</li>
+    <li><b>Os descontos</b> — continuam lá? Algum desapareceu ou diminuiu?</li>
+    <li><b>Os consumos</b> (electricidade, gás, água) — são leituras reais ou estimadas?</li>
+    <li><b>Os encargos adicionais</b> — apareceu alguma linha nova, como um serviço, um equipamento ou um valor pontual?</li>
+  </ul>
+
+  <h3>Exemplo: duas facturas de um pacote de telecomunicações</h3>
+  <div class="factura">
+    <div class="topo"><span><b>Operadora Exemplo</b> · Pacote TV + Internet + Voz</span><span>Facturas de Setembro e Outubro</span></div>
+    <table>
+      <thead><tr><th>Linha da factura</th><th class="v">Setembro</th><th class="v">Outubro</th><th class="v">Diferença</th></tr></thead>
+      <tbody>
+        <tr><td>Mensalidade do pacote</td><td class="v">49,99 €</td><td class="v">51,49 €</td><td class="v mais">+1,50 €</td></tr>
+        <tr><td>Desconto promocional (12 meses)</td><td class="v">−10,00 €</td><td class="v">—</td><td class="v mais">+10,00 €</td></tr>
+        <tr><td>Segunda box de televisão</td><td class="v">3,00 €</td><td class="v">3,00 €</td><td class="v">0,00 €</td></tr>
+        <tr><td>Serviço de conteúdos «Clube Desporto»</td><td class="v">—</td><td class="v">4,99 €</td><td class="v mais">+4,99 €</td></tr>
+        <tr class="total"><td>Total</td><td class="v">42,99 €</td><td class="v">59,48 €</td><td class="v mais">+16,49 €</td></tr>
+      </tbody>
+    </table>
+    <p class="ficticio">Exemplo inteiramente fictício, criado para este guia. Valores com IVA incluído.</p>
+  </div>
+
+  <p style="margin-top:4mm">O total subiu 16,49 €, mas por três motivos diferentes: uma actualização da mensalidade (+1,50 €), o fim de um desconto (+10,00 €) e um serviço novo (+4,99 €). Cada um pede uma pergunta diferente — é disso que trata a próxima verificação.</p>
+
+  <div class="caixa dica">
+    <div class="caixa-titulo">Dica</div>
+    <p>Muitas empresas permitem descarregar as facturas dos últimos meses em PDF. Guarde-as numa pasta por serviço: comparar fica muito mais fácil e terá a prova de que precisa se tiver de reclamar.</p>
+  </div>
+
+  <div class="rodape"><span>Está a pagar mais do que devia? · Guia DoLado</span><span class="num">4</span></div>
+</section>
+
+<!-- ===================== 5. V2 ===================== -->
+<section class="pagina" id="v2">
+  <div class="cabeca-verif"><div class="num-verif">2</div><div><div class="eyebrow">Verificação 2</div><h2>Descubra porque é que o valor mudou</h2></div></div>
+  <p>Encontrada a diferença, o passo seguinte é perceber a sua origem. Os motivos mais comuns são estes:</p>
+
+  <table>
+    <thead><tr><th style="width:34%">Motivo</th><th>O que costuma significar</th></tr></thead>
+    <tbody>
+      <tr><td><b>Período de facturação diferente</b></td><td>A factura cobre mais (ou menos) dias do que a anterior. Compare o valor por dia, não só o total.</td></tr>
+      <tr><td><b>Consumo diferente</b></td><td>Gastou mais ou menos electricidade, gás ou água — por exemplo, no Inverno ou com mais pessoas em casa.</td></tr>
+      <tr><td><b>Acerto de consumos</b></td><td>Depois de meses com estimativas, chegou uma leitura real e a empresa acertou a diferença, para mais ou para menos.</td></tr>
+      <tr><td><b>Fim de um desconto ou promoção</b></td><td>O preço volta ao valor normal previsto no contrato. Ver verificação 3.</td></tr>
+      <tr><td><b>Alteração de preço</b></td><td>A empresa actualizou o preço ou o tarifário. Ver verificação 7.</td></tr>
+      <tr><td><b>Serviço ou equipamento novo</b></td><td>Foi acrescentado um serviço, um equipamento ou uma subscrição. Ver verificação 5.</td></tr>
+      <tr><td><b>Valor pontual</b></td><td>Uma deslocação técnica, uma alteração de tarifário, um encargo por atraso no pagamento, uma chamada para números especiais.</td></tr>
+      <tr><td><b>Regularização</b></td><td>Correcção de uma factura anterior, devolução de um valor ou cobrança de um valor em falta.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Justificado ou a esclarecer?</h3>
+  <div class="grelha-2">
+    <div class="cartao">
+      <span class="etiqueta">Normalmente justificado</span>
+      <ul>
+        <li>Consumo maior num mês mais frio ou mais longo.</li>
+        <li>Fim de uma promoção cuja data conhecia.</li>
+        <li>Um serviço que pediu e que agora aparece na factura.</li>
+        <li>Uma alteração de preço comunicada com antecedência, nos termos do contrato.</li>
+      </ul>
+    </div>
+    <div class="cartao">
+      <span class="etiqueta laranja">Merece um pedido de esclarecimento</span>
+      <ul>
+        <li>Uma linha nova que não reconhece nem se lembra de ter pedido.</li>
+        <li>Um aumento sobre o qual não recebeu qualquer aviso.</li>
+        <li>Um desconto que desapareceu antes da data prevista.</li>
+        <li>Um acerto muito elevado, sem explicação das leituras usadas.</li>
+        <li>Um valor que não consegue relacionar com o contrato.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="caixa info">
+    <div class="caixa-titulo">Pedir explicações é um passo normal</div>
+    <p>Pedir à empresa que explique um valor não é uma reclamação nem um conflito. Muitas vezes a resposta resolve a dúvida. Se não resolver, ficará com um registo escrito que pode ser útil mais tarde (ver verificação 9).</p>
+  </div>
+
+  <div class="rodape"><span>Está a pagar mais do que devia? · Guia DoLado</span><span class="num">5</span></div>
+</section>
+
+<!-- ===================== 6. V3 ===================== -->
+<section class="pagina" id="v3">
+  <div class="cabeca-verif"><div class="num-verif">3</div><div><div class="eyebrow">Verificação 3</div><h2>Confirme quando terminam os seus descontos</h2></div></div>
+  <p>Muitos contratos começam com um preço promocional: «os primeiros 6 meses a metade do preço», «10 € de desconto durante 12 meses», «o primeiro mês grátis». São vantagens reais — mas têm um fim, e é aí que muitas facturas sobem sem aviso aparente.</p>
+
+  <h3>Onde procurar</h3>
+  <ul>
+    <li><b>No resumo contratual ou nas condições da oferta</b> que recebeu ao aderir: costumam indicar a duração do desconto e o preço que se aplica depois.</li>
+    <li><b>Na própria factura:</b> algumas mostram a linha do desconto com a indicação «até» ou «meses restantes».</li>
+    <li><b>Na área de cliente ou na aplicação</b> da empresa, no detalhe do tarifário.</li>
+    <li><b>Nos e-mails ou SMS de confirmação</b> da adesão.</li>
+  </ul>
+
+  <h3>O que registar</h3>
+  <div class="grelha-2">
+    <div class="cartao"><h4>Quando termina</h4><p>A data exacta, ou o número de meses a contar de uma data (por exemplo, a activação). Se só souber a duração, conte a partir da data em que o serviço começou.</p></div>
+    <div class="cartao"><h4>Quanto passa a pagar</h4><p>O preço depois da promoção. É este o valor que conta para decidir se o serviço continua a compensar.</p></div>
+    <div class="cartao"><h4>Se está ligado à fidelização</h4><p>Por vezes o desconto é a contrapartida de um período de fidelização. Saber isto ajuda a perceber os encargos de uma eventual saída antecipada.</p></div>
+    <div class="cartao"><h4>Se depende de condições</h4><p>Alguns descontos exigem factura electrónica, débito directo ou outro serviço associado. Se deixar de cumprir a condição, o desconto pode deixar de se aplicar.</p></div>
+  </div>
+
+  <div class="caixa dica">
+    <div class="caixa-titulo">Dica</div>
+    <p>Marque um lembrete no calendário cerca de 30 a 60 dias antes do fim do desconto. Terá tempo para comparar ofertas, falar com a empresa ou decidir com calma — em vez de descobrir o aumento na factura.</p>
+  </div>
+
+  <div class="caixa atencao">
+    <div class="caixa-titulo">Atenção</div>
+    <p>O fim de uma promoção com data conhecida não é, por si só, uma alteração do contrato: o preço normal já estava previsto. Mas se o desconto desaparecer <b>antes</b> da data acordada, ou se o preço depois da promoção for diferente do indicado, vale a pena pedir esclarecimento.</p>
+  </div>
+
+  <div class="rodape"><span>Está a pagar mais do que devia? · Guia DoLado</span><span class="num">6</span></div>
+</section>
+
+<!-- ===================== 7. V4 ===================== -->
+<section class="pagina" id="v4">
+  <div class="cabeca-verif"><div class="num-verif">4</div><div><div class="eyebrow">Verificação 4</div><h2>Consulte o período de fidelização</h2></div></div>
+  <p>A <b>fidelização</b> é o período durante o qual se compromete a manter o contrato, normalmente em troca de uma vantagem — um desconto, a instalação gratuita, um equipamento. Se sair antes do fim, podem ser cobrados encargos.</p>
+
+  <h3>Como saber as datas</h3>
+  <ul>
+    <li>Procure no contrato ou no resumo contratual a <b>duração</b> da fidelização e a <b>data de início</b> (que pode ser a da assinatura ou a da activação do serviço — confirme qual).</li>
+    <li>Muitas facturas e áreas de cliente indicam a data de fim. Se não a encontrar, peça-a à empresa por escrito.</li>
+    <li>Repare se houve uma <b>nova fidelização</b>: mudar de tarifário, aceitar um equipamento novo ou uma oferta pode ter iniciado um novo período.</li>
+  </ul>
+
+  <h3>As regras não são iguais em todos os sectores</h3>
+  <div class="grelha-2">
+    <div class="cartao">
+      <span class="etiqueta azul">Telecomunicações</span>
+      <p>A fidelização pode ir até 24 meses, e as operadoras têm de disponibilizar também ofertas sem fidelização. Se cancelar por sua iniciativa durante a fidelização, os encargos têm limites legais e dependem do contrato e do momento da saída. Em algumas situações previstas na lei — por exemplo, certas mudanças de residência ou de situação profissional — pode não haver encargos.</p>
+    </div>
+    <div class="cartao">
+      <span class="etiqueta azul">Electricidade e gás</span>
+      <p>Nos contratos com consumidores, a fidelização não pode ultrapassar 12 meses, tem de existir uma contrapartida para o cliente e não se renova automaticamente. Se sair antes do fim, a indemnização tem de ser proporcional e não pode exceder as perdas directas do comercializador.</p>
+    </div>
+  </div>
+  <p class="muted" style="font-size:9pt; margin-top:3mm">Na água, o serviço é prestado pela entidade gestora do seu município, normalmente sem períodos de fidelização.</p>
+
+  <div class="caixa atencao">
+    <div class="caixa-titulo">O fim da fidelização não termina o contrato</div>
+    <p>Quando a fidelização acaba, o contrato continua — normalmente com o preço que estiver em vigor nessa altura, que pode já não incluir os descontos iniciais. Para terminar o contrato ou mudar de empresa, é preciso pedi-lo. Nas telecomunicações, depois de um contrato com fidelização se prorrogar automaticamente, a lei permite denunciá-lo a qualquer momento, com pré-aviso máximo de um mês e sem custos de cessação.</p>
+  </div>
+
+  <h3>Antes de cancelar ou alterar, confirme</h3>
+  <ul>
+    <li>A data de fim da fidelização e se existe alguma nova em curso.</li>
+    <li>Que encargos o contrato prevê numa saída antecipada e como são calculados.</li>
+    <li>Se tem equipamentos para devolver, e em que prazo.</li>
+    <li>O pré-aviso exigido e a forma de pedir o cancelamento (guarde sempre o comprovativo).</li>
+  </ul>
+  <p style="font-size:9.4pt">Nas telecomunicações, pode estimar o encargo máximo com a <a href="https://dolado.pt/calculadora-cancelamento?utm_source=ebook&amp;utm_medium=pdf&amp;utm_campaign=guia_facturas">Calculadora de Cancelamento gratuita da DoLado</a>.</p>
+
+  <div class="rodape"><span>Está a pagar mais do que devia? · Guia DoLado</span><span class="num">7</span></div>
+</section>
+
+<!-- ===================== 8. V5 ===================== -->
+<section class="pagina" id="v5">
+  <div class="cabeca-verif"><div class="num-verif">5</div><div><div class="eyebrow">Verificação 5</div><h2>Identifique serviços que não utiliza</h2></div></div>
+  <p>Ao longo do tempo, os contratos tendem a acumular extras. Alguns foram pedidos e esquecidos; outros vieram com uma oferta; outros nem sabemos bem de onde vieram. Percorra a factura e procure linhas como estas:</p>
+
+  <div class="grelha-2">
+    <div class="cartao"><h4>Equipamentos</h4><p>Segunda ou terceira box, aluguer de router, extensores de rede, contador ou equipamento alugado.</p></div>
+    <div class="cartao"><h4>Canais e conteúdos</h4><p>Pacotes de canais, plataformas de vídeo, desporto, serviços de música ou jogos associados ao tarifário.</p></div>
+    <div class="cartao"><h4>Seguros e assistências</h4><p>Seguros de equipamentos, de avarias domésticas ou planos de assistência técnica associados ao contrato de energia ou de telecomunicações.</p></div>
+    <div class="cartao"><h4>Serviços de valor acrescentado</h4><p>Subscrições por SMS, chamadas para números especiais, compras de conteúdos digitais cobradas na factura.</p></div>
+  </div>
+
+  <h3>Não usar não é o mesmo que não ter autorizado</h3>
+  <div class="grelha-2">
+    <div class="cartao">
+      <span class="etiqueta">Serviço que contratou e não usa</span>
+      <p>Foi pedido ou aceite, mas já não lhe faz falta. Não há nada de errado na cobrança: o que pode fazer é pedir para o desactivar. Confirme antes se está associado a um desconto ou à fidelização e se o seu cancelamento tem algum custo.</p>
+    </div>
+    <div class="cartao">
+      <span class="etiqueta laranja">Cobrança que não reconhece</span>
+      <p>Não se lembra de ter pedido nem aceite este serviço. Neste caso, peça à empresa que identifique quando e como foi contratado e que envie o comprovativo. Se não existir prova da sua adesão, pode pedir a desactivação e a devolução do que pagou.</p>
+    </div>
+  </div>
+
+  <div class="caixa info">
+    <div class="caixa-titulo">Bom saber</div>
+    <p>Na electricidade e no gás, os serviços adicionais (como seguros ou assistências) são independentes do fornecimento de energia, e o comercializador deve informar sobre eles de forma clara e transparente. Deixar de ter um serviço adicional não significa ficar sem energia.</p>
+  </div>
+
+  <div class="caixa dica">
+    <div class="caixa-titulo">Dica</div>
+    <p>Se recebeu cobranças de conteúdos ou subscrições que não pediu, pergunte também à operadora se é possível bloquear este tipo de serviços no seu número, para evitar que voltem a acontecer.</p>
+  </div>
+
+  <div class="rodape"><span>Está a pagar mais do que devia? · Guia DoLado</span><span class="num">8</span></div>
+</section>
+
+<!-- ===================== 9. V6 ===================== -->
+<section class="pagina" id="v6">
+  <div class="cabeca-verif"><div class="num-verif">6</div><div><div class="eyebrow">Verificação 6</div><h2>Verifique os consumos e as leituras</h2></div></div>
+  <p>Na electricidade, no gás e na água, uma parte da factura depende de quanto consumiu. Para isso, a empresa precisa de saber o valor do contador — e nem sempre o sabe.</p>
+
+  <table>
+    <thead><tr><th style="width:28%">Termo</th><th>O que significa</th></tr></thead>
+    <tbody>
+      <tr><td><b>Leitura real</b></td><td>O valor efectivamente lido no contador — pela empresa, à distância (contadores inteligentes) ou comunicado por si.</td></tr>
+      <tr><td><b>Estimativa</b></td><td>Quando não há leitura, a empresa calcula um consumo provável, normalmente com base no seu histórico.</td></tr>
+      <tr><td><b>Acerto</b></td><td>Quando chega uma leitura real, a empresa compara-a com o que estimou e corrige a diferença: pode cobrar o que faltou ou descontar o que cobrou a mais.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>O que confirmar na factura</h3>
+  <ul>
+    <li>Se cada consumo indicado é <b>real</b> ou <b>estimado</b> (a factura deve dizê-lo).</li>
+    <li>As leituras usadas (inicial e final) e as datas a que correspondem.</li>
+    <li>Se o valor do seu contador hoje é coerente com a última leitura indicada. Uma fotografia do contador, com data, é a melhor prova.</li>
+    <li>Num acerto, que período cobre e como foi calculado.</li>
+  </ul>
+
+  <div class="grelha-2" style="margin-top:3mm">
+    <div class="cartao"><h4>Comunique as suas leituras</h4><p>Na electricidade e no gás, quando existe, deve prevalecer na facturação a leitura mais recente, incluindo a comunicada pelo cliente. Na água, as entidades gestoras também aceitam leituras dos utilizadores. Fazê-lo regularmente evita acertos grandes.</p></div>
+    <div class="cartao"><h4>Facturas acumuladas</h4><p>A regra é a facturação mensal. Se receber uma factura que junta vários meses porque a periodicidade não foi respeitada, pode, em certas condições, pedir o pagamento em prestações — sem juros, quando o atraso não lhe for imputável.</p></div>
+  </div>
+
+  <div class="caixa atencao">
+    <div class="caixa-titulo">Acertos de consumos antigos</div>
+    <p>Na electricidade, no gás, na água e nas comunicações electrónicas, a lei dos serviços públicos essenciais prevê prazos de seis meses que limitam a cobrança de alguns valores antigos — incluindo, em certos casos, diferenças apuradas num acerto. Se receber um acerto que inclua consumos de há muito tempo, vale a pena pedir o detalhe das datas e das leituras: a aplicação destes prazos depende das datas e de cada situação.</p>
+  </div>
+
+  <div class="rodape"><span>Está a pagar mais do que devia? · Guia DoLado</span><span class="num">9</span></div>
+</section>
+
+<!-- ===================== 10. V7 ===================== -->
+<section class="pagina" id="v7">
+  <div class="cabeca-verif"><div class="num-verif">7</div><div><div class="eyebrow">Verificação 7</div><h2>Saiba quando e como os preços podem mudar</h2></div></div>
+  <p>Os preços não ficam necessariamente iguais para sempre. Mas as empresas não os podem mudar de qualquer forma: há regras sobre o aviso que têm de dar e sobre o que o cliente pode fazer. Essas regras dependem do sector, do contrato e do tipo de alteração.</p>
+
+  <div class="cartao" style="margin-bottom:3mm">
+    <span class="etiqueta azul">Telecomunicações</span>
+    <p>A operadora tem de comunicar as alterações das condições contratuais de forma clara, em suporte duradouro e com pelo menos um mês de antecedência, indicando, quando aplicável, o direito de terminar o contrato. Se a alteração tiver efeito negativo para si, pode, em regra, terminar o contrato sem custos de cessação antecipada. Há excepções — por exemplo, alterações exclusivamente em seu benefício, puramente administrativas sem efeito negativo ou impostas por lei — e algumas actualizações de preço previstas no próprio contrato podem ter um enquadramento diferente.</p>
+  </div>
+  <div class="cartao" style="margin-bottom:3mm">
+    <span class="etiqueta azul">Electricidade e gás</span>
+    <p>O comercializador deve comunicar novas condições contratuais com pelo menos 30 dias de antecedência, informando o cliente do direito de denunciar o contrato sem encargos se não as aceitar. Durante um período de fidelização, em regra, não pode alterar as condições — incluindo o preço — salvo quando a alteração é do interesse do cliente e este a aceita expressamente.</p>
+  </div>
+  <div class="cartao">
+    <span class="etiqueta azul">Água</span>
+    <p>Os tarifários são aprovados pela entidade gestora e produzem efeitos, em regra, a 1 de Janeiro. Devem ser publicitados, e a informação sobre a alteração deve acompanhar a primeira factura seguinte. Outras alterações das condições do contrato devem ser comunicadas por escrito com pelo menos 30 dias de antecedência.</p>
+  </div>
+
+  <h3>Recebeu um aviso de alteração? Verifique</h3>
+  <ul>
+    <li><b>Quando o recebeu</b> e a partir de que data a alteração se aplica. Guarde a carta, o e-mail ou a mensagem.</li>
+    <li><b>O que muda exactamente</b>: o preço, os serviços incluídos, a velocidade, as condições de pagamento.</li>
+    <li><b>Que opções lhe são indicadas</b> e até quando as pode exercer.</li>
+    <li><b>Se a alteração estava prevista no contrato</b> e em que termos.</li>
+  </ul>
+
+  <div class="caixa atencao">
+    <div class="caixa-titulo">Atenção</div>
+    <p>Nem todo o aumento é ilegal, e nem toda a alteração permite cancelar sem encargos. O que importa é perceber se a alteração foi comunicada como devia e quais são as suas opções. Os prazos para reagir podem ser curtos — não deixe o aviso esquecido na caixa de correio.</p>
+  </div>
+
+  <div class="rodape"><span>Está a pagar mais do que devia? · Guia DoLado</span><span class="num">10</span></div>
+</section>
+
+<!-- ===================== 11. V8 ===================== -->
+<section class="pagina" id="v8">
+  <div class="cabeca-verif"><div class="num-verif">8</div><div><div class="eyebrow">Verificação 8</div><h2>Compare as condições actuais com as contratadas</h2></div></div>
+  <p>Com o tempo, é fácil esquecer o que se acordou. Uma vez por ano — ou sempre que algo lhe pareça estranho — vale a pena pôr lado a lado o que contratou e o que tem hoje.</p>
+
+  <h3>Onde está o que contratou</h3>
+  <ul>
+    <li><b>Contrato e condições gerais</b> — enviados na adesão ou disponíveis na área de cliente.</li>
+    <li><b>Resumo contratual</b> — nas telecomunicações, a operadora tem de entregar um resumo com as principais condições (preço, duração, fidelização, serviços).</li>
+    <li><b>Proposta ou condições da oferta</b> — na energia, a proposta que aceitou indica o preço, a duração e uma eventual fidelização.</li>
+    <li><b>Gravação ou confirmação da chamada</b> — se contratou por telefone, a empresa deve ter registo da sua aceitação. Pode pedir uma cópia.</li>
+  </ul>
+
+  <h3>Exemplo de comparação</h3>
+  <table>
+    <thead><tr><th style="width:30%">Condição</th><th>O que contratei</th><th>O que tenho hoje</th><th style="width:16%">Bate certo?</th></tr></thead>
+    <tbody>
+      <tr><td>Preço mensal</td><td>49,99 € (39,99 € nos primeiros 12 meses)</td><td>51,49 €</td><td class="mais">Verificar aviso</td></tr>
+      <tr><td>Serviços incluídos</td><td>Internet 500 Mb, 120 canais, telefone fixo</td><td>Internet 500 Mb, 120 canais, telefone fixo</td><td class="menos">Sim</td></tr>
+      <tr><td>Extras</td><td>Segunda box: 3,00 €</td><td>Segunda box: 3,00 € + «Clube Desporto»: 4,99 €</td><td class="mais">Esclarecer</td></tr>
+      <tr><td>Fidelização</td><td>24 meses desde a activação</td><td>Termina em Março</td><td class="menos">Sim</td></tr>
+      <tr><td>Forma de pagamento</td><td>Débito directo, factura electrónica</td><td>Débito directo, factura electrónica</td><td class="menos">Sim</td></tr>
+    </tbody>
+  </table>
+  <p class="ficticio">Exemplo inteiramente fictício, a continuar o da verificação 1.</p>
+
+  <div class="caixa dica">
+    <div class="caixa-titulo">Dica</div>
+    <p>Se não encontra o contrato, peça uma cópia à empresa. Tem interesse em ter sempre consigo as condições que aceitou — são a base de qualquer pedido de esclarecimento ou de reclamação.</p>
+  </div>
+
+  <div class="caixa info">
+    <div class="caixa-titulo">E se o serviço não corresponder ao contratado?</div>
+    <p>Se o que recebe for diferente do acordado — por exemplo, uma velocidade de internet muito abaixo da indicada no contrato, de forma continuada — registe as ocorrências (datas, testes de velocidade, contactos com a empresa). Nas telecomunicações, uma discrepância significativa e continuada pode justificar medidas, incluindo, em certos casos, terminar o contrato sem custos.</p>
+  </div>
+
+  <div class="rodape"><span>Está a pagar mais do que devia? · Guia DoLado</span><span class="num">11</span></div>
+</section>
+
+<!-- ===================== 12. V9 ===================== -->
+<section class="pagina" id="v9">
+  <div class="cabeca-verif"><div class="num-verif">9</div><div><div class="eyebrow">Verificação 9</div><h2>O que fazer perante uma cobrança inesperada</h2></div></div>
+  <ol class="passos">
+    <li><b>Confirme os dados da factura.</b> Período, leituras, linhas novas e valores. Às vezes a explicação está numa nota de rodapé.</li>
+    <li><b>Consulte as condições contratuais.</b> O contrato, o resumo contratual e os avisos recebidos (verificações 3, 7 e 8).</li>
+    <li><b>Reúna documentos e comunicações.</b> Facturas, contrato, e-mails, SMS, fotografias do contador, números de pedido.</li>
+    <li><b>Peça esclarecimento à empresa, por escrito.</b> Por e-mail, formulário ou área de cliente — e guarde o comprovativo. Pode usar o modelo abaixo.</li>
+    <li><b>Se necessário, reclame pelos meios adequados.</b> Livro de Reclamações (físico ou electrónico), o regulador do sector (ANACOM, ERSE ou ERSAR) e, em caso de conflito, os centros de resolução alternativa de litígios de consumo.</li>
+  </ol>
+
+  <h3>Modelo de pedido de esclarecimento</h3>
+  <div class="modelo">
+    <p><b>Assunto:</b> Pedido de esclarecimento — factura n.º <span class="campo">[n.º da factura]</span></p>
+    <p>Exmos. Senhores,</p>
+    <p>Sou titular do contrato n.º <span class="campo">[n.º de cliente ou de contrato]</span>, relativo ao serviço <span class="campo">[serviço]</span>.</p>
+    <p>Na factura n.º <span class="campo">[n.º]</span>, de <span class="campo">[data]</span>, verifiquei <span class="campo">[descrição objectiva — por exemplo: a cobrança de 4,99 € com a designação «Clube Desporto»]</span>, que não consigo relacionar com as condições que contratei.</p>
+    <p>Solicito que me informem, por escrito: (1) a que corresponde este valor e desde quando é cobrado; (2) em que contrato, adesão ou comunicação se baseia, enviando-me cópia; (3) caso não tenha fundamento, a sua correcção e a devolução do montante pago a mais.</p>
+    <p>Agradeço a vossa resposta para este endereço de e-mail.</p>
+    <p style="margin:0">Com os melhores cumprimentos,<br><span class="campo">[nome]</span> · <span class="campo">[data]</span></p>
+  </div>
+
+  <div class="caixa info">
+    <div class="caixa-titulo">Bom saber</div>
+    <ul>
+      <li>Se a factura juntar vários serviços, a lei permite, em regra, pagar em separado um serviço público essencial (como a electricidade ou a água).</li>
+      <li>Nas telecomunicações, uma reclamação escrita que conteste a existência ou a exigibilidade da dívida, apresentada até à data prevista para a suspensão, impede a suspensão do serviço por falta de pagamento desses valores. Na electricidade e no gás, uma reclamação sobre a facturação, com informação concreta que indique um possível erro, suspende as ordens de interrupção relativas a essa factura até ser apreciada.</li>
+      <li>No Livro de Reclamações, a empresa deve responder no prazo de 15 dias úteis.</li>
+    </ul>
+  </div>
+
+  <div class="rodape"><span>Está a pagar mais do que devia? · Guia DoLado</span><span class="num">12</span></div>
+</section>
+
+<!-- ===================== 13. V10 ===================== -->
+<section class="pagina" id="v10">
+  <div class="cabeca-verif"><div class="num-verif">10</div><div><div class="eyebrow">Verificação 10</div><h2>Crie o seu calendário de contratos</h2></div></div>
+  <p>A maior parte das surpresas nas facturas tem uma data por trás: o fim de um desconto, o fim de uma fidelização, uma alteração de preço. Juntar essas datas num só sítio é a forma mais simples de deixar de ser apanhado desprevenido.</p>
+
+  <h3>O que registar para cada serviço</h3>
+  <table>
+    <thead><tr><th style="width:32%">Campo</th><th>Porque importa</th></tr></thead>
+    <tbody>
+      <tr><td><b>Nome do serviço</b></td><td>Internet e TV, telemóvel, electricidade, gás, água.</td></tr>
+      <tr><td><b>Empresa fornecedora</b></td><td>Para saber a quem se dirigir e que regras se aplicam.</td></tr>
+      <tr><td><b>Valor mensal habitual</b></td><td>A referência para reparar logo num aumento.</td></tr>
+      <tr><td><b>Fim do desconto</b></td><td>A data em que o preço pode subir.</td></tr>
+      <tr><td><b>Fim da fidelização</b></td><td>A partir desta data, sair ou negociar costuma ser mais simples.</td></tr>
+      <tr><td><b>Próxima revisão</b></td><td>Uma data que escolhe para voltar a olhar para o contrato — por exemplo, 30 a 60 dias antes do fim do desconto ou da fidelização.</td></tr>
+      <tr><td><b>Observações</b></td><td>Equipamentos a devolver, n.º de cliente, contactos, pedidos feitos e respectivas datas.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Como manter o calendário vivo</h3>
+  <ul>
+    <li>Preencha o mapa da página 15 com os serviços da sua casa. Bastam 15 minutos.</li>
+    <li>Passe as datas de «próxima revisão» para o calendário do telemóvel, com um alerta.</li>
+    <li>Sempre que receber um aviso de alteração ou mudar de tarifário, actualize a linha correspondente.</li>
+    <li>Uma vez por ano, reveja tudo: o que paga, o que usa e o que ainda lhe faz sentido.</li>
+  </ul>
+
+  <div class="caixa dica">
+    <div class="caixa-titulo">Resultado</div>
+    <p>Com o calendário em dia, cada aumento deixa de ser uma surpresa: ou já sabia que vinha, ou percebe logo que merece uma pergunta. E as decisões — mudar, negociar, manter — passam a ser tomadas com tempo.</p>
+  </div>
+
+  <div class="rodape"><span>Está a pagar mais do que devia? · Guia DoLado</span><span class="num">13</span></div>
+</section>
+
+<!-- ===================== 14. CHECKLIST ===================== -->
+<section class="pagina" id="checklist">
+  <div class="eyebrow">Ferramenta prática 1 · Para imprimir</div>
+  <h2>Checklist das 10 verificações</h2>
+  <p class="muted" style="margin-top:2mm">Serviço: ________________________ &nbsp; Empresa: ____________________ &nbsp; Data: ___ / ___ / _____</p>
+  <ul class="lista-check" style="margin-top:3mm">
+    <li><span class="quadrado"></span><span class="txt"><b>1. Comparei a factura deste mês com a anterior</b><span>Total, período, preço base, descontos, consumos, linhas novas.</span></span><span class="linha-obs"></span></li>
+    <li><span class="quadrado"></span><span class="txt"><b>2. Sei porque é que o valor mudou</b><span>Consumo, período, acerto, fim de desconto, preço, serviço novo.</span></span><span class="linha-obs"></span></li>
+    <li><span class="quadrado"></span><span class="txt"><b>3. Sei quando terminam os meus descontos</b><span>Data de fim e preço que passo a pagar depois.</span></span><span class="linha-obs"></span></li>
+    <li><span class="quadrado"></span><span class="txt"><b>4. Conheço o período de fidelização</b><span>Data de início, data de fim, encargos de saída antecipada.</span></span><span class="linha-obs"></span></li>
+    <li><span class="quadrado"></span><span class="txt"><b>5. Revi os serviços e equipamentos extra</b><span>Os que uso, os que não uso e os que não reconheço.</span></span><span class="linha-obs"></span></li>
+    <li><span class="quadrado"></span><span class="txt"><b>6. Confirmei consumos e leituras</b><span>Real ou estimada; fotografia do contador com data.</span></span><span class="linha-obs"></span></li>
+    <li><span class="quadrado"></span><span class="txt"><b>7. Verifiquei avisos de alteração de preço</b><span>Data do aviso, data de aplicação, opções indicadas.</span></span><span class="linha-obs"></span></li>
+    <li><span class="quadrado"></span><span class="txt"><b>8. Comparei com as condições contratadas</b><span>Contrato, resumo contratual ou proposta aceite.</span></span><span class="linha-obs"></span></li>
+    <li><span class="quadrado"></span><span class="txt"><b>9. Pedi esclarecimento do que não bate certo</b><span>Por escrito, com comprovativo guardado.</span></span><span class="linha-obs"></span></li>
+    <li><span class="quadrado"></span><span class="txt"><b>10. Actualizei o meu calendário de contratos</b><span>Datas de fim e próxima revisão no calendário.</span></span><span class="linha-obs"></span></li>
+  </ul>
+  <h3>Observações</h3>
+  <div style="border-bottom:1px solid var(--line-strong); height:9mm"></div>
+  <div style="border-bottom:1px solid var(--line-strong); height:9mm"></div>
+  <div style="border-bottom:1px solid var(--line-strong); height:9mm"></div>
+  <div style="border-bottom:1px solid var(--line-strong); height:9mm"></div>
+  <div style="border-bottom:1px solid var(--line-strong); height:9mm"></div>
+  <div style="border-bottom:1px solid var(--line-strong); height:9mm"></div>
+
+  <div class="rodape"><span>Está a pagar mais do que devia? · Guia DoLado</span><span class="num">14</span></div>
+</section>
+
+<!-- ===================== 15. MAPA DE CONTRATOS ===================== -->
+<section class="pagina" id="mapa">
+  <div class="eyebrow">Ferramenta prática 2 · Para imprimir</div>
+  <h2>O meu mapa de contratos</h2>
+
+  <h3>Exemplo preenchido <span class="muted" style="font-weight:500; font-size:9pt">(fictício)</span></h3>
+  <table class="mapa">
+    <thead><tr><th>Serviço</th><th>Empresa</th><th class="v">Valor mensal</th><th>Fim do desconto</th><th>Fim da fidelização</th><th>Próxima revisão</th><th>Observações</th></tr></thead>
+    <tbody>
+      <tr><td>Internet + TV</td><td>Operadora Exemplo</td><td class="v">42,99 €</td><td>15/09</td><td>15/03 (ano seguinte)</td><td>15/01</td><td>2 boxes a devolver</td></tr>
+      <tr><td>Telemóvel</td><td>Rede Exemplo</td><td class="v">12,00 €</td><td>—</td><td>Sem fidelização</td><td>Anual</td><td>Rever tarifário</td></tr>
+      <tr><td>Electricidade</td><td>Energia Exemplo</td><td class="v">≈ 55 €</td><td>30/06</td><td>30/06</td><td>01/05</td><td>Enviar leitura todos os meses</td></tr>
+      <tr><td>Gás</td><td>Gás Exemplo</td><td class="v">≈ 25 €</td><td>—</td><td>Sem fidelização</td><td>Anual</td><td>Inclui assistência técnica</td></tr>
+      <tr><td>Água</td><td>Serviços Municipalizados</td><td class="v">≈ 30 €</td><td>—</td><td>—</td><td>Janeiro (tarifário)</td><td>Leitura real a cada 2 meses</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:8mm">O meu mapa</h3>
+  <table class="mapa branco">
+    <thead><tr><th style="width:15%">Serviço</th><th style="width:15%">Empresa</th><th style="width:11%" class="v">Valor mensal</th><th style="width:12%">Fim do desconto</th><th style="width:13%">Fim da fidelização</th><th style="width:12%">Próxima revisão</th><th>Observações</th></tr></thead>
+    <tbody>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table>
+  <p class="ficticio">As empresas do exemplo são fictícias. Não escreva neste mapa palavras-passe nem códigos de acesso.</p>
+
+  <div class="rodape"><span>Está a pagar mais do que devia? · Guia DoLado</span><span class="num">15</span></div>
+</section>
+
+<!-- ===================== 16. DOLADO + FONTES ===================== -->
+<section class="pagina fecho" id="dolado">
+  <div class="eyebrow">Como a DoLado pode ajudar</div>
+  <h2>Não precisa de fazer tudo sozinho</h2>
+  <p class="lead">Agora que conhece as principais informações que deve acompanhar, pode fazê-lo por conta própria com as ferramentas deste guia — ou contar com a DoLado.</p>
+  <p>Com a <b>Protecção DoLado</b>, mantém os seus serviços organizados num só lugar: envia o contrato e as facturas, nós verificamos a sua situação actual, comparamos cada nova factura com as anteriores e com as condições do contrato e avisamos antes das datas de fim de fidelização e de promoção. Quando encontramos uma alteração que merece atenção, é revista por uma pessoa antes de lhe ser comunicada. E se houver um problema para tratar, a DoLado pode preparar e acompanhar a reclamação consigo.</p>
+  <div class="grelha-3">
+    <div class="cartao"><h4>Os seus serviços num só lugar</h4><p>Contratos e facturas organizados por serviço, com as datas que importam.</p></div>
+    <div class="cartao"><h4>Cada factura comparada</h4><p>Com as anteriores e com as condições do contrato, para detectar alterações.</p></div>
+    <div class="cartao"><h4>Avisos com tempo</h4><p>Antes do fim da fidelização e das promoções, para decidir com calma.</p></div>
+  </div>
+  <a class="cta" href="https://dolado.pt/protecao?utm_source=ebook&amp;utm_medium=pdf&amp;utm_campaign=guia_facturas">Conhecer a Protecção DoLado →</a>
+
+  <h3 style="margin-top:9mm">Fontes oficiais</h3>
+  <ul class="fontes">
+    <li>Lei n.º 16/2022, de 16 de Agosto — Lei das Comunicações Electrónicas (arts. 120.º, 128.º, 129.º, 130.º, 132.º, 133.º, 135.º e 136.º): <a href="https://diariodarepublica.pt/dr/detalhe/lei/16-2022-187519012">diariodarepublica.pt</a></li>
+    <li>Directiva (UE) 2018/1972 — Código Europeu das Comunicações Electrónicas (art. 105.º): <a href="https://eur-lex.europa.eu/eli/dir/2018/1972/oj">eur-lex.europa.eu</a></li>
+    <li>Lei n.º 23/96, de 26 de Julho — Lei dos Serviços Públicos Essenciais (arts. 6.º, 10.º e 12.º), versão consolidada: <a href="https://diariodarepublica.pt/dr/legislacao-consolidada/lei/1996-34491275">diariodarepublica.pt</a></li>
+    <li>Regulamento n.º 827/2023 da ERSE — Regulamento de Relações Comerciais dos sectores eléctrico e do gás (arts. 17.º, 19.º, 42.º, 44.º e 68.º): <a href="https://diariodarepublica.pt/dr/detalhe/regulamento/827-2023-216305857">diariodarepublica.pt</a></li>
+    <li>Regulamento n.º 826/2023 da ERSE — Regulamento da Qualidade de Serviço (art. 64.º): <a href="https://www.erse.pt">erse.pt</a></li>
+    <li>Regulamento n.º 594/2018 da ERSAR — Regulamento de Relações Comerciais dos serviços de águas e resíduos (arts. 71.º, 83.º, 93.º, 97.º e 98.º): <a href="https://www.ersar.pt">ersar.pt</a></li>
+    <li>ANACOM — Portal do Consumidor: <a href="https://www.anacom-consumidor.pt">anacom-consumidor.pt</a> · Direcção-Geral do Consumidor: <a href="https://www.consumidor.gov.pt">consumidor.gov.pt</a> · Livro de Reclamações Electrónico: <a href="https://www.livroreclamacoes.pt">livroreclamacoes.pt</a></li>
+  </ul>
+
+  <p class="nota-legal" style="margin-top:5mm"><b>Revisão jurídica: 20 de Outubro de 2026.</b> Este guia tem carácter informativo e geral e reflecte as regras em vigor nessa data. Não constitui aconselhamento jurídico nem substitui a análise de cada caso concreto, que depende do contrato, do sector e das datas. Os exemplos são fictícios. A DoLado não está associada a nenhuma das entidades oficiais referidas.</p>
+  <p class="nota-legal">© 2026 DoLado · <a href="https://dolado.pt">dolado.pt</a> · <a href="mailto:contacto@dolado.pt">contacto@dolado.pt</a>. Pode partilhar livremente este guia, sem o alterar.</p>
+
+  <div class="rodape"><span><span class="marca" style="gap:1.5mm"><svg style="width:5mm;height:5mm"><use href="#icone-dolado"/></svg><span style="font-size:9pt">DoLado.<span class="p">p</span><span class="t">t</span></span></span></span><span class="num">16</span></div>
+</section>
+
+</body>
+</html>

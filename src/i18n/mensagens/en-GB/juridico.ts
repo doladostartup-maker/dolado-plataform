@@ -9,6 +9,7 @@ export const juridico: Traducao<typeof pt> = {
   rotuloTraducao: "English translation, for information only — the Portuguese text above is the binding version:",
   comunicacoes:
     "Optional: I agree to receive emails from DoLado with news and offers, such as Protection (alerts before the end of minimum terms and promotions). I can unsubscribe at any time.",
+  comunicacoesGuia: "I would like to receive tips, news and communications from DoLado by email.",
   aceitacaoTermos: "I have read and accept DoLado's Terms and Conditions.",
   inicioImediato:
     "I expressly ask DoLado to start providing the service immediately, before the end of the 14-day legal withdrawal period. I understand that, if I exercise that right after the service has started, I may have to pay an amount proportional to the service already provided and that, if the contract is fully performed during that period, I may lose the right of withdrawal under the applicable law.",

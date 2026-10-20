@@ -40,6 +40,16 @@ Origem: [auditoria-energia-facturacao-contratacao-2026-10-20.md](auditoria-energ
 - [x] **Limites temporais dos acertos** em `/problemas/energia/consumos-estimados` (20/10/2026, texto da secção E).
 - [x] **Página `/problemas/energia/mudanca-de-comercializador-nao-autorizada`** criada (20/10/2026, aprovada por Thiago).
 
+## Guia gratuito «Está a pagar mais do que devia?» (22 de Outubro de 2026)
+
+Origem: [revisao-juridica.md](../../conteudos/guia-facturas/revisao-juridica.md) (conteúdo do e-book) e [rascunho-privacidade-guia-facturas.md](rascunho-privacidade-guia-facturas.md) (captação de e-mail). **Bloqueia a entrada em produção da página `/guia-facturas`** (Política nova).
+
+- [ ] **Política de Privacidade:** nova versão com o guia gratuito e a autorização comercial sem conta (texto proposto no rascunho, secção 2).
+- [ ] **Conteúdo do e-book:** pontos A1–A5 da revisão jurídica (LCE art. 129.º, prazo do Livro de Reclamações, actualizações de preço previstas no contrato, água sem fidelização, modelo de pedido de esclarecimento).
+- [ ] **Antes do primeiro envio comercial:** dupla confirmação do endereço (`confirmado_em`) e ligação para deixar de receber em cada e-mail. Ainda não há envios.
+- [ ] **Prazos de conservação:** 12 meses para os pedidos; 3 anos para a prova das autorizações retiradas.
+- [ ] **Revisão periódica do e-book:** sempre que mudarem a LCE, o RRC/RQS da ERSE, o RRCAR ou a Lei n.º 23/96.
+
 ## Validações confirmadas (20 de Outubro de 2026)
 
 Confirmadas por Thiago a 20/10/2026:

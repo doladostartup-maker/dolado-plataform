@@ -44,6 +44,7 @@ const PAGINAS_PUBLICAS = [
   "/empresas",
   "/protecao",
   "/30-dias-gratis",
+  "/guia-facturas",
 ];
 
 // robots.txt e sitemap.xml: servidos diretamente em dolado.pt (nunca
@@ -98,6 +99,7 @@ const PAGINAS_SO_MARKETING = [
   "/empresas",
   "/protecao",
   "/30-dias-gratis",
+  "/guia-facturas",
 ];
 
 // Páginas "Problemas que tratamos" (/problemas e /problemas/…): marketing
@@ -290,7 +292,10 @@ async function encaminharSemIdioma(request: NextRequest, host: string, pathname:
 }
 
 export const config = {
+  // Ficheiros estáticos de public/ (imagens e o PDF do guia gratuito,
+  // public/guias) não passam pelo middleware: servidos tal como estão, em
+  // dolado.pt e no portal, sem redireccionamento nem sessão.
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|pdf)$).*)",
   ],
 };
