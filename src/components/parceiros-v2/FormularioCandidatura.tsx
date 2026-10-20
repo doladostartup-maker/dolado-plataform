@@ -23,7 +23,7 @@ export function FormularioCandidatura() {
 
   if (estado.tipo === "enviada") {
     return (
-      <div role="status" className={`${CARTAO} w-full max-w-[640px]`}>
+      <div role="status" className={`${CARTAO} w-full p-6 sm:p-9`}>
         <p className="text-[20px] font-extrabold text-[var(--v2-navy)]">{t.enviada.titulo}</p>
         <p className="mt-2 text-[16px] text-[var(--v2-muted)]">{t.enviada.texto}</p>
       </div>
@@ -37,9 +37,9 @@ export function FormularioCandidatura() {
         const dados = new FormData(e.currentTarget);
         startTransition(() => submeter(dados));
       }}
-      className={`${CARTAO} flex w-full max-w-[640px] flex-col gap-5`}
+      aria-label={t.eyebrow}
+      className={`${CARTAO} flex w-full flex-col gap-5 p-6 sm:p-9`}
     >
-      <h2 className="text-[24px] font-extrabold tracking-[-0.02em] text-[var(--v2-navy)]">{t.titulo}</h2>
       <label>
         <span className={ROTULO_CAMPO}>{t.nome}</span>
         <input name="nome" required maxLength={120} autoComplete="name" className={CAMPO} />
