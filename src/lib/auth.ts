@@ -92,7 +92,7 @@ export async function requireUser() {
  * disponíveis.
  */
 export async function obterAcesso(supabase: SupabaseServer, userId: string): Promise<Acesso> {
-  const [{ data }, { data: gratuita }] = await Promise.all([
+  const [{ data }, { data: gratuita }, { data: patrocinado }] = await Promise.all([
     supabase
       .from("user_access")
       .select("subscription_plan, subscription_status, case_credits, avulso_credits, current_period_end, cancel_at_period_end")
@@ -104,9 +104,17 @@ export async function obterAcesso(supabase: SupabaseServer, userId: string): Pro
       .select("id, estado, inicio_em, termina_em, lembretes_desativados_em")
       .eq("user_id", userId)
       .maybeSingle(),
+    // Protecção oferecida por um parceiro (RLS: só a da própria conta; o mais recente).
+    supabase
+      .from("acessos_patrocinados")
+      .select("id, estado, inicio_em, termina_em")
+      .eq("user_id", userId)
+      .order("termina_em", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
-  return calcularAcesso(data, gratuita);
+  return calcularAcesso(data, gratuita, new Date(), patrocinado);
 }
 
 /**

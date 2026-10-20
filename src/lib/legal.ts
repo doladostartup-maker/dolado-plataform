@@ -79,6 +79,19 @@ export const ACEITACAO_PROTECAO_GRATUITA_COMPLEMENTO =
   " Compreendo que a Protecção gratuita termina ao fim de 30 dias sem qualquer cobrança.";
 export const TEXTO_ACEITACAO_PROTECAO_GRATUITA = `${TEXTO_ACEITACAO_TERMOS}${ACEITACAO_PROTECAO_GRATUITA_COMPLEMENTO}`;
 
+/**
+ * Activação de uma Protecção oferecida por um Parceiro de Distribuição
+ * (acesso patrocinado): a mesma aceitação dos Termos e o que o beneficiário
+ * declara compreender. Fica registado em acessos_patrocinados.texto_aceite,
+ * com a versão dos Termos. ATENÇÃO: os Termos em vigor ainda não descrevem o
+ * acesso patrocinado — a funcionalidade fica desligada
+ * (ACESSOS_PATROCINADOS_ATIVO) até haver uma versão nova validada pela
+ * advogada (docs/legal/pendencias-juridicas.md).
+ */
+export const ACEITACAO_ACESSO_PATROCINADO_COMPLEMENTO =
+  " Compreendo que a Protecção oferecida termina automaticamente no fim do período indicado, sem qualquer cobrança, e que não inclui o tratamento de casos.";
+export const TEXTO_ACEITACAO_ACESSO_PATROCINADO = `${TEXTO_ACEITACAO_TERMOS}${ACEITACAO_ACESSO_PATROCINADO_COMPLEMENTO}`;
+
 const TEXTO_INICIO_IMEDIATO_BASE =
   "Peço expressamente que a DoLado inicie a prestação do serviço imediatamente, antes do fim do prazo legal de 14 dias de livre resolução. Compreendo que, se exercer esse direito depois de a prestação ter começado, poderá ser devido o valor proporcional ao serviço já prestado e que, se o contrato for integralmente executado durante esse período, poderei perder o direito de livre resolução nos termos legalmente aplicáveis.";
 

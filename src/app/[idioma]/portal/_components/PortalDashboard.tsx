@@ -1,6 +1,8 @@
 "use client";
 
 import { ProtecaoGratuitaPortal } from "@/components/portal/ProtecaoGratuita";
+import { AcessoPatrocinadoPortal } from "@/components/portal/AcessoPatrocinado";
+import type { EstadoAcessoPatrocinadoPortal } from "@/lib/acessoPatrocinadoServidor";
 import type { EstadoProtecaoGratuitaPortal } from "@/lib/protecaoGratuita";
 import Link from "@/i18n/Link";
 import type { Idioma } from "@/i18n/config";
@@ -188,6 +190,7 @@ export function PortalDashboard({
   temProtecao,
   temPlanoStripe,
   gratuita = null,
+  patrocinado = null,
   pagamentoPendente,
   conversaoProtecao,
   conversaoCasoProtecao,
@@ -209,6 +212,8 @@ export function PortalDashboard({
   temPlanoStripe: boolean;
   /** Proteção gratuita de 30 dias (null = nada a mostrar). */
   gratuita?: EstadoProtecaoGratuitaPortal | null;
+  /** Protecção oferecida por um parceiro, em curso (null = nada a mostrar). */
+  patrocinado?: EstadoAcessoPatrocinadoPortal | null;
   pagamentoPendente: boolean;
   /** O que um Avulso pago cobre em cada plano (null = sem conversão). */
   conversaoProtecao: OfertaConversao;
@@ -333,6 +338,7 @@ export function PortalDashboard({
       {/* 3. Proteção e plano */}
       <section aria-labelledby="protecao" className="flex flex-col gap-3">
         <TituloSeccao id="protecao" titulo={t.protecao} />
+        {patrocinado && <AcessoPatrocinadoPortal estado={patrocinado} comSubscricao={resumo.plano !== "sem_plano"} />}
         {gratuita && <ProtecaoGratuitaPortal estado={gratuita} />}
         <div className="grid gap-4 lg:grid-cols-[1.25fr_1fr]">
           {protecao ? (

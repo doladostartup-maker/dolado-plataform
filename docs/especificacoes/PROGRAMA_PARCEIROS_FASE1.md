@@ -1,6 +1,6 @@
 # Programa de Parceiros — Fase 1: auditoria e arquitectura
 
-Estado (20/10/2026): **arquitectura aprovada; PR 1 (base de dados) feito** — migration `20261021090000_programa_parceiros.sql`, testes `supabase/tests/database/programa_parceiros.test.sql` (113 verificações). PRs 2–4 por fazer.
+Estado (20/10/2026): **arquitectura aprovada; PR 1 (base de dados) e PR 2 (acesso patrocinado) feitos** — migration `20261021090000_programa_parceiros.sql`, testes `supabase/tests/database/programa_parceiros.test.sql` (113 verificações). PRs 3–4 por fazer.
 Origem: prompt "Programa de Parceiros DoLado" (Parceiro de Indicação + Parceiro de Distribuição).
 
 ---
@@ -110,7 +110,7 @@ Ainda em aberto:
 ## 5. Plano de entrega (PRs pequenos)
 
 1. ✅ Base de dados + testes pgTAP (parceiros, condições, códigos, atribuições, comissões, pacotes, acessos, `conta_tem_protecao`).
-2. Acesso patrocinado: activação `/ativar-codigo`, `calcularAcesso`, manutenção, e-mails, backoffice de pacotes/códigos/relatório.
+2. ✅ Acesso patrocinado: activação `/ativar-codigo`, `calcularAcesso`, manutenção, e-mails, backoffice de pacotes/códigos/relatório.
 3. Parceiro de Indicação: `/parceiros` + candidatura, aprovação, `/r/` partilhado, webhook (faturas, comissões, reversões), backoffice de comissões e pagamentos, oportunidades B2B.
 4. Documentos legais (depois da advogada) e ligação em produção por interruptor (`PARCEIROS_ATIVO=1`, desligado por omissão).
 
@@ -125,3 +125,12 @@ Ainda em aberto:
 - **Comissão B2B:** `parceiro_b2b_recalcular()` cria a diferença ainda não aprovada/paga entre a percentagem × receita do 1.º ano (`contrato_inicio` + 12 meses, sem IVA, menos reembolsos) e o já fechado. Receita a descer depois de aprovada/paga → `ajuste_negativo` (decisão humana).
 - **Manutenção:** pg_cron `acessos-patrocinados-manutencao` (`25 * * * *`, só SQL): termina os acessos, desactiva os dados sem outra Protecção, apaga as tentativas com mais de 2 dias, as visitas de parceiros com mais de 30 dias e as candidaturas rejeitadas há mais de 12 meses. Os e-mails (activação, 15 dias antes, fim) vão no PR 2, pela rota interna da Protecção gratuita.
 - **Aplicar em produção:** `supabase db push --linked --dry-run` e depois `db push`, antes do merge do PR 2. Não muda o comportamento actual (nenhuma conta tem acesso patrocinado nem atribuição a parceiro).
+
+## 7. Notas de implementação (PR 2 — Parceiro de Distribuição)
+
+- **Interruptor:** `ACESSOS_PATROCINADOS_ATIVO=1` liga a activação (`/ativar-codigo`). Desligado por omissão — os Termos em vigor ainda não descrevem o acesso patrocinado. O backoffice funciona com o interruptor desligado (preparar parceiros, pacotes e códigos); os avisos de acessos já activados são sempre enviados.
+- **Regras sem I/O:** `src/lib/acessoPatrocinado.ts` (códigos, normalização, acesso, período sem custo, relatório protegido); servidor `src/lib/acessoPatrocinadoServidor.ts`; job `src/lib/acessoPatrocinadoAvisos.ts` (corre na rota `/api/internal/protecao-gratuita`, de hora a hora); e-mails `src/lib/email/acessoPatrocinado.ts`; textos `src/i18n/mensagens/{pt-PT,en-GB}/acessoPatrocinado.ts`; aceitação registada `TEXTO_ACEITACAO_ACESSO_PATROCINADO` (`src/lib/legal.ts`).
+- **Acesso:** `calcularAcesso(linha, gratuita, agora, patrocinado)` → `Acesso.acessoPatrocinado`; `temProtecao` inclui-o, `temSubscricao` não. Adesão à Protecção durante a oferta: 1.ª cobrança no fim do período sem custo que termina mais tarde (`periodoSemCusto`), com a mesma metadata `protecao_gratuita = "1"` (cobrança adiada) para o webhook; o modal `ConfirmarCompra` usa os textos da "Protecção oferecida".
+- **Portal:** cartão `AcessoPatrocinadoPortal` no painel, em `/portal/subscricao` e em `/portal/contratos` (nome comercial do parceiro, datas, adesão voluntária). O código nunca vai no URL.
+- **Backoffice:** `/backoffice/parceiros` (lista, novo Parceiro de Distribuição) e `/backoffice/parceiros/[id]` (estado, pacotes, confirmar pagamento, emitir códigos com descarga CSV única, alterar prazo de activação, anular código pelos 4 últimos caracteres, relatório exacto + CSV para a empresa com "menos de 5", histórico).
+- **Verificado no browser (base local):** criar parceiro → activar → pacote de 50 → pagamento → 50 códigos (só hash na base de dados) → activação com código errado (recusada) e certo (minúsculas e espaços aceites) → Protecção activa sem linha em `user_access` → cartão e modal de adesão com a 1.ª cobrança no fim da oferta.

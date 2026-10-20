@@ -9,6 +9,7 @@ import { tIndicacoes } from "@/i18n/mensagens/indicacoes";
 import { tJuridico } from "@/i18n/mensagens/juridico";
 import { precoNoIdioma, tPlanos } from "@/i18n/mensagens/planos";
 import { tProtecaoGratuita } from "@/i18n/mensagens/protecaoGratuita";
+import { tAcessoPatrocinado } from "@/i18n/mensagens/acessoPatrocinado";
 import { formatarData } from "@/i18n/formatar";
 import { useActionState, useEffect, useState } from "react";
 import { confirmarCompra, type EstadoCompra } from "@/app/actions/stripe";
@@ -41,7 +42,8 @@ export type OfertaConversao = { mensalidade: number; reembolso: number } | null;
  * período; null = cobrada no dia da adesão). Só apresentação — o servidor
  * volta a decidir ao abrir o Checkout (confirmarCompra).
  */
-export type InfoProtecaoGratuita = { primeiraCobranca: string | null } | null;
+/** Período sem custo em curso (Protecção gratuita ou oferecida por um parceiro). */
+export type InfoProtecaoGratuita = { primeiraCobranca: string | null; tipo?: "gratuita" | "patrocinada" } | null;
 
 const LINK = "font-semibold text-[var(--v2-green)] underline underline-offset-4";
 
@@ -88,7 +90,10 @@ export function ConfirmarCompra({
   const tp = tPlanos[idioma];
   const ti = tIndicacoes[idioma];
   const tj = tJuridico[idioma];
-  const tg = tProtecaoGratuita[idioma].confirmarCompra;
+  // Textos da cobrança adiada: Protecção gratuita ou oferecida por um parceiro.
+  const tg = protecaoGratuita?.tipo === "patrocinada"
+    ? tAcessoPatrocinado[idioma].confirmarCompra
+    : tProtecaoGratuita[idioma].confirmarCompra;
   const formatarPreco = (c: number) => precoNoIdioma(idioma, c);
   const nome = casoExtra ? tp.casoExtra.nome : tp.nome[plano];
   const descricaoCurta = casoExtra ? tp.casoExtra.descricaoCurta : tp.descricaoCurta[plano];
