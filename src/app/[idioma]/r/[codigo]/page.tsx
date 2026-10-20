@@ -7,6 +7,7 @@ import { tIndicacoes } from "@/i18n/mensagens/indicacoes";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { MARKETING_SITE_URL } from "@/lib/site";
 import { indicacoesAtivas, normalizarCodigo } from "@/lib/indicacoes/regras";
+import { parceirosAtivos } from "@/lib/parceiros/regras";
 
 export async function generateMetadata({ params }: ComIdioma<{ codigo: string }>): Promise<Metadata> {
   const idioma = await idiomaDaPagina(params);
@@ -19,7 +20,8 @@ export async function generateMetadata({ params }: ComIdioma<{ codigo: string }>
 export default async function PaginaIndicacao({ params }: ComIdioma<{ codigo: string }>) {
   const idioma = await idiomaDaPagina(params);
   const codigo = normalizarCodigo((await params).codigo);
-  if (!codigo || !indicacoesAtivas()) redirect(localizarHref(idioma, `${MARKETING_SITE_URL}/`));
+  // Amigos (INDICACOES_ATIVO) ou parceiros (PARCEIROS_ATIVO): o endpoint decide qual.
+  if (!codigo || (!indicacoesAtivas() && !parceirosAtivos())) redirect(localizarHref(idioma, `${MARKETING_SITE_URL}/`));
 
   return (
     <PaginaV2 eventoCtaNavbar="click_nav_reclamacao">

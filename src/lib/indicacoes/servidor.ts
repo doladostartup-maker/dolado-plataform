@@ -24,6 +24,7 @@ import {
   type TipoDescontoIndicacao,
 } from "./regras";
 import type { DependenciasIndicacoes } from "./webhook";
+import { atribuirParceiroDoBrowser } from "@/lib/parceiros/servidor";
 
 // Programa de indicação no servidor: código da conta, visitas, atribuição,
 // desconto no Checkout e as dependências do webhook. Usa a service role —
@@ -97,6 +98,12 @@ export async function registarVisita(codigo: string, visitaAtual: string | null)
  * 30 dias, conta já atribuída (a primeira atribuição nunca muda).
  */
 export async function atribuirIndicacaoDoBrowser(userId: string): Promise<string> {
+  // Programa de Parceiros primeiro: visita de parceiro no cookie ou código
+  // escrito no registo (acto expresso do cliente). Uma conta só tem uma
+  // atribuição — amigo ou parceiro —, garantido na base de dados. Uma falha
+  // aqui nunca impede o login nem a compra.
+  const parceiro = await atribuirParceiroDoBrowser(userId).catch(() => null);
+  if (parceiro === "atribuida") return "atribuida_parceiro";
   if (!indicacoesAtivas()) return "desligado";
   // O cookie é httpOnly e só é emitido pelo endpoint depois de confirmar o
   // consentimento do Cookiebot; a retirada apaga-o no domínio principal.
@@ -216,7 +223,11 @@ export function camposDesconto(d: DescontoPreparado | null): Partial<Stripe.Chec
 export async function prepararDescontoCheckout(
   ctx: Omit<ContextoDescontoCheckout, "novoClienteIndicado" | "recompensasDisponiveis"> & { userId: string },
 ): Promise<DescontoPreparado | null> {
-  if (!indicacoesAtivas()) return null;
+  if (!indicacoesAtivas()) {
+    // Só o Programa de Parceiros (sem desconto): atribui na mesma ao abrir o Checkout.
+    await atribuirParceiroDoBrowser(ctx.userId).catch(() => null);
+    return null;
+  }
   await atribuirIndicacaoDoBrowser(ctx.userId);
   const estado = await estadoIndicacaoDaConta(ctx.userId);
   const tipo = escolherDescontoCheckout({ ...ctx, ...estado });
@@ -271,7 +282,10 @@ export async function prepararDescontoCheckout(
 
 /** Atribui (se houver visita) e devolve a situação da conta — para páginas que mostram preços. */
 export async function situacaoIndicacaoNaCompra(userId: string) {
-  if (!indicacoesAtivas()) return null;
+  if (!indicacoesAtivas()) {
+    await atribuirParceiroDoBrowser(userId).catch(() => null);
+    return null;
+  }
   try {
     await atribuirIndicacaoDoBrowser(userId);
     return await estadoIndicacaoDaConta(userId);
@@ -285,7 +299,10 @@ export async function ofertaIndicacaoParaConta(
   userId: string,
   ctx: Omit<ContextoDescontoCheckout, "novoClienteIndicado" | "recompensasDisponiveis" | "prescindiu">,
 ) {
-  if (!indicacoesAtivas()) return { desconto: null, novoClienteIndicado: false };
+  if (!indicacoesAtivas()) {
+    await atribuirParceiroDoBrowser(userId).catch(() => null);
+    return { desconto: null, novoClienteIndicado: false };
+  }
   await atribuirIndicacaoDoBrowser(userId);
   const estado = await estadoIndicacaoDaConta(userId);
   return {

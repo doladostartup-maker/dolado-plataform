@@ -7,12 +7,14 @@ import { relatorioDistribuicao } from "@/lib/acessoPatrocinadoServidor";
 import {
   alterarEstadoParceiro,
   anularCodigoAcesso,
+  ativarIndicacao,
   confirmarPagamentoPacote,
   criarPacote,
   prolongarActivacaoPacote,
 } from "../actions";
 import { ESTADOS_CODIGO_PT, ESTADOS_PARCEIRO_PT } from "../estados";
 import { DescarregarCsv, EmitirCodigos } from "./EmitirCodigos";
+import { SeccoesIndicacao } from "./SeccoesIndicacao";
 import { CabecalhoPagina, TituloSeccao } from "@/components/backoffice/Cabecalho";
 import { Dado, ListaDados, Metrica } from "@/components/backoffice/Blocos";
 import { BotaoSubmeter } from "@/components/backoffice/BotaoSubmeter";
@@ -131,6 +133,14 @@ export default async function ParceiroPage({
           Só um parceiro activo pode receber códigos. Suspender não anula os códigos já emitidos, mas impede novas activações.
         </p>
       </section>
+
+      {parceiro.indicacao ? (
+        <SeccoesIndicacao parceiroId={id} />
+      ) : (
+        <form action={ativarIndicacao.bind(null, id)}>
+          <BotaoSubmeter className={`${BOTAO_SECUNDARIO} ${BOTAO_PEQUENO}`}>Activar também a parceria de indicação</BotaoSubmeter>
+        </form>
+      )}
 
       {relatorio && (
         <section aria-labelledby="relatorio" className="flex flex-col gap-3">

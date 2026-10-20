@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { COOKIE_INDICACAO, INDICACAO_JANELA_DIAS, indicacoesAtivas, normalizarCodigo, visitaDoCookie } from "@/lib/indicacoes/regras";
 import { cookiebotAceitouMarketing } from "@/lib/indicacoes/consentimento";
 import { registarVisita } from "@/lib/indicacoes/servidor";
+import { registarVisitaParceiro } from "@/lib/parceiros/servidor";
+import { parceirosAtivos, valorCookieParceiro, visitaParceiroDoCookie } from "@/lib/parceiros/regras";
 
 const DOMINIOS_MARKETING = new Set(["dolado.pt", "www.dolado.pt"]);
 
@@ -49,16 +51,20 @@ export async function POST(request: NextRequest) {
     jar.set(COOKIE_INDICACAO, "", { ...cookieOptions(), maxAge: 0 });
     return NextResponse.json({ erro: "consentimento_marketing_em_falta" }, { status: 403 });
   }
-  if (!indicacoesAtivas()) return NextResponse.json({ erro: "programa_desligado" }, { status: 409 });
+  if (!indicacoesAtivas() && !parceirosAtivos()) return NextResponse.json({ erro: "programa_desligado" }, { status: 409 });
 
   const codigo = normalizarCodigo(corpo.codigo);
   if (!codigo) return NextResponse.json({ erro: "codigo_invalido" }, { status: 400 });
 
-  const visitaAtual = visitaDoCookie(jar.get(COOKIE_INDICACAO)?.value);
-  const visita = await registarVisita(codigo, visitaAtual);
-  if (!visita) return NextResponse.json({ erro: "indicacao_indisponivel" }, { status: 404 });
+  // O código é de um amigo ou de um parceiro (nunca dos dois — garantido na
+  // base de dados). A visita de parceiro vai no mesmo cookie com o prefixo "p.".
+  const valorAtual = jar.get(COOKIE_INDICACAO)?.value;
+  const visitaAmigo = indicacoesAtivas() ? await registarVisita(codigo, visitaDoCookie(valorAtual)) : null;
+  const visitaParceiro = visitaAmigo ? null : await registarVisitaParceiro(codigo, visitaParceiroDoCookie(valorAtual));
+  const valor = visitaAmigo ?? (visitaParceiro ? valorCookieParceiro(visitaParceiro) : null);
+  if (!valor) return NextResponse.json({ erro: "indicacao_indisponivel" }, { status: 404 });
 
-  jar.set(COOKIE_INDICACAO, visita, {
+  jar.set(COOKIE_INDICACAO, valor, {
     ...cookieOptions(),
     maxAge: INDICACAO_JANELA_DIAS * 24 * 60 * 60,
   });

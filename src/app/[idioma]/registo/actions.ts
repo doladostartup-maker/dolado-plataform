@@ -10,6 +10,9 @@ import { registarOrigemDaConta } from "@/lib/origemAquisicaoServidor";
 import { localizarHref } from "@/i18n/config";
 import { traduzirMensagemConta } from "@/i18n/mensagens/conta";
 import { obterIdioma } from "@/i18n/servidor";
+import { tParceiros } from "@/i18n/mensagens/parceiros";
+import { normalizarCodigoParceiro, parceirosAtivos } from "@/lib/parceiros/regras";
+import { codigoParceiroExiste } from "@/lib/parceiros/servidor";
 
 export async function registar(formData: FormData) {
   const supabase = await createClient();
@@ -21,12 +24,30 @@ export async function registar(formData: FormData) {
   const next = formData.get("next");
   const destino = ehDestinoSeguro(next) ? next : DESTINO_POS_LOGIN;
 
+  // "Código de parceiro" (opcional): só um código activo é aceite; a
+  // atribuição é decidida depois, na base de dados (primeira válida).
+  const codigoEscrito = String(formData.get("codigo_parceiro") ?? "").trim();
+  let codigoParceiro: string | null = null;
+  if (codigoEscrito && parceirosAtivos()) {
+    codigoParceiro = normalizarCodigoParceiro(codigoEscrito);
+    if (!codigoParceiro || !(await codigoParceiroExiste(codigoParceiro))) {
+      const idiomaErro = await obterIdioma();
+      const voltar = ehDestinoSeguro(next) ? `&next=${encodeURIComponent(next)}` : "";
+      redirect(localizarHref(idiomaErro, `/registo?erro=${encodeURIComponent(tParceiros[idiomaErro].codigo.invalido)}${voltar}`));
+    }
+  }
+
   // Este fluxo não tem campo para o código: o e-mail leva só a ligação.
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     // Conta criada a partir da landing /30-dias-gratis: só para o funil.
-    options: dadosContaNova({ nome, idioma: await obterIdioma(), origemRegisto: origemRegistoDoDestino(next) }),
+    options: dadosContaNova({
+      nome,
+      idioma: await obterIdioma(),
+      origemRegisto: origemRegistoDoDestino(next),
+      codigoParceiro,
+    }),
   });
 
   const idioma = await obterIdioma();

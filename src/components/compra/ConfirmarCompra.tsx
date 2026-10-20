@@ -10,6 +10,7 @@ import { tJuridico } from "@/i18n/mensagens/juridico";
 import { precoNoIdioma, tPlanos } from "@/i18n/mensagens/planos";
 import { tProtecaoGratuita } from "@/i18n/mensagens/protecaoGratuita";
 import { tAcessoPatrocinado } from "@/i18n/mensagens/acessoPatrocinado";
+import { tParceiros } from "@/i18n/mensagens/parceiros";
 import { formatarData } from "@/i18n/formatar";
 import { useActionState, useEffect, useState } from "react";
 import { confirmarCompra, type EstadoCompra } from "@/app/actions/stripe";
@@ -268,6 +269,21 @@ export function ConfirmarCompra({
           <input type="hidden" name="origem" value={origem} />
           {pedidoId && <input type="hidden" name="pedido_id" value={pedidoId} />}
           {prescindiu && <input type="hidden" name={CAMPO_SEM_DESCONTO_INDICACAO} value={VALOR_ACEITE} />}
+
+          {/* Programa de Parceiros: código escrito pelo cliente (sem desconto; só atribuição). */}
+          {oferta?.codigoParceiro && (
+            <label className="flex flex-col gap-1.5 text-[14px] font-semibold text-[var(--v2-navy)]">
+              {tParceiros[idioma].codigo.campo}
+              <input
+                name="codigo_parceiro"
+                type="text"
+                autoComplete="off"
+                maxLength={20}
+                className="w-full rounded-[12px] border border-[var(--v2-line-strong)] bg-white px-3.5 py-2.5 text-[15px] font-normal uppercase text-[var(--v2-navy)]"
+              />
+              <span className="text-[12.5px] font-normal text-[var(--v2-muted)]">{tParceiros[idioma].codigo.ajuda}</span>
+            </label>
+          )}
 
           <label className="flex items-start gap-3 text-[14.5px] leading-relaxed text-[var(--v2-navy)]">
             <input
