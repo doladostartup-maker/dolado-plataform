@@ -21,6 +21,7 @@ import { StepsTimeline, type Passo } from "@/components/marketing-v2/StepsTimeli
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
 import type { Pergunta } from "@/components/landing/AccordionPerguntas";
+import { parceirosAtivos } from "@/lib/parceiros/regras";
 import { CONTACTO_EMAIL } from "@/lib/site";
 
 // DoLado para empresas (/empresas): página estática de apresentação a
@@ -184,6 +185,16 @@ export async function EmpresasV2() {
             </li>
           ))}
         </ol>
+        {/* Indicação e distribuição ficam em /parceiros; com o programa
+            desligado essa página leva aqui, por isso a ligação não aparece. */}
+        {parceirosAtivos() && (
+          <p className="text-[15px] leading-relaxed text-[var(--v2-muted)] lg:col-start-2">
+            {t.parceiros.texto}{" "}
+            <Link prefetch={false} href="/parceiros" className={LINK}>
+              {t.parceiros.ligacao}
+            </Link>
+          </p>
+        )}
       </SectionV2>
 
       {/* ===== Confiança e clareza ===== */}
