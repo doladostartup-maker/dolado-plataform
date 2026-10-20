@@ -75,7 +75,7 @@ export function protecaoGratuitaDe(
  * Proteção — o Caso + Proteção inclui casos e é cobrado logo.
  */
 export function inicioCobrancaAdesao(
-  gratuita: ProtecaoGratuita | null,
+  gratuita: Pick<ProtecaoGratuita, "emCurso" | "fim"> | null,
   plano: string,
   agora: Date = new Date(),
 ): Date | null {

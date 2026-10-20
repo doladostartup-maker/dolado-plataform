@@ -29,6 +29,28 @@ Origem: [auditoria-interrupcoes-electricidade-2026-10-20.md](auditoria-interrupc
 - [ ] **Nova consolidação do RQS pela ERSE:** rever as 4 regras (sobretudo os padrões do Anexo I e os valores unitários) e a página `/problemas/energia/falta-de-luz` sempre que a ERSE publicar uma versão nova.
 - [ ] **Coerência da página `/problemas/energia/falta-de-luz` com as regras:** se uma regra de continuidade ou de danos mudar, rever o texto da página em pt e en (regra obrigatória das auditorias, no CLAUDE.md).
 
+## Programa de Parceiros — Fase 1 (20 de Outubro de 2026)
+
+Origem: [../especificacoes/PROGRAMA_PARCEIROS_FASE1.md](../especificacoes/PROGRAMA_PARCEIROS_FASE1.md), secção 4. **Bloqueia a ligação em produção** (interruptor desligado até lá); a base de dados pode ser aplicada antes, porque nada é exposto ao público.
+
+### Para a advogada
+
+Regras do programa e textos dos Termos e da Política `2026-10-20` validados pela advogada (confirmado por Thiago, 20/10/2026). Migration aplicada em produção a 20/10/2026.
+
+- [x] **Política de Privacidade `2026-10-20`** (`src/app/[idioma]/(legal)/privacidade/_versoes/v2026-10-20.tsx`, secções 2, 3, 5, 6 e 8): candidaturas, dados dos parceiros, atribuição (ligação com consentimento ou código), mensalidades usadas para a comissão, oportunidades B2B, Protecção oferecida, tentativas (2 dias). Pontos a confirmar: (a) bases jurídicas — candidatura em nome próprio (art. 6.º/1/b) vs. em nome de empresa (f); atribuição e registo das mensalidades por interesse legítimo (f); (b) prazos sem limpeza automática — dados dos parceiros e comissões (prescrição / prazo contabilístico até 10 anos), oportunidades B2B ("enquanto necessário"), candidaturas pendentes; se preferir prazos fixos, acrescentá-los à manutenção; (c) contactos B2B — o texto promete informar a pessoa no primeiro contacto (art. 14.º): procedimento manual de Thiago.
+- [x] **Termos `2026-10-20`** (`src/app/[idioma]/(legal)/termos/_versoes/v2026-10-20.tsx`, secções 5, 7, 14.2, 22, 23 e 24): Protecção oferecida (activação com e-mail confirmado, uma vez, prazo de activação, meses de calendário, sem cobrança, fim automático, adesão expressa com cobrança no fim, recusa com subscrição activa ou outra oferta em curso, termina a Protecção gratuita em curso e impede-a depois, anulação de códigos por activar); Parceiros de Indicação (comissão paga pela DoLado, sem desconto nem efeito no preço, primeira atribuição, contas que ainda não são clientes). Ponto a confirmar: a duração do período só é mostrada **depois** da activação (área de cliente e e-mail) — se tiver de aparecer antes, mostrar o número de meses na página `/ativar-codigo` depois de validar o código.
+- [ ] **Condições do Programa de Parceiros:** a candidatura em `/parceiros` só aceita o tratamento dos dados ("As condições comerciais constam do acordo de parceria"), por isso as condições (comissões sem IVA, 3 mensalidades, reversões, pagamento manual, mínimo de 25 €, sem rendimentos garantidos) ficam no contrato-tipo, fora do código.
+- [ ] **Contratos-tipo:** Parceiro de Indicação (incluindo o registo de oportunidades B2B e a legitimidade para comunicar contactos de terceiros) e Parceiro de Distribuição (pacotes pré-pagos, sem acesso a dados dos beneficiários).
+- [ ] **Fiscalidade dos pagamentos a parceiros pessoa singular** (recibo, retenção na fonte) — com o contabilista. IVA: decidido (comissões sem IVA; a DoLado está no regime normal e deduz o IVA dos parceiros — Thiago, 20/10/2026). Falta a retenção na fonte: se for preciso, acrescentar o campo ao registo do pagamento.
+
+### Fora do código (Thiago)
+
+- [ ] **Cookiebot:** a finalidade do cookie `dolado_indicacao` passa a incluir as indicações de parceiros comerciais.
+- [ ] **Alinhar `/empresas` com `/parceiros`** (não duplicar conteúdo nem prometer condições).
+- [ ] **Informar os contactos B2B no primeiro contacto** (Política, secções 3 e 8): procedimento manual até haver decisão sobre o botão de primeiro contacto ou a retirada do campo `contacto`.
+- [x] **Ligar em produção:** `PARCEIROS_ATIVO=1`, `ACESSOS_PATROCINADOS_ATIVO=1` e `PARCEIROS_CHAVE` na Clever Cloud, com novo build (20/10/2026, confirmado por Thiago).
+- [ ] **Decidir se `/parceiros` passa a indexável** (então: `PAGINAS_BILINGUES`, rodapé e retirar o `noindex`).
+
 ## Energia e Gás: facturação, cobrança e contratação (20 de Outubro de 2026)
 
 Origem: [auditoria-energia-facturacao-contratacao-2026-10-20.md](auditoria-energia-facturacao-contratacao-2026-10-20.md), secções C, D, E e G.

@@ -428,6 +428,16 @@ E-book em PDF (16 págs. A4) para captação nas redes sociais: Instagram/Facebo
 - O PDF é um ficheiro estático: os `.pdf` estão fora do `matcher` do middleware (sem redireccionamento para o portal).
 - Testes: `src/lib/guiaFacturas.test.mjs` e `supabase/tests/database/guia_facturas.test.sql`.
 
+## Programa de Parceiros — Fase 1 (20/10/2026)
+
+**Ligado em produção a 20/10/2026** (PR #147; `PARCEIROS_ATIVO=1`, `ACESSOS_PATROCINADOS_ATIVO=1` e `PARCEIROS_CHAVE` na Clever Cloud — confirmado por Thiago). Especificação, decisões e notas em **`docs/especificacoes/PROGRAMA_PARCEIROS_FASE1.md`**; pendências jurídicas em `docs/legal/pendencias-juridicas.md`. Migration `20261021090000_programa_parceiros.sql` (aplicada em produção a 20/10/2026); testes `supabase/tests/database/programa_parceiros.test.sql` e `src/lib/acessoPatrocinado.test.mjs`.
+
+- **Parceiro de Distribuição (feito):** pacotes pré-pagos de Protecção; códigos de 12 caracteres guardados só em SHA-256 (exportação CSV única); activação em `/ativar-codigo` (`ACESSOS_PATROCINADOS_ATIVO=1`, desligado por omissão; ligado em produção) → `acessos_patrocinados`, **sem Stripe**, termina sozinho (pg_cron `acessos-patrocinados-manutencao`), avisos de activação/15 dias/fim pela rota `/api/internal/protecao-gratuita`. `conta_tem_protecao()` = subscrição **ou** Protecção gratuita **ou** acesso patrocinado. Decisões de Thiago (20/10/2026): recusado a quem tem subscrição paga activa (código fica por usar); conta como "já teve Protecção" para os 30 dias gratuitos. Relatório à empresa só com contagens ("menos de 5" em grupos pequenos). Backoffice `/backoffice/parceiros`.
+- **Parceiro de Indicação (feito; `PARCEIROS_ATIVO=1`, desligado por omissão; ligado em produção):** página `/parceiros` (candidatura, noindex), aprovação em `/backoffice/parceiros/candidaturas`; códigos no mesmo espaço dos amigos (`/r/<código>` ou "Código de parceiro" escrito pelo cliente); **uma atribuição por conta — amigo ou parceiro, a primeira, para sempre**; cliente indicado por parceiro **sem desconto**; comissão fixa B2C (5 € Protecção / 8 € Caso + Protecção, **sem IVA**, acresce IVA do parceiro; a DoLado está no regime normal) elegível às 3 mensalidades pagas (> 0 €) da primeira subscrição; nunca no Avulso nem no Caso Extra; B2B 10 % (até 20 % com autorização) da receita do 1.º ano sem IVA; pagamento sempre manual, com IVA e documento do parceiro opcionais.
+- Parceiros nunca têm conta nem acesso na Fase 1; nada de dados de casos, faturas ou documentos dos clientes chega a um parceiro.
+- **Textos legais** (20/10/2026): regras aprovadas pela advogada; Termos `2026-10-20` (secções 23 "Protecção oferecida por um parceiro" e 24 "Parceiros de Indicação") e Política `2026-10-20` validados pela advogada (confirmado por Thiago a 20/10/2026), em vigor desde o merge do PR #147. Condições comerciais só no contrato-tipo.
+- **Por fazer (Thiago):** declarar no Cookiebot que `dolado_indicacao` inclui as indicações de parceiros; decidir o campo `contacto` das oportunidades B2B (o aviso do art. 14.º no primeiro contacto é manual até lá).
+
 ## Uso de IA (decisão: 25/09/2026)
 
 A exclusão geral de IA da v1 foi revista. A Claude API está agora em escopo, mas só dentro destas regras — não é uma autorização em aberto para qualquer uso de IA sem mais:

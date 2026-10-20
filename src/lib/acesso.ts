@@ -26,6 +26,7 @@
 import type { Idioma } from "../i18n/config.ts";
 import { tSubscricao } from "../i18n/mensagens/subscricao.ts";
 import { protecaoGratuitaDe, type LinhaProtecaoGratuita, type ProtecaoGratuita } from "./protecaoGratuita.ts";
+import { acessoPatrocinadoDe, type AcessoPatrocinado, type LinhaAcessoPatrocinado } from "./acessoPatrocinado.ts";
 
 export type PlanoSubscricao = "none" | "protecao" | "caso_protecao";
 
@@ -49,7 +50,7 @@ export type Acesso = {
   casosComprados: number;
   /** Casos incluídos na subscrição ainda por usar (creditos - casosComprados). */
   casosSubscricao: number;
-  /** Funcionalidades de proteção desbloqueadas (subscrição ou período gratuito). */
+  /** Funcionalidades de proteção desbloqueadas (subscrição, período gratuito ou acesso patrocinado). */
   temProtecao: boolean;
   /**
    * Subscrição Proteção / Caso + Proteção paga e em vigor no Stripe. É isto
@@ -58,6 +59,8 @@ export type Acesso = {
   temSubscricao: boolean;
   /** Proteção gratuita de 30 dias (null = nunca ativada). */
   protecaoGratuita: ProtecaoGratuita | null;
+  /** Protecção oferecida por um Parceiro de Distribuição (null = nenhuma em curso nem recente). */
+  acessoPatrocinado: AcessoPatrocinado | null;
   /** Pode abrir um caso novo no portal agora (tem casos disponíveis). */
   podeCriarCaso: boolean;
   /** Abrir um caso gasta um crédito (sempre — não há casos sem pagamento). */
@@ -85,9 +88,11 @@ export function calcularAcesso(
   linha: LinhaAcesso | null,
   linhaGratuita: LinhaProtecaoGratuita | null = null,
   agora: Date = new Date(),
+  linhaPatrocinada: LinhaAcessoPatrocinado | null = null,
 ): Acesso {
   const protecaoGratuita = protecaoGratuitaDe(linhaGratuita, agora);
-  const gratuitaEmCurso = !!protecaoGratuita?.emCurso;
+  const acessoPatrocinado = acessoPatrocinadoDe(linhaPatrocinada, agora);
+  const semCustoEmCurso = !!protecaoGratuita?.emCurso || !!acessoPatrocinado?.emCurso;
   if (!linha) {
     return {
       temPlanoStripe: false,
@@ -96,9 +101,10 @@ export function calcularAcesso(
       creditos: 0,
       casosComprados: 0,
       casosSubscricao: 0,
-      temProtecao: gratuitaEmCurso,
+      temProtecao: semCustoEmCurso,
       temSubscricao: false,
       protecaoGratuita,
+      acessoPatrocinado,
       podeCriarCaso: false,
       casoConsomeCredito: true,
       fimPeriodo: null,
@@ -117,9 +123,10 @@ export function calcularAcesso(
     creditos,
     casosComprados,
     casosSubscricao: creditos - casosComprados,
-    temProtecao: temSubscricao || gratuitaEmCurso,
+    temProtecao: temSubscricao || semCustoEmCurso,
     temSubscricao,
     protecaoGratuita,
+    acessoPatrocinado,
     podeCriarCaso: creditos > 0,
     casoConsomeCredito: true,
     fimPeriodo: linha.current_period_end ?? null,

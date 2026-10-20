@@ -1,0 +1,32 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { PaginaV2 } from "@/components/marketing-v2/PaginaV2";
+import { ParceirosV2 } from "@/components/parceiros-v2/ParceirosV2";
+import { localizarHref } from "@/i18n/config";
+import { metadadosPublicos } from "@/i18n/metadados";
+import { tParceiros } from "@/i18n/mensagens/parceiros";
+import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
+import { parceirosAtivos } from "@/lib/parceiros/regras";
+
+// /parceiros — Programa de Parceiros (Fase 1, 21/10/2026). Fora do menu, do
+// rodapé e do sitemap, e noindex, até o programa ser ligado em produção
+// (PARCEIROS_ATIVO, lido no build) com a nova Política de Privacidade. Com o
+// programa desligado leva a /empresas.
+export async function generateMetadata({ params }: ComIdioma): Promise<Metadata> {
+  const idioma = await idiomaDaPagina(params);
+  const t = tParceiros[idioma].pagina.metadados;
+  return {
+    ...metadadosPublicos(idioma, "/parceiros", { title: t.titulo, description: t.descricao }),
+    robots: { index: false, follow: true },
+  };
+}
+
+export default async function ParceirosPage({ params }: ComIdioma) {
+  const idioma = await idiomaDaPagina(params);
+  if (!parceirosAtivos()) redirect(localizarHref(idioma, "/empresas"));
+  return (
+    <PaginaV2 eventoCtaNavbar="click_nav_parceiros">
+      <ParceirosV2 />
+    </PaginaV2>
+  );
+}

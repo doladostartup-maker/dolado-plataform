@@ -45,6 +45,7 @@ const PAGINAS_PUBLICAS = [
   "/protecao",
   "/30-dias-gratis",
   "/guia-facturas",
+  "/parceiros",
 ];
 
 // robots.txt e sitemap.xml: servidos diretamente em dolado.pt (nunca
@@ -100,6 +101,7 @@ const PAGINAS_SO_MARKETING = [
   "/protecao",
   "/30-dias-gratis",
   "/guia-facturas",
+  "/parceiros",
 ];
 
 // Páginas "Problemas que tratamos" (/problemas e /problemas/…): marketing

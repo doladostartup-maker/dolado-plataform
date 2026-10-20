@@ -22,10 +22,13 @@ import { CONTACTO_EMAIL, ENTIDADE_LEGAL, MORADA_SEDE } from "./site.ts";
 // mesmo dia leva um sufixo de letra ("2026-10-01b").
 
 /** Versão dos Termos e Condições em vigor. Cada versão fica acessível em /termos/<versão>. */
-export const TERMOS_VERSAO = "2026-10-19";
+// 2026-10-20 (Termos e Política): Programa de Parceiros — Protecção oferecida
+// por um parceiro e Parceiros de Indicação. Regras e texto validados pela
+// advogada (confirmado por Thiago a 20/10/2026).
+export const TERMOS_VERSAO = "2026-10-20";
 
 /** Versão da Política de Privacidade em vigor. Cada versão fica acessível em /privacidade/<versão>. */
-export const PRIVACIDADE_VERSAO = "2026-10-19b";
+export const PRIVACIDADE_VERSAO = "2026-10-20";
 
 /** Versão do texto de pedido expresso de início imediato. */
 export const CONSENTIMENTO_INICIO_IMEDIATO_VERSAO = "2026-10-01";
@@ -89,6 +92,29 @@ export const TEXTO_ACEITACAO_TERMOS = `${ACEITACAO_TERMOS.antes}${ACEITACAO_TERM
 export const ACEITACAO_PROTECAO_GRATUITA_COMPLEMENTO =
   " Compreendo que a Protecção gratuita termina ao fim de 30 dias sem qualquer cobrança.";
 export const TEXTO_ACEITACAO_PROTECAO_GRATUITA = `${TEXTO_ACEITACAO_TERMOS}${ACEITACAO_PROTECAO_GRATUITA_COMPLEMENTO}`;
+
+/**
+ * Activação de uma Protecção oferecida por um Parceiro de Distribuição
+ * (acesso patrocinado): a mesma aceitação dos Termos e o que o beneficiário
+ * declara compreender. Fica registado em acessos_patrocinados.texto_aceite,
+ * com a versão dos Termos. Descrito na secção 23 dos Termos 2026-10-20
+ * (validados pela advogada a 20/10/2026); ligado por
+ * ACESSOS_PATROCINADOS_ATIVO.
+ */
+export const ACEITACAO_ACESSO_PATROCINADO_COMPLEMENTO =
+  " Compreendo que a Protecção oferecida termina automaticamente no fim do período indicado, sem qualquer cobrança, e que não inclui o tratamento de casos.";
+export const TEXTO_ACEITACAO_ACESSO_PATROCINADO = `${TEXTO_ACEITACAO_TERMOS}${ACEITACAO_ACESSO_PATROCINADO_COMPLEMENTO}`;
+
+/**
+ * Candidatura ao Programa de Parceiros (/parceiros): o candidato aceita o
+ * tratamento dos dados da candidatura. Texto e versão gravados em
+ * parceiros_candidaturas (prova). Mudar o texto = nova versão. Descritas na
+ * Política de Privacidade 2026-10-20 (secções 2, 3 e 6; validada pela
+ * advogada a 20/10/2026); o programa é ligado por PARCEIROS_ATIVO.
+ */
+export const CANDIDATURA_PARCEIROS_VERSAO = "2026-10-21";
+export const TEXTO_ACEITACAO_CANDIDATURA_PARCEIROS =
+  "Li a informação sobre privacidade e aceito que a DoLado use estes dados para analisar a minha candidatura e entrar em contacto comigo sobre ela.";
 
 const TEXTO_INICIO_IMEDIATO_BASE =
   "Peço expressamente que a DoLado inicie a prestação do serviço imediatamente, antes do fim do prazo legal de 14 dias de livre resolução. Compreendo que, se exercer esse direito depois de a prestação ter começado, poderá ser devido o valor proporcional ao serviço já prestado e que, se o contrato for integralmente executado durante esse período, poderei perder o direito de livre resolução nos termos legalmente aplicáveis.";

@@ -14,6 +14,8 @@ import { PRAZO_LIVRE_RESOLUCAO_DIAS, ROTAS_LEGAIS } from "@/lib/legal";
 import { CONTACTO_EMAIL, MARKETING_SITE_URL } from "@/lib/site";
 import { estadoProtecaoGratuitaDaConta } from "@/lib/protecaoGratuitaServidor";
 import { ProtecaoGratuitaPortal } from "@/components/portal/ProtecaoGratuita";
+import { AcessoPatrocinadoPortal } from "@/components/portal/AcessoPatrocinado";
+import { estadoAcessoPatrocinadoDaConta } from "@/lib/acessoPatrocinadoServidor";
 import { manterSubscricao } from "./actions";
 import { BotaoManter } from "./_components/BotaoManter";
 import { CancelarSubscricao } from "./_components/CancelarSubscricao";
@@ -47,7 +49,10 @@ export default async function GestaoSubscricaoPage({
     supabase.from("casos").select("status, origem_credito").eq("utilizador_id", user.id),
   ]);
   const casosEmCurso = (casos ?? []).filter(casoAcompanhadoPelaSubscricao).length;
-  const gratuita = await estadoProtecaoGratuitaDaConta(acesso, user);
+  const [gratuita, patrocinado] = await Promise.all([
+    estadoProtecaoGratuitaDaConta(acesso, user),
+    estadoAcessoPatrocinadoDaConta(acesso, user.id),
+  ]);
   const resumo = resumoPlanoPortal(acesso, idioma);
   const guardados = casosGuardados((congelamentos ?? []) as CongelamentoCasos[]);
   const comSubscricao = resumo.plano !== "sem_plano";
@@ -92,6 +97,7 @@ export default async function GestaoSubscricaoPage({
       )}
       {params.erro && <Aviso tom="erro">{MENSAGENS_ERRO[params.erro] ?? MENSAGENS_ERRO.falha}</Aviso>}
 
+      {patrocinado && <AcessoPatrocinadoPortal estado={patrocinado} comSubscricao={acesso.temSubscricao} />}
       {gratuita && <ProtecaoGratuitaPortal estado={gratuita} />}
 
       <section aria-labelledby="plano" className={`${CARTAO} flex flex-col gap-5`}>

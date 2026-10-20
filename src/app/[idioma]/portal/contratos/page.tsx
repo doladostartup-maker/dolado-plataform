@@ -1,4 +1,7 @@
 import { ProtecaoGratuitaPortal } from "@/components/portal/ProtecaoGratuita";
+import { AcessoPatrocinadoPortal } from "@/components/portal/AcessoPatrocinado";
+import { estadoAcessoPatrocinadoDaConta } from "@/lib/acessoPatrocinadoServidor";
+import { tAcessoPatrocinado } from "@/i18n/mensagens/acessoPatrocinado";
 import { estadoProtecaoGratuitaDaConta } from "@/lib/protecaoGratuitaServidor";
 import Link from "@/i18n/Link";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
@@ -53,7 +56,7 @@ export default async function ContratosPage({
   params: parametros,
   searchParams,
 }: ComIdioma & {
-  searchParams: Promise<{ erro?: string; removido?: string; aviso?: string; documento?: string; gratuita?: string }>;
+  searchParams: Promise<{ erro?: string; removido?: string; aviso?: string; documento?: string; gratuita?: string; oferta?: string }>;
 }) {
   const idioma: Idioma = await idiomaDaPagina(parametros);
   const t = tProtecao[idioma].lista;
@@ -98,6 +101,7 @@ export default async function ContratosPage({
   const ilegiveis = docs.filter((d) => d.estado === "ilegivel" && diasAte(diaLisboa(d.created_at), hoje) >= -DIAS_DOCUMENTO_ILEGIVEL);
   const fimAgendado = resumoPlanoPortal(acesso, idioma).fimAgendado;
   const gratuita = acesso.protecaoGratuita?.emCurso ? await estadoProtecaoGratuitaDaConta(acesso, user) : null;
+  const patrocinado = await estadoAcessoPatrocinadoDaConta(acesso, user.id);
   const chaveMensagem = params.removido ? (params.removido === "ultimo" ? "ultimo" : "removido") : params.aviso ?? params.documento;
   const mensagem =
     chaveMensagem && TOM_MENSAGEM[chaveMensagem]
@@ -213,6 +217,9 @@ export default async function ContratosPage({
 
       {mensagem && <Aviso tom={tomMensagem[mensagem.tom]}>{mensagem.texto}</Aviso>}
       {/* Proteção gratuita: estado do período (datas reais) e adesão. */}
+      {params.oferta === "ativada" && patrocinado && <Aviso tom="sucesso">{tAcessoPatrocinado[idioma].portal.ativada}</Aviso>}
+      {/* Protecção oferecida por um parceiro: datas reais e adesão voluntária. */}
+      {patrocinado && <AcessoPatrocinadoPortal estado={patrocinado} comSubscricao={acesso.temSubscricao} />}
       {gratuita && <ProtecaoGratuitaPortal estado={gratuita} />}
       {params.erro && <Aviso tom="erro">{traduzirMensagemProtecao(idioma, params.erro)}</Aviso>}
       {fimAgendado && (

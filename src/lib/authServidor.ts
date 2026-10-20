@@ -9,6 +9,7 @@
 // browser que criou a conta.
 
 import { cookies } from "next/headers";
+import { CHAVE_CODIGO_PARCEIRO } from "@/lib/parceiros/regras";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   COOKIE_DESTINO_POS_LOGIN,
@@ -46,13 +47,16 @@ export async function guardarDestinoPosLogin(destino: string, validadeS = VALIDA
  */
 // origemRegisto: só métricas (funil da landing /30-dias-gratis) — nunca
 // acesso, porque o cliente pode alterar os próprios metadados.
-export function dadosContaNova(dados: { nome?: string | null; mostrarCodigo?: boolean; origemRegisto?: string | null; idioma: Idioma }) {
+// codigoParceiro: "Código de parceiro" escrito no registo (já validado); a
+// atribuição é decidida na base de dados.
+export function dadosContaNova(dados: { nome?: string | null; mostrarCodigo?: boolean; origemRegisto?: string | null; codigoParceiro?: string | null; idioma: Idioma }) {
   return {
     emailRedirectTo: urlCallbackAuth(),
     data: {
       ...(dados.nome ? { nome: dados.nome } : {}),
       ...(dados.mostrarCodigo ? { mostrar_codigo: true } : {}),
       ...(dados.origemRegisto ? { origem_registo: dados.origemRegisto } : {}),
+      ...(dados.codigoParceiro ? { [CHAVE_CODIGO_PARCEIRO]: dados.codigoParceiro } : {}),
       [CHAVE_IDIOMA_CONTA]: dados.idioma,
     },
   };

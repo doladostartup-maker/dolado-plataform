@@ -7,6 +7,8 @@ import { Aviso } from "@/components/portal/Aviso";
 import { MolduraConta } from "@/components/portal/MolduraConta";
 import { BOTAO_PRIMARIO, CAMPO, LIGACAO, ROTULO } from "@/components/portal/ui";
 import { registar } from "./actions";
+import { tParceiros } from "@/i18n/mensagens/parceiros";
+import { parceirosAtivos } from "@/lib/parceiros/regras";
 
 export default async function RegistoPage({
   searchParams,
@@ -46,6 +48,13 @@ export default async function RegistoPage({
           {t.palavraPasse}
           <input name="password" type="password" autoComplete="new-password" required minLength={6} className={CAMPO} />
         </label>
+        {parceirosAtivos() && (
+          <label className={ROTULO}>
+            {tParceiros[idioma].codigo.campo}
+            <input name="codigo_parceiro" type="text" autoComplete="off" maxLength={20} className={`${CAMPO} uppercase`} />
+            <span className="text-[13px] font-normal text-[var(--v2-muted)]">{tParceiros[idioma].codigo.ajuda}</span>
+          </label>
+        )}
         <button type="submit" className={BOTAO_PRIMARIO}>
           {t.criar}
         </button>
