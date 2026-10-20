@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "@/i18n/Link";
 import { tParceiros } from "@/i18n/mensagens/parceiros";
 import { textos } from "@/i18n/servidor";
 import { IconeEscudo, IconePessoas, IconeSeta } from "@/components/marketing-v2/Icones";
@@ -59,11 +60,17 @@ export async function ParceirosV2() {
       </SectionV2>
 
       <SectionV2 id="modelos" tone="soft-blue">
-        <SectionHeader eyebrow={t.modelosEyebrow} titulo={t.modelosTitulo} />
+        <SectionHeader eyebrow={t.modelosEyebrow} titulo={t.modelosTitulo} texto={t.modelosTexto} />
         <div className="mt-10 grid gap-6 md:grid-cols-2 md:gap-y-0">
           <Modelo icone={<IconePessoas tamanho={26} strokeWidth={1.6} />} {...t.indicacao} />
           <Modelo icone={<IconeEscudo tamanho={26} strokeWidth={1.6} />} {...t.distribuicao} />
         </div>
+        <p className="mt-8 text-[15px] leading-relaxed text-[var(--v2-muted)]">
+          {t.empresas.texto}{" "}
+          <Link prefetch={false} href="/empresas" className="font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline">
+            {t.empresas.ligacao}
+          </Link>
+        </p>
       </SectionV2>
 
       <SectionV2>

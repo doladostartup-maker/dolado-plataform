@@ -46,7 +46,7 @@ Regras do programa e textos dos Termos e da Política `2026-10-20` validados pel
 ### Fora do código (Thiago)
 
 - [ ] **Cookiebot:** a finalidade do cookie `dolado_indicacao` passa a incluir as indicações de parceiros comerciais.
-- [ ] **Alinhar `/empresas` com `/parceiros`** (não duplicar conteúdo nem prometer condições).
+- [x] **Alinhar `/empresas` com `/parceiros`** (não duplicar conteúdo nem prometer condições) — feito a 20/10/2026: `/empresas` = benefício ("Pedir proposta"), `/parceiros` = indicação e distribuição ("Propor parceria"), ligações cruzadas, comissões só "nos termos do acordo".
 - [ ] **Informar os contactos B2B no primeiro contacto** (Política, secções 3 e 8): procedimento manual até haver decisão sobre o botão de primeiro contacto ou a retirada do campo `contacto`.
 - [x] **Ligar em produção:** `PARCEIROS_ATIVO=1`, `ACESSOS_PATROCINADOS_ATIVO=1` e `PARCEIROS_CHAVE` na Clever Cloud, com novo build (20/10/2026, confirmado por Thiago).
 - [ ] **Decidir se `/parceiros` passa a indexável** (então: `PAGINAS_BILINGUES`, rodapé e retirar o `noindex`).

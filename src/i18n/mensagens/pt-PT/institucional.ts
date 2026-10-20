@@ -195,14 +195,14 @@ export const institucional = {
   },
   empresas: {
     metadados: {
-      titulo: "DoLado para empresas | DoLado",
+      titulo: "DoLado para empresas: benefício para colaboradores e clientes | DoLado",
       descricao:
-        "Tem uma empresa? Fale com a DoLado sobre uma solução de apoio ao consumidor para colaboradores ou clientes: organizar o problema, preparar a reclamação e acompanhar os próximos passos.",
+        "Ofereça a DoLado como benefício aos seus colaboradores ou clientes: apoio para resolver problemas com facturas, contratos e compras. Peça uma proposta à DoLado.",
     },
-    falar: "Falar com a DoLado",
+    falar: "Pedir proposta",
     eyebrow: "DoLado para empresas",
     titulo1: "Tem uma empresa?",
-    titulo2: "Fale com a DoLado sobre uma solução para colaboradores ou clientes.",
+    titulo2: "Ofereça a DoLado como benefício aos seus colaboradores ou clientes.",
     texto:
       "Quando alguém tem um problema com uma empresa — uma cobrança, um cancelamento, um reembolso — a DoLado ajuda a organizar a situação, prepara a reclamação e acompanha os próximos passos. A sua empresa pode levar esse apoio a quem conta consigo.",
     verComoFunciona: "Ver como funciona",
@@ -307,6 +307,11 @@ export const institucional = {
         texto: "Começar com um âmbito definido, aprender com a utilização e decidir os passos seguintes.",
       },
     ],
+    // Ligação para /parceiros (só com o programa ligado).
+    parceiros: {
+      texto: "Quer indicar clientes ou distribuir a Protecção DoLado através da sua actividade?",
+      ligacao: "Conheça o nosso programa de parceiros.",
+    },
     clarezaCabecalho: {
       eyebrow: "Confiança e clareza",
       titulo: "A pessoa mantém o controlo do seu caso.",
@@ -356,7 +361,7 @@ export const institucional = {
     ],
     ctaFinal: {
       eyebrow: "Vamos conversar",
-      titulo: "Tem uma empresa? Fale com a DoLado.",
+      titulo: "Tem uma empresa? Peça uma proposta à DoLado.",
       texto:
         "Conte-nos o que tem em mente — colaboradores, clientes ou ambos — e exploramos o próximo passo consigo. Também pode escrever para <email/>.",
     },

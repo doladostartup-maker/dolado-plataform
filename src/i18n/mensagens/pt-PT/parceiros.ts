@@ -6,15 +6,15 @@
 export const parceiros = {
   pagina: {
     metadados: {
-      titulo: "Programa de Parceiros",
+      titulo: "Programa de Parceiros: indicar clientes e distribuir a Protecção | DoLado",
       descricao:
-        "Seja parceiro da DoLado: recomende a DoLado aos seus clientes ou ofereça a Protecção aos seus clientes e colaboradores, para os ajudar a prevenir e resolver problemas de consumo.",
+        "Indique clientes à DoLado ou distribua a Protecção DoLado através da sua actividade. As condições de cada parceria constam de um acordo escrito. Proponha uma parceria.",
     },
     eyebrow: "Programa de Parceiros",
     titulo: "Ajude as pessoas com quem trabalha a resolver problemas de consumo.",
     texto:
       "Para profissionais e empresas que estão perto dos consumidores — e que querem ter uma resposta quando uma factura, um contrato ou uma compra corre mal. A DoLado trata do problema; o parceiro aproxima a DoLado de quem precisa.",
-    cta: "Candidatar-me",
+    cta: "Propor parceria",
     verModelos: "Ver as formas de colaborar",
     garantias: {
       titulo: "Em qualquer parceria",
@@ -26,21 +26,23 @@ export const parceiros = {
     },
     modelosEyebrow: "Modelos de parceria",
     modelosTitulo: "Duas formas de colaborar",
+    modelosTexto:
+      "O serviço é o mesmo: a DoLado trata o problema do consumidor e a Protecção acompanha as facturas e as datas dos contratos. Muda só a forma de o levar a quem precisa.",
     indicacao: {
       titulo: "Parceiro de Indicação",
       texto:
         "Recomenda a DoLado aos seus clientes ou apresenta-nos empresas interessadas. A DoLado trata de tudo o resto: contratação, cobrança, tratamento dos casos e acompanhamento.",
       itens: [
         "Ligação e código próprios para partilhar.",
-        "Comissão por cada nova subscrição elegível, depois de confirmados os pagamentos do cliente.",
+        "Comissão nos termos do acordo de parceria, só depois de confirmados os pagamentos do cliente.",
         "Não tem acesso aos casos, facturas ou contratos das pessoas que indicar.",
-        "Cada comissão fica registada e é paga por transferência.",
+        "Cada comissão fica registada e é paga como previsto no acordo.",
       ],
     },
     distribuicao: {
       titulo: "Parceiro de Distribuição",
       texto:
-        "A sua empresa oferece a Protecção da DoLado aos seus clientes ou colaboradores, como benefício — por exemplo, a quem acabou de comprar casa ou a toda a equipa.",
+        "Leva a Protecção DoLado a quem acompanha na sua actividade: adquire acessos pré-pagos e entrega um código a cada pessoa — por exemplo, a quem acabou de comprar casa consigo.",
       itens: [
         "Acessos pré-pagos, com a duração acordada.",
         "Um código individual para entregar a cada pessoa.",
@@ -48,10 +50,15 @@ export const parceiros = {
         "Relatórios só com números agregados — nunca dados pessoais.",
       ],
     },
+    // Ligação para /empresas.
+    empresas: {
+      texto: "Pretende disponibilizar a DoLado como benefício aos seus colaboradores ou clientes?",
+      ligacao: "Conheça as nossas soluções para empresas.",
+    },
     passosEyebrow: "Do contacto ao acordo",
     passosTitulo: "Como funciona",
     passos: [
-      { titulo: "Candidata-se", texto: "Conte-nos quem é e como gostaria de colaborar." },
+      { titulo: "Propõe a parceria", texto: "Conte-nos quem é e como gostaria de colaborar." },
       { titulo: "Analisamos", texto: "Respondemos por e-mail no prazo máximo de 2 dias úteis." },
       { titulo: "Acordamos as condições", texto: "As condições de cada parceria constam de um acordo escrito." },
     ],
@@ -60,7 +67,7 @@ export const parceiros = {
   },
 
   candidatura: {
-    eyebrow: "Candidatura",
+    eyebrow: "Propor parceria",
     titulo: "Conte-nos quem é",
     texto: "Leva poucos minutos. Respondemos por e-mail no prazo máximo de 2 dias úteis.",
     nome: "Nome",
