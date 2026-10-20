@@ -76,17 +76,17 @@ export const problemas = {
     energia: {
       nome: "Energia",
       nomeMinusculas: "energia",
-      descricao: "Electricidade: facturas, leituras e cobranças.",
-      exemplos: ["Facturas muito altas", "Consumos estimados", "Cobranças que não reconhece", "Mudança de comercializador"],
+      descricao: "Electricidade: facturas, leituras, cobranças e falhas de fornecimento.",
+      exemplos: ["Facturas muito altas", "Consumos estimados", "Cobranças que não reconhece", "Falhas de electricidade"],
       ligacao: "Ver problemas de energia",
       metadados: {
-        titulo: "Problemas com a factura de electricidade - DoLado",
+        titulo: "Problemas com a electricidade: facturas e falhas - DoLado",
         descricao:
-          "Factura de electricidade muito alta, consumos estimados ou cobranças que não reconhece? Veja os problemas de energia que a DoLado trata consigo.",
+          "Factura de electricidade muito alta, consumos estimados, cobranças que não reconhece ou falhas de luz? Veja os problemas de energia que a DoLado trata consigo.",
       },
       titulo: "Problemas com a electricidade",
       intro:
-        "Facturas que sobem sem explicação clara, leituras estimadas ou valores que não reconhece: a DoLado ajuda a perceber o que está a ser cobrado e trata da reclamação consigo.",
+        "Facturas que sobem sem explicação clara, leituras estimadas, valores que não reconhece ou falhas de electricidade: a DoLado ajuda a perceber o que se passa e trata da reclamação consigo.",
     },
     "compras-reembolsos": {
       nome: "Compras e Reembolsos",
@@ -337,6 +337,32 @@ export const problemas = {
         ],
         ajuda:
           "A DoLado reconstitui o histórico de leituras e de facturas, verifica se o acerto corresponde ao consumo real e prepara a reclamação com o pedido concreto ao comercializador.",
+      },
+      "falta-de-luz": {
+        metadados: {
+          titulo: "Ficou sem luz ou a electricidade falha muitas vezes? - DoLado",
+          descricao:
+            "Falhas de electricidade repetidas ou longas? Veja quando pode haver compensação na factura, o que registar e como a DoLado trata a reclamação consigo.",
+        },
+        rotulo: "Falhas de electricidade",
+        resumo: "Ficou sem luz, a electricidade falha muitas vezes ou houve aparelhos danificados.",
+        titulo: "Ficou sem luz ou a electricidade falha muitas vezes?",
+        subtitulo:
+          "Uma falha de electricidade pode ser só um incómodo, mas quando se repete ou se prolonga pode haver uma compensação que deveria aparecer na sua factura. Se houve aparelhos ou outros bens danificados, isso é um pedido diferente.",
+        contestar: [
+          "Quando as falhas na rede ultrapassam, ao longo de um ano, os limites fixados pelo regulador para a zona onde vive, pode haver uma compensação, que em princípio deve ser creditada na factura sem ter de a pedir. Nem todas as falhas contam: as muito curtas, as avisadas com antecedência e as causadas por acontecimentos excepcionais reconhecidos pelo regulador podem ficar de fora.",
+          "Uma falha só em sua casa pode ter origem na sua própria instalação, e não na rede. Por isso, antes de concluir seja o que for, é necessário verificar a causa.",
+          "Se a falha ou o regresso da electricidade danificou aparelhos ou outros bens, pode haver fundamento para pedir uma indemnização, à parte de qualquer compensação. Depende da causa, da prova do dano e do seu caso concreto.",
+        ],
+        verificar: [
+          "As datas, as horas e a duração de cada falha, mesmo que anotadas por si",
+          "Os avisos de interrupção programada que recebeu, ou a falta deles",
+          "O número da ocorrência, se comunicou a avaria, e as respostas que recebeu",
+          "As facturas seguintes, para ver se aparece alguma compensação",
+          "Fotografias, relatórios ou orçamentos de reparação, se houve aparelhos danificados",
+        ],
+        ajuda:
+          "A DoLado organiza o histórico de falhas e de contactos, pede à empresa os dados que só ela tem e prepara a reclamação com um pedido concreto: o esclarecimento, a compensação em falta ou a reparação dos danos.",
       },
     },
     "compras-reembolsos": {
