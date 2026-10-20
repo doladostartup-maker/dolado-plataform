@@ -34,6 +34,7 @@ export const PAGINAS_BILINGUES = [
   "/transparencia",
   "/empresas",
   "/contacto",
+  "/guia-facturas",
 ] as const;
 
 /**

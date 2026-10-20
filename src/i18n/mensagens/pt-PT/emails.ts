@@ -244,4 +244,14 @@ export const emails = {
     terminaA: (servico: string, promocao: boolean, data: string, antes: boolean) =>
       `${servico}: ${promocao ? "a promoção" : "a fidelização"} termina a ${data}. ${antes ? "Avisamos por e-mail antes dessa data." : "Avisamos por e-mail nessa data."}`,
   },
+  guiaFacturas: {
+    assunto: "O seu guia gratuito da DoLado",
+    titulo: "O seu guia está pronto",
+    preheader: "Está a pagar mais do que devia? 10 coisas a verificar nas suas facturas e contratos.",
+    ola: "Olá,",
+    obrigado: "Obrigado pelo seu interesse no guia «Está a pagar mais do que devia?». Pode descarregá-lo aqui:",
+    botao: "Descarregar o guia",
+    dica: "Uma sugestão: tenha à mão uma factura recente e a do mês anterior do mesmo serviço. As primeiras verificações demoram poucos minutos.",
+    rodape: "Recebe este e-mail porque pediu o guia gratuito em dolado.pt. Não é uma subscrição: não lhe enviaremos outras mensagens por causa deste pedido.",
+  },
 };

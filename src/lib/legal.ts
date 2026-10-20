@@ -28,7 +28,7 @@ import { CONTACTO_EMAIL, ENTIDADE_LEGAL, MORADA_SEDE } from "./site.ts";
 export const TERMOS_VERSAO = "2026-10-20";
 
 /** Versão da Política de Privacidade em vigor. Cada versão fica acessível em /privacidade/<versão>. */
-export const PRIVACIDADE_VERSAO = "2026-10-20";
+export const PRIVACIDADE_VERSAO = "2026-10-22";
 
 /** Versão do texto de pedido expresso de início imediato. */
 export const CONSENTIMENTO_INICIO_IMEDIATO_VERSAO = "2026-10-01";
@@ -43,6 +43,17 @@ export const CONSENTIMENTO_INICIO_IMEDIATO_VERSAO = "2026-10-01";
 export const CONSENTIMENTO_COMUNICACOES_VERSAO = "2026-10-19";
 export const TEXTO_CONSENTIMENTO_COMUNICACOES =
   "Opcional: aceito receber e-mails da DoLado com novidades e ofertas, como a Protecção (alertas de fim de fidelização e de promoção). Pode cancelar a qualquer momento.";
+
+/**
+ * Autorização opcional para comunicações comerciais pedida na página do guia
+ * gratuito (/guia-facturas), sem conta. Desmarcada por omissão e nunca
+ * condição do download. O texto exacto e a versão ficam gravados em
+ * consentimentos_comunicacoes_sem_conta. Mudar o texto = nova versão. Antes
+ * do primeiro envio comercial: confirmação do endereço e forma de deixar de
+ * receber em cada e-mail.
+ */
+export const CONSENTIMENTO_COMUNICACOES_GUIA_VERSAO = "2026-10-22";
+export const TEXTO_CONSENTIMENTO_COMUNICACOES_GUIA = "Quero receber dicas, novidades e comunicações da DoLado por e-mail.";
 
 export const ROTAS_LEGAIS = {
   termos: "/termos",

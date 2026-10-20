@@ -10,6 +10,7 @@ import {
   COMO_EXERCER_LIVRE_RESOLUCAO,
   RESUMO_LIVRE_RESOLUCAO,
   TEXTO_CONSENTIMENTO_COMUNICACOES,
+  TEXTO_CONSENTIMENTO_COMUNICACOES_GUIA,
   consentimentoInicioImediato,
 } from "../../../lib/legal.ts";
 
@@ -17,6 +18,7 @@ export const juridico = {
   /** Etiqueta da tradução informativa (só usada em inglês). */
   rotuloTraducao: "",
   comunicacoes: TEXTO_CONSENTIMENTO_COMUNICACOES,
+  comunicacoesGuia: TEXTO_CONSENTIMENTO_COMUNICACOES_GUIA,
   aceitacaoTermos: `${ACEITACAO_TERMOS.antes}${ACEITACAO_TERMOS.ligacao}${ACEITACAO_TERMOS.depois}`,
   inicioImediato: consentimentoInicioImediato("caso_protecao").texto,
   resumoLivreResolucao: RESUMO_LIVRE_RESOLUCAO,

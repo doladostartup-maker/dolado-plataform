@@ -223,6 +223,8 @@ select is(
                            'protecao_gratuita_elegibilidade', 'protecao_gratuita_ativar', 'protecao_gratuita_desativar_lembretes',
                            'protecao_gratuita_manutencao', 'protecao_gratuita_marco_atual', 'protecao_gratuita_avisos_pendentes',
                            'protecao_gratuita_aviso_reservar', 'protecao_gratuita_aviso_concluir', 'protecao_gratuita_metricas',
+                           -- Guia gratuito (20261022090000): registo e libertação só service_role, métricas só admin, limpeza pelo pg_cron.
+                           'guia_registar_pedido', 'guia_libertar_email', 'guia_metricas', 'limpar_guias_pedidos',
                            -- Programa de Parceiros (20261021090000): só service_role, exceto os dois relatórios (verificam admin).
                            'acesso_patrocinado_ativar', 'acesso_patrocinado_aviso_concluir', 'acesso_patrocinado_aviso_reservar',
                            'acesso_patrocinado_avisos_pendentes', 'acesso_patrocinado_manutencao', 'acesso_patrocinado_marco_atual',
