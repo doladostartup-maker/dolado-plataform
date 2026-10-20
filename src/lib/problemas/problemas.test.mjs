@@ -28,10 +28,10 @@ function textos(v, saida = []) {
 }
 
 describe("catálogo", () => {
-  test("3 categorias com página e 14 problemas (13 da primeira vaga + falta de luz)", () => {
+  test("3 categorias com página e 15 problemas (13 da primeira vaga + falta de luz + mudança não autorizada)", () => {
     assert.deepEqual(categoriasComPagina().map((c) => c.slug), ["telecomunicacoes", "energia", "compras-reembolsos"]);
-    assert.equal(categoriasComPagina().flatMap((c) => c.problemas).length, 14);
-    assert.equal(caminhosProblemas().length, 1 + 3 + 14);
+    assert.equal(categoriasComPagina().flatMap((c) => c.problemas).length, 15);
+    assert.equal(caminhosProblemas().length, 1 + 3 + 15);
     assert.equal(new Set(caminhosProblemas()).size, caminhosProblemas().length);
   });
 

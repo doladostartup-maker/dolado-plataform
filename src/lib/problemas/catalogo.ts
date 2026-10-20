@@ -79,12 +79,19 @@ export const CATEGORIAS: Categoria[] = [
       {
         slug: "cobranca-indevida",
         problemaCaso: "Cobrança indevida",
-        relacionados: ["fatura-muito-alta", "consumos-estimados", "falta-de-luz"],
+        relacionados: ["fatura-muito-alta", "consumos-estimados", "mudanca-de-comercializador-nao-autorizada", "falta-de-luz"],
       },
       {
         slug: "consumos-estimados",
         problemaCaso: "Factura alta, estimativa ou acerto",
         relacionados: ["fatura-muito-alta", "cobranca-indevida"],
+      },
+      // Mudança de comercializador não autorizada (20/10/2026, aprovada por
+      // Thiago): contratação — docs/legal/auditoria-energia-facturacao-contratacao-2026-10-20.md.
+      {
+        slug: "mudanca-de-comercializador-nao-autorizada",
+        problemaCaso: "Mudança de comercializador",
+        relacionados: ["cobranca-indevida", "fatura-muito-alta"],
       },
       // Falhas de electricidade (20/10/2026): interrupções, compensação na
       // factura e danos — docs/legal/auditoria-interrupcoes-electricidade-2026-10-20.md.

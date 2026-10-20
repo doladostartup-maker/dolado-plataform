@@ -66,6 +66,22 @@ export const tratarCaso: Traducao<typeof pt> = {
     passo4: {
       titulo: "Do you have any documents?",
       texto: "Optional. For example, the bill in question, the contract or an e-mail from the company. If you don't have them now, we will ask for them later.",
+      documentosEnergia: {
+        titulo: "What helps most in this case:",
+        factura_acerto:
+          "the bill in question and the bills for the previous months (ideally three or more). A dated photo of the meter and the readings you submitted also help.",
+        cobranca: "the bill showing the amount. The contract or offer and proof of payment also help.",
+        apos_cancelamento:
+          "the bill you received after leaving. Proof of your cancellation request or of the switch date, and the meter reading on that day, also help.",
+        corte:
+          "the disconnection notice or debt collection letter, the bills for the debt and proof of payment. If the supply failed, your later bills help and, if there was damage, photos or repair quotes.",
+        contratacao:
+          "the first bill from the new company or with the new terms. What you signed or received and a record of the contact also help: date, channel and who called or visited you.",
+        fidelizacao:
+          "the bill with the amount being charged. The offer or contract with the minimum term and the advertising for the deal, if you have it, also help.",
+        cancelamento:
+          "what you signed or received and the cancellation request you made. The dates of the contract and of the start of supply also help.",
+      },
       aCarregar: "Uploading…",
       escolher: "Choose file",
       tipos: "Bill, contract, email or screenshot · PDF or image",
