@@ -31,15 +31,32 @@ export const inicio: Traducao<typeof pt> = {
     titulo1: "Help to sort out problems.",
     titulo2: "Protection to avoid surprises.",
     tratar: {
-      titulo: "I have a problem",
-      texto: "We handle the complaint with you.",
+      titulo: "I need help sorting out a problem",
+      texto: "We prepare the complaint with you, only send it with your authorisation and follow up the company's reply.",
       cta: "Start my case",
     },
     protecao: {
-      titulo: "I want to avoid surprises",
-      texto: "We keep an eye on your bills, contracts and key dates, so we can warn you in time.",
+      titulo: "I want to keep track of my bills and contracts",
+      texto:
+        "With Protection, we compare the bills you send us, keep an eye on key dates and let you know in time. Protection on its own does not include handling complaints.",
       cta: "Discover Protection",
     },
+  },
+  beneficio: {
+    titulo: "More control over your spending. More peace of mind every day.",
+    paragrafos: [
+      "An unexpected charge, a deadline that slipped by or a refund that never arrives can weigh on your budget and take up far too much time.",
+      "DoLado keeps track of your bills and contracts and helps sort out consumer problems, so you know what is happening and can act in time.",
+    ],
+    nota: "Tracking bills and contracts is part of Protection. Complaints are handled with Single Case or Case + Protection.",
+    verPrecario: "Compare the options",
+  },
+  empresas: {
+    eyebrow: "For businesses",
+    titulo: "Financial wellbeing for your team.",
+    texto:
+      "Your company can offer DoLado to employees or customers. Each person deals with their case directly with us, and the company does not see individual cases.",
+    cta: "Find out about the solution for businesses",
   },
   comoFunciona: {
     titulo: "How it works",

@@ -101,6 +101,23 @@ export const marketing = {
         "A mensalidade aumentou e não encontrámos nos dados do seu contrato uma explicação para esta diferença. Pode valer a pena confirmar com a empresa.",
       nota: "Antes de o avisarmos, uma pessoa da DoLado revê cada situação.",
     },
+    resumoMensal: {
+      titulo: "Exemplo de resumo mensal",
+      assunto: "A sua Protecção em Setembro",
+      intro: "Em Setembro, a DoLado verificou 2 facturas e manteve 2 alertas de datas activos. Não detectámos nenhuma alteração que exija a sua atenção.",
+      estado: "Tudo acompanhado",
+      estadoTexto:
+        "Com base nos documentos e nas datas que nos indicou, não há nada que exija a sua atenção neste momento. Continuamos atentos por si.",
+      acompanhamosTitulo: "O que acompanhámos em Setembro",
+      acompanhamos: [
+        "Comparação de facturas — Internet e televisão e Electricidade",
+        "Internet e televisão — fim da promoção a 15/12/2026",
+        "Internet e televisão — fim da fidelização a 14/03/2027",
+      ],
+      proximaRotulo: "Próxima data relevante",
+      proxima: "15/12/2026 — fim da promoção de Internet e televisão",
+      nota: "Exemplo fictício. O resumo real baseia-se nos documentos e nas datas que nos indicou.",
+    },
   },
   origem: {
     fotografia: "Thiago Pereira, fundador da DoLado",

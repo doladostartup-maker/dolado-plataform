@@ -17,6 +17,50 @@ export const paginas: Traducao<typeof pt> = {
       caso_protecao: { necessidade: "I have a problem and want ongoing support.", cta: "Choose Case + Protection" },
       protecao: { necessidade: "I want to keep an eye on my bills and contracts.", cta: "Get Protection" },
     },
+    seCancelar: {
+      avulso: "No subscription to cancel: the case is followed up until the process ends.",
+      caso_protecao:
+        "If you cancel: Protection continues until the end of the paid period. A subscription case being followed up only continues if you keep your subscription until that case is finished.",
+      protecao: "If you cancel: tracking and reminders continue until the end of the paid period and then stop.",
+    },
+    seCancelarRotulo: "Cancellation",
+    comparacao: {
+      eyebrow: "Compare the options",
+      titulo: "The three options side by side.",
+      criterio: "What you need to know",
+      linhas: {
+        indicado: "Best for",
+        pagamento: "Payment",
+        acompanhamento: "Tracking of bills and contracts",
+        casos: "Case handling",
+        casoEmCurso: "Case in progress when the subscription ends",
+      },
+      valores: (limite: number) => ({
+        avulso: {
+          indicado: "Sorting out a single problem, with no subscription",
+          pagamento: "One-off payment, no renewal",
+          acompanhamento: "Not included",
+          casos: "1 case",
+          casoEmCurso: "Does not apply: a Single Case is followed up until the end",
+        },
+        caso_protecao: {
+          indicado: "Sorting out a problem now and keeping your bills and contracts tracked",
+          pagamento: "Monthly, renews automatically",
+          acompanhamento: "Included",
+          casos: `1 case per month, building up to ${limite}`,
+          casoEmCurso:
+            "You can keep your subscription until the case is finished. If you cancel, follow-up on that case ends at the end of the paid period",
+        },
+        protecao: {
+          indicado: "Keeping track of bills and contracts, without a problem right now",
+          pagamento: "Monthly, renews automatically",
+          acompanhamento: "Included",
+          casos: "Not included",
+          casoEmCurso: "Does not apply: no cases included",
+        },
+      }),
+      nota: "You can cancel a subscription at any time in your account, with no further charges. The full conditions are below and in the Terms.",
+    },
     saberProtecao: "What is Protection?",
     condicoes: {
       eyebrow: "Payments and conditions",
@@ -81,7 +125,7 @@ export const paginas: Traducao<typeof pt> = {
     metadados: {
       titulo: "Protection: keeping an eye on bills and contracts - DoLado",
       descricao:
-        "With Protection, DoLado compares the bills you send us, reminds you before promotions and minimum terms end, and flags changes that are worth checking.",
+        "With Protection, DoLado compares the bills you send us, reminds you before promotions and minimum terms end, flags changes worth checking and sends a monthly summary.",
     },
     eyebrow: "Protection",
     titulo: "We keep an eye on your bills and contracts and warn you in time.",
@@ -89,38 +133,53 @@ export const paginas: Traducao<typeof pt> = {
       "Protection is for anyone who wants to avoid surprises, even without a problem right now. You send us the bills and, if you have it, the contract for the services you want us to follow. We compare each bill with the previous ones and with the contract, keep track of important dates and let you know when something deserves your attention.",
     aderir: "Get Protection",
     verPrecario: "See pricing",
-    tresPerguntas: {
-      eyebrow: "How it works",
-      titulo: "Protection in three questions.",
-      blocos: [
+    dependeDocumentos: "The analysis depends on the documents and information you send us.",
+    recebe: {
+      eyebrow: "What you get",
+      titulo: "What Protection gives you.",
+      itens: [
         {
-          titulo: "What do we keep an eye on?",
-          itens: [
-            "The bills for the services you send us — for example, broadband and mobile, electricity, gas or water — compared with the previous ones.",
-            "The terms of your contract, when you send it to us: monthly fee, promotions and minimum term.",
-            "Important dates, such as when a promotion or the minimum term ends.",
-            "For telecoms contracts, an estimate of the most you would pay if you cancelled before the minimum term ends.",
-          ],
+          titulo: "Information about changes in your bills",
+          texto: "You know what has changed from one bill to the next: the monthly charge, a new charge or a promotion that no longer appears.",
+          como:
+            "We compare each bill you send us with the previous ones and, if you send us the contract, with the agreed terms. Straight after the first document, your account shows what we checked, what we found and what we will keep an eye on.",
         },
         {
-          titulo: "What information and reminders do you get?",
-          itens: [
-            "In your account, straight after the first document: what we checked, what we found and what we will keep an eye on.",
-            "Reminders 60 and 30 days before a promotion or minimum term ends, and on the day itself.",
-            "A notice when a bill has a change that is worth checking, after a person at DoLado has reviewed it.",
-            "At the start of each month, a summary: what we kept an eye on, any changes we found and the next important date.",
-            "If you wish, notices about relevant changes in the sectors you choose, such as announced price rises.",
-          ],
+          titulo: "Alerts about situations that need attention",
+          texto: "You get an e-mail when a change is worth checking — for example, an increase the contract details don't explain or a possible duplicate charge.",
+          como:
+            "Someone at DoLado reviews each situation before we alert you. If you like, you can also get alerts about relevant changes in the sectors you choose, such as announced price rises.",
         },
         {
-          titulo: "What do you need to give us?",
-          itens: [
-            "One bill for each service, as a PDF or image. That is enough to get started.",
-            "The contract, if you have it, so we can compare the bills with what you signed up for.",
-            "If you do not have the documents to hand, the provider's name and a date, such as when the minimum term ends.",
-            "The next bills as they arrive: the comparison depends on the documents you send us.",
-          ],
+          titulo: "Reminders of important contract dates",
+          texto: "You won't miss the end of a promotion or the end of a minimum term.",
+          como:
+            "We send reminders 60 and 30 days before and on the day itself. For telecoms contracts, we also show an estimate of the most you would pay if you cancelled before the minimum term ends.",
         },
+        {
+          titulo: "Monthly summary of what we followed",
+          texto: "At the start of each month, you get a summary of what we followed — even when everything is in order.",
+          como:
+            "The summary shows the bills checked, the changes we told you about, what we are still following and the next important date.",
+        },
+      ],
+      comoRotulo: "How it works",
+    },
+    resumo: {
+      eyebrow: "Monthly summary",
+      titulo: "Even when there is nothing to sort out, you know what we checked.",
+      paragrafos: [
+        "Most months bring no problems. Even so, the monthly summary shows you the work done: which bills we compared, which dates we are following and which one comes next.",
+        "When something needs your attention, the summary says so too — after the situation has been reviewed by someone at DoLado.",
+      ],
+    },
+    precisa: {
+      titulo: "What do you need to give us?",
+      itens: [
+        "One bill for each service, as a PDF or image. That is enough to get started.",
+        "The contract, if you have it, so we can compare your bills with what you signed up for.",
+        "If you don't have documents to hand, the provider's name and a date, such as when the minimum term ends.",
+        "Your next bills as they arrive: the comparison depends on the documents you send us.",
       ],
     },
     exemplos: {

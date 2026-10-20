@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { CTASection } from "@/components/marketing-v2/CTASection";
-import { IconeSeta } from "@/components/marketing-v2/Icones";
+import { IconeSeta, IconeVisto } from "@/components/marketing-v2/Icones";
 import { OrigemFundador } from "@/components/marketing-v2/OrigemFundador";
 import { Eyebrow, SectionV2, type TomSecao } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_PRIMARIO, TEXTO, TITULO_H2 } from "@/components/marketing-v2/estilos";
@@ -12,8 +12,9 @@ import { useCaminho, useIdioma } from "@/i18n/cliente";
 import { tInstitucional } from "@/i18n/mensagens/institucional";
 
 // Sobre Nós no Design System V2 (secção 38 de docs/design/design-system-v2.md):
-// página editorial com a história do fundador como eixo. Todo o texto
-// institucional é o já publicado nesta página; só muda a apresentação.
+// página editorial com a história do fundador como eixo. Desde 20/10/2026 abre
+// com o posicionamento (bem-estar financeiro especializado no apoio ao
+// consumidor) e os compromissos concretos, antes da história do fundador.
 
 // Fundo de cada secção institucional: a do meio (prevenção) em verde.
 const TONS: TomSecao[] = ["white", "soft-green", "white"];
@@ -40,11 +41,30 @@ export function SobreNosV2() {
             {t.titulo}
           </h1>
           <div className={`${TEXTO} mt-6 space-y-4 text-[17.5px]`}>
-            {t.hero.map((p) => (
-              <p key={p}>{p}</p>
+            {t.hero.map((p, i) => (
+              <p key={p} className={i === 0 ? "text-[20px] font-semibold leading-snug text-[var(--v2-navy)]" : undefined}>
+                {p}
+              </p>
             ))}
             <p className="font-semibold text-[var(--v2-navy)]">{t.heroDestaque}</p>
           </div>
+        </div>
+        {/* Compromissos concretos que dão corpo ao posicionamento. */}
+        <div className="mt-12 border-t border-[var(--v2-line)] pt-10">
+          <h2 className="text-[13px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]">{t.compromissos.titulo}</h2>
+          <ul className="mt-6 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {t.compromissos.itens.map((c) => (
+              <li key={c.titulo} className="flex items-start gap-3">
+                <span className="mt-[2px] flex h-[24px] w-[24px] flex-none items-center justify-center rounded-full bg-[var(--v2-green)] text-white">
+                  <IconeVisto tamanho={13} strokeWidth={2.8} />
+                </span>
+                <div>
+                  <h3 className="text-[17px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{c.titulo}</h3>
+                  <p className="mt-1 text-[15px] leading-relaxed text-[var(--v2-muted)]">{c.texto}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       </SectionV2>
 

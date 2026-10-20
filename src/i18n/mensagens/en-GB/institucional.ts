@@ -6,15 +6,36 @@ export const institucional: Traducao<typeof pt> = {
     metadados: {
       titulo: "About Us | DoLado",
       descricao:
-        "Meet DoLado, a platform built to help consumers make complaints, follow up processes and avoid losses, with information, protection and support.",
+        "DoLado is a financial wellbeing company specialising in consumer support: it keeps track of bills and contracts and helps sort out consumer problems, with clear prices and nothing sent without your authorisation.",
     },
     eyebrow: "About us",
     titulo: "On the consumer's side.",
     hero: [
-      "DoLado was born from a simple idea: no consumer should lose out because they don't know their rights, the deadlines that apply or the steps needed to solve a problem.",
-      "Every day, people pay more than they should, stay in contracts they could end, miss important deadlines or give up on complaining because they don't know where to start.",
+      "DoLado is a financial wellbeing company specialising in consumer support.",
+      "We keep track of bills and contracts and help sort out consumer problems, so that people have more control over their spending and fewer worries about charges, deadlines and complaints.",
     ],
-    heroDestaque: "We created DoLado to help change that.",
+    heroDestaque: "We believe nobody should lose out for lack of time, information or support to act.",
+    compromissos: {
+      titulo: "Our commitments",
+      itens: [
+        {
+          titulo: "Clear prices",
+          texto: "You see the price before paying, VAT included. We never charge a percentage of what you recover.",
+        },
+        {
+          titulo: "Authorisation before sending",
+          texto: "We show you the complaint text and only send it once you have authorised it.",
+        },
+        {
+          titulo: "Follow-up",
+          texto: "We follow up the company's reply and keep you informed about where your case stands.",
+        },
+        {
+          titulo: "Next steps, explained",
+          texto: "When there are options, we explain them. The decision is always yours.",
+        },
+      ],
+    },
     secoes: [
       {
         titulo: "We are on your side",
@@ -33,7 +54,7 @@ export const institucional: Traducao<typeof pt> = {
           "Many of the problems consumers face could be avoided if the right information arrived at the right time.",
           "That is why DoLado isn't only there for when something goes wrong.",
           "With Protection, DoLado helps you spot situations that could turn into a problem and warns you in advance — such as the end of promotional periods, the end of minimum-term periods or significant changes in your bills — so you can act in time.",
-          "We want every consumer to have more control and fewer surprises.",
+          "Fewer surprises and more time to decide.",
         ],
       },
       {
@@ -57,7 +78,7 @@ export const institucional: Traducao<typeof pt> = {
         "And who stays by your side throughout the whole process.",
       ],
       fecho: [
-        "Because, whatever the amount involved, we believe no consumer should lose out simply because they didn't have the right information.",
+        "Whatever the amount involved, we want everyone to know what is happening and what they can do next.",
         "That is why we are here.",
       ],
     },
@@ -195,173 +216,192 @@ export const institucional: Traducao<typeof pt> = {
   },
   empresas: {
     metadados: {
-      titulo: "DoLado for businesses: a benefit for employees and customers | DoLado",
+      titulo: "Financial wellbeing for employees | DoLado for businesses",
       descricao:
-        "Offer DoLado as a benefit to your employees or customers: support for resolving problems with bills, contracts and purchases. Request a proposal from DoLado.",
+        "Give your employees practical support to keep track of bills and contracts and deal with consumer problems. Each case stays between the person and DoLado.",
     },
     falar: "Request a proposal",
     eyebrow: "DoLado for businesses",
-    titulo1: "Run a business?",
-    titulo2: "Offer DoLado as a benefit to your employees or customers.",
+    titulo: "Financial wellbeing for your employees.",
     texto:
-      "When someone has a problem with a company — a charge, a cancellation, a refund — DoLado helps organise the situation, prepares the complaint and follows the next steps. Your business can offer that support to the people who rely on you.",
+      "Practical support to keep track of bills and contracts and deal with consumer problems, with someone by their side at every stage.",
+    conhecer: "Find out about the solution for my team",
     verComoFunciona: "See how it works",
-    formatosNota: "Formats and terms agreed in a conversation, depending on your audience and your business's goals.",
+    formatosNota: "Format and terms agreed in a conversation, based on your team and your company's goals.",
+    situacoesCabecalho: {
+      eyebrow: "Day to day",
+      titulo: "Three situations where DoLado helps.",
+      texto: "Common consumer problems that weigh on the budget and take up time. This is how DoLado helps with each one.",
+    },
+    situacoes: [
+      {
+        titulo: "An unexpected charge",
+        situacao: "The broadband bill arrives higher than usual and nobody said why.",
+        apoio:
+          "With Protection, we compare each bill with the previous ones and with the contract, and let the person know when a change is worth checking, after it has been reviewed by someone at DoLado. If a complaint is needed, we prepare it and follow up the reply.",
+        servico: "Protection · case handling",
+      },
+      {
+        titulo: "A late refund",
+        situacao: "The return was accepted weeks ago, but the money still hasn't arrived.",
+        apoio:
+          "We organise the facts and documents, prepare the complaint with a clear request and only send it once the person has reviewed and authorised it. Then we follow up the company's reply.",
+        servico: "Case handling",
+      },
+      {
+        titulo: "A promotion about to end",
+        situacao: "The discount on the electricity or telecoms contract ends soon and the price is going to change.",
+        apoio:
+          "With Protection, we send a reminder 60 and 30 days before the promotion or minimum term ends, and on the day itself, so the person can check the next price and decide in time.",
+        servico: "Protection",
+      },
+    ],
     solucao: {
-      eyebrow: "One solution, two audiences",
-      titulo: "Support for real problems.",
-      texto: "It isn't a list of features: it is a service that supports the person from the problem through to the next steps.",
+      eyebrow: "Employees or customers",
+      titulo: "Two ways to bring DoLado to the people who count on you.",
+      texto:
+        "The solution for employees is a benefit for your team. The offer for customers adds support to the relationship your company already has with them. The support is the same; what changes is the audience and how it is presented.",
     },
     publicos: [
       {
-        titulo: "A benefit for employees",
+        titulo: "For your employees",
         texto:
-          "When a problem comes up with a bill, a service or a purchase, your employees have somewhere to turn. DoLado helps organise the situation, prepares the complaint and follows the next steps — without the person having to work everything out alone.",
+          "A financial wellbeing benefit for your team: when a problem comes up with a bill, a contract or a purchase, employees have someone to turn to and don't have to work it all out alone.",
         pontos: [
-          "Practical help with everyday consumer problems",
+          "Tracking of bills and contract dates, with Protection",
+          "Support preparing and following up complaints",
           "Each person deals with their case directly with DoLado",
-          "Less time and worry spent on hard-to-follow processes",
-          "With Protection, an eye kept on bills and contract dates — useful, for example, after moving home",
+          "The company does not see individual cases",
         ],
       },
       {
-        titulo: "An offer for your customers",
+        titulo: "For your customers",
         texto:
-          "Add useful support to your relationship with your customers for when something goes wrong with another company. DoLado can be presented as an extra resource, with communication suited to your audience.",
+          "An offer for your company's customers — for example, Protection to keep track of new broadband, electricity, gas or water contracts after moving home.",
         pontos: [
           "A concrete service, applied to real situations",
-          "Added value in the relationship you already have with your customers",
-          "Access arrangements agreed together",
-          "Protection can keep an eye on new broadband, electricity, gas or water contracts, for example after moving home",
+          "Added value in the relationship you already have with customers",
+          "Form of access agreed together",
+          "Each customer's data stays with DoLado",
         ],
       },
     ],
     comoFunciona: {
-      eyebrow: "How it works",
-      titulo: "From the problem to the next step.",
-      texto: "It starts with what happened to the person. DoLado turns the situation into practical support.",
+      eyebrow: "Access and use",
+      titulo: "How it works.",
+      texto: "The company provides access. Each person uses DoLado directly, at their own pace.",
     },
     passos: [
       {
-        titulo: "The person explains what happened",
-        texto: "A charge, a cancellation, a refund that never arrives or a complaint that went unanswered.",
+        titulo: "We agree the format with you",
+        texto:
+          "In a conversation, we agree the audience, what is included — tracking of bills and contracts, case handling or both — and the form of access.",
+        rotulo: "Together",
+      },
+      {
+        titulo: "The company provides access",
+        texto:
+          "For example, with individual activation codes that the company hands to each person. DoLado does not need to receive a list of employees.",
+        rotulo: "The company",
+      },
+      {
+        titulo: "Each person creates their account",
+        texto:
+          "They activate access, send the bills and contracts they want tracked or tell us about the problem they have. They decide what they share.",
         rotulo: "The person",
       },
       {
-        titulo: "DoLado organises the situation",
-        texto: "We identify the relevant information and what can be requested, based on the facts and documents of the case.",
-        rotulo: "DoLado",
-      },
-      {
-        titulo: "The complaint is prepared and reviewed",
-        texto: "DoLado prepares the complaint text. The person reviews it and it only goes ahead once they authorise it.",
-        rotulo: "The person decides",
-      },
-      {
-        titulo: "The next steps are followed up",
+        titulo: "DoLado follows every stage",
         texto:
-          "DoLado follows the response from the company complained about and keeps the person informed about the status of the case and the options that follow.",
+          "It flags when something needs attention, prepares the complaint, which the person reviews and authorises before it is sent, and follows up the reply from the company complained about.",
         rotulo: "DoLado",
-      },
-    ],
-    exemplosCabecalho: {
-      eyebrow: "Examples",
-      titulo: "Situations where help makes a difference.",
-      texto: "Common consumer problems that take time and patience for anyone trying to solve them alone.",
-    },
-    exemplos: [
-      {
-        titulo: "Unexpected charges",
-        texto: "A bill with an amount that makes no sense, or a service charged that was never requested.",
-        contexto: "Telecoms · energy · water",
-      },
-      {
-        titulo: "Cancellations",
-        texto: "A cancellation request that goes nowhere, or exit charges that raise questions.",
-        contexto: "Service contracts · subscriptions",
-      },
-      {
-        titulo: "Refunds",
-        texto: "A return that was accepted, but a refund that still hasn't arrived.",
-        contexto: "Purchases · services",
-      },
-      {
-        titulo: "Unanswered complaints",
-        texto: "The person has already tried to sort it out directly with the company and got no answer or solution.",
-        contexto: "Preparation · follow-up",
       },
     ],
     formatosCabecalho: {
       eyebrow: "Formats to explore",
       titulo: "A conversation to find the right format.",
       texto:
-        "The audience, the way people access the service and the terms are agreed together, depending on your business's goals. These are starting points, not fixed packages.",
+        "The audience, form of access and terms are agreed together, based on your company's goals. These are starting points, not fixed packages.",
     },
     formatos: [
       { titulo: "For employees", texto: "Give your team a simple way to find out about and access DoLado's support." },
-      { titulo: "For customers", texto: "Present DoLado as an extra resource in your relationship with your customers." },
-      { titulo: "For both audiences", texto: "Combine employees and customers, with communication suited to each group." },
+      { titulo: "For customers", texto: "Present DoLado as an additional resource in your relationship with your customers." },
+      { titulo: "For both audiences", texto: "Combine employees and customers, with the right communication for each group." },
       {
-        titulo: "A limited first trial",
-        texto: "Start with a defined scope, learn from how it is used and decide on the next steps.",
+        titulo: "A first, limited trial",
+        texto: "Start with a defined scope, learn from how it is used and decide the next steps.",
       },
     ],
     parceiros: {
-      texto: "Would you like to refer clients or distribute DoLado Protection through your work?",
+      texto: "Would you like to refer customers or offer DoLado Protection through your business?",
       ligacao: "Find out about our partner programme.",
     },
     clarezaCabecalho: {
-      eyebrow: "Trust and clarity",
-      titulo: "The person stays in control of their case.",
-      texto: "DoLado prepares and follows the situation. The person reviews the complaint before it is sent and decides how they want to proceed.",
+      eyebrow: "Confidentiality",
+      titulo: "Each person's cases stay between them and DoLado.",
+      texto:
+        "The company provides access, but does not follow anyone's personal finances. Each person stays in control of what they share and of what is sent on their behalf.",
     },
     clareza: [
-      { titulo: "The case starts with the person", texto: "They explain the situation and decide whether to go ahead." },
       {
-        titulo: "The complaint is reviewed before it is sent",
-        texto: "The person sees the text prepared by DoLado and only authorises sending it if they agree with it.",
+        titulo: "The company does not see individual cases",
+        texto: "Each person's problems, bills, contracts, documents and messages are not shared with the company.",
+      },
+      {
+        titulo: "Aggregate figures only",
+        texto:
+          "When access is given with activation codes, the company may receive counts only — for example, how many codes have been activated — never names, e-mails or activity. For small groups, we only show “fewer than 5”.",
+      },
+      {
+        titulo: "Nothing is sent without authorisation",
+        texto: "The person sees the complaint text prepared by DoLado and only authorises it to be sent if they agree with it.",
       },
       {
         titulo: "The outcome depends on the company complained about",
-        texto: "DoLado prepares and follows the process, but does not promise a particular response or outcome.",
+        texto: "DoLado prepares and follows up the process, but does not promise a particular reply or outcome.",
       },
     ],
     perguntasCabecalho: {
       eyebrow: "Frequently asked questions",
       titulo: "Before we start.",
-      texto: "A first conversation helps clarify what makes sense for your business.",
+      texto: "A first conversation helps clarify what makes sense for your company.",
     },
     perguntas: [
       {
-        pergunta: "Who can a business offer DoLado to?",
+        pergunta: "What does “financial wellbeing” mean at DoLado?",
         resposta:
-          "Employees, customers or both. The audience, the way people access the service and the communication are agreed together, depending on your business's goals.",
+          "It means helping people gain more control over their spending and worry less about consumer problems: keeping track of bills and contracts, flagging changes and important dates, and supporting them in preparing and following up complaints. DoLado does not give financial advice, manage budgets or broker credit.",
+      },
+      {
+        pergunta: "Who can a company offer DoLado to?",
+        resposta:
+          "To employees, to customers or to both. The audience, form of access and communication are agreed together, based on your company's goals.",
       },
       {
         pergunta: "What kind of support does DoLado provide?",
         resposta:
-          "DoLado helps deal with problems with companies — for example telecoms, energy, water, shops or gyms: it organises the situation, prepares the complaint, which the person reviews before it is sent, and follows the next steps. Protection is a separate service that does not require a problem: it keeps an eye on the bills and contract dates the person sends — for example, new contracts after moving home — and warns them when something deserves attention.",
+          "DoLado helps sort out problems with companies — for example in telecoms, energy, water, shopping or gyms: it organises the situation, prepares the complaint, which the person reviews before it is sent, and follows up the next steps. Protection is a separate service that doesn't require a problem: it keeps track of the bills and contract dates the person sends and flags when something needs attention.",
       },
       {
-        pergunta: "Does the business have access to individual cases?",
+        pergunta: "Does the company have access to individual cases?",
         resposta:
-          "Each case is handled directly between the person and DoLado. The solution does not assume that the business can access the individual cases of the people using DoLado; any information to be shared as part of a partnership is defined and clearly explained before starting.",
+          "No. Each case is handled directly between the person and DoLado. When access is given with activation codes, the company may only receive aggregate figures, such as how many codes have been activated — never names, e-mails, documents or anyone's activity.",
       },
       {
         pergunta: "What are the prices and terms for businesses?",
         resposta:
-          "They depend on the audience, the format and the intended use, and are agreed in a conversation with DoLado. Get in touch so we can explore what makes sense for your business.",
+          "They depend on the audience, format and intended use, and are agreed in a conversation with DoLado. Get in touch so we can explore what makes sense for your company.",
       },
       {
-        pergunta: "Does DoLado guarantee that the complaint will be resolved?",
-        resposta: "No. DoLado prepares and follows the process, but the response and the outcome depend on the company complained about.",
+        pergunta: "Does DoLado guarantee the complaint will be resolved?",
+        resposta: "No. DoLado prepares and follows up the process, but the reply and the outcome depend on the company complained about.",
       },
     ],
     ctaFinal: {
       eyebrow: "Let's talk",
-      titulo: "Run a business? Request a proposal from DoLado.",
+      titulo: "Want to bring DoLado to your team? Request a proposal.",
       texto:
-        "Tell us what you have in mind — employees, customers or both — and we will explore the next step with you. You can also write to <email/>.",
+        "Tell us what you have in mind — employees, customers or both — and we'll explore the next step with you. You can also write to <email/>.",
     },
   },
 };

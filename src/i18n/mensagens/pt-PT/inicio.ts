@@ -1,8 +1,9 @@
 // Homepage "/" (HomepageV2).
 //
 // Simplificação de 17/10/2026: uma ideia por secção e frases curtas.
-// Ordem: abertura → situações reais → as duas vertentes (tratar / Proteção)
-// → como funciona em 3 passos → ferramentas gratuitas → fundador → CTA final.
+// Ordem: abertura → situações reais → os dois percursos (tratar / Proteção)
+// → benefício (controlo das despesas) → como funciona em 3 passos →
+// ferramentas gratuitas → para empresas → fundador → CTA final.
 // O detalhe fica nas páginas próprias (/problemas, /protecao, /como-funciona,
 // /precario, /perguntas-frequentes, /sobre-nos). Cada afirmação corresponde
 // ao que está implementado.
@@ -37,15 +38,32 @@ export const inicio = {
     titulo1: "Apoio para tratar problemas.",
     titulo2: "Protecção para antecipar surpresas.",
     tratar: {
-      titulo: "Tenho um problema",
-      texto: "Tratamos a reclamação consigo.",
+      titulo: "Preciso de ajuda para tratar um problema",
+      texto: "Preparamos a reclamação consigo, só a enviamos com a sua autorização e acompanhamos a resposta da empresa.",
       cta: "Tratar do meu caso",
     },
     protecao: {
-      titulo: "Quero evitar surpresas",
-      texto: "Acompanhamos facturas, contratos e datas importantes, para o avisar a tempo.",
+      titulo: "Quero acompanhar as minhas facturas e contratos",
+      texto:
+        "Com a Protecção, comparamos as facturas que nos envia, estamos atentos às datas importantes e avisamos a tempo. O tratamento de reclamações não está incluído na Protecção sozinha.",
       cta: "Conhecer a Protecção",
     },
+  },
+  beneficio: {
+    titulo: "Mais controlo sobre as suas despesas. Mais tranquilidade no dia-a-dia.",
+    paragrafos: [
+      "Uma cobrança inesperada, um prazo que passou despercebido ou um reembolso que não chega podem pesar no orçamento e ocupar demasiado tempo.",
+      "A DoLado acompanha as suas facturas e contratos e ajuda a tratar problemas de consumo, para que saiba o que está a acontecer e possa agir a tempo.",
+    ],
+    nota: "O acompanhamento de facturas e contratos faz parte da Protecção. O tratamento de reclamações é feito com o Avulso ou com o Caso + Protecção.",
+    verPrecario: "Comparar as opções",
+  },
+  empresas: {
+    eyebrow: "Para empresas",
+    titulo: "Bem-estar financeiro para a sua equipa.",
+    texto:
+      "A sua empresa pode oferecer a DoLado aos colaboradores ou aos clientes. Cada pessoa trata do seu caso directamente connosco, e a empresa não vê os casos individuais.",
+    cta: "Conhecer a solução para empresas",
   },
   comoFunciona: {
     titulo: "Como funciona",

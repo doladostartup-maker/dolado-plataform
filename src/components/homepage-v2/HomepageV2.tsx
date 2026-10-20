@@ -16,6 +16,7 @@ import {
   IconeDocumentoVisto,
   IconeEscudo,
   IconePergunta,
+  IconePessoas,
   IconeSeta,
 } from "@/components/marketing-v2/Icones";
 import { VisualHero } from "@/components/marketing-v2/Mockups";
@@ -33,8 +34,10 @@ import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/mark
 // é a mesma (click_hero_reclamacao, click_hero_simulador, click_home_*).
 //
 // Simplificação de 17/10/2026: uma ideia por secção, pouco texto, um CTA
-// principal por secção. Ordem: abertura → situações reais → as duas
-// vertentes → como funciona (3 passos) → ferramentas → fundador → CTA final.
+// principal por secção. Ordem: abertura → situações reais → os dois
+// percursos → benefício (controlo das despesas; posicionamento de bem-estar
+// financeiro de 20/10/2026) → como funciona (3 passos) → ferramentas →
+// para empresas → fundador → CTA final.
 // O preçário, as perguntas frequentes e o processo em detalhe vivem nas
 // páginas próprias (navbar e rodapé).
 //
@@ -192,6 +195,27 @@ export function HomepageV2({ protecaoGratuita = false }: { protecaoGratuita?: bo
         </div>
       </SectionV2>
 
+      {/* ===== Benefício: o que muda para a pessoa ===== */}
+      {/* A nota separa o acompanhamento (Protecção) do tratamento de
+          reclamações (Avulso / Caso + Protecção): nem todos os planos
+          incluem os dois. */}
+      <SectionV2 id="beneficio" tone="soft-green" className="grid gap-8 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+        <h2 className="text-[clamp(28px,3.2vw,40px)] font-extrabold leading-[1.12] tracking-[-0.03em] text-[var(--v2-navy)]">
+          {t.beneficio.titulo}
+        </h2>
+        <div className="max-w-[600px]">
+          {t.beneficio.paragrafos.map((p) => (
+            <p key={p} className={`${TEXTO} mt-4 first:mt-0`}>
+              {p}
+            </p>
+          ))}
+          <p className="mt-6 border-l-[3px] border-[var(--v2-green)] pl-4 text-[15px] leading-relaxed text-[var(--v2-navy)]">{t.beneficio.nota}</p>
+          <Link prefetch={false} href={ROTAS_V2.precario} onClick={() => track("click_home_beneficio_precario")} className={`${LIGACAO} mt-5`}>
+            {t.beneficio.verPrecario} <IconeSeta tamanho={15} />
+          </Link>
+        </div>
+      </SectionV2>
+
       {/* ===== Como funciona: a única explicação do processo na homepage ===== */}
       <SectionV2 id="como-funciona" tone="soft-blue">
         <SectionHeader titulo={t.comoFunciona.titulo} />
@@ -236,6 +260,25 @@ export function HomepageV2({ protecaoGratuita = false }: { protecaoGratuita?: bo
         <Link prefetch={false} href={ROTAS_V2.ferramentas} className={`${LIGACAO} mt-8`}>
           {t.ferramentas.verTodas} <IconeSeta tamanho={15} />
         </Link>
+      </SectionV2>
+
+      {/* ===== Para empresas (detalhe em /empresas) ===== */}
+      <SectionV2 id="empresas" size="compact">
+        <div className={`${CARTAO} flex flex-col gap-6 p-7 sm:p-9 md:flex-row md:items-center md:justify-between md:gap-10`}>
+          <div className="flex items-start gap-5">
+            <span className="hidden flex-none text-[var(--v2-green)] sm:block">
+              <IconePessoas tamanho={32} strokeWidth={1.6} />
+            </span>
+            <div className="max-w-[640px]">
+              <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]">{t.empresas.eyebrow}</p>
+              <h2 className="mt-2 text-[24px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">{t.empresas.titulo}</h2>
+              <p className="mt-2 text-[16px] leading-relaxed text-[var(--v2-muted)]">{t.empresas.texto}</p>
+            </div>
+          </div>
+          <Link prefetch={false} href={ROTAS_V2.empresas} onClick={() => track("click_home_empresas")} className={`${BOTAO_CONTORNO} w-full flex-none md:w-auto`}>
+            {t.empresas.cta} <IconeSeta tamanho={17} />
+          </Link>
+        </div>
       </SectionV2>
 
       {/* ===== Fundador (história completa em /sobre-nos) ===== */}
