@@ -48,7 +48,8 @@ Regras do programa e textos dos Termos e da Política `2026-10-20` validados pel
 - [ ] **Cookiebot:** a finalidade do cookie `dolado_indicacao` passa a incluir as indicações de parceiros comerciais.
 - [ ] **Alinhar `/empresas` com `/parceiros`** (não duplicar conteúdo nem prometer condições).
 - [ ] **Informar os contactos B2B no primeiro contacto** (Política, secções 3 e 8): procedimento manual até haver decisão sobre o botão de primeiro contacto ou a retirada do campo `contacto`.
-- [ ] **Ligar em produção** (depois do merge, que publica a Política e os Termos novos): `PARCEIROS_ATIVO=1` e `ACESSOS_PATROCINADOS_ATIVO=1` na Clever Cloud (novo build), `PARCEIROS_CHAVE` (≥ 32 caracteres) e decidir se `/parceiros` passa a indexável (então: `PAGINAS_BILINGUES`, rodapé e retirar o `noindex`).
+- [x] **Ligar em produção:** `PARCEIROS_ATIVO=1`, `ACESSOS_PATROCINADOS_ATIVO=1` e `PARCEIROS_CHAVE` na Clever Cloud, com novo build (20/10/2026, confirmado por Thiago).
+- [ ] **Decidir se `/parceiros` passa a indexável** (então: `PAGINAS_BILINGUES`, rodapé e retirar o `noindex`).
 
 ## Energia e Gás: facturação, cobrança e contratação (20 de Outubro de 2026)
 
