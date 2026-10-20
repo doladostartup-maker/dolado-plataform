@@ -1,6 +1,6 @@
 # Programa de Parceiros — Fase 1: auditoria e arquitectura
 
-Estado (20/10/2026): **arquitectura aprovada; PR 1 (base de dados), PR 2 (acesso patrocinado) e PR 3 (Parceiro de Indicação) feitos** — migration `20261021090000_programa_parceiros.sql`, testes `supabase/tests/database/programa_parceiros.test.sql` (113 verificações). PR 4 (documentos legais e ligação em produção) por fazer.
+Estado (20/10/2026): **ligado em produção** — PR 1 (base de dados), PR 2 (acesso patrocinado), PR 3 (Parceiro de Indicação) e PR 4 (Termos e Política `2026-10-20`, validados pela advogada) entraram com o PR [#147](https://github.com/doladostartup-maker/dolado-plataform/pull/147); migration `20261021090000_programa_parceiros.sql` aplicada em produção; `PARCEIROS_ATIVO=1`, `ACESSOS_PATROCINADOS_ATIVO=1` e `PARCEIROS_CHAVE` na Clever Cloud (confirmado por Thiago). Testes `supabase/tests/database/programa_parceiros.test.sql` (113 verificações). Pendentes na secção 9.
 Origem: prompt "Programa de Parceiros DoLado" (Parceiro de Indicação + Parceiro de Distribuição).
 
 ---
@@ -146,9 +146,9 @@ Ainda em aberto:
 - **Verificado no browser (base local):** candidatura em `/parceiros` → aprovação no backoffice (parceiro activo, 5 €/8 €/3 mensalidades, código) → registo com código inválido (recusado antes de criar a conta) e válido → atribuição ao abrir a compra → campo deixa de aparecer; modal com código inválido pára antes do Checkout.
 - **Não testado localmente:** a ligação `/r/` de parceiro (o endpoint só aceita pedidos de `dolado.pt` com o Cookiebot); coberto pela lógica partilhada com os amigos e pelos testes de `regras.ts`.
 
-## 9. Pendências para a próxima sessão (20/10/2026)
+## 9. Pendências (actualizado a 20/10/2026)
 
-Estado: ramo `feat/parceiros-base` (worktree `.claude/worktrees/parceiros`), PR [#147](https://github.com/doladostartup-maker/dolado-plataform/pull/147). A migration `20261021090000_programa_parceiros.sql` está aplicada em **produção** (20/10/2026).
+Estado: **em produção** desde 20/10/2026 (PR [#147](https://github.com/doladostartup-maker/dolado-plataform/pull/147) merged, migration aplicada, interruptores ligados). Por fazer: itens 3 e 5, o campo `contacto` das oportunidades B2B (aviso do art. 14.º manual, ou botão de primeiro contacto, ou retirar o campo) e decidir se `/parceiros` passa a indexável.
 
 1. ~~Esclarecer o que a advogada aprovou~~ → **as regras do programa** (Thiago, 20/10/2026).
 2. **PR 4 — documentos legais:** ✅ redigidos a 20/10/2026 — Termos `2026-10-20` e Política `2026-10-20` (`TERMOS_VERSAO`/`PRIVACIDADE_VERSAO` já sobem neste ramo); texto validado pela advogada (Thiago, 20/10/2026). **Migration aplicada em produção a 20/10/2026** (`db push`). As condições comerciais ficam no contrato-tipo. Lista original:
@@ -157,5 +157,5 @@ Estado: ramo `feat/parceiros-base` (worktree `.claude/worktrees/parceiros`), PR 
    - Condições do Programa de Parceiros (texto aceite na candidatura; comissões sem IVA, "acresce IVA à taxa legal em vigor, quando aplicável"; 3 mensalidades; reversões; pagamento manual; mínimo 25 €; sem rendimentos garantidos).
    - Contratos-tipo de Indicação e Distribuição (fora do código).
 3. **Fora do código (Thiago):** retenção na fonte de parceiros pessoa singular (contabilista); declaração do `dolado_indicacao` no Cookiebot a incluir parceiros; alinhar `/empresas` com `/parceiros`.
-4. **Produção:** `supabase db push --linked --dry-run` e depois `db push` da migration **antes** do merge; push do ramo e PR no GitHub (o CI corre `test:contrato` e `supabase test db`); depois dos textos aprovados, `PARCEIROS_ATIVO=1`, `ACESSOS_PATROCINADOS_ATIVO=1` e `PARCEIROS_CHAVE` (≥ 32 caracteres) na Clever Cloud; decidir se `/parceiros` passa a indexável.
+4. ✅ **Produção** (feito a 20/10/2026): `supabase db push --linked --dry-run` e depois `db push` da migration **antes** do merge; push do ramo e PR no GitHub (o CI corre `test:contrato` e `supabase test db`); depois dos textos aprovados, `PARCEIROS_ATIVO=1`, `ACESSOS_PATROCINADOS_ATIVO=1` e `PARCEIROS_CHAVE` (≥ 32 caracteres) na Clever Cloud; decidir se `/parceiros` passa a indexável.
 5. **Limpeza local:** configuração `parceiros-local` no `.claude/launch.json` da pasta principal (porta 3007) e contas de teste locais `parceiros-admin@teste.invalid`, `parceiros-benef@teste.invalid`, `cliente-parceiro@teste.invalid` (só na Supabase local).
