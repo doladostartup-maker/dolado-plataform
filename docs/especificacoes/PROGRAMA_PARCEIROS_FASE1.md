@@ -148,10 +148,10 @@ Ainda em aberto:
 
 ## 9. Pendências para a próxima sessão (20/10/2026)
 
-Estado: ramo `feat/parceiros-base` (worktree `.claude/worktrees/parceiros`), PR 1–3 com commit, **sem push nem PR no GitHub**. A migration `20261021090000_programa_parceiros.sql` só está aplicada na base **local**.
+Estado: ramo `feat/parceiros-base` (worktree `.claude/worktrees/parceiros`), PR [#147](https://github.com/doladostartup-maker/dolado-plataform/pull/147). A migration `20261021090000_programa_parceiros.sql` está aplicada em **produção** (20/10/2026).
 
 1. ~~Esclarecer o que a advogada aprovou~~ → **as regras do programa** (Thiago, 20/10/2026).
-2. **PR 4 — documentos legais:** ✅ redigidos a 20/10/2026 — Termos `2026-10-20` e Política `2026-10-20` (`TERMOS_VERSAO`/`PRIVACIDADE_VERSAO` já sobem neste ramo); falta a revisão do texto pela advogada (pontos em `docs/legal/pendencias-juridicas.md`). As condições comerciais ficam no contrato-tipo. Lista original:
+2. **PR 4 — documentos legais:** ✅ redigidos a 20/10/2026 — Termos `2026-10-20` e Política `2026-10-20` (`TERMOS_VERSAO`/`PRIVACIDADE_VERSAO` já sobem neste ramo); texto validado pela advogada (Thiago, 20/10/2026). **Migration aplicada em produção a 20/10/2026** (`db push`). As condições comerciais ficam no contrato-tipo. Lista original:
    - Política de Privacidade (`_versoes/vAAAA-MM-DD.tsx` + `index.ts` + `PRIVACIDADE_VERSAO`): candidaturas (dados, finalidade, retenção de 12 meses das rejeitadas), atribuição de clientes a parceiros (ligação `/r/` com consentimento e código escrito; nunca dados do cliente ao parceiro), acessos patrocinados (a empresa só recebe contagens, "menos de 5"), registos financeiros das comissões, `limites_tentativas` (2 dias).
    - Termos (`TERMOS_VERSAO`): acesso patrocinado (meses de calendário, sem cobrança, fim automático, sem conversão automática, recusa a quem tem subscrição paga, conta como "já teve Protecção"); transparência de que alguns clientes chegam por parceiros com comissão.
    - Condições do Programa de Parceiros (texto aceite na candidatura; comissões sem IVA, "acresce IVA à taxa legal em vigor, quando aplicável"; 3 mensalidades; reversões; pagamento manual; mínimo 25 €; sem rendimentos garantidos).

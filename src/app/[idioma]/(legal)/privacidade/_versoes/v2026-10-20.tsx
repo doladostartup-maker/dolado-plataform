@@ -4,9 +4,8 @@
 // com consentimento ou código escrito pelo cliente), comissões e pagamentos,
 // oportunidades empresariais, Protecção oferecida por um Parceiro de
 // Distribuição e limitação de tentativas (secções 2, 3, 5, 6 e 8). Regras do
-// programa aprovadas pela advogada (confirmado por Thiago, 20/10/2026); este
-// texto ainda tem de ser revisto por ela antes de PARCEIROS_ATIVO /
-// ACESSOS_PATROCINADOS_ATIVO serem ligados. Nada do resto muda.
+// programa e este texto validados pela advogada (confirmado por Thiago,
+// 20/10/2026). Nada do resto muda.
 //
 // Uma versão publicada não se edita: alterações vão para uma versão nova.
 import Link from "next/link";

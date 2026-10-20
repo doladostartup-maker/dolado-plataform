@@ -1,10 +1,9 @@
 // Termos e Condições — versão 2026-10-20. Parte da 2026-10-19 e acrescenta o
 // Programa de Parceiros (Fase 1): Protecção oferecida por um Parceiro de
 // Distribuição (secções 5, 7, 14.2 e 23) e transparência sobre os Parceiros de
-// Indicação, que recebem comissão (secções 22 e 24). Regras do programa
-// aprovadas pela advogada (confirmado por Thiago, 20/10/2026); este texto
-// ainda tem de ser revisto por ela antes de PARCEIROS_ATIVO /
-// ACESSOS_PATROCINADOS_ATIVO serem ligados. Nada do resto muda.
+// Indicação, que recebem comissão (secções 22 e 24). Regras do programa e este
+// texto validados pela advogada (confirmado por Thiago, 20/10/2026). Nada do
+// resto muda.
 //
 // Uma versão publicada não se edita: alterações vão para uma versão nova
 // (ficheiro novo em _versoes/, registo em index.ts e TERMOS_VERSAO).

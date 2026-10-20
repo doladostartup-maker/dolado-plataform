@@ -23,8 +23,8 @@ import { CONTACTO_EMAIL, ENTIDADE_LEGAL, MORADA_SEDE } from "./site.ts";
 
 /** Versão dos Termos e Condições em vigor. Cada versão fica acessível em /termos/<versão>. */
 // 2026-10-20 (Termos e Política): Programa de Parceiros — Protecção oferecida
-// por um parceiro e Parceiros de Indicação. Texto por rever pela advogada antes
-// do merge (as regras foram aprovadas por ela a 20/10/2026).
+// por um parceiro e Parceiros de Indicação. Regras e texto validados pela
+// advogada (confirmado por Thiago a 20/10/2026).
 export const TERMOS_VERSAO = "2026-10-20";
 
 /** Versão da Política de Privacidade em vigor. Cada versão fica acessível em /privacidade/<versão>. */
@@ -86,9 +86,9 @@ export const TEXTO_ACEITACAO_PROTECAO_GRATUITA = `${TEXTO_ACEITACAO_TERMOS}${ACE
  * Activação de uma Protecção oferecida por um Parceiro de Distribuição
  * (acesso patrocinado): a mesma aceitação dos Termos e o que o beneficiário
  * declara compreender. Fica registado em acessos_patrocinados.texto_aceite,
- * com a versão dos Termos. Descrito na secção 23 dos Termos 2026-10-20; a
- * funcionalidade fica desligada (ACESSOS_PATROCINADOS_ATIVO) até a advogada
- * rever esse texto (docs/legal/pendencias-juridicas.md).
+ * com a versão dos Termos. Descrito na secção 23 dos Termos 2026-10-20
+ * (validados pela advogada a 20/10/2026); ligado por
+ * ACESSOS_PATROCINADOS_ATIVO.
  */
 export const ACEITACAO_ACESSO_PATROCINADO_COMPLEMENTO =
   " Compreendo que a Protecção oferecida termina automaticamente no fim do período indicado, sem qualquer cobrança, e que não inclui o tratamento de casos.";
@@ -98,9 +98,8 @@ export const TEXTO_ACEITACAO_ACESSO_PATROCINADO = `${TEXTO_ACEITACAO_TERMOS}${AC
  * Candidatura ao Programa de Parceiros (/parceiros): o candidato aceita o
  * tratamento dos dados da candidatura. Texto e versão gravados em
  * parceiros_candidaturas (prova). Mudar o texto = nova versão. Descritas na
- * Política de Privacidade 2026-10-20 (secções 2, 3 e 6); o programa fica
- * desligado (PARCEIROS_ATIVO) até a advogada rever esse texto
- * (docs/legal/pendencias-juridicas.md).
+ * Política de Privacidade 2026-10-20 (secções 2, 3 e 6; validada pela
+ * advogada a 20/10/2026); o programa é ligado por PARCEIROS_ATIVO.
  */
 export const CANDIDATURA_PARCEIROS_VERSAO = "2026-10-21";
 export const TEXTO_ACEITACAO_CANDIDATURA_PARCEIROS =
