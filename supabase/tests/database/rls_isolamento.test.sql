@@ -222,7 +222,17 @@ select is(
                            'protecao_desativar_dados', 'protecao_reativar_dados', 'protecao_gratuita_ja_teve_subscricao',
                            'protecao_gratuita_elegibilidade', 'protecao_gratuita_ativar', 'protecao_gratuita_desativar_lembretes',
                            'protecao_gratuita_manutencao', 'protecao_gratuita_marco_atual', 'protecao_gratuita_avisos_pendentes',
-                           'protecao_gratuita_aviso_reservar', 'protecao_gratuita_aviso_concluir', 'protecao_gratuita_metricas')), 0::bigint,
+                           'protecao_gratuita_aviso_reservar', 'protecao_gratuita_aviso_concluir', 'protecao_gratuita_metricas',
+                           -- Programa de Parceiros (20261021090000): só service_role, exceto os dois relatórios (verificam admin).
+                           'acesso_patrocinado_ativar', 'acesso_patrocinado_aviso_concluir', 'acesso_patrocinado_aviso_reservar',
+                           'acesso_patrocinado_avisos_pendentes', 'acesso_patrocinado_manutencao', 'acesso_patrocinado_marco_atual',
+                           'atribuicao_unica_por_conta', 'codigo_indicacao_unico', 'limite_tentar', 'parceiro_aprovar_comissoes',
+                           'parceiro_atribuir', 'parceiro_b2b_recalcular', 'parceiro_cancelar_comissao', 'parceiro_candidatura_criar',
+                           'parceiro_candidatura_decidir', 'parceiro_codigo_acesso_anular', 'parceiro_pacote_confirmar_pagamento',
+                           'parceiro_pacote_emitir_codigos', 'parceiro_registar_fatura', 'parceiro_registar_pagamento',
+                           'parceiro_registar_visita', 'parceiro_relatorio_distribuicao', 'parceiro_reverter_fatura',
+                           'parceiro_subscricao_terminada', 'parceiro_validar_comissao', 'parceiros_registar_historico',
+                           'parceiros_resumo_comissoes')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em

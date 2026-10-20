@@ -28,3 +28,20 @@ Origem: [auditoria-interrupcoes-electricidade-2026-10-20.md](auditoria-interrupc
 
 - [ ] **Nova consolidação do RQS pela ERSE:** rever as 4 regras (sobretudo os padrões do Anexo I e os valores unitários) e a página `/problemas/energia/falta-de-luz` sempre que a ERSE publicar uma versão nova.
 - [ ] **Coerência da página `/problemas/energia/falta-de-luz` com as regras:** se uma regra de continuidade ou de danos mudar, rever o texto da página em pt e en (regra obrigatória das auditorias, no CLAUDE.md).
+
+## Programa de Parceiros — Fase 1 (20 de Outubro de 2026)
+
+Origem: [../especificacoes/PROGRAMA_PARCEIROS_FASE1.md](../especificacoes/PROGRAMA_PARCEIROS_FASE1.md), secção 4. **Bloqueia a ligação em produção** (interruptor desligado até lá); a base de dados pode ser aplicada antes, porque nada é exposto ao público.
+
+### Para a advogada
+
+- [ ] **Política de Privacidade (nova versão):** candidaturas de parceiros (dados, retenção — rejeitadas apagadas aos 12 meses); atribuição de clientes a parceiros (ligação `/r/` com consentimento e código escrito pelo cliente; finalidade e base jurídica); acessos patrocinados (a empresa entrega o código e só recebe contagens agregadas, com "menos de 5" em grupos pequenos; a DoLado não lhe diz quem o activou); conservação dos registos financeiros das comissões.
+- [ ] **Termos (nova versão):** acesso patrocinado — duração em meses de calendário, sem cobrança, fim automático, sem conversão automática numa subscrição, recusa a quem já tem subscrição paga, conta como "já teve Protecção" para os 30 dias gratuitos; transparência de que alguns clientes chegam por parceiros que recebem comissão.
+- [ ] **Condições do Programa de Parceiros** (texto aceite na candidatura `/parceiros`): sem promessas de rendimento; comissões **sem IVA** ("acresce IVA à taxa legal em vigor, quando aplicável" — decisão de Thiago, 20/10/2026), elegibilidade (3 mensalidades pagas), reversões, pagamento manual, mínimo de 25 €.
+- [ ] **Contratos-tipo:** Parceiro de Indicação (incluindo o registo de oportunidades B2B e a legitimidade para comunicar contactos de terceiros) e Parceiro de Distribuição (pacotes pré-pagos, sem acesso a dados dos beneficiários).
+- [ ] **Fiscalidade dos pagamentos a parceiros pessoa singular** (recibo, retenção na fonte) — com o contabilista. IVA: decidido (comissões sem IVA; a DoLado está no regime normal e deduz o IVA dos parceiros — Thiago, 20/10/2026). Falta a retenção na fonte: se for preciso, acrescentar o campo ao registo do pagamento.
+
+### Fora do código (Thiago)
+
+- [ ] **Cookiebot:** a finalidade do cookie `dolado_indicacao` passa a incluir as indicações de parceiros comerciais.
+- [ ] **Alinhar `/empresas` com `/parceiros`** (não duplicar conteúdo nem prometer condições).
