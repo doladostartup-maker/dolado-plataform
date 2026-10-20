@@ -14,7 +14,7 @@ import { FAQAccordionV2 } from "@/components/marketing-v2/FAQAccordionV2";
 import { IconeCalendario, IconeDocumentoVisto, IconeEscudo, IconeSeta } from "@/components/marketing-v2/Icones";
 import { GRELHA_PLANOS, PricingCard } from "@/components/marketing-v2/PricingCard";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
-import { BOTAO_CONTORNO, BOTAO_PRIMARIO, TEXTO } from "@/components/marketing-v2/estilos";
+import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
 import { track } from "@/lib/analytics";
 import { PRAZO_LIVRE_RESOLUCAO_DIAS, ROTAS_LEGAIS } from "@/lib/legal";
 import { DIAS_CASOS_GUARDADOS } from "@/lib/acesso";
@@ -36,6 +36,9 @@ const NECESSIDADES: { plano: PlanoId; destaque?: boolean }[] = [
   { plano: "caso_protecao", destaque: true },
   { plano: "protecao" },
 ];
+
+// Linhas da tabela de comparação (textos em paginas.ts, "comparacao").
+const LINHAS_COMPARACAO = ["indicado", "pagamento", "acompanhamento", "casos", "casoEmCurso"] as const;
 
 // Perguntas já publicadas em /perguntas-frequentes (mesmas respostas).
 const IDS_PERGUNTAS = [
@@ -101,6 +104,7 @@ export function PrecarioV2({ protecaoGratuita = false }: { protecaoGratuita?: bo
       ),
     },
   ];
+  const VALORES = t.comparacao.valores(LIMITE_CASOS_ACUMULADOS);
   const escolher = (plano: PlanoId) => {
     track(`click_precario_${plano}`, { pagina: "precario_v2" });
     window.location.assign(c(destinoPlano(plano, "/precario")));
@@ -150,6 +154,7 @@ export function PrecarioV2({ protecaoGratuita = false }: { protecaoGratuita?: bo
                       ? tg.garantias.join(" · ")
                       : undefined
                 }
+                cancelamento={{ rotulo: t.seCancelarRotulo, texto: t.seCancelar[id] }}
                 destaque={destaque}
                 acao={
                   <>
@@ -206,6 +211,65 @@ export function PrecarioV2({ protecaoGratuita = false }: { protecaoGratuita?: bo
           local="pricing"
           contexto="planos"
         />
+      </SectionV2>
+
+      {/* ===== Comparação lado a lado ===== */}
+      {/* Mesmos factos dos cartões e das condições (Termos, secções 8–10 e
+          14), em linhas comparáveis. No telemóvel, um cartão por opção. */}
+      <SectionV2 id="comparar" tone="soft-blue">
+        <SectionHeader eyebrow={t.comparacao.eyebrow} titulo={t.comparacao.titulo} />
+        <ul className="mt-10 space-y-4 md:hidden">
+          {NECESSIDADES.map(({ plano }) => (
+            <li key={plano} className={`${CARTAO} p-5`}>
+              <p className="text-[17px] font-bold text-[var(--v2-navy)]">{tp.nome[plano]}</p>
+              <p className="text-[13.5px] text-[var(--v2-muted)]">
+                {tp.comUnidade(preco(PLANOS[plano].precoCentimos), PLANOS[plano].subscricao)}
+              </p>
+              <dl className="mt-3 divide-y divide-[var(--v2-line)] text-[14.5px]">
+                {LINHAS_COMPARACAO.map((linha) => (
+                  <div key={linha} className="py-2.5">
+                    <dt className="font-semibold text-[var(--v2-navy)]">{t.comparacao.linhas[linha]}</dt>
+                    <dd className="mt-0.5 leading-relaxed text-[var(--v2-muted)]">{VALORES[plano][linha]}</dd>
+                  </div>
+                ))}
+              </dl>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-10 hidden overflow-x-auto rounded-[16px] border border-[var(--v2-line)] bg-white md:block">
+          <table className="w-full border-collapse text-left text-[14.5px]">
+            <thead>
+              <tr className="border-b border-[var(--v2-line)]">
+                <th scope="col" className="w-[24%] px-5 py-4 text-[12px] font-bold uppercase tracking-[0.06em] text-[var(--v2-muted)]">
+                  {t.comparacao.criterio}
+                </th>
+                {NECESSIDADES.map(({ plano }) => (
+                  <th key={plano} scope="col" className="px-5 py-4 text-[16px] font-bold text-[var(--v2-navy)]">
+                    {tp.nome[plano]}
+                    <span className="block text-[13.5px] font-medium text-[var(--v2-muted)]">
+                      {tp.comUnidade(preco(PLANOS[plano].precoCentimos), PLANOS[plano].subscricao)}
+                    </span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {LINHAS_COMPARACAO.map((linha) => (
+                <tr key={linha} className="border-b border-[var(--v2-line)] last:border-b-0">
+                  <th scope="row" className="px-5 py-4 align-top font-semibold text-[var(--v2-navy)]">
+                    {t.comparacao.linhas[linha]}
+                  </th>
+                  {NECESSIDADES.map(({ plano }) => (
+                    <td key={plano} className="px-5 py-4 align-top leading-relaxed text-[var(--v2-muted)]">
+                      {VALORES[plano][linha]}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-5 max-w-[760px] text-[14px] leading-relaxed text-[var(--v2-muted)]">{t.comparacao.nota}</p>
       </SectionV2>
 
       {/* ===== Pagamentos e condições ===== */}

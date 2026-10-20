@@ -6,11 +6,10 @@ import type { ReactNode } from "react";
 import { CTASection } from "@/components/marketing-v2/CTASection";
 import { FAQAccordionV2 } from "@/components/marketing-v2/FAQAccordionV2";
 import {
+  IconeCalendario,
   IconeCirculoVisto,
-  IconeDocumentoVisto,
   IconeEtiqueta,
   IconeFatura,
-  IconeMensagem,
   IconePessoas,
   IconeSeta,
   IconeVisto,
@@ -25,8 +24,10 @@ import { parceirosAtivos } from "@/lib/parceiros/regras";
 import { CONTACTO_EMAIL } from "@/lib/site";
 
 // DoLado para empresas (/empresas): página estática de apresentação a
-// empresas que queiram disponibilizar a DoLado a colaboradores, oferecê-la a
-// clientes ou explorar os dois públicos. Sem formulário próprio nem backend:
+// empresas, centrada no bem-estar financeiro dos colaboradores (revisão do
+// posicionamento de 20/10/2026), com a oferta a clientes à parte. O acesso
+// descrito é o que existe (códigos de activação do acesso patrocinado; o
+// relatório à empresa só tem contagens). Sem formulário próprio nem backend:
 // o contacto usa o formulário já existente em /contacto ("Imprensa, parcerias
 // e outros assuntos") e o e-mail institucional. Sem preços, condições,
 // clientes nem resultados — formatos e condições ficam para a conversa.
@@ -50,14 +51,21 @@ const ICONES_PUBLICOS: ReactNode[] = [
   <IconePessoas key="p" tamanho={28} strokeWidth={1.6} />,
   <IconeCirculoVisto key="c" tamanho={28} strokeWidth={1.6} />,
 ];
-const DO_CLIENTE = [true, false, true, false];
-const ICONES_EXEMPLOS: ReactNode[] = [
+// Quem age em cada passo: a empresa, a empresa, a pessoa, a DoLado.
+const DO_CLIENTE = [false, false, true, false];
+const ICONES_SITUACOES: ReactNode[] = [
   <IconeFatura key="f" tamanho={26} strokeWidth={1.6} />,
-  <IconeDocumentoVisto key="d" tamanho={26} strokeWidth={1.6} />,
   <IconeEtiqueta key="e" tamanho={26} strokeWidth={1.6} />,
-  <IconeMensagem key="m" tamanho={26} strokeWidth={1.6} />,
+  <IconeCalendario key="c" tamanho={26} strokeWidth={1.6} />,
 ];
-const IDS_PERGUNTAS = ["empresas-publico", "empresas-apoio", "empresas-casos", "empresas-condicoes", "empresas-resultado"];
+const IDS_PERGUNTAS = [
+  "empresas-bem-estar",
+  "empresas-publico",
+  "empresas-apoio",
+  "empresas-casos",
+  "empresas-condicoes",
+  "empresas-resultado",
+];
 
 export async function EmpresasV2() {
   const t = (await textos(tInstitucional)).empresas;
@@ -68,7 +76,7 @@ export async function EmpresasV2() {
     rotulo: { texto: p.rotulo, doCliente: DO_CLIENTE[i] },
     final: i === t.passos.length - 1,
   }));
-  const EXEMPLOS = t.exemplos.map((e, i) => ({ ...e, icone: ICONES_EXEMPLOS[i] }));
+  const SITUACOES = t.situacoes.map((s, i) => ({ ...s, icone: ICONES_SITUACOES[i] }));
   const FORMATOS = t.formatos;
   const CLAREZA = t.clareza;
   const PERGUNTAS: Pergunta[] = t.perguntas.map((p, i) => ({ id: IDS_PERGUNTAS[i], ...p }));
@@ -79,14 +87,12 @@ export async function EmpresasV2() {
         <div>
           <Eyebrow>{t.eyebrow}</Eyebrow>
           <h1 className="mt-5 text-[clamp(32px,3.6vw,48px)] font-extrabold leading-[1.08] tracking-[-0.035em] text-[var(--v2-navy)]">
-            {t.titulo1}
-            <br />
-            <span className="font-semibold">{t.titulo2}</span>
+            {t.titulo}
           </h1>
           <p className={`${TEXTO} mt-6 max-w-[560px] text-[17.5px]`}>{t.texto}</p>
           <div className="mt-8">
             <AcoesContacto
-              falar={t.falar}
+              falar={t.conhecer}
               secundaria={
                 <a href="#como-funciona" className={BOTAO_CONTORNO}>
                   {t.verComoFunciona}
@@ -99,7 +105,30 @@ export async function EmpresasV2() {
         <VisualHero />
       </SectionV2>
 
-      {/* ===== Proposta de valor ===== */}
+      {/* ===== Três situações concretas ===== */}
+      <SectionV2 id="situacoes" tone="soft-green">
+        <SectionHeader
+          eyebrow={t.situacoesCabecalho.eyebrow}
+          titulo={t.situacoesCabecalho.titulo}
+          texto={t.situacoesCabecalho.texto}
+          sobreVerde
+        />
+        <ul className="mt-10 grid gap-5 lg:grid-cols-3">
+          {SITUACOES.map((s) => (
+            <li key={s.titulo} className={`${CARTAO} flex flex-col p-6 sm:p-7`}>
+              <span className="text-[var(--v2-green)]">{s.icone}</span>
+              <h3 className="mt-4 text-[19px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{s.titulo}</h3>
+              <p className="mt-2 text-[15px] italic leading-relaxed text-[var(--v2-muted)]">{s.situacao}</p>
+              <p className="mt-4 border-t border-[var(--v2-line)] pt-4 text-[15px] leading-relaxed text-[var(--v2-navy)]">{s.apoio}</p>
+              <p className="mt-auto pt-5 text-[12px] font-bold uppercase tracking-[0.06em] text-[var(--v2-green-dark)]">
+                {s.servico}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </SectionV2>
+
+      {/* ===== Colaboradores ou clientes ===== */}
       <SectionV2 id="solucao" tone="soft-blue">
         <SectionHeader
           eyebrow={t.solucao.eyebrow}
@@ -143,23 +172,23 @@ export async function EmpresasV2() {
         </div>
       </SectionV2>
 
-      {/* ===== Exemplos de utilização ===== */}
-      <SectionV2 tone="soft-green">
+      {/* ===== Confidencialidade dos casos individuais ===== */}
+      <SectionV2 tone="soft-blue" className="grid gap-10 lg:grid-cols-2 lg:gap-16">
         <SectionHeader
-          eyebrow={t.exemplosCabecalho.eyebrow}
-          titulo={t.exemplosCabecalho.titulo}
-          texto={t.exemplosCabecalho.texto}
-          sobreVerde
+          eyebrow={t.clarezaCabecalho.eyebrow}
+          titulo={t.clarezaCabecalho.titulo}
+          texto={t.clarezaCabecalho.texto}
         />
-        <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {EXEMPLOS.map((e) => (
-            <li key={e.titulo} className={`${CARTAO} flex flex-col p-6`}>
-              <span className="text-[var(--v2-green)]">{e.icone}</span>
-              <h3 className="mt-4 text-[18px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{e.titulo}</h3>
-              <p className="mt-2 text-[15px] leading-relaxed text-[var(--v2-muted)]">{e.texto}</p>
-              <p className="mt-auto pt-5 text-[12px] font-bold uppercase tracking-[0.06em] text-[var(--v2-green-dark)]">
-                {e.contexto}
-              </p>
+        <ul className="space-y-6">
+          {CLAREZA.map((c) => (
+            <li key={c.titulo} className="flex items-start gap-4">
+              <span className="mt-[2px] flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full bg-[var(--v2-green)] text-white">
+                <IconeVisto tamanho={14} strokeWidth={2.8} />
+              </span>
+              <div>
+                <h3 className="text-[17px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{c.titulo}</h3>
+                <p className="mt-1 text-[15px] leading-relaxed text-[var(--v2-muted)]">{c.texto}</p>
+              </div>
             </li>
           ))}
         </ul>
@@ -197,30 +226,8 @@ export async function EmpresasV2() {
         )}
       </SectionV2>
 
-      {/* ===== Confiança e clareza ===== */}
-      <SectionV2 tone="soft-blue" className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-        <SectionHeader
-          eyebrow={t.clarezaCabecalho.eyebrow}
-          titulo={t.clarezaCabecalho.titulo}
-          texto={t.clarezaCabecalho.texto}
-        />
-        <ul className="space-y-6">
-          {CLAREZA.map((c) => (
-            <li key={c.titulo} className="flex items-start gap-4">
-              <span className="mt-[2px] flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full bg-[var(--v2-green)] text-white">
-                <IconeVisto tamanho={14} strokeWidth={2.8} />
-              </span>
-              <div>
-                <h3 className="text-[17px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{c.titulo}</h3>
-                <p className="mt-1 text-[15px] leading-relaxed text-[var(--v2-muted)]">{c.texto}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </SectionV2>
-
       {/* ===== Perguntas frequentes ===== */}
-      <SectionV2 id="perguntas" className="grid gap-10 lg:grid-cols-[0.7fr_1.3fr] lg:gap-16">
+      <SectionV2 id="perguntas" tone="soft-blue" className="grid gap-10 lg:grid-cols-[0.7fr_1.3fr] lg:gap-16">
         <SectionHeader
           eyebrow={t.perguntasCabecalho.eyebrow}
           titulo={t.perguntasCabecalho.titulo}

@@ -100,6 +100,23 @@ export const marketing: Traducao<typeof pt> = {
         "The monthly fee went up and we found nothing in your contract details that explains the difference. It may be worth checking with the company.",
       nota: "Before we tell you, a person at DoLado reviews each situation.",
     },
+    resumoMensal: {
+      titulo: "Example of a monthly summary",
+      assunto: "Your Protection in September",
+      intro: "In September, DoLado checked 2 bills and kept 2 date alerts active. We found no change that needs your attention.",
+      estado: "All being followed",
+      estadoTexto:
+        "Based on the documents and dates you gave us, there is nothing that needs your attention right now. We keep an eye on things for you.",
+      acompanhamosTitulo: "What we followed in September",
+      acompanhamos: [
+        "Bill comparison — Broadband and TV and Electricity",
+        "Broadband and TV — promotion ends on 15/12/2026",
+        "Broadband and TV — minimum term ends on 14/03/2027",
+      ],
+      proximaRotulo: "Next relevant date",
+      proxima: "15/12/2026 — end of the Broadband and TV promotion",
+      nota: "Fictional example. The real summary is based on the documents and dates you gave us.",
+    },
   },
   origem: {
     fotografia: "Thiago Pereira, founder of DoLado",

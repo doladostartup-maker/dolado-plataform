@@ -5,15 +5,36 @@ export const institucional = {
     metadados: {
       titulo: "Sobre Nós | DoLado",
       descricao:
-        "Conheça a DoLado, uma plataforma criada para ajudar os consumidores a apresentar reclamações, acompanhar processos e evitar prejuízos, com informação, protecção e acompanhamento.",
+        "A DoLado é uma empresa de bem-estar financeiro especializada no apoio ao consumidor: acompanha facturas e contratos e ajuda a tratar problemas de consumo, com preços claros e nada enviado sem a sua autorização.",
     },
     eyebrow: "Sobre nós",
     titulo: "Do lado do consumidor.",
     hero: [
-      "A DoLado nasceu de uma ideia simples: nenhum consumidor deve ser prejudicado por desconhecer os seus direitos, os prazos aplicáveis ou os passos necessários para resolver um problema.",
-      "Todos os dias, há pessoas que pagam mais do que deviam, mantêm contratos que poderiam terminar, deixam passar prazos importantes ou acabam por desistir de reclamar porque não sabem por onde começar.",
+      "A DoLado é uma empresa de bem-estar financeiro especializada no apoio ao consumidor.",
+      "Acompanhamos facturas e contratos e ajudamos a tratar problemas de consumo, para que as pessoas tenham mais controlo sobre as suas despesas e menos preocupações com cobranças, prazos e reclamações.",
     ],
-    heroDestaque: "Foi para ajudar a mudar esta realidade que criámos a DoLado.",
+    heroDestaque: "Acreditamos que ninguém deve ficar prejudicado por não ter tempo, informação ou apoio para agir.",
+    compromissos: {
+      titulo: "Os nossos compromissos",
+      itens: [
+        {
+          titulo: "Preços claros",
+          texto: "O preço aparece antes de pagar, com IVA incluído. Nunca cobramos uma percentagem do que recuperar.",
+        },
+        {
+          titulo: "Autorização antes do envio",
+          texto: "Mostramos-lhe o texto da reclamação e só o enviamos depois de o autorizar.",
+        },
+        {
+          titulo: "Acompanhamento",
+          texto: "Acompanhamos a resposta da empresa e mantemo-lo informado sobre o estado do seu caso.",
+        },
+        {
+          titulo: "Os passos seguintes, explicados",
+          texto: "Quando há opções, explicamos-lhas. A decisão é sempre sua.",
+        },
+      ],
+    },
     secoes: [
       {
         titulo: "Estamos do seu lado",
@@ -32,7 +53,7 @@ export const institucional = {
           "Muitos dos problemas enfrentados pelos consumidores poderiam ser evitados se a informação certa chegasse no momento certo.",
           "Por isso, a DoLado não existe apenas para ajudar quando algo corre mal.",
           "Com a Protecção, a DoLado ajuda a identificar situações que podem tornar-se num problema e avisa com antecedência — como o fim de períodos promocionais, o termo de períodos de fidelização ou alterações significativas no valor das facturas — para que possa agir a tempo.",
-          "Queremos que cada consumidor tenha mais controlo e menos surpresas.",
+          "Menos surpresas e mais tempo para decidir.",
         ],
       },
       {
@@ -57,7 +78,7 @@ export const institucional = {
         "E que permanece ao seu lado ao longo de todo o processo.",
       ],
       fecho: [
-        "Porque, independentemente do valor em causa, acreditamos que nenhum consumidor deve ficar prejudicado simplesmente por não ter tido acesso à informação certa.",
+        "Seja qual for o valor em causa, queremos que cada pessoa saiba o que está a acontecer e o que pode fazer a seguir.",
         "É por isso que estamos aqui.",
       ],
     },
@@ -195,101 +216,106 @@ export const institucional = {
   },
   empresas: {
     metadados: {
-      titulo: "DoLado para empresas: benefício para colaboradores e clientes | DoLado",
+      titulo: "Bem-estar financeiro para colaboradores | DoLado para empresas",
       descricao:
-        "Ofereça a DoLado como benefício aos seus colaboradores ou clientes: apoio para resolver problemas com facturas, contratos e compras. Peça uma proposta à DoLado.",
+        "Ofereça aos seus colaboradores apoio prático para acompanhar facturas e contratos e tratar problemas de consumo. Cada caso fica entre a pessoa e a DoLado.",
     },
     falar: "Pedir proposta",
     eyebrow: "DoLado para empresas",
-    titulo1: "Tem uma empresa?",
-    titulo2: "Ofereça a DoLado como benefício aos seus colaboradores ou clientes.",
+    titulo: "Bem-estar financeiro para os seus colaboradores.",
     texto:
-      "Quando alguém tem um problema com uma empresa — uma cobrança, um cancelamento, um reembolso — a DoLado ajuda a organizar a situação, prepara a reclamação e acompanha os próximos passos. A sua empresa pode levar esse apoio a quem conta consigo.",
+      "Apoio prático para acompanhar facturas e contratos e tratar problemas de consumo, com alguém ao lado em cada etapa.",
+    conhecer: "Conhecer a solução para a minha equipa",
     verComoFunciona: "Ver como funciona",
-    formatosNota: "Formatos e condições definidos numa conversa, de acordo com o público e o objectivo da sua empresa.",
-    solucao: {
-      eyebrow: "Uma solução, dois públicos",
-      titulo: "Apoio aplicado a problemas concretos.",
+    formatosNota: "Formato e condições definidos numa conversa, de acordo com a sua equipa e o objectivo da sua empresa.",
+    situacoesCabecalho: {
+      eyebrow: "No dia-a-dia",
+      titulo: "Três situações em que a DoLado ajuda.",
       texto:
-        "Não é uma lista de funcionalidades: é um serviço que acompanha a pessoa desde o problema até aos próximos passos.",
+        "Problemas de consumo comuns, que pesam no orçamento e ocupam tempo. É assim que a DoLado ajuda em cada um.",
+    },
+    situacoes: [
+      {
+        titulo: "Uma cobrança inesperada",
+        situacao: "A factura da internet chega com um valor mais alto e ninguém avisou porquê.",
+        apoio:
+          "Com a Protecção, comparamos cada factura com as anteriores e com o contrato e avisamos quando uma alteração merece ser verificada, depois de revista por uma pessoa da DoLado. Se for preciso reclamar, preparamos a reclamação e acompanhamos a resposta.",
+        servico: "Protecção · tratamento de casos",
+      },
+      {
+        titulo: "Um reembolso em atraso",
+        situacao: "A devolução foi aceite há semanas, mas o dinheiro continua sem chegar.",
+        apoio:
+          "Organizamos os factos e os documentos, preparamos a reclamação com um pedido claro e só a enviamos depois de a pessoa a rever e autorizar. Depois, acompanhamos a resposta da empresa.",
+        servico: "Tratamento de casos",
+      },
+      {
+        titulo: "Uma promoção prestes a terminar",
+        situacao: "O desconto do contrato de electricidade ou de telecomunicações acaba em breve e o preço vai mudar.",
+        apoio:
+          "Com a Protecção, avisamos 60 e 30 dias antes do fim da promoção ou da fidelização e no próprio dia, para que a pessoa possa confirmar o preço seguinte e decidir a tempo.",
+        servico: "Protecção",
+      },
+    ],
+    solucao: {
+      eyebrow: "Colaboradores ou clientes",
+      titulo: "Duas formas de levar a DoLado a quem conta consigo.",
+      texto:
+        "A solução para colaboradores é um benefício para a sua equipa. A oferta para clientes acrescenta um apoio à relação que a sua empresa já tem com eles. O apoio prestado é o mesmo; muda o público e a forma de o apresentar.",
     },
     publicos: [
       {
-        titulo: "Um benefício para colaboradores",
+        titulo: "Para os seus colaboradores",
         texto:
-          "Quando surge um problema com uma factura, um serviço ou uma compra, o colaborador tem a quem recorrer. A DoLado ajuda a organizar a situação, prepara a reclamação e acompanha os próximos passos — sem que a pessoa tenha de descobrir tudo sozinha.",
+          "Um benefício de bem-estar financeiro para a equipa: quando surge um problema com uma factura, um contrato ou uma compra, o colaborador tem a quem recorrer e não tem de descobrir tudo sozinho.",
         pontos: [
-          "Apoio prático em problemas de consumo do dia-a-dia",
+          "Acompanhamento das facturas e das datas dos contratos, com a Protecção",
+          "Apoio na preparação e no acompanhamento de reclamações",
           "Cada pessoa trata do seu caso directamente com a DoLado",
-          "Menos tempo e preocupação com processos difíceis de perceber",
-          "Com a Protecção, acompanhamento das facturas e das datas dos contratos — útil, por exemplo, depois de uma mudança de casa",
+          "A empresa não vê os casos individuais",
         ],
       },
       {
-        titulo: "Uma oferta para os seus clientes",
+        titulo: "Para os seus clientes",
         texto:
-          "Acrescente à relação com os seus clientes um apoio útil para quando algo corre mal com outra empresa. A DoLado pode ser apresentada como um recurso adicional, com comunicação adequada ao seu público.",
+          "Uma oferta para os clientes da sua empresa — por exemplo, a Protecção para acompanhar os novos contratos de internet, electricidade, gás ou água depois de uma mudança de casa.",
         pontos: [
           "Um serviço concreto, aplicado a situações reais",
           "Valor acrescentado na relação que já tem com os clientes",
           "Forma de acesso definida em conjunto",
-          "A Protecção pode acompanhar os novos contratos de internet, electricidade, gás ou água, por exemplo depois de uma mudança de casa",
+          "Os dados de cada cliente ficam na DoLado",
         ],
       },
     ],
     comoFunciona: {
-      eyebrow: "Como funciona",
-      titulo: "Do problema ao próximo passo.",
-      texto: "A experiência começa com aquilo que aconteceu à pessoa. A DoLado transforma a situação em apoio prático.",
+      eyebrow: "Acesso e utilização",
+      titulo: "Como funciona.",
+      texto: "A empresa disponibiliza o acesso. Cada pessoa usa a DoLado directamente, ao seu ritmo.",
     },
     passos: [
       {
-        titulo: "A pessoa explica o que aconteceu",
-        texto: "Uma cobrança, um cancelamento, um reembolso que não chega ou uma reclamação que ficou sem resposta.",
+        titulo: "Definimos o formato consigo",
+        texto:
+          "Numa conversa, definimos o público, o que fica incluído — acompanhamento de facturas e contratos, tratamento de casos ou ambos — e a forma de acesso.",
+        rotulo: "Em conjunto",
+      },
+      {
+        titulo: "A empresa disponibiliza o acesso",
+        texto:
+          "Por exemplo, com códigos de activação individuais, que a empresa entrega a cada pessoa. A DoLado não precisa de receber uma lista de colaboradores.",
+        rotulo: "A empresa",
+      },
+      {
+        titulo: "Cada pessoa cria a sua conta",
+        texto:
+          "Activa o acesso, envia as facturas e os contratos que quer acompanhar ou conta o problema que tem. É ela que decide o que partilha.",
         rotulo: "A pessoa",
       },
       {
-        titulo: "A DoLado organiza a situação",
-        texto: "Percebemos a informação relevante e o que pode ser pedido, com base nos factos e nos documentos do caso.",
-        rotulo: "A DoLado",
-      },
-      {
-        titulo: "A reclamação é preparada e revista",
-        texto: "A DoLado prepara o texto da reclamação. A pessoa revê-o e só depois de o autorizar é que ele segue.",
-        rotulo: "A pessoa decide",
-      },
-      {
-        titulo: "Os próximos passos são acompanhados",
+        titulo: "A DoLado acompanha cada etapa",
         texto:
-          "A DoLado acompanha a resposta da empresa reclamada e mantém a pessoa informada sobre o estado do caso e as opções seguintes.",
+          "Avisa quando algo merece atenção, prepara a reclamação, que a pessoa revê e autoriza antes do envio, e acompanha a resposta da empresa reclamada.",
         rotulo: "A DoLado",
-      },
-    ],
-    exemplosCabecalho: {
-      eyebrow: "Exemplos de utilização",
-      titulo: "Situações em que a ajuda faz diferença.",
-      texto: "Problemas de consumo comuns, que levam tempo e paciência a quem os tenta resolver sozinho.",
-    },
-    exemplos: [
-      {
-        titulo: "Cobranças inesperadas",
-        texto: "Uma factura com um valor que não se percebe ou um serviço cobrado que não foi pedido.",
-        contexto: "Telecomunicações · energia · água",
-      },
-      {
-        titulo: "Cancelamentos",
-        texto: "Um pedido de cancelamento que não avança ou encargos de saída que levantam dúvidas.",
-        contexto: "Contratos de serviços · subscrições",
-      },
-      {
-        titulo: "Reembolsos",
-        texto: "Uma devolução aceite, mas um reembolso que continua por chegar.",
-        contexto: "Compras · serviços",
-      },
-      {
-        titulo: "Reclamações sem resposta",
-        texto: "A pessoa já tentou resolver directamente com a empresa e não teve resposta ou solução.",
-        contexto: "Preparação · acompanhamento",
       },
     ],
     formatosCabecalho: {
@@ -313,15 +339,24 @@ export const institucional = {
       ligacao: "Conheça o nosso programa de parceiros.",
     },
     clarezaCabecalho: {
-      eyebrow: "Confiança e clareza",
-      titulo: "A pessoa mantém o controlo do seu caso.",
-      texto: "A DoLado prepara e acompanha a situação. A pessoa revê a reclamação antes do envio e decide como quer avançar.",
+      eyebrow: "Confidencialidade",
+      titulo: "Os casos de cada pessoa ficam entre ela e a DoLado.",
+      texto:
+        "A empresa oferece o acesso, mas não acompanha a vida financeira de ninguém. Cada pessoa mantém o controlo do que partilha e do que é enviado em seu nome.",
     },
     clareza: [
-      { titulo: "O caso começa com a pessoa", texto: "É ela que explica a situação e decide se quer avançar." },
       {
-        titulo: "A reclamação é revista antes do envio",
-        texto: "A pessoa vê o texto preparado pela DoLado e só autoriza o envio se concordar com ele.",
+        titulo: "A empresa não vê os casos individuais",
+        texto: "Problemas, facturas, contratos, documentos e mensagens de cada pessoa não são partilhados com a empresa.",
+      },
+      {
+        titulo: "Só números agregados",
+        texto:
+          "Quando o acesso é dado com códigos de activação, a empresa pode receber apenas contagens — por exemplo, quantos códigos foram activados —, nunca nomes, e-mails nem actividade. Em grupos pequenos, indicamos apenas «menos de 5».",
+      },
+      {
+        titulo: "Nada é enviado sem autorização",
+        texto: "A pessoa vê o texto da reclamação preparado pela DoLado e só autoriza o envio se concordar com ele.",
       },
       {
         titulo: "O resultado depende da entidade reclamada",
@@ -335,6 +370,11 @@ export const institucional = {
     },
     perguntas: [
       {
+        pergunta: "O que significa «bem-estar financeiro» na DoLado?",
+        resposta:
+          "Significa ajudar as pessoas a ter mais controlo sobre as despesas e menos preocupações com problemas de consumo: acompanhar facturas e contratos, avisar de alterações e prazos importantes e apoiar na preparação e no acompanhamento de reclamações. A DoLado não presta aconselhamento financeiro, não faz gestão de orçamento nem intermedeia crédito.",
+      },
+      {
         pergunta: "A quem pode a empresa disponibilizar a DoLado?",
         resposta:
           "A colaboradores, a clientes ou aos dois públicos. O público, a forma de acesso e a comunicação são definidos em conjunto, de acordo com o objectivo da sua empresa.",
@@ -342,12 +382,12 @@ export const institucional = {
       {
         pergunta: "Que tipo de apoio presta a DoLado?",
         resposta:
-          "A DoLado ajuda a tratar problemas com empresas — por exemplo, de telecomunicações, energia, água, compras ou ginásios: organiza a situação, prepara a reclamação, que a pessoa revê antes do envio, e acompanha os próximos passos. A Protecção é um serviço à parte, que não exige um problema: acompanha as facturas e as datas dos contratos que a pessoa envia — por exemplo, os novos contratos depois de uma mudança de casa — e avisa quando algo merece atenção.",
+          "A DoLado ajuda a tratar problemas com empresas — por exemplo, de telecomunicações, energia, água, compras ou ginásios: organiza a situação, prepara a reclamação, que a pessoa revê antes do envio, e acompanha os próximos passos. A Protecção é um serviço à parte, que não exige um problema: acompanha as facturas e as datas dos contratos que a pessoa envia e avisa quando algo merece atenção.",
       },
       {
         pergunta: "A empresa tem acesso aos casos individuais?",
         resposta:
-          "Cada caso é tratado directamente entre a pessoa e a DoLado. A solução não pressupõe que a empresa aceda aos casos individuais de quem utiliza a DoLado; qualquer informação a partilhar no âmbito de uma parceria é definida e explicada com clareza antes de começar.",
+          "Não. Cada caso é tratado directamente entre a pessoa e a DoLado. Quando o acesso é dado com códigos de activação, a empresa pode receber apenas números agregados, como quantos códigos foram activados — nunca nomes, e-mails, documentos nem actividade de cada pessoa.",
       },
       {
         pergunta: "Quais são os preços e as condições para empresas?",
@@ -361,7 +401,7 @@ export const institucional = {
     ],
     ctaFinal: {
       eyebrow: "Vamos conversar",
-      titulo: "Tem uma empresa? Peça uma proposta à DoLado.",
+      titulo: "Quer levar a DoLado à sua equipa? Peça uma proposta.",
       texto:
         "Conte-nos o que tem em mente — colaboradores, clientes ou ambos — e exploramos o próximo passo consigo. Também pode escrever para <email/>.",
     },

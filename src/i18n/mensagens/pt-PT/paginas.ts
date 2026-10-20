@@ -16,6 +16,50 @@ export const paginas = {
       caso_protecao: { necessidade: "Tenho um problema e quero acompanhamento contínuo.", cta: "Escolher Caso + Protecção" },
       protecao: { necessidade: "Quero acompanhar as minhas facturas e contratos.", cta: "Aderir à Protecção" },
     },
+    seCancelar: {
+      avulso: "Sem subscrição para cancelar: o caso é acompanhado até ao fim do processo.",
+      caso_protecao:
+        "Se cancelar: a Protecção mantém-se até ao fim do período pago. Um caso da subscrição em acompanhamento só continua se mantiver a subscrição até esse caso terminar.",
+      protecao: "Se cancelar: o acompanhamento e os avisos mantêm-se até ao fim do período pago e depois param.",
+    },
+    seCancelarRotulo: "Cancelamento",
+    comparacao: {
+      eyebrow: "Comparar as opções",
+      titulo: "As três opções lado a lado.",
+      criterio: "O que precisa de saber",
+      linhas: {
+        indicado: "Indicado para",
+        pagamento: "Pagamento",
+        acompanhamento: "Acompanhamento de facturas e contratos",
+        casos: "Tratamento de casos",
+        casoEmCurso: "Caso em curso quando a subscrição termina",
+      },
+      valores: (limite: number) => ({
+        avulso: {
+          indicado: "Tratar um único problema, sem subscrição",
+          pagamento: "Pagamento único, sem renovação",
+          acompanhamento: "Não incluído",
+          casos: "1 caso",
+          casoEmCurso: "Não se aplica: o caso Avulso é acompanhado até ao fim",
+        },
+        caso_protecao: {
+          indicado: "Tratar um problema agora e manter as facturas e os contratos acompanhados",
+          pagamento: "Mensal, com renovação automática",
+          acompanhamento: "Incluído",
+          casos: `1 caso por mês, acumulável até ${limite}`,
+          casoEmCurso:
+            "Pode manter a subscrição até o caso terminar. Se cancelar, o acompanhamento desse caso termina no fim do período pago",
+        },
+        protecao: {
+          indicado: "Acompanhar facturas e contratos, sem ter um problema agora",
+          pagamento: "Mensal, com renovação automática",
+          acompanhamento: "Incluído",
+          casos: "Não incluído",
+          casoEmCurso: "Não se aplica: não inclui casos",
+        },
+      }),
+      nota: "Pode cancelar uma subscrição a qualquer momento na área de cliente, sem novas cobranças. As condições completas estão abaixo e nos Termos.",
+    },
     saberProtecao: "O que é a Protecção?",
     condicoes: {
       eyebrow: "Pagamentos e condições",
@@ -81,7 +125,7 @@ export const paginas = {
     metadados: {
       titulo: "Protecção: acompanhamento de facturas e contratos - DoLado",
       descricao:
-        "Com a Protecção, a DoLado compara as facturas que nos envia, avisa antes do fim de promoções e da fidelização e assinala alterações que merecem ser verificadas.",
+        "Com a Protecção, a DoLado compara as facturas que nos envia, avisa antes do fim de promoções e da fidelização, assinala alterações a verificar e envia um resumo mensal.",
     },
     eyebrow: "Protecção",
     titulo: "Acompanhamos as suas facturas e contratos e avisamos a tempo.",
@@ -89,38 +133,53 @@ export const paginas = {
       "A Protecção é para quem quer evitar surpresas, mesmo sem ter um problema agora. Envie-nos as facturas e, se tiver, o contrato dos serviços que quer acompanhar. Comparamos cada factura com as anteriores e com o contrato, estamos atentos às datas importantes e avisamos quando alguma coisa merece a sua atenção.",
     aderir: "Aderir à Protecção",
     verPrecario: "Ver preçário",
-    tresPerguntas: {
-      eyebrow: "Como funciona",
-      titulo: "A Protecção em três perguntas.",
-      blocos: [
+    dependeDocumentos: "A análise depende dos documentos e das informações que nos envia.",
+    recebe: {
+      eyebrow: "O que recebe",
+      titulo: "O que a Protecção lhe dá.",
+      itens: [
         {
-          titulo: "O que acompanhamos?",
-          itens: [
-            "As facturas dos serviços que nos envia — por exemplo, internet e telemóvel, electricidade, gás ou água —, comparadas com as anteriores.",
-            "As condições do contrato, quando nos envia o contrato: mensalidade, promoções e fidelização.",
-            "As datas importantes, como o fim de uma promoção e o fim da fidelização.",
-            "Nos contratos de telecomunicações, uma estimativa do valor máximo a pagar se cancelar antes do fim da fidelização.",
-          ],
+          titulo: "Informação sobre alterações nas facturas",
+          texto: "Sabe o que mudou de uma factura para a outra: a mensalidade, uma cobrança nova ou uma promoção que deixou de aparecer.",
+          como:
+            "Comparamos cada factura que nos envia com as anteriores e, se nos enviar o contrato, com as condições contratadas. Logo depois do primeiro documento, mostramos na área de cliente o que verificámos, o que encontrámos e o que vamos acompanhar.",
         },
         {
-          titulo: "Que informação e avisos recebe?",
-          itens: [
-            "Na área de cliente, logo depois do primeiro documento: o que verificámos, o que encontrámos e o que vamos acompanhar.",
-            "Avisos 60 e 30 dias antes do fim de uma promoção ou da fidelização, e no próprio dia.",
-            "Um aviso quando uma factura tem uma alteração que merece ser verificada, depois de revista por uma pessoa da DoLado.",
-            "No início de cada mês, um resumo: o que acompanhámos, as alterações encontradas e a próxima data importante.",
-            "Se quiser, avisos de alterações relevantes nos sectores que escolher, como subidas de preços anunciadas.",
-          ],
+          titulo: "Avisos sobre situações que merecem atenção",
+          texto: "É avisado por e-mail quando uma alteração merece ser verificada — por exemplo, um aumento que os dados do contrato não explicam ou uma possível cobrança em duplicado.",
+          como:
+            "Uma pessoa da DoLado revê cada situação antes de o avisarmos. Se quiser, também recebe avisos de alterações relevantes nos sectores que escolher, como subidas de preços anunciadas.",
         },
         {
-          titulo: "O que precisa de nos disponibilizar?",
-          itens: [
-            "Uma factura de cada serviço, em PDF ou imagem. É o suficiente para começar.",
-            "O contrato, se o tiver, para compararmos as facturas com o que foi contratado.",
-            "Se não tiver documentos à mão, o nome do fornecedor e uma data, como o fim da fidelização.",
-            "As facturas seguintes, à medida que chegam: a comparação depende dos documentos que nos envia.",
-          ],
+          titulo: "Lembretes de datas importantes dos contratos",
+          texto: "Não deixa passar o fim de uma promoção nem o fim da fidelização.",
+          como:
+            "Enviamos lembretes 60 e 30 dias antes e no próprio dia. Nos contratos de telecomunicações, mostramos também uma estimativa do valor máximo a pagar se cancelar antes do fim da fidelização.",
         },
+        {
+          titulo: "Resumo mensal do acompanhamento",
+          texto: "No início de cada mês, recebe um resumo do que acompanhámos — mesmo quando está tudo certo.",
+          como:
+            "O resumo indica as facturas verificadas, as alterações comunicadas, o que continua em acompanhamento e a próxima data importante.",
+        },
+      ],
+      comoRotulo: "Como funciona",
+    },
+    resumo: {
+      eyebrow: "Resumo mensal",
+      titulo: "Mesmo quando não há nada a resolver, sabe o que verificámos.",
+      paragrafos: [
+        "A maior parte dos meses não traz problemas. O resumo mensal mostra-lhe, ainda assim, o trabalho feito: que facturas comparámos, que datas estamos a acompanhar e qual é a próxima.",
+        "Quando há algo que merece a sua atenção, o resumo também o indica — depois de a situação ter sido revista por uma pessoa da DoLado.",
+      ],
+    },
+    precisa: {
+      titulo: "O que precisa de nos disponibilizar?",
+      itens: [
+        "Uma factura de cada serviço, em PDF ou imagem. É o suficiente para começar.",
+        "O contrato, se o tiver, para compararmos as facturas com o que foi contratado.",
+        "Se não tiver documentos à mão, o nome do fornecedor e uma data, como o fim da fidelização.",
+        "As facturas seguintes, à medida que chegam: a comparação depende dos documentos que nos envia.",
       ],
     },
     exemplos: {

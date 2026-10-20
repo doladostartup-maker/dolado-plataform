@@ -8,9 +8,9 @@ import { rico } from "@/i18n/Rico";
 import { tPaginas } from "@/i18n/mensagens/paginas";
 import { precoNoIdioma, tPlanos } from "@/i18n/mensagens/planos";
 import { CTASection } from "@/components/marketing-v2/CTASection";
-import { ExemploAlteracaoFatura, ExemploAvisoPromocao } from "@/components/marketing-v2/Exemplos";
+import { ExemploAlteracaoFatura, ExemploAvisoPromocao, ExemploResumoMensal } from "@/components/marketing-v2/Exemplos";
 import { FAQAccordionV2 } from "@/components/marketing-v2/FAQAccordionV2";
-import { IconeCalendario, IconeFatura, IconeFormulario, IconeSeta } from "@/components/marketing-v2/Icones";
+import { IconeCalendario, IconeDocumentoVisto, IconeFatura, IconeLupaDocumento, IconeSeta } from "@/components/marketing-v2/Icones";
 import { ListaVistos } from "@/components/marketing-v2/ListaVistos";
 import { PainelProtecao } from "@/components/marketing-v2/Mockups";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
@@ -27,10 +27,14 @@ import { destinoPlano } from "@/lib/precario";
 // destino da adesão vêm de src/lib/planos.ts e src/lib/precario.ts — a
 // compra continua a passar por /comprar e pelo modal ConfirmarCompra.
 
+// Organizada pelo que o cliente recebe (revisão de 20/10/2026): alterações
+// nas facturas, avisos, lembretes de datas e resumo mensal — este com um
+// exemplo em destaque, para mostrar o acompanhamento num mês sem problemas.
 const ICONES = [
   <IconeFatura key="f" tamanho={28} strokeWidth={1.6} />,
+  <IconeLupaDocumento key="l" tamanho={28} strokeWidth={1.6} />,
   <IconeCalendario key="c" tamanho={28} strokeWidth={1.6} />,
-  <IconeFormulario key="d" tamanho={28} strokeWidth={1.6} />,
+  <IconeDocumentoVisto key="d" tamanho={28} strokeWidth={1.6} />,
 ];
 
 const IDS_PERGUNTAS = ["o-que-inclui-protecao", "comecar-protecao", "diferenca-planos", "cancelar-protecao"];
@@ -80,34 +84,59 @@ export function ProtecaoV2({ protecaoGratuita = false }: { protecaoGratuita?: bo
               {t.verPrecario}
             </Link>
           </div>
+          <p className="mt-4 text-[14px] leading-relaxed text-[var(--v2-muted)]">{t.dependeDocumentos}</p>
           {protecaoGratuita && <OfertaProtecaoGratuita origem="protecao" className="mt-7" />}
         </div>
         <PainelProtecao />
       </SectionV2>
 
-      {/* ===== Três perguntas ===== */}
-      <SectionV2 tone="soft-blue">
-        <SectionHeader eyebrow={t.tresPerguntas.eyebrow} titulo={t.tresPerguntas.titulo} />
-        <div className="mt-10 grid gap-6 lg:grid-cols-3">
-          {t.tresPerguntas.blocos.map((b, i) => (
-            <article key={b.titulo} className={`${CARTAO} p-6 sm:p-7`}>
+      {/* ===== O que recebe e como funciona ===== */}
+      <SectionV2 id="o-que-recebe" tone="soft-blue">
+        <SectionHeader eyebrow={t.recebe.eyebrow} titulo={t.recebe.titulo} />
+        <ul className="mt-10 grid gap-6 md:grid-cols-2">
+          {t.recebe.itens.map((item, i) => (
+            <li key={item.titulo} className={`${CARTAO} flex flex-col p-6 sm:p-7`}>
               <span className="text-[var(--v2-green)]">{ICONES[i]}</span>
-              <h2 className="mt-4 text-[20px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">{b.titulo}</h2>
-              <div className="mt-5">
-                <ListaVistos compacta itens={b.itens} />
-              </div>
-            </article>
+              <h2 className="mt-4 text-[20px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">{item.titulo}</h2>
+              <p className="mt-2 text-[15.5px] leading-relaxed text-[var(--v2-navy)]">{item.texto}</p>
+              <p className="mt-4 border-t border-[var(--v2-line)] pt-4 text-[14.5px] leading-relaxed text-[var(--v2-muted)]">
+                <strong className="font-semibold text-[var(--v2-navy)]">{t.recebe.comoRotulo}: </strong>
+                {item.como}
+              </p>
+            </li>
           ))}
-        </div>
+        </ul>
       </SectionV2>
 
-      {/* ===== Exemplos fictícios ===== */}
-      <SectionV2>
+      {/* ===== Resumo mensal em destaque ===== */}
+      <SectionV2 id="resumo-mensal" className="grid items-start gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+        <div className="lg:sticky lg:top-28">
+          <SectionHeader eyebrow={t.resumo.eyebrow} titulo={t.resumo.titulo} />
+          {t.resumo.paragrafos.map((p) => (
+            <p key={p} className={`${TEXTO} mt-4`}>
+              {p}
+            </p>
+          ))}
+        </div>
+        <ExemploResumoMensal />
+      </SectionV2>
+
+      {/* ===== Outros exemplos fictícios ===== */}
+      <SectionV2 tone="soft-blue">
         <SectionHeader eyebrow={t.exemplos.eyebrow} titulo={t.exemplos.titulo} texto={t.exemplos.texto} />
         <div className="mt-10 grid gap-6 md:grid-cols-2">
           <ExemploAvisoPromocao />
           <ExemploAlteracaoFatura />
         </div>
+      </SectionV2>
+
+      {/* ===== O que precisa de nos disponibilizar ===== */}
+      <SectionV2 className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
+        <div>
+          <SectionHeader titulo={t.precisa.titulo} />
+          <p className="mt-4 text-[15.5px] font-semibold leading-relaxed text-[var(--v2-navy)]">{t.dependeDocumentos}</p>
+        </div>
+        <ListaVistos itens={t.precisa.itens} />
       </SectionV2>
 
       {/* ===== Limites e comparação ===== */}
@@ -152,7 +181,7 @@ export function ProtecaoV2({ protecaoGratuita = false }: { protecaoGratuita?: bo
       {/* ===== CTA final ===== */}
       <CTASection
         titulo={t.ctaFinal.titulo}
-        texto={t.ctaFinal.texto}
+        texto={`${t.ctaFinal.texto} ${t.dependeDocumentos}`}
         acao={
           <button type="button" onClick={() => aderir("click_protecao_cta_final")} className={`${BOTAO_PRIMARIO} w-full md:w-auto`}>
             {t.ctaFinal.acao} <IconeSeta tamanho={17} />

@@ -19,6 +19,7 @@ export function PricingCard({
   inclui,
   naoInclui,
   nota,
+  cancelamento,
   destaque = false,
   selo,
   acao,
@@ -33,6 +34,8 @@ export function PricingCard({
   naoInclui?: string;
   /** Nota discreta por baixo do que inclui (ex.: Caso Extra no Caso + Proteção). */
   nota?: string;
+  /** O que acontece se cancelar, junto do plano (informação material, não nota de rodapé). */
+  cancelamento?: { rotulo: string; texto: string };
   destaque?: boolean;
   /** Selo discreto junto ao nome (ex.: "30 dias grátis"). */
   selo?: string;
@@ -63,6 +66,12 @@ export function PricingCard({
         <ListaVistos compacta itens={inclui} />
         {naoInclui && <p className="mt-4 text-[14px] text-[var(--v2-muted)]">{naoInclui}</p>}
         {nota && <p className="mt-4 text-[13.5px] leading-relaxed text-[var(--v2-muted)]">{nota}</p>}
+        {cancelamento && (
+          <p className="mt-4 rounded-[10px] bg-[var(--v2-blue-bg)] px-3.5 py-3 text-[14px] leading-relaxed text-[var(--v2-navy)]">
+            <strong className="font-semibold">{cancelamento.rotulo}: </strong>
+            {cancelamento.texto}
+          </p>
+        )}
       </div>
       <div className="mt-auto pt-8 lg:mt-0 lg:self-end">{acao}</div>
     </article>
