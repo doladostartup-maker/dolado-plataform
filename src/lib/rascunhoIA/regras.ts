@@ -56,6 +56,22 @@ export type SeletorRegras = (caso: CasoParaSelecao, regras: RegraJuridica[], dat
 /** Máximo de regras por pedido (mantém o contexto curto e focado). */
 export const MAX_REGRAS_POR_PEDIDO = 12;
 
+/**
+ * Energia + "Corte ou falha de serviço" (20/10/2026): o tipo junta duas
+ * situações com regras diferentes — o corte por falta de pagamento
+ * (Suspensão) e a falha do fornecimento (Qualidade de serviço: continuidade,
+ * compensações, avarias, danos). Com 12, as regras da continuidade e dos
+ * danos tirariam o lugar às de corte já enviadas. 18, como o perfil de
+ * Autoconsumo. Ver docs/legal/auditoria-interrupcoes-electricidade-2026-10-20.md.
+ */
+export const MAX_REGRAS_CORTE_FALHA_ENERGIA = 18;
+
+export function limiteRegras(caso: Pick<CasoParaSelecao, "setor" | "categoria">) {
+  return caso.setor === "Energia" && (caso.categoria ?? "").trim() === "Corte ou falha de serviço"
+    ? MAX_REGRAS_CORTE_FALHA_ENERGIA
+    : MAX_REGRAS_POR_PEDIDO;
+}
+
 function normalizar(v: string | null | undefined) {
   return (v ?? "")
     .normalize("NFD")
@@ -133,7 +149,7 @@ const SO_PERFIL = new Set(CATEGORIAS_SO_AUTOCONSUMO.map(normalizar));
  * Regras ativas, revistas e em vigor, do setor do caso (ou gerais), das
  * categorias do tipo de problema e das categorias sempre enviadas. Ordem:
  * do setor antes das gerais; do tipo de problema antes das sempre enviadas;
- * no máximo MAX_REGRAS_POR_PEDIDO. Casos de painéis solares (Energia →
+ * no máximo limiteRegras(caso). Casos de painéis solares (Energia →
  * Autoconsumo) seguem o perfil próprio (selecionarRegrasAutoconsumo).
  */
 export const selecionarRegras: SeletorRegras = (caso, regras, dataReferencia) => {
@@ -156,7 +172,7 @@ export const selecionarRegras: SeletorRegras = (caso, regras, dataReferencia) =>
     })
     .filter(({ relevante }) => relevante >= 0)
     .sort((a, b) => b.especificidade - a.especificidade || a.r.codigo.localeCompare(b.r.codigo))
-    .slice(0, MAX_REGRAS_POR_PEDIDO)
+    .slice(0, limiteRegras(caso))
     .map(({ r }) => r);
 };
 

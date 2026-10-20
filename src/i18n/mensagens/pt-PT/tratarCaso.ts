@@ -43,6 +43,10 @@ export const tratarCaso = {
       titulo: "O que aconteceu?",
       descricao: "Conte-nos por palavras suas",
       descricaoExemplo: "Por exemplo: em Agosto a mensalidade subiu de 35 € para 42 € e não recebi nenhum aviso.",
+      // Energia + "Corte ou falha de serviço": o que ajuda a perceber se há
+      // compensação (nada é obrigatório; os indicadores são do operador).
+      dicaFalhaEnergia:
+        "Se a electricidade falhou, ajuda indicar, se souber: quando aconteceu e quanto tempo durou, quantas vezes se repetiu, se foi avisado antes, se já recebeu alguma compensação na factura e se houve danos em aparelhos. Se não souber algum destes dados, não faz mal.",
       solar: {
         titulo: "Sobre os painéis solares",
         texto: "Estas respostas ajudam-nos a perceber como podemos tratar o seu caso.",

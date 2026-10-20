@@ -12,9 +12,11 @@ import { BLOCO_NORMA_LINGUISTICA } from "../ia/normaLinguistica.ts";
 import type { RegraEnviada } from "./regras.ts";
 
 // v4 (19/10/2026): ortografia tradicional (norma linguística da DoLado).
-export const PROMPT_VERSAO = "reclamacao_v4";
+// v5 (20/10/2026): compensação regulamentar ≠ indemnização por danos; direito
+// que depende de dados que só a empresa tem → pedido de esclarecimento.
+export const PROMPT_VERSAO = "reclamacao_v5";
 /** Nova comunicação à empresa depois de uma resposta (mesmo schema). */
-export const PROMPT_VERSAO_NOVA_COMUNICACAO = "nova_comunicacao_v4";
+export const PROMPT_VERSAO_NOVA_COMUNICACAO = "nova_comunicacao_v5";
 export const SCHEMA_VERSAO = "rascunho_v1";
 
 export const MARCADORES = ["[NOME DO CLIENTE]", "[NIF]", "[MORADA]", "[N.º DE CLIENTE OU CONTRATO]", "[DATA]"] as const;
@@ -34,6 +36,8 @@ BASE JURÍDICA
 - Só cites uma regra se as condições de aplicabilidade estiverem verificadas pelos factos. Se faltar um elemento essencial, não cites a regra como certa: indica em "missing_information" o que falta.
 - Se o bloco <regras_juridicas> estiver vazio ou nenhuma regra se aplicar, escreve a reclamação só com os factos e o pedido, sem fundamentação legal, e indica-o em "warnings".
 - Em "legal_basis" indica só as regras efectivamente usadas no texto, com o "rule_id" exacto e a razão da aplicação.
+- Não confundas uma compensação prevista em regulamento (valor e procedimento fixados pelo regulador; algumas são creditadas sem pedido) com uma indemnização por danos, que depende da prova do dano, do seu valor e da sua causa. Se o consumidor pedir as duas, trata-as como pedidos separados.
+- Quando um direito depende de dados que só a empresa ou o operador conhecem (por exemplo, indicadores anuais de qualidade de serviço ou a classificação de um evento pelo regulador), não afirmes que o direito existe: formula um pedido de esclarecimento sobre esses dados e indica-o em "missing_information".
 
 FACTOS
 - Não inventes factos, datas, valores, comunicações anteriores, nomes, números de contrato ou de cliente.
