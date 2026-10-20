@@ -17,7 +17,10 @@ import {
   problemasDoSetor,
   problemaValidoParaSetor,
   PROBLEMAS_AUTOCONSUMO,
+  camposDetalhes,
   ehCasoAutoconsumo,
+  ehContratacaoEnergia,
+  PROBLEMAS_CONTRATACAO_ENERGIA,
   lerDetalhesCaso,
 } from "./pedidoCaso.ts";
 import { calcularAcesso } from "./acesso.ts";
@@ -75,10 +78,28 @@ describe("formulário do caso (lerDadosPedido)", () => {
     for (const setor of ["Telecomunicações", "Água"]) {
       assert.deepEqual(problemasDoSetor(setor), [...SERVICOS, "Outro"]);
     }
-    // Energia e Gás têm ainda a mudança de comercializador e a tarifa social (06/10/2026);
-    // Energia tem também os três tipos de painéis solares (13/10/2026), antes de "Outro".
-    assert.deepEqual(problemasDoSetor("Gás"), [...SERVICOS, "Mudança de comercializador", "Tarifa social", "Outro"]);
-    assert.deepEqual(problemasDoSetor("Energia"), [...SERVICOS, "Mudança de comercializador", "Tarifa social", ...PROBLEMAS_AUTOCONSUMO, "Outro"]);
+    // Energia e Gás: os tipos comuns, os de facturação e contratação (20/10/2026),
+    // a mudança de comercializador e a tarifa social (06/10/2026); Energia tem
+    // também os três tipos de painéis solares (13/10/2026), antes de "Outro".
+    const ENERGIA_GAS = [
+      "Aumento de mensalidade",
+      "Factura alta, estimativa ou acerto",
+      "Cobrança indevida",
+      "Cobrança após cancelamento",
+      "Contrato ou condições que não aceitei",
+      "Fidelização ou penalização",
+      "Corte ou falha de serviço",
+      "Cancelamento recusado",
+      "Mudança de comercializador",
+      "Tarifa social",
+    ];
+    assert.deepEqual(problemasDoSetor("Gás"), [...ENERGIA_GAS, "Outro"]);
+    assert.deepEqual(problemasDoSetor("Energia"), [...ENERGIA_GAS, ...PROBLEMAS_AUTOCONSUMO, "Outro"]);
+    for (const p of ["Factura alta, estimativa ou acerto", "Contrato ou condições que não aceitei"]) {
+      for (const setor of ["Telecomunicações", "Água", "Compras & Reembolsos", "Ginásios"]) {
+        assert.ok(!problemasDoSetor(setor).includes(p), `${p} não aparece em ${setor}`);
+      }
+    }
     for (const setor of SETORES.filter((s) => s !== "Energia")) {
       for (const p of PROBLEMAS_AUTOCONSUMO) assert.ok(!problemasDoSetor(setor).includes(p), `${p} só em Energia (não em ${setor})`);
     }
@@ -104,11 +125,35 @@ describe("formulário do caso (lerDadosPedido)", () => {
     assert.equal(lerDadosPedido(formulario({ sector: "Ginásios", problema_tipo: "Corte ou falha de serviço" })).ok, false);
     // Mudança de comercializador e tarifa social: só Energia e Gás.
     for (const p of ["Mudança de comercializador", "Tarifa social"]) {
-      assert.equal(lerDadosPedido(formulario({ sector: "Gás", problema_tipo: p })).ok, true, p);
-      assert.equal(lerDadosPedido(formulario({ sector: "Energia", problema_tipo: p })).ok, true, p);
+      // (a mudança de comercializador pergunta a forma de contratação)
+      assert.equal(lerDadosPedido(formulario({ sector: "Gás", problema_tipo: p, forma_contratacao: "nao_sei" })).ok, true, p);
+      assert.equal(lerDadosPedido(formulario({ sector: "Energia", problema_tipo: p, forma_contratacao: "nao_sei" })).ok, true, p);
       assert.equal(lerDadosPedido(formulario({ sector: "Telecomunicações", problema_tipo: p })).ok, false, p);
       assert.equal(lerDadosPedido(formulario({ sector: "Compras & Reembolsos", problema_tipo: p })).ok, false, p);
     }
+  });
+
+  test("contratação de Energia/Gás: só a forma de contratação, obrigatória (com \"Não sei\")", () => {
+    for (const setor of ["Energia", "Gás"]) {
+      for (const problema_tipo of PROBLEMAS_CONTRATACAO_ENERGIA) {
+        assert.ok(ehContratacaoEnergia(setor, problema_tipo), `${setor} / ${problema_tipo}`);
+        assert.deepEqual(camposDetalhes(setor, problema_tipo), ["forma_contratacao"]);
+        const base = { sector: setor, problema_tipo };
+        assert.equal(lerDadosPedido(formulario(base)).ok, false, "sem resposta");
+        assert.equal(lerDadosPedido(formulario({ ...base, forma_contratacao: "telefone" })).ok, false, "fora da lista");
+        const r = lerDadosPedido(formulario({ ...base, forma_contratacao: "distancia", financiamento: "sim_com_compra" }));
+        assert.equal(r.ok, true);
+        // Nunca guarda respostas que não foram pedidas.
+        assert.deepEqual(r.dados.detalhes_caso, { forma_contratacao: "distancia" });
+        assert.deepEqual(lerDadosPedido(formulario({ ...base, forma_contratacao: "nao_sei" })).dados.detalhes_caso, { forma_contratacao: "nao_sei" });
+      }
+    }
+    // Outros tipos e sectores: sem pergunta e sem respostas guardadas.
+    assert.equal(ehContratacaoEnergia("Telecomunicações", "Cancelamento recusado"), false);
+    assert.equal(ehContratacaoEnergia("Energia", "Cobrança indevida"), false);
+    assert.deepEqual(camposDetalhes("Energia", "Factura alta, estimativa ou acerto"), []);
+    assert.equal(lerDadosPedido(formulario({ sector: "Ginásios", problema_tipo: "Cancelamento recusado", forma_contratacao: "domicilio" })).dados.detalhes_caso, null);
+    assert.deepEqual(camposDetalhes("Energia", PROBLEMAS_AUTOCONSUMO[0]), ["forma_contratacao", "financiamento", "tipo_contrato_solar"]);
   });
 
   test("painéis solares: três respostas obrigatórias (com \"Não sei\"), só nos tipos de Autoconsumo", () => {

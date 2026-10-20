@@ -14,7 +14,7 @@
 
 import { encontrarFornecedor, normalizarNomeEmpresa, type Fornecedor } from "../monitor/fornecedores.ts";
 import { mascararTextoLivre, prepararParaIA } from "../ia/minimizacao.ts";
-import { ehCasoAutoconsumo, lerDetalhesCaso } from "../pedidoCaso.ts";
+import { ehCasoAutoconsumo, ehContratacaoEnergia, lerDetalhesCaso } from "../pedidoCaso.ts";
 
 export type CasoParaRascunho = {
   id: string;
@@ -68,7 +68,8 @@ export type ServicoMonitor = {
 };
 
 /** Versão da forma do contexto (gravada na auditoria com o hash). */
-export const CONTEXTO_VERSAO = "contexto_v3";
+// v4 (20/10/2026): forma de contratação nos casos de contratação de Energia/Gás.
+export const CONTEXTO_VERSAO = "contexto_v4";
 
 const MAX_DESCRICAO = 4000;
 const MAX_SERVICOS = 3;
@@ -185,6 +186,10 @@ export function construirContexto(caso: CasoParaRascunho, servicos: ServicoMonit
       data_do_pedido_a_dolado: caso.created_at.slice(0, 10),
       // Painéis solares: valores fechados (sem dados pessoais).
       ...(ehCasoAutoconsumo(caso.sector, caso.problema_tipo) ? { paineis_solares: detalhesParaIA(caso.detalhes_caso) } : {}),
+      // Contratação de Energia/Gás: só a forma de contratação (valor fechado).
+      ...(ehContratacaoEnergia(caso.sector, caso.problema_tipo)
+        ? { forma_de_contratacao: FORMA_PARA_IA[lerDetalhesCaso(caso.detalhes_caso)?.forma_contratacao ?? "nao_sei"] }
+        : {}),
     },
     dados_registados_pela_dolado: {
       data_fim_fidelizacao: caso.data_fim_fidelidade,

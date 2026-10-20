@@ -17,6 +17,8 @@ export const rotulos: Traducao<typeof pt> = {
     "Fidelização ou penalização": "Minimum term or early exit charge",
     "Corte ou falha de serviço": "Service cut-off or outage",
     "Cancelamento recusado": "Cancellation refused",
+    "Factura alta, estimativa ou acerto": "High bill, estimated reading or catch-up bill",
+    "Contrato ou condições que não aceitei": "A contract or terms I did not agree to",
     "Mudança de comercializador": "Switching supplier",
     "Tarifa social": "Social tariff",
     "Produto com defeito": "Faulty product",

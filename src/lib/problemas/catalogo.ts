@@ -68,15 +68,24 @@ export const CATEGORIAS: Categoria[] = [
     slug: "energia",
     setor: "Energia",
     problemas: [
-      // "Fatura muito alta" e "consumos estimados" não têm um tipo de problema
-      // exato: o cliente escolhe no formulário (nunca presumir "cobrança indevida").
-      { slug: "fatura-muito-alta", relacionados: ["consumos-estimados", "cobranca-indevida"] },
+      // "Fatura muito alta" e "consumos estimados" pré-preenchem o tipo
+      // "Factura alta, estimativa ou acerto" (20/10/2026) — nunca "cobrança
+      // indevida", que pressupõe um valor que não devia estar na factura.
+      {
+        slug: "fatura-muito-alta",
+        problemaCaso: "Factura alta, estimativa ou acerto",
+        relacionados: ["consumos-estimados", "cobranca-indevida"],
+      },
       {
         slug: "cobranca-indevida",
         problemaCaso: "Cobrança indevida",
         relacionados: ["fatura-muito-alta", "consumos-estimados"],
       },
-      { slug: "consumos-estimados", relacionados: ["fatura-muito-alta", "cobranca-indevida"] },
+      {
+        slug: "consumos-estimados",
+        problemaCaso: "Factura alta, estimativa ou acerto",
+        relacionados: ["fatura-muito-alta", "cobranca-indevida"],
+      },
     ],
   },
   {

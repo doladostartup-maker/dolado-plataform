@@ -20,6 +20,8 @@ export const rotulos = {
     "Fidelização ou penalização": "Fidelização ou penalização",
     "Corte ou falha de serviço": "Corte ou falha de serviço",
     "Cancelamento recusado": "Cancelamento recusado",
+    "Factura alta, estimativa ou acerto": "Factura alta, estimativa ou acerto",
+    "Contrato ou condições que não aceitei": "Contrato ou condições que não aceitei",
     "Mudança de comercializador": "Mudança de comercializador",
     "Tarifa social": "Tarifa social",
     "Produto com defeito": "Produto com defeito",
@@ -34,7 +36,8 @@ export const rotulos = {
     "Painéis solares: registo, ligação ou autoconsumo": "Painéis solares: registo, ligação ou autoconsumo",
     Outro: "Outro",
   },
-  // Respostas adicionais dos casos de painéis solares (detalhes_caso).
+  // Respostas adicionais (detalhes_caso): painéis solares e, só a forma de
+  // contratação, os casos de contratação de Energia e Gás.
   formaContratacao: {
     estabelecimento: "Numa loja ou nas instalações da empresa",
     domicilio: "Em minha casa, com um vendedor",
