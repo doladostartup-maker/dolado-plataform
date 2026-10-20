@@ -174,6 +174,30 @@ export function ehContratacaoEnergia(setor: string | null | undefined, problema:
   return (setor === "Energia" || setor === "Gás") && !!problema && PROBLEMAS_CONTRATACAO_ENERGIA.includes(problema);
 }
 
+// Energia e Gás — que documentos mais ajudam, por tipo de problema (pergunta 4
+// de /tratar-caso; auditoria de 20/10/2026, secção D). Só texto de orientação:
+// o documento continua opcional e nada novo é recolhido. Os tipos sem
+// orientação própria (aumento de mensalidade, tarifa social, painéis solares,
+// "Outro") ficam com o texto geral.
+export const DOCUMENTOS_ENERGIA_POR_PROBLEMA = {
+  [PROBLEMA_FACTURA_ACERTO]: "factura_acerto",
+  "Cobrança indevida": "cobranca",
+  [PROBLEMA_COBRANCA_APOS_CANCELAMENTO]: "apos_cancelamento",
+  "Corte ou falha de serviço": "corte",
+  [PROBLEMA_CONTRATO_NAO_ACEITE]: "contratacao",
+  "Mudança de comercializador": "contratacao",
+  "Fidelização ou penalização": "fidelizacao",
+  "Cancelamento recusado": "cancelamento",
+} as const;
+
+export type DocumentosEnergia = (typeof DOCUMENTOS_ENERGIA_POR_PROBLEMA)[keyof typeof DOCUMENTOS_ENERGIA_POR_PROBLEMA];
+
+/** Orientação de documentos para este caso (null = texto geral). */
+export function documentosEnergia(setor: string | null | undefined, problema: string | null | undefined): DocumentosEnergia | null {
+  if ((setor !== "Energia" && setor !== "Gás") || !problema) return null;
+  return (DOCUMENTOS_ENERGIA_POR_PROBLEMA as Record<string, DocumentosEnergia>)[problema] ?? null;
+}
+
 /** Respostas adicionais pedidas para este caso (vazio = nenhuma). */
 export function camposDetalhes(setor: string | null | undefined, problema: string | null | undefined): (keyof DetalhesCaso)[] {
   if (ehCasoAutoconsumo(setor, problema)) return [...CAMPOS_DETALHES];

@@ -73,6 +73,24 @@ export const tratarCaso = {
     passo4: {
       titulo: "Tem algum documento?",
       texto: "Opcional. Por exemplo, a factura em causa, o contrato ou um e-mail da empresa. Se não tiver agora, pedimos-lho depois.",
+      // Energia e Gás (20/10/2026): o que mais ajuda, por tipo de problema
+      // (documentosEnergia em src/lib/pedidoCaso.ts). Só orientação.
+      documentosEnergia: {
+        titulo: "O que mais ajuda neste caso:",
+        factura_acerto:
+          "a factura em causa e as facturas dos meses anteriores (de preferência três ou mais). Também ajudam uma fotografia do contador com a data e as leituras que comunicou.",
+        cobranca: "a factura onde aparece o valor. Também ajudam o contrato ou a proposta e os comprovativos de pagamento.",
+        apos_cancelamento:
+          "a factura que recebeu depois de sair. Também ajudam o comprovativo do pedido de cancelamento ou da data da mudança e a leitura do contador nesse dia.",
+        corte:
+          "o aviso de corte ou a carta de cobrança, as facturas da dívida e os comprovativos de pagamento. Se o fornecimento falhou, ajudam as facturas seguintes e, se houve danos, fotografias ou orçamentos de reparação.",
+        contratacao:
+          "a primeira factura da nova empresa ou com as novas condições. Também ajudam o que assinou ou recebeu e o registo do contacto: data, canal e quem lhe ligou ou o visitou.",
+        fidelizacao:
+          "a factura com o valor exigido. Também ajudam a proposta ou o contrato com a condição de fidelização e a publicidade da campanha, se a tiver.",
+        cancelamento:
+          "o que assinou ou recebeu e o pedido de cancelamento que fez. Também ajudam as datas do contrato e do início do fornecimento.",
+      },
       aCarregar: "A carregar…",
       escolher: "Escolher ficheiro",
       tipos: "Factura, contrato, e-mail ou captura de ecrã · PDF ou imagem",
