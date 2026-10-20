@@ -13,6 +13,16 @@ export const parceiros: Traducao<typeof pt> = {
     texto:
       "For professionals and companies who are close to consumers — and who want to have an answer when a bill, a contract or a purchase goes wrong. DoLado handles the problem; the partner brings DoLado to the people who need it.",
     cta: "Apply",
+    verModelos: "See the ways to work with us",
+    garantias: {
+      titulo: "In every partnership",
+      itens: [
+        "DoLado handles the consumer's problem, from first contact to outcome.",
+        "The partner never has access to anyone's cases, bills or contracts.",
+        "The terms are set out in a written agreement before we start.",
+      ],
+    },
+    modelosEyebrow: "Partnership models",
     modelosTitulo: "Two ways to work with us",
     indicacao: {
       titulo: "Referral Partner",
@@ -36,6 +46,7 @@ export const parceiros: Traducao<typeof pt> = {
         "Reports with aggregate figures only — never personal data.",
       ],
     },
+    passosEyebrow: "From first contact to agreement",
     passosTitulo: "How it works",
     passos: [
       { titulo: "You apply", texto: "Tell us who you are and how you would like to work with us." },
@@ -47,7 +58,9 @@ export const parceiros: Traducao<typeof pt> = {
   },
 
   candidatura: {
-    titulo: "Application",
+    eyebrow: "Application",
+    titulo: "Tell us who you are",
+    texto: "It only takes a few minutes. We reply by e-mail within 2 working days at the latest.",
     nome: "Name",
     email: "E-mail",
     empresa: "Company (optional)",

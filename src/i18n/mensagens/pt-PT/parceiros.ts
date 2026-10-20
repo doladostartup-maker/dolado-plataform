@@ -15,6 +15,16 @@ export const parceiros = {
     texto:
       "Para profissionais e empresas que estão perto dos consumidores — e que querem ter uma resposta quando uma factura, um contrato ou uma compra corre mal. A DoLado trata do problema; o parceiro aproxima a DoLado de quem precisa.",
     cta: "Candidatar-me",
+    verModelos: "Ver as formas de colaborar",
+    garantias: {
+      titulo: "Em qualquer parceria",
+      itens: [
+        "A DoLado trata do problema do consumidor, do primeiro contacto ao desfecho.",
+        "O parceiro nunca tem acesso a casos, facturas ou contratos de ninguém.",
+        "As condições ficam num acordo escrito, antes de começar.",
+      ],
+    },
+    modelosEyebrow: "Modelos de parceria",
     modelosTitulo: "Duas formas de colaborar",
     indicacao: {
       titulo: "Parceiro de Indicação",
@@ -38,6 +48,7 @@ export const parceiros = {
         "Relatórios só com números agregados — nunca dados pessoais.",
       ],
     },
+    passosEyebrow: "Do contacto ao acordo",
     passosTitulo: "Como funciona",
     passos: [
       { titulo: "Candidata-se", texto: "Conte-nos quem é e como gostaria de colaborar." },
@@ -49,7 +60,9 @@ export const parceiros = {
   },
 
   candidatura: {
-    titulo: "Candidatura",
+    eyebrow: "Candidatura",
+    titulo: "Conte-nos quem é",
+    texto: "Leva poucos minutos. Respondemos por e-mail no prazo máximo de 2 dias úteis.",
     nome: "Nome",
     email: "E-mail",
     empresa: "Empresa (opcional)",
