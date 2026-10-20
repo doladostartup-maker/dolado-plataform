@@ -8,17 +8,14 @@ import { tParceiros } from "@/i18n/mensagens/parceiros";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { parceirosAtivos } from "@/lib/parceiros/regras";
 
-// /parceiros — Programa de Parceiros (Fase 1, 21/10/2026). Fora do menu, do
-// rodapé e do sitemap, e noindex, até o programa ser ligado em produção
-// (PARCEIROS_ATIVO, lido no build) com a nova Política de Privacidade. Com o
-// programa desligado leva a /empresas.
+// /parceiros — Programa de Parceiros (Fase 1, ligado em produção a
+// 20/10/2026 com PARCEIROS_ATIVO, lido no build). Indexável desde 23/10/2026
+// (decisão de Thiago): no sitemap e no rodapé (só com o programa ligado), fora
+// do menu. Com o programa desligado leva a /empresas.
 export async function generateMetadata({ params }: ComIdioma): Promise<Metadata> {
   const idioma = await idiomaDaPagina(params);
   const t = tParceiros[idioma].pagina.metadados;
-  return {
-    ...metadadosPublicos(idioma, "/parceiros", { title: t.titulo, description: t.descricao }),
-    robots: { index: false, follow: true },
-  };
+  return metadadosPublicos(idioma, "/parceiros", { title: t.titulo, description: t.descricao });
 }
 
 export default async function ParceirosPage({ params }: ComIdioma) {

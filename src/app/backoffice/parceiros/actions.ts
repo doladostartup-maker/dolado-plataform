@@ -8,7 +8,8 @@ import { MAXIMO_CODIGOS_POR_EMISSAO, csvCodigos } from "@/lib/acessoPatrocinado"
 import { emitirCodigosDoPacote } from "@/lib/acessoPatrocinadoServidor";
 import { after } from "next/server";
 import { enviarEmailBrevo } from "@/lib/email/brevo";
-import { montarEmailCandidaturaAprovada, montarEmailPagamentoComissoes } from "@/lib/email/parceiros";
+import { montarEmailCandidaturaAprovada, montarEmailPagamentoComissoes, montarEmailPrimeiroContacto } from "@/lib/email/parceiros";
+import { AVISO_PRIMEIRO_CONTACTO_VERSAO } from "@/lib/legal";
 import { lerIva, urlParceiro } from "@/lib/parceiros/regras";
 import { criarCodigoParceiro, decidirCandidatura } from "@/lib/parceiros/servidor";
 
@@ -457,6 +458,47 @@ export async function atualizarOportunidade(parceiroId: string, oportunidadeId: 
   }
   revalidatePath(caminho);
   voltar(caminho, "ok", "Oportunidade actualizada.");
+}
+
+// Primeiro contacto a uma pessoa indicada pelo parceiro: envia o aviso do
+// art. 14.º (com a mensagem opcional) e só grava a prova se a Brevo aceitar.
+// Um aviso por oportunidade.
+export async function avisarPrimeiroContacto(parceiroId: string, oportunidadeId: string, form: FormData) {
+  const { user } = await requireAdmin();
+  const caminho = `/backoffice/parceiros/${parceiroId}`;
+  const email = texto(form, "email", 254)?.toLowerCase() ?? null;
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) voltar(caminho, "erro", "Indique um e-mail válido para o contacto.");
+  const admin = createAdminClient();
+  const { data: op } = await admin
+    .from("parceiros_oportunidades")
+    .select("entidade, contacto, parceiro_id, parceiros(nome)")
+    .eq("id", oportunidadeId)
+    .maybeSingle();
+  if (!op || op.parceiro_id !== parceiroId) voltar(caminho, "erro", "Oportunidade inexistente.");
+  if (!op.contacto) voltar(caminho, "erro", "A oportunidade não tem contacto registado.");
+  const { count } = await admin
+    .from("parceiros_oportunidades_avisos")
+    .select("id", { count: "exact", head: true })
+    .eq("oportunidade_id", oportunidadeId);
+  if (count) voltar(caminho, "erro", "O primeiro contacto desta oportunidade já foi avisado.");
+  const parceiro = (op.parceiros as unknown as { nome: string } | null)?.nome ?? "";
+  const montado = montarEmailPrimeiroContacto({ parceiro, entidade: op.entidade, mensagem: texto(form, "mensagem", 2000) });
+  try {
+    await enviarEmailBrevo(email, montado.assunto, montado.html, montado.texto);
+  } catch {
+    voltar(caminho, "erro", "A Brevo não aceitou o envio. Nada foi registado; tente de novo.");
+  }
+  const { error } = await admin.from("parceiros_oportunidades_avisos").insert({
+    oportunidade_id: oportunidadeId,
+    destinatario_email: email,
+    aviso_versao: AVISO_PRIMEIRO_CONTACTO_VERSAO,
+    assunto: montado.assunto,
+    texto: montado.texto,
+    enviado_por: user.id,
+  });
+  revalidatePath(caminho);
+  if (error) voltar(caminho, "erro", "E-mail enviado, mas não foi possível registar a prova. Registe-a à mão nas notas.");
+  voltar(caminho, "ok", "Aviso de primeiro contacto enviado e registado.");
 }
 
 export async function marcarOportunidadeGanha(parceiroId: string, oportunidadeId: string, form: FormData) {
