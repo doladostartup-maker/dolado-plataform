@@ -1,13 +1,13 @@
 # Caso Extra — subscritores que já usaram o caso do mês (05/10/2026)
 
-Um subscritor do **Caso + Proteção** que já usou o caso incluído no ciclo pode tratar mais um caso por **11,99 €** (preço normal do Avulso: 14,99 €, cerca de 20% de desconto), sem códigos a introduzir, sem mudar de plano e sem criar outra conta.
+Um subscritor do **Caso + Proteção** que já usou o caso incluído no ciclo pode tratar mais um caso por **9,59 €** (preço normal do Avulso: 11,99 €, cerca de 20% de desconto; até 18/10/2026: 11,99 € vs. 14,99 €), sem códigos a introduzir, sem mudar de plano e sem criar outra conta.
 
 ## Três formas de ter direito a tratar um caso
 
 | | Caso mensal | Caso Extra | Avulso |
 |---|---|---|---|
 | Para quem | Caso + Proteção ativo | Caso + Proteção ativo (`active`/`trialing`) **sem casos disponíveis** | Quem não tem subscrição |
-| Preço | Incluído (7,99 €/mês) | 11,99 € (pagamento único) | 14,99 € (pagamento único) |
+| Preço | Incluído (7,99 €/mês) | 9,59 € (pagamento único) | 11,99 € (pagamento único) |
 | Origem em `case_credit_grants` | `invoice:<fatura>` (sem linha por caso consumido) | `checkout:<sessão>`, `produto = 'caso_extra'` | `checkout:<sessão>`, `produto = 'avulso'` |
 | Conta em `avulso_credits` | Não | Sim (compra única por usar) | Sim |
 | Limite de 4 | Sim (só os casos da subscrição) | Não | Não |

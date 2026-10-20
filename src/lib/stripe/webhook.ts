@@ -9,6 +9,7 @@ import {
   indicacaoAoPagarFatura,
   indicacaoAoReembolso,
   indicacaoAoTerminarSubscricao,
+  indicacaoNaPrimeiraCobrancaDiferida,
   type DependenciasIndicacoes,
 } from "../indicacoes/webhook.ts";
 
@@ -347,11 +348,26 @@ export interface DependenciasWebhook {
     valorPagoCentimos: number | null;
     /** Próxima renovação (ISO), nas subscrições, se conhecida. */
     renovacao: string | null;
+    /**
+     * Adesão durante a Proteção gratuita: nada cobrado agora; a 1.ª cobrança
+     * é na data de renovação (trial_end). Só apresentação no e-mail.
+     */
+    cobrancaDiferida?: boolean;
     consentimento: ConsentimentoLigado | null;
+    /** Só apresentação (idioma do e-mail): conta ligada à compra, se houver. */
+    userId?: string | null;
+    /** Só apresentação (idioma do e-mail): `locale` da Checkout Session ("en-GB" em /en). */
+    localeCheckout?: string | null;
   }): Promise<void>;
   registar(linha: LinhaLog): void;
   /** Programa de indicação (ausente = desligado, ex.: testes antigos). */
   indicacoes?: DependenciasIndicacoes;
+  /**
+   * Subscrição criada durante a Proteção gratuita com a 1.ª cobrança adiada
+   * (metadata protecao_gratuita = "1"): devolve a sessão de Checkout dessa
+   * adesão, para a indicação ser decidida na 1.ª cobrança real. null = não é.
+   */
+  adesaoComCobrancaDiferida?(subscriptionId: string): Promise<{ sessionId: string } | null>;
 }
 
 export type ResultadoWebhook = { status: 200 | 500; corpo: Record<string, unknown> };
@@ -380,6 +396,11 @@ function codigoDeErro(erro: unknown) {
   const codigo = (erro as { code?: unknown } | null)?.code;
   if (typeof codigo === "string" && codigo) return codigo;
   return erro instanceof Error ? erro.name : "desconhecido";
+}
+
+/** Adesão durante a Proteção gratuita, sem cobrança no Checkout (1.ª cobrança no fim do período). */
+export function cobrancaDiferidaDaSessao(session: Pick<Stripe.Checkout.Session, "metadata" | "amount_total">) {
+  return session.metadata?.protecao_gratuita === "1" && !((session.amount_total ?? 0) > 0);
 }
 
 export function pagamentoDaSessaoConfirmado(session: Pick<Stripe.Checkout.Session, "payment_status">) {
@@ -504,10 +525,10 @@ export async function sinalizarSubscricaoDuplicada(deps: DependenciasWebhook, da
   if (!(await deps.registarSubscricaoDuplicada(dados))) return;
   await deps.notificarAdmin(
     "Subscrição duplicada por rever — DoLado",
-    `A conta ${dados.userId} já tem a subscrição ativa ${dados.subscricaoExistenteId} e foi paga uma segunda subscrição, ${dados.novaSubscriptionId}` +
-      `${dados.sessionId ? ` (compra ${dados.sessionId})` : ""}, detetada em: ${dados.origem}. ` +
+    `A conta ${dados.userId} já tem a subscrição activa ${dados.subscricaoExistenteId} e foi paga uma segunda subscrição, ${dados.novaSubscriptionId}` +
+      `${dados.sessionId ? ` (compra ${dados.sessionId})` : ""}, detectada em: ${dados.origem}. ` +
       "A segunda subscrição NÃO foi aplicada à conta; nada foi cancelado nem reembolsado. " +
-      "Ação recomendada: confirmar com o cliente, cancelar no Stripe Dashboard a subscrição a mais e, se houve cobrança, decidir o reembolso; depois marcar como resolvida no backoffice.",
+      "Acção recomendada: confirmar com o cliente, cancelar no Stripe Dashboard a subscrição a mais e, se houve cobrança, decidir o reembolso; depois marcar como resolvida no backoffice.",
   );
 }
 
@@ -615,7 +636,7 @@ async function converterAvulso(
   await deps.marcarIntervencaoConversao(conversao.id, `o Stripe recusou o reembolso (${reembolso.motivo})`);
   await deps.notificarAdmin(
     "Reembolso de conversão falhou — DoLado",
-    `O reembolso da conversão ${conversao.id} não foi criado (${reembolso.motivo}). A subscrição continua ativa. Resolver manualmente no Stripe.`,
+    `O reembolso da conversão ${conversao.id} não foi criado (${reembolso.motivo}). A subscrição continua activa. Resolver manualmente no Stripe.`,
   );
 }
 
@@ -763,6 +784,9 @@ async function confirmarCompra(
     );
   }
   const consentimento = await ligarConsentimentoDaSessao(session, s, contas, deps);
+  // Adesão durante a Proteção gratuita com a 1.ª cobrança no fim do período
+  // (trial_end): nada foi pago agora.
+  const cobrancaDiferida = cobrancaDiferidaDaSessao(session);
   if (estadoAnterior !== "concluido" && plano) {
     const renovacao =
       s.tipo === "subscricao" && s.subscriptionId
@@ -775,12 +799,17 @@ async function confirmarCompra(
       sessionId: session.id,
       valorPagoCentimos: session.amount_total,
       renovacao,
+      cobrancaDiferida,
       consentimento,
+      userId: contas[0] ?? null,
+      localeCheckout: session.locale ?? null,
     });
   }
   // Programa de indicação: no fim, com o acesso e o pagamento já gravados
   // (tudo idempotente — um reenvio depois de uma falha repete sem duplicar).
-  if (deps.indicacoes && !duplicada) {
+  // Com a 1.ª cobrança adiada, a indicação só é decidida quando houver um
+  // pagamento real (tratarFatura) — uma compra a 0 € nunca recompensa.
+  if (deps.indicacoes && !duplicada && !cobrancaDiferida) {
     await indicacaoAoConfirmarPagamento(
       session,
       contas[0] ?? null,
@@ -937,6 +966,18 @@ async function tratarFatura(
   }
   if (deps.indicacoes && invoice.id) {
     await indicacaoAoPagarFatura(invoice.id, subscriptionId, contas, deps.indicacoes);
+    // Adesão feita durante a Proteção gratuita: a primeira compra paga é esta
+    // 1.ª cobrança real (idempotente — as seguintes dão "nao_primeira_compra").
+    if (
+      deps.adesaoComCobrancaDiferida &&
+      (invoice.amount_paid ?? 0) > 0 &&
+      invoice.billing_reason === "subscription_cycle"
+    ) {
+      const adesao = await deps.adesaoComCobrancaDiferida(subscriptionId);
+      if (adesao) {
+        await indicacaoNaPrimeiraCobrancaDiferida(invoice, adesao.sessionId, subscriptionId, contas[0] ?? null, plano, deps.indicacoes);
+      }
+    }
   }
   return { resultado: creditou ? "acesso_e_credito" : "acesso_garantido", ...ids };
 }
@@ -1038,7 +1079,7 @@ async function tratarReembolso(event: Stripe.Event, deps: DependenciasWebhook): 
     );
     await deps.notificarAdmin(
       "Reembolso de conversão falhou — DoLado",
-      `O reembolso ${refund.id} (conversão ${atualizado.conversaoId}) ficou "${refund.status}". A subscrição continua ativa. Resolver manualmente no Stripe.`,
+      `O reembolso ${refund.id} (conversão ${atualizado.conversaoId}) ficou "${refund.status}". A subscrição continua activa. Resolver manualmente no Stripe.`,
     );
     return { resultado: "reembolso_falhado_intervencao" };
   }

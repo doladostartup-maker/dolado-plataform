@@ -113,9 +113,9 @@ export async function associarCompraAConta(
   if (resultado === "duplicado_por_rever" && subscriptionId && existente) {
     await deps.webhook.notificarAdmin(
       "Subscrição duplicada por rever — DoLado",
-      `A conta ${conta.id} pediu para associar a compra ${session.id} (subscrição ${subscriptionId}), mas já tem a subscrição ativa ${existente}. ` +
+      `A conta ${conta.id} pediu para associar a compra ${session.id} (subscrição ${subscriptionId}), mas já tem a subscrição activa ${existente}. ` +
         "A nova subscrição NÃO foi aplicada à conta; nada foi cancelado nem reembolsado. " +
-        "Ação recomendada: confirmar com o cliente, cancelar no Stripe Dashboard a subscrição a mais e, se houve cobrança, decidir o reembolso; depois marcar como resolvida no backoffice.",
+        "Acção recomendada: confirmar com o cliente, cancelar no Stripe Dashboard a subscrição a mais e, se houve cobrança, decidir o reembolso; depois marcar como resolvida no backoffice.",
     );
   }
   return resultado;
@@ -126,9 +126,9 @@ export const MENSAGENS_ASSOCIACAO: Record<ResultadoAssociacao, string> = {
   associada: "A compra foi associada à sua conta.",
   ja_associada: "Esta compra já está associada à sua conta.",
   duplicado_por_rever:
-    "A sua conta já tem uma subscrição ativa, por isso esta compra não foi somada à conta. A DoLado vai analisar a situação e responder-lhe por e-mail no prazo máximo de 48 horas úteis.",
+    "A sua conta já tem uma subscrição activa, por isso esta compra não foi somada à conta. A DoLado vai analisar a situação e responder-lhe por e-mail no prazo máximo de 2 dias úteis.",
   ja_em_revisao:
-    "Esta compra já está em análise pela DoLado. A DoLado responde-lhe por e-mail no prazo máximo de 48 horas úteis.",
+    "Esta compra já está em análise pela DoLado. A DoLado responde-lhe por e-mail no prazo máximo de 2 dias úteis.",
   outra_conta: "Esta compra já está associada a outra conta. Se precisar de ajuda, contacte-nos.",
   sem_pagamento: "Ainda estamos a confirmar este pagamento. Tente novamente dentro de alguns minutos.",
   pagamento_nao_confirmado:

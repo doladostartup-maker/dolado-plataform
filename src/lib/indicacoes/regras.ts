@@ -30,7 +30,7 @@ export const INDICACAO_JANELA_DIAS = 30;
 export const VALIDADE_RECOMPENSA_MESES = 12;
 
 export const REGRA_CASO_PROTECAO =
-  "Caso + Proteção não é elegível para o desconto de aquisição de 20%. Contudo, uma recompensa de indicação já ganha pelo cliente pode ser utilizada numa renovação mensal futura do Caso + Proteção.";
+  "Caso + Protecção não é elegível para o desconto de aquisição de 20%. Contudo, uma recompensa de indicação já ganha pelo cliente pode ser utilizada numa renovação mensal futura do Caso + Protecção.";
 
 /** Cookie com o id da visita pelo link (só o id; o código e a data vêm da base de dados). */
 export const COOKIE_INDICACAO = "dolado_indicacao";
@@ -134,6 +134,12 @@ export type ContextoDescontoCheckout = {
   recompensasDisponiveis: number;
   /** O cliente preferiu usar um código promocional. */
   prescindiu: boolean;
+  /**
+   * A conta já ativou a Proteção gratuita de 30 dias. Na Proteção não
+   * acumula com nenhum desconto de indicação (decisão de Thiago, 18/10/2026);
+   * um desconto de quem indicou continua disponível para uma renovação.
+   */
+  usouProtecaoGratuita?: boolean;
 };
 
 /**
@@ -141,11 +147,13 @@ export type ContextoDescontoCheckout = {
  * Ordem determinística: primeiro o de novo cliente (só vale na primeira
  * compra), depois um desconto de quem indicou. Sem desconto em: compra sem
  * conta (o servidor não sabe quem compra), Caso Extra (já tem desconto),
- * conversão de um Avulso (1.ª mensalidade já coberta) e Caso + Proteção.
+ * conversão de um Avulso (1.ª mensalidade já coberta), Caso + Proteção e
+ * Proteção de quem já usou a Proteção gratuita (não acumula).
  */
 export function escolherDescontoCheckout(c: ContextoDescontoCheckout): TipoDescontoIndicacao | null {
   if (c.fluxo === "publico" || c.fluxo === "caso_extra" || c.conversao || c.prescindiu) return null;
   if (!produtoComDescontoIndicacao(c.plano)) return null;
+  if (c.plano === "protecao" && c.usouProtecaoGratuita) return null;
   if (c.novoClienteIndicado) return "novo_cliente";
   if (c.recompensasDisponiveis > 0) return "recompensa";
   return null;
@@ -160,7 +168,7 @@ export function camposDescontoCheckout<T extends { discounts?: unknown; expires_
   return parametros ? { ...parametros } : { allow_promotion_codes: true as const };
 }
 
-/** Preço com 20% (o Stripe arredonda o desconto ao cêntimo): 1499 → 1199, 499 → 399. */
+/** Preço com 20% (o Stripe arredonda o desconto ao cêntimo): 1199 → 959, 499 → 399. */
 export function precoComDescontoCentimos(centimos: number) {
   const desconto = Math.round((centimos * INDICACAO_PERCENTAGEM) / 100);
   return centimos - desconto;
@@ -208,11 +216,11 @@ export const TEXTOS_INDICACAO = {
   titulo: "Indique a DoLado",
   mensagem: `${INDICACAO_PERCENTAGEM}% para si. ${INDICACAO_PERCENTAGEM}% para quem indicar.`,
   apoio: `Partilhe o seu link. Quem vier através dele recebe ${INDICACAO_PERCENTAGEM}% na primeira compra elegível e, depois de essa compra ser confirmada, recebe também ${INDICACAO_PERCENTAGEM}% na sua próxima compra ou mensalidade.`,
-  regras: `O desconto de quem chega pelo seu link aplica-se à primeira compra Avulso ou à primeira mensalidade da Proteção. Os seus descontos são válidos durante 12 meses e aplicam-se, um de cada vez, às compras Avulso e às renovações mensais da Proteção e do Caso + Proteção. Não se aplicam à adesão ao Caso + Proteção nem ao Caso Extra e não acumulam com códigos promocionais.`,
-  semConta: `Chegou através de um link de indicação. Para ativar os ${INDICACAO_PERCENTAGEM}% de desconto, crie conta ou inicie sessão antes do pagamento. Se continuar sem conta, o pagamento é feito sem o desconto de indicação.`,
+  regras: `O desconto de quem chega pelo seu link aplica-se à primeira compra Avulso ou à primeira mensalidade da Protecção. Os seus descontos são válidos durante 12 meses e aplicam-se, um de cada vez, às compras Avulso e às renovações mensais da Protecção e do Caso + Protecção. Não se aplicam à adesão ao Caso + Protecção nem ao Caso Extra e não acumulam com códigos promocionais.`,
+  semConta: `Chegou através de um link de indicação. Para activar os ${INDICACAO_PERCENTAGEM}% de desconto, crie conta ou inicie sessão antes do pagamento. Se continuar sem conta, o pagamento é feito sem o desconto de indicação.`,
   aposEnvio: `Conhece alguém que também precise da DoLado? Partilhe o seu link: ${INDICACAO_PERCENTAGEM}% para si e ${INDICACAO_PERCENTAGEM}% para quem indicar.`,
   resultadoPositivo: `Conseguimos ajudar. Conhece alguém que também esteja com um problema por resolver? Ofereça-lhe ${INDICACAO_PERCENTAGEM}% na DoLado e receba também ${INDICACAO_PERCENTAGEM}%.`,
-  casoProtecaoSemDesconto: "O Caso + Proteção não acumula com a promoção de indicação.",
+  casoProtecaoSemDesconto: "O Caso + Protecção não acumula com a promoção de indicação.",
   textoPartilha: `Experimente a DoLado: ajuda a resolver problemas com empresas de telecomunicações, energia, água e outras. Com este link tem ${INDICACAO_PERCENTAGEM}% na primeira compra elegível.`,
 } as const;
 

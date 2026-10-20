@@ -113,7 +113,7 @@ export function proximaAcao(c: CasoTriagem): ProximaAcao {
       descricao:
         novas > 0
           ? `Chegou ${novas === 1 ? "uma comunicação" : `${novas} comunicações`} depois do encerramento. Para a analisar, retome o caso (corrigir o estado).`
-          : "Acompanhamento terminado; o cliente recebeu o dossiê e a informação sobre as entidades RAL. Sem novas ações (para retomar, corrigir o estado).",
+          : "Acompanhamento terminado; o cliente recebeu o dossiê e a informação sobre as entidades RAL. Sem novas acções (para retomar, corrigir o estado).",
       tom: "neutro",
       interna: false,
       aguarda: null,
@@ -261,6 +261,9 @@ export type Prazo = {
   nivel: NivelPrazo;
 };
 
+/** 1.ª resposta ao cliente: 2 dias úteis, contados em horas úteis (9h-18h, diasUteis.ts). */
+export const HORAS_PRIMEIRA_RESPOSTA = 18;
+
 function diasCorridosAte(data: string, hoje: Date) {
   const inicio = new Date(hoje);
   inicio.setHours(0, 0, 0, 0);
@@ -269,7 +272,8 @@ function diasCorridosAte(data: string, hoje: Date) {
 }
 
 /**
- * Prazos de um caso em curso: 1.ª resposta ao cliente (48 horas úteis),
+ * Prazos de um caso em curso: 1.ª resposta ao cliente (2 dias úteis = 18
+ * horas úteis, janelas de 9h-18h; desde 17/10/2026, antes 48 horas úteis),
  * resposta da empresa (15 dias úteis desde o envio) e fim da fidelização
  * (urgente a 15 dias). Casos resolvidos ou bloqueados não têm prazos.
  */
@@ -282,8 +286,11 @@ export function prazosCaso(c: CasoTriagem, hoje: Date = new Date()): Prazo[] {
     prazos.push({
       tipo: "primeira_resposta",
       rotulo: "1.ª resposta",
-      detalhe: horas >= 48 ? `${Math.floor(horas)}h úteis (prazo de 48h ultrapassado)` : `${Math.floor(horas)}h úteis de 48h`,
-      nivel: horas >= 48 ? "vencido" : horas >= 36 ? "proximo" : "ok",
+      detalhe:
+        horas >= HORAS_PRIMEIRA_RESPOSTA
+          ? `${Math.floor(horas)}h úteis (prazo de 2 dias úteis ultrapassado)`
+          : `${Math.floor(horas)}h úteis de ${HORAS_PRIMEIRA_RESPOSTA}h (2 dias úteis)`,
+      nivel: horas >= HORAS_PRIMEIRA_RESPOSTA ? "vencido" : horas >= HORAS_PRIMEIRA_RESPOSTA * 0.75 ? "proximo" : "ok",
     });
   }
 
@@ -344,7 +351,7 @@ export function prioridade(c: CasoTriagem, hoje: Date = new Date()): number {
 
 /** Vistas da lista de casos. */
 export const VISTAS_CASOS = {
-  acao: "Precisam de ação",
+  acao: "Precisam de acção",
   espera: "À espera de terceiros",
   concluidos: "Concluídos",
   todos: "Todos",

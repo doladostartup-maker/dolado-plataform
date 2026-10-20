@@ -7,6 +7,12 @@ import { criarContratoParaDocumento, definirCampoAdmin, marcarDocumento, reproce
 import { AlterarTipoDocumento } from "../_components/AlterarTipoDocumento";
 import { ROTULO_TIPO_DOCUMENTO, sugestaoTipoDocumento } from "@/lib/monitor/tipoDocumento";
 import type { TomBackoffice } from "@/lib/backoffice/triagem";
+import {
+  ROTULO_SITUACAO_ADMIN,
+  SITUACOES_ADMIN_COM_ACAO,
+  TOM_SITUACAO_ADMIN,
+  situacaoDocumentoAdmin,
+} from "@/lib/monitor/processamento";
 import { CabecalhoPagina } from "@/components/backoffice/Cabecalho";
 import { Dado, Historico, ListaDados, Seccao } from "@/components/backoffice/Blocos";
 import { BotaoSubmeter } from "@/components/backoffice/BotaoSubmeter";
@@ -25,23 +31,35 @@ import {
 const MOTIVO: Record<string, string> = {
   api_nao_configurada: "A ANTHROPIC_API_KEY não está configurada no servidor (Clever Cloud). O documento fica pendente até haver chave.",
   erro_api: "A Claude API respondeu com erro. Verifique a chave e o modelo (ANTHROPIC_DOCUMENT_MODEL) no Clever Cloud.",
-  orcamento_atingido: "O orçamento da Claude API (ANTHROPIC_ORCAMENTO_USD) foi atingido. Aumente o teto para continuar a ler documentos automaticamente.",
+  orcamento_atingido: "O orçamento da Claude API (ANTHROPIC_ORCAMENTO_USD) foi atingido. Aumente o tecto para continuar a ler documentos automaticamente.",
   ficheiro_nao_encontrado: "O ficheiro não foi encontrado no Storage.",
   formato_nao_lido: "Este formato não é lido automaticamente.",
   recusa: "A Claude API recusou ler o documento.",
   resposta_invalida: "A leitura não devolveu um resultado válido.",
   validacao: "Os dados lidos não passaram a validação.",
-  nao_e_fatura: "A leitura indica que o documento não é uma fatura.",
+  nao_e_fatura: "A leitura indica que o documento não é uma factura.",
   nao_e_contrato: "A leitura indica que o documento não é um contrato.",
   erro_inesperado: "Erro inesperado no processamento.",
 };
 
+// Documentos que já não pedem nada à DoLado (os restantes seguem a situação
+// de situacaoDocumentoAdmin: em leitura, falhou, parada, por processar, por rever).
 const ESTADO_DOC: Record<string, { rotulo: string; tom: TomBackoffice }> = {
-  pendente: { rotulo: "Por processar", tom: "aviso" },
-  a_rever: { rotulo: "Por rever", tom: "acao" },
   processado: { rotulo: "Lido", tom: "sucesso" },
   ilegivel: { rotulo: "Ilegível", tom: "erro" },
 };
+
+function situacaoAgora(doc: { estado: string; etapa: string | null; etapa_atualizada_em: string | null }) {
+  return situacaoDocumentoAdmin(doc, Date.now());
+}
+
+function rotuloResultado(resultado: string) {
+  if (resultado === "processado") return "Documento lido.";
+  if (resultado === "em_leitura") return "A leitura automática deste documento ainda está a decorrer. Tente de novo daqui a alguns minutos.";
+  if (resultado === "repetido") return "Documento repetido: o ficheiro foi apagado e não é lido de novo.";
+  if (resultado === "ilegivel") return "Documento marcado como ilegível.";
+  return `O documento ficou ${resultado === "pendente" ? "pendente" : "por rever"}.`;
+}
 
 function dataHora(iso: string) {
   return new Date(iso).toLocaleString("pt-PT", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Lisbon" });
@@ -84,14 +102,23 @@ export default async function DocumentoMonitorPage({
   const sugestao = sugestaoTipoDocumento(doc, extracoes ?? []);
   const rotuloTipo = (t: string) => ROTULO_TIPO_DOCUMENTO[t] ?? t;
 
-  const estadoDoc = ESTADO_DOC[doc.estado] ?? { rotulo: doc.estado, tom: "neutro" as TomBackoffice };
-  const porTratar = doc.estado === "pendente" || doc.estado === "a_rever";
+  const situacao = situacaoAgora(doc);
+  const repetido = doc.etapa === "repetido";
+  const estadoDoc = situacao
+    ? { rotulo: ROTULO_SITUACAO_ADMIN[situacao], tom: TOM_SITUACAO_ADMIN[situacao] }
+    : repetido
+      ? { rotulo: "Repetido", tom: "neutro" as TomBackoffice }
+      : (ESTADO_DOC[doc.estado] ?? { rotulo: doc.estado, tom: "neutro" as TomBackoffice });
+  const porTratar = situacao !== null && SITUACOES_ADMIN_COM_ACAO.includes(situacao);
+  // Um repetido já não tem ficheiro; um documento em leitura automática não
+  // se lê duas vezes ao mesmo tempo.
+  const podeAgir = !repetido && situacao !== "em_leitura";
 
   return (
     <div className="flex flex-col gap-5">
       <CabecalhoPagina
         voltar={{ href: "/backoffice/monitor", texto: "Documentos por tratar" }}
-        contexto="Proteção · documento"
+        contexto="Protecção · documento"
         titulo={`${rotuloTipo(doc.tipo)} carregad${doc.tipo === "fatura" ? "a" : "o"}`}
         estado={<Etiqueta tom={estadoDoc.tom}>{estadoDoc.rotulo}</Etiqueta>}
         meta={
@@ -103,8 +130,8 @@ export default async function DocumentoMonitorPage({
 
       {query.resultado && (
         <Aviso
-          tom={query.resultado === "processado" ? "sucesso" : "atencao"}
-          titulo={query.resultado === "processado" ? "Documento lido." : `O documento ficou ${query.resultado === "pendente" ? "pendente" : "por rever"}.`}
+          tom={query.resultado === "processado" ? "sucesso" : query.resultado === "repetido" || query.resultado === "em_leitura" ? "info" : "atencao"}
+          titulo={rotuloResultado(query.resultado)}
         >
           {query.motivo && <p>{MOTIVO[query.motivo] ?? query.motivo}</p>}
           {query.detalhe && <p className="mt-1 break-words text-[12.5px]">{MOTIVO[query.detalhe] ?? query.detalhe}</p>}
@@ -128,27 +155,40 @@ export default async function DocumentoMonitorPage({
                 Sugestão da leitura automática. O tipo só muda se o alterar abaixo.
               </Aviso>
             )}
-            <div className="flex flex-wrap gap-2">
-              <form action={marcarDocumento}>
-                <input type="hidden" name="documento_id" value={doc.id} />
-                <input type="hidden" name="estado" value="processado" />
-                <BotaoSubmeter className={porTratar ? BOTAO_PRIMARIO : BOTAO_SECUNDARIO}>Marcar como revisto</BotaoSubmeter>
-              </form>
-              <form action={reprocessarDocumento}>
-                <input type="hidden" name="documento_id" value={doc.id} />
-                <BotaoSubmeter className={BOTAO_SECUNDARIO} aDecorrer="A ler… pode demorar até um minuto">
-                  Ler de novo
-                </BotaoSubmeter>
-              </form>
-              <form action={marcarDocumento}>
-                <input type="hidden" name="documento_id" value={doc.id} />
-                <input type="hidden" name="estado" value="ilegivel" />
-                <BotaoSubmeter className={BOTAO_TERCIARIO}>Marcar como ilegível</BotaoSubmeter>
-              </form>
-            </div>
-            <div className="border-t border-[var(--v2-line)] pt-4">
-              <AlterarTipoDocumento documentoId={doc.id} tipoAtual={doc.tipo} sugerido={sugestao?.tipo ?? null} className={BOTAO_SECUNDARIO} inputClassName={CAMPO} />
-            </div>
+            {repetido ? (
+              <Aviso tom="info" titulo="Documento repetido.">
+                Este documento (ou a mesma factura) já estava registado. O ficheiro foi apagado e o documento não é lido de novo.
+              </Aviso>
+            ) : situacao === "em_leitura" ? (
+              <Aviso tom="info" titulo="Leitura automática a decorrer.">
+                Volte a esta página daqui a alguns minutos. Se a leitura parar, o documento aparece como «Leitura parada».
+              </Aviso>
+            ) : null}
+            {podeAgir && (
+              <>
+                <div className="flex flex-wrap gap-2">
+                  <form action={marcarDocumento}>
+                    <input type="hidden" name="documento_id" value={doc.id} />
+                    <input type="hidden" name="estado" value="processado" />
+                    <BotaoSubmeter className={porTratar ? BOTAO_PRIMARIO : BOTAO_SECUNDARIO}>Marcar como revisto</BotaoSubmeter>
+                  </form>
+                  <form action={reprocessarDocumento}>
+                    <input type="hidden" name="documento_id" value={doc.id} />
+                    <BotaoSubmeter className={BOTAO_SECUNDARIO} aDecorrer="A ler… pode demorar até um minuto">
+                      Ler de novo
+                    </BotaoSubmeter>
+                  </form>
+                  <form action={marcarDocumento}>
+                    <input type="hidden" name="documento_id" value={doc.id} />
+                    <input type="hidden" name="estado" value="ilegivel" />
+                    <BotaoSubmeter className={BOTAO_TERCIARIO}>Marcar como ilegível</BotaoSubmeter>
+                  </form>
+                </div>
+                <div className="border-t border-[var(--v2-line)] pt-4">
+                  <AlterarTipoDocumento documentoId={doc.id} tipoAtual={doc.tipo} sugerido={sugestao?.tipo ?? null} className={BOTAO_SECUNDARIO} inputClassName={CAMPO} />
+                </div>
+              </>
+            )}
           </Seccao>
 
           {!contrato && (
@@ -156,7 +196,7 @@ export default async function DocumentoMonitorPage({
               <form action={criarContratoParaDocumento} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
                 <input type="hidden" name="documento_id" value={doc.id} />
                 <label className={ROTULO}>
-                  Setor
+                  Sector
                   <select name="setor" className={CAMPO} defaultValue="telecomunicacoes">
                     {SETORES_CONTRATO.map((s) => (
                       <option key={s} value={s}>
@@ -175,7 +215,7 @@ export default async function DocumentoMonitorPage({
           )}
 
           {contrato && (
-            <Seccao titulo="Valores do serviço" descricao="Valores atuais, propostos e em conflito, com a origem de cada um.">
+            <Seccao titulo="Valores do serviço" descricao="Valores actuais, propostos e em conflito, com a origem de cada um.">
               {(campos ?? []).length === 0 ? (
                 <p className="text-[14px] text-[var(--v2-muted)]">Sem valores registados.</p>
               ) : (
@@ -215,7 +255,7 @@ export default async function DocumentoMonitorPage({
                   <BotaoSubmeter className={BOTAO_SECUNDARIO}>Definir valor</BotaoSubmeter>
                 </div>
                 <p className={AJUDA_CAMPO}>
-                  Um valor definido aqui passa a ser o atual e fica marcado como corrigido pela DoLado. Não use para concluir sobre o cumprimento da lei ou do
+                  Um valor definido aqui passa a ser o actual e fica marcado como corrigido pela DoLado. Não use para concluir sobre o cumprimento da lei ou do
                   contrato.
                 </p>
               </form>
@@ -277,7 +317,7 @@ export default async function DocumentoMonitorPage({
                   quando: dataHora(a.created_at),
                   ator: revisor.get(a.alterado_por) ?? a.alterado_por,
                   titulo: `${rotuloTipo(a.tipo_anterior)} → ${rotuloTipo(a.tipo_novo)}`,
-                  detalhe: `${a.leituras_invalidadas} leitura(s) posta(s) de parte${a.fatura_removida ? " · fatura registada retirada" : ""}${
+                  detalhe: `${a.leituras_invalidadas} leitura(s) posta(s) de parte${a.fatura_removida ? " · factura registada retirada" : ""}${
                     a.valores_retirados ? ` · ${a.valores_retirados} valor(es) retirado(s)` : ""
                   }`,
                 }))}

@@ -10,7 +10,18 @@
 // (ex.: subcategorias, palavras-chave, datas dos factos), basta outra função
 // com a mesma assinatura (SeletorRegras) — o resto do fluxo não muda.
 
-import { isServicoPublicoEssencial, SETORES } from "../pedidoCaso.ts";
+import {
+  ehCasoAutoconsumo,
+  isServicoPublicoEssencial,
+  lerDetalhesCaso,
+  PROBLEMA_CONTRATO_NAO_ACEITE,
+  PROBLEMA_FACTURA_ACERTO,
+  PROBLEMAS_AUTOCONSUMO,
+  SETORES,
+  type DetalhesCaso,
+} from "../pedidoCaso.ts";
+import { categoriasAutoconsumo, CATEGORIAS_SO_AUTOCONSUMO, CATEGORIA_DANOS, selecionarRegrasAutoconsumo } from "./perfilAutoconsumo.ts";
+import { categoriasEnergia, selecionarRegrasEnergia, usaPerfilEnergia } from "./perfilEnergia.ts";
 
 export type RegraJuridica = {
   id: string;
@@ -44,13 +55,35 @@ export type RegraEnviada = {
 
 export type CasoParaSelecao = {
   setor: string | null;
+  /** Tipo de problema do caso (casos.problema_tipo). */
   categoria: string | null;
+  /**
+   * Respostas adicionais (painéis solares; forma de contratação na
+   * contratação de Energia/Gás); sem elas, "não sei".
+   */
+  detalhes?: Partial<DetalhesCaso> | null;
 };
 
 export type SeletorRegras = (caso: CasoParaSelecao, regras: RegraJuridica[], dataReferencia: string) => RegraJuridica[];
 
 /** Máximo de regras por pedido (mantém o contexto curto e focado). */
 export const MAX_REGRAS_POR_PEDIDO = 12;
+
+/**
+ * Energia + "Corte ou falha de serviço" (20/10/2026): o tipo junta duas
+ * situações com regras diferentes — o corte por falta de pagamento
+ * (Suspensão) e a falha do fornecimento (Qualidade de serviço: continuidade,
+ * compensações, avarias, danos). Com 12, as regras da continuidade e dos
+ * danos tirariam o lugar às de corte já enviadas. 18, como o perfil de
+ * Autoconsumo. Ver docs/legal/auditoria-interrupcoes-electricidade-2026-10-20.md.
+ */
+export const MAX_REGRAS_CORTE_FALHA_ENERGIA = 18;
+
+export function limiteRegras(caso: Pick<CasoParaSelecao, "setor" | "categoria">) {
+  return caso.setor === "Energia" && (caso.categoria ?? "").trim() === "Corte ou falha de serviço"
+    ? MAX_REGRAS_CORTE_FALHA_ENERGIA
+    : MAX_REGRAS_POR_PEDIDO;
+}
 
 function normalizar(v: string | null | undefined) {
   return (v ?? "")
@@ -91,6 +124,14 @@ export const CATEGORIAS_POR_PROBLEMA: Record<string, string[]> = {
   "Garantia recusada": ["Garantia", "Conformidade"],
   "Cobrança após cancelamento": ["Cancelamento", "Cobrança", "Pagamento"],
   "Serviço diferente do contratado": ["Contrato", "Alteração contratual", "Qualidade do serviço"],
+  // Energia e Gás (20/10/2026): estes dois tipos só existem nesses setores e
+  // usam o perfil próprio (perfilEnergia.ts, com prioridades) — aqui só as
+  // categorias, para o formulário do backoffice.
+  [PROBLEMA_FACTURA_ACERTO]: categoriasEnergia(PROBLEMA_FACTURA_ACERTO),
+  [PROBLEMA_CONTRATO_NAO_ACEITE]: categoriasEnergia(PROBLEMA_CONTRATO_NAO_ACEITE),
+  // Energia → Autoconsumo (13/10/2026): só informativo — estes tipos usam o
+  // perfil próprio (perfilAutoconsumo.ts), com prioridades e condições.
+  ...Object.fromEntries(PROBLEMAS_AUTOCONSUMO.map((p) => [p, categoriasAutoconsumo(p)])),
 };
 
 /** Categorias sempre enviadas, além das do tipo de problema. */
@@ -98,7 +139,7 @@ export const CATEGORIAS_SEMPRE = ["Reclamação", "Resolução de conflitos", "P
 
 /** Categorias usadas pelas regras (formulário do backoffice). */
 export const CATEGORIAS_REGRAS: readonly string[] = [
-  ...new Set([...Object.values(CATEGORIAS_POR_PROBLEMA).flat(), ...CATEGORIAS_SEMPRE]),
+  ...new Set([...Object.values(CATEGORIAS_POR_PROBLEMA).flat(), ...CATEGORIAS_SEMPRE, ...CATEGORIAS_SO_AUTOCONSUMO, CATEGORIA_DANOS]),
 ].sort((a, b) => a.localeCompare(b, "pt"));
 
 // Lei n.º 23/96 (serviços públicos essenciais): identificada pelo diploma da
@@ -118,14 +159,31 @@ export function regraAplicavelAoSetor(regra: Pick<RegraJuridica, "codigo" | "dip
   return true;
 }
 
+// Categorias que só o perfil de Autoconsumo envia (UPAC, CAER, crédito
+// coligado): dependem de respostas que só esses casos têm.
+const SO_PERFIL = new Set(CATEGORIAS_SO_AUTOCONSUMO.map(normalizar));
+
 /**
  * Regras ativas, revistas e em vigor, do setor do caso (ou gerais), das
  * categorias do tipo de problema e das categorias sempre enviadas. Ordem:
  * do setor antes das gerais; do tipo de problema antes das sempre enviadas;
- * no máximo MAX_REGRAS_POR_PEDIDO.
+ * no máximo limiteRegras(caso). Casos de painéis solares (Energia →
+ * Autoconsumo) seguem o perfil próprio (selecionarRegrasAutoconsumo).
  */
 export const selecionarRegras: SeletorRegras = (caso, regras, dataReferencia) => {
   const problema = (caso.categoria ?? "").trim();
+  if (ehCasoAutoconsumo(caso.setor, problema)) {
+    return selecionarRegrasAutoconsumo(problema, lerDetalhesCaso(caso.detalhes), regras.filter((r) => regraEmVigor(r, dataReferencia)));
+  }
+  // Energia e Gás (fornecimento): prioridades por tipo de problema antes do
+  // limite (perfilEnergia.ts), com a mesma filtragem do critério geral.
+  if (usaPerfilEnergia(caso.setor, problema)) {
+    const candidatas = regras
+      .filter((r) => regraEmVigor(r, dataReferencia))
+      .filter((r) => regraAplicavelAoSetor(r, caso.setor))
+      .filter((r) => !SO_PERFIL.has(normalizar(r.categoria)));
+    return selecionarRegrasEnergia(problema, caso.detalhes ?? null, candidatas, CATEGORIAS_SEMPRE);
+  }
   const doProblema = CATEGORIAS_POR_PROBLEMA[problema];
   // Uma regra com a categoria igual ao próprio tipo de problema também conta.
   const categorias = doProblema ? new Set([...doProblema, problema].map(normalizar)) : null;
@@ -133,6 +191,7 @@ export const selecionarRegras: SeletorRegras = (caso, regras, dataReferencia) =>
   return regras
     .filter((r) => regraEmVigor(r, dataReferencia))
     .filter((r) => regraAplicavelAoSetor(r, caso.setor))
+    .filter((r) => !SO_PERFIL.has(normalizar(r.categoria)))
     .map((r) => {
       const cat = normalizar(r.categoria);
       const relevante = !r.categoria ? 1 : categorias === null || categorias.has(cat) ? 1 : sempre.has(cat) ? 0 : -1;
@@ -140,7 +199,7 @@ export const selecionarRegras: SeletorRegras = (caso, regras, dataReferencia) =>
     })
     .filter(({ relevante }) => relevante >= 0)
     .sort((a, b) => b.especificidade - a.especificidade || a.r.codigo.localeCompare(b.r.codigo))
-    .slice(0, MAX_REGRAS_POR_PEDIDO)
+    .slice(0, limiteRegras(caso))
     .map(({ r }) => r);
 };
 
@@ -207,6 +266,6 @@ export function lerRegraDoFormulario(ler: (campo: string) => unknown): { ok: tru
   if (dados.em_vigor_desde && dados.revogada_em && dados.revogada_em <= dados.em_vigor_desde) {
     return { ok: false, erro: "A data de revogação tem de ser posterior à entrada em vigor." };
   }
-  if (dados.ativa && !dados.revista_em) return { ok: false, erro: "Uma regra só pode ficar ativa com a data da última revisão." };
+  if (dados.ativa && !dados.revista_em) return { ok: false, erro: "Uma regra só pode ficar activa com a data da última revisão." };
   return { ok: true, dados };
 }

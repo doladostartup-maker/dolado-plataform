@@ -5,10 +5,10 @@
 //   caso mensal  — incluído no Caso + Proteção: 1 por ciclo pago, acumula
 //                  até 4 (case_credits - avulso_credits). Congela 90 dias no
 //                  fim da subscrição.
-//   Caso Extra   — compra única (11,99 €) só para subscritores do Caso +
+//   Caso Extra   — compra única (9,59 €) só para subscritores do Caso +
 //                  Proteção sem casos disponíveis. Não muda o plano nem a
 //                  subscrição; não congela; não conta para o limite de 4.
-//   Avulso       — compra única (14,99 €) para quem não tem subscrição.
+//   Avulso       — compra única (11,99 €) para quem não tem subscrição.
 //                  Pode ser convertido na 1.ª mensalidade (o Caso Extra não).
 // Ordem de consumo (consumir_credito_caso): primeiro os casos mensais;
 // depois a compra única mais antiga (Avulso ou Caso Extra). Um pedido pago
@@ -19,6 +19,7 @@
 // nunca com o que o browser envia.
 
 import { estadoComAcesso, type Acesso } from "./acesso.ts";
+import { mesesComMaiuscula } from "../i18n/formatar.ts";
 
 /** Só uma subscrição em dia dá o benefício (past_due mantém o acesso, mas não o desconto). */
 const ESTADOS_COM_BENEFICIO: ReadonlySet<string> = new Set(["active", "trialing"]);
@@ -103,10 +104,12 @@ export function casosAcumulados(c: Pick<CasosDoMes, "casosSubscricao">) {
 
 /** 2026-11-05T… → "5 de novembro de 2026" (hora de Lisboa). */
 export function dataCasoExtra(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-PT", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "Europe/Lisbon",
-  });
+  return mesesComMaiuscula(
+    new Date(iso).toLocaleDateString("pt-PT", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "Europe/Lisbon",
+    }),
+  );
 }

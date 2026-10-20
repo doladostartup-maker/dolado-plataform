@@ -1,8 +1,14 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/i18n/Link";
 import type { ReactNode } from "react";
-import { CATEGORIAS_PERGUNTAS } from "@/components/landing/conteudoPerguntasFrequentes";
+import { categoriasPerguntas } from "@/components/landing/conteudoPerguntasFrequentes";
+import { useCaminho, useIdioma } from "@/i18n/cliente";
+import { rico } from "@/i18n/Rico";
+import { tPaginas } from "@/i18n/mensagens/paginas";
+import { tWhatsApp } from "@/i18n/mensagens/whatsapp";
+import { precoNoIdioma, tPlanos } from "@/i18n/mensagens/planos";
+import { ApoioWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
 import { CTASection } from "@/components/marketing-v2/CTASection";
 import { FAQAccordionV2 } from "@/components/marketing-v2/FAQAccordionV2";
 import { IconeCalendario, IconeDocumentoVisto, IconeEscudo, IconeSeta } from "@/components/marketing-v2/Icones";
@@ -11,8 +17,12 @@ import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/Sec
 import { BOTAO_CONTORNO, BOTAO_PRIMARIO, TEXTO } from "@/components/marketing-v2/estilos";
 import { track } from "@/lib/analytics";
 import { PRAZO_LIVRE_RESOLUCAO_DIAS, ROTAS_LEGAIS } from "@/lib/legal";
-import { IVA_INCLUIDO, PLANOS, formatarPreco, type PlanoId } from "@/lib/planos";
-import { CONTEUDO_PLANOS, NOTA_CONVERSAO_AVULSO, destinoPlano } from "@/lib/precario";
+import { DIAS_CASOS_GUARDADOS } from "@/lib/acesso";
+import { CASO_EXTRA, LIMITE_CASOS_ACUMULADOS, PLANOS, type PlanoId } from "@/lib/planos";
+import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
+import { destinoPlano } from "@/lib/precario";
+import { urlExperimentarProtecao } from "@/lib/site";
+import { tProtecaoGratuita } from "@/i18n/mensagens/protecaoGratuita";
 
 // Preçário no Design System V2 (/precario): organizado pela necessidade do
 // cliente (secção 35 de docs/design/design-system-v2.md), não por plano.
@@ -20,45 +30,11 @@ import { CONTEUDO_PLANOS, NOTA_CONVERSAO_AVULSO, destinoPlano } from "@/lib/prec
 // destino dos botões, de src/lib/precario.ts (os mesmos do preçário da
 // homepage). Nenhuma regra de compra muda aqui.
 
-const NECESSIDADES: { plano: PlanoId; necessidade: string; cta: string; destaque?: boolean }[] = [
-  { plano: "avulso", necessidade: "Tenho um problema agora.", cta: "Tratar do meu caso" },
-  {
-    plano: "caso_protecao",
-    necessidade: "Tenho um problema e quero continuar protegido.",
-    cta: "Escolher Caso + Proteção",
-    destaque: true,
-  },
-  { plano: "protecao", necessidade: "Não tenho um problema agora, mas quero acompanhamento.", cta: "Aderir à Proteção" },
-];
-
-const ANTES_DE_DECIDIR: { icone: ReactNode; titulo: string; texto: ReactNode }[] = [
-  {
-    icone: <IconeDocumentoVisto tamanho={28} strokeWidth={1.6} />,
-    titulo: "Revê antes do envio",
-    texto: "Nada é enviado em seu nome sem que reveja o texto preparado e autorize o envio.",
-  },
-  {
-    icone: <IconeCalendario tamanho={28} strokeWidth={1.6} />,
-    titulo: "Cancela quando quiser",
-    texto:
-      "Pode cancelar a subscrição a qualquer momento na sua área de cliente. O serviço mantém-se até ao fim do período já pago.",
-  },
-  {
-    icone: <IconeEscudo tamanho={28} strokeWidth={1.6} />,
-    titulo: "Livre resolução",
-    texto: (
-      <>
-        Nos casos legalmente aplicáveis, dispõe de {PRAZO_LIVRE_RESOLUCAO_DIAS} dias para exercer o direito de
-        livre resolução.{" "}
-        <Link prefetch={false}
-          href={ROTAS_LEGAIS.livreResolucao}
-          className="font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
-        >
-          Saber mais
-        </Link>
-      </>
-    ),
-  },
+// Textos: src/i18n/mensagens/*/paginas.ts ("precario") e */planos.ts.
+const NECESSIDADES: { plano: PlanoId; destaque?: boolean }[] = [
+  { plano: "avulso" },
+  { plano: "caso_protecao", destaque: true },
+  { plano: "protecao" },
 ];
 
 // Perguntas já publicadas em /perguntas-frequentes (mesmas respostas).
@@ -69,14 +45,65 @@ const IDS_PERGUNTAS = [
   "cancelar-protecao",
   "livre-resolucao",
 ];
-const PERGUNTAS = (CATEGORIAS_PERGUNTAS.find((c) => c.id === "planos")?.perguntas ?? []).filter((p) =>
-  IDS_PERGUNTAS.includes(p.id),
-);
 
-export function PrecarioV2() {
+/** `protecaoGratuita`: oferta dos 30 dias ligada (PROTECAO_GRATUITA_ATIVA, lido no build). */
+export function PrecarioV2({ protecaoGratuita = false }: { protecaoGratuita?: boolean }) {
+  const idioma = useIdioma();
+  const c = useCaminho();
+  const t = tPaginas[idioma].precario;
+  const tp = tPlanos[idioma];
+  const tg = tProtecaoGratuita[idioma].precario;
+  const idsPerguntas = protecaoGratuita ? ["fim-protecao-gratuita", ...IDS_PERGUNTAS] : IDS_PERGUNTAS;
+  const PERGUNTAS = (categoriasPerguntas(idioma, { protecaoGratuita }).find((cat) => cat.id === "planos")?.perguntas ?? []).filter((p) =>
+    idsPerguntas.includes(p.id),
+  );
+  const ANTES_DE_DECIDIR: { icone: ReactNode; titulo: string; texto: ReactNode }[] = [
+    { icone: <IconeDocumentoVisto tamanho={28} strokeWidth={1.6} />, ...t.antesDeDecidir.reve },
+    { icone: <IconeCalendario tamanho={28} strokeWidth={1.6} />, ...t.antesDeDecidir.cancela },
+    {
+      icone: <IconeEscudo tamanho={28} strokeWidth={1.6} />,
+      titulo: t.antesDeDecidir.livre.titulo,
+      texto: rico(t.antesDeDecidir.livre.texto(PRAZO_LIVRE_RESOLUCAO_DIAS), {
+        saber: (conteudo) => (
+          <Link prefetch={false}
+            href={ROTAS_LEGAIS.livreResolucao}
+            className="font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
+          >
+            {conteudo}
+          </Link>
+        ),
+      }),
+    },
+  ];
+  const preco = (centimos: number) => precoNoIdioma(idioma, centimos);
+  const ci = t.condicoes.itens;
+  // Condições reais de compra (Termos, secções 8–10 e 14; src/lib/planos.ts).
+  const CONDICOES: { titulo: string; texto: string }[] = [
+    {
+      titulo: ci.casoOuSubscricao.titulo,
+      texto: ci.casoOuSubscricao.texto(preco(PLANOS.avulso.precoCentimos), tp.comUnidade(preco(PLANOS.caso_protecao.precoCentimos), true)),
+    },
+    ci.renovacao,
+    { titulo: ci.casoPorMes.titulo, texto: ci.casoPorMes.texto(LIMITE_CASOS_ACUMULADOS) },
+    { titulo: ci.fimSubscricao.titulo, texto: ci.fimSubscricao.texto(DIAS_CASOS_GUARDADOS) },
+    {
+      titulo: ci.casoExtra.titulo,
+      texto: ci.casoExtra.texto(preco(CASO_EXTRA.precoCentimos), preco(CASO_EXTRA.precoReferenciaCentimos), CASO_EXTRA.descontoPercentagem),
+    },
+    ...(protecaoGratuita
+      ? [{ titulo: tg.condicao.titulo, texto: tg.condicao.texto(preco(PLANOS.protecao.precoCentimos)) }]
+      : []),
+    {
+      titulo: ci.conversao.titulo,
+      texto: ci.conversao.texto(
+        preco(PLANOS.avulso.precoCentimos - PLANOS.protecao.precoCentimos),
+        preco(PLANOS.avulso.precoCentimos - PLANOS.caso_protecao.precoCentimos),
+      ),
+    },
+  ];
   const escolher = (plano: PlanoId) => {
     track(`click_precario_${plano}`, { pagina: "precario_v2" });
-    window.location.assign(destinoPlano(plano, "/precario"));
+    window.location.assign(c(destinoPlano(plano, "/precario")));
   };
 
   return (
@@ -84,40 +111,84 @@ export function PrecarioV2() {
       {/* ===== Necessidades e planos ===== */}
       <SectionV2 size="compact" className="lg:py-20">
         <div className="max-w-[720px]">
-          <Eyebrow>Preçário</Eyebrow>
+          <Eyebrow>{t.eyebrow}</Eyebrow>
           <h1 className="mt-5 text-[clamp(34px,4vw,52px)] font-extrabold leading-[1.06] tracking-[-0.035em] text-[var(--v2-navy)]">
-            De que tipo de ajuda precisa?
+            {t.titulo}
           </h1>
-          <p className={`${TEXTO} mt-5 text-[17.5px]`}>
-            Escolha conforme a sua situação: tratar um problema agora, tratar e continuar protegido, ou só
-            acompanhamento. Todos os preços têm {IVA_INCLUIDO}.
-          </p>
+          <p className={`${TEXTO} mt-5 text-[17.5px]`}>{t.texto(tp.ivaIncluido)}</p>
         </div>
 
         <div className={`mt-12 ${GRELHA_PLANOS}`}>
-          {NECESSIDADES.map(({ plano: id, necessidade, cta, destaque }) => {
+          {NECESSIDADES.map(({ plano: id, destaque }) => {
             const plano = PLANOS[id];
-            const conteudo = CONTEUDO_PLANOS[id];
+            const conteudo = tp.conteudo[id];
+            const { necessidade, cta } = t.necessidades[id];
+            // Proteção com a oferta dos 30 dias: 0 € no destaque, o preço normal
+            // logo a seguir e sem cartão / sem cobrança automática.
+            const gratis = protecaoGratuita && id === "protecao";
+            const precoNormal = precoNoIdioma(idioma, plano.precoCentimos);
             return (
               <PricingCard
                 key={id}
                 necessidade={necessidade}
-                nome={plano.nome}
-                preco={formatarPreco(plano.precoCentimos)}
-                unidade={plano.subscricao ? "/mês" : "/ caso"}
-                condicoes={plano.subscricao ? `Subscrição mensal · ${IVA_INCLUIDO}` : `Pagamento único · ${IVA_INCLUIDO}`}
+                nome={tp.nome[id]}
+                preco={gratis ? tg.preco : precoNormal}
+                unidade={gratis ? tg.unidade : plano.subscricao ? tp.unidadeMes : tp.unidadeCaso}
+                condicoes={
+                  gratis
+                    ? `${tg.depois(precoNormal)} · ${tp.ivaIncluido}`
+                    : `${plano.subscricao ? tp.condicoesSubscricao : tp.condicoesPagamentoUnico} · ${tp.ivaIncluido}`
+                }
+                selo={gratis ? tg.selo : undefined}
                 resumo={conteudo.resumo}
                 inclui={conteudo.inclui}
                 naoInclui={conteudo.naoInclui}
+                nota={
+                  id === "caso_protecao"
+                    ? tp.notaCasoExtra(precoNoIdioma(idioma, CASO_EXTRA.precoCentimos))
+                    : gratis
+                      ? tg.garantias.join(" · ")
+                      : undefined
+                }
                 destaque={destaque}
                 acao={
-                  <button
-                    type="button"
-                    onClick={() => escolher(id)}
-                    className={`${destaque ? BOTAO_PRIMARIO : BOTAO_CONTORNO} w-full`}
-                  >
-                    {cta} <IconeSeta tamanho={16} />
-                  </button>
+                  <>
+                    {gratis ? (
+                      <>
+                        <a
+                          href={c(urlExperimentarProtecao("precario"))}
+                          onClick={() => track("protecao_gratuita_clique", { local: "precario" })}
+                          className={`${BOTAO_CONTORNO} w-full`}
+                        >
+                          {tProtecaoGratuita[idioma].oferta.cta} <IconeSeta tamanho={16} />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => escolher(id)}
+                          className="mt-3 flex min-h-11 w-full items-center justify-center text-[14.5px] font-semibold text-[var(--v2-navy)] underline-offset-4 hover:underline"
+                        >
+                          {tg.subscreverJa(precoNormal)}
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => escolher(id)}
+                        className={`${destaque ? BOTAO_PRIMARIO : BOTAO_CONTORNO} w-full`}
+                      >
+                        {cta} <IconeSeta tamanho={16} />
+                      </button>
+                    )}
+                    {id === "protecao" && (
+                      <Link prefetch={false}
+                        href={ROTAS_V2.protecao}
+                        onClick={() => track("click_precario_saber_protecao")}
+                        className="mt-4 flex min-h-11 items-center justify-center gap-1.5 text-[14.5px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
+                      >
+                        {t.saberProtecao} <IconeSeta tamanho={15} />
+                      </Link>
+                    )}
+                  </>
                 }
               />
             );
@@ -125,14 +196,34 @@ export function PrecarioV2() {
         </div>
 
         <div className="mt-8 max-w-[760px] space-y-2 text-[14px] leading-relaxed text-[var(--v2-muted)]">
-          <p>{NOTA_CONVERSAO_AVULSO}</p>
-          <p>Preços de lançamento — sujeitos a alteração.</p>
+          <p>{t.precosLancamento}</p>
         </div>
+        <ApoioWhatsApp
+          className="mt-6"
+          pergunta={tWhatsApp[idioma].contextos.precario.pergunta}
+          mensagem={tWhatsApp[idioma].contextos.precario.mensagem}
+          pagina="/precario"
+          local="pricing"
+          contexto="planos"
+        />
+      </SectionV2>
+
+      {/* ===== Pagamentos e condições ===== */}
+      <SectionV2>
+        <SectionHeader eyebrow={t.condicoes.eyebrow} titulo={t.condicoes.titulo} />
+        <dl className="mt-10 grid gap-x-10 gap-y-8 md:grid-cols-2">
+          {CONDICOES.map((item) => (
+            <div key={item.titulo} className="border-t border-[var(--v2-line)] pt-5">
+              <dt className="text-[18px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{item.titulo}</dt>
+              <dd className="mt-2 text-[15.5px] leading-relaxed text-[var(--v2-muted)]">{item.texto}</dd>
+            </div>
+          ))}
+        </dl>
       </SectionV2>
 
       {/* ===== Antes de decidir ===== */}
       <SectionV2 tone="soft-blue">
-        <SectionHeader eyebrow="Antes de decidir" titulo="O que precisa de saber." />
+        <SectionHeader eyebrow={t.antesDeDecidir.eyebrow} titulo={t.antesDeDecidir.titulo} />
         <ul className="mt-10 grid gap-10 md:grid-cols-3 md:gap-8">
           {ANTES_DE_DECIDIR.map((item) => (
             <li key={item.titulo}>
@@ -147,12 +238,12 @@ export function PrecarioV2() {
       {/* ===== Perguntas ===== */}
       <SectionV2 className="grid gap-10 lg:grid-cols-[1fr_1.6fr] lg:gap-16">
         <div>
-          <SectionHeader eyebrow="Perguntas frequentes" titulo="Planos e pagamentos." />
+          <SectionHeader eyebrow={t.perguntas.eyebrow} titulo={t.perguntas.titulo} />
           <Link prefetch={false}
             href="/perguntas-frequentes"
             className="mt-6 inline-flex items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline"
           >
-            Ver todas as perguntas <IconeSeta tamanho={15} />
+            {t.perguntas.verTodas} <IconeSeta tamanho={15} />
           </Link>
         </div>
         <FAQAccordionV2 perguntas={PERGUNTAS} />
@@ -160,16 +251,16 @@ export function PrecarioV2() {
 
       {/* ===== CTA final ===== */}
       <CTASection
-        eyebrow="Ainda não sabe qual escolher?"
-        titulo="Veja primeiro se a DoLado pode ajudar."
-        texto="É gratuito, sem conta e sem e-mail."
+        eyebrow={t.ctaFinal.eyebrow}
+        titulo={t.ctaFinal.titulo}
+        texto={t.ctaFinal.texto}
         acao={
           <Link prefetch={false}
             href="/simulador-elegibilidade"
             onClick={() => track("click_precario_v2_simulador")}
             className={`${BOTAO_PRIMARIO} w-full md:w-auto`}
           >
-            Ver se a DoLado pode ajudar <IconeSeta tamanho={17} />
+            {t.ctaFinal.acao} <IconeSeta tamanho={17} />
           </Link>
         }
       />

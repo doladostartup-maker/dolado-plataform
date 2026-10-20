@@ -1,8 +1,13 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/i18n/Link";
+import { useCaminho, useIdioma } from "@/i18n/cliente";
+import { rico } from "@/i18n/Rico";
+import { tInstitucional } from "@/i18n/mensagens/institucional";
+import { tWhatsApp } from "@/i18n/mensagens/whatsapp";
 import { useActionState, useCallback, useState, type ReactNode } from "react";
 import { enviarContacto, type EstadoContacto } from "@/app/actions/contacto";
+import { IconeWhatsApp, LigacaoWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
 import { IconeDocumentoVisto, IconeEscudo, IconeFormulario, IconeSeta } from "@/components/marketing-v2/Icones";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
@@ -10,11 +15,13 @@ import { BOTAO_PRIMARIO, CAMPO, CARTAO, ROTULO_CAMPO, TEXTO } from "@/components
 import { detectarOrigem, track } from "@/lib/analytics";
 import { ROTAS_LEGAIS } from "@/lib/legal";
 import { CONTACTO_EMAIL, PRIVACIDADE_EMAIL, urlTratarCaso } from "@/lib/site";
+import { NUMERO_WHATSAPP } from "@/lib/whatsapp";
 
 // Contacto no Design System V2 (secção 39 de docs/design/design-system-v2.md):
 // caminhos claros e o mesmo formulário (enviarContacto, mesmos campos e
-// honeypot). O aviso "Este formulário não abre casos" mantém-se: os casos
-// abrem-se só pelo fluxo "Tratar o meu caso".
+// honeypot). Uma mensagem não abre um caso: os casos abrem-se só pelo
+// formulário passo a passo de "Tratar o meu caso" (explicado no aviso, com
+// ligação direta — revisão de 17/10/2026).
 
 const LINK = "font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline";
 
@@ -25,51 +32,72 @@ const ESTADO_INICIAL: EstadoContacto = { ok: false };
 export function ContactoV2() {
   const [origem] = useState(detectarOrigem);
   const [state, formAction, pending] = useActionState(enviarContacto, ESTADO_INICIAL);
+  const c = useCaminho();
+  const idioma = useIdioma();
+  const t = tInstitucional[idioma].contacto;
+  const tw = tWhatsApp[idioma].contextos.contacto;
+  const email = (endereco: string) =>
+    function LigacaoEmail() {
+      return (
+        <a href={`mailto:${endereco}`} className={LINK}>
+          {endereco}
+        </a>
+      );
+    };
+  const comEmail = (texto: string, endereco: string, extra = {}) =>
+    rico(texto, { email: email(endereco), ...extra });
 
   const tratarCaso = useCallback(() => {
     track("click_contacto_tratar_caso");
-    window.location.assign(urlTratarCaso(origem));
-  }, [origem]);
+    window.location.assign(c(urlTratarCaso(origem)));
+  }, [origem, c]);
 
   const CAMINHOS: Caminho[] = [
     {
       icone: <IconeFormulario tamanho={28} strokeWidth={1.6} />,
-      titulo: "Tem um problema com uma empresa?",
-      texto: "Os casos abrem-se só pelo fluxo guiado: conte-nos o que aconteceu, passo a passo.",
+      titulo: t.caminhos.caso.titulo,
+      texto: t.caminhos.caso.texto,
       acao: (
         <button type="button" onClick={tratarCaso} className={`${LINK} inline-flex items-center gap-1.5`}>
-          Tratar do meu caso <IconeSeta tamanho={15} />
+          {t.caminhos.caso.acao} <IconeSeta tamanho={15} />
         </button>
       ),
     },
     {
       icone: <IconeDocumentoVisto tamanho={28} strokeWidth={1.6} />,
-      titulo: "Já tem um caso aberto?",
-      texto: "Acompanhe o estado, o texto da reclamação e os comprovativos na sua área de cliente.",
+      titulo: t.caminhos.casoAberto.titulo,
+      texto: t.caminhos.casoAberto.texto,
       acao: (
-        <a href={ROTAS_V2.entrar} className={`${LINK} inline-flex items-center gap-1.5`}>
-          Iniciar sessão <IconeSeta tamanho={15} />
+        <a href={c(ROTAS_V2.entrar)} className={`${LINK} inline-flex items-center gap-1.5`}>
+          {t.caminhos.casoAberto.acao} <IconeSeta tamanho={15} />
         </a>
       ),
     },
     {
       icone: <IconeEscudo tamanho={28} strokeWidth={1.6} />,
-      titulo: "Privacidade e dados pessoais",
-      texto: (
-        <>
-          Para exercer os seus direitos sobre os dados pessoais, escreva para{" "}
-          <a href={`mailto:${PRIVACIDADE_EMAIL}`} className={LINK}>
-            {PRIVACIDADE_EMAIL}
-          </a>
-          .
-        </>
-      ),
+      titulo: t.caminhos.privacidade.titulo,
+      texto: comEmail(t.caminhos.privacidade.texto, PRIVACIDADE_EMAIL),
       acao: (
         <Link prefetch={false} href={ROTAS_LEGAIS.privacidade} className={`${LINK} inline-flex items-center gap-1.5`}>
-          Política de Privacidade <IconeSeta tamanho={15} />
+          {t.caminhos.privacidade.acao} <IconeSeta tamanho={15} />
         </Link>
       ),
     },
+    // WhatsApp: canal secundário, só por mensagem (src/lib/whatsapp.ts).
+    ...(NUMERO_WHATSAPP
+      ? [
+          {
+            icone: <IconeWhatsApp tamanho={28} strokeWidth={1.6} />,
+            titulo: tw.titulo,
+            texto: tw.texto,
+            acao: (
+              <LigacaoWhatsApp mensagem={tw.mensagem} pagina="/contacto" local="contact" contexto="caminhos" className={`${LINK} inline-flex items-center gap-1.5`}>
+                {tw.acao} <IconeSeta tamanho={15} />
+              </LigacaoWhatsApp>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -77,24 +105,18 @@ export function ContactoV2() {
       {/* ===== Hero ===== */}
       <SectionV2 size="compact" className="lg:py-20">
         <div className="max-w-[720px]">
-          <Eyebrow>Contacto</Eyebrow>
+          <Eyebrow>{t.eyebrow}</Eyebrow>
           <h1 className="mt-5 text-[clamp(34px,4vw,52px)] font-extrabold leading-[1.06] tracking-[-0.035em] text-[var(--v2-navy)]">
-            Fale connosco.
+            {t.titulo}
           </h1>
-          <p className={`${TEXTO} mt-5 text-[17.5px]`}>
-            Use o formulário ou escreva-nos para{" "}
-            <a href={`mailto:${CONTACTO_EMAIL}`} className={LINK}>
-              {CONTACTO_EMAIL}
-            </a>
-            .
-          </p>
+          <p className={`${TEXTO} mt-5 text-[17.5px]`}>{comEmail(t.texto, CONTACTO_EMAIL)}</p>
         </div>
       </SectionV2>
 
       {/* ===== Caminhos ===== */}
       <SectionV2 tone="soft-blue">
-        <SectionHeader eyebrow="Antes de escrever" titulo="Qual é o seu assunto?" />
-        <ul className="mt-10 grid gap-10 md:grid-cols-3 md:gap-8">
+        <SectionHeader eyebrow={t.caminhos.eyebrow} titulo={t.caminhos.titulo} />
+        <ul className={`mt-10 grid gap-10 md:gap-8 ${CAMINHOS.length > 3 ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"}`}>
           {CAMINHOS.map((c) => (
             <li key={c.titulo} className="flex flex-col">
               <span className="text-[var(--v2-green)]">{c.icone}</span>
@@ -110,38 +132,31 @@ export function ContactoV2() {
       <SectionV2 id="formulario" className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
         <div>
           <SectionHeader
-            eyebrow="Imprensa, parcerias e outros assuntos"
-            titulo="Envie-nos uma mensagem."
-            texto={
-              <>
-                Também pode escrever para{" "}
-                <a href={`mailto:${CONTACTO_EMAIL}`} className={LINK}>
-                  {CONTACTO_EMAIL}
-                </a>
-                . Reclamações sobre a própria DoLado: veja também a página{" "}
+            eyebrow={t.formulario.eyebrow}
+            titulo={t.formulario.titulo}
+            texto={comEmail(t.formulario.texto, CONTACTO_EMAIL, {
+              litigios: (conteudo: React.ReactNode) => (
                 <Link prefetch={false} href={ROTAS_LEGAIS.resolucaoLitigios} className={LINK}>
-                  Resolução de litígios
+                  {conteudo}
                 </Link>
-                .
-              </>
-            }
+              ),
+            })}
           />
           <div
             role="note"
             className="mt-8 rounded-[14px] border-l-[3px] border-[var(--v2-aviso)] bg-[var(--v2-aviso-bg)] px-5 py-4 text-[15px] leading-relaxed text-[var(--v2-navy)]"
           >
-            <span className="font-bold">Este formulário não abre casos.</span> Reclamações enviadas por e-mail ou por
-            este formulário são ignoradas. Para abrir um caso, use sempre o fluxo guiado em &ldquo;Tratar o meu
-            caso&rdquo;.
+            {rico(t.formulario.aviso, { b: (conteudo) => <span className="font-bold">{conteudo}</span> })}
+            <button type="button" onClick={tratarCaso} className={`${LINK} mt-2 flex min-h-11 items-center gap-1.5`}>
+              {t.formulario.avisoAcao} <IconeSeta tamanho={15} />
+            </button>
           </div>
         </div>
 
         {state.ok ? (
           <div role="status" className={`${CARTAO} self-start p-8`}>
-            <p className="text-[19px] font-bold text-[var(--v2-navy)]">Mensagem enviada.</p>
-            <p className="mt-2 text-[15px] leading-relaxed text-[var(--v2-muted)]">
-              Obrigado pelo contacto — responderemos assim que possível.
-            </p>
+            <p className="text-[19px] font-bold text-[var(--v2-navy)]">{t.formulario.enviada}</p>
+            <p className="mt-2 text-[15px] leading-relaxed text-[var(--v2-muted)]">{t.formulario.obrigado}</p>
           </div>
         ) : (
           <form action={formAction} className={`${CARTAO} flex flex-col gap-5 p-7 sm:p-8`}>
@@ -156,20 +171,20 @@ export function ContactoV2() {
 
             <div>
               <label className={ROTULO_CAMPO} htmlFor="contacto-nome">
-                Nome
+                {t.formulario.nome}
               </label>
-              <input id="contacto-nome" name="nome" type="text" placeholder="O seu nome" required className={CAMPO} />
+              <input id="contacto-nome" name="nome" type="text" placeholder={t.formulario.nomePlaceholder} required className={CAMPO} />
             </div>
 
             <div>
               <label className={ROTULO_CAMPO} htmlFor="contacto-email">
-                E-mail
+                {t.formulario.email}
               </label>
               <input
                 id="contacto-email"
                 name="email"
                 type="email"
-                placeholder="nome@exemplo.pt"
+                placeholder={t.formulario.emailPlaceholder}
                 required
                 className={CAMPO}
               />
@@ -177,13 +192,13 @@ export function ContactoV2() {
 
             <div>
               <label className={ROTULO_CAMPO} htmlFor="contacto-assunto">
-                Assunto
+                {t.formulario.assunto}
               </label>
               <input
                 id="contacto-assunto"
                 name="assunto"
                 type="text"
-                placeholder="Sobre o que quer falar?"
+                placeholder={t.formulario.assuntoPlaceholder}
                 required
                 className={CAMPO}
               />
@@ -191,13 +206,13 @@ export function ContactoV2() {
 
             <div>
               <label className={ROTULO_CAMPO} htmlFor="contacto-mensagem">
-                Mensagem
+                {t.formulario.mensagem}
               </label>
               <textarea
                 id="contacto-mensagem"
                 name="mensagem"
                 rows={5}
-                placeholder="Escreva aqui — imprensa, parcerias, dúvidas gerais…"
+                placeholder={t.formulario.mensagemPlaceholder}
                 required
                 className={CAMPO}
               />
@@ -214,7 +229,7 @@ export function ContactoV2() {
               disabled={pending}
               className={`${BOTAO_PRIMARIO} mt-1 w-full disabled:cursor-not-allowed disabled:opacity-50`}
             >
-              {pending ? "A enviar…" : "Enviar mensagem"}
+              {pending ? t.formulario.aEnviar : t.formulario.enviar}
             </button>
           </form>
         )}

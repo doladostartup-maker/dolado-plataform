@@ -16,7 +16,17 @@ import {
   PROBLEMAS_POR_SETOR,
   problemasDoSetor,
   problemaValidoParaSetor,
+  PROBLEMAS_AUTOCONSUMO,
+  camposDetalhes,
+  ehCasoAutoconsumo,
+  ehContratacaoEnergia,
+  PROBLEMAS_CONTRATACAO_ENERGIA,
+  lerDetalhesCaso,
+  documentosEnergia,
+  DOCUMENTOS_ENERGIA_POR_PROBLEMA,
 } from "./pedidoCaso.ts";
+import { tratarCaso as tratarCasoPt } from "../i18n/mensagens/pt-PT/tratarCaso.ts";
+import { tratarCaso as tratarCasoEn } from "../i18n/mensagens/en-GB/tratarCaso.ts";
 import { calcularAcesso } from "./acesso.ts";
 
 const A = "00000000-0000-4000-a000-00000000000a";
@@ -46,7 +56,7 @@ describe("formulário do caso (lerDadosPedido)", () => {
     assert.equal(r.dados.anexo, null);
   });
 
-  test("aceita todos os setores, incluindo Gás, Compras & Reembolsos e Ginásios", () => {
+  test("aceita todos os sectores, incluindo Gás, Compras & Reembolsos e Ginásios", () => {
     assert.deepEqual(SETORES, ["Telecomunicações", "Energia", "Gás", "Água", "Compras & Reembolsos", "Ginásios"]);
     for (const sector of SETORES) {
       const r = lerDadosPedido(formulario({ sector }));
@@ -59,8 +69,8 @@ describe("formulário do caso (lerDadosPedido)", () => {
     }
   });
 
-  test("tipos de problema por setor", () => {
-    assert.deepEqual(Object.keys(PROBLEMAS_POR_SETOR).sort(), [...SETORES].sort(), "cada setor tem a sua lista");
+  test("tipos de problema por sector", () => {
+    assert.deepEqual(Object.keys(PROBLEMAS_POR_SETOR).sort(), [...SETORES].sort(), "cada sector tem a sua lista");
     for (const setor of SETORES) {
       const lista = problemasDoSetor(setor);
       assert.equal(lista.at(-1), "Outro", setor);
@@ -72,9 +82,30 @@ describe("formulário do caso (lerDadosPedido)", () => {
     for (const setor of ["Telecomunicações", "Água"]) {
       assert.deepEqual(problemasDoSetor(setor), [...SERVICOS, "Outro"]);
     }
-    // Energia e Gás têm ainda a mudança de comercializador e a tarifa social (06/10/2026).
-    for (const setor of ["Energia", "Gás"]) {
-      assert.deepEqual(problemasDoSetor(setor), [...SERVICOS, "Mudança de comercializador", "Tarifa social", "Outro"]);
+    // Energia e Gás: os tipos comuns, os de facturação e contratação (20/10/2026),
+    // a mudança de comercializador e a tarifa social (06/10/2026); Energia tem
+    // também os três tipos de painéis solares (13/10/2026), antes de "Outro".
+    const ENERGIA_GAS = [
+      "Aumento de mensalidade",
+      "Factura alta, estimativa ou acerto",
+      "Cobrança indevida",
+      "Cobrança após cancelamento",
+      "Contrato ou condições que não aceitei",
+      "Fidelização ou penalização",
+      "Corte ou falha de serviço",
+      "Cancelamento recusado",
+      "Mudança de comercializador",
+      "Tarifa social",
+    ];
+    assert.deepEqual(problemasDoSetor("Gás"), [...ENERGIA_GAS, "Outro"]);
+    assert.deepEqual(problemasDoSetor("Energia"), [...ENERGIA_GAS, ...PROBLEMAS_AUTOCONSUMO, "Outro"]);
+    for (const p of ["Factura alta, estimativa ou acerto", "Contrato ou condições que não aceitei"]) {
+      for (const setor of ["Telecomunicações", "Água", "Compras & Reembolsos", "Ginásios"]) {
+        assert.ok(!problemasDoSetor(setor).includes(p), `${p} não aparece em ${setor}`);
+      }
+    }
+    for (const setor of SETORES.filter((s) => s !== "Energia")) {
+      for (const p of PROBLEMAS_AUTOCONSUMO) assert.ok(!problemasDoSetor(setor).includes(p), `${p} só em Energia (não em ${setor})`);
     }
     for (const p of ["Mudança de comercializador", "Tarifa social"]) {
       for (const setor of ["Telecomunicações", "Água", "Compras & Reembolsos", "Ginásios"]) {
@@ -91,30 +122,85 @@ describe("formulário do caso (lerDadosPedido)", () => {
     assert.deepEqual(problemasDoSetor(""), PROBLEMAS);
   });
 
-  test("o problema tem de existir no setor escolhido", () => {
+  test("o problema tem de existir no sector escolhido", () => {
     assert.equal(lerDadosPedido(formulario({ sector: "Compras & Reembolsos", problema_tipo: "Produto com defeito" })).ok, true);
     assert.equal(lerDadosPedido(formulario({ sector: "Ginásios", problema_tipo: "Cobrança após cancelamento" })).ok, true);
     assert.equal(lerDadosPedido(formulario({ sector: "Energia", problema_tipo: "Produto com defeito" })).ok, false);
     assert.equal(lerDadosPedido(formulario({ sector: "Ginásios", problema_tipo: "Corte ou falha de serviço" })).ok, false);
     // Mudança de comercializador e tarifa social: só Energia e Gás.
     for (const p of ["Mudança de comercializador", "Tarifa social"]) {
-      assert.equal(lerDadosPedido(formulario({ sector: "Gás", problema_tipo: p })).ok, true, p);
-      assert.equal(lerDadosPedido(formulario({ sector: "Energia", problema_tipo: p })).ok, true, p);
+      // (a mudança de comercializador pergunta a forma de contratação)
+      assert.equal(lerDadosPedido(formulario({ sector: "Gás", problema_tipo: p, forma_contratacao: "nao_sei" })).ok, true, p);
+      assert.equal(lerDadosPedido(formulario({ sector: "Energia", problema_tipo: p, forma_contratacao: "nao_sei" })).ok, true, p);
       assert.equal(lerDadosPedido(formulario({ sector: "Telecomunicações", problema_tipo: p })).ok, false, p);
       assert.equal(lerDadosPedido(formulario({ sector: "Compras & Reembolsos", problema_tipo: p })).ok, false, p);
     }
   });
 
-  test("backoffice: o tipo de problema tem de pertencer ao setor (vazio continua válido)", () => {
+  test("contratação de Energia/Gás: só a forma de contratação, obrigatória (com \"Não sei\")", () => {
+    for (const setor of ["Energia", "Gás"]) {
+      for (const problema_tipo of PROBLEMAS_CONTRATACAO_ENERGIA) {
+        assert.ok(ehContratacaoEnergia(setor, problema_tipo), `${setor} / ${problema_tipo}`);
+        assert.deepEqual(camposDetalhes(setor, problema_tipo), ["forma_contratacao"]);
+        const base = { sector: setor, problema_tipo };
+        assert.equal(lerDadosPedido(formulario(base)).ok, false, "sem resposta");
+        assert.equal(lerDadosPedido(formulario({ ...base, forma_contratacao: "telefone" })).ok, false, "fora da lista");
+        const r = lerDadosPedido(formulario({ ...base, forma_contratacao: "distancia", financiamento: "sim_com_compra" }));
+        assert.equal(r.ok, true);
+        // Nunca guarda respostas que não foram pedidas.
+        assert.deepEqual(r.dados.detalhes_caso, { forma_contratacao: "distancia" });
+        assert.deepEqual(lerDadosPedido(formulario({ ...base, forma_contratacao: "nao_sei" })).dados.detalhes_caso, { forma_contratacao: "nao_sei" });
+      }
+    }
+    // Outros tipos e sectores: sem pergunta e sem respostas guardadas.
+    assert.equal(ehContratacaoEnergia("Telecomunicações", "Cancelamento recusado"), false);
+    assert.equal(ehContratacaoEnergia("Energia", "Cobrança indevida"), false);
+    assert.deepEqual(camposDetalhes("Energia", "Factura alta, estimativa ou acerto"), []);
+    assert.equal(lerDadosPedido(formulario({ sector: "Ginásios", problema_tipo: "Cancelamento recusado", forma_contratacao: "domicilio" })).dados.detalhes_caso, null);
+    assert.deepEqual(camposDetalhes("Energia", PROBLEMAS_AUTOCONSUMO[0]), ["forma_contratacao", "financiamento", "tipo_contrato_solar"]);
+  });
+
+  test("painéis solares: três respostas obrigatórias (com \"Não sei\"), só nos tipos de Autoconsumo", () => {
+    const solar = { sector: "Energia", problema_tipo: PROBLEMAS_AUTOCONSUMO[0] };
+    const respostas = { forma_contratacao: "domicilio", financiamento: "sim_com_compra", tipo_contrato_solar: "compra_instalacao" };
+    const r = lerDadosPedido(formulario({ ...solar, ...respostas }));
+    assert.equal(r.ok, true);
+    assert.deepEqual(r.dados.detalhes_caso, respostas);
+    // Falta uma resposta, ou valor fora da lista → recusado.
+    assert.equal(lerDadosPedido(formulario({ ...solar, ...respostas, financiamento: "" })).ok, false);
+    assert.equal(lerDadosPedido(formulario({ ...solar, ...respostas, forma_contratacao: "porta" })).ok, false);
+    // "Não sei" é uma resposta válida.
+    const naoSei = { forma_contratacao: "nao_sei", financiamento: "nao_sei", tipo_contrato_solar: "nao_sei" };
+    assert.deepEqual(lerDadosPedido(formulario({ ...solar, ...naoSei })).dados.detalhes_caso, naoSei);
+    // Fora dos casos solares as respostas são ignoradas (nunca gravadas).
+    assert.equal(lerDadosPedido(formulario({ ...respostas })).dados.detalhes_caso, null);
+    assert.equal(lerDadosPedido(formulario({ sector: "Gás", problema_tipo: PROBLEMAS_AUTOCONSUMO[0], ...respostas })).ok, false);
+    assert.equal(ehCasoAutoconsumo("Energia", PROBLEMAS_AUTOCONSUMO[2]), true);
+    assert.equal(ehCasoAutoconsumo("Energia", "Cobrança indevida"), false);
+    assert.equal(ehCasoAutoconsumo("Compras & Reembolsos", PROBLEMAS_AUTOCONSUMO[0]), false);
+  });
+
+  test("lerDetalhesCaso: valores fora da lista → \"nao_sei\"; sem nada válido → null", () => {
+    assert.equal(lerDetalhesCaso(null), null);
+    assert.equal(lerDetalhesCaso([]), null);
+    assert.equal(lerDetalhesCaso({ outro: "x" }), null);
+    assert.deepEqual(lerDetalhesCaso({ financiamento: "nao", forma_contratacao: 3 }), {
+      forma_contratacao: "nao_sei",
+      financiamento: "nao",
+      tipo_contrato_solar: "nao_sei",
+    });
+  });
+
+  test("backoffice: o tipo de problema tem de pertencer ao sector (vazio continua válido)", () => {
     assert.equal(problemaValidoParaSetor("Gás", "Tarifa social"), true);
     assert.equal(problemaValidoParaSetor("Ginásios", "Tarifa social"), false);
     assert.equal(problemaValidoParaSetor("Água", "Mudança de comercializador"), false);
     assert.equal(problemaValidoParaSetor("Ginásios", null), true);
-    assert.equal(problemaValidoParaSetor(null, "Tarifa social"), true, "sem setor: qualquer tipo da lista");
+    assert.equal(problemaValidoParaSetor(null, "Tarifa social"), true, "sem sector: qualquer tipo da lista");
     assert.equal(problemaValidoParaSetor(null, "x"), false);
   });
 
-  test("só aceita setores, problemas e momentos das listas", () => {
+  test("só aceita sectores, problemas e momentos das listas", () => {
     assert.equal(lerDadosPedido(formulario({ sector: "Banca" })).ok, false);
     assert.equal(lerDadosPedido(formulario({ problema_tipo: "x" })).ok, false);
     assert.equal(lerDadosPedido(formulario({ momento_cliente: "x" })).ok, false);
@@ -167,18 +253,18 @@ describe("posse do pedido", () => {
 });
 
 describe("modalidades oferecidas (opcoesDoPedido)", () => {
-  test("conta sem compras: Avulso e Caso + Proteção, nada de graça", () => {
-    assert.deepEqual(opcoesDoPedido({ creditos: 0, temProtecao: false }), {
+  test("conta sem compras: Avulso e Caso + Protecção, nada de graça", () => {
+    assert.deepEqual(opcoesDoPedido({ creditos: 0, temSubscricao: false }), {
       usarCasoDisponivel: false,
       casoExtra: false,
       modalidades: ["avulso", "caso_protecao"],
     });
   });
   test("com casos disponíveis já pagos: pode usar um", () => {
-    assert.equal(opcoesDoPedido({ creditos: 2, temProtecao: true }).usarCasoDisponivel, true);
+    assert.equal(opcoesDoPedido({ creditos: 2, temSubscricao: true }).usarCasoDisponivel, true);
   });
-  test("com proteção ativa (sem casos): não abre segunda subscrição, só Avulso", () => {
-    assert.deepEqual(opcoesDoPedido({ creditos: 0, temProtecao: true }).modalidades, ["avulso"]);
+  test("com protecção activa (sem casos): não abre segunda subscrição, só Avulso", () => {
+    assert.deepEqual(opcoesDoPedido({ creditos: 0, temSubscricao: true }).modalidades, ["avulso"]);
   });
 });
 
@@ -198,18 +284,18 @@ describe("direito a caso no fluxo Tratar o meu caso (acesso → opções)", () =
     return { opcoes: opcoesDoPedido(acesso), entrada: entradaDoPedido(acesso) };
   };
 
-  test("Caso + Proteção ativa, caso do ciclo por usar: usa-o, sem pagamento", () => {
+  test("Caso + Protecção activa, caso do ciclo por usar: usa-o, sem pagamento", () => {
     const { opcoes, entrada } = fluxo(linha({ case_credits: 1 }));
     assert.equal(opcoes.usarCasoDisponivel, true);
     assert.equal(entrada, "usar_caso");
   });
-  test("Caso + Proteção ativa, caso do ciclo já usado: só Avulso, nunca segunda subscrição", () => {
+  test("Caso + Protecção activa, caso do ciclo já usado: só Avulso, nunca segunda subscrição", () => {
     const { opcoes, entrada } = fluxo(linha({ case_credits: 0 }));
     assert.equal(opcoes.usarCasoDisponivel, false);
     assert.deepEqual(opcoes.modalidades, ["avulso"]);
     assert.equal(entrada, "so_avulso");
   });
-  test("Proteção ativa (não inclui casos): só Avulso", () => {
+  test("Protecção activa (não inclui casos): só Avulso", () => {
     const { opcoes, entrada } = fluxo(linha({ subscription_plan: "protecao", case_credits: 0 }));
     assert.equal(opcoes.usarCasoDisponivel, false);
     assert.deepEqual(opcoes.modalidades, ["avulso"]);
@@ -222,11 +308,11 @@ describe("direito a caso no fluxo Tratar o meu caso (acesso → opções)", () =
     assert.equal(opcoes.usarCasoDisponivel, true);
     assert.equal(entrada, "usar_caso");
   });
-  test("Proteção ativa com um Avulso comprado à parte: usa-o, sem pagamento", () => {
+  test("Protecção activa com um Avulso comprado à parte: usa-o, sem pagamento", () => {
     const { entrada } = fluxo(linha({ subscription_plan: "protecao", case_credits: 1, avulso_credits: 1 }));
     assert.equal(entrada, "usar_caso");
   });
-  test("sem subscrição e sem casos: escolhe Avulso ou Caso + Proteção e paga", () => {
+  test("sem subscrição e sem casos: escolhe Avulso ou Caso + Protecção e paga", () => {
     for (const l of [null, linha({ subscription_plan: "none", subscription_status: null })]) {
       const { opcoes, entrada } = fluxo(l);
       assert.equal(opcoes.usarCasoDisponivel, false);
@@ -238,13 +324,13 @@ describe("direito a caso no fluxo Tratar o meu caso (acesso → opções)", () =
     assert.equal(entradaDoPedido(null), "escolher");
   });
   test("a página do formulário lê o acesso da conta e usa a mesma regra (sem lógica própria)", () => {
-    const pagina = readFileSync(new URL("../app/tratar-caso/page.tsx", import.meta.url), "utf8");
+    const pagina = readFileSync(new URL("../app/[idioma]/tratar-caso/page.tsx", import.meta.url), "utf8");
     assert.match(pagina, /obterAcesso\(/);
     assert.match(pagina, /entradaDoPedido\(acesso, casoExtraConfigurado\(\)\)/);
     assert.doesNotMatch(pagina, /case_credits/);
   });
   test("o botão da área de contratos leva ao mesmo fluxo", () => {
-    const contrato = readFileSync(new URL("../app/portal/contratos/[id]/page.tsx", import.meta.url), "utf8");
+    const contrato = readFileSync(new URL("../app/[idioma]/portal/contratos/[id]/page.tsx", import.meta.url), "utf8");
     assert.match(contrato, /urlTratarCaso\(/);
   });
 });
@@ -257,31 +343,31 @@ describe("metadata e redirecionamentos", () => {
   });
   test("destino depois do login: só caminhos deste site", () => {
     assert.equal(destinoSeguro("/tratar-caso/recebido?pedido=x"), "/tratar-caso/recebido?pedido=x");
-    assert.equal(destinoSeguro("//evil.example"), "/portal/casos");
-    assert.equal(destinoSeguro("https://evil.example"), "/portal/casos");
-    assert.equal(destinoSeguro("@evil.example"), "/portal/casos");
-    assert.equal(destinoSeguro("/\\evil.example"), "/portal/casos");
-    assert.equal(destinoSeguro(null), "/portal/casos");
+    assert.equal(destinoSeguro("//evil.example"), "/portal");
+    assert.equal(destinoSeguro("https://evil.example"), "/portal");
+    assert.equal(destinoSeguro("@evil.example"), "/portal");
+    assert.equal(destinoSeguro("/\\evil.example"), "/portal");
+    assert.equal(destinoSeguro(null), "/portal");
   });
 });
 
 describe("nenhuma rota pública cria casos sem pagamento (código)", () => {
   const fonte = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 
-  test("o formulário e as ações de conta só gravam pedidos — nunca casos", () => {
-    for (const f of ["../app/tratar-caso/actions.ts", "../lib/pedidoCasoServidor.ts", "../app/actions/formulario-guiado.ts"]) {
+  test("o formulário e as acções de conta só gravam pedidos — nunca casos", () => {
+    for (const f of ["../app/[idioma]/tratar-caso/actions.ts", "../lib/pedidoCasoServidor.ts", "../app/actions/formulario-guiado.ts"]) {
       assert.equal(/from\("casos"\)/.test(fonte(f)), false, f);
     }
   });
 
   test("o caso só nasce de converter_pedido_em_caso (que gasta um caso pago) ou do portal com caso disponível", () => {
-    const portal = fonte("../app/portal/casos/actions.ts");
+    const portal = fonte("../app/[idioma]/portal/casos/actions.ts");
     assert.match(portal, /consumir_credito_caso[\s\S]*from\("casos"\)[\s\S]*insert/);
     assert.equal(/acesso\.casoConsomeCredito/.test(portal), false, "sem o antigo caminho gratuito");
   });
 
   test("a página de regresso do Stripe só lê estado (não converte nem concede)", () => {
-    const recebido = fonte("../app/tratar-caso/recebido/page.tsx");
+    const recebido = fonte("../app/[idioma]/tratar-caso/recebido/page.tsx");
     assert.equal(/converterPedidoEmCaso|concederCredito|conceder_credito_caso|\.insert\(|\.update\(/.test(recebido), false);
   });
 });
@@ -318,10 +404,38 @@ describe("nome e telemóvel já conhecidos (contactoConhecido)", () => {
   });
 
   test("a página lê os dados com o cliente da sessão (RLS), nunca com a service role", () => {
-    const pagina = readFileSync(new URL("../app/tratar-caso/page.tsx", import.meta.url), "utf8");
+    const pagina = readFileSync(new URL("../app/[idioma]/tratar-caso/page.tsx", import.meta.url), "utf8");
     assert.equal(/createAdminClient/.test(pagina), false);
     assert.match(pagina, /\.from\("utilizadores"\)\.select\("nome"\)\.eq\("id", userId\)/);
     assert.match(pagina, /\.from\("casos"\)[^;]*\.eq\("utilizador_id", userId\)/);
     assert.match(pagina, /\.from\("pedidos_caso"\)[^;]*\.eq\("user_id", userId\)/);
+  });
+});
+
+describe("documentos por tipo de problema — Energia e Gás (pergunta 4)", () => {
+  test("só Energia e Gás, só os tipos da tabela; o resto fica com o texto geral", () => {
+    assert.equal(documentosEnergia("Energia", "Factura alta, estimativa ou acerto"), "factura_acerto");
+    assert.equal(documentosEnergia("Gás", "Cobrança após cancelamento"), "apos_cancelamento");
+    assert.equal(documentosEnergia("Energia", "Mudança de comercializador"), "contratacao");
+    assert.equal(documentosEnergia("Gás", "Contrato ou condições que não aceitei"), "contratacao");
+    assert.equal(documentosEnergia("Telecomunicações", "Cobrança indevida"), null);
+    assert.equal(documentosEnergia("Ginásios", "Cobrança após cancelamento"), null);
+    for (const p of ["Aumento de mensalidade", "Tarifa social", "Outro", ...PROBLEMAS_AUTOCONSUMO]) assert.equal(documentosEnergia("Energia", p), null, p);
+    assert.equal(documentosEnergia("Energia", ""), null);
+    assert.equal(documentosEnergia(null, "Cobrança indevida"), null);
+  });
+
+  test("cada tipo mapeado existe em Energia e Gás", () => {
+    for (const p of Object.keys(DOCUMENTOS_ENERGIA_POR_PROBLEMA)) {
+      assert.ok(problemaValidoParaSetor("Energia", p), p);
+      assert.ok(problemaValidoParaSetor("Gás", p), p);
+    }
+  });
+
+  test("cada orientação tem texto nas duas línguas", () => {
+    for (const chave of new Set(Object.values(DOCUMENTOS_ENERGIA_POR_PROBLEMA))) {
+      assert.ok(tratarCasoPt.formulario.passo4.documentosEnergia[chave], `pt ${chave}`);
+      assert.ok(tratarCasoEn.formulario.passo4.documentosEnergia[chave], `en ${chave}`);
+    }
   });
 });

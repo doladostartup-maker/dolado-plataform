@@ -2,6 +2,8 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { calcularAcesso, type Acesso } from "@/lib/acesso";
 import { createClient } from "@/lib/supabase/server";
+import { destinoDepoisDeAutenticar } from "@/lib/authServidor";
+import { localizarHref, type Idioma } from "@/i18n/config";
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
 
@@ -45,6 +47,17 @@ export async function requireAdmin() {
   return { supabase, user };
 }
 
+/**
+ * Páginas de acesso (/login, /entrar) abertas por quem já tem sessão: segue
+ * para o ?next= seguro ou, sem ele, para o Painel (admin: backoffice). Sem
+ * sessão, não faz nada. Só navegação — não mexe em acesso nem planos.
+ */
+export async function redirecionarSeComSessao(idioma: Idioma, next?: unknown) {
+  const { supabase, user } = await utilizadorPorPedido();
+  if (!user) return;
+  redirect(localizarHref(idioma, await destinoDepoisDeAutenticar(supabase, user.id, { nextExplicito: next })));
+}
+
 /** Utilizador da sessão, sem redirecionar (null sem sessão). */
 export async function utilizadorAtual() {
   return utilizadorPorPedido();
@@ -79,13 +92,21 @@ export async function requireUser() {
  * disponíveis.
  */
 export async function obterAcesso(supabase: SupabaseServer, userId: string): Promise<Acesso> {
-  const { data } = await supabase
-    .from("user_access")
-    .select("subscription_plan, subscription_status, case_credits, avulso_credits, current_period_end, cancel_at_period_end")
-    .eq("user_id", userId)
-    .maybeSingle();
+  const [{ data }, { data: gratuita }] = await Promise.all([
+    supabase
+      .from("user_access")
+      .select("subscription_plan, subscription_status, case_credits, avulso_credits, current_period_end, cancel_at_period_end")
+      .eq("user_id", userId)
+      .maybeSingle(),
+    // Proteção gratuita de 30 dias (RLS: só a da própria conta).
+    supabase
+      .from("protecao_gratuita")
+      .select("id, estado, inicio_em, termina_em, lembretes_desativados_em")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
 
-  return calcularAcesso(data);
+  return calcularAcesso(data, gratuita);
 }
 
 /**

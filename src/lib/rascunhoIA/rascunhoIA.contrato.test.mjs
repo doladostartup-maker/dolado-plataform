@@ -21,7 +21,7 @@ let hashConteudo;
 
 const TEXTO =
   "[NOME DO CLIENTE], NIF [NIF].\n\nAssunto: Reclamação — aumento da mensalidade.\n\n" +
-  "Venho apresentar reclamação pelo aumento da mensalidade de 30 € para 36 € a partir de setembro de 2026, " +
+  "Venho apresentar reclamação pelo aumento da mensalidade de 30 € para 36 € a partir de Setembro de 2026, " +
   "sem comunicação prévia de que tenha conhecimento. Solicito esclarecimento e a reposição do valor anterior.";
 
 function modeloFixo(capturas, resposta = {}) {
@@ -50,7 +50,7 @@ async function criarCaso() {
       sector: "Telecomunicações",
       empresa: "Operadora Contrato",
       problema_tipo: "Aumento de mensalidade",
-      descricao: "Sou a Joana Pereira (joana@exemplo.pt). A mensalidade subiu de 30 € para 36 € em setembro.",
+      descricao: "Sou a Joana Pereira (joana@exemplo.pt). A mensalidade subiu de 30 € para 36 € em Setembro.",
       momento_cliente: "Ainda não reclamei",
       status: "Novo",
     })
@@ -91,7 +91,7 @@ describe("sugestão do texto pela IA (Supabase real)", { skip: !ATIVO && "só co
     const { data: geracao } = await admin.from("casos_rascunhos_ia").select("*").eq("id", r.geracaoId).single();
     assert.equal(geracao.estado, "gerado");
     assert.equal(geracao.modelo, "claude-opus-5-5");
-    assert.equal(geracao.prompt_versao, "reclamacao_v3");
+    assert.equal(geracao.prompt_versao, "reclamacao_v5");
     assert.match(geracao.contexto_sha256, /^[0-9a-f]{64}$/);
     assert.deepEqual(geracao.resposta.missing_information, ["Data de contratação não identificada."]);
 

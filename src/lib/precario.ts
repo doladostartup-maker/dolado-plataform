@@ -1,5 +1,5 @@
-import { LIMITE_CASOS_ACUMULADOS, type PlanoId } from "@/lib/planos";
-import { urlComprar, urlTratarCaso } from "@/lib/site";
+import { LIMITE_CASOS_ACUMULADOS, type PlanoId } from "./planos.ts";
+import { urlComprar, urlTratarCaso } from "./site.ts";
 
 // O que cada plano inclui, como é apresentado no preçário. Partilhado entre
 // o preçário da homepage (Precario.tsx) e a página V2 /precario, para os
@@ -8,10 +8,10 @@ import { urlComprar, urlTratarCaso } from "@/lib/site";
 // descritas pelo benefício e nunca pelos nomes internos.
 
 const FUNCIONALIDADES_PROTECAO = [
-  "Comparação de faturas mês a mês, para identificar alterações",
+  "Comparação de facturas mês a mês, para identificar alterações",
   "Avisos antes do fim de promoções",
   "Avisos antes do fim de períodos de fidelização",
-  "Alertas sobre alterações relevantes no seu setor",
+  "Alertas sobre alterações relevantes no seu sector",
 ];
 
 export type ConteudoPlano = {
@@ -23,14 +23,14 @@ export type ConteudoPlano = {
 export const CONTEUDO_PLANOS: Record<PlanoId, ConteudoPlano> = {
   protecao: {
     resumo:
-      "Para quem quer identificar alterações importantes e antecipar problemas, antes de perder dinheiro ou a oportunidade de agir.",
+      "Para quem quer ser avisado a tempo de alterações nas facturas e de datas importantes dos contratos, mesmo sem ter um problema agora.",
     inclui: FUNCIONALIDADES_PROTECAO,
     naoInclui: "Não inclui o tratamento de casos.",
   },
   caso_protecao: {
-    resumo: "Tratamos dos problemas quando surgem e ajudamos a identificar outros antes que lhe causem prejuízo.",
+    resumo: "Para tratar o problema que tem agora e continuar com as facturas e os contratos acompanhados, com 1 caso por mês.",
     inclui: [
-      "Tudo o que está incluído na Proteção",
+      "Tudo o que está incluído na Protecção",
       "1 novo caso por mês",
       `Casos não utilizados acumulam até ao limite de ${LIMITE_CASOS_ACUMULADOS}`,
       "Sem período de carência",
@@ -43,7 +43,7 @@ export const CONTEUDO_PLANOS: Record<PlanoId, ConteudoPlano> = {
       "Acompanhamento desse caso ao longo do processo",
       "Acesso ao histórico do caso na área de cliente",
     ],
-    naoInclui: "Não inclui as funcionalidades da Proteção.",
+    naoInclui: "Não inclui as funcionalidades da Protecção.",
   },
 };
 

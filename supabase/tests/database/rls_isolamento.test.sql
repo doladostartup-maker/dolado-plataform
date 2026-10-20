@@ -216,7 +216,13 @@ select is(
                            'indicacoes_recompensas_registar_historico',
                            'origem_aquisicao_registar', 'origem_aquisicao_retirar',
                            -- 20261008100000: resumo mensal da Proteção (só service_role); testes em resumo_mensal.test.sql
-                           'protecao_resumo_destinatarios', 'protecao_resumo_reservar', 'protecao_resumo_concluir')), 0::bigint,
+                           'protecao_resumo_destinatarios', 'protecao_resumo_reservar', 'protecao_resumo_concluir',
+                           -- 20261018090000: Proteção gratuita (só service_role ou trigger; métricas: só admin);
+                           -- testes em protecao_gratuita.test.sql
+                           'protecao_desativar_dados', 'protecao_reativar_dados', 'protecao_gratuita_ja_teve_subscricao',
+                           'protecao_gratuita_elegibilidade', 'protecao_gratuita_ativar', 'protecao_gratuita_desativar_lembretes',
+                           'protecao_gratuita_manutencao', 'protecao_gratuita_marco_atual', 'protecao_gratuita_avisos_pendentes',
+                           'protecao_gratuita_aviso_reservar', 'protecao_gratuita_aviso_concluir', 'protecao_gratuita_metricas')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em

@@ -16,7 +16,7 @@ export const ROTULO_CANAL_RECEBIDA: Record<string, string> = { ...CANAIS_RECEBID
 
 export const CLASSIFICACAO_ROTULO: Record<Classificacao, string> = {
   resposta_automatica: "Resposta automática",
-  confirmacao_rececao: "Confirmação de receção",
+  confirmacao_rececao: "Confirmação de recepção",
   pedido_informacao: "Pedido de informação",
   pedido_documentos: "Pedido de documentos",
   resposta_satisfatoria: "Resposta satisfatória",
@@ -50,7 +50,7 @@ export const DECISOES: Record<Decisao, { letra: string; rotulo: string; descrica
   pedir_informacao_cliente: {
     letra: "C",
     rotulo: "Pedir informação ou documentos ao cliente",
-    descricao: "O cliente vê exatamente o que é pedido e responde no portal.",
+    descricao: "O cliente vê exactamente o que é pedido e responde no portal.",
     confirmacao: "Pedido enviado ao cliente. O caso aguarda a resposta dele.",
   },
   encaminhar: {
@@ -61,9 +61,9 @@ export const DECISOES: Record<Decisao, { letra: string; rotulo: string; descrica
   },
   mensagem_sem_acao: {
     letra: "E",
-    rotulo: "Mensagem sem ação (automática, confirmação, spam)",
+    rotulo: "Mensagem sem acção (automática, confirmação, spam)",
     descricao: "A mensagem fica guardada; o caso volta a “A aguardar resposta da empresa”, se foi esta mensagem que o pôs em análise.",
-    confirmacao: "Mensagem marcada sem ação.",
+    confirmacao: "Mensagem marcada sem acção.",
     exigeComunicacao: true,
   },
 };
@@ -74,23 +74,23 @@ export function ehDecisao(v: unknown): v is Decisao {
 
 export const MENSAGENS_DECISAO: Record<string, string> = {
   invalido: "Pedido inválido.",
-  comunicacao_invalida: "Esta ação precisa de uma comunicação deste caso.",
+  comunicacao_invalida: "Esta acção precisa de uma comunicação deste caso.",
   ja_analisada: "Esta comunicação já foi analisada.",
   falta_mensagem_cliente: "Escreva a explicação da solução para o cliente.",
   falta_pedido: "Indique o que é pedido ao cliente.",
   encaminhamento_invalido: "Escolha o tipo de encaminhamento.",
-  transicao_invalida: "Esta decisão não é possível no estado atual do caso.",
+  transicao_invalida: "Esta decisão não é possível no estado actual do caso.",
 };
 
 export const ESTADO_ANALISE: Record<string, { rotulo: string; tom: "acao" | "sucesso" | "neutro" }> = {
   por_analisar: { rotulo: "Por analisar", tom: "acao" },
   analisada: { rotulo: "Analisada", tom: "sucesso" },
-  sem_acao: { rotulo: "Sem ação", tom: "neutro" },
+  sem_acao: { rotulo: "Sem acção", tom: "neutro" },
 };
 
 export const PROXIMO_PASSO_ROTULO: Record<string, string> = {
   aguardar_nova_resposta: "Aguardar nova resposta",
-  sem_acao: "Sem ação",
+  sem_acao: "Sem acção",
   pedir_informacao_cliente: "Pedir informação ao cliente",
   confirmar_resolucao_com_cliente: "Confirmar a resolução com o cliente",
   preparar_nova_resposta: "Preparar nova resposta à empresa",

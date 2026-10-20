@@ -29,3 +29,6 @@ npm-debug.log*
 
 # Supabase CLI (config local, gerado por `supabase link`)
 supabase/.temp/
+
+# Backups locais com dados pessoais (scripts/manutencao)
+/backups/

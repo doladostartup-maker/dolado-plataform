@@ -19,12 +19,14 @@
 // em ../_shared/emailNovoCaso.ts, com escape de HTML e assunto saneado.
 
 import {
-  ASSUNTO_CONFIRMACAO_CLIENTE,
+  assuntoConfirmacaoCliente,
   assuntoNotificacaoAdmin,
   type CasoNovo,
   htmlConfirmacaoCliente,
   htmlNotificacaoAdmin,
 } from "../_shared/emailNovoCaso.ts";
+import { idiomaDosMetadados } from "../_shared/idiomaConta.ts";
+import type { IdiomaEmail } from "../_shared/molduraEmail.ts";
 import { textoParaAssunto } from "../_shared/textoSeguro.ts";
 
 interface WebhookPayload {
@@ -40,6 +42,28 @@ const CONTACTO_EMAIL = "contacto@dolado.pt";
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") ?? "thiago.pereira@dolado.pt";
 const WEBHOOK_SECRET = Deno.env.get("NOVO_CASO_WEBHOOK_SECRET");
 const SITE_URL = Deno.env.get("SITE_URL") ?? "https://portal.dolado.pt";
+// Variáveis postas pela própria Supabase em todas as Edge Functions.
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+/**
+ * Idioma da conta do cliente (user_metadata.idioma), só para o e-mail de
+ * confirmação. Sem conta, sem idioma ou qualquer erro → português.
+ */
+async function idiomaDaConta(utilizadorId: string | null | undefined): Promise<IdiomaEmail> {
+  if (!utilizadorId || !SUPABASE_URL || !SERVICE_ROLE_KEY) return "pt-PT";
+  try {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(utilizadorId)}`, {
+      headers: { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}` },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!r.ok) return "pt-PT";
+    const u = await r.json();
+    return idiomaDosMetadados(u?.user_metadata);
+  } catch {
+    return "pt-PT";
+  }
+}
 
 async function enviarEmailBrevo(destino: { email: string; nome?: string }, assunto: string, html: string) {
   const resposta = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -78,10 +102,11 @@ Deno.serve(async (req: Request) => {
 
     const caso = payload.record;
 
+    const idioma = await idiomaDaConta(caso.utilizador_id);
     await enviarEmailBrevo(
       { email: caso.email, nome: textoParaAssunto(caso.nome ?? "", 70) },
-      ASSUNTO_CONFIRMACAO_CLIENTE,
-      htmlConfirmacaoCliente(caso.nome),
+      assuntoConfirmacaoCliente(idioma),
+      htmlConfirmacaoCliente(caso.nome, idioma),
     );
 
     await enviarEmailBrevo(

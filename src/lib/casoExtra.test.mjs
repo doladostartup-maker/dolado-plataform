@@ -35,11 +35,11 @@ function conta(extra = {}) {
 }
 
 describe("preço do Caso Extra", () => {
-  test("11,99 € em vez dos 14,99 € do Avulso (cerca de 20%)", () => {
-    assert.equal(CASO_EXTRA.precoCentimos, 1199);
+  test("9,59 € em vez dos 11,99 € do Avulso (cerca de 20%)", () => {
+    assert.equal(CASO_EXTRA.precoCentimos, 959);
     assert.equal(CASO_EXTRA.precoReferenciaCentimos, PLANOS.avulso.precoCentimos);
-    assert.equal(formatarPreco(CASO_EXTRA.precoReferenciaCentimos), "14,99 €");
-    assert.equal(formatarPreco(CASO_EXTRA.precoCentimos), "11,99 €");
+    assert.equal(formatarPreco(CASO_EXTRA.precoReferenciaCentimos), "11,99 €");
+    assert.equal(formatarPreco(CASO_EXTRA.precoCentimos), "9,59 €");
     const desconto = 1 - CASO_EXTRA.precoCentimos / CASO_EXTRA.precoReferenciaCentimos;
     assert.ok(Math.abs(desconto - CASO_EXTRA.descontoPercentagem / 100) < 0.005);
   });
@@ -109,7 +109,7 @@ describe("cenário 2 — subscritor que já usou o caso do mês", () => {
 
 describe("cenário 10 — sem direito ao desconto", () => {
   const casos = [
-    ["Proteção (não inclui casos)", { subscription_plan: "protecao" }, "sem_caso_protecao"],
+    ["Protecção (não inclui casos)", { subscription_plan: "protecao" }, "sem_caso_protecao"],
     ["sem subscrição (Avulso comprado antes)", { subscription_plan: "none", subscription_status: "canceled" }, "sem_caso_protecao"],
     ["pagamento em atraso", { subscription_status: "past_due" }, "subscricao_nao_ativa"],
     ["subscrição suspensa", { subscription_status: "unpaid" }, "subscricao_nao_ativa"],
@@ -126,7 +126,7 @@ describe("cenário 10 — sem direito ao desconto", () => {
     assert.equal(casosDoMes(calcularAcesso(null)), null);
   });
 
-  test("subscrição no Stripe tem de ser ativa, Caso + Proteção e do Customer da conta", () => {
+  test("subscrição no Stripe tem de ser activa, Caso + Protecção e do Customer da conta", () => {
     const ok = { status: "active", customerId: "cus_a", plano: "caso_protecao" };
     assert.equal(subscricaoStripeConfirmaCasoExtra(ok, "cus_a"), true);
     assert.equal(subscricaoStripeConfirmaCasoExtra({ ...ok, customerId: "cus_outro" }, "cus_a"), false);
@@ -161,7 +161,7 @@ describe("cenário 10 — sem direito ao desconto", () => {
   });
 });
 
-describe("cenário 5 — Checkout com a conta e a sessão atuais", () => {
+describe("cenário 5 — Checkout com a conta e a sessão actuais", () => {
   const params = parametrosCheckoutCasoExtra({
     precoId: "price_caso_extra",
     customerId: "cus_existente",

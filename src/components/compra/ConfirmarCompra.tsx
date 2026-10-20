@@ -1,6 +1,15 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/i18n/Link";
+import { useIdioma } from "@/i18n/cliente";
+import { rico } from "@/i18n/Rico";
+import { TextoVinculativo } from "@/i18n/TextoVinculativo";
+import { tCompra } from "@/i18n/mensagens/compra";
+import { tIndicacoes } from "@/i18n/mensagens/indicacoes";
+import { tJuridico } from "@/i18n/mensagens/juridico";
+import { precoNoIdioma, tPlanos } from "@/i18n/mensagens/planos";
+import { tProtecaoGratuita } from "@/i18n/mensagens/protecaoGratuita";
+import { formatarData } from "@/i18n/formatar";
 import { useActionState, useEffect, useState } from "react";
 import { confirmarCompra, type EstadoCompra } from "@/app/actions/stripe";
 import { ofertaIndicacaoNaCompra, type OfertaIndicacaoCompra } from "@/app/actions/indicacoes";
@@ -20,12 +29,19 @@ import {
   consentimentoInicioImediato,
 } from "@/lib/legal";
 import { track } from "@/lib/analytics";
-import { CASO_EXTRA, IVA_INCLUIDO, PLANOS, TEXTO_BENEFICIO_SUBSCRITOR, formatarPreco, type PlanoId } from "@/lib/planos";
-import { TEXTOS_INDICACAO, precoComDescontoCentimos, textoDescontoNaCompra } from "@/lib/indicacoes/regras";
+import { CASO_EXTRA, PLANOS, type PlanoId } from "@/lib/planos";
+import { precoComDescontoCentimos, type TipoDescontoIndicacao } from "@/lib/indicacoes/regras";
 import { fonteV2 } from "@/components/marketing-v2/fonte";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAIXA_SELECAO } from "@/components/portal/ui";
 
 export type OfertaConversao = { mensalidade: number; reembolso: number } | null;
+
+/**
+ * A conta está na Proteção gratuita: data da 1.ª cobrança da Proteção (fim do
+ * período; null = cobrada no dia da adesão). Só apresentação — o servidor
+ * volta a decidir ao abrir o Checkout (confirmarCompra).
+ */
+export type InfoProtecaoGratuita = { primeiraCobranca: string | null } | null;
 
 const LINK = "font-semibold text-[var(--v2-green)] underline underline-offset-4";
 
@@ -46,6 +62,7 @@ export function ConfirmarCompra({
   origem,
   conversao = null,
   pedidoId,
+  protecaoGratuita = null,
   onFechar,
 }: {
   plano: PlanoId;
@@ -55,6 +72,7 @@ export function ConfirmarCompra({
   conversao?: OfertaConversao;
   /** Pedido de caso a pagar (fluxo "pedido_caso"); a posse é validada no servidor. */
   pedidoId?: string;
+  protecaoGratuita?: InfoProtecaoGratuita;
   onFechar: () => void;
 }) {
   const [estado, submeter, aSubmeter] = useActionState<EstadoCompra, FormData>(confirmarCompra, { erro: null });
@@ -65,6 +83,23 @@ export function ConfirmarCompra({
   const casoExtra = fluxo === "caso_extra";
   const info = casoExtra ? { ...PLANOS.avulso, ...CASO_EXTRA } : PLANOS[plano];
   const inicioImediato = consentimentoInicioImediato(plano);
+  const idioma = useIdioma();
+  const t = tCompra[idioma].modal;
+  const tp = tPlanos[idioma];
+  const ti = tIndicacoes[idioma];
+  const tj = tJuridico[idioma];
+  const tg = tProtecaoGratuita[idioma].confirmarCompra;
+  const formatarPreco = (c: number) => precoNoIdioma(idioma, c);
+  const nome = casoExtra ? tp.casoExtra.nome : tp.nome[plano];
+  const descricaoCurta = casoExtra ? tp.casoExtra.descricaoCurta : tp.descricaoCurta[plano];
+  const textoDescontoNaCompra = (tipo: TipoDescontoIndicacao, subscricao: boolean) =>
+    tipo === "novo_cliente"
+      ? subscricao
+        ? ti.descontoNaCompra.novoClienteSubscricao
+        : ti.descontoNaCompra.novoClienteCompra
+      : subscricao
+        ? ti.descontoNaCompra.recompensaSubscricao
+        : ti.descontoNaCompra.recompensaCompra;
 
   // Desconto de indicação: só para mostrar (o servidor decide de novo ao abrir
   // o Checkout). O cliente pode preferir um código promocional — não acumulam.
@@ -95,54 +130,60 @@ export function ConfirmarCompra({
         className="max-h-full w-full max-w-[540px] overflow-y-auto rounded-[20px] bg-white p-6 text-left text-[var(--v2-navy)] shadow-[0_24px_48px_-16px_rgba(11,37,69,0.35)] sm:p-7"
       >
         <h2 id="confirmar-compra-titulo" className="mb-4 text-[21px] font-extrabold tracking-[-0.02em] text-[var(--v2-navy)]">
-          Confirmar compra
+          {t.titulo}
         </h2>
 
         <div className="mb-4 rounded-[14px] border border-[var(--v2-line)] bg-[var(--v2-blue-bg)] p-4">
-          <p className="text-[16px] font-bold text-[var(--v2-navy)]">{info.nome}</p>
-          {casoExtra && <p className="text-[13.5px] font-semibold text-[var(--v2-green-dark)]">{TEXTO_BENEFICIO_SUBSCRITOR}</p>}
+          <p className="text-[16px] font-bold text-[var(--v2-navy)]">{nome}</p>
+          {casoExtra && <p className="text-[13.5px] font-semibold text-[var(--v2-green-dark)]">{tp.casoExtra.beneficio}</p>}
           <p className="text-[15px] font-semibold text-[var(--v2-navy)]">
             {(casoExtra || descontoIndicacao) && (
               <>
                 <span className="font-normal text-[var(--v2-muted)] line-through">
-                  <span className="sr-only">Preço normal: </span>
+                  <span className="sr-only">{t.precoNormal}</span>
                   {formatarPreco(casoExtra ? CASO_EXTRA.precoReferenciaCentimos : info.precoCentimos)}
                 </span>{" "}
               </>
             )}
             {formatarPreco(descontoIndicacao ? precoComDescontoCentimos(info.precoCentimos) : info.precoCentimos)}
-            {descontoIndicacao && info.subscricao
-              ? " no primeiro mês"
-              : info.subscricao
-                ? " por mês"
-                : " — pagamento único"}{" "}
-            ({IVA_INCLUIDO})
+            {descontoIndicacao && info.subscricao ? t.noPrimeiroMes : info.subscricao ? t.porMes : t.pagamentoUnico}{" "}
+            ({tp.ivaIncluido})
           </p>
           <p className="mt-1 text-[13.5px] text-[var(--v2-muted)]">
-            {info.subscricao
-              ? "Subscrição mensal com renovação automática todos os meses, até a cancelar."
-              : "Pagamento único, sem renovação."}
+            {info.subscricao ? t.renovacao : t.semRenovacao}
           </p>
-          <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--v2-muted)]">{info.descricaoCurta}</p>
+          <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--v2-muted)]">{descricaoCurta}</p>
         </div>
 
         <div className="mb-4 flex flex-col gap-2 text-[13.5px] leading-relaxed text-[var(--v2-muted)]">
           {conversao && (
             <p>
-              Utilizamos {formatarPreco(conversao.mensalidade)} do seu pagamento Avulso para cobrir o primeiro mês
-              {conversao.reembolso > 0 &&
-                ` e reembolsamos os restantes ${formatarPreco(conversao.reembolso)} para o método de pagamento original`}
-              . A partir do mês seguinte, é cobrado o preço do plano.
+              {t.conversao(formatarPreco(conversao.mensalidade))}
+              {conversao.reembolso > 0 && t.conversaoReembolso(formatarPreco(conversao.reembolso))}
+              {t.conversaoFim}
+            </p>
+          )}
+          {protecaoGratuita && !casoExtra && plano !== "avulso" && (
+            <p className="font-semibold text-[var(--v2-navy)]">
+              {plano === "caso_protecao"
+                ? tg.casoProtecao
+                : protecaoGratuita.primeiraCobranca
+                  ? tg.cobrancaNoFim(
+                      formatarData(idioma, protecaoGratuita.primeiraCobranca, {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                        timeZone: "Europe/Lisbon",
+                      }),
+                    )
+                  : tg.cobrancaHoje}
             </p>
           )}
           {info.subscricao && (
-            <p>
-              Pode cancelar a qualquer momento em Gestão de Subscrição, na sua área de cliente. O cancelamento produz
-              efeitos no fim do período já pago.
-            </p>
+            <p>{t.cancelar}</p>
           )}
           {casoExtra && (
-            <p>O desconto de subscritor já está aplicado no preço e não acumula com códigos promocionais.</p>
+            <p>{t.descontoSubscritor}</p>
           )}
           {descontoIndicacao && (
             <>
@@ -150,56 +191,63 @@ export function ConfirmarCompra({
                 {textoDescontoNaCompra(descontoIndicacao, info.subscricao)}
               </p>
               <p>
-                O desconto de indicação não acumula com códigos promocionais.{" "}
+                {t.naoAcumula}{" "}
                 <button type="button" onClick={() => setPrescindiu(true)} className={LINK}>
-                  Prefiro usar um código promocional
+                  {t.prefiroCodigo}
                 </button>
               </p>
             </>
           )}
           {prescindiu && oferta?.desconto && (
             <p>
-              Não aplicamos o desconto de indicação nesta compra: pode introduzir o seu código promocional no passo de
-              pagamento.{" "}
+              {t.semDescontoIndicacao}{" "}
               <button type="button" onClick={() => setPrescindiu(false)} className={LINK}>
-                Usar o desconto de indicação
+                {t.usarDesconto}
               </button>
             </p>
           )}
-          {plano === "caso_protecao" && oferta?.novoClienteIndicado && <p>{TEXTOS_INDICACAO.casoProtecaoSemDesconto}</p>}
+          {plano === "caso_protecao" && oferta?.novoClienteIndicado && <p>{ti.textos.casoProtecaoSemDesconto}</p>}
           {oferta?.semContaComIndicacao && (
-            <p className="font-semibold text-[var(--v2-navy)]">{TEXTOS_INDICACAO.semConta}</p>
+            <p className="font-semibold text-[var(--v2-navy)]">{ti.textos.semConta}</p>
           )}
-          {!conversao && !casoExtra && !descontoIndicacao && (
+          {!conversao && !casoExtra && !descontoIndicacao && !(plano === "protecao" && protecaoGratuita?.primeiraCobranca) && (
             <p>
-              {info.subscricao
-                ? "Se tiver um código promocional, pode aplicá-lo no passo de pagamento. Mesmo com desconto ou com valor de 0 €, a subscrição renova-se todos os meses, ao preço do plano ou nas condições do código aplicado, até a cancelar."
-                : "Se tiver um código promocional, pode aplicá-lo no passo de pagamento."}
+              {info.subscricao ? t.codigoSubscricao : t.codigoCompra}
             </p>
           )}
         </div>
 
         <div className="mb-4 rounded-[14px] bg-[var(--v2-surface)] p-4 text-[13.5px] leading-relaxed text-[var(--v2-navy)]">
-          <p className="mb-1 font-semibold">Direito de livre resolução</p>
-          <p>{RESUMO_LIVRE_RESOLUCAO}</p>
-          <p className="mt-2">{COMO_EXERCER_LIVRE_RESOLUCAO}</p>
+          <p className="mb-1 font-semibold">{t.livreResolucao}</p>
+          <p>
+            <TextoVinculativo idioma={idioma} traducao={tj.resumoLivreResolucao}>
+              {RESUMO_LIVRE_RESOLUCAO}
+            </TextoVinculativo>
+          </p>
+          <p className="mt-2">
+            <TextoVinculativo idioma={idioma} traducao={tj.comoExercer}>
+              {COMO_EXERCER_LIVRE_RESOLUCAO}
+            </TextoVinculativo>
+          </p>
           <p className="mt-2">
             <Link href={ROTAS_LEGAIS.livreResolucao} target="_blank" className={LINK}>
-              Informação completa sobre livre resolução
+              {t.informacaoCompleta}
             </Link>{" "}
             ·{" "}
             <Link href={ROTAS_LEGAIS.termos} target="_blank" className={LINK}>
-              Termos e Condições
+              {t.termos}
             </Link>
           </p>
         </div>
 
         <p className="mb-5 text-[13.5px] text-[var(--v2-muted)]">
-          Para saber como tratamos os seus dados, consulte a{" "}
-          <Link href={ROTAS_LEGAIS.privacidade} target="_blank" className={LINK}>
-            Política de Privacidade
-          </Link>
-          .
+          {rico(t.dados, {
+            privacidade: (c) => (
+              <Link href={ROTAS_LEGAIS.privacidade} target="_blank" className={LINK}>
+                {c}
+              </Link>
+            ),
+          })}
         </p>
 
         <form
@@ -226,13 +274,16 @@ export function ConfirmarCompra({
               onChange={(e) => setAceitaTermos(e.target.checked)}
               className={CAIXA_SELECAO}
             />
-            <span>
-              {ACEITACAO_TERMOS.antes}
-              <Link href={ROTAS_LEGAIS.termos} target="_blank" className={LINK}>
-                {ACEITACAO_TERMOS.ligacao}
-              </Link>
-              {ACEITACAO_TERMOS.depois}
-            </span>
+            {/* Consentimentos com prova: o texto mostrado e gravado é o português (legal.ts). */}
+            <TextoVinculativo idioma={idioma} traducao={tj.aceitacaoTermos}>
+              <span>
+                {ACEITACAO_TERMOS.antes}
+                <Link href={ROTAS_LEGAIS.termos} target="_blank" className={LINK}>
+                  {ACEITACAO_TERMOS.ligacao}
+                </Link>
+                {ACEITACAO_TERMOS.depois}
+              </span>
+            </TextoVinculativo>
           </label>
 
           <label className="flex items-start gap-3 text-[14.5px] leading-relaxed text-[var(--v2-navy)]">
@@ -245,7 +296,9 @@ export function ConfirmarCompra({
               onChange={(e) => setPedeInicio(e.target.checked)}
               className={CAIXA_SELECAO}
             />
-            <span>{inicioImediato.texto}</span>
+            <TextoVinculativo idioma={idioma} traducao={tj.inicioImediato}>
+              <span>{inicioImediato.texto}</span>
+            </TextoVinculativo>
           </label>
 
           {estado.erro && (
@@ -260,14 +313,14 @@ export function ConfirmarCompra({
               onClick={onFechar}
               className={`${BOTAO_SECUNDARIO} flex-1`}
             >
-              Voltar
+              {t.voltar}
             </button>
             <button
               type="submit"
               disabled={!aceitaTermos || !pedeInicio || aSubmeter}
               className={`${BOTAO_PRIMARIO} flex-1`}
             >
-              {aSubmeter ? "A abrir pagamento…" : "Continuar para pagamento"}
+              {aSubmeter ? t.aAbrir : t.continuar}
             </button>
           </div>
         </form>

@@ -27,11 +27,11 @@ describe("estadoCasoCliente", () => {
     }
   });
 
-  test("só a confirmação da solução e o pedido de informação pedem ação pelo estado do caso", () => {
+  test("só a confirmação da solução e o pedido de informação pedem acção pelo estado do caso", () => {
     for (const s of STATUS) assert.equal(estadoCasoCliente(s).requerAcao, s === "Aguardando decisão cliente" || s === "Aguardando cliente", s);
   });
 
-  test("texto à espera de autorização pede ação, exceto em caso resolvido ou à espera de decisão", () => {
+  test("texto à espera de autorização pede acção, excepto em caso resolvido ou à espera de decisão", () => {
     const e = estadoCasoCliente("Em investigação", "aguardando_aprovacao");
     assert.equal(e.requerAcao, true);
     assert.equal(e.rotulo, "Precisamos da sua autorização");
@@ -74,7 +74,7 @@ describe("eventos do caso no portal", () => {
   });
 
   test("evento desconhecido não mostra o tipo interno", () => {
-    assert.equal(rotuloEventoCliente("tipo_interno_x"), "Atualização do caso");
+    assert.equal(rotuloEventoCliente("tipo_interno_x"), "Actualização do caso");
   });
 
   test("na terceira pessoa, sem 'Cliente'", () => {
@@ -91,7 +91,7 @@ describe("acompanhamento depois do envio", () => {
     assert.notEqual(e.tom, "concluido");
   });
 
-  test("resposta recebida: em análise, sem pedir ação", () => {
+  test("resposta recebida: em análise, sem pedir acção", () => {
     const e = estadoCasoCliente("Resposta em análise");
     assert.equal(e.rotulo, "Resposta recebida — em análise pela DoLado");
     assert.equal(e.requerAcao, false);

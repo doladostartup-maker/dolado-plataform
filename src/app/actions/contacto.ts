@@ -3,6 +3,8 @@
 import { headers } from "next/headers";
 import { excedeuLimiteTaxa } from "@/lib/rateLimit";
 import { CONTACTO_EMAIL } from "@/lib/site";
+import { tInstitucional } from "@/i18n/mensagens/institucional";
+import { textos } from "@/i18n/servidor";
 
 async function obterIp() {
   const h = await headers();
@@ -34,9 +36,10 @@ export async function enviarContacto(
     return { ok: true };
   }
 
+  const erros = (await textos(tInstitucional)).contacto.erros;
   const ip = await obterIp();
   if (excedeuLimiteTaxa(`contacto:${ip}`)) {
-    return { ok: false, erro: "Demasiados pedidos. Tente novamente dentro de alguns minutos." };
+    return { ok: false, erro: erros.limite };
   }
 
   const nome = ((formData.get("nome") as string) || "").trim();
@@ -45,16 +48,16 @@ export async function enviarContacto(
   const mensagem = ((formData.get("mensagem") as string) || "").trim();
 
   if (!nome) {
-    return { ok: false, erro: "Indique o seu nome." };
+    return { ok: false, erro: erros.nome };
   }
   if (!validEmail(email)) {
-    return { ok: false, erro: "Insira um e-mail válido." };
+    return { ok: false, erro: erros.email };
   }
   if (!assunto) {
-    return { ok: false, erro: "Indique o assunto." };
+    return { ok: false, erro: erros.assunto };
   }
   if (!mensagem) {
-    return { ok: false, erro: "Escreva a sua mensagem." };
+    return { ok: false, erro: erros.mensagem };
   }
 
   const resposta = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -79,7 +82,7 @@ export async function enviarContacto(
   });
 
   if (!resposta.ok) {
-    return { ok: false, erro: "Erro ao enviar. Por favor tente novamente." };
+    return { ok: false, erro: erros.envio };
   }
 
   return { ok: true };

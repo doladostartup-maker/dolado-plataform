@@ -1,11 +1,12 @@
 "use client";
 
 import Script from "next/script";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { SEM_CONSENTIMENTO, lerConsentimento, scriptsDeMedicao } from "@/lib/consentimentoMedicao";
+import { SEM_CONSENTIMENTO, lerConsentimento, metaPixelId, scriptsDeMedicao } from "@/lib/consentimentoMedicao";
 import { COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM, COOKIE_ORIGEM, PARAMETRO_ORIGEM, decidirCookiesOrigem, linhaCookieOrigem } from "@/lib/origemAquisicao";
 
-// Insere GTM, GA4 e Google Ads só depois de o Cookiebot confirmar o
+// Insere GTM, GA4, Google Ads e o Pixel da Meta só depois de o Cookiebot confirmar o
 // consentimento da categoria certa (regras em src/lib/consentimentoMedicao.ts).
 // Não depende do bloqueio automático do Cookiebot: sem Cookiebot ou sem
 // resposta no banner, nada é inserido. Os eventos do Cookiebot avisam quando
@@ -20,14 +21,66 @@ import { COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM, COOKIE_ORIGEM, PARAMETRO_ORIGE
 const GTM_ID = "GTM-T4HCJBMF";
 const GA4_IDS = ["G-B4PQKLZ2BF", "G-KD6C514Q1Q"];
 const ADS_ID = "AW-18429943837";
+const META_PIXEL_ID = metaPixelId();
 
 const EVENTOS_COOKIEBOT = ["CookiebotOnConsentReady", "CookiebotOnAccept", "CookiebotOnDecline"] as const;
 
 const GTAG_BASE = `window.dataLayer = window.dataLayer || [];
 window.gtag = window.gtag || function gtag(){window.dataLayer.push(arguments);};`;
 
+// Pixel da Meta. Sem a imagem "noscript" do código oficial: sem JavaScript não há Cookiebot nem
+// consentimento, logo a imagem de rastreio nunca pode ser inserida.
+// O PageView vai pelo efeito (abaixo), para contar também as navegações do
+// Next.js, que não recarregam a página.
+const META_PIXEL_SRC = "https://connect.facebook.net/en_US/fbevents.js";
+
+/** O mesmo que o código oficial da Meta: fila de chamadas + fbevents.js assíncrono. */
+function carregarPixelMeta() {
+  if (window.fbq) return;
+  type Fila = ((...args: unknown[]) => void) & { callMethod?: (...a: unknown[]) => void; queue: unknown[][]; push: unknown; loaded: boolean; version: string };
+  const fbq = function (...args: unknown[]) {
+    if (fbq.callMethod) fbq.callMethod(...args);
+    else fbq.queue.push(args);
+  } as Fila;
+  fbq.push = fbq;
+  fbq.loaded = true;
+  fbq.version = "2.0";
+  fbq.queue = [];
+  window.fbq = fbq;
+  (window as unknown as { _fbq?: unknown })._fbq ??= fbq;
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = META_PIXEL_SRC;
+  document.head.appendChild(script);
+}
+
+// Estado do Pixel na janela (o componente volta a montar a cada página).
+let metaIniciado = false;
+let metaUltimoPageView: string | null = null;
+
+function pixelMeta(permitido: boolean, caminho: string) {
+  if (!META_PIXEL_ID) return;
+  if (!permitido) {
+    // Consentimento retirado depois de o Pixel carregar: deixa de enviar.
+    if (metaIniciado) window.fbq?.("consent", "revoke");
+    return;
+  }
+  if (!metaIniciado) {
+    carregarPixelMeta();
+    window.fbq?.("init", META_PIXEL_ID);
+    metaIniciado = true;
+  } else {
+    window.fbq?.("consent", "grant");
+  }
+  if (metaUltimoPageView !== caminho) {
+    window.fbq?.("track", "PageView");
+    metaUltimoPageView = caminho;
+  }
+}
+
 export function MedicaoComConsentimento({ origemAtiva = false }: { origemAtiva?: boolean }) {
   const [consentimento, setConsentimento] = useState(SEM_CONSENTIMENTO);
+  const caminho = usePathname();
 
   useEffect(() => {
     const gerirOrigem = () => {
@@ -62,6 +115,10 @@ export function MedicaoComConsentimento({ origemAtiva = false }: { origemAtiva?:
   }, [origemAtiva]);
 
   const permitidos = scriptsDeMedicao(consentimento);
+
+  useEffect(() => {
+    pixelMeta(permitidos.meta, caminho);
+  }, [permitidos.meta, caminho]);
 
   return (
     <>

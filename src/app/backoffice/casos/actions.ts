@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { problemaValidoParaSetor } from "@/lib/pedidoCaso";
+import { camposDetalhes, problemaValidoParaSetor, respostaDetalheValida } from "@/lib/pedidoCaso";
 
 function parseCasoFormData(formData: FormData) {
   const valorIndicado = formData.get("valor_indicado") as string;
@@ -11,16 +11,32 @@ function parseCasoFormData(formData: FormData) {
   const dataFim = formData.get("data_fim_fidelidade") as string;
   const dataEnvioReclamacao = formData.get("data_envio_reclamacao") as string;
   const primeiraRespostaEm = formData.get("primeira_resposta_em") as string;
+  const sector = (formData.get("sector") as string) || null;
+  const problemaTipo = (formData.get("problema_tipo") as string) || null;
+  // Respostas adicionais (painéis solares; forma de contratação na
+  // contratação de Energia/Gás): podem ser corrigidas aqui — decidem que
+  // regras jurídicas a IA pode considerar. Só as do tipo de caso; valor
+  // inválido ou em falta → "nao_sei". Outros casos: null.
+  const campos = camposDetalhes(sector, problemaTipo);
+  const detalhes = campos.length
+    ? Object.fromEntries(
+        campos.map((c) => {
+          const v = formData.get(c);
+          return [c, respostaDetalheValida(c, v) ? v : "nao_sei"];
+        }),
+      )
+    : null;
 
   return {
     nome: formData.get("nome") as string,
     email: formData.get("email") as string,
     telefone: (formData.get("telefone") as string) || null,
     empresa_parceira: (formData.get("empresa_parceira") as string) || null,
-    sector: (formData.get("sector") as string) || null,
+    sector,
     empresa: (formData.get("empresa") as string) || null,
     tipo_problema: (formData.get("tipo_problema") as string) || null,
-    problema_tipo: (formData.get("problema_tipo") as string) || null,
+    problema_tipo: problemaTipo,
+    detalhes_caso: detalhes,
     momento_cliente: (formData.get("momento_cliente") as string) || null,
     descricao: (formData.get("descricao") as string) || null,
     status: formData.get("status") as string,
@@ -36,7 +52,7 @@ function parseCasoFormData(formData: FormData) {
   };
 }
 
-const ERRO_PROBLEMA = "O tipo de problema não existe no setor escolhido.";
+const ERRO_PROBLEMA = "O tipo de problema não existe no sector escolhido.";
 
 export async function criarCaso(formData: FormData) {
   const supabase = await createClient();

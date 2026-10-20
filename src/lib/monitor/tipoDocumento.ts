@@ -11,12 +11,12 @@ export const TIPOS_DOCUMENTO = ["fatura", "contrato"] as const;
 export type TipoDocumento = (typeof TIPOS_DOCUMENTO)[number];
 
 export const ROTULO_TIPO_DOCUMENTO: Record<string, string> = {
-  fatura: "Fatura",
+  fatura: "Factura",
   contrato: "Contrato",
   desconhecido: "Desconhecido",
 };
 
-const COM_ARTIGO: Record<TipoDocumento, string> = { fatura: "uma fatura", contrato: "um contrato" };
+const COM_ARTIGO: Record<TipoDocumento, string> = { fatura: "uma factura", contrato: "um contrato" };
 
 export function lerTipoDocumento(valor: unknown): TipoDocumento | null {
   return TIPOS_DOCUMENTO.includes(valor as TipoDocumento) ? (valor as TipoDocumento) : null;
@@ -46,7 +46,7 @@ export function sugestaoTipoDocumento(
   if (!lido || lido === doc.tipo) return null;
   const atual = lerTipoDocumento(doc.tipo);
   if (lido === "outro") {
-    return { tipo: null, texto: "A leitura indica que o documento não parece ser uma fatura nem um contrato." };
+    return { tipo: null, texto: "A leitura indica que o documento não parece ser uma factura nem um contrato." };
   }
   if (!atual) return { tipo: lido, texto: `O documento parece ser ${COM_ARTIGO[lido]}.` };
   const como = doc.tipo === doc.tipo_indicado ? "foi enviado como" : "está a ser tratado como";
@@ -65,7 +65,7 @@ export const MSG_ERRO_ALTERAR_TIPO: Record<ErroAlterarTipo, string> = {
   nao_encontrado: "Documento não encontrado.",
   indisponivel: "Não é possível alterar o tipo agora: o documento está a ser lido ou o ficheiro já não está guardado.",
   dados_decididos:
-    "Este documento tem valores ou situações já confirmados pelo cliente ou pela DoLado. O tipo não é alterado automaticamente: trate a correção à mão.",
+    "Este documento tem valores ou situações já confirmados pelo cliente ou pela DoLado. O tipo não é alterado automaticamente: trate a correcção à mão.",
   erro: "Não foi possível alterar o tipo do documento. Tente novamente.",
 };
 

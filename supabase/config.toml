@@ -25,8 +25,13 @@ verify_jwt = false
 # Este ficheiro só configura a stack local: em produção o mesmo assunto e
 # HTML têm de ser colados no Dashboard (Authentication → Emails →
 # Templates → Confirm sign up) sempre que o template mudar.
+# Idioma (09/10/2026): assunto e HTML escolhem o texto por
+# `{{ if eq (print .Data.idioma) "en-GB" }}` — user_metadata.idioma, gravado
+# ao criar a conta (src/lib/idiomaConta.ts); sem idioma → português. Nunca
+# usar `$` dentro de blocos nem `sed -i` nestes ficheiros (a stack local
+# monta-os por inode: um ficheiro novo deixa o Kong sem o template).
 [auth.email.template.confirmation]
-subject = "Confirme o seu e-mail na DoLado"
+subject = '{{ if eq (print .Data.idioma) "en-GB" }}Confirm your email with DoLado{{ else }}Confirme o seu e-mail na DoLado{{ end }}'
 content_path = "./supabase/templates/confirmacao.html"
 
 # E-mail "Reset password" (recuperação da palavra-passe, /recuperar-palavra-passe).
@@ -43,7 +48,7 @@ content_path = "./supabase/templates/confirmacao.html"
 # Em produção, colar o mesmo assunto e HTML no Dashboard (Authentication →
 # Emails → Templates → Reset Password) sempre que o template mudar.
 [auth.email.template.recovery]
-subject = "Defina uma nova palavra-passe na DoLado"
+subject = '{{ if eq (print .Data.idioma) "en-GB" }}Set a new password for DoLado{{ else }}Defina uma nova palavra-passe na DoLado{{ end }}'
 content_path = "./supabase/templates/recuperacao.html"
 
 # Stack local: os testes de contrato enviam vários e-mails da Auth (Mailpit)

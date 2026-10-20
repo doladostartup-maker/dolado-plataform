@@ -12,7 +12,18 @@ export type PassoLinhaTemporal = {
   estado: "feito" | "atual" | "futuro";
 };
 
-export function LinhaTemporal({ passos, rotulo }: { passos: PassoLinhaTemporal[]; rotulo: string }) {
+const ESTADOS_PT = { feito: " (concluído)", atual: " (em curso)", futuro: " (a seguir)" };
+
+export function LinhaTemporal({
+  passos,
+  rotulo,
+  estados = ESTADOS_PT,
+}: {
+  passos: PassoLinhaTemporal[];
+  rotulo: string;
+  /** Texto para leitores de ecrã de cada estado (o backoffice usa o português). */
+  estados?: Record<PassoLinhaTemporal["estado"], string>;
+}) {
   return (
     <ol aria-label={rotulo} className="flex flex-col">
       {passos.map((p, i) => {
@@ -43,7 +54,7 @@ export function LinhaTemporal({ passos, rotulo }: { passos: PassoLinhaTemporal[]
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <p className={`text-[14.5px] leading-snug ${p.estado === "futuro" ? "text-[var(--v2-muted)]" : "font-semibold text-[var(--v2-navy)]"}`}>
                 {p.titulo}
-                <span className="sr-only">{p.estado === "feito" ? " (concluído)" : p.estado === "atual" ? " (em curso)" : " (a seguir)"}</span>
+                <span className="sr-only">{estados[p.estado]}</span>
               </p>
               {p.quando && <p className="text-[13px] text-[var(--v2-muted)]">{p.quando}</p>}
               {p.detalhe && <div className="text-[13.5px] leading-relaxed text-[var(--v2-muted)]">{p.detalhe}</div>}

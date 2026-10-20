@@ -61,7 +61,7 @@ export function TabelaCasos({
               <th scope="col" className={TABELA_TH}>Cliente</th>
               <th scope="col" className={TABELA_TH}>Empresa e problema</th>
               <th scope="col" className={TABELA_TH}>Estado</th>
-              <th scope="col" className={TABELA_TH}>Próxima ação</th>
+              <th scope="col" className={TABELA_TH}>Próxima acção</th>
               <th scope="col" className={TABELA_TH}>Prazo</th>
               <th scope="col" className={`${TABELA_TH} text-right`}>Criado</th>
             </tr>
@@ -78,7 +78,7 @@ export function TabelaCasos({
                 <td className={TABELA_TD}>
                   <span className="block font-medium">{c.empresa || "Empresa por indicar"}</span>
                   <span className="block text-[12.5px] text-[var(--v2-muted)]">
-                    {c.sector ?? "Sem setor"} · {problema(c)}
+                    {c.sector ?? "Sem sector"} · {problema(c)}
                   </span>
                 </td>
                 <td className={TABELA_TD}>

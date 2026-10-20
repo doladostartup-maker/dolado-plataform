@@ -158,7 +158,7 @@ describe("resumo mensal (Supabase real)", { skip: !ATIVO && "só com npm run tes
     assert.equal(entradas[0].achados.length, 1);
   });
 
-  test("com a sessão do cliente (RLS) lê exatamente o mesmo que a service_role", async () => {
+  test("com a sessão do cliente (RLS) lê exactamente o mesmo que a service_role", async () => {
     const { createClient } = await import("@supabase/supabase-js");
     const cliente = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.CONTRATO_ANON_KEY, { auth: { persistSession: false } });
     const { error } = await cliente.auth.signInWithPassword({ email: a.email, password: a.password });
@@ -166,7 +166,7 @@ describe("resumo mensal (Supabase real)", { skip: !ATIVO && "só com npm run tes
     assert.deepEqual(await carregarEntradasServicos(cliente, a.id), await carregarEntradasServicos(admin, a.id));
   });
 
-  test("envia um resumo por conta com Proteção, só com os dados dessa conta, e não repete", async () => {
+  test("envia um resumo por conta com Protecção, só com os dados dessa conta, e não repete", async () => {
     const emails = [];
     const deps = dependenciasResumoMensal({ enviarEmail: async (destinatario, assunto, html, texto) => emails.push({ destinatario, assunto, html, texto }) });
     const r = await enviarResumosMensais(deps, SITE, AGORA);
@@ -175,11 +175,11 @@ describe("resumo mensal (Supabase real)", { skip: !ATIVO && "só com npm run tes
     const para = (email) => emails.filter((e) => e.destinatario === email);
     assert.equal(para(a.email).length, 1);
     assert.equal(para(b.email).length, 1);
-    assert.equal(para(avulso.email).length, 0, "conta sem Proteção não recebe");
-    assert.equal(para(novo.email).length, 0, "Proteção subscrita depois do mês de referência: não recebe");
+    assert.equal(para(avulso.email).length, 0, "conta sem Protecção não recebe");
+    assert.equal(para(novo.email).length, 0, "Protecção subscrita depois do mês de referência: não recebe");
 
     const ea = para(a.email)[0];
-    assert.equal(ea.assunto, "A sua Proteção em fevereiro");
+    assert.equal(ea.assunto, "A sua Protecção em Fevereiro");
     assert.ok(ea.texto.includes("Operadora Alfa") && !ea.texto.includes("Operadora Beta"));
     assert.ok(!ea.texto.includes("SEGREDO POR REVER"));
     assert.match(ea.texto.replace(/\s/g, " "), /um aumento de 6,40 € na mensalidade/);
@@ -195,7 +195,7 @@ describe("resumo mensal (Supabase real)", { skip: !ATIVO && "só com npm run tes
     assert.equal(linhas.length, 2);
     for (const l of linhas) {
       assert.equal(l.estado, "enviado");
-      assert.equal(l.modelo_versao, "resumo_v1");
+      assert.equal(l.modelo_versao, "resumo_v4");
       assert.ok(!JSON.stringify(l.conteudo).includes("@"), "a fotografia não guarda e-mails");
     }
 

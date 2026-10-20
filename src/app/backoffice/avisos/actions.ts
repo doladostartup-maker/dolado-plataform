@@ -6,7 +6,8 @@ import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SETORES } from "@/lib/pedidoCaso";
 import { CONTACTO_EMAIL } from "@/lib/site";
-import { montarHtmlAvisoSetorial } from "@/lib/email/avisoSetorial";
+import { assuntoAvisoSetorial, montarHtmlAvisoSetorial } from "@/lib/email/avisoSetorial";
+import { idiomaDaConta } from "@/lib/idiomaContaServidor";
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY;
 const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL;
@@ -40,7 +41,7 @@ export async function enviarAvisoSectorial(formData: FormData) {
   const descricao = ((formData.get("descricao") as string) || "").trim();
 
   if (!SETORES.includes(setor)) {
-    redirect(`/backoffice/avisos?erro=${encodeURIComponent("Escolha um setor válido.")}`);
+    redirect(`/backoffice/avisos?erro=${encodeURIComponent("Escolha um sector válido.")}`);
   }
   if (!titulo || !descricao) {
     redirect(`/backoffice/avisos?erro=${encodeURIComponent("Preencha o título e a descrição.")}`);
@@ -73,15 +74,24 @@ export async function enviarAvisoSectorial(formData: FormData) {
 
     const nomeExibido = destinatario.nome || destinatario.email;
     try {
+      // Idioma da conta (moldura do e-mail; o título e a descrição ficam
+      // como escritos aqui). Sem idioma guardado → português.
+      const { data: conta } = await createAdminClient()
+        .from("utilizadores")
+        .select("id")
+        .eq("email", destinatario.email)
+        .limit(1)
+        .maybeSingle();
+      const idioma = await idiomaDaConta(conta?.id as string | undefined);
       await enviarEmailBrevo(
         { email: destinatario.email, nome: nomeExibido },
-        `[Aviso DoLado] Novidade no setor de ${setor}`,
-        montarHtmlAvisoSetorial(nomeExibido, setor, titulo, descricao),
+        assuntoAvisoSetorial(setor, idioma),
+        montarHtmlAvisoSetorial(nomeExibido, setor, titulo, descricao, new Date(), idioma),
       );
       enviados += 1;
     } catch (erro) {
       // Uma falha de envio individual não pode travar os restantes.
-      console.error(`Falha ao enviar aviso setorial a ${destinatario.email}:`, erro);
+      console.error(`Falha ao enviar aviso sectorial a ${destinatario.email}:`, erro);
     }
   }
 

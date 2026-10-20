@@ -30,7 +30,7 @@ export function decidirCompra(dados: {
   plano: PlanoId;
   autenticado: boolean;
   /** Acesso da conta (user_access); null sem sessão. */
-  acesso: { plano: string; temProtecao: boolean } | null;
+  acesso: { plano: string; temSubscricao: boolean } | null;
   /** Subscrições ativas no Stripe para o Customer da conta (plano pelo price; null se desconhecido). */
   subscricoesAtivasStripe: PlanoSubscricaoAtiva[];
 }): DecisaoCompra {
@@ -38,7 +38,7 @@ export function decidirCompra(dados: {
   if (!dados.autenticado) return { acao: "publico" };
 
   const planosAtivos: PlanoSubscricaoAtiva[] = [...dados.subscricoesAtivasStripe];
-  if (dados.acesso?.temProtecao) {
+  if (dados.acesso?.temSubscricao) {
     planosAtivos.push(dados.acesso.plano === "protecao" || dados.acesso.plano === "caso_protecao" ? dados.acesso.plano : null);
   }
   if (planosAtivos.length > 0) {
@@ -47,6 +47,6 @@ export function decidirCompra(dados: {
   return { acao: "adesao" };
 }
 
-export const MENSAGEM_MESMA_SUBSCRICAO = "Já tem esta subscrição ativa.";
+export const MENSAGEM_MESMA_SUBSCRICAO = "Já tem esta subscrição activa.";
 export const MENSAGEM_OUTRA_SUBSCRICAO =
-  "Já tem uma subscrição ativa. Pode consultá-la em Gestão de Subscrição, na sua área de cliente.";
+  "Já tem uma subscrição activa. Pode consultá-la em Gestão de Subscrição, na sua área de cliente.";

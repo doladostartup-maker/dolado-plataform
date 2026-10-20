@@ -54,6 +54,25 @@ export type SubscricaoAtualizada = {
   current_period_end: string | null;
 };
 
+/**
+ * Casos que deixam de ser acompanhados quando a subscrição termina
+ * (decisão de Thiago, 17/10/2026): casos ainda em curso abertos com um caso
+ * da subscrição (`origem_credito = 'subscricao'`) ou sem compra única ligada
+ * (`null`: anteriores a 05/10/2026 ou criados pelo admin). Os casos pagos à
+ * parte (Avulso, Caso Extra) continuam a ser acompanhados.
+ */
+export const ESTADOS_CASO_TERMINADOS: readonly string[] = [
+  "Resolvido",
+  "Bloqueado",
+  "Encerrado sem resolução",
+  "Encerrado com encaminhamento externo",
+];
+
+export function casoAcompanhadoPelaSubscricao(caso: { status: string | null; origem_credito: string | null }) {
+  if (caso.status && ESTADOS_CASO_TERMINADOS.includes(caso.status)) return false;
+  return caso.origem_credito === null || caso.origem_credito === "subscricao";
+}
+
 export interface DependenciasGestao {
   /** user_access da própria conta (o user_id vem sempre da sessão). */
   obterConta(userId: string): Promise<ContaSubscricao | null>;
@@ -65,6 +84,8 @@ export interface DependenciasGestao {
     subscriptionId: string,
     dados: { cancel_at_period_end: boolean; current_period_end: string | null },
   ): Promise<void>;
+  /** Casos da própria conta em curso e acompanhados pela subscrição (casoAcompanhadoPelaSubscricao). */
+  contarCasosEmCurso(userId: string): Promise<number>;
   registarPedido(dados: {
     userId: string;
     subscriptionId: string;
@@ -72,13 +93,15 @@ export interface DependenciasGestao {
     motivo: MotivoCancelamento;
     pedidoEm: string;
     fimPrevisto: string | null;
+    /** Casos em curso cujo acompanhamento termina com a subscrição (a cliente confirmou). */
+    casosEmCurso: number;
   }): Promise<void>;
   registarReversao(subscriptionId: string, em: string): Promise<void>;
 }
 
 export type ResultadoGestao =
   | { ok: true; fim: string | null; jaEstava: boolean }
-  | { ok: false; erro: "sem_subscricao" | "sem_cancelamento" | "subscricao_diferente" };
+  | { ok: false; erro: "sem_subscricao" | "sem_cancelamento" | "subscricao_diferente" | "confirmar_casos" };
 
 const ESTADOS_COM_ACESSO = new Set(["active", "trialing", "past_due"]);
 
@@ -95,12 +118,19 @@ export async function pedirCancelamento(
   motivo: MotivoCancelamento,
   deps: DependenciasGestao,
   agora: Date = new Date(),
+  /** A cliente confirmou que o acompanhamento dos casos em curso termina com a subscrição. */
+  confirmouFimAcompanhamento = false,
 ): Promise<ResultadoGestao> {
   const conta = await deps.obterConta(userId);
   const sub = subscricaoGerivel(conta);
   if (!sub || !conta) return { ok: false, erro: "sem_subscricao" };
   // Pedido repetido (duplo clique, outro separador): nada a fazer.
   if (conta.cancel_at_period_end) return { ok: true, fim: conta.current_period_end, jaEstava: true };
+
+  // Com casos em curso, só se cancela com a escolha explícita da cliente
+  // (contado no servidor, nunca vindo do browser). Nada muda no Stripe antes.
+  const casosEmCurso = await deps.contarCasosEmCurso(userId);
+  if (casosEmCurso > 0 && !confirmouFimAcompanhamento) return { ok: false, erro: "confirmar_casos" };
 
   const atualizada = await deps.definirCancelamentoNoFimDoPeriodo(sub.subscriptionId, true);
   if (conta.stripe_customer_id && atualizada.stripe_customer_id !== conta.stripe_customer_id) {
@@ -120,6 +150,7 @@ export async function pedirCancelamento(
     motivo,
     pedidoEm: agora.toISOString(),
     fimPrevisto: atualizada.current_period_end,
+    casosEmCurso,
   });
   return { ok: true, fim: atualizada.current_period_end, jaEstava: false };
 }

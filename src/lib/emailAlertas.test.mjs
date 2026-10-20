@@ -26,8 +26,8 @@ describe("escape de conteúdo do cliente", () => {
   });
 
   test("texto normal continua legível (acentos não são alterados)", () => {
-    const html = htmlAlertaMonitor({ ...BASE, regra: "promocao_30d", dias: 1, fornecedor: "Operadora Ação & Cª", descricaoPromocao: "Fibra 1 Gbps" });
-    assert.ok(html.includes("Operadora Ação &amp; Cª"));
+    const html = htmlAlertaMonitor({ ...BASE, regra: "promocao_30d", dias: 1, fornecedor: "Operadora Acção & Cª", descricaoPromocao: "Fibra 1 Gbps" });
+    assert.ok(html.includes("Operadora Acção &amp; Cª"));
     assert.ok(html.includes("termina amanhã"));
   });
 
@@ -48,12 +48,15 @@ describe("destinatário dos alertas diários", () => {
     // A reserva vem antes do envio; uma falha liberta a reserva.
     assert.ok(codigo.indexOf('"monitor_reservar_alerta"') < codigo.indexOf("await enviarEmailBrevo("));
     assert.match(codigo, /"monitor_libertar_alerta"/);
-    // Nunca lê tabelas diretamente para escolher destinatários.
-    assert.equal(/rest\/v1\/contratos_/.test(codigo), false);
+    // Nunca lê tabelas diretamente para escolher destinatários: o único
+    // acesso direto é o dono do contrato, só para o idioma do texto.
+    assert.equal((codigo.match(/rest\/v1\/contratos_/g) ?? []).length, 1);
+    assert.match(codigo, /contratos_monitorizados\?id=eq\.\$\{encodeURIComponent\(contratoId\)\}&select=utilizador_id/);
+    assert.match(codigo, /\{ email: a\.email, nome: a\.nome \}/);
   });
 });
 
-describe("e-mails do Monitor de Proteção", async () => {
+describe("e-mails do Monitor de Protecção", async () => {
   const { assuntoAlertaMonitor, htmlAlertaMonitor } = await import("../../supabase/functions/_shared/emailAlertas.ts");
   const base = { nome: "Ana", fornecedor: "Vodafone", descricaoPromocao: null, dataFim: "2027-02-28", contratoId: "abc" };
 

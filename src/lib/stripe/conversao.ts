@@ -1,12 +1,19 @@
 import type Stripe from "stripe";
+import type { Idioma } from "../../i18n/config.ts";
+import { formatarEurosCents } from "../../i18n/formatar.ts";
+import { tPlanos } from "../../i18n/mensagens/planos.ts";
+import { tSubscricao } from "../../i18n/mensagens/subscricao.ts";
 
 // Conversão de um Avulso pago na 1.ª mensalidade de uma assinatura, com
 // reembolso parcial da diferença. Sem efeitos, para ser testável com
 // `node --test` (quem fala com o Stripe e a Supabase é app/actions/stripe.ts
 // e o webhook).
 //
-//   Avulso 14,99 € → Proteção 4,99 €:        1.ª fatura 0 €, reembolso 10,00 €
-//   Avulso 14,99 € → Caso + Proteção 7,99 €: 1.ª fatura 0 €, reembolso  7,00 €
+//   Avulso 11,99 € → Proteção 4,99 €:        1.ª fatura 0 €, reembolso 7,00 €
+//   Avulso 11,99 € → Caso + Proteção 7,99 €: 1.ª fatura 0 €, reembolso 4,00 €
+//
+// O reembolso parte sempre do valor efetivamente pago: um Avulso comprado
+// antes de 18/10/2026 a 14,99 € continua a dar 10,00 € / 7,00 €.
 //
 // Sem Customer Balance e sem saldo para meses seguintes: a 1.ª fatura leva
 // um cupão de 100% "once" (só essa fatura) e a diferença é devolvida ao
@@ -21,8 +28,8 @@ export const VALOR_MENSALIDADE_CENTIMOS: Record<PlanoDestino, number> = {
 };
 
 export const NOME_PLANO: Record<PlanoDestino, string> = {
-  protecao: "Proteção",
-  caso_protecao: "Caso + Proteção",
+  protecao: "Protecção",
+  caso_protecao: "Caso + Protecção",
 };
 
 /** Cupão Stripe da 1.ª mensalidade coberta pelo Avulso: 100%, só uma fatura. */
@@ -172,7 +179,7 @@ export function parametrosCheckoutConversao({
 
 const ESTADO_REEMBOLSO: Record<string, string> = {
   pending: "pendente",
-  requires_action: "requer ação",
+  requires_action: "requer acção",
   succeeded: "concluído",
   failed: "falhado",
   canceled: "cancelado",
@@ -189,9 +196,10 @@ export function formatarEuros(centimos: number) {
 }
 
 /** Texto mostrado ao cliente depois da conversão (sem falar em saldo ou crédito futuro). */
-export function mensagemConversao(plano: PlanoDestino, mensalidade: number, reembolso: number) {
-  const base = `Utilizámos ${formatarEuros(mensalidade)} do valor do seu pagamento Avulso para cobrir o primeiro mês do plano ${NOME_PLANO[plano]}.`;
-  return reembolso > 0
-    ? `${base} Os restantes ${formatarEuros(reembolso)} serão reembolsados para o método de pagamento original.`
-    : base;
+export function mensagemConversao(plano: PlanoDestino, mensalidade: number, reembolso: number, idioma: Idioma = "pt-PT") {
+  const euros = (c: number) => (idioma === "pt-PT" ? formatarEuros(c) : formatarEurosCents(idioma, c));
+  const nome = idioma === "pt-PT" ? NOME_PLANO[plano] : tPlanos[idioma].nome[plano];
+  const t = tSubscricao[idioma];
+  const base = t.conversao(euros(mensalidade), nome);
+  return reembolso > 0 ? `${base}${t.conversaoReembolso(euros(reembolso))}` : base;
 }

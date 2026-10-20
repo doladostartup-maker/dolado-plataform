@@ -54,7 +54,7 @@ function listaDeTextos(v: unknown): string[] | null {
 // "Lei n.º 16/2022", "Decreto-Lei n.º 24/2014", "DL 446/85", "Lei 23/96",
 // "Portaria n.º 123-A/2020", "Regulamento n.º 829/2023".
 const CITACAO_DIPLOMA =
-  /\b(?:Decreto-Lei|Decreto|DL|Lei|Portaria|Regulamento|Diretiva|Despacho|Resolução)\s*(?:n\.?\s*[ºo°.]?\s*)?(\d{1,5}(?:-[A-Z])?\/\d{2,4}(?:\/[A-Z]{2,4})?)/giu;
+  /\b(?:Decreto-Lei|Decreto|DL|Lei|Portaria|Regulamento|Dire(?:c)?tiva|Despacho|Resolução)\s*(?:n\.?\s*[ºo°.]?\s*)?(\d{1,5}(?:-[A-Z])?\/\d{2,4}(?:\/[A-Z]{2,4})?)/giu;
 
 function numerosCitados(texto: string) {
   return [...texto.matchAll(CITACAO_DIPLOMA)].map((m) => m[1].toUpperCase());

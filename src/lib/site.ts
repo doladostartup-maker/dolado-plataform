@@ -1,3 +1,5 @@
+import { caminhoAtivacaoLanding, type Utm } from "./landing30Dias.ts";
+
 // dolado.pt serve só as páginas de marketing; tudo o resto (login, portal,
 // backoffice) corre em portal.dolado.pt — ver o comentário em
 // src/middleware.ts sobre PAGINAS_SO_MARKETING. Um link para "/" ou
@@ -15,10 +17,10 @@ export const PRIVACIDADE_EMAIL = "privacidade@dolado.pt";
 // Identificação legal da entidade que opera a marca DoLado. Fonte única para
 // footer, Termos, Privacidade, modelo de livre resolução e e-mails.
 //
-// ATENÇÃO — sede em processo de alteração: MORADA_SEDE é a morada legal
-// atualmente registada. Só trocar quando a nova sede estiver oficialmente
-// registada (checklist em CLAUDE.md, "Pendência da nova sede"). A mudança de
-// sede pode alterar a entidade RAL de referência (ENTIDADES_RAL em legal.ts).
+// MORADA_SEDE é a morada legal registada. A mudança de sede prevista foi
+// posta de lado: mantém-se esta morada (decisão de Thiago, 20/10/2026). Se um
+// dia mudar: novas versões dos Termos e da Política, rodapé e ENTIDADES_RAL
+// em legal.ts (a entidade RAL de referência depende da localização).
 export const ENTIDADE_LEGAL = "Competent Domain - Consultoria em Informática Unipessoal Lda";
 export const NIPC = "515609773";
 export const MORADA_SEDE = "Rua Cidade de Manchester, n.º 35, r/c, 1170-099 Lisboa";
@@ -38,6 +40,26 @@ export function urlTratarCaso(origem?: string) {
 // sempre tomada em portal.dolado.pt, onde está a sessão (cookies host-only):
 // quem já tem conta compra com o Customer da conta e nunca abre uma segunda
 // subscrição desligada dela.
+/** Ativação da Proteção gratuita (portal.dolado.pt), com a página de origem (só métricas). */
+export function urlExperimentarProtecao(origem: "homepage" | "precario" | "protecao") {
+  return `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/experimentar-protecao?origem=${origem}`;
+}
+
+/** Caminho absoluto em portal.dolado.pt (sessão, registo, activação). */
+export function urlPortal(caminho: string) {
+  return `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}${caminho}`;
+}
+
+/** Activação vinda da landing /30-dias-gratis, com os UTM do anúncio (src/lib/landing30Dias.ts). */
+export function urlAtivacaoLanding(utm: Utm = {}) {
+  return `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}${caminhoAtivacaoLanding(utm)}`;
+}
+
+/** Oferta da Proteção gratuita ligada nas páginas públicas (lido no build). */
+export function ofertaProtecaoGratuitaPublica() {
+  return process.env.PROTECAO_GRATUITA_ATIVA === "1";
+}
+
 export function urlComprar(plano: string) {
   return `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/comprar?plano=${encodeURIComponent(plano)}`;
 }

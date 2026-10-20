@@ -5,17 +5,27 @@ import { PLANOS_LIVRE_RESOLUCAO, type PedidoLivreResolucao } from "../livreResol
 import { CONTACTO_EMAIL } from "../site.ts";
 import { escaparHtml } from "./textoRevisao.ts";
 import { emailV2, tabelaEmail } from "./molduraEmail.ts";
+import { IDIOMA_PADRAO, type Idioma } from "../../i18n/config.ts";
+import { formatarDataHora, mesesComMaiuscula } from "../../i18n/formatar.ts";
+import { tEmails } from "../../i18n/mensagens/emails.ts";
+import { tPlanos } from "../../i18n/mensagens/planos.ts";
 
-export const ASSUNTO_CONFIRMACAO_LIVRE_RESOLUCAO = "Recebemos o seu pedido de livre resolução";
+export const ASSUNTO_CONFIRMACAO_LIVRE_RESOLUCAO = tEmails["pt-PT"].livreResolucao.assunto;
+
+export function assuntoConfirmacaoLivreResolucao(idioma: Idioma = IDIOMA_PADRAO) {
+  return tEmails[idioma].livreResolucao.assunto;
+}
 
 const P = 'style="margin:0 0 16px 0;"';
 
 function dataHora(iso: string) {
-  return new Intl.DateTimeFormat("pt-PT", {
-    dateStyle: "long",
-    timeStyle: "short",
-    timeZone: "Europe/Lisbon",
-  }).format(new Date(iso));
+  return mesesComMaiuscula(
+    new Intl.DateTimeFormat("pt-PT", {
+      dateStyle: "long",
+      timeStyle: "short",
+      timeZone: "Europe/Lisbon",
+    }).format(new Date(iso)),
+  );
 }
 
 /** Moldura simples dos avisos internos à DoLado. */
@@ -30,22 +40,36 @@ function moldura(conteudo: string) {
  * formulário público não servir para fazer chegar texto arbitrário à
  * caixa de correio de um cliente.
  */
-export function montarHtmlConfirmacaoLivreResolucao(pedido: PedidoLivreResolucao, id: string, pedidoEm: string) {
+export function montarHtmlConfirmacaoLivreResolucao(
+  pedido: PedidoLivreResolucao,
+  id: string,
+  pedidoEm: string,
+  idioma: Idioma = IDIOMA_PADRAO,
+) {
+  const tc = tEmails[idioma].comum;
+  const t = tEmails[idioma].livreResolucao;
+  const plano =
+    idioma === "pt-PT"
+      ? PLANOS_LIVRE_RESOLUCAO[pedido.plano]
+      : pedido.plano === "nao_sei"
+        ? t.planoNaoSei
+        : tPlanos[idioma].nome[pedido.plano];
   const linhas = [
-    ["Referência", id],
-    ["Recebido em", dataHora(pedidoEm)],
-    ["E-mail", pedido.email],
-    ["Plano", PLANOS_LIVRE_RESOLUCAO[pedido.plano]],
-    ...(pedido.data_compra ? [["Data da compra", pedido.data_compra]] : []),
+    [t.rotuloReferencia, id],
+    [t.rotuloRecebido, idioma === "pt-PT" ? dataHora(pedidoEm) : formatarDataHora(idioma, pedidoEm)],
+    [t.rotuloEmail, pedido.email],
+    [t.rotuloPlano, plano],
+    ...(pedido.data_compra ? [[t.rotuloDataCompra, pedido.data_compra]] : []),
   ].map(([k, v]) => [escaparHtml(k), escaparHtml(v)] as [string, string]);
   return emailV2({
-    titulo: ASSUNTO_CONFIRMACAO_LIVRE_RESOLUCAO,
+    titulo: t.assunto,
+    idioma,
     corpo: `
-    <p ${P}>Olá,</p>
-    <p ${P}>Confirmamos que recebemos o seu pedido de livre resolução, feito através do formulário em dolado.pt/livre-resolucao.</p>
+    <p ${P}>${tc.ola}</p>
+    <p ${P}>${t.p1}</p>
     ${tabelaEmail(linhas)}
-    <p ${P}>A DoLado vai analisar o pedido e responder-lhe por e-mail. Se houver lugar a reembolso, este é feito pelo mesmo meio de pagamento que utilizou, no prazo máximo de 14 dias a contar da data em que fomos informados da sua decisão, nos termos da lei.</p>
-    <p ${P}>Se não fez este pedido, responda a este e-mail ou escreva para ${escaparHtml(CONTACTO_EMAIL)}.</p>`,
+    <p ${P}>${t.p2}</p>
+    <p ${P}>${t.naoFez(escaparHtml(CONTACTO_EMAIL))}</p>`,
     assinatura: "equipa",
   });
 }
@@ -66,7 +90,7 @@ export function montarHtmlAvisoLivreResolucao(
       <li>Data da compra: ${escaparHtml(pedido.data_compra ?? "—")}</li>
       <li>Identificação: ${escaparHtml(pedido.identificacao ?? "—")}</li>
       <li>E-mail de cliente conhecido: ${contexto.contaConhecida ? "sim" : "não — confirmar a identidade antes de responder"}</li>
-      <li>Confirmação de receção enviada: ${contexto.confirmacaoEnviada ? "sim" : "não"}</li>
+      <li>Confirmação de recepção enviada: ${contexto.confirmacaoEnviada ? "sim" : "não"}</li>
     </ul>
     ${pedido.mensagem ? `<p ${P}>${escaparHtml(pedido.mensagem).replace(/\n/g, "<br>")}</p>` : ""}
     <p style="margin:0;">Sem efeitos automáticos: apreciar o pedido e tratar no Stripe Dashboard, se aplicável.</p>`);

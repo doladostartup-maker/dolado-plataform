@@ -15,7 +15,7 @@ import { BOTAO_PEQUENO, BOTAO_SECUNDARIO, CODIGO, TABELA, TABELA_MOLDURA, TABELA
 const MOTIVO: Record<string, string> = {
   sem_endereco_de_caso: "Não foi enviado para um endereço de caso",
   endereco_inexistente: "Endereço de caso que não existe",
-  endereco_desativado: "Endereço de caso desativado",
+  endereco_desativado: "Endereço de caso desactivado",
   caso_inexistente: "O caso já não existe",
 };
 
@@ -66,7 +66,7 @@ export default async function RespostasSemCasoPage({ searchParams }: { searchPar
                 <th className={TABELA_TH}>Para</th>
                 <th className={TABELA_TH}>Motivo</th>
                 <th className={TABELA_TH}>
-                  <span className="sr-only">Ações</span>
+                  <span className="sr-only">Acções</span>
                 </th>
               </tr>
             </thead>

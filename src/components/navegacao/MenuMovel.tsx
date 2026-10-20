@@ -5,7 +5,14 @@ import { useEffect, useId, useState } from "react";
 // Botão e painel de navegação (portal e backoffice) abaixo de `md`. A navegação em si
 // (links e "Terminar sessão") vem do layout como children, para ser a mesma
 // da barra lateral.
-export function MenuMovel({ children }: { children: React.ReactNode }) {
+export function MenuMovel({
+  children,
+  rotulos = { abrir: "Abrir menu", fechar: "Fechar menu" },
+}: {
+  children: React.ReactNode;
+  /** Rótulos acessíveis (portal: no idioma da página; backoffice: português). */
+  rotulos?: { abrir: string; fechar: string };
+}) {
   const [aberto, setAberto] = useState(false);
   const idPainel = useId();
 
@@ -29,7 +36,7 @@ export function MenuMovel({ children }: { children: React.ReactNode }) {
         type="button"
         aria-expanded={aberto}
         aria-controls={idPainel}
-        aria-label={aberto ? "Fechar menu" : "Abrir menu"}
+        aria-label={aberto ? rotulos.fechar : rotulos.abrir}
         onClick={() => setAberto((v) => !v)}
         className="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-[10px] text-[var(--v2-navy)] hover:bg-[var(--v2-surface)]"
       >

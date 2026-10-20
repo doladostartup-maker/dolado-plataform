@@ -355,7 +355,7 @@ export function validarExtracaoFatura(entrada: unknown, hoje: string): Resultado
   const periodoInicio = dataValida(bruto.periodo_inicio) ? bruto.periodo_inicio : null;
   let periodoFim = dataValida(bruto.periodo_fim) ? bruto.periodo_fim : null;
   if (periodoInicio && periodoFim && periodoFim < periodoInicio) {
-    avisos.push("período de faturação invertido");
+    avisos.push("período de facturação invertido");
     periodoFim = null;
     precisaRevisao = true;
   }

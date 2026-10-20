@@ -49,11 +49,11 @@ describe("novo-caso: escape de conteúdo do cliente", () => {
 
   test("notificação ao admin mostra problema_tipo e empresa (formulário guiado)", () => {
     const html = htmlNotificacaoAdmin(
-      caso({ problema_tipo: "Cobrança indevida", empresa: "Operadora Ação & Cª" }),
+      caso({ problema_tipo: "Cobrança indevida", empresa: "Operadora Acção & Cª" }),
       SITE,
     );
     assert.ok(html.includes("Cobrança indevida"));
-    assert.ok(html.includes("Operadora Ação &amp; Cª"));
+    assert.ok(html.includes("Operadora Acção &amp; Cª"));
   });
 
   test("descrição mantém as quebras de linha; campos vazios aparecem como —", () => {
@@ -77,7 +77,7 @@ describe("novo-caso: assunto ao admin", () => {
 
   test("comprimento limitado e valores em falta", () => {
     assert.ok(assuntoNotificacaoAdmin({ nome: "x".repeat(500), sector: "y".repeat(500) }).length < 120);
-    assert.equal(assuntoNotificacaoAdmin({ nome: "", sector: null }), "[NOVO CASO] Sem setor – Sem nome");
+    assert.equal(assuntoNotificacaoAdmin({ nome: "", sector: null }), "[NOVO CASO] Sem sector – Sem nome");
   });
 });
 
@@ -88,7 +88,7 @@ test("a Edge Function novo-caso usa o módulo partilhado e não monta HTML próp
   assert.equal(/\$\{caso\.(nome|sector)/.test(codigo), false);
 });
 
-test("confirmação ao cliente: texto atual, sem prazo nem promessa de resposta pessoal", () => {
+test("confirmação ao cliente: texto actual, sem prazo nem promessa de resposta pessoal", () => {
   const html = htmlConfirmacaoCliente("Ana");
   assert.ok(html.includes("Recebemos o seu caso."));
   assert.ok(html.includes("A DoLado irá analisar as informações enviadas e, antes de qualquer envio, poderá entrar em contacto consigo"));

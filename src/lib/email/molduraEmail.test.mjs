@@ -62,6 +62,6 @@ test("todos os e-mails ao cliente usam a moldura V2 (nenhum com as cores antigas
 test("template de confirmação mantém as variáveis da Supabase", () => {
   const t = fonte("../../../supabase/templates/confirmacao.html");
   assert.match(t, /\{\{ \.ConfirmationURL \}\}/);
-  assert.match(t, /\{\{ with \.Data \}\}\{\{ if \.mostrar_codigo \}\}/);
-  assert.match(t, /\{\{ \$\.Token \}\}/);
+  assert.match(t, /\{\{ if \.Data\.mostrar_codigo \}\}/);
+  assert.match(t, /\{\{ \.Token \}\}/);
 });

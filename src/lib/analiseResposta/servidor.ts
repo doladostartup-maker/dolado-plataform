@@ -6,6 +6,7 @@ import { avisosAtravessados, estadoOrcamento, lerTetoOrcamentoUsd } from "@/lib/
 import { avisarAdminIA, gastoApiUsd } from "@/lib/orcamentoClaude";
 import type { ComunicacaoParaAnalise, DadosAnalise } from "./contexto";
 import { gerarAnalise, iniciarAnalise, type DepsAnalise, type ResultadoAnalise } from "./gerar";
+import { lerDetalhesCaso } from "@/lib/pedidoCaso";
 import { paraEnvio, selecionarRegras, type RegraJuridica } from "@/lib/rascunhoIA/regras";
 
 // DoLado — dependências reais da análise preliminar das respostas (service
@@ -55,7 +56,7 @@ export function criarDependenciasAnalise(): DepsAnalise {
       if (!com) return null;
       const casoId = com.caso_id as string;
       const [caso, enviadas, anteriores, anexos, decisoes, regras] = await Promise.all([
-        admin.from("casos").select("nome, sector, empresa, problema_tipo, tipo_problema, descricao, created_at").eq("id", casoId).single(),
+        admin.from("casos").select("nome, sector, empresa, problema_tipo, tipo_problema, descricao, created_at, detalhes_caso").eq("id", casoId).single(),
         admin
           .from("casos_textos_envios")
           .select("enviado_em, canal, referencia, casos_textos(conteudo)")
@@ -85,7 +86,11 @@ export function criarDependenciasAnalise(): DepsAnalise {
       const dadosCaso = caso.data as DadosAnalise["caso"];
       return {
         caso: dadosCaso,
-        regras: selecionarRegras({ setor: dadosCaso.sector, categoria: dadosCaso.problema_tipo }, (regras.data ?? []) as RegraJuridica[], hoje).map(paraEnvio),
+        regras: selecionarRegras(
+          { setor: dadosCaso.sector, categoria: dadosCaso.problema_tipo, detalhes: lerDetalhesCaso((caso.data as { detalhes_caso?: unknown }).detalhes_caso) },
+          (regras.data ?? []) as RegraJuridica[],
+          hoje,
+        ).map(paraEnvio),
         comunicacao: paraAnalise(com),
         enviadas: (enviadas.data ?? []).flatMap((e) => {
           const texto = (Array.isArray(e.casos_textos) ? e.casos_textos[0] : e.casos_textos) as { conteudo: string } | null;
@@ -101,7 +106,7 @@ export function criarDependenciasAnalise(): DepsAnalise {
     async orcamentoBloqueado() {
       gastoAntes = await gastoApiUsd(admin);
       const bloqueado = estadoOrcamento(gastoAntes, teto).bloqueado;
-      if (bloqueado) await avisar("Orçamento da Claude API atingido", `A análise automática não foi gerada: o gasto (${gastoAntes.toFixed(2)} USD) atingiu o teto de ${teto} USD.`);
+      if (bloqueado) await avisar("Orçamento da Claude API atingido", `A análise automática não foi gerada: o gasto (${gastoAntes.toFixed(2)} USD) atingiu o tecto de ${teto} USD.`);
       return bloqueado;
     },
 

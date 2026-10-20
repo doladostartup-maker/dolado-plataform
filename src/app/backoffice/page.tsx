@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { mesesComMaiuscula } from "@/i18n/formatar";
 import { casosEmCurso, contagensFilas, type CasoLista } from "@/lib/backoffice/filas";
 import { prazoPrincipal, prazosCaso, prioridade, proximaAcao } from "@/lib/backoffice/triagem";
 import { CabecalhoPagina, TituloSeccao } from "@/components/backoffice/Cabecalho";
@@ -76,7 +77,7 @@ export default async function BackofficeHoje() {
   const outrasFilas = [filas.documentosMonitor, filas.achados, filas.compras, filas.conversoes, filas.naoAssociadas].reduce<number>((s, n) => s + (n ?? 0), 0);
   const tudoEmDia = precisam.length === 0 && comPrazo.length === 0 && outrasFilas === 0;
 
-  const dataHoje = hoje.toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Lisbon" });
+  const dataHoje = mesesComMaiuscula(hoje.toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Lisbon" }));
 
   return (
     <div className="flex flex-col gap-7">
@@ -87,7 +88,7 @@ export default async function BackofficeHoje() {
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Metrica rotulo="Precisam de ação" valor={precisam.length} detalhe="Casos à espera da DoLado" />
+        <Metrica rotulo="Precisam de acção" valor={precisam.length} detalhe="Casos à espera da DoLado" />
         <Metrica rotulo="Fora do prazo" valor={foraDoPrazo} detalhe="1.ª resposta, empresa ou fidelização" tom={foraDoPrazo > 0 ? "erro" : "normal"} />
         <Metrica rotulo="À espera do cliente" valor={esperaCliente} detalhe="Aprovação do texto, informação ou confirmação" />
         <Metrica rotulo="À espera da empresa" valor={esperaEmpresa} detalhe="Reclamação ou nova comunicação enviada" />
@@ -103,7 +104,7 @@ export default async function BackofficeHoje() {
         <section aria-labelledby="precisam" className="flex flex-col gap-3">
           <TituloSeccao
             id="precisam"
-            titulo="Precisa da sua ação"
+            titulo="Precisa da sua acção"
             contagem={precisam.length}
             descricao="Casos em que o próximo passo é da DoLado, por prioridade."
             acao={
@@ -124,14 +125,14 @@ export default async function BackofficeHoje() {
             id="prazos"
             titulo="Prazos a vigiar"
             contagem={comPrazo.length}
-            descricao="Casos à espera do cliente ou da empresa, fora do prazo ou perto dele: resposta da empresa (15 dias úteis), fim da fidelização (15 dias) e 1.ª resposta (48 horas úteis)."
+            descricao="Casos à espera do cliente ou da empresa, fora do prazo ou perto dele: resposta da empresa (15 dias úteis), fim da fidelização (15 dias) e 1.ª resposta (2 dias úteis)."
           />
           <Lista casos={comPrazo.slice(0, LIMITE_LISTA)} mostrar="prazo" />
         </section>
       )}
 
       <section aria-labelledby="filas" className="flex flex-col gap-3">
-        <TituloSeccao id="filas" titulo="Outras filas" descricao="Respostas sem caso, Proteção e pagamentos que esperam uma decisão." />
+        <TituloSeccao id="filas" titulo="Outras filas" descricao="Respostas sem caso, Protecção e pagamentos que esperam uma decisão." />
         <div className="grid gap-3 sm:grid-cols-2">
           <CartaoFila
             href="/backoffice/respostas-sem-caso"
@@ -143,13 +144,13 @@ export default async function BackofficeHoje() {
           <CartaoFila
             href="/backoffice/monitor"
             titulo="Documentos por tratar"
-            descricao="Documentos da Proteção pendentes ou por rever."
+            descricao="Documentos da Protecção pendentes ou por rever."
             contagem={filas.documentosMonitor}
             icone={<IconeEscudo tamanho={18} />}
           />
           <CartaoFila
             href="/backoffice/monitor/achados"
-            titulo="Situações detetadas"
+            titulo="Situações detectadas"
             descricao="Por rever antes de qualquer comunicação ao cliente."
             contagem={filas.achados}
             icone={<IconeLupaDocumento tamanho={18} />}

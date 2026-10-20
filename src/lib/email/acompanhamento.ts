@@ -7,61 +7,53 @@
 // À equipa: avisos internos em HTML simples, sem conteúdo nem endereços.
 import { escaparHtml } from "./textoRevisao.ts";
 import { P_EMAIL, P_NOTA, botaoEmail, emailV2 } from "./molduraEmail.ts";
+import { IDIOMA_PADRAO, localizarHref, type Idioma } from "../../i18n/config.ts";
+import { tEmails } from "../../i18n/mensagens/emails.ts";
 
-const sobre = (empresa: string | null) => (empresa ? ` relativa a <strong>${escaparHtml(empresa)}</strong>` : "");
+type Momento = "respostaRecebida" | "pedidoInformacao" | "solucaoApresentada" | "casoEncerradoExterno";
+type Dados = { empresa: string | null; urlCaso: string };
 
-export const ASSUNTO_RESPOSTA_RECEBIDA = "Recebemos uma resposta relacionada com o seu caso";
+const pt = tEmails["pt-PT"].acompanhamento;
+export const ASSUNTO_RESPOSTA_RECEBIDA = pt.respostaRecebida.assunto;
+export const ASSUNTO_PEDIDO_INFORMACAO = pt.pedidoInformacao.assunto;
+export const ASSUNTO_SOLUCAO_APRESENTADA = pt.solucaoApresentada.assunto;
+export const ASSUNTO_CASO_ENCERRADO_EXTERNO = pt.casoEncerradoExterno.assunto;
 
-export function montarHtmlRespostaRecebida({ empresa, urlCaso }: { empresa: string | null; urlCaso: string }) {
+export function assuntoAcompanhamento(momento: Momento, idioma: Idioma = IDIOMA_PADRAO) {
+  return tEmails[idioma].acompanhamento[momento].assunto;
+}
+
+/** Corpo comum: saudação, dois parágrafos, botão para o caso no portal e nota opcional. */
+function montar(momento: Momento, { empresa, urlCaso }: Dados, idioma: Idioma) {
+  const tc = tEmails[idioma].comum;
+  const t = tEmails[idioma].acompanhamento[momento];
+  const sobre = empresa ? tc.sobre(escaparHtml(empresa)) : "";
+  const nota = "nota" in t ? `\n          <p ${P_NOTA}>${t.nota}</p>` : "";
   return emailV2({
-    titulo: ASSUNTO_RESPOSTA_RECEBIDA,
-    preheader: "Estamos a analisá-la. Não precisa de fazer nada neste momento.",
-    corpo: `<p ${P_EMAIL}>Olá,</p>
-          <p ${P_EMAIL}>Recebemos uma comunicação relacionada com a sua reclamação${sobre(empresa)} e estamos a analisá-la.</p>
-          <p ${P_EMAIL}>Não precisa de fazer nada neste momento. Entraremos em contacto consigo se for necessária alguma ação.</p>
-          ${botaoEmail(escaparHtml(urlCaso), "Ver o meu caso")}
-          <p ${P_NOTA}>Pode acompanhar o caso a qualquer momento na sua área de cliente.</p>`,
+    titulo: t.assunto,
+    preheader: t.preheader,
+    idioma,
+    corpo: `<p ${P_EMAIL}>${tc.ola}</p>
+          <p ${P_EMAIL}>${t.p1(sobre)}</p>
+          <p ${P_EMAIL}>${t.p2}</p>
+          ${botaoEmail(escaparHtml(localizarHref(idioma, urlCaso)), t.botao)}${nota}`,
   });
 }
 
-export const ASSUNTO_PEDIDO_INFORMACAO = "Precisamos de informação sua para continuar o seu caso";
-
-export function montarHtmlPedidoInformacao({ empresa, urlCaso }: { empresa: string | null; urlCaso: string }) {
-  return emailV2({
-    titulo: ASSUNTO_PEDIDO_INFORMACAO,
-    preheader: "Veja no portal o que precisamos e envie-nos a informação.",
-    corpo: `<p ${P_EMAIL}>Olá,</p>
-          <p ${P_EMAIL}>Para continuarmos a tratar a sua reclamação${sobre(empresa)}, precisamos de informação ou documentos seus.</p>
-          <p ${P_EMAIL}>Indicámos no seu caso, no portal, exatamente o que precisamos e como nos pode enviar.</p>
-          ${botaoEmail(escaparHtml(urlCaso), "Ver o que precisamos")}`,
-  });
+export function montarHtmlRespostaRecebida(dados: Dados, idioma: Idioma = IDIOMA_PADRAO) {
+  return montar("respostaRecebida", dados, idioma);
 }
 
-export const ASSUNTO_SOLUCAO_APRESENTADA = "A empresa apresentou uma solução para o seu caso";
-
-export function montarHtmlSolucaoApresentada({ empresa, urlCaso }: { empresa: string | null; urlCaso: string }) {
-  return emailV2({
-    titulo: ASSUNTO_SOLUCAO_APRESENTADA,
-    preheader: "Diga-nos se o problema ficou resolvido.",
-    corpo: `<p ${P_EMAIL}>Olá,</p>
-          <p ${P_EMAIL}>A empresa apresentou uma solução para a sua reclamação${sobre(empresa)}. Explicámos o resultado no seu caso, no portal.</p>
-          <p ${P_EMAIL}>Só damos o caso por resolvido depois de nos confirmar que o problema ficou mesmo resolvido.</p>
-          ${botaoEmail(escaparHtml(urlCaso), "Ver a solução e responder")}`,
-  });
+export function montarHtmlPedidoInformacao(dados: Dados, idioma: Idioma = IDIOMA_PADRAO) {
+  return montar("pedidoInformacao", dados, idioma);
 }
 
-export const ASSUNTO_CASO_ENCERRADO_EXTERNO = "A DoLado terminou o acompanhamento do seu caso";
+export function montarHtmlSolucaoApresentada(dados: Dados, idioma: Idioma = IDIOMA_PADRAO) {
+  return montar("solucaoApresentada", dados, idioma);
+}
 
-export function montarHtmlCasoEncerradoExterno({ empresa, urlCaso }: { empresa: string | null; urlCaso: string }) {
-  return emailV2({
-    titulo: ASSUNTO_CASO_ENCERRADO_EXTERNO,
-    preheader: "Preparámos o dossiê do seu caso e a informação sobre como pode continuar.",
-    corpo: `<p ${P_EMAIL}>Olá,</p>
-          <p ${P_EMAIL}>A DoLado terminou o acompanhamento da sua reclamação${sobre(empresa)}. Isto não significa necessariamente que o problema esteja resolvido.</p>
-          <p ${P_EMAIL}>Preparámos o seu dossiê com o histórico e os documentos do caso. Se pretender continuar, poderá consultar a lista meramente informativa de entidades oficiais de Resolução Alternativa de Litígios de Consumo no portal.</p>
-          ${botaoEmail(escaparHtml(urlCaso), "Ver o caso e descarregar o dossiê")}
-          <p ${P_NOTA}>A DoLado não representa o consumidor em processos de mediação, conciliação ou arbitragem, não apresenta pedidos em seu nome e não determina nem indica qual é a entidade competente para este caso. Confirme diretamente junto da entidade se pode apreciar o conflito.</p>`,
-  });
+export function montarHtmlCasoEncerradoExterno(dados: Dados, idioma: Idioma = IDIOMA_PADRAO) {
+  return montar("casoEncerradoExterno", dados, idioma);
 }
 
 /** Aviso interno à equipa (sem conteúdo da mensagem, sem endereços). */

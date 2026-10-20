@@ -37,6 +37,7 @@ import { EnviosCaso, type ComprovativoEquipa, type EnvioEquipa } from "../_compo
 import { EncerramentoCaso, type DossieResumo, type EncerramentoResumo } from "../_components/EncerramentoCaso";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rotuloOrigem } from "@/lib/origemAquisicao";
+import { casoAcompanhadoPelaSubscricao } from "@/lib/gestaoSubscricao";
 import { rascunhoIAAtivo } from "@/lib/rascunhoIA/servidor";
 import { documentosParaPreenchimento } from "@/lib/preenchimentoReclamacao/servidor";
 import type { GeracaoIA } from "../_components/RascunhoIA";
@@ -89,6 +90,20 @@ export default async function CasoDetalhePage({
         .maybeSingle()
     : { data: null };
   const voucher = (compraComVoucher?.codigo_desconto as string | null | undefined) ?? null;
+  // Cancelamento da subscrição com casos em curso (17/10/2026): a cliente
+  // escolheu terminar também o acompanhamento no fim do período pago.
+  const { data: fimAcompanhamento } =
+    caso.utilizador_id && casoAcompanhadoPelaSubscricao({ status: caso.status, origem_credito: caso.origem_credito })
+      ? await supabase
+          .from("subscricao_cancelamentos")
+          .select("fim_previsto_em, terminado_em")
+          .eq("user_id", caso.utilizador_id)
+          .eq("acompanhamento_casos_termina", true)
+          .is("revertido_em", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : { data: null };
 
   const { data: anexosData } = await supabase
     .from("anexos")
@@ -254,7 +269,7 @@ export default async function CasoDetalhePage({
     <div className="flex flex-col gap-5">
       <CabecalhoPagina
         voltar={{ href: "/backoffice/casos", texto: "Casos" }}
-        contexto={`${caso.sector ?? "Sem setor"} · ${problema}`}
+        contexto={`${caso.sector ?? "Sem sector"} · ${problema}`}
         titulo={caso.nome}
         estado={<EstadoCaso status={caso.status} />}
         meta={
@@ -275,6 +290,17 @@ export default async function CasoDetalhePage({
         }
       />
 
+      {fimAcompanhamento && (
+        <Aviso tom="info" titulo="Acompanhamento termina com a subscrição">
+          A cliente cancelou a subscrição e escolheu terminar também o acompanhamento dos casos em curso
+          {fimAcompanhamento.terminado_em
+            ? ` (subscrição terminada a ${dataCurta(fimAcompanhamento.terminado_em as string)}).`
+            : fimAcompanhamento.fim_previsto_em
+              ? ` a ${dataCurta(fimAcompanhamento.fim_previsto_em as string)}.`
+              : " no fim do período pago."}{" "}
+          Se ela retirar o cancelamento, este aviso desaparece.
+        </Aviso>
+      )}
       {query.guardado && <Aviso tom="sucesso">Alterações guardadas.</Aviso>}
       {query.acomp_ok && <Aviso tom="sucesso">{query.acomp_ok}</Aviso>}
       {query.acomp_erro && <Aviso tom="erro">{query.acomp_erro}</Aviso>}
@@ -291,7 +317,7 @@ export default async function CasoDetalhePage({
         }`}
       >
         <div className="flex flex-col gap-1.5">
-          <p className={EYEBROW}>{acao.interna ? "Próxima ação da DoLado" : acao.aguarda ? "A aguardar" : "Estado"}</p>
+          <p className={EYEBROW}>{acao.interna ? "Próxima acção da DoLado" : acao.aguarda ? "A aguardar" : "Estado"}</p>
           <div>
             <Etiqueta tom={acao.tom}>{acao.rotulo}</Etiqueta>
           </div>
@@ -339,7 +365,7 @@ export default async function CasoDetalhePage({
             )}
             <ListaDados colunas={2}>
               <Dado rotulo="Empresa reclamada">{caso.empresa || "—"}</Dado>
-              <Dado rotulo="Setor">{caso.sector ?? "—"}</Dado>
+              <Dado rotulo="Sector">{caso.sector ?? "—"}</Dado>
               <Dado rotulo="O que aconteceu">{caso.problema_tipo || "—"}</Dado>
               <Dado rotulo="Tipo de problema">{caso.tipo_problema || "—"}</Dado>
               <Dado rotulo="Já reclamou?">{caso.momento_cliente || "—"}</Dado>
@@ -404,11 +430,11 @@ export default async function CasoDetalhePage({
             dossies={(dossies.data ?? []) as DossieResumo[]}
           />
 
-          <Seccao id="dados" titulo="Dados do caso" descricao="Editar os campos do caso. O estado muda com as ações do caso.">
+          <Seccao id="dados" titulo="Dados do caso" descricao="Editar os campos do caso. O estado muda com as acções do caso.">
             <CasoForm action={actualizarComId} valores={caso} submitLabel="Guardar alterações" edicao />
             <details className="rounded-[12px] border border-[var(--v2-line)]">
               <summary className="flex min-h-10 cursor-pointer items-center px-4 text-[14px] font-semibold text-[var(--v2-navy)]">
-                Corrigir estado (exceção)
+                Corrigir estado (excepção)
               </summary>
               <form action={corrigirEstado.bind(null, id)} className="flex flex-col gap-3 border-t border-[var(--v2-line)] p-4">
                 <p className={AJUDA_CAMPO}>
@@ -438,7 +464,7 @@ export default async function CasoDetalhePage({
                   <ConfirmarAcao
                     className={BOTAO_SECUNDARIO}
                     titulo="Corrigir o estado do caso?"
-                    descricao="A correção fica registada com o motivo. O cliente vê o novo estado no portal."
+                    descricao="A correcção fica registada com o motivo. O cliente vê o novo estado no portal."
                     confirmar="Corrigir estado"
                   >
                     Corrigir estado

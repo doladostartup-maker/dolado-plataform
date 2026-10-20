@@ -11,7 +11,9 @@
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 import type { createClient } from "@/lib/supabase/server";
-import { ROTULO_SETOR, type SetorContratoMonitor } from "./contratos";
+import { rotuloSetorMonitor } from "./contratos";
+import type { Idioma } from "@/i18n/config";
+import { tMonitor } from "@/i18n/mensagens/monitor";
 import type { LinhaFatura } from "./extracaoFatura";
 import { nomeComercial } from "./fornecedores";
 import {
@@ -49,10 +51,17 @@ function agrupar<T>(linhas: T[] | null | undefined, chave: (l: T) => string | nu
 }
 
 /** Resultado de todos os serviços acompanhados (ou só de um, com `contratoId`). */
-export async function carregarProtecao(supabase: SupabaseServer, userId: string, contratoId?: string): Promise<ProtecaoCliente> {
+export async function carregarProtecao(
+  supabase: SupabaseServer,
+  userId: string,
+  contratoId?: string,
+  idioma: Idioma = "pt-PT",
+): Promise<ProtecaoCliente> {
   const hoje = hojeLisboa();
-  const servicos = (await carregarEntradasServicos(supabase, userId, contratoId)).map((entrada) => resultadoServico(entrada, hoje));
-  return { servicos, geral: resultadoGeral(servicos) };
+  const servicos = (await carregarEntradasServicos(supabase, userId, contratoId, idioma)).map((entrada) =>
+    resultadoServico(entrada, hoje, idioma),
+  );
+  return { servicos, geral: resultadoGeral(servicos, idioma) };
 }
 
 /**
@@ -60,7 +69,12 @@ export async function carregarProtecao(supabase: SupabaseServer, userId: string,
  * vê no portal. Seguro também com a service_role: todas as consultas filtram
  * pelo dono e os eventos "atencao" só entram com o achado comunicado.
  */
-export async function carregarEntradasServicos(supabase: Leitor, userId: string, contratoId?: string): Promise<EntradaServico[]> {
+export async function carregarEntradasServicos(
+  supabase: Leitor,
+  userId: string,
+  contratoId?: string,
+  idioma: Idioma = "pt-PT",
+): Promise<EntradaServico[]> {
   let contratosQ = supabase
     .from("contratos_monitorizados")
     .select("id, setor, fornecedor, estado, created_at")
@@ -141,10 +155,10 @@ export async function carregarEntradasServicos(supabase: Leitor, userId: string,
     for (const x of lista.filter((x) => x.estado === "atual")) atuais[x.campo] = { valor: x.valor, origem: x.origem };
     const pendentes = lista.filter((x) => x.estado === "proposto" || x.estado === "em_conflito");
     const versao = versaoPor.get(c.id);
-    const setor = ROTULO_SETOR[c.setor as SetorContratoMonitor] ?? c.setor;
+    const setor = rotuloSetorMonitor(c.setor, idioma);
     const entrada: EntradaServico = {
       id: c.id,
-      nome: nomeComercial(c.fornecedor, fornecedores) ?? (c.setor === "nao_indicado" ? "Serviço por identificar" : `Serviço de ${setor.toLowerCase()}`),
+      nome: nomeComercial(c.fornecedor, fornecedores) ?? (c.setor === "nao_indicado" ? tMonitor[idioma].contratos.servicoPorIdentificar : tMonitor[idioma].contratos.servicoDe(setor)),
       setor: c.setor,
       terminado: c.estado === "terminado",
       campos: atuais,

@@ -5,9 +5,10 @@
 // milhão de tokens. Um modelo desconhecido conta pelo preço mais alto da
 // tabela: o orçamento nunca é subestimado.
 //
-// Orçamento (decisão de 02/10/2026): teto em ANTHROPIC_ORCAMENTO_USD (5 USD
-// por omissão), avisos ao admin a 50/75/90% e, no teto, nenhum documento é
-// processado automaticamente (fica pendente, sem erro para o cliente).
+// Orçamento (decisão de 12/10/2026; antes 5 USD): teto em
+// ANTHROPIC_ORCAMENTO_USD (8 USD por omissão), avisos ao admin a 50/75/90%
+// e, no teto, nenhum documento é processado automaticamente (fica pendente,
+// sem erro para o cliente).
 
 export const PRECOS_USD_POR_MTOK: Record<string, { entrada: number; saida: number }> = {
   "claude-sonnet-5-5": { entrada: 2, saida: 10 },
@@ -20,7 +21,7 @@ const PRECO_MAIS_ALTO = Object.values(PRECOS_USD_POR_MTOK).reduce((max, p) =>
   p.entrada + p.saida > max.entrada + max.saida ? p : max,
 );
 
-export const ORCAMENTO_PADRAO_USD = 5;
+export const ORCAMENTO_PADRAO_USD = 8;
 export const AVISOS_ORCAMENTO_PCT = [50, 75, 90] as const;
 
 export function custoEstimadoUsd(modelo: string, tokensEntrada: number, tokensSaida: number): number {

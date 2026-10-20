@@ -299,14 +299,14 @@ describe("primeira compra de quem foi indicado", () => {
     assert.deepEqual(recompensasDe(ANA).map((r) => r.estado), ["disponivel"]);
   });
 
-  test("Proteção com desconto na 1.ª mensalidade → desconto para quem indicou", async () => {
+  test("Protecção com desconto na 1.ª mensalidade → desconto para quem indicou", async () => {
     atribuir(BRUNO, ANA);
     await processar(evento("checkout.session.completed", sessaoSubscricao(BRUNO, PRECO_PROTECAO, { valor: 399, meta: { indicacao_desconto: "novo_cliente" } })));
     assert.equal(e.indicacoes.get(BRUNO).produto, "protecao");
     assert.equal(recompensasDe(ANA).length, 1);
   });
 
-  test("Caso + Proteção (sem desconto de indicação) continua a recompensar quem indicou", async () => {
+  test("Caso + Protecção (sem desconto de indicação) continua a recompensar quem indicou", async () => {
     atribuir(BRUNO, ANA);
     await processar(evento("checkout.session.completed", sessaoSubscricao(BRUNO, PRECO_CASO_PROTECAO, { valor: 799 })));
     const i = e.indicacoes.get(BRUNO);
@@ -441,7 +441,7 @@ describe("reembolso e disputa", () => {
 });
 
 describe("descontos de quem indicou: um por cobrança", () => {
-  test("Proteção: 3 indicações = 3 mensalidades seguidas com 20%, nunca 40%/60%, depois preço normal", async () => {
+  test("Protecção: 3 indicações = 3 mensalidades seguidas com 20%, nunca 40%/60%, depois preço normal", async () => {
     await processar(evento("checkout.session.completed", sessaoSubscricao(ANA, PRECO_PROTECAO, { customer: "cus_a1" })));
     for (const [user, cust] of [[BRUNO, "cus_b2"], [CARLA, "cus_c3"], ["00000000-0000-4000-a000-0000000000d4", "cus_d4"]]) {
       atribuir(user, ANA);
@@ -490,7 +490,7 @@ describe("descontos de quem indicou: um por cobrança", () => {
     assert.equal(r2.estado, "disponivel"); // o segundo fica para a próxima compra
   });
 
-  test("Caso + Proteção de quem indicou: a recompensa já ganha é usada na renovação mensal seguinte", async () => {
+  test("Caso + Protecção de quem indicou: a recompensa já ganha é usada na renovação mensal seguinte", async () => {
     await processar(evento("checkout.session.completed", sessaoSubscricao(ANA, PRECO_CASO_PROTECAO, { customer: "cus_a1", valor: 799 })));
     atribuir(BRUNO, ANA);
     await processar(evento("checkout.session.completed", sessaoAvulso(BRUNO)));
@@ -500,7 +500,7 @@ describe("descontos de quem indicou: um por cobrança", () => {
     assert.equal(recompensasDe(ANA)[0].estado, "usada");
   });
 
-  test("Caso + Proteção com cupão do piloto (100%): o desconto de indicação não acumula, fica disponível", async () => {
+  test("Caso + Protecção com cupão do piloto (100%): o desconto de indicação não acumula, fica disponível", async () => {
     await processar(evento("checkout.session.completed", sessaoSubscricao(ANA, PRECO_CASO_PROTECAO, { customer: "cus_a1", valor: 0 })));
     e.subsStripe.get(e.contas.get(ANA).sub).discounts = ["duploprestigio26"];
     atribuir(BRUNO, ANA);
@@ -540,5 +540,58 @@ describe("descontos de quem indicou: um por cobrança", () => {
       }),
     );
     assert.equal(recompensasDe(ANA)[0].estado, "disponivel");
+  });
+});
+
+describe("Protecção gratuita: adesão com a 1.ª cobrança no fim do período", () => {
+  const comAdesaoDiferida = (sessionId) => {
+    const deps = depsWebhook();
+    deps.adesaoComCobrancaDiferida = async () => ({ sessionId });
+    return deps;
+  };
+  const primeiraCobranca = (sessao, valor, motivo = "subscription_cycle") =>
+    evento("invoice.paid", {
+      id: novoId("in"),
+      customer: sessao.customer,
+      amount_paid: valor,
+      billing_reason: motivo,
+      parent: { subscription_details: { subscription: sessao.subscription } },
+    });
+
+  test("Checkout a 0 € não decide a indicação; a 1.ª cobrança real recompensa quem indicou (uma vez)", async () => {
+    atribuir(BRUNO, ANA);
+    const s = sessaoSubscricao(BRUNO, PRECO_PROTECAO, { valor: 0, meta: { protecao_gratuita: "1" } });
+    e.subsStripe.get(s.subscription).status = "trialing";
+    await processar(evento("checkout.session.completed", s));
+    assert.equal(e.indicacoes.get(BRUNO).estado, "registada", "a 0 € a indicação fica por decidir");
+    assert.equal(recompensasDe(ANA).length, 0);
+
+    e.subsStripe.get(s.subscription).status = "active";
+    const deps = comAdesaoDiferida(s.id);
+    await processarEventoStripe(primeiraCobranca(s, 499), deps);
+    assert.equal(e.indicacoes.get(BRUNO).estado, "compra_confirmada");
+    assert.equal(e.indicacoes.get(BRUNO).produto, "protecao");
+    assert.equal(e.indicacoes.get(BRUNO).com_desconto, false);
+    assert.equal(recompensasDe(ANA).length, 1);
+
+    // Renovações seguintes e reenvios: nunca uma segunda recompensa.
+    await processarEventoStripe(primeiraCobranca(s, 499), comAdesaoDiferida(s.id));
+    assert.equal(recompensasDe(ANA).length, 1);
+  });
+
+  test("Sem cobrança real (factura a 0 €) não decide nada", async () => {
+    atribuir(BRUNO, ANA);
+    const s = sessaoSubscricao(BRUNO, PRECO_PROTECAO, { valor: 0, meta: { protecao_gratuita: "1" } });
+    await processar(evento("checkout.session.completed", s));
+    await processarEventoStripe(primeiraCobranca(s, 0), comAdesaoDiferida(s.id));
+    assert.equal(e.indicacoes.get(BRUNO).estado, "registada");
+    assert.equal(recompensasDe(ANA).length, 0);
+  });
+
+  test("Adesão com pagamento logo (menos de 49 h ou Caso + Protecção) decide no Checkout, como sempre", async () => {
+    atribuir(BRUNO, ANA);
+    await processar(evento("checkout.session.completed", sessaoSubscricao(BRUNO, PRECO_PROTECAO, { valor: 499, meta: { protecao_gratuita: "1" } })));
+    assert.equal(e.indicacoes.get(BRUNO).estado, "compra_confirmada");
+    assert.equal(recompensasDe(ANA).length, 1);
   });
 });

@@ -15,6 +15,8 @@
 
 import type { LinhaFatura } from "./extracaoFatura.ts";
 import { formatarDataPt, formatarEurosCents } from "./contratos.ts";
+import type { Idioma } from "../../i18n/config.ts";
+import { tMonitor } from "../../i18n/mensagens/monitor.ts";
 
 export const VERSAO_ACOMPANHAMENTO = "acomp_v1";
 
@@ -347,82 +349,85 @@ export function resultadoFatura(eventos: Pick<Evento, "severidade">[]): Severida
 // Frases (determinísticas)
 // ---------------------------------------------------------------------------
 
-const eur = (c: unknown) => formatarEurosCents(typeof c === "number" ? c : null);
-const ordinal = (n: number) => `${n}.ª`;
+// Frases no idioma da interface (português por omissão: backoffice, e-mail
+// mensal, testes). Textos em src/i18n/mensagens/*/monitor.ts.
+const euros = (idioma: Idioma) => (c: unknown) => formatarEurosCents(typeof c === "number" ? c : null, idioma);
 
-export function fraseEvento(e: Pick<Evento, "tipo" | "base" | "montanteCents" | "dados">): string {
+export function fraseEvento(e: Pick<Evento, "tipo" | "base" | "montanteCents" | "dados">, idioma: Idioma = "pt-PT"): string {
+  const t = tMonitor[idioma].eventos;
+  const eur = euros(idioma);
+  const ordinal = tMonitor[idioma].datas.ordinal;
   const d = e.dados ?? {};
   const contrato = e.base === "contrato";
   switch (e.tipo) {
     case "primeira_fatura":
-      return "Primeira fatura analisada. Ainda não temos meses anteriores suficientes para comparar.";
+      return t.primeiraFatura;
     case "mensalidade_conforme":
-      return `A mensalidade mantém-se conforme o contrato (${eur(d.mensalidade)}).`;
+      return t.mensalidadeConforme(eur(d.mensalidade));
     case "mensalidade_mantida": {
       const n = Number(d.consecutivas ?? 0);
-      if (d.anterior != null && n >= 2 && n <= 3) return `É a ${ordinal(n)} fatura consecutiva com este novo valor (${eur(d.mensalidade)}).`;
-      if (n >= 3) return `Esta é a ${ordinal(n)} fatura consecutiva com a mesma mensalidade (${eur(d.mensalidade)}).`;
-      return `A mensalidade recorrente mantém-se igual à do mês anterior (${eur(d.mensalidade)}).`;
+      if (d.anterior != null && n >= 2 && n <= 3) return t.mensalidadeNovoValor(ordinal(n), eur(d.mensalidade));
+      if (n >= 3) return t.mensalidadeMesma(ordinal(n), eur(d.mensalidade));
+      return t.mensalidadeIgual(eur(d.mensalidade));
     }
     case "mensalidade_alterada":
       return d.sentido === "aumento"
-        ? `A mensalidade recorrente aumentou ${eur(e.montanteCents)} face ao mês anterior (de ${eur(d.anterior)} para ${eur(d.atual)}).`
-        : `A mensalidade recorrente diminuiu ${eur(e.montanteCents)} face ao mês anterior (de ${eur(d.anterior)} para ${eur(d.atual)}).`;
+        ? t.mensalidadeAumentou(eur(e.montanteCents), eur(d.anterior), eur(d.atual))
+        : t.mensalidadeDiminuiu(eur(e.montanteCents), eur(d.anterior), eur(d.atual));
     case "diferenca_preco_contrato":
-      return `A mensalidade recorrente (${eur(d.mensalidade)}) ficou ${eur(e.montanteCents)} ${d.sentido === "acima" ? "acima" : "abaixo"} do valor contratual (${eur(d.esperada)}).`;
+      return t.diferencaContrato(eur(d.mensalidade), eur(e.montanteCents), d.sentido === "acima", eur(d.esperada));
     case "promocao_aplicada":
-      if (contrato) return `O desconto contratual de ${eur(e.montanteCents)} foi aplicado.`;
-      if (d.continua) return `O desconto de ${eur(e.montanteCents)} continua a ser aplicado.`;
-      if (d.novo) return `Apareceu um desconto de ${eur(e.montanteCents)} que não estava na fatura anterior.`;
-      return `Desconto identificado na fatura: ${eur(e.montanteCents)}/mês.`;
+      if (contrato) return t.descontoContratual(eur(e.montanteCents));
+      if (d.continua) return t.descontoContinua(eur(e.montanteCents));
+      if (d.novo) return t.descontoNovo(eur(e.montanteCents));
+      return t.descontoIdentificado(eur(e.montanteCents));
     case "promocao_em_falta":
-      return contrato
-        ? `Não encontrámos o desconto de ${eur(e.montanteCents)} previsto no contrato.`
-        : `O desconto de ${eur(e.montanteCents)} que aparecia na fatura anterior deixou de aparecer nesta fatura.`;
+      return contrato ? t.descontoEmFaltaContrato(eur(e.montanteCents)) : t.descontoEmFalta(eur(e.montanteCents));
     case "promocao_alterada":
-      return `O desconto passou de ${eur(d.anterior)} para ${eur(d.atual)}.`;
+      return t.descontoAlterado(eur(d.anterior), eur(d.atual));
     case "promocao_terminada":
-      return `A promoção terminou a ${formatarDataPt(String(d.fim ?? ""))} e o desconto deixou de ser aplicado.`;
+      return t.promocaoTerminada(formatarDataPt(String(d.fim ?? "")));
     case "consumo_adicional":
-      return `Esta fatura inclui ${eur(e.montanteCents)} de consumo adicional.`;
+      return t.consumoAdicional(eur(e.montanteCents));
     case "cobranca_pontual": {
       const linhas = Array.isArray(d.linhas) ? (d.linhas as string[]) : [];
-      return `Esta fatura inclui ${eur(e.montanteCents)} de cobranças pontuais${linhas.length ? ` (${linhas.join(", ")})` : ""}.`;
+      return t.cobrancasPontuais(eur(e.montanteCents), linhas.join(", "));
     }
     case "credito_aplicado":
-      return `Foi aplicado um crédito de ${eur(e.montanteCents)}.`;
+      return t.credito(eur(e.montanteCents));
     case "cobranca_recorrente_nova":
-      return `Encontrámos uma cobrança nova de ${eur(e.montanteCents)} (“${String(d.descricao ?? "")}”).`;
+      return t.cobrancaNova(eur(e.montanteCents), String(d.descricao ?? ""));
     case "possivel_duplicado":
       return d.outra_fatura
-        ? `Encontrámos outra fatura para o mesmo período (${formatarDataPt(String(d.periodo_inicio))} a ${formatarDataPt(String(d.periodo_fim))}).`
-        : `Encontrámos ${String(d.ocorrencias)} cobranças iguais nesta fatura (“${String(d.descricao ?? "")}”, ${eur(e.montanteCents)} cada).`;
+        ? t.outraFatura(formatarDataPt(String(d.periodo_inicio)), formatarDataPt(String(d.periodo_fim)))
+        : t.cobrancasIguais(String(d.ocorrencias), String(d.descricao ?? ""), eur(e.montanteCents));
     case "fidelizacao_diferente":
-      return `A fatura indica o fim da fidelização a ${formatarDataPt(String(d.fatura))}; o contrato registado indica ${formatarDataPt(String(d.contrato))}.`;
+      return t.fidelizacaoDiferente(formatarDataPt(String(d.fatura)), formatarDataPt(String(d.contrato)));
     case "dados_insuficientes":
-      return "Não conseguimos identificar a mensalidade nesta fatura.";
+      return t.dadosInsuficientes;
     case "sem_alteracao_relevante":
     default:
-      return contrato ? "Não encontrámos diferenças relevantes face ao contrato." : "Não encontrámos diferenças relevantes neste mês.";
+      return contrato ? t.semDiferencasContrato : t.semDiferencas;
   }
 }
 
 /** Explicação curta da diferença de total face à fatura anterior. */
-export function fraseVariacaoTotal(atual: FaturaComparavel, anterior: FaturaComparavel | null): string | null {
+export function fraseVariacaoTotal(atual: FaturaComparavel, anterior: FaturaComparavel | null, idioma: Idioma = "pt-PT"): string | null {
+  const t = tMonitor[idioma].variacao;
+  const eur = euros(idioma);
   if (!anterior || atual.totalCents == null || anterior.totalCents == null) return null;
   const dif = atual.totalCents - anterior.totalCents;
-  if (Math.abs(dif) <= TOLERANCIA_CENTS) return "O total é igual ao da fatura anterior.";
+  if (Math.abs(dif) <= TOLERANCIA_CENTS) return t.igual;
   const c = componentesFatura(atual);
   const p = componentesFatura(anterior);
   const causas: string[] = [];
-  if (c.mensalidadeCents != null && p.mensalidadeCents != null && !igual(c.mensalidadeCents, p.mensalidadeCents)) causas.push("à alteração da mensalidade");
-  if (!igual(c.consumosCents, p.consumosCents)) causas.push(dif > 0 && c.consumosCents > p.consumosCents ? "a consumo adicional" : "à variação dos consumos");
-  if (!igual(c.pontuaisCents, p.pontuaisCents)) causas.push("a cobranças pontuais");
-  if (!igual(c.creditosCents, p.creditosCents)) causas.push("a créditos aplicados");
-  const sentido = dif > 0 ? "superior" : "inferior";
-  if (causas.length === 0) return `Esta fatura é ${eur(Math.abs(dif))} ${sentido} à anterior.`;
-  const lista = causas.length === 1 ? causas[0] : `${causas.slice(0, -1).join(", ")} e ${causas.at(-1)}`;
-  return `Esta fatura é ${eur(Math.abs(dif))} ${sentido} à anterior devido ${lista}.`;
+  if (c.mensalidadeCents != null && p.mensalidadeCents != null && !igual(c.mensalidadeCents, p.mensalidadeCents)) causas.push(t.mensalidade);
+  if (!igual(c.consumosCents, p.consumosCents)) causas.push(dif > 0 && c.consumosCents > p.consumosCents ? t.consumoAdicional : t.variacaoConsumos);
+  if (!igual(c.pontuaisCents, p.pontuaisCents)) causas.push(t.pontuais);
+  if (!igual(c.creditosCents, p.creditosCents)) causas.push(t.creditos);
+  const sentido = dif > 0 ? t.superior : t.inferior;
+  if (causas.length === 0) return t.semCausa(eur(Math.abs(dif)), sentido);
+  return t.comCausa(eur(Math.abs(dif)), sentido, t.lista(causas));
 }
 
 // ---------------------------------------------------------------------------
@@ -480,18 +485,18 @@ export const TIPO_ACHADO: Partial<Record<TipoEvento, string>> = {
   fidelizacao_diferente: "fidelizacao_diferente",
 };
 
-const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-
 /** "Outubro 2026" a partir de uma data ISO. */
-export function mesAno(iso: string | null | undefined): string {
-  if (!iso) return "Data desconhecida";
-  const m = MESES[Number(iso.slice(5, 7)) - 1];
-  return m ? `${m[0].toUpperCase()}${m.slice(1)} ${iso.slice(0, 4)}` : "Data desconhecida";
+export function mesAno(iso: string | null | undefined, idioma: Idioma = "pt-PT"): string {
+  const t = tMonitor[idioma].datas;
+  if (!iso) return t.desconhecida;
+  const m = t.meses[Number(iso.slice(5, 7)) - 1];
+  return m ? t.mesAno(m, iso.slice(0, 4)) : t.desconhecida;
 }
 
 /** "outubro de 2026", para usar a meio de uma frase. */
-export function mesAnoTexto(iso: string | null | undefined): string {
-  if (!iso) return "data desconhecida";
-  const m = MESES[Number(iso.slice(5, 7)) - 1];
-  return m ? `${m} de ${iso.slice(0, 4)}` : "data desconhecida";
+export function mesAnoTexto(iso: string | null | undefined, idioma: Idioma = "pt-PT"): string {
+  const t = tMonitor[idioma].datas;
+  if (!iso) return t.desconhecidaTexto;
+  const m = t.meses[Number(iso.slice(5, 7)) - 1];
+  return m ? t.mesAnoTexto(m, iso.slice(0, 4)) : t.desconhecidaTexto;
 }

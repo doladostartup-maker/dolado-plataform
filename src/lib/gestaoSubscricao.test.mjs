@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, test } from "node:test";
-import { MAX_MOTIVO_TEXTO, lerMotivo, manterSubscricao, pedirCancelamento } from "./gestaoSubscricao.ts";
+import { MAX_MOTIVO_TEXTO, casoAcompanhadoPelaSubscricao, lerMotivo, manterSubscricao, pedirCancelamento } from "./gestaoSubscricao.ts";
 
 const USER = "00000000-0000-4000-a000-00000000000a";
 const FIM = "2026-10-30T10:00:00.000Z";
@@ -40,6 +40,10 @@ function criar(conta) {
     async gravarNaConta(userId, subId, dados) {
       assert.equal(subId, estado.conta.stripe_subscription_id);
       Object.assign(estado.conta, dados);
+    },
+    async contarCasosEmCurso(userId) {
+      assert.equal(userId, USER);
+      return estado.casosEmCurso ?? 0;
     },
     async registarPedido(dados) {
       estado.pedidos.push(dados);
@@ -81,7 +85,7 @@ describe("pedir cancelamento", () => {
     assert.equal(estado.pedidos.length, 1);
   });
 
-  test("Proteção também pode ser cancelada", async () => {
+  test("Protecção também pode ser cancelada", async () => {
     criar({ subscription_plan: "protecao" });
     assert.equal((await pedirCancelamento(USER, lerMotivo(null, null), deps)).ok, true);
     assert.equal(estado.pedidos[0].plano, "protecao");
@@ -139,6 +143,41 @@ describe("manter subscrição (reverter o cancelamento)", () => {
   });
 });
 
+describe("casos em curso quando a subscrição é cancelada", () => {
+  test("com casos em curso e sem a confirmação da cliente, não toca no Stripe nem regista nada", async () => {
+    estado.casosEmCurso = 1;
+    const r = await pedirCancelamento(USER, lerMotivo(null, null), deps);
+    assert.deepEqual(r, { ok: false, erro: "confirmar_casos" });
+    assert.equal(estado.chamadasStripe.length, 0);
+    assert.equal(estado.pedidos.length, 0);
+    assert.equal(estado.conta.cancel_at_period_end, false);
+  });
+
+  test("com a confirmação, agenda o cancelamento e regista quantos casos deixam de ser acompanhados", async () => {
+    estado.casosEmCurso = 2;
+    const r = await pedirCancelamento(USER, lerMotivo(null, null), deps, new Date("2026-10-17T10:00:00Z"), true);
+    assert.equal(r.ok, true);
+    assert.equal(estado.chamadasStripe.length, 1);
+    assert.equal(estado.pedidos[0].casosEmCurso, 2);
+  });
+
+  test("sem casos em curso, a confirmação não é necessária", async () => {
+    const r = await pedirCancelamento(USER, lerMotivo(null, null), deps);
+    assert.equal(r.ok, true);
+    assert.equal(estado.pedidos[0].casosEmCurso, 0);
+  });
+
+  test("só contam casos em curso da subscrição (ou sem compra única ligada); Avulso e Caso Extra continuam", () => {
+    assert.equal(casoAcompanhadoPelaSubscricao({ status: "Aguardando operador", origem_credito: "subscricao" }), true);
+    assert.equal(casoAcompanhadoPelaSubscricao({ status: "Novo", origem_credito: null }), true);
+    assert.equal(casoAcompanhadoPelaSubscricao({ status: "Novo", origem_credito: "avulso" }), false);
+    assert.equal(casoAcompanhadoPelaSubscricao({ status: "Novo", origem_credito: "caso_extra" }), false);
+    for (const status of ["Resolvido", "Bloqueado", "Encerrado sem resolução", "Encerrado com encaminhamento externo"]) {
+      assert.equal(casoAcompanhadoPelaSubscricao({ status, origem_credito: "subscricao" }), false, status);
+    }
+  });
+});
+
 describe("motivo", () => {
   test("códigos inválidos contam como sem resposta; texto limpo e limitado", () => {
     assert.deepEqual(lerMotivo("hack", "  "), { codigo: null, texto: null });
@@ -148,10 +187,10 @@ describe("motivo", () => {
 });
 
 describe("o cancelamento normal não é livre resolução nem cancelamento imediato", () => {
-  const acoes = readFileSync(new URL("../app/portal/subscricao/actions.ts", import.meta.url), "utf8");
-  const pagina = readFileSync(new URL("../app/portal/subscricao/page.tsx", import.meta.url), "utf8");
+  const acoes = readFileSync(new URL("../app/[idioma]/portal/subscricao/actions.ts", import.meta.url), "utf8");
+  const pagina = readFileSync(new URL("../app/[idioma]/portal/subscricao/page.tsx", import.meta.url), "utf8");
 
-  test("as ações do cliente só usam cancel_at_period_end: sem reembolsos nem cancelamento imediato", () => {
+  test("as acções do cliente só usam cancel_at_period_end: sem reembolsos nem cancelamento imediato", () => {
     assert.match(acoes, /cancel_at_period_end: cancelar/);
     assert.equal(/refunds|subscriptions\.(cancel|del)\(|invoice_now|prorate/.test(acoes), false);
   });

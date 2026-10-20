@@ -15,7 +15,7 @@ import {
   SECCAO_ENTIDADES,
 } from "../encerramentoExterno.ts";
 
-const TEXTO_ENVIADO = "Exmos. Senhores,\n\nEu, Maria Teste, titular do contrato n.º 123456, venho reclamar da cobrança em duplicado de agosto.\n\nCom os melhores cumprimentos.";
+const TEXTO_ENVIADO = "Exmos. Senhores,\n\nEu, Maria Teste, titular do contrato n.º 123456, venho reclamar da cobrança em duplicado de Agosto.\n\nCom os melhores cumprimentos.";
 
 function dados(extra = {}) {
   return {
@@ -26,7 +26,7 @@ function dados(extra = {}) {
       sector: "Telecomunicações",
       tipo_problema: "Faturação",
       problema_tipo: null,
-      descricao: "Cobraram-me duas vezes a mensalidade de agosto.",
+      descricao: "Cobraram-me duas vezes a mensalidade de Agosto.",
       created_at: "2026-09-01T10:00:00Z",
     },
     eventos: [
@@ -105,11 +105,11 @@ function dados(extra = {}) {
     mensagensCliente: [{ decisao: "encaminhar", mensagem_cliente: "Indicámos-lhe o próximo passo possível.", created_at: "2026-09-20T10:00:00Z" }],
     pedidosCliente: [
       {
-        pedido: "Envie-nos a fatura de agosto.",
+        pedido: "Envie-nos a factura de Agosto.",
         created_at: "2026-09-12T10:00:00Z",
         estado: "respondido",
         respondido_em: "2026-09-13T10:00:00Z",
-        resposta_texto: "Junto a fatura.",
+        resposta_texto: "Junto a factura.",
         resposta_anexos: [{ nome: "fatura-agosto.pdf", tamanho_bytes: 1000 }],
       },
     ],
@@ -131,7 +131,7 @@ describe("conteúdo do dossiê", () => {
     assert.match(DOSSIE_MODELO_VERSAO, /^dossie_v\d+$/);
   });
 
-  test("inclui os dados pedidos: empresa, setor, categoria, descrição, envio, referência LRE, comprovativo, estado final, encerramento", () => {
+  test("inclui os dados pedidos: empresa, sector, categoria, descrição, envio, referência LRE, comprovativo, estado final, encerramento", () => {
     const m = montarDossie(dados());
     const t = textoDoModelo(m);
     assert.equal(m.titulo, "Dossiê do Caso DoLado");
@@ -140,14 +140,14 @@ describe("conteúdo do dossiê", () => {
       "Operadora X",
       "Telecomunicações",
       "Faturação",
-      "Cobraram-me duas vezes a mensalidade de agosto.",
+      "Cobraram-me duas vezes a mensalidade de Agosto.",
       "N.º da reclamação no Livro de Reclamações",
       "LRE-2026-0001",
       "comprovativo-lre.pdf",
-      "Livro de Reclamações Eletrónico",
+      "Livro de Reclamações Electrónico",
       "Lamentamos, mas não há lugar a devolução.",
       "carta-resposta.pdf",
-      "Envie-nos a fatura de agosto.",
+      "Envie-nos a factura de Agosto.",
       "fatura-agosto.pdf",
       "contrato.pdf",
       "Indicámos-lhe o próximo passo possível.",
@@ -161,7 +161,7 @@ describe("conteúdo do dossiê", () => {
     }
   });
 
-  test("texto enviado reproduzido exatamente (versão apontada pelo envio)", () => {
+  test("texto enviado reproduzido exactamente (versão apontada pelo envio)", () => {
     const m = montarDossie(dados());
     const blocos = m.seccoes.find((s) => s.titulo === "Reclamação e comunicações enviadas").blocos;
     assert.ok(blocos.some((b) => b.tipo === "paragrafo" && b.texto === TEXTO_ENVIADO));
@@ -199,7 +199,7 @@ describe("conteúdo do dossiê", () => {
     const t = textoDoModelo(montarDossie(dados()));
     assert.match(t, /não é um parecer jurídico nem uma peça processual/);
     assert.doesNotMatch(t, /centro competente é|entidade competente é|tem direito|violou a lei|vai ganhar|petição|requerimento de arbitragem/i);
-    assert.doesNotMatch(t, /\bemail\b|você|\barquivo\b|\bfactura|\bacção/i);
+    assert.doesNotMatch(t.replace(/[\w-]+\.pdf/g, ""), /\bemail\b|você|\barquivo\b|(?<!\p{L})(faturas?|ação|setor)(?!\p{L})/iu);
   });
 });
 
@@ -210,7 +210,7 @@ describe("PDF", () => {
     const pdf = await getDocumentProxy(new Uint8Array(bytes));
     const { text, totalPages } = await extractText(pdf, { mergePages: true });
     assert.ok(totalPages >= 1);
-    for (const esperado of ["Dossiê do Caso DoLado", "Operadora X", "LRE-2026-0001", "venho reclamar da cobrança em duplicado de agosto", "Opções para continuar a tratar o conflito", `Página 1 de ${totalPages}`]) {
+    for (const esperado of ["Dossiê do Caso DoLado", "Operadora X", "LRE-2026-0001", "venho reclamar da cobrança em duplicado de Agosto", "Opções para continuar a tratar o conflito", `Página 1 de ${totalPages}`]) {
       assert.ok(text.includes(esperado), `falta no PDF: ${esperado}`);
     }
   });
@@ -251,16 +251,16 @@ describe("textos do portal (encerramento)", () => {
     assert.doesNotMatch(todos, /centro competente é|entidade competente é|escolhemos|representamos/i);
     assert.match(todos, /não representa o consumidor/);
     assert.match(todos, /não determina nem indica qual é a entidade competente para este caso/);
-    assert.match(todos, /Confirme diretamente junto da entidade se pode apreciar o conflito/);
+    assert.match(todos, /Confirme directamente junto da entidade se pode apreciar o conflito/);
   });
 
-  test("lista oficial da Direção-Geral do Consumidor e entidades com site", () => {
+  test("lista oficial da Direcção-Geral do Consumidor e entidades com site", () => {
     assert.match(LISTA_OFICIAL_RAL_URL, /^https:\/\/www\.consumidor\.gov\.pt\//);
     assert.ok(CENTROS_RAL_GERAIS.length > 0);
     for (const e of [...CENTROS_RAL_GERAIS, ...ENTIDADES_RAL_SETORIAIS]) assert.match(e.site, /^https:\/\//);
   });
 
-  test("lista DGC (08/10/2026): 10 centros gerais e 2 entidades setoriais, em secções separadas", () => {
+  test("lista DGC (08/10/2026): 10 centros gerais e 2 entidades sectoriais, em secções separadas", () => {
     assert.equal(CENTROS_RAL_GERAIS.length, 10);
     assert.deepEqual(
       ENTIDADES_RAL_SETORIAIS.map((e) => e.nome),
@@ -275,9 +275,9 @@ describe("textos do portal (encerramento)", () => {
     const d = montarDossie(dados());
     const linhas = JSON.stringify(d);
     const iCentros = linhas.indexOf("Centros a consultar (informação pública)");
-    const iSetoriais = linhas.indexOf("Entidades setoriais a consultar (informação pública)");
+    const iSetoriais = linhas.indexOf("Entidades sectoriais a consultar (informação pública)");
     assert.ok(iCentros >= 0 && iSetoriais > iCentros);
-    assert.ok(linhas.indexOf("CIMPAS") > iSetoriais, "CIMPAS só depois do subtítulo das entidades setoriais");
+    assert.ok(linhas.indexOf("CIMPAS") > iSetoriais, "CIMPAS só depois do subtítulo das entidades sectoriais");
     assert.ok(linhas.indexOf("CNIACC") > iCentros && linhas.indexOf("CNIACC") < iSetoriais);
     assert.match(SECCAO_ENTIDADES.notaLista, /não constitui indicação da entidade competente/i);
   });

@@ -5,7 +5,7 @@ Documento interno (art. 28.º e 30.º do RGPD). Fonte única desta informação 
 em `src/lib/legal.ts`) tem de ficar coerente com esta matriz: se um fornecedor, uma finalidade ou um
 mecanismo de transferência mudar, rever a Política (nova versão — as publicadas não se editam).
 
-- **Última revisão:** 05/10/2026 (Política de Privacidade `2026-10-05` — proposta do texto da reclamação pela IA).
+- **Última revisão:** 19/10/2026 (Política de Privacidade `2026-10-19` — Pixel da Meta).
 - **Fontes:** código e configuração do repositório, API da Supabase (região do projeto), `CLAUDE.md`
   e confirmação de Thiago (01/10/2026) de que os DPA estão obtidos.
 - **"A validar"** = não se confirma pelo repositório; confirmar no DPA / conta do fornecedor e
@@ -26,7 +26,9 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 | Anthropic | Claude API (leitura de faturas e contratos no Monitor de Proteção; primeira proposta do texto da reclamação; análise preliminar das respostas das empresas) | Subcontratante | A validar | Possíveis | A validar no DPA (SCCs, se aplicável) | Obtido |
 | Stripe | Pagamentos, subscrições, faturação, reembolsos | Subcontratante; responsável autónomo para finalidades próprias | A validar (entidade contratante) | Possíveis | A validar no DPA (SCCs / DPF) | Obtido |
 | Google | GA4, Tag Manager, Google Ads (com consentimento); início de sessão com Google | Subcontratante na medição; responsável autónomo para fins próprios e no início de sessão | A validar | Possíveis | A validar no DPA (SCCs / DPF) | Obtido |
+| Meta (Meta Platforms Ireland Limited) | Pixel da Meta em dolado.pt (só `PageView`), só com consentimento de marketing: medição das campanhas e publicidade a quem visitou o site | Responsável conjunta na recolha e transmissão (art. 26.º; acórdão *Fashion ID*); responsável autónoma no tratamento posterior | UE (Irlanda) | Sim (Meta Platforms, Inc., EUA) | EU-U.S. DPF + SCCs | **Por aceitar** (Meta Business Tools Terms + Controller Addendum no Events Manager) |
 | Cookiebot (Usercentrics) | Gestão do consentimento de cookies | Subcontratante | A validar | A validar | A validar | **Por confirmar** |
+| Crisp (Crisp IM SAS) — **ainda não ligado** | Chat em direto nas páginas públicas (homepage, preçário, simulador), só com consentimento de preferências | Subcontratante | UE (sede em França) — região de alojamento a validar | A validar (subcontratantes ulteriores) | A validar no DPA | **Por obter** |
 
 ## Detalhe por fornecedor
 
@@ -175,6 +177,28 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 - **Localização / transferências:** possíveis transferências internacionais. **Mecanismo:** a validar no
   DPA (SCCs / DPF). **DPA:** obtido.
 
+### Meta (Meta Platforms Ireland Limited) — ligado a 19/10/2026
+
+- **Serviço / finalidade:** Pixel da Meta (`connect.facebook.net/…/fbevents.js`, ID
+  `1432203388349553`) em todas as páginas públicas de dolado.pt, só depois do consentimento de
+  "Marketing" no Cookiebot (`MedicaoComConsentimento`). Medir as visitas vindas das campanhas no
+  Facebook e no Instagram e mostrar publicidade da DoLado a quem visitou o site. Não corre em
+  portal.dolado.pt.
+- **Categorias de dados:** página visitada e página de origem (evento `PageView`), endereço IP, dados
+  técnicos do browser, cookie `_fbp` (90 dias) e, se o visitante tiver sessão Meta nesse browser, os
+  cookies da Meta que permitem associar a visita a uma conta Facebook/Instagram. A DoLado não envia
+  nome, e-mail, telefone, nem dados da conta, de casos, contratos ou faturas (sem eventos de conversão
+  nem correspondência avançada).
+- **Papel:** responsável conjunta com a DoLado na recolha e transmissão (art. 26.º do RGPD; acórdão do
+  TJUE *Fashion ID*, C-40/17); responsável autónoma no tratamento posterior (publicidade, perfis).
+- **Localização / transferências / mecanismo:** Meta Platforms Ireland Limited (UE); transferências para
+  a Meta Platforms, Inc. (EUA) com base no EU-U.S. Data Privacy Framework e em SCCs.
+- **Acordo:** **por aceitar** — Meta Business Tools Terms, com o *Controller Addendum* e os *Data
+  Processing Terms*, aceites no Events Manager (não há DPA à parte para assinar). Anotar a data de
+  aceitação. Desligar também a correspondência automática avançada (*Automatic Advanced Matching*).
+- **Política:** `2026-10-19` (secções 2, 3, 5, 6 e 7); rascunho validado em
+  `docs/legal/rascunho-privacidade-meta-pixel.md`.
+
 ### Cookiebot (Usercentrics)
 
 - **Serviço / finalidade:** banner e registo do consentimento de cookies (`consent.cookiebot.com`).
@@ -183,6 +207,23 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 - **Papel:** subcontratante.
 - **Localização, transferências, mecanismo:** **a validar**.
 - **DPA:** **por confirmar** — único fornecedor sem DPA confirmado.
+
+### Crisp (Crisp IM SAS) — por ligar (19/10/2026)
+
+- **Serviço / finalidade:** chat em direto nas páginas públicas `/`, `/precario` e
+  `/simulador-elegibilidade` (`client.crisp.chat`), atendido só por Thiago, sem IA nem respostas
+  automáticas. Só carrega com consentimento de "preferências" no Cookiebot (`src/lib/crisp.ts`);
+  desligado por omissão (`CRISP_ATIVO`).
+- **Categorias de dados:** o que o visitante escrever na conversa (e o e-mail, se o deixar quando a
+  conversa está offline); endereço IP (guardado pelo Crisp ~30 min sem conversa, mais tempo com
+  conversa); dados técnicos do browser, página visitada e localização aproximada pelo IP (funcionamento
+  normal do serviço — a validar); cookies `crisp-client/…` (6 meses). A DoLado não envia ao Crisp
+  dados da conta, de casos, contratos ou faturas.
+- **Papel:** subcontratante.
+- **Localização / transferências / mecanismo:** **a validar** no DPA (empresa francesa; confirmar região
+  de alojamento e subcontratantes ulteriores).
+- **DPA:** **por obter** antes de ligar em produção. Rascunho da Política:
+  `docs/legal/rascunho-privacidade-crisp.md`.
 
 ## Pontos a validar (resumo)
 
@@ -194,3 +235,6 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 5. Entidade Stripe contratante e região.
 6. DPA, região e transferências da Cookiebot.
 7. Prazo de conservação dos registos na Clever Cloud e na Brevo.
+8. Crisp: DPA, região de alojamento, subcontratantes ulteriores e prazo de conservação das conversas.
+9. Meta: data de aceitação dos Business Tools Terms (Controller Addendum) e correspondência automática
+   avançada desligada no Events Manager.

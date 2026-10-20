@@ -68,7 +68,7 @@ export const EVENTOS_CASO: Record<string, string> = {
 
 /** Eventos só da cronologia interna (o cliente não os vê). */
 export const EVENTOS_CASO_INTERNOS: Record<string, string> = {
-  mensagem_sem_acao: "Mensagem marcada sem ação",
+  mensagem_sem_acao: "Mensagem marcada sem acção",
   estado_corrigido: "Estado corrigido manualmente",
 };
 
@@ -109,10 +109,12 @@ export function mensagemComprovativoCliente(tipo: TipoComprovativo | null) {
 /** Limite da referência da reclamação (igual à base de dados). */
 export const MAX_REFERENCIA = 200;
 
+// Sem "carta": a DoLado não envia reclamações por carta (decisão de Thiago,
+// 17/10/2026). O valor continua aceite pela base de dados, mas deixa de
+// poder ser escolhido no backoffice e de ser mostrado.
 export const CANAIS_ENVIO = {
-  livro_reclamacoes_eletronico: "Livro de Reclamações Eletrónico",
+  livro_reclamacoes_eletronico: "Livro de Reclamações Electrónico",
   email: "E-mail",
-  carta: "Carta",
   formulario_operador: "Formulário do operador",
   outro: "Outro",
 } as const;
@@ -161,7 +163,7 @@ export const MENSAGENS_TEXTO: Record<ResultadoAcaoTexto, { titulo: string; texto
     texto: "Por segurança, os links de revisão são válidos durante um período limitado. Pode pedir um novo link, que enviaremos para o e-mail associado ao caso.",
   },
   link_substituido: {
-    titulo: "Este link já não está ativo",
+    titulo: "Este link já não está activo",
     texto: "Enviámos-lhe entretanto um link mais recente. Consulte o e-mail mais recente enviado pela DoLado ou aceda à sua área de cliente.",
   },
   mensagem_invalida: {

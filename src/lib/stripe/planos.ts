@@ -12,7 +12,7 @@ export const PRECO_AVULSO_ID =
   process.env.STRIPE_PRICE_AVULSO_ID || PLANOS.avulso.stripePriceId;
 
 /**
- * Caso Extra (11,99 €, pagamento único). Sem Price ID configurado (variável
+ * Caso Extra (9,59 €, pagamento único). Sem Price ID configurado (variável
  * ou src/lib/planos.ts), a oferta não aparece e o servidor recusa o checkout —
  * nunca se cobra o Avulso no lugar dele.
  */

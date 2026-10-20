@@ -100,7 +100,7 @@ export async function registarRespostaManual(casoId: string, formData: FormData)
 /** Pedido manual (ou nova tentativa) da análise preliminar pela IA. */
 export async function pedirAnaliseIA(casoId: string, comunicacaoId: string) {
   const { user } = await requireAdmin();
-  if (!analiseIAAtiva()) voltar(casoId, "erro", "A análise por IA está desativada neste ambiente (ANALISE_RESPOSTA_IA_ATIVO).", "analise", comunicacaoId);
+  if (!analiseIAAtiva()) voltar(casoId, "erro", "A análise por IA está desactivada neste ambiente (ANALISE_RESPOSTA_IA_ATIVO).", "analise", comunicacaoId);
   const { data: com } = await createAdminClient().from("casos_comunicacoes_recebidas").select("caso_id").eq("id", comunicacaoId).maybeSingle();
   if (com?.caso_id !== casoId) voltar(casoId, "erro", "Comunicação inválida.");
   let id: string | null = null;
@@ -110,7 +110,7 @@ export async function pedirAnaliseIA(casoId: string, comunicacaoId: string) {
     voltar(casoId, "erro", "Não foi possível iniciar a análise.", "analise", comunicacaoId);
   }
   if (!id) voltar(casoId, "erro", "Já há uma análise em curso para esta comunicação.", "analise", comunicacaoId);
-  voltar(casoId, "ok", "A gerar a análise. A página atualiza quando terminar.", "analise", comunicacaoId);
+  voltar(casoId, "ok", "A gerar a análise. A página actualiza quando terminar.", "analise", comunicacaoId);
 }
 
 /**
@@ -171,7 +171,7 @@ export async function corrigirEstado(casoId: string, formData: FormData) {
   const para = formData.get("para");
   const motivo = texto(formData, "motivo", 500);
   if (typeof para !== "string" || !(ESTADOS_CASO as readonly string[]).includes(para)) voltar(casoId, "erro", "Escolha o estado.", "dados");
-  if (motivo.length < 5) voltar(casoId, "erro", "Indique o motivo da correção.", "dados");
+  if (motivo.length < 5) voltar(casoId, "erro", "Indique o motivo da correcção.", "dados");
   const { data, error } = await createAdminClient().rpc("caso_corrigir_estado", { p_caso_id: casoId, p_para: para, p_motivo: motivo, p_admin: user.id });
   const r = (data as { resultado?: string } | null)?.resultado;
   if (error || (r !== "ok" && r !== "sem_alteracao")) voltar(casoId, "erro", "Não foi possível corrigir o estado.", "dados");

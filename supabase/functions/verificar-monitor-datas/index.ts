@@ -19,6 +19,8 @@
 // injetados pela Supabase.
 
 import { assuntoAlertaMonitor, htmlAlertaMonitor, type RegraAlertaMonitor } from "../_shared/emailAlertas.ts";
+import { idiomaDosMetadados } from "../_shared/idiomaConta.ts";
+import type { IdiomaEmail } from "../_shared/molduraEmail.ts";
 
 interface AlertaPendente {
   contrato_id: string;
@@ -79,6 +81,31 @@ async function enviarEmailBrevo(destino: { email: string; nome: string }, assunt
   if (!r.ok) throw new Error(`Brevo respondeu ${r.status}: ${await r.text()}`);
 }
 
+/**
+ * Idioma da conta dona do contrato (user_metadata.idioma), só para o texto
+ * do alerta. O destinatário continua a ser o de monitor_alertas_pendentes().
+ * Sem idioma ou qualquer erro → português.
+ */
+async function idiomaDoContrato(contratoId: string): Promise<IdiomaEmail> {
+  try {
+    const c = await fetch(
+      `${SUPABASE_URL}/rest/v1/contratos_monitorizados?id=eq.${encodeURIComponent(contratoId)}&select=utilizador_id`,
+      { headers: CABECALHOS, signal: AbortSignal.timeout(5_000) },
+    );
+    if (!c.ok) return "pt-PT";
+    const utilizador = (await c.json())?.[0]?.utilizador_id;
+    if (!utilizador) return "pt-PT";
+    const u = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(utilizador)}`, {
+      headers: CABECALHOS,
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!u.ok) return "pt-PT";
+    return idiomaDosMetadados((await u.json())?.user_metadata);
+  } catch {
+    return "pt-PT";
+  }
+}
+
 async function enviarAlertas(hoje: string) {
   const pendentes = await rpc<AlertaPendente[]>("monitor_alertas_pendentes", { p_hoje: hoje });
   let enviados = 0;
@@ -91,9 +118,10 @@ async function enviarAlertas(hoje: string) {
       if (!reservado) continue; // já enviado por outra execução
       try {
         const dias = diasEntre(hoje, a.data_alvo);
+        const idioma = await idiomaDoContrato(a.contrato_id);
         await enviarEmailBrevo(
           { email: a.email, nome: a.nome },
-          assuntoAlertaMonitor(a.regra, a.fornecedor, dias),
+          assuntoAlertaMonitor(a.regra, a.fornecedor, dias, idioma),
           htmlAlertaMonitor({
             regra: a.regra,
             nome: a.nome,
@@ -102,6 +130,7 @@ async function enviarAlertas(hoje: string) {
             dias,
             dataFim: a.data_alvo,
             contratoId: a.contrato_id,
+            idioma,
           }),
         );
         enviados += 1;

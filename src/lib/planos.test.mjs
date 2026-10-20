@@ -4,6 +4,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { TERMOS_VERSAO } from "./legal.ts";
 import { avisoDoPortal, calcularAcesso, casosGuardados, estadoReembolsoCliente, resumoPlanoPortal } from "./acesso.ts";
 import {
   CASO_EXTRA,
@@ -21,30 +22,35 @@ import {
 const fonte = (rel) => readFileSync(new URL(rel, import.meta.url), "utf8");
 
 describe("configuração central dos planos", () => {
-  test("Proteção aponta para o Price ID correto", () => {
+  test("Protecção aponta para o Price ID correcto", () => {
     assert.equal(PLANOS.protecao.stripePriceId, "price_1ULUUeBtJL9VeDPfWuDk5XCo");
   });
-  test("Caso + Proteção aponta para o Price ID correto", () => {
+  test("Caso + Protecção aponta para o Price ID correcto", () => {
     assert.equal(PLANOS.caso_protecao.stripePriceId, "price_1UJYnPBtJL9VeDPfnQTlVwsq");
   });
-  test("Avulso aponta para o Price ID correto", () => {
-    assert.equal(PLANOS.avulso.stripePriceId, "price_1UJYwzBtJL9VeDPfrAiguI1Z");
+  test("Avulso aponta para o Price ID de 11,99 € (nunca o antigo de 14,99 €)", () => {
+    assert.match(PLANOS.avulso.stripePriceId, /^price_[A-Za-z0-9]{10,}$/);
+    assert.notEqual(PLANOS.avulso.stripePriceId, "price_1UJYwzBtJL9VeDPfrAiguI1Z");
+  });
+  test("Caso Extra aponta para o Price ID de 9,59 € (nunca o antigo de 11,99 €)", () => {
+    assert.match(CASO_EXTRA.stripePriceId, /^price_[A-Za-z0-9]{10,}$/);
+    assert.notEqual(CASO_EXTRA.stripePriceId, "price_1UNGPnBtJL9VeDPfJUIG2ZvK");
   });
 
   test("nomes oficiais e ordem do preçário", () => {
     assert.deepEqual(
       ORDEM_PLANOS.map((id) => PLANOS[id].nome),
-      ["Proteção", "Caso + Proteção", "Avulso"],
+      ["Protecção", "Caso + Protecção", "Avulso"],
     );
   });
 
-  test("preços apresentados: 4,99 €/mês, 7,99 €/mês, 14,99 € / caso", () => {
+  test("preços apresentados: 4,99 €/mês, 7,99 €/mês, 11,99 € / caso", () => {
     assert.equal(formatarPreco(PLANOS.protecao.precoCentimos), "4,99 €");
     assert.equal(formatarPreco(PLANOS.caso_protecao.precoCentimos), "7,99 €");
-    assert.equal(formatarPreco(PLANOS.avulso.precoCentimos), "14,99 €");
+    assert.equal(formatarPreco(PLANOS.avulso.precoCentimos), "11,99 €");
     assert.equal(precoComUnidade("protecao"), "4,99 €/mês");
     assert.equal(precoComUnidade("caso_protecao"), "7,99 €/mês");
-    assert.equal(precoComUnidade("avulso"), "14,99 € / caso");
+    assert.equal(precoComUnidade("avulso"), "11,99 € / caso");
   });
 
   test("Avulso é pagamento único; os outros são subscrição", () => {
@@ -53,7 +59,7 @@ describe("configuração central dos planos", () => {
     assert.equal(PLANOS.caso_protecao.subscricao, true);
   });
 
-  test("casos: Proteção 0, Caso + Proteção 1/mês até 4, Avulso 1", () => {
+  test("casos: Protecção 0, Caso + Protecção 1/mês até 4, Avulso 1", () => {
     assert.equal(PLANOS.protecao.casosPorMes, 0);
     assert.equal(PLANOS.protecao.casosPorCompra, 0);
     assert.equal(PLANOS.caso_protecao.casosPorMes, 1);
@@ -78,8 +84,8 @@ describe("configuração central dos planos", () => {
   });
 
   test("texto de conversão: cobre o 1.º mês e reembolsa o resto", () => {
-    assert.match(textoConversaoAvulso("protecao"), /utilizamos 4,99 € .* reembolsamos os restantes 10,00 €/);
-    assert.match(textoConversaoAvulso("caso_protecao"), /utilizamos 7,99 € .* reembolsamos os restantes 7,00 €/);
+    assert.match(textoConversaoAvulso("protecao"), /utilizamos 4,99 € .* reembolsamos os restantes 7,00 €/);
+    assert.match(textoConversaoAvulso("caso_protecao"), /utilizamos 7,99 € .* reembolsamos os restantes 4,00 €/);
   });
 });
 
@@ -105,9 +111,9 @@ describe("checkout: o browser só escolhe o plano, o servidor escolhe o preço",
     const precarioV2 = fonte("../components/precario-v2/PrecarioV2.tsx");
     const destino = fonte("./precario.ts");
     assert.match(destino, /urlComprar\(plano\)/);
-    const comprar = fonte("../app/comprar/page.tsx");
+    const comprar = fonte("../app/[idioma]/comprar/page.tsx");
     assert.match(comprar, /ehPlanoId\(plano\)/);
-    const confirmacao = fonte("../app/comprar/CompraConfirmacao.tsx");
+    const confirmacao = fonte("../app/[idioma]/comprar/CompraConfirmacao.tsx");
     assert.match(confirmacao, /<ConfirmarCompra/);
     const modal = fonte("../components/compra/ConfirmarCompra.tsx");
     assert.match(modal, /name="plano" value=\{plano\}/);
@@ -118,24 +124,26 @@ describe("checkout: o browser só escolhe o plano, o servidor escolhe o preço",
 describe("preçário público", () => {
   // O preçário é a página /precario (PrecarioV2); o que cada plano inclui
   // vive em src/lib/precario.ts.
-  const conteudo = fonte("./precario.ts");
+  // Textos visíveis em src/i18n (pt-PT reexpõe planos.ts/precario.ts).
+  const conteudo = fonte("./precario.ts") + fonte("../i18n/mensagens/pt-PT/paginas.ts") + fonte("../i18n/mensagens/pt-PT/planos.ts");
   const precarioV2 = fonte("../components/precario-v2/PrecarioV2.tsx");
   const precario = precarioV2 + conteudo;
 
   test("mostra os três planos, IVA incluído e preços da configuração central", () => {
-    assert.match(precario, /formatarPreco\(plano\.precoCentimos\)/);
-    assert.match(precario, /\$\{IVA_INCLUIDO\}/);
+    assert.match(precario, /precoNoIdioma\(idioma, plano\.precoCentimos\)/);
+    assert.match(precario, /\$\{tp\.ivaIncluido\}/);
+    assert.match(precario, /ivaIncluido: IVA_INCLUIDO/);
     assert.equal(IVA_INCLUIDO, "IVA incluído");
     assert.equal(/\+ ?IVA/.test(precario), false);
   });
 
   test("CTAs oficiais", () => {
-    for (const cta of ["Aderir à Proteção", "Escolher Caso + Proteção", "Tratar do meu caso"]) {
+    for (const cta of ["Aderir à Protecção", "Escolher Caso + Protecção", "Tratar do meu caso"]) {
       assert.ok(precario.includes(cta), cta);
     }
   });
 
-  test("Proteção sem casos, Caso + Proteção com 1/mês e acumulação, Avulso com 1 caso", () => {
+  test("Protecção sem casos, Caso + Protecção com 1/mês e acumulação, Avulso com 1 caso", () => {
     assert.match(precario, /Não inclui o tratamento de casos\./);
     assert.match(precario, /"1 novo caso por mês"/);
     assert.match(precario, /acumulam até ao limite de \$\{LIMITE_CASOS_ACUMULADOS\}/);
@@ -148,19 +156,19 @@ describe("preçário público", () => {
 
   test("/precario (V2): mesmos planos, preços e conteúdo, organizados por necessidade", () => {
     for (const id of ["avulso", "caso_protecao", "protecao"]) assert.match(precarioV2, new RegExp(`plano: "${id}"`));
-    assert.match(precarioV2, /CONTEUDO_PLANOS\[id\]/);
-    assert.match(precarioV2, /formatarPreco\(plano\.precoCentimos\)/);
-    assert.match(precarioV2, /\$\{IVA_INCLUIDO\}/);
+    assert.match(precarioV2, /tp\.conteudo\[id\]/);
+    assert.match(precarioV2, /precoNoIdioma\(idioma, plano\.precoCentimos\)/);
+    assert.match(precarioV2, /\$\{tp\.ivaIncluido\}/);
     assert.equal(/\+ ?IVA|\d+,\d{2} ?€/.test(precarioV2), false);
-    for (const n of ["Tenho um problema agora.", "Tenho um problema e quero continuar protegido.", "Não tenho um problema agora, mas quero acompanhamento."]) {
-      assert.ok(precarioV2.includes(n), n);
+    for (const n of ["Tenho um problema agora.", "Tenho um problema e quero acompanhamento contínuo.", "Quero acompanhar as minhas facturas e contratos."]) {
+      assert.ok(conteudo.includes(n), n);
     }
   });
 
-  test("a homepage leva ao preçário e mantém os links antigos /#precario", () => {
+  test("o preçário está na navbar e a homepage mantém os links antigos /#precario", () => {
     const home = fonte("../components/homepage-v2/HomepageV2.tsx");
-    assert.match(home, /href=\{ROTAS_V2\.precario\}/);
-    assert.match(home, /window\.location\.hash === "#precario"\) window\.location\.replace\(ROTAS_V2\.precario\)/);
+    assert.match(fonte("../components/marketing-v2/NavbarV2.tsx"), /href: ROTAS_V2\.precario/);
+    assert.match(home, /window\.location\.hash === "#precario"\) window\.location\.replace\(c\(ROTAS_V2\.precario\)\)/);
     assert.match(home, /addEventListener\("hashchange", irParaPrecario\)/);
     assert.match(fonte("../components/marketing-v2/rotas.ts"), /precario: "\/precario"/);
     assert.equal(home.includes("Assinatura Mensal"), false);
@@ -181,7 +189,7 @@ function ficheirosAtivos(dir) {
   return saida;
 }
 
-describe("sem textos nem preços antigos no código ativo", () => {
+describe("sem textos nem preços antigos no código activo", () => {
   const raiz = fileURLToPath(new URL("..", import.meta.url));
   const ficheiros = ficheirosAtivos(raiz).map((f) => [f, readFileSync(f, "utf8")]);
 
@@ -228,14 +236,14 @@ const linha = (subscription_plan, subscription_status, case_credits = 0, current
 describe("plano apresentado no portal", () => {
   const FIM = "2026-10-30T10:00:00.000Z";
 
-  test("identifica Proteção (ativa, com renovação, sem casos incluídos)", () => {
+  test("identifica Protecção (activa, com renovação, sem casos incluídos)", () => {
     const r = resumoPlanoPortal(calcularAcesso(linha("protecao", "active", 0, FIM)));
-    assert.deepEqual(r, { plano: "protecao", estado: "Ativa", renovacao: FIM, fimAgendado: null, casosDisponiveis: null });
+    assert.deepEqual(r, { plano: "protecao", estado: "Activa", renovacao: FIM, fimAgendado: null, casosDisponiveis: null });
   });
 
-  test("identifica Caso + Proteção com casos disponíveis", () => {
+  test("identifica Caso + Protecção com casos disponíveis", () => {
     const r = resumoPlanoPortal(calcularAcesso(linha("caso_protecao", "active", 2, FIM)));
-    assert.deepEqual(r, { plano: "caso_protecao", estado: "Ativa", renovacao: FIM, fimAgendado: null, casosDisponiveis: 2 });
+    assert.deepEqual(r, { plano: "caso_protecao", estado: "Activa", renovacao: FIM, fimAgendado: null, casosDisponiveis: 2 });
   });
 
   test("Avulso comprado, sem subscrição: 'sem subscrição' com os casos disponíveis — nunca 'Avulso'", () => {
@@ -262,7 +270,7 @@ describe("plano apresentado no portal", () => {
     assert.equal(r.casosDisponiveis, null);
   });
 
-  test("cancelamento agendado: mantém o plano e a proteção, sem renovação, com a data de fim", () => {
+  test("cancelamento agendado: mantém o plano e a protecção, sem renovação, com a data de fim", () => {
     const acesso = calcularAcesso(linha("caso_protecao", "active", 2, FIM, true));
     assert.equal(acesso.temProtecao, true);
     assert.equal(acesso.podeCriarCaso, true);
@@ -283,7 +291,7 @@ describe("plano apresentado no portal", () => {
 });
 
 describe("pagamento pendente não concede acesso", () => {
-  test("subscrição incompleta: sem proteção, sem renovação", () => {
+  test("subscrição incompleta: sem protecção, sem renovação", () => {
     const acesso = calcularAcesso(linha("protecao", "incomplete", 0, "2026-10-30T10:00:00.000Z"));
     assert.equal(acesso.temProtecao, false);
     const r = resumoPlanoPortal(acesso);
@@ -302,7 +310,7 @@ describe("pagamento pendente não concede acesso", () => {
   });
 
   test("o cartão do plano no portal só lê props calculadas no servidor", () => {
-    const painel = fonte("../app/portal/_components/PortalDashboard.tsx");
+    const painel = fonte("../app/[idioma]/portal/_components/PortalDashboard.tsx");
     assert.equal(/searchParams|useSearchParams/.test(painel), false);
   });
 });
@@ -320,7 +328,7 @@ describe("estado do reembolso da conversão", () => {
 
   test("efetuado", () => {
     assert.deepEqual(estadoReembolsoCliente({ ...base, refundEstado: "succeeded" }), {
-      titulo: "Reembolso efetuado",
+      titulo: "Reembolso efectuado",
       texto: "O reembolso foi processado para o método de pagamento original.",
     });
   });
@@ -341,7 +349,7 @@ describe("estado do reembolso da conversão", () => {
   });
 });
 
-describe("casos guardados depois do fim do Caso + Proteção", () => {
+describe("casos guardados depois do fim do Caso + Protecção", () => {
   const AGORA = new Date("2026-10-01T10:00:00.000Z");
   test("só conta congelamentos por restaurar e dentro do prazo", () => {
     const r = casosGuardados(
@@ -358,5 +366,33 @@ describe("casos guardados depois do fim do Caso + Proteção", () => {
 
   test("depois dos 90 dias: nada para recuperar", () => {
     assert.equal(casosGuardados([{ quantidade: 3, expira_em: "2026-09-30T10:00:00.000Z", restaurado_em: null }], AGORA), null);
+  });
+});
+
+describe("versões publicadas dos Termos não mudam com o preço", () => {
+  const dir = fileURLToPath(new URL("../app/[idioma]/(legal)/termos/_versoes/", import.meta.url));
+  const publicadas = readdirSync(dir).filter((f) => /^v\d{4}-\d{2}-\d{2}[a-z]?\.tsx$/.test(f) && f.slice(1, -4) <= "2026-10-18");
+
+  test("até 2026-10-18 os preços vêm de precosAte20261018.ts, nunca de planos.ts", () => {
+    for (const f of publicadas) {
+      const c = readFileSync(join(dir, f), "utf8");
+      if (!/PLANOS|CASO_EXTRA/.test(c)) continue;
+      assert.match(c, /from "\.\/precosAte20261018"/, f);
+      assert.doesNotMatch(c, /import \{[^}]*\b(PLANOS|CASO_EXTRA)\b[^}]*\} from "@\/lib\/planos"/, f);
+    }
+  });
+
+  test("preços fixados: Avulso 14,99 €, Caso Extra 11,99 €, Protecção 4,99 €, Caso + Protecção 7,99 €", () => {
+    const c = readFileSync(join(dir, "precosAte20261018.ts"), "utf8");
+    assert.match(c, /avulso: \{ \.\.\.PLANOS_ATUAIS\.avulso, precoCentimos: 1499 \}/);
+    assert.match(c, /protecao: \{ \.\.\.PLANOS_ATUAIS\.protecao, precoCentimos: 499 \}/);
+    assert.match(c, /caso_protecao: \{ \.\.\.PLANOS_ATUAIS\.caso_protecao, precoCentimos: 799 \}/);
+    assert.match(c, /precoCentimos: 1199, descontoPercentagem: 20/);
+  });
+
+  test("a versão em vigor lê os preços actuais", () => {
+    const c = readFileSync(join(dir, `v${TERMOS_VERSAO}.tsx`), "utf8");
+    assert.match(c, /from "@\/lib\/planos"/);
+    assert.doesNotMatch(c, /precosAte20261018/);
   });
 });

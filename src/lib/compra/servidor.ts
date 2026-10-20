@@ -15,6 +15,8 @@ import { criarDependenciasWebhook, enviarEmailReal, type OpcoesDependencias } fr
 import type { ContaAutenticada, DependenciasAssociacao, ResultadoReclamacao } from "@/lib/compra/associacao";
 import type { PlanoSubscricaoAtiva } from "@/lib/compra/decisao";
 import type { CompraPendente, DependenciasLembretes } from "@/lib/compra/lembretes";
+import { idiomaDoEmailPagamento } from "@/lib/idiomaConta";
+import { IDIOMA_PADRAO } from "@/i18n/config";
 
 // Implementações reais (Supabase service_role + Stripe) da decisão de
 // compra, da associação de compras e dos lembretes. Só código de servidor:
@@ -84,7 +86,7 @@ export async function contaExisteComEmail(email: string) {
   return data === true;
 }
 
-export function dependenciasLembretes(opcoes: Pick<OpcoesDependencias, "enviarEmail"> = {}): DependenciasLembretes {
+export function dependenciasLembretes(opcoes: Pick<OpcoesDependencias, "enviarEmail" | "stripe"> = {}): DependenciasLembretes {
   const admin = createAdminClient();
   const webhook = criarDependenciasWebhook(opcoes);
   return {
@@ -104,6 +106,15 @@ export function dependenciasLembretes(opcoes: Pick<OpcoesDependencias, "enviarEm
     },
     contaExisteComEmail,
     enviarEmail: opcoes.enviarEmail ?? enviarEmailReal,
+    // Só leitura da sessão (o locale foi posto ao abrir o Checkout em /en).
+    async idiomaDaCompra(sessionId) {
+      try {
+        const sessao = await (opcoes.stripe ?? getStripe()).checkout.sessions.retrieve(sessionId);
+        return idiomaDoEmailPagamento(null, sessao.locale);
+      } catch {
+        return IDIOMA_PADRAO;
+      }
+    },
     notificarAdmin: (assunto, texto) => webhook.notificarAdmin(assunto, texto),
   };
 }

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { DocumentoRaiz } from "../DocumentoRaiz";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { fonteV2 } from "@/components/marketing-v2/fonte";
@@ -6,6 +7,14 @@ import { MenuMovel } from "@/components/navegacao/MenuMovel";
 import { NavegacaoBackoffice, type ContagensNavegacao } from "@/components/backoffice/Navegacao";
 import { casosEmCurso, contagensFilas } from "@/lib/backoffice/filas";
 import { proximaAcao } from "@/lib/backoffice/triagem";
+
+// Metadata por omissão que vinha do antigo layout raiz (src/app/layout.tsx).
+export const metadata = {
+  title: "DoLado",
+  description:
+    "A DoLado é uma plataforma criada para ajudar os consumidores a resolver problemas e a evitar prejuízos relacionados com serviços essenciais, como telecomunicações, energia e água.",
+  icons: { icon: "/brand/dolado-logo-icon.svg" },
+};
 
 // Backoffice no Design System V2 (.tema-backoffice em globals.css): a marca
 // da DoLado numa ferramenta de trabalho — barra lateral com as filas e as
@@ -37,7 +46,9 @@ export default async function BackofficeLayout({ children }: { children: React.R
   };
   const navegacao = <NavegacaoBackoffice contagens={contagens} email={user.email} />;
 
+  // Layout raiz próprio (sempre em português): o backoffice não tem idioma.
   return (
+    <DocumentoRaiz lang="pt-PT">
     <div className={`tema-backoffice ${fonteV2.className} min-h-screen bg-[#F7F9FC] text-[var(--v2-navy)] antialiased lg:flex`}>
       <a
         href="#conteudo"
@@ -62,5 +73,6 @@ export default async function BackofficeLayout({ children }: { children: React.R
         <div className="mx-auto max-w-[1280px]">{children}</div>
       </main>
     </div>
+    </DocumentoRaiz>
   );
 }

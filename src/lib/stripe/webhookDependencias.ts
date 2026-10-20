@@ -1,9 +1,12 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  assuntoPagamentoConfirmado,
   montarHtmlBoasVindasPagamento,
   montarHtmlNotificacaoNovoPagamento,
 } from "@/lib/email/pagamento";
 import { CONTACTO_EMAIL } from "@/lib/site";
+import { idiomaDoEmailPagamento } from "@/lib/idiomaConta";
+import { preferenciaIdiomaDaConta } from "@/lib/idiomaContaServidor";
 import { agendarRascunhoIA } from "@/lib/rascunhoIA/servidor";
 import type Stripe from "stripe";
 import { getStripe as stripeReal } from "@/lib/stripe/client";
@@ -695,7 +698,24 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
       return (data?.length ?? 0) > 0;
     },
 
-    async enviarEmailPagamentoConfirmado({ email, plano, contaExiste, sessionId, valorPagoCentimos, renovacao, consentimento }) {
+    async adesaoComCobrancaDiferida(subscriptionId) {
+      // Só subscrições criadas durante a Proteção gratuita com a 1.ª cobrança
+      // adiada (metadata decidida no servidor, em confirmarCompra).
+      const sub = await getStripe().subscriptions.retrieve(subscriptionId);
+      if (sub.metadata?.protecao_gratuita !== "1") return null;
+      const { data, error } = await admin
+        .from("stripe_payments")
+        .select("stripe_session_id")
+        .eq("stripe_subscription_id", subscriptionId)
+        .not("stripe_session_id", "is", null)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      falhar("stripe_payments.select", error);
+      return data?.stripe_session_id ? { sessionId: data.stripe_session_id as string } : null;
+    },
+
+    async enviarEmailPagamentoConfirmado({ email, plano, contaExiste, sessionId, valorPagoCentimos, renovacao, cobrancaDiferida, consentimento, userId, localeCheckout }) {
       // Sem conta ligada, mas o e-mail do Checkout já tem conta: iniciar
       // sessão e associar a compra (nunca criar uma segunda conta).
       let associar = false;
@@ -703,6 +723,9 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
         const { data, error } = await admin.rpc("conta_existe_com_email", { p_email: email });
         associar = !error && data === true;
       }
+      // Idioma do e-mail (só apresentação): o da conta; sem conta ou conta
+      // antiga sem idioma, o do Checkout (en-GB quando a compra foi feita em /en).
+      const idioma = idiomaDoEmailPagamento(await preferenciaIdiomaDaConta(userId), localeCheckout);
       const ligacao = contaExiste
         ? `${siteUrl}/entrar`
         : associar
@@ -710,20 +733,21 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
           : `${siteUrl}/criar-conta?session_id=${encodeURIComponent(sessionId)}`;
       await enviarEmailBrevo(
         email,
-        contaExiste
-          ? "Pagamento confirmado — o seu acesso está ativo ✓"
-          : associar
-            ? "Pagamento confirmado — Associe esta compra à sua conta ✓"
-            : "Pagamento confirmado — Falta criar a sua palavra-passe ✓",
-        montarHtmlBoasVindasPagamento(plano, {
-          contaExiste,
-          associarCompra: associar,
-          ligacao,
-          valorPagoCentimos,
-          renovacao,
-          consentimento,
-          portalUrl: siteUrl,
-        }),
+        assuntoPagamentoConfirmado({ contaExiste, associarCompra: associar }, idioma),
+        montarHtmlBoasVindasPagamento(
+          plano,
+          {
+            contaExiste,
+            associarCompra: associar,
+            ligacao,
+            valorPagoCentimos,
+            renovacao,
+            primeiraCobranca: cobrancaDiferida ? renovacao : null,
+            consentimento,
+            portalUrl: siteUrl,
+          },
+          idioma,
+        ),
       );
       if (process.env.BREVO_SENDER_EMAIL) {
         await enviarEmailBrevo(

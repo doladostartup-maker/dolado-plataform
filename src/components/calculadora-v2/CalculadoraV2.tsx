@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
+import { ApoioWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
 import { IconeSeta } from "@/components/marketing-v2/Icones";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CAMPO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
@@ -8,41 +9,50 @@ import { track } from "@/lib/analytics";
 import {
   DURACAO_MAXIMA_MESES,
   PRE_PREENCHIMENTO_TRATAR_CASO,
-  calcularEncargoCancelamento,
+  apresentacaoResultado,
+  estimarEncargoCancelamento,
   formatarEuros,
   hojeEmLisboa,
   lerEuros,
-  type CampoCalculadora,
-  type DadosCalculadora,
+  type CampoCalculadoraPublica,
+  type ComparacaoOperador,
+  type DadosCalculadoraPublica,
   type Duracao,
-  type ResultadoCalculadora,
+  type ResultadoCalculadoraPublica,
 } from "@/lib/calculadoraCancelamento/regras";
 import { urlTratarCaso } from "@/lib/site";
+import type { Idioma } from "@/i18n/config";
+import { useCaminho, useIdioma } from "@/i18n/cliente";
+import { formatarEurosCents } from "@/i18n/formatar";
+import { tWhatsApp } from "@/i18n/mensagens/whatsapp";
+import { tCalculadora } from "@/i18n/mensagens/calculadora";
 
 // Calculadora pública no Design System V2: formulário → estimativa do encargo
 // máximo de um cancelamento antecipado (telecomunicações). Tudo acontece no
 // browser — nada é gravado, enviado ou associado a uma conta. Regras em
-// src/lib/calculadoraCancelamento/regras.ts; campos, textos, resultado e
-// medição iguais aos da versão anterior.
+// src/lib/calculadoraCancelamento/regras.ts (estimarEncargoCancelamento).
+// "Não sei" nunca bloqueia (14/10/2026): sem a vantagem ou sem o tipo de
+// fidelização, o resultado é parcial ("Limite calculado: até X") e diz o que
+// falta — só o resultado completo usa "Valor máximo estimado".
 
 const ORIGEM = "/calculadora-cancelamento";
 
-const DADOS_VAZIOS: DadosCalculadora = {
+const DADOS_VAZIOS: DadosCalculadoraPublica = {
   dataInicio: "",
   duracaoMeses: "24",
-  tipo: "",
+  primeiraVez: "",
   novaInstalacao: "",
   mensalidade: "",
+  conheceVantagem: "",
   vantagem: "",
   equipamento: "",
+  valorOperador: "",
 };
 
 const ROTULO = "text-[15.5px] font-bold text-[var(--v2-navy)]";
 const AJUDA = "text-[14px] leading-relaxed text-[var(--v2-muted)]";
 const ERRO = "text-[14px] font-medium text-[var(--v2-erro)]";
 
-const NOTA_AMBITO =
-  "Esta calculadora estima o encargo máximo de um cancelamento antecipado por iniciativa do cliente, quando não exista um motivo legal ou contratual que permita cancelar sem encargos.";
 
 const semSubscricao = () => () => {};
 
@@ -56,11 +66,17 @@ function formatarData(iso: string) {
   return `${d}/${m}/${a}`;
 }
 
-function textoDuracao({ meses, dias }: Duracao) {
+function textoDuracao(idioma: Idioma, { meses, dias }: Duracao) {
+  const t = tCalculadora[idioma].duracao;
   const partes: string[] = [];
-  if (meses > 0) partes.push(meses === 1 ? "1 mês" : `${meses} meses`);
-  if (dias > 0 || meses === 0) partes.push(dias === 1 ? "1 dia" : `${dias} dias`);
-  return partes.join(" e ");
+  if (meses > 0) partes.push(t.meses(meses));
+  if (dias > 0 || meses === 0) partes.push(t.dias(dias));
+  return partes.join(t.e);
+}
+
+/** Euros no idioma: português como sempre (formatarEuros), inglês "€80.00". */
+function euros(idioma: Idioma, centimos: number) {
+  return idioma === "pt-PT" ? formatarEuros(centimos) : formatarEurosCents(idioma, centimos);
 }
 
 // ---------------------------------------------------------------------------
@@ -128,7 +144,11 @@ function Escolha<T extends string>({
 // Resultado
 // ---------------------------------------------------------------------------
 
-type ResultadoValido = Exclude<ResultadoCalculadora, { ok: false }>;
+type ResultadoValido = Exclude<ResultadoCalculadoraPublica, { ok: false }>;
+
+const NOTA = "rounded-[12px] border-l-[3px] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--v2-navy)]";
+const NOTA_AVISO = `${NOTA} border-[var(--v2-aviso)] bg-[var(--v2-aviso-bg)]`;
+const NOTA_INFO = `${NOTA} border-[var(--v2-green)] bg-[var(--v2-mint)]`;
 
 function LinhaTempo({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
@@ -139,82 +159,171 @@ function LinhaTempo({ rotulo, valor }: { rotulo: string; valor: string }) {
   );
 }
 
-function Resultado({ resultado, mensalidade, onRecomecar }: { resultado: ResultadoValido; mensalidade: string; onRecomecar: () => void }) {
+function Operador({ comparacao, parcial }: { comparacao: ComparacaoOperador; parcial: boolean }) {
+  const idioma = useIdioma();
+  const c = useCaminho();
+  const t = tCalculadora[idioma].resultado;
+  const operador = euros(idioma, comparacao.operadorCentimos);
+  const limite = parcial ? t.ate(euros(idioma, comparacao.limiteCentimos)) : euros(idioma, comparacao.limiteCentimos);
+  if (comparacao.resultado !== "superior") {
+    const texto = comparacao.resultado === "proximo" ? t.operadorProximo(operador, limite) : t.operadorInferior(operador, limite);
+    return <p className={NOTA_INFO}>{texto}</p>;
+  }
+  return (
+    <div className={NOTA_AVISO}>
+      <p>{t.operadorSuperior(operador, limite)}</p>
+      <a
+        href={c(hrefTratarCaso())}
+        onClick={() => track("click_nav_reclamacao")}
+        className="mt-2 inline-block font-semibold text-[var(--v2-green-dark)] underline underline-offset-2"
+      >
+        {t.analisar}
+      </a>
+    </div>
+  );
+}
+
+function Resultado({
+  resultado,
+  mensalidade,
+  valorOperador,
+  onRecomecar,
+}: {
+  resultado: ResultadoValido;
+  mensalidade: string;
+  valorOperador: number | null;
+  onRecomecar: () => void;
+}) {
   const { tempo } = resultado;
+  const idioma = useIdioma();
+  const c = useCaminho();
+  const t = tCalculadora[idioma].resultado;
+  const formatarEuros = (centimos: number) => euros(idioma, centimos);
+  const modo = apresentacaoResultado(resultado);
+  const completo = modo === "completo" || modo === "terminada";
 
   return (
     <div aria-live="polite" className="flex flex-col gap-4">
-      <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]">Resultado</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]">{t.rotulo}</p>
+        <span
+          className={`rounded-full px-2.5 py-0.5 text-[12px] font-bold ${
+            completo ? "bg-[var(--v2-mint)] text-[var(--v2-green-dark)]" : "bg-[var(--v2-aviso-bg)] text-[var(--v2-navy)]"
+          }`}
+        >
+          {completo ? t.seloCompleto : t.seloParcial}
+        </span>
+      </div>
 
-      <h2 className="text-[22px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">
-        Estimativa máxima do encargo de cancelamento:{" "}
-        <span className="whitespace-nowrap text-[var(--v2-green)]">{formatarEuros(resultado.resultadoCentimos)}</span>
-      </h2>
+      {modo === "sem_limite" ? (
+        <h2 className="text-[22px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">{t.tituloSemLimite}</h2>
+      ) : (
+        <h2 className="text-[22px] font-bold leading-snug tracking-[-0.015em] text-[var(--v2-navy)]">
+          {modo === "completo" ? t.tituloCompleto : modo === "parcial" ? t.tituloParcial : t.tituloTerminada}{" "}
+          <span className={`whitespace-nowrap ${completo ? "text-[var(--v2-green)]" : "text-[var(--v2-navy)]"}`}>
+            {formatarEuros(resultado.estado === "sem_limite" ? 0 : resultado.resultadoCentimos)}
+          </span>
+        </h2>
+      )}
 
       {resultado.estado === "terminada" && (
-        <p className="text-[14.5px] leading-relaxed text-[var(--v2-muted)]">
-          Com base nas datas introduzidas, a fidelização terminou a {formatarData(tempo.dataFim)}: já não existe
-          período de fidelização em curso.
-        </p>
+        <p className="text-[14.5px] leading-relaxed text-[var(--v2-muted)]">{t.terminada(formatarData(tempo.dataFim))}</p>
+      )}
+
+      {resultado.estado === "sem_limite" && (
+        <div className={NOTA_AVISO}>
+          <p>{t.semLimite}</p>
+          {resultado.faltam.includes("tipo") && <p className="mt-2">{t.semLimiteTipo}</p>}
+        </div>
+      )}
+
+      {resultado.estado === "calculado" && !resultado.completo && (
+        <div className={NOTA_AVISO}>
+          {resultado.faltam.includes("vantagem") && <p>{t.parcialVantagem}</p>}
+          {resultado.faltam.includes("tipo") && <p className={resultado.faltam.includes("vantagem") ? "mt-2" : ""}>{t.parcialTipo}</p>}
+        </div>
       )}
 
       {resultado.estado === "calculado" && (
         <ul className="flex flex-col gap-1.5 text-[14.5px] leading-relaxed text-[var(--v2-navy)]">
-          <li>
-            Vantagem proporcional ainda por recuperar:{" "}
-            <strong>{formatarEuros(resultado.vantagemProporcionalCentimos)}</strong>
-          </li>
-          {resultado.limiteMensalidadesCentimos !== null && (
+          {resultado.limitesMensalidades.map((l) => (
+            <li key={l.percentagem}>
+              {t.limite(tempo.mensalidadesEmFalta, mensalidade, l.percentagem)}{" "}
+              <strong>{formatarEuros(l.centimos)}</strong>
+              {resultado.limitesMensalidades.length > 1 && <span className="text-[var(--v2-muted)]"> ({t.cenario[l.cenario]})</span>}
+            </li>
+          ))}
+          {resultado.vantagemProporcionalCentimos !== null && (
             <li>
-              Limite pelas mensalidades restantes ({tempo.mensalidadesEmFalta} × {mensalidade} ×{" "}
-              {resultado.percentagemLimite}%): <strong>{formatarEuros(resultado.limiteMensalidadesCentimos)}</strong>
+              {t.vantagem} <strong>{formatarEuros(resultado.vantagemProporcionalCentimos)}</strong>
             </li>
           )}
-          <li>
-            Valor aplicável: <strong>{formatarEuros(resultado.resultadoCentimos)}</strong>
-            {(resultado.criterio === "vantagem" || resultado.criterio === "limite") && ", por ser o menor dos dois"}
-            {resultado.criterio === "iguais" && ", por os dois valores serem iguais"}
-            {resultado.criterio === "so_vantagem" &&
-              ". Num contrato iniciado antes de 14 de novembro de 2022, só se aplica a vantagem proporcional, exceto numa refidelização sem nova instalação"}
-            .
-          </li>
+          {resultado.completo && resultado.criterio && (
+            <li>
+              {t.aplicavel} <strong>{formatarEuros(resultado.resultadoCentimos)}</strong>
+              {(resultado.criterio === "vantagem" || resultado.criterio === "limite") && t.menor}
+              {resultado.criterio === "iguais" && t.iguais}
+              {resultado.criterio === "so_vantagem" && t.soVantagem}
+              .
+            </li>
+          )}
         </ul>
       )}
 
-      {resultado.estado === "calculado" && (
+      {(resultado.estado === "calculado" || resultado.estado === "sem_limite") && resultado.faltam.length > 0 && (
+        <div className="text-[14px] leading-relaxed text-[var(--v2-navy)]">
+          <p className="font-semibold">{t.faltaTitulo}</p>
+          <ul className="mt-1 list-disc pl-5">
+            {resultado.faltam.map((f) => (
+              <li key={f}>{t.falta[f]}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {resultado.estado !== "terminada" && (
         <dl className="rounded-[10px] bg-[var(--v2-surface)] px-4 py-1">
-          <LinhaTempo rotulo="Tempo já decorrido" valor={textoDuracao(tempo.decorrido)} />
-          <LinhaTempo rotulo="Tempo de fidelização em falta" valor={textoDuracao(tempo.emFalta)} />
-          <LinhaTempo rotulo="Mensalidades em falta (estimativa)" valor={String(tempo.mensalidadesEmFalta)} />
-          <LinhaTempo rotulo="Fim da fidelização" valor={formatarData(tempo.dataFim)} />
+          <LinhaTempo rotulo={t.decorrido} valor={textoDuracao(idioma, tempo.decorrido)} />
+          <LinhaTempo rotulo={t.emFalta} valor={textoDuracao(idioma, tempo.emFalta)} />
+          <LinhaTempo rotulo={t.mensalidadesEmFalta} valor={String(tempo.mensalidadesEmFalta)} />
+          <LinhaTempo rotulo={t.fim} valor={formatarData(tempo.dataFim)} />
         </dl>
       )}
 
-      {resultado.equipamento && (
-        <p className="rounded-[12px] border-l-[3px] border-[var(--v2-aviso)] bg-[var(--v2-aviso-bg)] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--v2-navy)]">
-          Indicou que recebeu equipamento subsidiado. Podem existir regras e encargos específicos relacionados com o
-          equipamento, que não estão incluídos neste valor: o resultado não corresponde ao custo total do cancelamento.
-        </p>
+      {resultado.estado !== "sem_limite" && resultado.operador && <Operador comparacao={resultado.operador} parcial={!completo} />}
+      {resultado.estado === "sem_limite" && valorOperador !== null && (
+        <p className={NOTA_INFO}>{t.operadorSemLimite(formatarEuros(valorOperador))}</p>
       )}
+
+      {resultado.equipamento && <p className={NOTA_AVISO}>{t.equipamento}</p>}
 
       <div className="mt-1 flex flex-col gap-3 sm:flex-row">
         <a
-          href={hrefTratarCaso()}
+          href={c(hrefTratarCaso())}
           onClick={() => track("click_nav_reclamacao")}
           className={BOTAO_PRIMARIO}
         >
-          Tratar o meu caso <IconeSeta tamanho={17} />
+          {t.tratarCaso} <IconeSeta tamanho={17} />
         </a>
         <button type="button" onClick={onRecomecar} className={BOTAO_CONTORNO}>
-          Calcular de novo
+          {t.calcularDeNovo}
         </button>
       </div>
 
+      {/* Apoio secundário: mensagem fixa, nunca os dados nem o valor calculado. */}
+      <ApoioWhatsApp
+        pergunta={tWhatsApp[idioma].contextos.calculadora.pergunta}
+        acao={tWhatsApp[idioma].contextos.calculadora.acao}
+        mensagem={tWhatsApp[idioma].contextos.calculadora.mensagem}
+        pagina="/calculadora-cancelamento"
+        local="fidelity_calculator_result"
+        contexto={resultado.estado}
+      />
+
       <ul className="flex list-disc flex-col gap-1 border-t border-[var(--v2-line)] pt-3 pl-4 text-[12.5px] leading-relaxed text-[var(--v2-muted)]">
-        <li>Este valor é uma estimativa e depende dos dados que introduziu.</li>
-        <li>Podem existir outras condições contratuais ou legais que esta calculadora não considera.</li>
-        <li>O equipamento subsidiado pode ter regras próprias, não incluídas neste cálculo.</li>
-        <li>Não é uma avaliação jurídica do seu caso.</li>
+        {t.notas.map((n) => (
+          <li key={n}>{n}</li>
+        ))}
       </ul>
     </div>
   );
@@ -225,23 +334,31 @@ function Resultado({ resultado, mensalidade, onRecomecar }: { resultado: Resulta
 // ---------------------------------------------------------------------------
 
 function Calculadora() {
-  const [dados, setDados] = useState<DadosCalculadora>(DADOS_VAZIOS);
-  const [erros, setErros] = useState<Partial<Record<CampoCalculadora, string>>>({});
+  const idioma = useIdioma();
+  const tc = tCalculadora[idioma];
+  const t = tc.campos;
+  const [dados, setDados] = useState<DadosCalculadoraPublica>(DADOS_VAZIOS);
+  const [erros, setErros] = useState<Partial<Record<CampoCalculadoraPublica, string>>>({});
   const [resultado, setResultado] = useState<ResultadoValido | null>(null);
   // Data máxima do campo: só no browser (no servidor fica sem limite), para
   // não haver diferenças entre o HTML do servidor e o do browser.
   const hoje = useSyncExternalStore(semSubscricao, hojeEmLisboa, () => undefined);
 
-  function alterar<K extends CampoCalculadora>(campo: K, valor: DadosCalculadora[K]) {
-    setDados((d) => ({ ...d, [campo]: valor, ...(campo === "tipo" && valor === "primeira" ? { novaInstalacao: "" } : {}) }));
-    setErros((e) => ({ ...e, [campo]: undefined }));
+  function alterar<K extends CampoCalculadoraPublica>(campo: K, valor: DadosCalculadoraPublica[K]) {
+    setDados((d) => ({ ...d, [campo]: valor, ...(campo === "primeiraVez" && valor !== "nao" ? { novaInstalacao: "" } : {}) }));
+    setErros((e) => ({ ...e, [campo]: undefined, ...(campo === "conheceVantagem" ? { vantagem: undefined } : {}) }));
   }
 
   function calcular(e: FormEvent) {
     e.preventDefault();
-    const r = calcularEncargoCancelamento(dados, hojeEmLisboa());
+    const r = estimarEncargoCancelamento(dados, hojeEmLisboa());
     if (!r.ok) {
-      setErros(r.erros);
+      // Mensagens de validação no idioma (as regras devolvem-nas em português).
+      const traduzidas: Partial<Record<CampoCalculadoraPublica, string>> = {};
+      for (const [campo, msg] of Object.entries(r.erros) as [CampoCalculadoraPublica, string | undefined][]) {
+        if (msg) traduzidas[campo] = (tc.erros as Record<string, string>)[msg] ?? msg;
+      }
+      setErros(traduzidas);
       return;
     }
     setErros({});
@@ -253,14 +370,42 @@ function Calculadora() {
     setResultado(null);
   }
 
-  if (resultado) return <Resultado resultado={resultado} mensalidade={formatarEuros(lerEuros(dados.mensalidade) ?? 0)} onRecomecar={recomecar} />;
+  if (resultado) {
+    return (
+      <Resultado
+        resultado={resultado}
+        mensalidade={euros(idioma, lerEuros(dados.mensalidade) ?? 0)}
+        valorOperador={dados.valorOperador.trim() === "" ? null : lerEuros(dados.valorOperador)}
+        onRecomecar={recomecar}
+      />
+    );
+  }
+
+  const opcoesSimNaoNaoSei = [
+    { valor: "sim" as const, texto: t.sim },
+    { valor: "nao" as const, texto: t.nao },
+    { valor: "nao_sei" as const, texto: t.naoSei },
+  ];
+  const campoVantagem = (
+    <Campo id="vantagem" rotulo={t.vantagem} erro={erros.vantagem}>
+      <input
+        id="vantagem"
+        type="text"
+        inputMode="decimal"
+        placeholder={t.vantagemExemplo}
+        value={dados.vantagem}
+        onChange={(e) => alterar("vantagem", e.target.value)}
+        className={CAMPO}
+      />
+    </Campo>
+  );
 
   return (
     <form onSubmit={calcular} noValidate className="flex flex-col gap-6">
       <Campo
         id="data-inicio"
-        rotulo="Data de início da fidelização"
-        ajuda="Numa refidelização, indique a data em que começou o novo período de fidelização."
+        rotulo={t.dataInicio}
+        ajuda={t.dataInicioAjuda}
         erro={erros.dataInicio}
       >
         <input
@@ -273,7 +418,7 @@ function Calculadora() {
         />
       </Campo>
 
-      <Campo id="duracao" rotulo="Duração total da fidelização (meses)" ajuda="Normalmente 12 ou 24 meses." erro={erros.duracaoMeses}>
+      <Campo id="duracao" rotulo={t.duracao} ajuda={t.duracaoAjuda} erro={erros.duracaoMeses}>
         <input
           id="duracao"
           type="number"
@@ -288,125 +433,126 @@ function Calculadora() {
       </Campo>
 
       <Escolha
-        rotulo="É a primeira fidelização ou uma refidelização?"
-        ajuda="Refidelização: um novo período de fidelização no mesmo contrato, por exemplo ao mudar de tarifário ou ao receber uma nova oferta."
-        opcoes={[
-          { valor: "primeira", texto: "Primeira fidelização" },
-          { valor: "refidelizacao", texto: "Refidelização" },
-        ]}
-        valor={dados.tipo}
-        onEscolher={(v) => alterar("tipo", v)}
-        erro={erros.tipo}
+        rotulo={t.primeiraVez}
+        ajuda={t.primeiraVezAjuda}
+        opcoes={opcoesSimNaoNaoSei}
+        valor={dados.primeiraVez}
+        onEscolher={(v) => alterar("primeiraVez", v)}
+        erro={erros.primeiraVez}
       />
 
-      {dados.tipo === "refidelizacao" && (
+      {dados.primeiraVez === "nao" && (
         <Escolha
-          rotulo="Na refidelização, houve nova instalação ou alteração do lacete local?"
-          ajuda="Por exemplo, uma nova instalação física da ligação em sua casa."
-          opcoes={[
-            { valor: "sim", texto: "Sim" },
-            { valor: "nao", texto: "Não" },
-          ]}
+          rotulo={t.novaInstalacao}
+          ajuda={t.novaInstalacaoAjuda}
+          opcoes={opcoesSimNaoNaoSei}
           valor={dados.novaInstalacao}
           onEscolher={(v) => alterar("novaInstalacao", v)}
           erro={erros.novaInstalacao}
         />
       )}
 
-      <Campo id="mensalidade" rotulo="Valor atual da mensalidade (€)" erro={erros.mensalidade}>
+      <Campo id="mensalidade" rotulo={t.mensalidade} erro={erros.mensalidade}>
         <input
           id="mensalidade"
           type="text"
           inputMode="decimal"
-          placeholder="Ex.: 29,99"
+          placeholder={t.mensalidadeExemplo}
           value={dados.mensalidade}
           onChange={(e) => alterar("mensalidade", e.target.value)}
           className={CAMPO}
         />
       </Campo>
 
-      <Campo
-        id="vantagem"
-        rotulo="Valor total da vantagem associada à fidelização (€)"
-        ajuda="O valor indicado no contrato como vantagem ou benefício por aceitar a fidelização (por exemplo, descontos ou instalação gratuita)."
-        erro={erros.vantagem}
-      >
-        <input
-          id="vantagem"
-          type="text"
-          inputMode="decimal"
-          placeholder="Ex.: 120,00"
-          value={dados.vantagem}
-          onChange={(e) => alterar("vantagem", e.target.value)}
-          className={CAMPO}
-        />
-      </Campo>
+      <Escolha
+        rotulo={t.conheceVantagem}
+        ajuda={t.conheceVantagemAjuda}
+        opcoes={[
+          { valor: "sim", texto: t.sim },
+          { valor: "nao_sei", texto: t.naoSei },
+          { valor: "ajuda", texto: t.ajudeMe },
+        ]}
+        valor={dados.conheceVantagem}
+        onEscolher={(v) => alterar("conheceVantagem", v)}
+        erro={erros.conheceVantagem}
+      />
+
+      {dados.conheceVantagem === "sim" && campoVantagem}
+
+      {dados.conheceVantagem === "nao_sei" && <p className={NOTA_INFO}>{t.naoSeiVantagem}</p>}
+
+      {dados.conheceVantagem === "ajuda" && (
+        <div className="flex flex-col gap-4 rounded-[12px] bg-[var(--v2-surface)] p-4">
+          <div>
+            <p className={ROTULO}>{t.ajudaTitulo}</p>
+            {t.ajudaTexto.map((p) => (
+              <p key={p} className={`${AJUDA} mt-1.5`}>
+                {p}
+              </p>
+            ))}
+          </div>
+          {campoVantagem}
+          <button
+            type="button"
+            onClick={() => alterar("conheceVantagem", "nao_sei")}
+            className="self-start text-[14.5px] font-semibold text-[var(--v2-green-dark)] underline underline-offset-2"
+          >
+            {t.naoEncontro}
+          </button>
+        </div>
+      )}
 
       <Escolha
-        rotulo="Recebeu equipamento subsidiado associado ao contrato?"
-        ajuda="Por exemplo, um telemóvel ou outro equipamento oferecido ou com desconto por causa da fidelização."
+        rotulo={t.equipamento}
+        ajuda={t.equipamentoAjuda}
         opcoes={[
-          { valor: "sim", texto: "Sim" },
-          { valor: "nao", texto: "Não" },
+          { valor: "sim", texto: t.sim },
+          { valor: "nao", texto: t.nao },
         ]}
         valor={dados.equipamento}
         onEscolher={(v) => alterar("equipamento", v)}
         erro={erros.equipamento}
       />
 
-      <p className="rounded-[12px] border-l-[3px] border-[var(--v2-green)] bg-[var(--v2-mint)] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--v2-navy)]">
-        {NOTA_AMBITO}
-      </p>
+      <Campo id="valor-operador" rotulo={t.valorOperador} ajuda={t.valorOperadorAjuda} erro={erros.valorOperador}>
+        <input
+          id="valor-operador"
+          type="text"
+          inputMode="decimal"
+          placeholder={t.valorOperadorExemplo}
+          value={dados.valorOperador}
+          onChange={(e) => alterar("valorOperador", e.target.value)}
+          className={CAMPO}
+        />
+      </Campo>
+
+      <p className={NOTA_INFO}>{tc.notaAmbito}</p>
 
       {Object.values(erros).some(Boolean) && (
         <p className={ERRO} role="alert">
-          Reveja os campos assinalados.
+          {tc.reveja}
         </p>
       )}
 
       <button type="submit" className={`${BOTAO_PRIMARIO} self-start px-8`}>
-        Calcular
+        {tc.calcular}
       </button>
     </form>
   );
 }
 
-const COMO_FUNCIONA: { titulo: string; texto: string }[] = [
-  {
-    titulo: "Como é feito o cálculo.",
-    texto:
-      "Nos contratos com fidelização iniciada ou renovada a partir de 14 de novembro de 2022, o encargo corresponde ao menor de dois valores: a parte da vantagem ainda por recuperar, proporcional ao tempo de fidelização em falta, e uma percentagem das mensalidades em falta (50% no primeiro ano e 30% no segundo; 30% numa refidelização sem nova instalação). Nos contratos anteriores, conta a vantagem proporcional ao tempo em falta e, numa refidelização sem nova instalação, também o limite de 30% das mensalidades em falta.",
-  },
-  {
-    titulo: "O que não é.",
-    texto:
-      "Não avalia se pode cancelar sem encargos, não inclui encargos com equipamento e não é uma avaliação jurídica do seu caso.",
-  },
-  {
-    titulo: "Os seus dados.",
-    texto:
-      "O cálculo é feito apenas no seu navegador: não guardamos os valores que introduz nem os associamos a si.",
-  },
-  {
-    titulo: "Se decidir avançar.",
-    texto: "Em “Tratar o meu caso” descreve o que aconteceu, cria a sua conta e escolhe a modalidade. Só paga no fim.",
-  },
-];
-
 export function CalculadoraV2() {
+  const t = tCalculadora[useIdioma()];
   return (
     <>
       {/* ===== Hero + calculadora ===== */}
       <SectionV2 size="compact" className="grid items-start gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:py-20">
         <div className="lg:sticky lg:top-28 lg:pt-6">
-          <Eyebrow>Grátis · sem conta · telecomunicações</Eyebrow>
+          <Eyebrow>{t.eyebrow}</Eyebrow>
           <h1 className="mt-5 text-[clamp(32px,3.8vw,48px)] font-extrabold leading-[1.08] tracking-[-0.035em] text-[var(--v2-navy)]">
-            Calculadora de Cancelamento
+            {t.titulo}
           </h1>
-          <p className={`${TEXTO} mt-5 text-[17.5px]`}>
-            Estime quanto lhe pode ser cobrado se cancelar antecipadamente um contrato de telecomunicações com
-            fidelização. O resultado aparece logo, sem pedir e-mail nem criar conta.
-          </p>
+          <p className={`${TEXTO} mt-5 text-[17.5px]`}>{t.texto}</p>
         </div>
         <div className={`${CARTAO} p-6 sm:p-8`}>
           <Calculadora />
@@ -415,9 +561,9 @@ export function CalculadoraV2() {
 
       {/* ===== Como funciona ===== */}
       <SectionV2 tone="soft-blue">
-        <SectionHeader eyebrow="Como funciona" titulo="O que precisa de saber sobre a calculadora." />
+        <SectionHeader eyebrow={t.comoFunciona.eyebrow} titulo={t.comoFunciona.titulo} />
         <ul className="mt-10 grid gap-8 md:grid-cols-2 md:gap-x-12">
-          {COMO_FUNCIONA.map((c) => (
+          {t.comoFunciona.itens.map((c) => (
             <li key={c.titulo}>
               <h3 className="text-[18px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{c.titulo}</h3>
               <p className="mt-2 text-[15.5px] leading-relaxed text-[var(--v2-muted)]">{c.texto}</p>

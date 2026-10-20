@@ -113,7 +113,7 @@ export default async function ConversaoDetalhePage({
             </Dado>
             <Dado rotulo="Estado do reembolso">
               {estadoReembolsoPt(c.refund_estado) ?? "não criado"}
-              {c.refund_atualizado_em && <span className="block text-[12.5px] text-[var(--v2-muted)]">atualizado em {data(c.refund_atualizado_em)}</span>}
+              {c.refund_atualizado_em && <span className="block text-[12.5px] text-[var(--v2-muted)]">actualizado em {data(c.refund_atualizado_em)}</span>}
             </Dado>
             <Dado rotulo="Refund">
               <span className={CODIGO}>{c.refund_id ?? "—"}</span>
@@ -152,7 +152,7 @@ export default async function ConversaoDetalhePage({
                   name="nota"
                   required
                   rows={3}
-                  placeholder="Ex.: reembolso de 10,00 € criado manualmente no Stripe (re_…) em 02/10."
+                  placeholder="Ex.: reembolso de 7,00 € criado manualmente no Stripe (re_…) em 02/10."
                   className={CAMPO}
                 />
               </label>

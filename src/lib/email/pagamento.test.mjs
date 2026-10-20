@@ -13,14 +13,14 @@ const base = {
 };
 
 describe("15. e-mail pós-pagamento", () => {
-  test("Caso + Proteção: produto, valor, IVA, subscrição, renovação, gestão, início imediato, livre resolução, contacto e documentos", () => {
+  test("Caso + Protecção: produto, valor, IVA, subscrição, renovação, gestão, início imediato, livre resolução, contacto e documentos", () => {
     const html = montarHtmlBoasVindasPagamento("caso_protecao", base);
     for (const esperado of [
-      "Caso + Proteção",
+      "Caso + Protecção",
       "7,99 € (IVA incluído)",
       "Subscrição mensal com renovação automática",
       "7,99 €/mês (IVA incluído)",
-      "01 de novembro de 2026",
+      "01 de Novembro de 2026",
       "https://portal.dolado.pt/portal/subscricao",
       "Gestão de Subscrição",
       "pediu expressamente que a DoLado iniciasse a prestação do serviço",
@@ -45,7 +45,7 @@ describe("15. e-mail pós-pagamento", () => {
       "11,99 € (IVA incluído)",
       "Pagamento único",
       "Tem 1 Caso Extra na sua conta",
-      "Continua ativa e não foi alterada",
+      "Continua activa e não foi alterada",
       "https://portal.dolado.pt/portal/casos",
       "Ver os meus casos",
       "Direito de livre resolução",

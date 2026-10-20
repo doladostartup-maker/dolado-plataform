@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { track } from "@/lib/analytics";
-import { TEXTOS_INDICACAO } from "@/lib/indicacoes/regras";
+import { useTextos } from "@/i18n/cliente";
+import { tIndicacoes } from "@/i18n/mensagens/indicacoes";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAMPO } from "./ui";
 
 /**
@@ -12,6 +13,8 @@ import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAMPO } from "./ui";
  */
 export function PartilharIndicacao({ url, local }: { url: string; local: string }) {
   const [copiado, setCopiado] = useState(false);
+  const ti = useTextos(tIndicacoes);
+  const t = ti.partilhar;
 
   async function copiar() {
     try {
@@ -28,7 +31,7 @@ export function PartilharIndicacao({ url, local }: { url: string; local: string 
     track("indicacao_partilhar", { local });
     if (typeof navigator.share === "function") {
       try {
-        await navigator.share({ title: "DoLado", text: TEXTOS_INDICACAO.textoPartilha, url });
+        await navigator.share({ title: "DoLado", text: ti.textos.textoPartilha, url });
         return;
       } catch {
         return; // cancelado pelo cliente
@@ -40,7 +43,7 @@ export function PartilharIndicacao({ url, local }: { url: string; local: string 
   return (
     <div className="flex flex-col gap-3">
       <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-[var(--v2-muted)]">
-        O seu link
+        {t.oSeuLink}
         <input
           type="text"
           readOnly
@@ -51,14 +54,14 @@ export function PartilharIndicacao({ url, local }: { url: string; local: string 
       </label>
       <div className="flex flex-col gap-2 sm:flex-row">
         <button type="button" onClick={copiar} className={`${BOTAO_PRIMARIO} sm:flex-1`}>
-          {copiado ? "Link copiado" : "Copiar link"}
+          {copiado ? t.copiado : t.copiar}
         </button>
         <button type="button" onClick={partilhar} className={`${BOTAO_SECUNDARIO} sm:flex-1`}>
-          Partilhar
+          {t.partilhar}
         </button>
       </div>
       <p aria-live="polite" className="sr-only">
-        {copiado ? "Link copiado." : ""}
+        {copiado ? t.copiadoAnuncio : ""}
       </p>
     </div>
   );

@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
+import { crispAtivo } from "@/lib/crisp";
+import { ChatCrisp } from "./ChatCrisp";
 import { FooterV2 } from "./FooterV2";
 import { fonteV2 as fonte } from "./fonte";
 import { NavbarV2 } from "./NavbarV2";
@@ -11,23 +13,33 @@ import { NavbarV2 } from "./NavbarV2";
 // via (legal)/layout.tsx) carregam AnalyticsScripts uma única vez, por esta
 // moldura — nunca página a página. GTM, GA4 e Google Ads só são inseridos
 // depois do consentimento no banner do Cookiebot (MedicaoComConsentimento).
+//
+// Chat em direto (Crisp): só nas páginas que passam `chatEmDireto` (lista em
+// PAGINAS_COM_CRISP, src/lib/crisp.ts), com CRISP_ATIVO=1 e consentimento.
 
 export function PaginaV2({
   eventoCtaNavbar,
   parametrosCtaNavbar,
+  chatEmDireto = false,
+  cabecalho,
   children,
 }: {
   eventoCtaNavbar: string;
   /** Parâmetros do evento do botão da navbar (ex.: { local: "cabecalho" }). */
   parametrosCtaNavbar?: Record<string, string>;
+  /** Mostra o chat em direto (Crisp) — só nas páginas de PAGINAS_COM_CRISP. */
+  chatEmDireto?: boolean;
+  /** Substitui a NavbarV2 (ex.: cabeçalho simplificado da landing /30-dias-gratis). */
+  cabecalho?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <div className={`tema-v2 ${fonte.className} min-h-screen bg-white text-[var(--v2-navy)] antialiased`}>
       <AnalyticsScripts />
-      <NavbarV2 eventoCta={eventoCtaNavbar} parametrosCta={parametrosCtaNavbar} />
+      {cabecalho ?? <NavbarV2 eventoCta={eventoCtaNavbar} parametrosCta={parametrosCtaNavbar} />}
       <main>{children}</main>
       <FooterV2 />
+      {chatEmDireto && crispAtivo() && <ChatCrisp />}
     </div>
   );
 }

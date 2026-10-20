@@ -21,6 +21,12 @@
 // desde 01/10/2026 — não depende do plano. Funcionalidades
 // futuras de proteção usam a mesma verificação (temProtecao).
 
+
+// Textos apresentados (pt-PT/en-GB): src/i18n/mensagens/*/subscricao.ts.
+import type { Idioma } from "../i18n/config.ts";
+import { tSubscricao } from "../i18n/mensagens/subscricao.ts";
+import { protecaoGratuitaDe, type LinhaProtecaoGratuita, type ProtecaoGratuita } from "./protecaoGratuita.ts";
+
 export type PlanoSubscricao = "none" | "protecao" | "caso_protecao";
 
 export type LinhaAcesso = {
@@ -43,8 +49,15 @@ export type Acesso = {
   casosComprados: number;
   /** Casos incluídos na subscrição ainda por usar (creditos - casosComprados). */
   casosSubscricao: number;
-  /** Funcionalidades de proteção desbloqueadas. */
+  /** Funcionalidades de proteção desbloqueadas (subscrição ou período gratuito). */
   temProtecao: boolean;
+  /**
+   * Subscrição Proteção / Caso + Proteção paga e em vigor no Stripe. É isto
+   * (e não temProtecao) que impede abrir um segundo Checkout de subscrição.
+   */
+  temSubscricao: boolean;
+  /** Proteção gratuita de 30 dias (null = nunca ativada). */
+  protecaoGratuita: ProtecaoGratuita | null;
   /** Pode abrir um caso novo no portal agora (tem casos disponíveis). */
   podeCriarCaso: boolean;
   /** Abrir um caso gasta um crédito (sempre — não há casos sem pagamento). */
@@ -68,7 +81,13 @@ function lerPlano(valor: string | null | undefined): PlanoSubscricao {
   return valor === "protecao" || valor === "caso_protecao" ? valor : "none";
 }
 
-export function calcularAcesso(linha: LinhaAcesso | null): Acesso {
+export function calcularAcesso(
+  linha: LinhaAcesso | null,
+  linhaGratuita: LinhaProtecaoGratuita | null = null,
+  agora: Date = new Date(),
+): Acesso {
+  const protecaoGratuita = protecaoGratuitaDe(linhaGratuita, agora);
+  const gratuitaEmCurso = !!protecaoGratuita?.emCurso;
   if (!linha) {
     return {
       temPlanoStripe: false,
@@ -77,7 +96,9 @@ export function calcularAcesso(linha: LinhaAcesso | null): Acesso {
       creditos: 0,
       casosComprados: 0,
       casosSubscricao: 0,
-      temProtecao: false,
+      temProtecao: gratuitaEmCurso,
+      temSubscricao: false,
+      protecaoGratuita,
       podeCriarCaso: false,
       casoConsomeCredito: true,
       fimPeriodo: null,
@@ -88,6 +109,7 @@ export function calcularAcesso(linha: LinhaAcesso | null): Acesso {
   const plano = lerPlano(linha.subscription_plan);
   const creditos = Math.max(0, linha.case_credits ?? 0);
   const casosComprados = Math.min(creditos, Math.max(0, linha.avulso_credits ?? 0));
+  const temSubscricao = plano !== "none" && estadoComAcesso(linha.subscription_status);
   return {
     temPlanoStripe: true,
     plano,
@@ -95,7 +117,9 @@ export function calcularAcesso(linha: LinhaAcesso | null): Acesso {
     creditos,
     casosComprados,
     casosSubscricao: creditos - casosComprados,
-    temProtecao: plano !== "none" && estadoComAcesso(linha.subscription_status),
+    temProtecao: temSubscricao || gratuitaEmCurso,
+    temSubscricao,
+    protecaoGratuita,
     podeCriarCaso: creditos > 0,
     casoConsomeCredito: true,
     fimPeriodo: linha.current_period_end ?? null,
@@ -121,7 +145,7 @@ export function avisoDoPortal({
 }): AvisoPortal {
   if (ultimoPagamentoEstado === "pendente") return "pagamento_pendente";
   if (ultimoPagamentoEstado === "falhado") return "pagamento_falhado";
-  if (regressoDoCheckout && acesso.temProtecao) return "plano_ativo";
+  if (regressoDoCheckout && acesso.temSubscricao) return "plano_ativo";
   return null;
 }
 
@@ -145,24 +169,16 @@ export type ResumoPlano = {
   casosDisponiveis: number | null;
 };
 
-const ESTADO_SUBSCRICAO_PT: Record<string, string> = {
-  active: "Ativa",
-  trialing: "Ativa",
-  past_due: "Pagamento em atraso",
-  incomplete: "Pagamento em confirmação",
-  unpaid: "Suspensa por falta de pagamento",
-  paused: "Suspensa",
-};
 
 // Subscrições terminadas deixam de identificar o plano da conta.
 const ESTADOS_TERMINADOS: ReadonlySet<string> = new Set(["canceled", "incomplete_expired"]);
 
-export function estadoSubscricaoPt(status: string | null | undefined) {
+export function estadoSubscricaoPt(status: string | null | undefined, idioma: Idioma = "pt-PT") {
   if (!status) return null;
-  return ESTADO_SUBSCRICAO_PT[status] ?? null;
+  return (tSubscricao[idioma].estados as Record<string, string>)[status] ?? null;
 }
 
-export function resumoPlanoPortal(acesso: Acesso): ResumoPlano {
+export function resumoPlanoPortal(acesso: Acesso, idioma: Idioma = "pt-PT"): ResumoPlano {
   const subscricaoEmVigor =
     acesso.plano !== "none" && !!acesso.estadoSubscricao && !ESTADOS_TERMINADOS.has(acesso.estadoSubscricao);
 
@@ -171,7 +187,7 @@ export function resumoPlanoPortal(acesso: Acesso): ResumoPlano {
     const agendado = comAcesso && acesso.cancelamentoAgendado;
     return {
       plano: acesso.plano as "protecao" | "caso_protecao",
-      estado: agendado ? "Cancelamento agendado" : estadoSubscricaoPt(acesso.estadoSubscricao),
+      estado: agendado ? tSubscricao[idioma].cancelamentoAgendado : estadoSubscricaoPt(acesso.estadoSubscricao, idioma),
       renovacao: comAcesso && !agendado ? acesso.fimPeriodo : null,
       fimAgendado: agendado ? acesso.fimPeriodo : null,
       // Proteção não inclui casos; só mostra se tiver comprado um Avulso à parte.
@@ -228,34 +244,25 @@ export function casosGuardados(
 
 export type EstadoReembolsoCliente = { titulo: string; texto: string } | null;
 
-export function estadoReembolsoCliente({
-  refundEstado,
-  requerIntervencao,
-  intervencaoResolvida,
-  montanteCentimos,
-}: {
-  refundEstado: string | null;
-  requerIntervencao: boolean;
-  intervencaoResolvida: boolean;
-  montanteCentimos: number;
-}): EstadoReembolsoCliente {
+export function estadoReembolsoCliente(
+  {
+    refundEstado,
+    requerIntervencao,
+    intervencaoResolvida,
+    montanteCentimos,
+  }: {
+    refundEstado: string | null;
+    requerIntervencao: boolean;
+    intervencaoResolvida: boolean;
+    montanteCentimos: number;
+  },
+  idioma: Idioma = "pt-PT",
+): EstadoReembolsoCliente {
+  const t = tSubscricao[idioma].reembolso;
   if (montanteCentimos <= 0) return null;
-  if (refundEstado === "succeeded") {
-    return {
-      titulo: "Reembolso efetuado",
-      texto: "O reembolso foi processado para o método de pagamento original.",
-    };
-  }
+  if (refundEstado === "succeeded") return { ...t.efetuado };
   // Resolvido manualmente pelo admin: sem estado fiável a mostrar.
   if (intervencaoResolvida) return null;
-  if (requerIntervencao || refundEstado === "failed" || refundEstado === "canceled") {
-    return {
-      titulo: "Estamos a verificar o reembolso",
-      texto: "Houve um problema no processamento do reembolso. Não precisa de fazer nada neste momento.",
-    };
-  }
-  return {
-    titulo: "Reembolso em processamento",
-    texto: "O reembolso foi iniciado para o método de pagamento original.",
-  };
+  if (requerIntervencao || refundEstado === "failed" || refundEstado === "canceled") return { ...t.verificar };
+  return { ...t.emProcessamento };
 }

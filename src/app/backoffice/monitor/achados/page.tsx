@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ROTULO_ACHADO } from "@/lib/monitor/achados";
+import { ESTADOS_ACHADO_POR_DECIDIR, ROTULO_ACHADO, achadoPorDecidir } from "@/lib/monitor/achados";
 import type { TomBackoffice } from "@/lib/backoffice/triagem";
 import { CabecalhoPagina } from "@/components/backoffice/Cabecalho";
 import { Etiqueta } from "@/components/backoffice/Estado";
@@ -28,7 +28,7 @@ export default async function AchadosPage({ searchParams }: { searchParams: Prom
     .select("id, tipo, estado, created_at, contrato_id, utilizador_id")
     .order("created_at", { ascending: true })
     .limit(200);
-  if (!params.todos) consulta = consulta.in("estado", ["detetado", "em_revisao", "confirmado"]);
+  if (!params.todos) consulta = consulta.in("estado", ESTADOS_ACHADO_POR_DECIDIR);
   const { data: achados } = await consulta;
 
   const contratos = [...new Set((achados ?? []).map((a) => a.contrato_id))];
@@ -45,9 +45,9 @@ export default async function AchadosPage({ searchParams }: { searchParams: Prom
   return (
     <div className="flex flex-col gap-5">
       <CabecalhoPagina
-        contexto="Proteção"
-        titulo="Situações detetadas"
-        descricao="Resultados das regras sobre as faturas. Nada chega ao cliente sem revisão: confirme os factos, ajuste o texto e comunique, ou descarte com o motivo."
+        contexto="Protecção"
+        titulo="Situações detectadas"
+        descricao="Resultados das regras sobre as facturas. Nada chega ao cliente sem revisão: confirme os factos, ajuste o texto e comunique, ou descarte com o motivo."
       />
 
       <nav aria-label="Filtro das situações" className="flex gap-1 border-b border-[var(--v2-line)]">
@@ -67,9 +67,9 @@ export default async function AchadosPage({ searchParams }: { searchParams: Prom
                 <th scope="col" className={TABELA_TH}>Situação</th>
                 <th scope="col" className={TABELA_TH}>Fornecedor</th>
                 <th scope="col" className={TABELA_TH}>Estado</th>
-                <th scope="col" className={TABELA_TH}>Detetada em</th>
+                <th scope="col" className={TABELA_TH}>Detectada em</th>
                 <th scope="col" className={TABELA_TH}>
-                  <span className="sr-only">Ação</span>
+                  <span className="sr-only">Acção</span>
                 </th>
               </tr>
             </thead>
@@ -88,7 +88,7 @@ export default async function AchadosPage({ searchParams }: { searchParams: Prom
                     </td>
                     <td className={`${TABELA_TD} text-right`}>
                       <Link href={`/backoffice/monitor/achados/${a.id}`} prefetch={false} className={`${BOTAO_SECUNDARIO} ${BOTAO_PEQUENO}`}>
-                        {["detetado", "em_revisao", "confirmado"].includes(a.estado) ? "Rever" : "Ver"}
+                        {achadoPorDecidir(a.estado) ? "Rever" : "Ver"}
                       </Link>
                     </td>
                   </tr>
@@ -99,7 +99,7 @@ export default async function AchadosPage({ searchParams }: { searchParams: Prom
         </div>
       ) : (
         <EstadoVazio icone={<IconeCirculoVisto tamanho={20} />} titulo="Sem situações por decidir.">
-          As situações novas aparecem aqui depois de cada fatura analisada.
+          As situações novas aparecem aqui depois de cada factura analisada.
         </EstadoVazio>
       )}
     </div>

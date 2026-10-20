@@ -97,7 +97,7 @@ describe("links de revisão do texto (contrato)", { skip: !ATIVO && "só em npm 
     const { createAdminClient } = await import("@/lib/supabase/admin");
     admin = createAdminClient();
     ({ consultarLink } = await import("@/lib/textoCasoServidor"));
-    ({ autorizarPorLink, pedirAlteracoesPorLink } = await import("@/app/texto/actions"));
+    ({ autorizarPorLink, pedirAlteracoesPorLink } = await import("@/app/[idioma]/texto/actions"));
     ({ gerarToken, hashToken, hashConteudo } = await import("@/lib/textoCasoTokens"));
   });
 
@@ -109,7 +109,7 @@ describe("links de revisão do texto (contrato)", { skip: !ATIVO && "só em npm 
       const rever = await consultarLink(c.rever, "rever_autorizar");
       const alterar = await consultarLink(c.alterar, "pedir_alteracoes");
       assert.equal(rever.situacao, "valido");
-      assert.equal(rever.conteudo, "Texto v1", "a página mostra o texto exato da versão");
+      assert.equal(rever.conteudo, "Texto v1", "a página mostra o texto exacto da versão");
       assert.equal(alterar.situacao, "valido");
     }
     // Pedidos em paralelo, como um gateway que visita todos os links de uma vez.
@@ -140,7 +140,7 @@ describe("links de revisão do texto (contrato)", { skip: !ATIVO && "só em npm 
     const s = await retrato(c.casoId);
     assert.equal(s.textos[0].estado, "autorizado");
     assert.deepEqual(s.eventos.filter((e) => e === "texto_autorizado"), ["texto_autorizado"]);
-    assert.equal((await consultarLink(c.rever, "rever_autorizar")).situacao, "ja_autorizado", "voltar ao link mostra o estado, sem ações");
+    assert.equal((await consultarLink(c.rever, "rever_autorizar")).situacao, "ja_autorizado", "voltar ao link mostra o estado, sem acções");
   });
 
   test("4. POST repetido é idempotente: \"já autorizado\", sem duplicar", async () => {
@@ -220,7 +220,7 @@ describe("links de revisão do texto (contrato)", { skip: !ATIVO && "só em npm 
 
     assert.equal((await consultarLink(a.rever, "rever_autorizar")).conteudo, "Texto do caso A", "o link de A nunca mostra o texto de B");
     assert.equal((await autorizar(a.rever)).resultado, "autorizado");
-    assert.deepEqual(await retrato(b.casoId), antesB, "o caso B fica exatamente como estava");
+    assert.deepEqual(await retrato(b.casoId), antesB, "o caso B fica exactamente como estava");
     assert.equal((await consultarLink(b.rever, "rever_autorizar")).situacao, "valido");
 
     const { data } = await admin.from("casos_textos_autorizacoes").select("caso_id, texto_id").eq("texto_id", a.textoId).single();
@@ -252,7 +252,7 @@ describe("links de revisão do texto (contrato)", { skip: !ATIVO && "só em npm 
     assert.equal((await autorizar(t2.rever)).resultado, "autorizado", "a versão 2 precisa de uma autorização própria");
   });
 
-  test("10. \"Pedir alterações\" só com a ação explícita e com mensagem", async () => {
+  test("10. \"Pedir alterações\" só com a acção explícita e com mensagem", async () => {
     const c = await casoComTexto();
     await consultarLink(c.alterar, "pedir_alteracoes");
     assert.equal((await retrato(c.casoId)).pedidos.length, 0, "abrir a página não pede alterações");
@@ -267,7 +267,7 @@ describe("links de revisão do texto (contrato)", { skip: !ATIVO && "só em npm 
     assert.equal((await autorizar(c.rever)).resultado, "alteracoes_pedidas", "depois de pedir alterações, esta versão não pode ser autorizada");
   });
 
-  test("estado especial: reclamação já enviada — os links não permitem mais ações", async () => {
+  test("estado especial: reclamação já enviada — os links não permitem mais acções", async () => {
     const c = await casoComTexto({ conteudo: "Texto enviado" });
     await autorizar(c.rever);
     const envio = await admin.rpc("texto_registar_envio", {

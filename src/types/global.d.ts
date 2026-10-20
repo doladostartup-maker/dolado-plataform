@@ -10,5 +10,7 @@ declare global {
       consent?: { necessary?: boolean; preferences?: boolean; statistics?: boolean; marketing?: boolean };
       renew?: () => void;
     };
+    /** Pixel da Meta (connect.facebook.net/…/fbevents.js): só com consentimento de marketing. */
+    fbq?: (...args: unknown[]) => void;
   }
 }

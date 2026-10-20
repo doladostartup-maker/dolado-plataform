@@ -16,89 +16,32 @@ export type EstadoCasoCliente = {
   requerAcao: boolean;
 };
 
-const NADA_A_FAZER = "Não precisa de fazer nada neste momento.";
+// Textos (pt-PT e en-GB): src/i18n/mensagens/*/estadoCaso.ts. O idioma é
+// opcional e, por omissão, português (backoffice, dossiê, testes).
+import type { Idioma } from "../../i18n/config.ts";
+import { tEstadoCaso } from "../../i18n/mensagens/estadoCaso.ts";
 
-const POR_STATUS: Record<string, EstadoCasoCliente> = {
-  Novo: {
-    rotulo: "Caso recebido",
-    tom: "curso",
-    explicacao: "Recebemos o seu caso. A DoLado vai analisar a situação e os documentos que enviou.",
-    proximoPasso: "Análise do caso pela DoLado.",
-    requerAcao: false,
-  },
-  "Em investigação": {
-    rotulo: "Em análise",
-    tom: "curso",
-    explicacao: "A DoLado está a analisar o seu caso e a preparar o próximo passo.",
-    proximoPasso: "Preparação do texto da reclamação, que lhe mostramos antes de qualquer envio.",
-    requerAcao: false,
-  },
-  "Aguardando operador": {
-    rotulo: "A aguardar resposta da empresa",
-    tom: "espera",
-    explicacao: "A sua reclamação foi enviada. Estamos a aguardar a resposta da empresa.",
-    proximoPasso: `${NADA_A_FAZER} Quando a empresa responder, analisamos a resposta e damos-lhe notícias.`,
-    requerAcao: false,
-  },
-  "Resposta em análise": {
-    rotulo: "Resposta recebida — em análise pela DoLado",
-    tom: "curso",
-    explicacao:
-      "Recebemos uma comunicação relacionada com a sua reclamação. Estamos a analisá-la e entraremos em contacto consigo caso seja necessária alguma ação.",
-    proximoPasso: NADA_A_FAZER,
-    requerAcao: false,
-  },
-  "Aguardando cliente": {
-    rotulo: "Precisamos de informação sua",
-    tom: "acao",
-    explicacao: "Para continuarmos a tratar o seu caso, precisamos de informação ou documentos seus.",
-    proximoPasso: "Envie-nos a informação pedida. Indicamos abaixo exatamente o que precisamos.",
-    requerAcao: true,
-  },
-  "Aguardando decisão cliente": {
-    rotulo: "A empresa apresentou uma solução",
-    tom: "acao",
-    explicacao: "A empresa apresentou uma solução para o seu caso. Diga-nos se o problema ficou resolvido.",
-    proximoPasso: "A sua confirmação. Só damos o caso por resolvido quando nos confirmar.",
-    requerAcao: true,
-  },
-  Resolvido: {
-    rotulo: "Resolvido",
-    tom: "concluido",
-    explicacao: "O problema ficou resolvido. O caso está concluído.",
-    proximoPasso: null,
-    requerAcao: false,
-  },
-  Bloqueado: {
-    rotulo: "Próximo passo indicado",
-    tom: "neutro",
-    explicacao: "A DoLado indicou-lhe o próximo passo possível para continuar a tratar a situação.",
-    proximoPasso: "Veja abaixo o próximo passo indicado pela DoLado.",
-    requerAcao: false,
-  },
-  "Encerrado sem resolução": {
-    rotulo: "Encerrado",
-    tom: "neutro",
-    explicacao: "O caso foi encerrado sem que a empresa tenha resolvido a situação.",
-    proximoPasso: null,
-    requerAcao: false,
-  },
-  "Encerrado com encaminhamento externo": {
-    rotulo: "Encerrado na DoLado",
-    tom: "neutro",
-    explicacao: "A DoLado terminou o acompanhamento deste caso. Isto não significa necessariamente que o problema esteja resolvido.",
-    proximoPasso: null,
-    requerAcao: false,
-  },
+/** Tom e "requer ação" por estado (regras); os textos vêm do dicionário. */
+const REGRAS_STATUS: Record<string, { tom: TomEstado; requerAcao: boolean }> = {
+  Novo: { tom: "curso", requerAcao: false },
+  "Em investigação": { tom: "curso", requerAcao: false },
+  "Aguardando operador": { tom: "espera", requerAcao: false },
+  "Resposta em análise": { tom: "curso", requerAcao: false },
+  "Aguardando cliente": { tom: "acao", requerAcao: true },
+  "Aguardando decisão cliente": { tom: "acao", requerAcao: true },
+  Resolvido: { tom: "concluido", requerAcao: false },
+  Bloqueado: { tom: "neutro", requerAcao: false },
+  "Encerrado sem resolução": { tom: "neutro", requerAcao: false },
+  "Encerrado com encaminhamento externo": { tom: "neutro", requerAcao: false },
 };
 
-const DESCONHECIDO: EstadoCasoCliente = {
-  rotulo: "Em acompanhamento",
-  tom: "curso",
-  explicacao: "A DoLado está a acompanhar o seu caso.",
-  proximoPasso: null,
-  requerAcao: false,
-};
+function estadoBase(status: string, idioma: Idioma): EstadoCasoCliente {
+  const t = tEstadoCaso[idioma];
+  const regras = REGRAS_STATUS[status];
+  const textos = (t.porStatus as Record<string, { rotulo: string; explicacao: string; proximoPasso: string }>)[status];
+  if (!regras || !textos) return { ...t.desconhecido, tom: "curso", proximoPasso: null, requerAcao: false };
+  return { ...regras, rotulo: textos.rotulo, explicacao: textos.explicacao, proximoPasso: textos.proximoPasso || null };
+}
 
 /** Estados do texto da reclamação que mudam o que o cliente vê. */
 export type EstadoTextoRelevante = "aguardando_aprovacao" | "alteracoes_solicitadas" | "autorizado" | null;
@@ -132,85 +75,48 @@ export function estadoCasoCliente(
   status: string,
   textoEmCurso: EstadoTextoRelevante = null,
   contexto: ContextoEstado = {},
+  idioma: Idioma = "pt-PT",
 ): EstadoCasoCliente {
-  let base = POR_STATUS[status] ?? DESCONHECIDO;
+  const t = tEstadoCaso[idioma];
+  let base = estadoBase(status, idioma);
   if (status === "Em investigação" && contexto.jaEnviado) {
-    base = {
-      ...base,
-      explicacao: "A DoLado está a preparar uma nova comunicação à empresa, com base na resposta recebida.",
-      proximoPasso: "Mostramos-lhe o texto antes de qualquer envio. Nada é enviado sem a sua autorização.",
-    };
+    base = { ...base, ...t.novaComunicacao };
   }
   if (status === "Resposta em análise" && contexto.analiseSemResposta) {
-    base = {
-      ...base,
-      rotulo: "Em análise pela DoLado",
-      explicacao: "Estamos a analisar a situação do seu caso para definir o próximo passo. Entraremos em contacto consigo se for necessária alguma ação.",
-    };
+    base = { ...base, ...t.analiseSemResposta };
   }
   if (SEM_TEXTO_EM_CURSO.includes(status)) return base;
   const nova = contexto.jaEnviado;
   if (textoEmCurso === "aguardando_aprovacao") {
     return {
-      rotulo: "Precisamos da sua autorização",
+      rotulo: t.textoAguarda.rotulo,
       tom: "acao",
-      explicacao: nova
-        ? "Preparámos uma nova comunicação à empresa. Reveja-a e autorize o envio, ou peça alterações."
-        : "Preparámos o texto da reclamação. Reveja-o e autorize o envio, ou peça alterações.",
-      proximoPasso: "A sua autorização do texto. Nada é enviado sem ela.",
+      explicacao: nova ? t.textoAguarda.explicacaoNova : t.textoAguarda.explicacao,
+      proximoPasso: t.textoAguarda.proximoPasso,
       requerAcao: true,
     };
   }
   if (textoEmCurso === "alteracoes_solicitadas") {
-    return {
-      rotulo: "A rever o texto",
-      tom: "curso",
-      explicacao: "Recebemos o seu pedido de alterações. A DoLado está a preparar uma nova versão do texto.",
-      proximoPasso: "Nova versão do texto para a sua revisão.",
-      requerAcao: false,
-    };
+    return { ...t.textoAlteracoes, tom: "curso", requerAcao: false };
   }
   if (textoEmCurso === "autorizado") {
     return {
-      rotulo: "Envio autorizado",
+      rotulo: t.textoAutorizado.rotulo,
       tom: "curso",
-      explicacao: nova
-        ? "Autorizou o envio. A DoLado vai enviar a nova comunicação à empresa em seu nome."
-        : "Autorizou o envio. A DoLado vai apresentar a reclamação em seu nome.",
-      proximoPasso: nova ? "Envio da nova comunicação." : "Envio da reclamação e registo do comprovativo.",
+      explicacao: nova ? t.textoAutorizado.explicacaoNova : t.textoAutorizado.explicacao,
+      proximoPasso: nova ? t.textoAutorizado.proximoPassoNova : t.textoAutorizado.proximoPasso,
       requerAcao: false,
     };
   }
   return base;
 }
 
-/** Acontecimentos do caso, vistos pelo cliente (casos_eventos.tipo; só os visíveis). */
-export const EVENTOS_CASO_CLIENTE: Record<string, string> = {
-  texto_preparado: "Texto da reclamação preparado",
-  nova_versao: "Nova versão do texto preparada",
-  texto_enviado_revisao: "Texto enviado para a sua revisão",
-  links_reemitidos: "Novo link de revisão enviado",
-  alteracoes_pedidas: "Pediu alterações ao texto",
-  texto_autorizado: "Autorizou o envio",
-  comunicacao_enviada: "Reclamação enviada",
-  comprovativo_disponivel: "Comprovativo de submissão disponível",
-  dossie_disponivel: "Dossiê final disponível",
-  aguarda_resposta_empresa: "A aguardar resposta da empresa",
-  comunicacao_recebida: "Comunicação recebida da empresa",
-  em_analise_dolado: "Em análise pela DoLado",
-  analise_concluida: "A DoLado concluiu a análise",
-  solucao_apresentada: "A empresa apresentou uma solução",
-  cliente_confirmou_resolucao: "Confirmou que o problema ficou resolvido",
-  cliente_rejeitou_resolucao: "Indicou que o problema não ficou resolvido",
-  pedido_informacao_cliente: "Pedimos-lhe informação",
-  informacao_cliente_enviada: "Enviou a informação pedida",
-  encaminhamento_registado: "Próximo passo indicado",
-  caso_encerrado: "Caso encerrado",
-  dossie_gerado: "Dossiê do caso preparado",
-};
+/** Acontecimentos do caso, vistos pelo cliente (casos_eventos.tipo; só os visíveis). Português. */
+export const EVENTOS_CASO_CLIENTE: Record<string, string> = tEstadoCaso["pt-PT"].eventos;
 
-export function rotuloEventoCliente(tipo: string): string {
-  return EVENTOS_CASO_CLIENTE[tipo] ?? "Atualização do caso";
+export function rotuloEventoCliente(tipo: string, idioma: Idioma = "pt-PT"): string {
+  const t = tEstadoCaso[idioma];
+  return (t.eventos as Record<string, string>)[tipo] ?? t.eventoDesconhecido;
 }
 
 export type EventoCliente = {
@@ -226,28 +132,34 @@ export type ItemCronologia = { titulo: string; quando: string; detalhe?: string 
  * reclamação e as comunicações seguintes, e a referência de cada envio. Sem
  * dados técnicos (ids, endereços, análise interna).
  */
-export function cronologiaCliente(eventos: EventoCliente[], referencias: Map<string, string | null> = new Map()): ItemCronologia[] {
+export function cronologiaCliente(
+  eventos: EventoCliente[],
+  referencias: Map<string, string | null> = new Map(),
+  idioma: Idioma = "pt-PT",
+): ItemCronologia[] {
+  const c = tEstadoCaso[idioma].cronologia;
   let envios = 0;
   return eventos.map((e) => {
     const depoisDoEnvio = envios > 0;
-    let titulo = rotuloEventoCliente(e.tipo);
+    let titulo = rotuloEventoCliente(e.tipo, idioma);
     let detalhe: string | undefined;
     if (e.tipo === "comunicacao_enviada") {
-      titulo = envios === 0 ? "Reclamação enviada" : "Nova comunicação enviada à empresa";
+      titulo = envios === 0 ? c.reclamacaoEnviada : c.novaEnviada;
       envios += 1;
       const ref = e.texto_id ? referencias.get(e.texto_id) : null;
-      if (ref) detalhe = `Referência: ${ref}`;
+      if (ref) detalhe = c.referencia(ref);
     } else if (depoisDoEnvio && (e.tipo === "texto_preparado" || e.tipo === "nova_versao")) {
-      titulo = "Nova comunicação preparada";
+      titulo = c.novaPreparada;
     } else if (depoisDoEnvio && e.tipo === "texto_enviado_revisao") {
-      titulo = "Nova comunicação enviada para a sua revisão";
+      titulo = c.novaRevisao;
     } else if (e.tipo === "encaminhamento_registado" && e.dados?.rotulo) {
+      // Rótulo do tipo de encaminhamento, escrito pela DoLado (dado gravado, não traduzido).
       detalhe = e.dados.rotulo;
     } else if (e.tipo === "caso_encerrado" && e.dados?.modo === "encaminhamento_externo") {
-      titulo = "Encerrado na DoLado";
-      detalhe = "O acompanhamento terminou; existem opções externas para continuar";
+      titulo = c.encerradoDolado;
+      detalhe = c.encerradoDetalhe;
     } else if (e.tipo === "dossie_gerado" && (e.dados?.versao ?? 1) > 1) {
-      titulo = "Nova versão do dossiê do caso preparada";
+      titulo = c.novoDossie;
     }
     return { titulo, quando: e.created_at, detalhe };
   });

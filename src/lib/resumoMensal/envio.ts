@@ -18,6 +18,7 @@
 import { assuntoResumoMensal, montarHtmlResumoMensal, montarTextoResumoMensal } from "../email/resumoMensal.ts";
 import type { EntradaServico } from "../monitor/resultadoProtecao.ts";
 import { RESUMO_MODELO_VERSAO, mesReferencia, montarResumoMensal, type ResumoMensal } from "./resumo.ts";
+import { IDIOMA_PADRAO, type Idioma } from "../../i18n/config.ts";
 
 export type DestinatarioResumo = { utilizador_id: string; email: string };
 
@@ -32,6 +33,8 @@ export interface DependenciasResumoMensal {
   reservar(utilizadorId: string, mesData: string): Promise<string | null>;
   /** Serviços da conta, como o cliente os vê no portal. */
   carregarServicos(utilizadorId: string): Promise<EntradaServico[]>;
+  /** Idioma da conta (só apresentação; sem idioma → português). Opcional (testes antigos). */
+  idiomaDaConta?(utilizadorId: string): Promise<Idioma>;
   enviarEmail(destinatario: string, assunto: string, html: string, texto: string): Promise<void>;
   concluir(reservaId: string, conclusao: Conclusao): Promise<void>;
 }
@@ -71,7 +74,8 @@ export async function enviarResumosMensais(
       let html: string;
       let texto: string;
       try {
-        resumo = montarResumoMensal(await deps.carregarServicos(d.utilizador_id), ref.mes, ref.hoje);
+        const idioma = deps.idiomaDaConta ? await deps.idiomaDaConta(d.utilizador_id).catch(() => IDIOMA_PADRAO) : IDIOMA_PADRAO;
+        resumo = montarResumoMensal(await deps.carregarServicos(d.utilizador_id), ref.mes, ref.hoje, idioma);
         html = montarHtmlResumoMensal(resumo, urlPortal);
         texto = montarTextoResumoMensal(resumo, urlPortal);
       } catch (erro) {

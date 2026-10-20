@@ -8,6 +8,8 @@
 import { cache } from "react";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ESTADOS_ACHADO_POR_DECIDIR } from "@/lib/monitor/achados";
+import { documentoPorTratar } from "@/lib/monitor/processamento";
 import { FILTRO_FINAIS, type CasoTriagem, type TextoResumo } from "./triagem";
 
 export type CasoLista = CasoTriagem & {
@@ -84,10 +86,10 @@ export const contagensFilas = cache(async (): Promise<ContagensFilas> => {
   const [documentos, achados, duplicadas, semConta, conversoes, naoAssociadas] = await Promise.all([
     admin
       .from("documentos_monitor")
-      .select("id", { count: "exact", head: true })
+      .select("estado, etapa, etapa_atualizada_em")
       .in("estado", ["pendente", "a_rever"])
       .is("desativado_em", null),
-    admin.from("achados_monitor").select("id", { count: "exact", head: true }).in("estado", ["detetado", "em_revisao", "confirmado"]),
+    admin.from("achados_monitor").select("id", { count: "exact", head: true }).in("estado", ESTADOS_ACHADO_POR_DECIDIR),
     supabase.from("subscricoes_duplicadas").select("nova_subscription_id", { count: "exact", head: true }).eq("estado", "por_rever"),
     supabase.from("compras_sem_conta").select("stripe_session_id", { count: "exact", head: true }).is("resolvido_em", null),
     supabase.from("conversoes_avulso").select("id", { count: "exact", head: true }).eq("requer_intervencao", true),
@@ -97,7 +99,9 @@ export const contagensFilas = cache(async (): Promise<ContagensFilas> => {
   const d = n(duplicadas);
   const s = n(semConta);
   return {
-    documentosMonitor: n(documentos),
+    // Pela situação (estado + etapa), como em /backoffice/monitor: leituras a
+    // decorrer e documentos repetidos não contam.
+    documentosMonitor: documentos.error ? null : (documentos.data ?? []).filter((d) => documentoPorTratar(d, Date.now())).length,
     achados: n(achados),
     compras: d === null || s === null ? null : d + s,
     conversoes: n(conversoes),

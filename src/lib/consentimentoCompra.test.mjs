@@ -170,7 +170,7 @@ describe("ordem: registo antes do Checkout, id na metadata", () => {
   });
 });
 
-describe("nenhum fluxo abre o Checkout sem consentimento (código das ações)", () => {
+describe("nenhum fluxo abre o Checkout sem consentimento (código das acções)", () => {
   const acoes = readFileSync(new URL("../app/actions/stripe.ts", import.meta.url), "utf8");
 
   test("a única Server Action exportada é confirmarCompra", () => {
@@ -211,18 +211,18 @@ describe("pontos de entrada usam a confirmação", () => {
   const fonte = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
   const pontos = {
     "5. landing (preçário → portal /comprar)": [
-      "../app/comprar/page.tsx",
+      "../app/[idioma]/comprar/page.tsx",
       /<BotaoComprar[\s\S]*fluxo="publico"[\s\S]*origem="landing"[\s\S]*<CompraConfirmacao[\s\S]*fluxo="adesao"/,
     ],
-    "6. portal (painel)": ["../app/portal/_components/PortalDashboard.tsx", /<ConfirmarCompra[\s\S]*fluxo="adesao"[\s\S]*origem="portal"/],
+    "6. portal (painel)": ["../app/[idioma]/portal/_components/PortalDashboard.tsx", /<ConfirmarCompra[\s\S]*fluxo="adesao"[\s\S]*origem="portal"/],
     "7. pedido de caso (modalidade)": [
-      "../app/tratar-caso/modalidade/page.tsx",
+      "../app/[idioma]/tratar-caso/modalidade/page.tsx",
       /<BotaoComprar[\s\S]*fluxo="pedido_caso"[\s\S]*origem="tratar_caso"[\s\S]*pedidoId=\{pedido\.id\}/,
     ],
-    "tentar pagar novamente": ["../app/portal/page.tsx", /origem="repetir_pagamento"/],
+    "tentar pagar novamente": ["../app/[idioma]/portal/page.tsx", /origem="repetir_pagamento"/],
   };
   for (const [nome, [ficheiro, padrao]] of Object.entries(pontos)) {
-    test(`${nome}: abre a confirmação e não chama ações de Checkout antigas`, () => {
+    test(`${nome}: abre a confirmação e não chama acções de Checkout antigas`, () => {
       const f = fonte(ficheiro);
       assert.match(f, padrao);
       assert.equal(/iniciarCheckout|iniciarCompraAvulsoComConta|iniciarUpgradePara/.test(f), false);
@@ -237,7 +237,7 @@ describe("pontos de entrada usam a confirmação", () => {
       assert.equal(/ConfirmarCompra|confirmarCompra|BotaoComprar|stripe/i.test(f), false);
     }
     assert.match(precarioV2, /destinoPlano\(plano, "\/precario"\)/);
-    const confirmacao = fonte("../app/comprar/CompraConfirmacao.tsx");
+    const confirmacao = fonte("../app/[idioma]/comprar/CompraConfirmacao.tsx");
     assert.match(confirmacao, /<ConfirmarCompra[\s\S]*origem="landing"/);
   });
 
@@ -247,7 +247,7 @@ describe("pontos de entrada usam a confirmação", () => {
     assert.match(acoes, /pedido\.fluxo === "publico" && !comSessao\s*\?\s*await checkoutPublico\(pedido\)/);
   });
 
-  test("modal: checkboxes não pré-selecionadas, sem checkbox de Política de Privacidade", () => {
+  test("modal: checkboxes não pré-seleccionadas, sem checkbox de Política de Privacidade", () => {
     const modal = fonte("../components/compra/ConfirmarCompra.tsx");
     assert.match(modal, /useState\(false\)[\s\S]*useState\(false\)/);
     assert.equal(/defaultChecked/.test(modal), false);
@@ -264,7 +264,7 @@ describe("checkout de um pedido de caso (fluxo pedido_caso)", () => {
   const pedido = (extra = {}) =>
     formulario({ plano: "avulso", fluxo: "pedido_caso", origem: "tratar_caso", pedido_id: PEDIDO, ...extra });
 
-  test("Avulso e Caso + Proteção com o pedido → válido, com o id do pedido", () => {
+  test("Avulso e Caso + Protecção com o pedido → válido, com o id do pedido", () => {
     assert.deepEqual(lerPedidoCompra(pedido()), {
       ok: true,
       pedido: { plano: "avulso", fluxo: "pedido_caso", origem: "tratar_caso", pedidoId: PEDIDO },
@@ -272,7 +272,7 @@ describe("checkout de um pedido de caso (fluxo pedido_caso)", () => {
     assert.equal(lerPedidoCompra(pedido({ plano: "caso_protecao" })).ok, true);
   });
 
-  test("Proteção sozinha não trata casos → recusado", () => {
+  test("Protecção sozinha não trata casos → recusado", () => {
     assert.deepEqual(lerPedidoCompra(pedido({ plano: "protecao" })), { ok: false, erro: "dados_invalidos" });
   });
 

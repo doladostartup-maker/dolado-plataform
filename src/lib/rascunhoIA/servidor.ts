@@ -55,7 +55,7 @@ export function criarDependenciasRascunho(): DepsRascunho {
     async carregarCaso(casoId) {
       const { data, error } = await admin
         .from("casos")
-        .select("id, utilizador_id, nome, sector, empresa, problema_tipo, tipo_problema, descricao, momento_cliente, data_fim_fidelidade, created_at")
+        .select("id, utilizador_id, nome, sector, empresa, problema_tipo, tipo_problema, descricao, momento_cliente, data_fim_fidelidade, created_at, detalhes_caso")
         .eq("id", casoId)
         .maybeSingle<CasoParaRascunho>();
       falhou("casos", error);
@@ -123,7 +123,7 @@ export function criarDependenciasRascunho(): DepsRascunho {
     async orcamentoBloqueado() {
       gastoAntes = await gastoApiUsd(admin);
       const bloqueado = estadoOrcamento(gastoAntes, teto).bloqueado;
-      if (bloqueado) await avisarAdmin("Orçamento da Claude API atingido", `A sugestão do texto não foi gerada: o gasto (${gastoAntes.toFixed(2)} USD) atingiu o teto de ${teto} USD.`);
+      if (bloqueado) await avisarAdmin("Orçamento da Claude API atingido", `A sugestão do texto não foi gerada: o gasto (${gastoAntes.toFixed(2)} USD) atingiu o tecto de ${teto} USD.`);
       return bloqueado;
     },
 

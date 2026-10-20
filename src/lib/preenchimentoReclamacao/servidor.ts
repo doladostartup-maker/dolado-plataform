@@ -81,7 +81,7 @@ export async function documentosParaPreenchimento(casoId: string): Promise<Docum
   const monitor: DocumentoCandidato[] = (docs ?? []).map((d) => ({
     fonte: "monitor",
     id: d.id as string,
-    nome: (d.nome_ficheiro as string | null) ?? (d.tipo === "contrato" ? "Contrato" : "Fatura"),
+    nome: (d.nome_ficheiro as string | null) ?? (d.tipo === "contrato" ? "Contrato" : "Factura"),
     tipo: d.tipo === "contrato" ? "contrato" : "fatura",
     data: d.created_at as string,
     legivel: !!tipoLegivel(d.mime_type as string | null, d.nome_ficheiro as string | null),
@@ -120,7 +120,7 @@ async function lerFicheiro(caso: CasoBase, fonte: FonteDocumento, id: string) {
     ? {
         bytes: new Uint8Array(await blob.arrayBuffer()),
         mime: tipoLegivel(data.mime_type as string | null, data.nome_ficheiro as string | null),
-        nome: (data.nome_ficheiro as string | null) ?? (data.tipo === "contrato" ? "Contrato" : "Fatura"),
+        nome: (data.nome_ficheiro as string | null) ?? (data.tipo === "contrato" ? "Contrato" : "Factura"),
         servicos: [data.contrato_id as string],
       }
     : null;

@@ -1,4 +1,8 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useTextos } from "@/i18n/cliente";
+import { tMarketing } from "@/i18n/mensagens/marketing";
 import {
   IconeAntena,
   IconeCalendario,
@@ -15,9 +19,10 @@ import { CARTAO } from "./estilos";
 // fictícios (sem empresas reais nem logótipos) e cada painel diz "Exemplo".
 
 function Exemplo() {
+  const t = useTextos(tMarketing).mockups;
   return (
     <span className="rounded-full bg-[var(--v2-blue-soft)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--v2-muted)]">
-      Exemplo
+      {t.exemplo}
     </span>
   );
 }
@@ -34,34 +39,35 @@ function Linhas({ larguras }: { larguras: string[] }) {
 
 /** Hero: o caso no portal, com o texto à espera da aprovação do cliente. */
 export function VisualHero() {
+  const t = useTextos(tMarketing).mockups.hero;
   return (
     <div
       role="img"
-      aria-label="Exemplo ilustrativo: um caso no portal da DoLado, com o texto da reclamação à espera da aprovação do cliente"
+      aria-label={t.rotulo}
       className="relative mx-auto w-full max-w-[560px] pb-10 pt-6 lg:max-w-none"
     >
       <div className="absolute inset-0 rounded-[32px] bg-[linear-gradient(140deg,var(--v2-mint)_0%,var(--v2-blue-soft)_70%)]" />
       <div aria-hidden="true" className="relative px-5 pt-5 sm:px-10 sm:pt-10">
         <div className={`${CARTAO} p-5 sm:p-6`}>
           <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-[13px] font-semibold text-[var(--v2-muted)]">O seu caso</p>
+            <p className="text-[13px] font-semibold text-[var(--v2-muted)]">{t.oSeuCaso}</p>
             <Exemplo />
           </div>
-          <p className="mb-1 text-[17px] font-bold text-[var(--v2-navy)]">Cobrança depois do cancelamento</p>
-          <p className="mb-5 text-[13px] text-[var(--v2-muted)]">Operadora · Telecomunicações</p>
+          <p className="mb-1 text-[17px] font-bold text-[var(--v2-navy)]">{t.titulo}</p>
+          <p className="mb-5 text-[13px] text-[var(--v2-muted)]">{t.subtitulo}</p>
           <div className="mb-5 rounded-[12px] border border-[var(--v2-line)] bg-[var(--v2-surface)] p-4">
             <div className="mb-3 flex items-center gap-2 text-[12.5px] font-semibold text-[var(--v2-navy)]">
               <IconeDocumentoVisto tamanho={16} className="text-[var(--v2-green)]" />
-              Texto da reclamação
+              {t.textoReclamacao}
             </div>
             <Linhas larguras={["100%", "94%", "97%", "62%"]} />
           </div>
           <div className="flex flex-wrap gap-2">
             <span className="inline-flex h-9 items-center rounded-[9px] bg-[var(--v2-green)] px-4 text-[13px] font-semibold text-white">
-              Autorizar o envio
+              {t.autorizar}
             </span>
             <span className="inline-flex h-9 items-center rounded-[9px] border border-[var(--v2-line-strong)] bg-white px-4 text-[13px] font-semibold text-[var(--v2-navy)]">
-              Pedir alterações
+              {t.pedirAlteracoes}
             </span>
           </div>
         </div>
@@ -71,8 +77,8 @@ export function VisualHero() {
             <IconeVisto tamanho={18} />
           </span>
           <div>
-            <p className="text-[13.5px] font-bold text-[var(--v2-navy)]">Reclamação enviada</p>
-            <p className="text-[12.5px] text-[var(--v2-muted)]">Comprovativo disponível no portal</p>
+            <p className="text-[13.5px] font-bold text-[var(--v2-navy)]">{t.enviada}</p>
+            <p className="text-[12.5px] text-[var(--v2-muted)]">{t.comprovativo}</p>
           </div>
         </div>
       </div>
@@ -81,9 +87,9 @@ export function VisualHero() {
         aria-hidden="true"
         className="absolute right-4 top-[-6px] rotate-[-6deg] font-[family-name:var(--font-source-serif)] text-[17px] italic leading-tight text-[var(--v2-navy)] sm:right-8"
       >
-        Menos burocracia.
+        {t.lema1}
         <br />
-        Mais tempo para si.
+        {t.lema2}
       </p>
     </div>
   );
@@ -91,6 +97,7 @@ export function VisualHero() {
 
 /** Ferramenta 1: Calculadora de Cancelamento (estimativa do encargo máximo). */
 export function VisualFidelizacao() {
+  const t = useTextos(tMarketing).mockups.fidelizacao;
   return (
     <div aria-hidden="true" className="relative h-[170px]">
       <div className="absolute left-2 top-4 h-[140px] w-[150px] rotate-[-5deg] rounded-[8px] border border-[var(--v2-line)] bg-white p-3 shadow-[0_6px_16px_-10px_rgba(11,37,69,0.25)]">
@@ -106,8 +113,8 @@ export function VisualFidelizacao() {
           <IconeCalendario tamanho={22} />
         </span>
         <div>
-          <p className="text-[12px] text-[var(--v2-muted)]">Calculada com os dados do contrato</p>
-          <p className="text-[15px] font-bold text-[var(--v2-navy)]">Encargo máximo estimado</p>
+          <p className="text-[12px] text-[var(--v2-muted)]">{t.calculada}</p>
+          <p className="text-[15px] font-bold text-[var(--v2-navy)]">{t.encargo}</p>
         </div>
       </div>
     </div>
@@ -116,11 +123,8 @@ export function VisualFidelizacao() {
 
 /** Ferramenta 2: os três resultados possíveis do simulador. */
 export function VisualSimulador() {
-  const resultados: { texto: string; ativo: boolean }[] = [
-    { texto: "Parece enquadrar-se no serviço", ativo: true },
-    { texto: "Por confirmar", ativo: false },
-    { texto: "Pode não se enquadrar", ativo: false },
-  ];
+  const t = useTextos(tMarketing).mockups.simulador;
+  const resultados: { texto: string; ativo: boolean }[] = t.map((texto, i) => ({ texto, ativo: i === 0 }));
   return (
     <div aria-hidden="true" className="mx-auto flex h-[170px] max-w-[320px] flex-col justify-center gap-2.5">
       {resultados.map((r) => (
@@ -148,7 +152,7 @@ export function VisualSimulador() {
 
 /** Ferramenta 3: os quatro momentos do Guia de Mudança de Casa. */
 export function VisualMudanca() {
-  const momentos = ["Antes da mudança", "No dia da saída", "Na casa nova", "Depois da mudança"];
+  const momentos = useTextos(tMarketing).mockups.mudanca;
   return (
     <div aria-hidden="true" className="mx-auto flex h-[170px] max-w-[320px] flex-col justify-center gap-2">
       {momentos.map((m, i) => (
@@ -166,21 +170,16 @@ export function VisualMudanca() {
   );
 }
 
-const ETAPAS_CASO: { titulo: string; texto: string; estado: "feito" | "atual" | "seguinte" }[] = [
-  { titulo: "Caso recebido", texto: "Recebemos a sua descrição e os documentos.", estado: "feito" },
-  { titulo: "Análise", texto: "Analisamos a sua situação.", estado: "feito" },
-  { titulo: "Texto preparado", texto: "Mostramos-lhe o texto para aprovação.", estado: "feito" },
-  { titulo: "Aprovação", texto: "Só enviamos com a sua autorização.", estado: "feito" },
-  { titulo: "Reclamação enviada", texto: "O comprovativo fica no seu caso.", estado: "atual" },
-  { titulo: "Acompanhamento", texto: "Acompanhamos o processo consigo.", estado: "seguinte" },
-];
+const ESTADOS_CASO: ("feito" | "atual" | "seguinte")[] = ["feito", "feito", "feito", "feito", "atual", "seguinte"];
 
 /** Tratamento do caso: linha temporal de um caso no portal. */
 export function PainelCaso() {
+  const t = useTextos(tMarketing).mockups.caso;
+  const ETAPAS_CASO = t.etapas.map((e, i) => ({ ...e, estado: ESTADOS_CASO[i] }));
   return (
-    <figure className={`${CARTAO} p-6 sm:p-7`} aria-label="Exemplo ilustrativo das etapas de um caso tratado pela DoLado">
+    <figure className={`${CARTAO} p-6 sm:p-7`} aria-label={t.rotulo}>
       <div className="mb-6 flex items-center justify-between gap-3">
-        <figcaption className="text-[15px] font-bold text-[var(--v2-navy)]">Um caso tratado pela DoLado</figcaption>
+        <figcaption className="text-[15px] font-bold text-[var(--v2-navy)]">{t.titulo}</figcaption>
         <Exemplo />
       </div>
       <ol>
@@ -238,28 +237,29 @@ function LinhaProtecao({ icone, titulo, valor }: { icone: ReactNode; titulo: str
 
 /** Proteção: estado do acompanhamento de um serviço. */
 export function PainelProtecao() {
+  const t = useTextos(tMarketing).mockups.protecao;
   return (
-    <figure className={`${CARTAO} p-6 sm:p-7`} aria-label="Exemplo ilustrativo do estado de proteção, com dados fictícios">
+    <figure className={`${CARTAO} p-6 sm:p-7`} aria-label={t.rotulo}>
       <div className="mb-4 flex items-center justify-between gap-3">
-        <figcaption className="text-[15px] font-bold text-[var(--v2-navy)]">O seu estado de proteção</figcaption>
+        <figcaption className="text-[15px] font-bold text-[var(--v2-navy)]">{t.titulo}</figcaption>
         <Exemplo />
       </div>
       <div className="mb-1 flex items-center gap-3 rounded-[12px] bg-[var(--v2-surface)] px-3 py-2.5">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[var(--v2-navy)] shadow-[0_1px_2px_rgba(11,37,69,0.1)]">
           <IconeAntena tamanho={17} />
         </span>
-        <p className="text-[14px] font-bold text-[var(--v2-navy)]">Operadora</p>
+        <p className="text-[14px] font-bold text-[var(--v2-navy)]">{t.operadora}</p>
       </div>
       <div className="divide-y divide-[var(--v2-line)]">
-        <LinhaProtecao icone={<IconeCalendario tamanho={17} />} titulo="Fidelização termina em 14/03/2027" />
-        <LinhaProtecao icone={<IconeFatura tamanho={17} />} titulo="Fatura atual" valor="54,90 €" />
-        <LinhaProtecao icone={<IconeEtiqueta tamanho={17} />} titulo="Promoção identificada" />
-        <LinhaProtecao icone={<IconeLista tamanho={17} />} titulo="Condições importantes identificadas" />
+        <LinhaProtecao icone={<IconeCalendario tamanho={17} />} titulo={t.fidelizacao} />
+        <LinhaProtecao icone={<IconeFatura tamanho={17} />} titulo={t.faturaAtual} valor={t.valorFatura} />
+        <LinhaProtecao icone={<IconeEtiqueta tamanho={17} />} titulo={t.promocao} />
+        <LinhaProtecao icone={<IconeLista tamanho={17} />} titulo={t.condicoes} />
       </div>
       <div className="mt-3 flex items-start gap-3 rounded-[12px] bg-[var(--v2-mint)] px-4 py-3.5">
         <IconeCirculoVisto tamanho={22} className="flex-none text-[var(--v2-green)]" />
         <p className="text-[13.5px] leading-relaxed text-[var(--v2-navy)]">
-          Neste momento não detetámos nenhuma situação que exija intervenção.
+          {t.semSituacoes}
         </p>
       </div>
     </figure>

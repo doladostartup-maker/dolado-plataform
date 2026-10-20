@@ -123,7 +123,7 @@ export function NavegacaoBackoffice({ contagens, email }: { contagens: Contagens
           ]}
         />
         <Grupo
-          titulo="Proteção"
+          titulo="Protecção"
           pathname={pathname}
           itens={[
             {
@@ -133,7 +133,7 @@ export function NavegacaoBackoffice({ contagens, email }: { contagens: Contagens
               contagem: contagens.documentos,
               exceto: ["/backoffice/monitor/achados"],
             },
-            { href: "/backoffice/monitor/achados", texto: "Situações detetadas", icone: <IconeLupaDocumento tamanho={t} />, contagem: contagens.achados },
+            { href: "/backoffice/monitor/achados", texto: "Situações detectadas", icone: <IconeLupaDocumento tamanho={t} />, contagem: contagens.achados },
           ]}
         />
         <Grupo
@@ -143,13 +143,14 @@ export function NavegacaoBackoffice({ contagens, email }: { contagens: Contagens
             { href: "/backoffice/compras", texto: "Compras por rever", icone: <IconeCartao tamanho={t} />, contagem: contagens.compras },
             { href: "/backoffice/conversoes", texto: "Conversões", icone: <IconeTrocar tamanho={t} />, contagem: contagens.conversoes, critico: true },
             { href: "/backoffice/indicacoes", texto: "Indicações", icone: <IconeMegafone tamanho={t} /> },
+            { href: "/backoffice/protecao-gratuita", texto: "Protecção gratuita", icone: <IconeEscudo tamanho={t} /> },
           ]}
         />
         <Grupo
           titulo="Conteúdos"
           pathname={pathname}
           itens={[
-            { href: "/backoffice/avisos", texto: "Avisos setoriais", icone: <IconeMegafone tamanho={t} /> },
+            { href: "/backoffice/avisos", texto: "Avisos sectoriais", icone: <IconeMegafone tamanho={t} /> },
             { href: "/backoffice/regras-juridicas", texto: "Base jurídica", icone: <IconeBalanca tamanho={t} /> },
           ]}
         />
