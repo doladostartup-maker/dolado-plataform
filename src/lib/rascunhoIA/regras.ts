@@ -10,8 +10,18 @@
 // (ex.: subcategorias, palavras-chave, datas dos factos), basta outra função
 // com a mesma assinatura (SeletorRegras) — o resto do fluxo não muda.
 
-import { ehCasoAutoconsumo, isServicoPublicoEssencial, PROBLEMAS_AUTOCONSUMO, SETORES, type DetalhesCaso } from "../pedidoCaso.ts";
+import {
+  ehCasoAutoconsumo,
+  isServicoPublicoEssencial,
+  lerDetalhesCaso,
+  PROBLEMA_CONTRATO_NAO_ACEITE,
+  PROBLEMA_FACTURA_ACERTO,
+  PROBLEMAS_AUTOCONSUMO,
+  SETORES,
+  type DetalhesCaso,
+} from "../pedidoCaso.ts";
 import { categoriasAutoconsumo, CATEGORIAS_SO_AUTOCONSUMO, CATEGORIA_DANOS, selecionarRegrasAutoconsumo } from "./perfilAutoconsumo.ts";
+import { categoriasEnergia, selecionarRegrasEnergia, usaPerfilEnergia } from "./perfilEnergia.ts";
 
 export type RegraJuridica = {
   id: string;
@@ -47,8 +57,11 @@ export type CasoParaSelecao = {
   setor: string | null;
   /** Tipo de problema do caso (casos.problema_tipo). */
   categoria: string | null;
-  /** Respostas adicionais (casos de painéis solares); sem elas, "não sei". */
-  detalhes?: DetalhesCaso | null;
+  /**
+   * Respostas adicionais (painéis solares; forma de contratação na
+   * contratação de Energia/Gás); sem elas, "não sei".
+   */
+  detalhes?: Partial<DetalhesCaso> | null;
 };
 
 export type SeletorRegras = (caso: CasoParaSelecao, regras: RegraJuridica[], dataReferencia: string) => RegraJuridica[];
@@ -111,6 +124,11 @@ export const CATEGORIAS_POR_PROBLEMA: Record<string, string[]> = {
   "Garantia recusada": ["Garantia", "Conformidade"],
   "Cobrança após cancelamento": ["Cancelamento", "Cobrança", "Pagamento"],
   "Serviço diferente do contratado": ["Contrato", "Alteração contratual", "Qualidade do serviço"],
+  // Energia e Gás (20/10/2026): estes dois tipos só existem nesses setores e
+  // usam o perfil próprio (perfilEnergia.ts, com prioridades) — aqui só as
+  // categorias, para o formulário do backoffice.
+  [PROBLEMA_FACTURA_ACERTO]: categoriasEnergia(PROBLEMA_FACTURA_ACERTO),
+  [PROBLEMA_CONTRATO_NAO_ACEITE]: categoriasEnergia(PROBLEMA_CONTRATO_NAO_ACEITE),
   // Energia → Autoconsumo (13/10/2026): só informativo — estes tipos usam o
   // perfil próprio (perfilAutoconsumo.ts), com prioridades e condições.
   ...Object.fromEntries(PROBLEMAS_AUTOCONSUMO.map((p) => [p, categoriasAutoconsumo(p)])),
@@ -155,7 +173,16 @@ const SO_PERFIL = new Set(CATEGORIAS_SO_AUTOCONSUMO.map(normalizar));
 export const selecionarRegras: SeletorRegras = (caso, regras, dataReferencia) => {
   const problema = (caso.categoria ?? "").trim();
   if (ehCasoAutoconsumo(caso.setor, problema)) {
-    return selecionarRegrasAutoconsumo(problema, caso.detalhes ?? null, regras.filter((r) => regraEmVigor(r, dataReferencia)));
+    return selecionarRegrasAutoconsumo(problema, lerDetalhesCaso(caso.detalhes), regras.filter((r) => regraEmVigor(r, dataReferencia)));
+  }
+  // Energia e Gás (fornecimento): prioridades por tipo de problema antes do
+  // limite (perfilEnergia.ts), com a mesma filtragem do critério geral.
+  if (usaPerfilEnergia(caso.setor, problema)) {
+    const candidatas = regras
+      .filter((r) => regraEmVigor(r, dataReferencia))
+      .filter((r) => regraAplicavelAoSetor(r, caso.setor))
+      .filter((r) => !SO_PERFIL.has(normalizar(r.categoria)));
+    return selecionarRegrasEnergia(problema, caso.detalhes ?? null, candidatas, CATEGORIAS_SEMPRE);
   }
   const doProblema = CATEGORIAS_POR_PROBLEMA[problema];
   // Uma regra com a categoria igual ao próprio tipo de problema também conta.

@@ -42,10 +42,26 @@ const PROBLEMAS_SERVICOS = [
   "Outro",
 ];
 
-// Energia e Gás têm ainda a mudança de comercializador e a tarifa social
-// (06/10/2026) — só nestes dois setores.
+// Energia e Gás (20/10/2026 — auditoria em
+// docs/legal/auditoria-energia-facturacao-contratacao-2026-10-20.md): além dos
+// tipos comuns, os dois grandes temas das reclamações aos comercializadores
+// (ERSE, 2025: facturação e cobrança 49,6%, contratação 35,1%) têm tipo
+// próprio — factura alta/estimativa/acerto, cobrança depois de sair e
+// contrato ou condições não aceites —, a mudança de comercializador e a
+// tarifa social (06/10/2026). "Cobrança após cancelamento" é o mesmo valor
+// dos Ginásios. Os valores gravados nunca mudam; a ordem é só a do ecrã.
+export const PROBLEMA_FACTURA_ACERTO = "Factura alta, estimativa ou acerto";
+export const PROBLEMA_COBRANCA_APOS_CANCELAMENTO = "Cobrança após cancelamento";
+export const PROBLEMA_CONTRATO_NAO_ACEITE = "Contrato ou condições que não aceitei";
 const PROBLEMAS_ENERGIA_GAS = [
-  ...PROBLEMAS_SERVICOS.filter((p) => p !== "Outro"),
+  "Aumento de mensalidade",
+  PROBLEMA_FACTURA_ACERTO,
+  "Cobrança indevida",
+  PROBLEMA_COBRANCA_APOS_CANCELAMENTO,
+  PROBLEMA_CONTRATO_NAO_ACEITE,
+  "Fidelização ou penalização",
+  "Corte ou falha de serviço",
+  "Cancelamento recusado",
   "Mudança de comercializador",
   "Tarifa social",
   "Outro",
@@ -82,7 +98,7 @@ export const PROBLEMAS_POR_SETOR: Record<string, string[]> = {
   "Ginásios": [
     "Cancelamento recusado",
     "Fidelização ou penalização",
-    "Cobrança após cancelamento",
+    PROBLEMA_COBRANCA_APOS_CANCELAMENTO,
     "Aumento de mensalidade",
     "Cobrança indevida",
     "Serviço diferente do contratado",
@@ -142,6 +158,33 @@ const OPCOES_DETALHES: { [K in keyof DetalhesCaso]: readonly string[] } = {
   tipo_contrato_solar: TIPOS_CONTRATO_SOLAR,
 };
 export const CAMPOS_DETALHES = Object.keys(OPCOES_DETALHES) as (keyof DetalhesCaso)[];
+
+// Energia e Gás — tipos de problema de contratação (20/10/2026): o canal de
+// contratação decide se as regras do DL 24/2014 (à distância, por telefone,
+// fora do estabelecimento) podem ser consideradas. Só a forma de contratação
+// é perguntada; as outras respostas são só dos painéis solares.
+export const PROBLEMAS_CONTRATACAO_ENERGIA: readonly string[] = [
+  PROBLEMA_CONTRATO_NAO_ACEITE,
+  "Mudança de comercializador",
+  "Cancelamento recusado",
+];
+
+/** Caso de contratação de Energia ou Gás (pergunta a forma de contratação)? */
+export function ehContratacaoEnergia(setor: string | null | undefined, problema: string | null | undefined): boolean {
+  return (setor === "Energia" || setor === "Gás") && !!problema && PROBLEMAS_CONTRATACAO_ENERGIA.includes(problema);
+}
+
+/** Respostas adicionais pedidas para este caso (vazio = nenhuma). */
+export function camposDetalhes(setor: string | null | undefined, problema: string | null | undefined): (keyof DetalhesCaso)[] {
+  if (ehCasoAutoconsumo(setor, problema)) return [...CAMPOS_DETALHES];
+  if (ehContratacaoEnergia(setor, problema)) return ["forma_contratacao"];
+  return [];
+}
+
+/** Valor válido de uma resposta adicional? */
+export function respostaDetalheValida(campo: keyof DetalhesCaso, valor: unknown): boolean {
+  return typeof valor === "string" && OPCOES_DETALHES[campo].includes(valor);
+}
 
 /**
  * Lê as respostas adicionais de um valor desconhecido (base de dados ou
@@ -236,8 +279,12 @@ export type DadosPedido = {
   origem: string;
   consentimento_alertas: boolean;
   anexo: { caminho: string; nome: string; tipo: string | null; tamanho: number | null } | null;
-  /** Só nos casos de painéis solares (ehCasoAutoconsumo); nos outros, null. */
-  detalhes_caso: DetalhesCaso | null;
+  /**
+   * Só as respostas pedidas para o caso (camposDetalhes): as três nos painéis
+   * solares, só a forma de contratação na contratação de Energia/Gás; nos
+   * outros casos, null.
+   */
+  detalhes_caso: Partial<DetalhesCaso> | null;
 };
 
 /**
@@ -263,14 +310,21 @@ export function lerDadosPedido(ler: (campo: string) => unknown): { ok: true; dad
   if (!validTelemovel(telefone)) return { ok: false, erro: "Telemóvel inválido." };
   if (ler("autorizacao") !== "on") return { ok: false, erro: "Confirme o pedido para avançar." };
 
-  // Painéis solares: as três respostas são obrigatórias (todas têm "Não sei").
-  let detalhes: DetalhesCaso | null = null;
-  if (ehCasoAutoconsumo(sector, problemaTipo)) {
-    const respostas = Object.fromEntries(CAMPOS_DETALHES.map((c) => [c, texto(c, 40)]));
-    if (CAMPOS_DETALHES.some((c) => !OPCOES_DETALHES[c].includes(respostas[c]))) {
-      return { ok: false, erro: "Responda às perguntas sobre o contrato dos painéis solares." };
+  // Respostas adicionais (painéis solares; contratação de Energia/Gás): as
+  // pedidas são obrigatórias (todas têm "Não sei"); nunca se guardam outras.
+  let detalhes: Partial<DetalhesCaso> | null = null;
+  const campos = camposDetalhes(sector, problemaTipo);
+  if (campos.length) {
+    const respostas = Object.fromEntries(campos.map((c) => [c, texto(c, 40)]));
+    if (campos.some((c) => !respostaDetalheValida(c, respostas[c]))) {
+      return {
+        ok: false,
+        erro: ehCasoAutoconsumo(sector, problemaTipo)
+          ? "Responda às perguntas sobre o contrato dos painéis solares."
+          : "Indique como foi feito o contrato.",
+      };
     }
-    detalhes = lerDetalhesCaso(respostas);
+    detalhes = respostas as Partial<DetalhesCaso>;
   }
 
   const caminho = texto("anexo_caminho", 400);

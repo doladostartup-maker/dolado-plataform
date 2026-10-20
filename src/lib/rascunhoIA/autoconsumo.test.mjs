@@ -9,6 +9,7 @@ import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
 import { PROBLEMA_SOLAR_CONTRATO, PROBLEMA_SOLAR_INSTALACAO, PROBLEMA_SOLAR_REGISTO, PROBLEMAS, PROBLEMAS_AUTOCONSUMO, problemasDoSetor, SETORES } from "../pedidoCaso.ts";
 import { construirContexto } from "./contexto.ts";
+import { usaPerfilEnergia } from "./perfilEnergia.ts";
 import { lerRegrasDaMigration } from "./lerRegrasMigration.mjs";
 import { CATEGORIAS_SO_AUTOCONSUMO, MAX_REGRAS_AUTOCONSUMO, prioridadeAutoconsumo } from "./perfilAutoconsumo.ts";
 import { CATEGORIAS_POR_PROBLEMA, CATEGORIAS_SEMPRE, lerRegraDoFormulario, limiteRegras, MAX_REGRAS_POR_PEDIDO, regraAplicavelAoSetor, regraEmVigor, selecionarRegras } from "./regras.ts";
@@ -291,6 +292,9 @@ describe("Não regressão: os restantes tipos de problema", () => {
     for (const setor of [...SETORES, null]) {
       for (const problema of [...(setor ? problemasDoSetor(setor) : PROBLEMAS), null]) {
         if (PROBLEMAS_AUTOCONSUMO.includes(problema) && setor === "Energia") continue;
+        // Energia e Gás com perfil próprio (20/10/2026): mudança intencional,
+        // testada em energiaFacturacao.test.mjs.
+        if (usaPerfilEnergia(setor, problema)) continue;
         const caso = { setor, categoria: problema };
         const nova = selecionarRegras(caso, PRODUCAO, HOJE).map((r) => r.codigo);
         // Energia + "Corte ou falha de serviço" tem limite próprio (16, 20/10/2026):

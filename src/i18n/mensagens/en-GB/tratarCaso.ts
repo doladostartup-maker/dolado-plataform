@@ -43,6 +43,13 @@ export const tratarCaso: Traducao<typeof pt> = {
       descricaoExemplo: "For example: in August my monthly bill went up from €35 to €42 and I wasn't told about it.",
       dicaFalhaEnergia:
         "If your electricity supply failed, it helps to tell us, if you know: when it happened and how long it lasted, how many times it happened, whether you were warned beforehand, whether any compensation has appeared on your bill and whether any appliances were damaged. If you don't know some of this, that's fine.",
+      contratacao: {
+        titulo: "About the contract",
+        texto: "How the contract was made can change your rights. If you are not sure, choose “I don't know”.",
+        forma: "How was the contract (or the change of supplier) made?",
+        telefone: "If it was by phone, say in the description who made the call: the company or you.",
+        erro: "Please say how the contract was made. If you are not sure, choose “I don't know”.",
+      },
       solar: {
         titulo: "About the solar panels",
         texto: "These answers help us understand how we can handle your case.",
@@ -189,6 +196,7 @@ export const tratarCaso: Traducao<typeof pt> = {
     "Não foi possível guardar o seu pedido. Tente novamente.": "We couldn't save your request. Please try again.",
     "Indique o sector e a empresa.": "Please enter the sector and the company.",
     "Responda às perguntas sobre o contrato dos painéis solares.": "Please answer the questions about the solar panel contract.",
+    "Indique como foi feito o contrato.": "Please say how the contract was made.",
     "Seleccione o que aconteceu.": "Please select what happened.",
     "Indique se já reclamou junto da empresa.": "Please say whether you have already complained to the company.",
     "Insira um nome válido.": "Please enter a valid name.",

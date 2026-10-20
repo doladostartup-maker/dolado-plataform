@@ -56,6 +56,11 @@ const norm = (v: string | null | undefined) =>
     .toLowerCase()
     .trim();
 
+/** Regra do DL 24/2014 (contratos à distância e fora do estabelecimento)? */
+export function regraDl24(r: Pick<RegraJuridica, "diploma">): boolean {
+  return DL_24_2014.test(r.diploma);
+}
+
 function grupoDaRegra(r: Pick<RegraJuridica, "codigo" | "diploma" | "categoria">): Grupo {
   if (LEI_23_96.test(r.diploma) || /^SPE[_-]/.test(r.codigo)) return "spe";
   if (DL_133_2009.test(r.diploma) || norm(r.categoria) === norm(CATEGORIA_CREDITO_COLIGADO)) return "credito";
@@ -84,6 +89,29 @@ function modalidadeDl24(r: Pick<RegraJuridica, "artigo">): "distancia" | "fora" 
   return "ambas";
 }
 
+/**
+ * Uma regra do DL 24/2014 pode ser considerada com esta forma de contratação?
+ * Na loja, só a regra da compra no estabelecimento (sem livre resolução); à
+ * distância, as gerais e as da distância; no domicílio ou noutro local fora
+ * do estabelecimento, as gerais e as de fora; "não sei" (ou sem resposta):
+ * todas menos a da loja — a pessoa confirma na revisão. Também usada pelo
+ * perfil de Energia e Gás (perfilEnergia.ts).
+ */
+export function dl24CompativelComForma(r: Pick<RegraJuridica, "artigo">, forma: DetalhesCaso["forma_contratacao"] | null | undefined): boolean {
+  const m = modalidadeDl24(r);
+  switch (forma) {
+    case "estabelecimento":
+      return m === "loja";
+    case "distancia":
+      return m === "ambas" || m === "distancia";
+    case "domicilio":
+    case "fora_estabelecimento":
+      return m === "ambas" || m === "fora";
+    default:
+      return m !== "loja";
+  }
+}
+
 const SEM_DETALHES: DetalhesCaso = { forma_contratacao: "nao_sei", financiamento: "nao_sei", tipo_contrato_solar: "nao_sei" };
 
 /**
@@ -108,20 +136,8 @@ export function regraAplicavelAutoconsumo(r: RegraJuridica, detalhes: DetalhesCa
       return d.financiamento === "sim_com_compra";
     case "caer":
       return d.tipo_contrato_solar === "caer";
-    case "dl24": {
-      const m = modalidadeDl24(r);
-      switch (d.forma_contratacao) {
-        case "estabelecimento":
-          return m === "loja";
-        case "distancia":
-          return m === "ambas" || m === "distancia";
-        case "domicilio":
-        case "fora_estabelecimento":
-          return m === "ambas" || m === "fora";
-        default: // não sei: pode ser qualquer uma — a pessoa confirma
-          return m !== "loja";
-      }
-    }
+    case "dl24":
+      return dl24CompativelComForma(r, d.forma_contratacao);
     default:
       return true;
   }

@@ -47,6 +47,16 @@ export const tratarCaso = {
       // compensação (nada é obrigatório; os indicadores são do operador).
       dicaFalhaEnergia:
         "Se a electricidade falhou, ajuda indicar, se souber: quando aconteceu e quanto tempo durou, quantas vezes se repetiu, se foi avisado antes, se já recebeu alguma compensação na factura e se houve danos em aparelhos. Se não souber algum destes dados, não faz mal.",
+      // Energia e Gás, tipos de contratação (20/10/2026): só a forma de
+      // contratação (decide se se aplicam as regras da contratação à
+      // distância, por telefone ou fora do estabelecimento).
+      contratacao: {
+        titulo: "Sobre o contrato",
+        texto: "A forma como o contrato foi feito pode mudar os seus direitos. Se não tiver a certeza, escolha “Não sei”.",
+        forma: "Como foi feito o contrato (ou a mudança de comercializador)?",
+        telefone: "Se foi por telefone, indique na descrição quem fez a chamada: a empresa ou o próprio.",
+        erro: "Indique como foi feito o contrato. Se não tiver a certeza, escolha “Não sei”.",
+      },
       solar: {
         titulo: "Sobre os painéis solares",
         texto: "Estas respostas ajudam-nos a perceber como podemos tratar o seu caso.",
@@ -194,6 +204,7 @@ export const tratarCaso = {
     "Não foi possível guardar o seu pedido. Tente novamente.": "Não foi possível guardar o seu pedido. Tente novamente.",
     "Indique o sector e a empresa.": "Indique o sector e a empresa.",
     "Responda às perguntas sobre o contrato dos painéis solares.": "Responda às perguntas sobre o contrato dos painéis solares.",
+    "Indique como foi feito o contrato.": "Indique como foi feito o contrato.",
     "Seleccione o que aconteceu.": "Seleccione o que aconteceu.",
     "Indique se já reclamou junto da empresa.": "Indique se já reclamou junto da empresa.",
     "Insira um nome válido.": "Insira um nome válido.",
