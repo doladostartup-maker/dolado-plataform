@@ -1,6 +1,6 @@
 # Rascunho — Política de Privacidade: guia gratuito e autorização comercial sem conta
 
-**Estado:** rascunho para validação pela advogada. **Bloqueia a entrada em produção** da página `/guia-facturas` (`GUIA_FACTURAS_ATIVO=1`).
+**Estado:** validado pela advogada (confirmado por Thiago a 22/10/2026). Publicado como Política de Privacidade `2026-10-22` (secções 2, 3, 5 e 6; fundamentos e prazos propostos aceites).
 **Funcionalidade:** e-book gratuito «Está a pagar mais do que devia?» (página `/guia-facturas`, 22/10/2026). Migration `20261022090000_guia_facturas.sql`.
 
 ## 1. O que é tratado
