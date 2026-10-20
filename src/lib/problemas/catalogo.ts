@@ -79,11 +79,18 @@ export const CATEGORIAS: Categoria[] = [
       {
         slug: "cobranca-indevida",
         problemaCaso: "Cobrança indevida",
-        relacionados: ["fatura-muito-alta", "consumos-estimados"],
+        relacionados: ["fatura-muito-alta", "consumos-estimados", "falta-de-luz"],
       },
       {
         slug: "consumos-estimados",
         problemaCaso: "Factura alta, estimativa ou acerto",
+        relacionados: ["fatura-muito-alta", "cobranca-indevida"],
+      },
+      // Falhas de electricidade (20/10/2026): interrupções, compensação na
+      // factura e danos — docs/legal/auditoria-interrupcoes-electricidade-2026-10-20.md.
+      {
+        slug: "falta-de-luz",
+        problemaCaso: "Corte ou falha de serviço",
         relacionados: ["fatura-muito-alta", "cobranca-indevida"],
       },
     ],

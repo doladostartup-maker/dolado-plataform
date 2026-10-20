@@ -68,17 +68,17 @@ export const problemas: Traducao<typeof pt> = {
     energia: {
       nome: "Energy",
       nomeMinusculas: "energy",
-      descricao: "Electricity: bills, meter readings and charges.",
-      exemplos: ["Very high bills", "Estimated readings", "Charges you do not recognise", "Switching supplier"],
+      descricao: "Electricity: bills, meter readings, charges and power cuts.",
+      exemplos: ["Very high bills", "Estimated readings", "Charges you do not recognise", "Power cuts"],
       ligacao: "See energy problems",
       metadados: {
-        titulo: "Problems with your electricity bill - DoLado",
+        titulo: "Problems with electricity: bills and power cuts - DoLado",
         descricao:
-          "Very high electricity bill, estimated readings or charges you do not recognise? See the energy problems DoLado handles with you.",
+          "Very high electricity bill, estimated readings, charges you do not recognise or power cuts? See the energy problems DoLado handles with you.",
       },
       titulo: "Problems with electricity",
       intro:
-        "Bills that rise without a clear explanation, estimated readings or amounts you do not recognise: DoLado helps you understand what is being charged and handles the complaint with you.",
+        "Bills that rise without a clear explanation, estimated readings, amounts you do not recognise or power cuts: DoLado helps you understand what is going on and handles the complaint with you.",
     },
     "compras-reembolsos": {
       nome: "Purchases and Refunds",
@@ -329,6 +329,32 @@ export const problemas: Traducao<typeof pt> = {
         ],
         ajuda:
           "DoLado reconstructs the history of readings and bills, checks whether the adjustment matches actual usage and prepares the complaint with a specific request to the supplier.",
+      },
+      "falta-de-luz": {
+        metadados: {
+          titulo: "Lost power, or does your electricity keep cutting out? - DoLado",
+          descricao:
+            "Repeated or long power cuts? See when compensation may appear on your bill, what to record and how DoLado can handle the complaint with you.",
+        },
+        rotulo: "Power cuts",
+        resumo: "You lost power, your electricity keeps cutting out or appliances were damaged.",
+        titulo: "Lost power, or does your electricity keep cutting out?",
+        subtitulo:
+          "A power cut may be just an inconvenience, but when it keeps happening or lasts a long time there may be compensation that should appear on your bill. If appliances or other belongings were damaged, that is a separate claim.",
+        contestar: [
+          "When cuts on the network exceed, over a year, the limits set by the regulator for the area where you live, compensation may be due, which in principle should be credited on your bill without you having to ask. Not every cut counts: very short ones, ones announced in advance and ones caused by exceptional events recognised by the regulator may be left out.",
+          "A cut affecting only your home may come from your own wiring rather than the network. So the cause needs to be checked before drawing any conclusion.",
+          "If the cut, or the power coming back, damaged appliances or other belongings, there may be grounds to claim compensation for the damage, separately from any regulatory compensation. It depends on the cause, on proof of the damage and on your specific case.",
+        ],
+        verificar: [
+          "The dates, times and length of each cut, even if you noted them yourself",
+          "Any notices of planned interruptions you received, or the lack of them",
+          "The incident number, if you reported the fault, and the replies you received",
+          "Your later bills, to see whether any compensation appears",
+          "Photos, reports or repair quotes, if appliances were damaged",
+        ],
+        ajuda:
+          "DoLado organises the history of cuts and contacts, asks the company for the data only it holds and prepares the complaint with a specific request: an explanation, the missing compensation or repair of the damage.",
       },
     },
     "compras-reembolsos": {
