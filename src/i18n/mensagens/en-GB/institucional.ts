@@ -195,14 +195,14 @@ export const institucional: Traducao<typeof pt> = {
   },
   empresas: {
     metadados: {
-      titulo: "DoLado for businesses | DoLado",
+      titulo: "DoLado for businesses: a benefit for employees and customers | DoLado",
       descricao:
-        "Run a business? Talk to DoLado about a consumer support solution for your employees or customers: organising the problem, preparing the complaint and following the next steps.",
+        "Offer DoLado as a benefit to your employees or customers: support for resolving problems with bills, contracts and purchases. Request a proposal from DoLado.",
     },
-    falar: "Talk to DoLado",
+    falar: "Request a proposal",
     eyebrow: "DoLado for businesses",
     titulo1: "Run a business?",
-    titulo2: "Talk to DoLado about a solution for your employees or customers.",
+    titulo2: "Offer DoLado as a benefit to your employees or customers.",
     texto:
       "When someone has a problem with a company — a charge, a cancellation, a refund — DoLado helps organise the situation, prepares the complaint and follows the next steps. Your business can offer that support to the people who rely on you.",
     verComoFunciona: "See how it works",
@@ -306,6 +306,10 @@ export const institucional: Traducao<typeof pt> = {
         texto: "Start with a defined scope, learn from how it is used and decide on the next steps.",
       },
     ],
+    parceiros: {
+      texto: "Would you like to refer clients or distribute DoLado Protection through your work?",
+      ligacao: "Find out about our partner programme.",
+    },
     clarezaCabecalho: {
       eyebrow: "Trust and clarity",
       titulo: "The person stays in control of their case.",
@@ -355,7 +359,7 @@ export const institucional: Traducao<typeof pt> = {
     ],
     ctaFinal: {
       eyebrow: "Let's talk",
-      titulo: "Run a business? Talk to DoLado.",
+      titulo: "Run a business? Request a proposal from DoLado.",
       texto:
         "Tell us what you have in mind — employees, customers or both — and we will explore the next step with you. You can also write to <email/>.",
     },

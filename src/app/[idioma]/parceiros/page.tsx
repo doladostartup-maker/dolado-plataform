@@ -11,7 +11,8 @@ import { parceirosAtivos } from "@/lib/parceiros/regras";
 // /parceiros — Programa de Parceiros (Fase 1, ligado em produção a
 // 20/10/2026 com PARCEIROS_ATIVO, lido no build). Indexável desde 20/10/2026
 // (decisão de Thiago): no sitemap e no rodapé (só com o programa ligado), fora
-// do menu. Com o programa desligado leva a /empresas.
+// do menu. Com o programa desligado leva a /empresas. As duas páginas ligam
+// uma à outra (benefício ≠ indicação e distribuição).
 export async function generateMetadata({ params }: ComIdioma): Promise<Metadata> {
   const idioma = await idiomaDaPagina(params);
   const t = tParceiros[idioma].pagina.metadados;

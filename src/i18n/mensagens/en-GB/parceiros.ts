@@ -4,15 +4,15 @@ import type { parceiros as pt } from "../pt-PT/parceiros.ts";
 export const parceiros: Traducao<typeof pt> = {
   pagina: {
     metadados: {
-      titulo: "Partner Programme",
+      titulo: "Partner Programme: refer clients and distribute Protection | DoLado",
       descricao:
-        "Become a DoLado partner: recommend DoLado to your clients or give Protection to your clients and staff, to help them prevent and resolve consumer problems.",
+        "Refer clients to DoLado or distribute DoLado Protection through your work. The terms of each partnership are set out in a written agreement. Propose a partnership.",
     },
     eyebrow: "Partner Programme",
     titulo: "Help the people you work with resolve consumer problems.",
     texto:
       "For professionals and companies who are close to consumers — and who want to have an answer when a bill, a contract or a purchase goes wrong. DoLado handles the problem; the partner brings DoLado to the people who need it.",
-    cta: "Apply",
+    cta: "Propose a partnership",
     verModelos: "See the ways to work with us",
     garantias: {
       titulo: "In every partnership",
@@ -24,21 +24,23 @@ export const parceiros: Traducao<typeof pt> = {
     },
     modelosEyebrow: "Partnership models",
     modelosTitulo: "Two ways to work with us",
+    modelosTexto:
+      "The service is the same: DoLado handles the consumer's problem and Protection keeps an eye on bills and contract dates. Only the way it reaches the people who need it changes.",
     indicacao: {
       titulo: "Referral Partner",
       texto:
         "You recommend DoLado to your clients or introduce companies that may be interested. DoLado takes care of everything else: sign-up, billing, case handling and follow-up.",
       itens: [
         "Your own link and code to share.",
-        "A commission for each new eligible subscription, once the client's payments are confirmed.",
+        "A commission under the terms of the partnership agreement, only once the client's payments are confirmed.",
         "You have no access to the cases, bills or contracts of the people you refer.",
-        "Each commission is recorded and paid by bank transfer.",
+        "Each commission is recorded and paid as set out in the agreement.",
       ],
     },
     distribuicao: {
       titulo: "Distribution Partner",
       texto:
-        "Your company gives DoLado Protection to its clients or staff as a benefit — for example, to people who have just bought a home, or to the whole team.",
+        "You bring DoLado Protection to the people you work with: you buy prepaid access and give each person a code — for example, to people who have just bought a home through you.",
       itens: [
         "Prepaid access, for the agreed period.",
         "An individual code to give to each person.",
@@ -46,10 +48,14 @@ export const parceiros: Traducao<typeof pt> = {
         "Reports with aggregate figures only — never personal data.",
       ],
     },
+    empresas: {
+      texto: "Would you like to offer DoLado as a benefit to your employees or customers?",
+      ligacao: "Find out about our solutions for businesses.",
+    },
     passosEyebrow: "From first contact to agreement",
     passosTitulo: "How it works",
     passos: [
-      { titulo: "You apply", texto: "Tell us who you are and how you would like to work with us." },
+      { titulo: "You propose a partnership", texto: "Tell us who you are and how you would like to work with us." },
       { titulo: "We review", texto: "We reply by e-mail within 2 working days at the latest." },
       { titulo: "We agree the terms", texto: "The terms of each partnership are set out in a written agreement." },
     ],
@@ -58,7 +64,7 @@ export const parceiros: Traducao<typeof pt> = {
   },
 
   candidatura: {
-    eyebrow: "Application",
+    eyebrow: "Propose a partnership",
     titulo: "Tell us who you are",
     texto: "It only takes a few minutes. We reply by e-mail within 2 working days at the latest.",
     nome: "Name",
