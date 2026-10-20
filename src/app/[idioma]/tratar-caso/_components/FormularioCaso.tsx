@@ -182,6 +182,7 @@ export function FormularioCaso({
   const [financiamento, setFinanciamento] = useState("");
   const [tipoContratoSolar, setTipoContratoSolar] = useState("");
   const solar = ehCasoAutoconsumo(sector, problemaTipo);
+  const falhaEnergia = sector === "Energia" && problemaTipo === "Corte ou falha de serviço";
 
   const [anexo, setAnexo] = useState<{
     caminho: string;
@@ -480,7 +481,13 @@ export function FormularioCaso({
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
                 placeholder={t.passo2.descricaoExemplo}
+                aria-describedby={falhaEnergia ? "descricao-dica" : undefined}
               />
+              {falhaEnergia && (
+                <p id="descricao-dica" className="mt-2 text-[13px] leading-[1.5]" style={{ color: COR.inkMuted }}>
+                  {t.passo2.dicaFalhaEnergia}
+                </p>
+              )}
             </Campo>
             <div className="mt-3 flex justify-between gap-3">
               <button type="button" onClick={() => irPara(1)} className={BOTAO_SECUNDARIO}>

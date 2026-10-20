@@ -41,6 +41,8 @@ export const tratarCaso: Traducao<typeof pt> = {
       titulo: "What happened?",
       descricao: "Tell us in your own words",
       descricaoExemplo: "For example: in August my monthly bill went up from €35 to €42 and I wasn't told about it.",
+      dicaFalhaEnergia:
+        "If your electricity supply failed, it helps to tell us, if you know: when it happened and how long it lasted, how many times it happened, whether you were warned beforehand, whether any compensation has appeared on your bill and whether any appliances were damaged. If you don't know some of this, that's fine.",
       solar: {
         titulo: "About the solar panels",
         texto: "These answers help us understand how we can handle your case.",

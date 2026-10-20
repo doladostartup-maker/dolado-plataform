@@ -11,7 +11,7 @@ import { PROBLEMA_SOLAR_CONTRATO, PROBLEMA_SOLAR_INSTALACAO, PROBLEMA_SOLAR_REGI
 import { construirContexto } from "./contexto.ts";
 import { lerRegrasDaMigration } from "./lerRegrasMigration.mjs";
 import { CATEGORIAS_SO_AUTOCONSUMO, MAX_REGRAS_AUTOCONSUMO, prioridadeAutoconsumo } from "./perfilAutoconsumo.ts";
-import { CATEGORIAS_POR_PROBLEMA, CATEGORIAS_SEMPRE, lerRegraDoFormulario, MAX_REGRAS_POR_PEDIDO, regraAplicavelAoSetor, regraEmVigor, selecionarRegras } from "./regras.ts";
+import { CATEGORIAS_POR_PROBLEMA, CATEGORIAS_SEMPRE, lerRegraDoFormulario, limiteRegras, MAX_REGRAS_POR_PEDIDO, regraAplicavelAoSetor, regraEmVigor, selecionarRegras } from "./regras.ts";
 
 const HOJE = "2026-10-14";
 const MIGRATION = new URL("../../../supabase/migrations/20261013100000_energia_solar_autoconsumo.sql", import.meta.url);
@@ -292,7 +292,12 @@ describe("Não regressão: os restantes tipos de problema", () => {
       for (const problema of [...(setor ? problemasDoSetor(setor) : PROBLEMAS), null]) {
         if (PROBLEMAS_AUTOCONSUMO.includes(problema) && setor === "Energia") continue;
         const caso = { setor, categoria: problema };
-        assert.deepEqual(selecionarRegras(caso, PRODUCAO, HOJE).map((r) => r.codigo), selecaoAntiga(caso, PRODUCAO, HOJE), `${setor} / ${problema}`);
+        const nova = selecionarRegras(caso, PRODUCAO, HOJE).map((r) => r.codigo);
+        // Energia + "Corte ou falha de serviço" tem limite próprio (16, 20/10/2026):
+        // as mesmas regras de antes, pela mesma ordem, e só depois as seguintes.
+        const antiga = selecaoAntiga(caso, PRODUCAO, HOJE);
+        const comparar = setor === "Energia" && problema === "Corte ou falha de serviço" ? nova.slice(0, antiga.length) : nova;
+        assert.deepEqual(comparar, antiga, `${setor} / ${problema}`);
       }
     }
   });
@@ -304,7 +309,7 @@ describe("Não regressão: os restantes tipos de problema", () => {
         const enviadas = selecionarRegras({ setor, categoria: problema }, TODAS, HOJE);
         const so = enviadas.filter((r) => CATEGORIAS_SO_AUTOCONSUMO.includes(r.categoria));
         assert.deepEqual(so.map((r) => r.codigo), [], `${setor} / ${problema}`);
-        assert.ok(enviadas.length <= MAX_REGRAS_POR_PEDIDO);
+        assert.ok(enviadas.length <= limiteRegras({ setor, categoria: problema }));
       }
     }
   });
