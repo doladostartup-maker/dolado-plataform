@@ -21,6 +21,7 @@ import {
 } from "@/components/marketing-v2/Icones";
 import { VisualHero } from "@/components/marketing-v2/Mockups";
 import { ApoioWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
+import { InstagramFundador } from "@/components/marketing-v2/RedesSociais";
 import { OfertaProtecaoGratuita } from "@/components/marketing-v2/OfertaProtecaoGratuita";
 import { CTASection } from "@/components/marketing-v2/CTASection";
 import { ferramentas } from "@/components/marketing-v2/ferramentas";
@@ -300,6 +301,7 @@ export function HomepageV2({ protecaoGratuita = false }: { protecaoGratuita?: bo
           <Link prefetch={false} href={ROTAS_V2.sobreNos} className={`${LIGACAO} mt-5`}>
             {t.fundador.cta} <IconeSeta tamanho={15} />
           </Link>
+          <InstagramFundador local="homepage_fundador" className="mt-8" />
         </div>
       </SectionV2>
 

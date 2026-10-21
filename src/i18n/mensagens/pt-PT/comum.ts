@@ -62,6 +62,14 @@ export const comum = {
     definicoesCookies: "Definições de cookies",
     cidade: "Lisboa",
   },
+  redesSociais: {
+    fundadorTitulo: "Conheça melhor quem criou a DoLado",
+    fundadorTexto:
+      "No meu Instagram partilho conselhos práticos, respondo a dúvidas e explico situações que afectam os consumidores no dia-a-dia.",
+    rodapeTitulo: "Acompanhe a DoLado",
+    rodapeTexto: "Dicas práticas, direitos dos consumidores e novidades para o ajudar a tomar decisões mais informadas.",
+    abreNovaJanela: "(abre numa nova janela)",
+  },
   naoEncontrada: {
     titulo: "Página não encontrada",
     texto: "A página que procura não existe ou mudou de endereço.",

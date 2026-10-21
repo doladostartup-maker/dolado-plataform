@@ -4,11 +4,13 @@ import Image from "next/image";
 import { useTextos } from "@/i18n/cliente";
 import { tMarketing } from "@/i18n/mensagens/marketing";
 import type { ReactNode } from "react";
+import { InstagramFundador } from "./RedesSociais";
 import { SectionHeader, SectionV2, type TomSecao } from "./SectionV2";
 
 // "A nossa origem": a história do fundador, na primeira pessoa. Texto e
 // fotografia reais (a fotografia já foi publicada numa versão anterior da
-// homepage) — mudar só com o Thiago. Usado na homepage V2 e em Sobre Nós.
+// homepage) — mudar só com o Thiago. Usado em Sobre Nós (a homepage tem uma
+// versão curta). Termina com o Instagram pessoal do fundador.
 // Ficheiro já redimensionado (600 px, 2× a largura máxima mostrada): as
 // imagens não são otimizadas no servidor (images.unoptimized, next.config.ts).
 export function OrigemFundador({ tone = "soft-blue", aside }: { tone?: TomSecao; aside?: ReactNode }) {
@@ -35,6 +37,7 @@ export function OrigemFundador({ tone = "soft-blue", aside }: { tone?: TomSecao;
           ))}
         </div>
         <p className="mt-6 text-[15px] font-semibold text-[var(--v2-navy)]">{t.assinatura}</p>
+        <InstagramFundador local="sobre_nos_fundador" className="mt-8" />
       </div>
       {aside}
     </SectionV2>
