@@ -33,6 +33,7 @@ export const LOCAIS_WHATSAPP = [
   "sector_page",
   "faq",
   "contact",
+  "landing_30d",
 ] as const;
 
 export type LocalWhatsApp = (typeof LOCAIS_WHATSAPP)[number];

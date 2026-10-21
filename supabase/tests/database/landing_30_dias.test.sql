@@ -4,7 +4,8 @@
 --
 -- Prova: a activação aceita a origem 'landing_30d' (e continua a reduzir
 -- valores desconhecidos a 'outro'); o funil da landing conta uma linha por
--- conta (criadas, e-mail confirmado, activadas) e só o admin o lê. Tudo numa
+-- conta (criadas, e-mail confirmado, activadas, com o primeiro documento) e
+-- só o admin o lê. Tudo numa
 -- transação revertida.
 
 begin;
@@ -42,6 +43,10 @@ select is(
 select is((select origem from public.protecao_gratuita where user_id = '00000000-0000-4000-e100-00000000000c'),
   'outro', 'Origem desconhecida continua a ser outro');
 
+-- Primeiro documento de a (activada na landing) durante o período gratuito.
+insert into public.documentos_monitor (utilizador_id, tipo, storage_path)
+values ('00000000-0000-4000-e100-00000000000a', 'fatura', '00000000-0000-4000-e100-00000000000a/l30.pdf');
+
 select throws_ok(
   $$update public.protecao_gratuita set origem = 'facebook' where user_id = '00000000-0000-4000-e100-00000000000c'$$,
   null, 'Origem fora da lista recusada pela base de dados');
@@ -56,6 +61,12 @@ select is(
      from (select public.protecao_gratuita_metricas() as m) x) >= 1,
   true, 'Conta por confirmar não conta como confirmada');
 select is((public.protecao_gratuita_metricas() -> 'landing_30d' ->> 'ativadas')::int >= 1, true, 'Activações da landing');
+select is((public.protecao_gratuita_metricas() -> 'landing_30d' ->> 'com_documento')::int >= 1, true,
+  'Activações da landing com o primeiro documento');
+select is(
+  (select (m -> 'landing_30d' ->> 'com_documento')::int <= (m -> 'landing_30d' ->> 'ativadas')::int
+     from (select public.protecao_gratuita_metricas() as m) x),
+  true, 'Com documento nunca excede as activações');
 select is((public.protecao_gratuita_metricas() -> 'por_origem' ->> 'landing_30d')::int >= 1, true, 'Origem no resumo por origem');
 
 select * from finish();

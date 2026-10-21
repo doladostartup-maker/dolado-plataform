@@ -24,7 +24,14 @@ type Metricas = {
   cancelamentos_posteriores: number;
   por_origem: Record<string, number>;
   /** Funil da landing /30-dias-gratis (migration 20261020090000; ausente antes dela). */
-  landing_30d?: { contas_criadas: number; emails_confirmados: number; ativadas_destas_contas: number; ativadas: number };
+  landing_30d?: {
+    contas_criadas: number;
+    emails_confirmados: number;
+    ativadas_destas_contas: number;
+    ativadas: number;
+    /** Migration 20261025090000; ausente antes dela. */
+    com_documento?: number;
+  };
 };
 
 const NOMES_ORIGEM: Record<string, string> = {
@@ -119,9 +126,16 @@ export default async function ProtecaoGratuitaBackofficePage() {
               valor={m.landing_30d.ativadas}
               detalhe={`${m.landing_30d.ativadas_destas_contas} das contas criadas na landing · ${percentagem(m.landing_30d.ativadas_destas_contas, m.landing_30d.emails_confirmados)} das confirmadas`}
             />
+            {m.landing_30d.com_documento !== undefined && (
+              <Numero
+                rotulo="Primeiro documento adicionado"
+                valor={m.landing_30d.com_documento}
+                detalhe={`${percentagem(m.landing_30d.com_documento, m.landing_30d.ativadas)} das activações da landing`}
+              />
+            )}
           </div>
           <p className={METADADOS}>
-            Visitas e cliques: GA4, eventos landing_30d_view e landing_30d_cta_click (parâmetro local: topo, condicoes, barra), só com consentimento — uma amostra, não o total. As activações incluem quem já tinha conta e iniciou sessão a partir da landing.
+            Visitas e cliques: GA4, eventos landing_30d_view e landing_30d_cta_click (parâmetro local: topo, final, barra; até 21/10/2026 também condicoes), só com consentimento — uma amostra, não o total. As activações incluem quem já tinha conta e iniciou sessão a partir da landing.
           </p>
         </section>
       )}
