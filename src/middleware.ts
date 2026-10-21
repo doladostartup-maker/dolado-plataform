@@ -4,6 +4,7 @@ import { COOKIE_CONSENTIMENTO_ESTATISTICA_ORIGEM, COOKIE_ORIGEM, dominioCookiesO
 import { COOKIE_INDICACAO } from "@/lib/indicacoes/regras";
 import { cookiebotAceitouMarketing } from "@/lib/indicacoes/consentimento";
 import { ehCaminhoDeProblemas } from "@/lib/problemas/catalogo";
+import { CAMINHO_LANDING_30_DIAS } from "@/lib/landing30Dias";
 import {
   CABECALHO_IDIOMA,
   COOKIE_IDIOMA,
@@ -193,6 +194,13 @@ async function encaminhar(request: NextRequest): Promise<NextResponse> {
   }
 
   if (host.startsWith("portal.") && ehLinkDeIndicacao(caminho)) {
+    return NextResponse.redirect(new URL(`${pathname}${search}`, "https://dolado.pt"), 308);
+  }
+
+  // Landing dos anúncios: só em dolado.pt, onde está o banner do Cookiebot —
+  // em portal.dolado.pt não há consentimento, logo nem GA4 nem o Pixel medem
+  // a campanha. Mantém o idioma e os parâmetros (UTM, fbclid).
+  if (host.startsWith("portal.") && caminho === CAMINHO_LANDING_30_DIAS) {
     return NextResponse.redirect(new URL(`${pathname}${search}`, "https://dolado.pt"), 308);
   }
 

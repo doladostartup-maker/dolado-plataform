@@ -61,6 +61,10 @@ describe("página e integrações", () => {
     const marketing = m.slice(m.indexOf("const PAGINAS_SO_MARKETING"), m.indexOf("];", m.indexOf("const PAGINAS_SO_MARKETING")));
     assert.ok(marketing.includes(`"${CAMINHO_LANDING_30_DIAS}"`));
   });
+  test("em portal.dolado.pt redirecciona para dolado.pt (sem Cookiebot no portal não há medição)", () => {
+    const m = ler("../middleware.ts");
+    assert.match(m, /host\.startsWith\("portal\."\) && caminho === CAMINHO_LANDING_30_DIAS\) \{\n\s+return NextResponse\.redirect\(new URL\(`\$\{pathname\}\$\{search\}`, "https:\/\/dolado\.pt"\), 308\);/);
+  });
   test("noindex e fora do sitemap", () => {
     assert.match(ler("../app/[idioma]/30-dias-gratis/page.tsx"), /robots: \{ index: false, follow: true \}/);
     assert.ok(!ler("./seo/indexacao.ts").includes(CAMINHO_LANDING_30_DIAS));
