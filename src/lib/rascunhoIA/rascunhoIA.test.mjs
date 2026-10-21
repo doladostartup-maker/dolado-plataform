@@ -257,7 +257,7 @@ function depsFalsas(extra = {}) {
     orcamentoBloqueado: async () => false,
     chamarModelo: async (pedido) => {
       registo.pedidos.push(pedido);
-      return { ok: true, bruto: respostaOk(), uso: { modelo: "claude-opus-5-5", tokensEntrada: 10, tokensSaida: 5, custoUsd: 0.001, latenciaMs: 1, requestId: "req" } };
+      return { ok: true, bruto: respostaOk(), uso: { modelo: "claude-sonnet-5-5", tokensEntrada: 10, tokensSaida: 5, custoUsd: 0.001, latenciaMs: 1, requestId: "req" } };
     },
     registarUso: async (uso, ok) => void registo.uso.push({ uso, ok }),
     concluir: async (id, dados) => void registo.concluir.push({ id, dados }),

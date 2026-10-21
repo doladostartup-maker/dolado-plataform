@@ -19,10 +19,11 @@ export const PARAMETROS_EXTRACAO = {
   output_config: { effort: "low" },
 } as const;
 
-// Primeira sugestão do texto da reclamação (src/lib/rascunhoIA/). Redigir é
-// mais exigente do que extrair: modelo Opus por omissão, esforço médio.
-// Trocável sem alterar código (ANTHROPIC_RASCUNHO_MODEL).
-export const MODELO_RASCUNHOS = process.env.ANTHROPIC_RASCUNHO_MODEL || "claude-opus-5-5";
+// Primeira sugestão do texto da reclamação (src/lib/rascunhoIA/). Sonnet 5.5
+// por omissão desde 21/10/2026 (antes Opus 5.5; decisão de Thiago), esforço
+// médio — sempre revista por uma pessoa. Trocável sem alterar código
+// (ANTHROPIC_RASCUNHO_MODEL).
+export const MODELO_RASCUNHOS = process.env.ANTHROPIC_RASCUNHO_MODEL || "claude-sonnet-5-5";
 
 export const PARAMETROS_RASCUNHO = {
   max_tokens: 16000,
@@ -30,10 +31,10 @@ export const PARAMETROS_RASCUNHO = {
 } as const;
 
 // Análise preliminar das respostas das empresas (src/lib/analiseResposta/):
-// interpretar uma resposta face à reclamação enviada é exigente — Opus por
-// omissão, esforço médio. Sempre revista por uma pessoa antes de qualquer
+// Sonnet 5.5 por omissão desde 21/10/2026 (antes Opus 5.5; decisão de
+// Thiago), esforço médio. Sempre revista por uma pessoa antes de qualquer
 // decisão. Trocável sem alterar código (ANTHROPIC_ANALISE_MODEL).
-export const MODELO_ANALISES = process.env.ANTHROPIC_ANALISE_MODEL || "claude-opus-5-5";
+export const MODELO_ANALISES = process.env.ANTHROPIC_ANALISE_MODEL || "claude-sonnet-5-5";
 
 export const PARAMETROS_ANALISE = {
   max_tokens: 16000,
