@@ -432,7 +432,7 @@ E-book em PDF (16 págs. A4) para captação nas redes sociais: Instagram/Facebo
 
 ## Comunicações comerciais: dupla confirmação e deixar de receber (21/10/2026)
 
-Pré-requisito de qualquer envio comercial (ainda não há envios). Migration `20261024090000_comunicacoes_dupla_confirmacao.sql` (aplicar com `db push` antes do merge que faz o deploy); código em `src/lib/comunicacoesComerciais/` (`ligacoes.ts` sem I/O, `servidor.ts`) e `src/lib/email/comunicacoesComerciais.ts`.
+Pré-requisito de qualquer envio comercial (ainda não há envios). Migration `20261024090000_comunicacoes_dupla_confirmacao.sql` (aplicada em produção a 21/10/2026); código em `src/lib/comunicacoesComerciais/` (`ligacoes.ts` sem I/O, `servidor.ts`) e `src/lib/email/comunicacoesComerciais.ts`.
 
 - **Desligado por omissão:** sem `COMUNICACOES_CHAVE` (≥ 32 caracteres; HMAC das ligações; **nunca mudar** — as ligações já enviadas deixariam de funcionar) não há ligações: nenhum e-mail de confirmação sai e nenhum e-mail comercial pode ser montado (falha fechada).
 - **Sem conta (guia):** `comunicacoes_reservar_confirmacao()` → e-mail de confirmação (transaccional, sem promoção; no máximo 1 em 24 h, `confirmacao_enviada_em`) → `/comunicacoes/confirmar?tipo=sem_conta&id=…&t=…` → `comunicacoes_confirmar()` grava `confirmado_em`. Ligação válida 30 dias a contar da autorização; depois, `expirado` (nova autorização = novo pedido do guia com a caixa).
