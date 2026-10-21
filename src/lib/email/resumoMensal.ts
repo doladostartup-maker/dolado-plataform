@@ -52,6 +52,9 @@ export function montarHtmlResumoMensal(r: ResumoMensal, urlPortal: string): stri
     secoes.push(`<p ${TITULO_SECAO}>${t.alteracoes}</p>`);
     secoes.push(r.alteracoes.length > 0 ? lista(r.alteracoes) : `<p ${P}>${escaparHtml(r.semAlteracoes ?? "")}</p>`);
   }
+  if (r.energia?.length) {
+    secoes.push(`<p ${TITULO_SECAO}>${t.energia}</p>`, lista(r.energia));
+  }
   if (r.acompanhamento.length > 0) {
     secoes.push(`<p ${TITULO_SECAO}>${t.continuaAtiva}</p>`, lista(r.acompanhamento));
   }
@@ -78,6 +81,7 @@ export function montarTextoResumoMensal(r: ResumoMensal, urlPortal: string): str
   if (r.estado !== "sem_servicos") {
     linhas.push("", t.alteracoes, ...(r.alteracoes.length > 0 ? r.alteracoes.map((i) => `- ${i}`) : [r.semAlteracoes ?? ""]));
   }
+  if (r.energia?.length) linhas.push("", t.energia, ...r.energia.map((i) => `- ${i}`));
   if (r.acompanhamento.length > 0) linhas.push("", t.continuaAtiva, ...r.acompanhamento.map((i) => `- ${i}`));
   linhas.push("", t.proximaData, r.proximaData, "", t.verTexto(url));
   linhas.push("", t.baseiaSe, t.duvidas(CONTACTO_EMAIL), "", "Thiago", "DoLado", "", t.rodape);

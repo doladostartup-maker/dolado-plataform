@@ -9,6 +9,10 @@
 // documentos sem repetir extrações já feitas — extracoes_documento).
 
 import type { IdentificadorLido, TipoIdentificador } from "./identificacao.ts";
+import { dataValida, ehObjeto, paraCents, textoCurto } from "./valores.ts";
+import { PROMPT_ENERGIA, SCHEMA_ENERGIA, normalizarEnergia, type FornecimentoEnergia } from "./energia.ts";
+
+export { dataValida, ehObjeto, paraCents, textoCurto };
 
 // v2 (02/10/2026): sem campos "nullable" — a API aceita no máximo 16 parâmetros
 // com tipos em união; o v1 tinha 26. Valor em falta = texto vazio, página
@@ -17,10 +21,24 @@ import type { IdentificadorLido, TipoIdentificador } from "./identificacao.ts";
 // fatura ao serviço certo), número da fatura (duplicados) e linhas de crédito.
 // A fatura deixa de propor fornecedor, mensalidade e referência como dados do
 // contrato: são dados OBSERVADOS (faturas_monitor) ou de identificação.
-export const SCHEMA_FATURA_VERSAO = "fatura_v3";
-export const PROMPT_FATURA_VERSAO = "fatura_prompt_v3";
+// v4 (21/10/2026): bloco "energia" (electricidade e gás: potência, termo fixo,
+// consumos por período horário, preços unitários, leituras, acertos, impostos,
+// descontos e serviços adicionais, por fornecimento) — energia.ts.
+// Só com MONITOR_ENERGIA_ATIVO=1 (energiaAtiva()): sem o interruptor, a
+// leitura continua a ser a fatura_v3 (o schema maior tem de ser confirmado
+// numa chamada real antes de ser usado em todas as facturas).
+export const SCHEMA_FATURA_VERSAO = "fatura_v4";
+export const PROMPT_FATURA_VERSAO = "fatura_prompt_v4";
+export const SCHEMA_FATURA_VERSAO_SEM_ENERGIA = "fatura_v3";
+export const PROMPT_FATURA_VERSAO_SEM_ENERGIA = "fatura_prompt_v3";
 
-export const PROMPT_FATURA = `És um extrator de dados da DoLado, uma plataforma portuguesa de apoio a consumidores.
+/** Leitura de electricidade e gás ligada? (MONITOR_ENERGIA_ATIVO=1; desligada por omissão) */
+export function energiaAtiva(valor: string | undefined = process.env.MONITOR_ENERGIA_ATIVO): boolean {
+  return valor === "1";
+}
+
+// Prompt da fatura_prompt_v3, sem alterações (a v4 acrescenta PROMPT_ENERGIA).
+export const PROMPT_FATURA_SEM_ENERGIA = `És um extrator de dados da DoLado, uma plataforma portuguesa de apoio a consumidores.
 
 Analisa exclusivamente o documento fornecido e devolve os campos exigidos pelo schema.
 
@@ -37,6 +55,9 @@ Regras:
 - Para fornecedor, total, mensalidade, data_fim_fidelizacao e valor_cessacao indica a página (a primeira é 1) e um excerto curto (até 150 caracteres) do texto onde encontraste o valor.
 - Nas linhas, os descontos têm valor negativo. "credito" é um acerto ou devolução pontual a favor do cliente (valor negativo). "consumo" são chamadas, dados ou outros consumos fora do pacote.
 - Em "identificacao" copia exatamente o que está escrito no documento (texto vazio se não existir): nome do titular, NIF do titular, número de cliente, número/referência da conta, número do serviço (telefone, CPE ou CUI) e número da fatura. Não confundas o NIF do fornecedor com o NIF do titular.`;
+
+export const PROMPT_FATURA = `${PROMPT_FATURA_SEM_ENERGIA}
+${PROMPT_ENERGIA}`;
 
 export const CONFIANCAS = ["high", "medium", "low", "not_found", "ambiguous"] as const;
 export type Confianca = (typeof CONFIANCAS)[number];
@@ -102,6 +123,7 @@ export const SCHEMA_FATURA = {
     "data_referencia_cessacao",
     "identificacao",
     "linhas",
+    "energia",
   ],
   properties: {
     tipo_documento: { type: "string", enum: ["fatura", "contrato", "outro"] },
@@ -132,8 +154,28 @@ export const SCHEMA_FATURA = {
         },
       },
     },
+    energia: SCHEMA_ENERGIA,
   },
 } as const;
+
+/** Schema da fatura_v3 (sem o bloco de energia). */
+export const SCHEMA_FATURA_SEM_ENERGIA = {
+  ...SCHEMA_FATURA,
+  required: SCHEMA_FATURA.required.filter((c) => c !== "energia"),
+  properties: Object.fromEntries(Object.entries(SCHEMA_FATURA.properties).filter(([c]) => c !== "energia")),
+};
+
+/** Schema, prompt e versões da leitura de facturas em uso. */
+export function leituraFatura(comEnergia: boolean = energiaAtiva()) {
+  return comEnergia
+    ? { schema: SCHEMA_FATURA, prompt: PROMPT_FATURA, schemaVersao: SCHEMA_FATURA_VERSAO, promptVersao: PROMPT_FATURA_VERSAO }
+    : {
+        schema: SCHEMA_FATURA_SEM_ENERGIA,
+        prompt: PROMPT_FATURA_SEM_ENERGIA,
+        schemaVersao: SCHEMA_FATURA_VERSAO_SEM_ENERGIA,
+        promptVersao: PROMPT_FATURA_VERSAO_SEM_ENERGIA,
+      };
+}
 
 // ---------------------------------------------------------------------------
 // Validação de domínio
@@ -189,6 +231,8 @@ export type FaturaNormalizada = {
   linhas: LinhaFatura[];
   cessacaoOperadorCents: number | null;
   dataFimFidelizacao: string | null;
+  /** Electricidade e gás: um elemento por fornecimento (fatura_v4). [] nos outros sectores. */
+  energia: FornecimentoEnergia[];
 };
 
 export type ResultadoValidacao =
@@ -214,36 +258,17 @@ export const SETORES_FATURA = ["telecomunicacoes", "eletricidade", "gas", "agua"
 export type SetorFatura = (typeof SETORES_FATURA)[number];
 
 const CAMPOS_CRITICOS = ["fornecedor", "total", "mensalidade", "data_fim_fidelizacao", "valor_cessacao"] as const;
-const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 // Diferença tolerada entre o total e a soma das linhas (arredondamentos).
 const TOLERANCIA_TOTAL_CENTS = 5;
 
 type Campo = { valor: unknown; confianca: unknown; pagina: unknown; evidencia: unknown };
 
-export function ehObjeto(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
 
 function ehCampo(v: unknown): v is Campo {
   return ehObjeto(v) && "valor" in v && CONFIANCAS.includes(v.confianca as Confianca);
 }
 
-export function dataValida(v: unknown): v is string {
-  if (typeof v !== "string" || !DATA_ISO.test(v)) return false;
-  const d = new Date(`${v}T00:00:00Z`);
-  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
-}
 
-// Aceita número ou texto numérico ("42.99", "42,99").
-export function paraCents(v: unknown): number | null {
-  if (typeof v === "string") {
-    const t = v.trim().replace(",", ".");
-    if (!/^-?\d+(\.\d+)?$/.test(t)) return null;
-    v = Number(t);
-  }
-  if (typeof v !== "number" || !Number.isFinite(v)) return null;
-  return Math.round(v * 100);
-}
 
 // Converte a saída do schema v2 (sem nulls) para a forma interna: "" → null,
 // página 0 → null. Idempotente para valores já normalizados.
@@ -269,11 +294,6 @@ function somarDias(iso: string, dias: number) {
   return d.toISOString().slice(0, 10);
 }
 
-export function textoCurto(v: unknown, max: number): string | null {
-  if (typeof v !== "string") return null;
-  const t = v.replace(/\s+/g, " ").trim();
-  return t ? t.slice(0, max) : null;
-}
 
 export function pagina(v: unknown): number | null {
   return typeof v === "number" && Number.isInteger(v) && v > 0 ? v : null;
@@ -288,8 +308,8 @@ export function lerIdentificacao(bruto: unknown, mapa: Record<string, TipoIdenti
   for (const [campo, tipo] of Object.entries(mapa)) {
     const v = textoCurto(bruto[campo], 120);
     if (!v) continue;
-    // NIF já pseudonimizado (protegerExtracao): a apresentação mascarada vem à parte.
-    const apresentacao = tipo === "nif_titular" ? textoCurto(bruto.nif_titular_apresentacao, 60) : null;
+    // NIF e CPE/CUI já pseudonimizados: a apresentação mascarada vem à parte.
+    const apresentacao = tipo === "titular" ? null : textoCurto(bruto[`${campo}_apresentacao`], 60);
     out.push(apresentacao ? { tipo, valor: v, apresentacao } : { tipo, valor: v });
   }
   return out;
@@ -419,6 +439,15 @@ export function validarExtracaoFatura(entrada: unknown, hoje: string): Resultado
   if (refContrato) identificacao.push({ tipo: "referencia_contrato", valor: refContrato });
   const numeroFatura = ehObjeto(bruto.identificacao) ? textoCurto(bruto.identificacao.numero_fatura, 60) : null;
 
+  // Electricidade e gás: fornecimentos normalizados. O CPE/CUI só chega aqui
+  // já pseudonimizado (protegerExtracao) e identifica o local de fornecimento.
+  const energia = normalizarEnergia(bruto.energia, String(bruto.setor), totalCents);
+  for (const e of energia) {
+    if (e.local) identificacao.push({ tipo: e.tipo === "gas" ? "cui" : "cpe", valor: e.local, apresentacao: e.localApresentacao });
+    for (const a of e.avisos) avisos.push(`energia: ${a}`);
+    if (e.reconciliado === false) avisos.push(`energia: componentes de ${e.tipo} não somam o total`);
+  }
+
   // Informação contratual explícita na fatura (nível 2): só o fim da
   // fidelização e o valor de cessação, com origem "Lido da fatura".
   propor("data_fim_fidelizacao", fimFidelizacao, dataFimFidelizacao);
@@ -447,6 +476,7 @@ export function validarExtracaoFatura(entrada: unknown, hoje: string): Resultado
       linhas,
       cessacaoOperadorCents: CONFIANCA_SUFICIENTE.includes(cessacao.confianca as Confianca) ? cessacaoCents : null,
       dataFimFidelizacao: CONFIANCA_SUFICIENTE.includes(fimFidelizacao.confianca as Confianca) ? dataFimFidelizacao : null,
+      energia,
     },
     propostas,
     precisaRevisao,

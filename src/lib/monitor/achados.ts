@@ -15,6 +15,13 @@ export const ROTULO_ACHADO: Record<string, string> = {
   possivel_duplicado: "Possível cobrança em duplicado",
   fidelizacao_diferente: "Fim da fidelização diferente do contrato",
   diferenca_nao_explicada: "Diferença não explicada",
+  // Electricidade e gás (energia_v1)
+  energia_preco_alterado: "Preço da energia por kWh subiu",
+  energia_termo_fixo_alterado: "Preço diário fixo (potência ou termo fixo) subiu",
+  energia_potencia_alterada: "Potência contratada aumentou",
+  energia_tarifario_alterado: "Opção horária ou tipo de tarifário mudou",
+  energia_acerto_relevante: "Acerto de valor relevante",
+  energia_servico_adicional: "Serviço adicional novo ou mais caro",
 };
 
 /**

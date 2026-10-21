@@ -139,7 +139,7 @@ describe("alterar o tipo de um documento (Supabase real)", { skip: !ATIVO && "s√
     ({ MODELO_DOCUMENTOS: MODELO } = await import("@/lib/claude"));
     const f = await import("@/lib/monitor/extracaoFatura");
     const ct = await import("@/lib/monitor/extracaoContrato");
-    VERSAO_FATURA = { schema: f.SCHEMA_FATURA_VERSAO, prompt: f.PROMPT_FATURA_VERSAO };
+    VERSAO_FATURA = { schema: f.leituraFatura().schemaVersao, prompt: f.leituraFatura().promptVersao };
     VERSAO_CONTRATO = { schema: ct.SCHEMA_CONTRATO_VERSAO, prompt: ct.PROMPT_CONTRATO_VERSAO };
     revisor = await criarConta({ role: "admin" });
   });

@@ -24,6 +24,9 @@ import { diasAte, formatarEurosCents, proximaData, type ProximaData } from "./co
 import { emCurso } from "./processamento.ts";
 import type { Idioma } from "../../i18n/config.ts";
 import { tMonitor } from "../../i18n/mensagens/monitor.ts";
+import { tMonitorEnergia } from "../../i18n/mensagens/monitorEnergia.ts";
+import { precoUnitario, quantidade } from "./frasesEnergia.ts";
+import { PROBLEMA_FACTURA_ACERTO } from "../pedidoCaso.ts";
 
 // Textos (pt-PT e en-GB): src/i18n/mensagens/*/monitor.ts. Todas as funções
 // aceitam o idioma; por omissão português (e-mail mensal, backoffice, testes).
@@ -336,6 +339,55 @@ export function situacaoDe(
     }
     case "cessacao_divergente":
       return { ...base, causas: CAUSAS.cessacao, problema: "Fidelização ou penalização", curto: t.curtoCessacao };
+    // ---- Electricidade e gás (energia_v1) ----------------------------------
+    case "energia_preco_alterado":
+    case "energia_termo_fixo_alterado":
+    case "energia_potencia_alterada":
+    case "energia_tarifario_alterado": {
+      const te = tMonitorEnergia[idioma].situacao;
+      const curto = {
+        energia_preco_alterado: te.curtoPreco,
+        energia_termo_fixo_alterado: te.curtoTermoFixo,
+        energia_potencia_alterada: te.curtoPotencia,
+        energia_tarifario_alterado: te.curtoTarifario,
+      }[tipo];
+      const valores =
+        tipo === "energia_termo_fixo_alterado" && num(d.anterior) != null && num(d.atual) != null
+          ? {
+              antes: { rotulo: te.antes, valor: precoUnitario(num(d.anterior), "dia", idioma) },
+              agora: { rotulo: te.agora, valor: precoUnitario(num(d.atual), "dia", idioma) },
+              ...(e?.montanteCents ? { diferenca: { rotulo: te.diferenca, valor: `+${eur(e.montanteCents)}` } } : {}),
+            }
+          : null;
+      return {
+        ...base,
+        resumo: e ? fraseEvento({ tipo, base: "historico", montanteCents: e.montanteCents, dados: d }, idioma) : null,
+        valores,
+        causas: te.causas.preco,
+        problema: "Aumento de mensalidade",
+        curto,
+      };
+    }
+    case "energia_acerto": {
+      const te = tMonitorEnergia[idioma].situacao;
+      return {
+        ...base,
+        resumo: e ? fraseEvento({ tipo, base: "historico", montanteCents: e.montanteCents, dados: d }, idioma) : null,
+        causas: te.causas.acerto,
+        problema: PROBLEMA_FACTURA_ACERTO,
+        curto: e?.montanteCents != null ? te.curtoAcerto(eur(e.montanteCents)) : te.curtoAcerto(""),
+      };
+    }
+    case "energia_servico_adicional": {
+      const te = tMonitorEnergia[idioma].situacao;
+      return {
+        ...base,
+        resumo: e ? fraseEvento({ tipo, base: "historico", montanteCents: e.montanteCents, dados: d }, idioma) : null,
+        causas: te.causas.servico,
+        problema: "Cobrança indevida",
+        curto: te.curtoServico,
+      };
+    }
     default:
       return base;
   }
@@ -389,6 +441,8 @@ export function resultadoServico(s: EntradaServico, hoje: string, idioma: Idioma
   const temEvento = (tipo: string) => eventosUltima.some((e) => e.tipo === tipo);
   const emVerificacao = s.faturas.some((f) => f.emVerificacao);
   const ultimaEmVerificacao = !!ultima?.emVerificacao;
+  // Electricidade e gás com dados por fornecimento: não há "mensalidade".
+  const energiaUltima = ultima?.energia?.length ? ultima.energia : null;
 
   const condicao = (campo: string) => {
     const x = s.campos[campo];
@@ -410,7 +464,23 @@ export function resultadoServico(s: EntradaServico, hoje: string, idioma: Idioma
   // ---- O que verificámos -------------------------------------------------
   const verificacoes: Verificacao[] = [];
   const mensalidadeRef = temContrato && s.mensalidadeContratadaCents != null ? s.mensalidadeContratadaCents : c?.mensalidadeCents ?? null;
-  if (temContrato && s.mensalidadeContratadaCents != null) {
+  if (energiaUltima) {
+    const te = tMonitorEnergia[idioma];
+    if (ultima?.totalCents != null) verificacoes.push({ rotulo: te.servico.ultimaFatura, valor: eur(ultima.totalCents), detalhe: mesUltima ?? undefined });
+    for (const f of energiaUltima) {
+      const nome = te.fornecimento[f.tipo];
+      if (f.consumoKwh != null && f.dias) {
+        verificacoes.push({
+          rotulo: te.servico.consumoDia(nome),
+          valor: quantidade(Math.round((f.consumoKwh / f.dias) * 100) / 100, "kwh", idioma),
+          detalhe: f.tipoLeitura === "estimada" || f.tipoLeitura === "mista" ? te.servico.estimada : undefined,
+        });
+      }
+      const precos = [...new Set(f.energia.map((p) => p.precoMicro).filter((p): p is number => p != null))];
+      if (precos.length === 1) verificacoes.push({ rotulo: te.servico.precoEnergia(nome), valor: precoUnitario(precos[0], "kwh", idioma) });
+      if (f.potenciaKva != null) verificacoes.push({ rotulo: te.servico.potencia, valor: quantidade(f.potenciaKva, "kva", idioma) });
+    }
+  } else if (temContrato && s.mensalidadeContratadaCents != null) {
     verificacoes.push({
       rotulo: t.mensalidadeContrato,
       valor: eur(s.mensalidadeContratadaCents),
@@ -453,14 +523,16 @@ export function resultadoServico(s: EntradaServico, hoje: string, idioma: Idioma
   const servico = texto(condicao("servico")?.valor);
   if (servico) verificacoes.push({ rotulo: t.servico, valor: servico });
   // Verificações sem resultado negativo só quando não há nada por rever.
-  if (ultima && ultima.linhas.length > 0 && !ultimaEmVerificacao) {
+  // (Electricidade e gás: estas verificações das linhas não se aplicam — a
+  // comparação própria trata dos serviços adicionais e dos descontos.)
+  if (ultima && !energiaUltima && ultima.linhas.length > 0 && !ultimaEmVerificacao) {
     if (!temEvento("possivel_duplicado")) verificacoes.push({ rotulo: t.duplicados, valor: t.nenhumaEncontrada });
     if (ordenadas.length >= 2 && !temEvento("cobranca_recorrente_nova")) {
       verificacoes.push({ rotulo: t.cobrancasNovas, valor: t.nenhumaFaceAnteriores });
     }
   }
-  if (c && c.consumosCents > 0) verificacoes.push({ rotulo: t.consumoAdicional, valor: eur(c.consumosCents), detalhe: t.naFaturaDe(mesUltima ?? "") });
-  if (c && c.pontuaisCents > 0) verificacoes.push({ rotulo: t.cobrancasPontuais, valor: eur(c.pontuaisCents), detalhe: t.naFaturaDe(mesUltima ?? "") });
+  if (c && !energiaUltima && c.consumosCents > 0) verificacoes.push({ rotulo: t.consumoAdicional, valor: eur(c.consumosCents), detalhe: t.naFaturaDe(mesUltima ?? "") });
+  if (c && !energiaUltima && c.pontuaisCents > 0) verificacoes.push({ rotulo: t.cobrancasPontuais, valor: eur(c.pontuaisCents), detalhe: t.naFaturaDe(mesUltima ?? "") });
   if (c && c.creditosCents > 0) verificacoes.push({ rotulo: t.credito, valor: eur(c.creditosCents), detalhe: t.naFaturaDe(mesUltima ?? "") });
 
   // ---- O que vamos acompanhar ---------------------------------------------
@@ -470,16 +542,19 @@ export function resultadoServico(s: EntradaServico, hoje: string, idioma: Idioma
     if (fimFidelizacao && diasAte(fimFidelizacao, hoje) >= 0) {
       atentos.push({ texto: t.atentoFimFidelizacao(extenso(fimFidelizacao, hoje)), data: fimFidelizacao });
     }
-    if (mensalidadeRef != null) atentos.push({ texto: t.atentoMensalidade(eur(mensalidadeRef)) });
+    if (energiaUltima) {
+      const te = tMonitorEnergia[idioma].servico;
+      atentos.push({ texto: te.atentoPrecos }, { texto: te.atentoConsumo }, { texto: te.atentoServicos });
+    } else if (mensalidadeRef != null) atentos.push({ texto: t.atentoMensalidade(eur(mensalidadeRef)) });
     const descontoAcompanhado = descontoContrato || (c?.descontoCents ?? 0);
     if (descontoAcompanhado > 0) atentos.push({ texto: t.atentoDesconto(eur(descontoAcompanhado)) });
-    if (s.faturas.some((f) => f.linhas.length > 0)) atentos.push({ texto: t.atentoCobrancas });
+    if (!energiaUltima && s.faturas.some((f) => f.linhas.length > 0)) atentos.push({ texto: t.atentoCobrancas });
   }
 
   // ---- O que ainda não conseguimos confirmar ------------------------------
   const pendente = new Set(s.porConfirmar.campos);
   const lacunas: string[] = [];
-  if (ultima && c?.mensalidadeCents == null && !temContrato) lacunas.push(t.lacunaMensalidade);
+  if (ultima && !energiaUltima && c?.mensalidadeCents == null && !temContrato) lacunas.push(t.lacunaMensalidade);
   if (s.setor === "telecomunicacoes" && (ultima || temContrato) && !fimFidelizacao && !pendente.has("data_fim_fidelizacao")) {
     lacunas.push(t.lacunaFidelizacao);
   }
@@ -522,7 +597,7 @@ export function resultadoServico(s: EntradaServico, hoje: string, idioma: Idioma
       break;
     }
     case "verificado":
-      if (ultima && c?.mensalidadeCents == null && !temContrato) {
+      if (ultima && !energiaUltima && c?.mensalidadeCents == null && !temContrato) {
         titulo = ordenadas.length === 1 ? t.primeiraFaturaTitulo : t.novaFaturaTitulo;
         textoPrincipal = t.semMensalidadeTexto;
       } else if (primeira) {

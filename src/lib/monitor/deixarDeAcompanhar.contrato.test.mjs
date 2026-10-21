@@ -173,7 +173,7 @@ describe("deixar de acompanhar até ao último serviço (Supabase real)", { skip
     ({ MODELO_DOCUMENTOS: MODELO } = await import("@/lib/claude"));
     const f = await import("@/lib/monitor/extracaoFatura");
     const ct = await import("@/lib/monitor/extracaoContrato");
-    VERSAO_FATURA = { schema: f.SCHEMA_FATURA_VERSAO, prompt: f.PROMPT_FATURA_VERSAO };
+    VERSAO_FATURA = { schema: f.leituraFatura().schemaVersao, prompt: f.leituraFatura().promptVersao };
     VERSAO_CONTRATO = { schema: ct.SCHEMA_CONTRATO_VERSAO, prompt: ct.PROMPT_CONTRATO_VERSAO };
     intercetar();
   });

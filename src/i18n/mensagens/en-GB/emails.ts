@@ -179,6 +179,7 @@ export const emails: Traducao<typeof pt> = {
     acompanhamosEm: (mes: string) => `What we kept track of in ${mes}`,
     alteracoes: "Changes spotted",
     continuaAtiva: "Your Protection remains active",
+    energia: "Why the amount on your bills changed",
     proximaData: "Next relevant date",
     botaoAdicionar: "Add a document",
     botaoVer: "View my Protection",
@@ -194,6 +195,7 @@ export const emails: Traducao<typeof pt> = {
     fimDe: (servico: string, promocao: boolean, data: string) => `${servico} — end of the ${promocao ? "promotion" : "minimum term"} on ${data}`,
     comparacaoFaturas: (servicos: string) => `Bill comparison — ${servicos}`,
     situacao: (servico: string, curto: string, data: string) => `${servico}: ${curto} (notified on ${data})`,
+    energiaLinha: (servico: string, frase: string) => `${servico}: ${frase}`,
     estados: {
       tudo_acompanhado: [
         "Everything is being tracked",

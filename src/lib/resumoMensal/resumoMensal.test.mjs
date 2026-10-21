@@ -195,6 +195,74 @@ describe("conteúdo do resumo", () => {
 });
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+describe("electricidade e gás: porque mudou o valor (resumo_v5)", () => {
+  const variacao = {
+    fornecimento: "eletricidade",
+    tipo: "eletricidade",
+    anteriorId: "fa",
+    totalAnteriorCents: 5000,
+    totalAtualCents: 5900,
+    diferencaCents: 900,
+    componentes: [{ chave: "consumo", cents: 900 }],
+    arredondamentoCents: 0,
+    naoExplicadoCents: 0,
+    parcial: false,
+    certeza: "alta",
+    estruturaCompativel: true,
+    estimada: false,
+    diasAnterior: 30,
+    diasAtual: 30,
+    consumoDiaAnterior: 6.67,
+    consumoDiaAtual: 8.67,
+  };
+  const evento = (faturaId, over = {}) => ({
+    faturaId,
+    tipo: "energia_variacao",
+    base: "historico",
+    severidade: "info",
+    montanteCents: 900,
+    dados: variacao,
+    achadoId: null,
+    criadoEm: "2026-09-05T10:00:00Z",
+    ...over,
+  });
+
+  test("a explicação das facturas do mês entra no resumo, no e-mail e no texto", () => {
+    const f = fatura("2026-09-05T10:00:00Z", { energia: [{ tipo: "eletricidade", energia: [] }] });
+    const antiga = fatura("2026-08-05T10:00:00Z", { energia: [{ tipo: "eletricidade", energia: [] }] });
+    const r = montarResumoMensal(
+      [servico({ nome: "EDP", setor: "eletricidade", faturas: [antiga, f], eventos: [evento(f.id), evento(antiga.id)] })],
+      MES,
+      HOJE,
+    );
+    assert.equal(r.versao, "resumo_v5");
+    assert.equal(r.energia.length, 1); // só a factura registada em Setembro
+    assert.match(norm(r.energia[0]), /^EDP: A factura de electricidade foi 9,00 € mais alta do que a anterior: consumo de energia \+9,00 €\.$/);
+    assert.match(norm(montarHtmlResumoMensal(r, SITE)), /Porque mudou o valor das suas facturas/);
+    assert.match(norm(montarTextoResumoMensal(r, SITE)), /EDP: A factura de electricidade/);
+  });
+
+  test("telecomunicações e eventos por rever não entram nesta secção", () => {
+    const f = fatura("2026-09-05T10:00:00Z");
+    const r = montarResumoMensal([servico({ faturas: [f], eventos: [evento(f.id)] })], MES, HOJE);
+    assert.deepEqual(r.energia, []);
+    assert.doesNotMatch(montarHtmlResumoMensal(r, SITE), /Porque mudou o valor/);
+  });
+
+  test("factura em verificação: a explicação espera pela revisão da DoLado", () => {
+    const f = fatura("2026-09-05T10:00:00Z", { energia: [{ tipo: "eletricidade", energia: [] }], emVerificacao: true });
+    const r = montarResumoMensal([servico({ nome: "EDP", faturas: [f], eventos: [evento(f.id)] })], MES, HOJE);
+    assert.deepEqual(r.energia, []);
+  });
+
+  test("em inglês", () => {
+    const f = fatura("2026-09-05T10:00:00Z", { energia: [{ tipo: "eletricidade", energia: [] }] });
+    const r = montarResumoMensal([servico({ nome: "EDP", faturas: [f], eventos: [evento(f.id)] })], MES, HOJE, "en-GB");
+    assert.match(norm(r.energia[0]), /^EDP: The electricity bill was €9\.00 higher than the previous one/);
+  });
+});
+
 describe("e-mail", () => {
   test("assunto, secções, versão em texto e escape dos nomes", () => {
     const r = montarResumoMensal(

@@ -83,6 +83,27 @@ Detectado na revisão da landing `/30-dias-gratis`. **Decisão de Thiago (e, se 
 - **Proposta para a próxima versão dos Termos:** «se faltarem menos de 49 horas (cerca de 2 dias) para o fim do período, a primeira cobrança é feita no dia da adesão». Alternativa sem mudar os Termos: nenhuma (o limite de 48 h do Stripe não permite baixar o código para 48 h exactas).
 - **Textos públicos que omitem a excepção** (dizem só «a primeira cobrança só é feita quando ele terminar»): `protecaoGratuita.precario.condicao.texto` e `protecaoGratuita.faq.fim.resposta` (`src/i18n/mensagens/{pt-PT,en-GB}/protecaoGratuita.ts`, usados em `/precario`, `/protecao` e nas perguntas frequentes). A landing já foi corrigida («se faltarem menos de 2 dias, é feita no dia da adesão»). Acertar o resto com a mesma redacção que for decidida para os Termos.
 
+## Monitor de Protecção: electricidade e gás (21 de Outubro de 2026)
+
+Origem: [auditoria-monitor-energia-2026-10-21.md](auditoria-monitor-energia-2026-10-21.md), secção 3. A Fase 1 é só factual (sem regras jurídicas); estes pontos bloqueiam apenas a **Fase 2**.
+
+### Para a advogada
+
+- [ ] Subida do preço durante a fidelização (RRC, art. 19.º, n.º 5): sinal ao revisor e texto ao cliente.
+- [ ] Fidelização + tarifário indexado/dinâmico (art. 19.º, n.º 7): confirmar a proibição e o texto do aviso.
+- [ ] Aviso prévio de 30 dias (art. 68.º): validar "Confirme se recebeu uma comunicação do comercializador sobre esta alteração".
+- [ ] Repercussão das tarifas de acesso às redes num contrato de preço fixo: quando conta como alteração das condições.
+- [ ] Acertos com consumos de mais de 6 meses (Lei n.º 23/96, art. 10.º): sinal ao revisor e texto.
+- [ ] Serviços adicionais: validar "Se não pediu este serviço, vale a pena confirmar com o comercializador".
+- [ ] Custo de saída em energia (art. 19.º, n.os 9 a 11): só o valor indicado pelo comercializador, com que ressalvas.
+- [ ] Comparação de ofertas com o simulador da ERSE: condições de utilização e linguagem.
+- [ ] Política de Privacidade/DPIA: consumo por período horário, potência e preços estruturados a partir das facturas.
+
+### Revisões
+
+- [ ] Confirmar os arts. 17.º, 19.º, 41.º, 42.º, 44.º, 68.º e 81.º do RRC no texto consolidado posterior ao Regulamento n.º 8/2026 e a qualquer outro acto de 2026.
+- [ ] Depois de ligar `MONITOR_ENERGIA_ATIVO`: decidir a frase sobre electricidade e gás em `/protecao` (pt e en).
+
 ## Validações confirmadas (20 de Outubro de 2026)
 
 Confirmadas por Thiago a 20/10/2026:

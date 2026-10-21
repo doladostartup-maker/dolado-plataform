@@ -28,7 +28,13 @@ export const EXCECOES: { ficheiro: string; contem: string; motivo: string }[] = 
     ficheiro: "src/lib/monitor/extracaoFatura.ts",
     contem: "És um extrator de dados da DoLado",
     motivo:
-      "Prompt de extracção factual (fatura_prompt_v3): não produz texto para o cliente e mudar o texto obriga a nova versão das leituras. Rever na próxima versão do prompt.",
+      "Prompt de extracção factual (fatura_prompt_v3, reutilizado na v4): não produz texto para o cliente e mudar o texto obriga a nova versão das leituras. Rever na próxima versão do prompt.",
+  },
+  {
+    ficheiro: "src/lib/monitor/energia.ts",
+    contem: "Bloco \"energia\" (só em facturas de electricidade",
+    motivo:
+      "Parte do prompt de extracção fatura_prompt_v4: cita os valores fixos do schema (\"eletricidade\", \"gas\"), que são identificadores técnicos e não texto para o cliente.",
   },
   {
     ficheiro: "src/lib/monitor/servidor.ts",
