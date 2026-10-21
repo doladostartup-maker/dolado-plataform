@@ -234,7 +234,9 @@ select is(
                            'parceiro_pacote_emitir_codigos', 'parceiro_registar_fatura', 'parceiro_registar_pagamento',
                            'parceiro_registar_visita', 'parceiro_relatorio_distribuicao', 'parceiro_reverter_fatura',
                            'parceiro_subscricao_terminada', 'parceiro_validar_comissao', 'parceiros_registar_historico',
-                           'parceiros_resumo_comissoes')), 0::bigint,
+                           'parceiros_resumo_comissoes',
+                           'comunicacoes_reservar_confirmacao', 'comunicacoes_libertar_confirmacao', 'comunicacoes_confirmar',
+                           'comunicacoes_retirar', 'comunicacoes_destinatarios')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em
