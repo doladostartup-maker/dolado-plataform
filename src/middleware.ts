@@ -71,6 +71,8 @@ const ROTAS_SEM_REFRESH_DE_SESSAO = [
   "/api/indicacoes/visita",
   // Webhook de receção de respostas (Resend): sem sessão, como o do Stripe.
   "/api/webhooks/resend/inbound",
+  // "Deixar de receber" num clique (cliente de e-mail, sem cookies).
+  "/api/comunicacoes/deixar-de-receber",
 ];
 
 // Só estas páginas de marketing fazem sentido em dolado.pt (sem "portal.").

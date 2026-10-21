@@ -246,4 +246,19 @@ export const emails: Traducao<typeof pt> = {
     dica: "A tip: have a recent bill and the previous month's bill for the same service to hand. The first checks only take a few minutes.",
     rodape: "You are receiving this email because you asked for the free guide on dolado.pt. It is not a subscription: we will not send you other messages because of this request.",
   },
+  confirmacaoComunicacoes: {
+    assunto: "Confirm that you want to receive emails from DoLado",
+    titulo: "Confirm your email address",
+    preheader: "One more step to receive tips and news from DoLado.",
+    ola: "Hello,",
+    texto: "You asked to receive tips, news and other communications from DoLado by email. To make sure this address is yours, please confirm using the button below.",
+    botao: "Confirm my email",
+    validade: "The link is valid for 30 days. If you do not confirm, we will not send you any communications.",
+    naoFoi: "If you did not ask for this, please ignore this email: without confirmation, we will not send you anything.",
+    rodape: "You are receiving this email because you ticked the box to receive communications from DoLado when you asked for a free guide on dolado.pt.",
+  },
+  comercial: {
+    rodape: "You are receiving this email because you authorised DoLado to send you communications by email.",
+    deixarDeReceber: "Stop receiving these emails",
+  },
 };

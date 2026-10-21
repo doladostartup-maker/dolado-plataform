@@ -254,4 +254,19 @@ export const emails = {
     dica: "Uma sugestão: tenha à mão uma factura recente e a do mês anterior do mesmo serviço. As primeiras verificações demoram poucos minutos.",
     rodape: "Recebe este e-mail porque pediu o guia gratuito em dolado.pt. Não é uma subscrição: não lhe enviaremos outras mensagens por causa deste pedido.",
   },
+  confirmacaoComunicacoes: {
+    assunto: "Confirme que quer receber e-mails da DoLado",
+    titulo: "Confirme o seu endereço de e-mail",
+    preheader: "Falta um passo para receber dicas e novidades da DoLado.",
+    ola: "Olá,",
+    texto: "Pediu para receber dicas, novidades e comunicações da DoLado por e-mail. Para termos a certeza de que este endereço é seu, confirme no botão abaixo.",
+    botao: "Confirmar o meu e-mail",
+    validade: "A ligação é válida durante 30 dias. Se não confirmar, não lhe enviamos nenhuma comunicação.",
+    naoFoi: "Se não foi o próprio a pedir, ignore este e-mail: sem confirmação, não lhe enviamos nada.",
+    rodape: "Recebe este e-mail porque marcou a caixa para receber comunicações da DoLado ao pedir um guia gratuito em dolado.pt.",
+  },
+  comercial: {
+    rodape: "Recebe este e-mail porque autorizou a DoLado a enviar-lhe comunicações por e-mail.",
+    deixarDeReceber: "Deixar de receber estes e-mails",
+  },
 };

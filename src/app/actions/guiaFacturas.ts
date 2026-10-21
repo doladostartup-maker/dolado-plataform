@@ -17,6 +17,7 @@ import {
 import { CONSENTIMENTO_COMUNICACOES_GUIA_VERSAO, TEXTO_CONSENTIMENTO_COMUNICACOES_GUIA } from "@/lib/legal";
 import { excedeuLimiteTaxa } from "@/lib/rateLimit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { enviarConfirmacaoSePreciso } from "@/lib/comunicacoesComerciais/servidor";
 import { normalizarIdioma } from "@/i18n/config";
 
 // Pedido do guia gratuito (/guia-facturas). Sem sessão e sem conta: valida o
@@ -88,6 +89,11 @@ export async function pedirGuiaFacturas(_anterior: EstadoGuia, form: FormData): 
       }
     });
   }
+
+  // Autorização comercial: só vale depois de confirmar o endereço (dupla
+  // confirmação). O e-mail de confirmação é separado do guia e sai no máximo
+  // uma vez por 24 h; nunca afecta o pedido.
+  if (comunicacoes) after(() => enviarConfirmacaoSePreciso(email, idioma));
 
   return { ok: true, ficheiro: FICHEIRO_GUIA_FACTURAS, email: resultado.enviar_email ? "enviado" : "recente" };
 }

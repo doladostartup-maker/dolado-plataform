@@ -68,7 +68,9 @@ Origem: [revisao-juridica.md](../../conteudos/guia-facturas/revisao-juridica.md)
 
 - [x] **Política de Privacidade:** versão `2026-10-22` com o guia gratuito e a autorização comercial sem conta (validada pela advogada, confirmado por Thiago a 22/10/2026).
 - [ ] **Conteúdo do e-book:** pontos A1–A5 da revisão jurídica (LCE art. 129.º, prazo do Livro de Reclamações, actualizações de preço previstas no contrato, água sem fidelização, modelo de pedido de esclarecimento).
-- [ ] **Antes do primeiro envio comercial:** dupla confirmação do endereço (`confirmado_em`) e ligação para deixar de receber em cada e-mail. Ainda não há envios.
+- [x] **Antes do primeiro envio comercial:** dupla confirmação do endereço (`confirmado_em`) e ligação para deixar de receber em cada e-mail — construídas a 21/10/2026 (migration `20261024090000`). Ainda não há envios.
+- [ ] **Política de Privacidade:** confirmar com a advogada se a próxima versão deve mencionar o e-mail de confirmação do endereço e o registo da data da confirmação (prova do consentimento). Não bloqueia: a confirmação reforça a autorização já descrita.
+- [ ] **Autorizações sem conta nunca confirmadas:** hoje ficam guardadas (nunca dão envios). Decidir um prazo de conservação e acrescentá-lo à limpeza.
 - [x] **Prazos de conservação:** 12 meses para os pedidos; 3 anos para a prova das autorizações retiradas (validados com a Política `2026-10-22`).
 - [ ] **Revisão periódica do e-book:** sempre que mudarem a LCE, o RRC/RQS da ERSE, o RRCAR ou a Lei n.º 23/96.
 
