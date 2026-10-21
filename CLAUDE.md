@@ -171,18 +171,19 @@ Objectivo: colaborador Remax (ou cliente B2C) vê o próprio caso.
 - Link do dossiê disponível quando preenchido no backoffice
 
 ### FASE 4 — Extras e automação
-Fases 1-3 confirmadas por Thiago em 24/09/2026 — Fase 4 em curso.
+Fases 1-3 confirmadas por Thiago em 24/09/2026. **Fase 4 encerrada a 21/10/2026** (decisão de Thiago): o que foi construído fica; os itens que faltavam não serão feitos.
 
 Já construído e em produção:
 - **Monitor de Proteção** (`/portal/contratos`, 02/10/2026) — substitui o Alerta de fim de fidelização, o Alerta de fim de promoção e o Comparador de Faturas; ver "Monitor de Proteção" abaixo
 - Aviso Sectorial (`/portal/perfil` + `/backoffice/avisos`) — sem IA, admin avisa por e-mail os clientes que subscreveram o setor
 - Simulador de Elegibilidade — **público e gratuito desde 01/10/2026** (`/simulador-elegibilidade`, ver "Simulador de Elegibilidade público" abaixo); já não é funcionalidade do portal nem da Proteção
 
-Ainda por construir:
-- Templates de texto (CRUD simples, substituição de variáveis `{{}}`, sem IA) — os textos-base já existem, pedir a Thiago o documento `templates-texto-reclamacoes.md`
-- Gerador de carta grátis público (reutiliza os mesmos templates)
-- Geração de dossiê em PDF, guardado no Supabase Storage
-- Email automático em mudança de estado (só email por agora, sem SMS — volume não justifica)
+Não serão feitos (decisão de Thiago, 21/10/2026 — ver "Explicitamente fora de escopo"):
+- Templates de texto (CRUD, substituição de variáveis `{{}}`) — o texto da reclamação continua a ser preparado no "Texto para envio", com a sugestão da IA sempre revista
+- Gerador de carta grátis público
+- E-mail automático em cada mudança de estado — ficam só os avisos ao cliente já existentes (acompanhamento, encerramento, pedidos de informação)
+
+A geração de dossiê em PDF, que também estava nesta lista, já existe ("Dossiê do Caso DoLado", ver "Encerramento com encaminhamento externo").
 
 ## Explicitamente fora de escopo — não construir sem decisão nova de Thiago
 
@@ -192,6 +193,7 @@ Ainda por construir:
 - Apple Sign In
 - Outros idiomas além de pt-PT e en-GB (ex.: francês) e tradução do backoffice
 - Hosting fora da Clever Cloud
+- Templates de texto, gerador de carta grátis público e e-mail automático em cada mudança de estado (Fase 4 encerrada a 21/10/2026)
 
 O simulador de elegibilidade e o uso de IA em geral **saíram** desta lista em 25/09/2026 — ver "Uso de IA" abaixo para as regras que passaram a aplicar-se em vez de uma exclusão total. Pagamentos/Stripe **saiu** desta lista na mesma data — ver "Pagamentos (Stripe)" abaixo.
 
