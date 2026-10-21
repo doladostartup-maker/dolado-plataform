@@ -588,7 +588,7 @@ describe("Protecção gratuita: adesão com a 1.ª cobrança no fim do período"
     assert.equal(recompensasDe(ANA).length, 0);
   });
 
-  test("Adesão com pagamento logo (menos de 49 h ou Caso + Protecção) decide no Checkout, como sempre", async () => {
+  test("Adesão com pagamento logo (menos de 48 h ou Caso + Protecção) decide no Checkout, como sempre", async () => {
     atribuir(BRUNO, ANA);
     await processar(evento("checkout.session.completed", sessaoSubscricao(BRUNO, PRECO_PROTECAO, { valor: 499, meta: { protecao_gratuita: "1" } })));
     assert.equal(e.indicacoes.get(BRUNO).estado, "compra_confirmada");

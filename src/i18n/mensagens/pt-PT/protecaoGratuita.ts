@@ -23,7 +23,7 @@ export const protecaoGratuita = {
     condicao: {
       titulo: "Protecção gratuita durante 30 dias",
       texto: (preco: string) =>
-        `Quem nunca teve a Protecção pode experimentá-la durante 30 dias, uma vez, sem cartão bancário. O período começa quando a activa e termina sozinho, sem cobrança. Para continuar, adere expressamente à Protecção por ${preco}/mês; se aderir durante o período gratuito, a primeira cobrança só é feita quando ele terminar. Não se aplica ao Caso + Protecção nem ao Avulso.`,
+        `Quem nunca teve a Protecção pode experimentá-la durante 30 dias, uma vez, sem cartão bancário. O período começa quando a activa e termina sozinho, sem cobrança. Para continuar, adere expressamente à Protecção por ${preco}/mês; se aderir durante o período gratuito, a primeira cobrança só é feita quando ele terminar (se faltarem menos de 2 dias, é feita no dia da adesão). Não se aplica ao Caso + Protecção nem ao Avulso.`,
     },
   },
 
@@ -177,7 +177,7 @@ export const protecaoGratuita = {
     fim: {
       pergunta: "O que acontece no fim dos 30 dias grátis?",
       resposta: (preco: string, meses: number) =>
-        `A Protecção gratuita termina sozinha, sem qualquer cobrança e sem criar uma subscrição. Para continuar, pode aderir à Protecção por ${preco}/mês; se aderir antes do fim, a primeira cobrança só é feita quando o período gratuito terminar. Se não aderir, os seus serviços e documentos ficam guardados durante ${meses} meses e voltam a ficar activos se aderir nesse prazo.`,
+        `A Protecção gratuita termina sozinha, sem qualquer cobrança e sem criar uma subscrição. Para continuar, pode aderir à Protecção por ${preco}/mês; se aderir antes do fim, a primeira cobrança só é feita quando o período gratuito terminar (se faltarem menos de 2 dias, é feita no dia da adesão). Se não aderir, os seus serviços e documentos ficam guardados durante ${meses} meses e voltam a ficar activos se aderir nesse prazo.`,
     },
   },
 

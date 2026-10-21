@@ -119,7 +119,7 @@ describe("adesão durante a oferta: cobrança no fim, sem cobrança automática 
     assert.equal(inicioCobrancaAdesao(periodoSemCusto(a), "caso_protecao", AGORA), null);
   });
 
-  test("a menos de 49 h do fim, a cobrança é no dia da adesão", () => {
+  test("a menos de 48 h (2 dias) do fim, a cobrança é no dia da adesão", () => {
     const a = acessoPatrocinadoDe(linha(91, 92), AGORA);
     assert.equal(inicioCobrancaAdesao(periodoSemCusto(a), "protecao", AGORA), null);
   });

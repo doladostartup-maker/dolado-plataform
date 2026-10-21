@@ -57,12 +57,25 @@ describe("adesão durante o período: quando começa a cobrança", () => {
     const g = protecaoGratuitaDe(linha(10), AGORA);
     const d = inicioCobrancaAdesao(g, "protecao", AGORA);
     assert.equal(d.toISOString(), g.fim);
-    assert.equal(trialEndStripe(d), Math.floor(new Date(g.fim).getTime() / 1000));
+    assert.equal(trialEndStripe(d, AGORA), Math.ceil(new Date(g.fim).getTime() / 1000));
   });
 
-  test("menos de 49 h por correr: cobrança no dia da adesão (limite do Stripe)", () => {
+  test("menos de 48 h (2 dias, Termos secção 5): cobrança no dia da adesão", () => {
     assert.equal(inicioCobrancaAdesao(protecaoGratuitaDe(linha(28.5), AGORA), "protecao", AGORA), null);
+    assert.equal(inicioCobrancaAdesao(protecaoGratuitaDe(linha(28.02), AGORA), "protecao", AGORA), null);
     assert.ok(inicioCobrancaAdesao(protecaoGratuitaDe(linha(27.9), AGORA), "protecao", AGORA));
+    // 48 h exactas e entre 48 h e 49 h: cobrança no fim do período (antes eram 49 h).
+    assert.ok(inicioCobrancaAdesao(protecaoGratuitaDe(linha(28), AGORA), "protecao", AGORA));
+    assert.ok(inicioCobrancaAdesao(protecaoGratuitaDe(linha(27.98), AGORA), "protecao", AGORA));
+  });
+
+  test("trial_end nunca abaixo do mínimo do Stripe; no máximo 5 minutos depois do fim", () => {
+    const g = protecaoGratuitaDe(linha(28), AGORA); // 48 h por correr
+    const d = inicioCobrancaAdesao(g, "protecao", AGORA);
+    const te = trialEndStripe(d, AGORA) * 1000;
+    assert.ok(te >= AGORA.getTime() + 48 * 3600 * 1000 + 5 * 60 * 1000);
+    assert.ok(te >= new Date(g.fim).getTime());
+    assert.ok(te - new Date(g.fim).getTime() <= 5 * 60 * 1000 + 1000);
   });
 
   test("Caso + Protecção e Avulso são cobrados logo; sem período em curso também", () => {
