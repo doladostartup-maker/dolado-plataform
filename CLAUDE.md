@@ -387,7 +387,7 @@ Especificação em `docs/especificacoes/` (F1/F2/F4 e Claude API); plano e decis
 
 ## Monitor de Protecção: electricidade e gás (21/10/2026)
 
-Fase 1, só factual: explicar porque mudou o valor de uma factura de electricidade ou gás (consumo × preço × outros), sem conclusões jurídicas. Especificação em `docs/especificacoes/MONITOR_ENERGIA_FASE1.md`; auditoria jurídica e pontos para a advogada (Fase 2) em `docs/legal/auditoria-monitor-energia-2026-10-21.md`. Migration `20261026090000_monitor_energia.sql` (aplicar com `db push` antes do merge que faz o deploy).
+Fase 1, só factual: explicar porque mudou o valor de uma factura de electricidade ou gás (consumo × preço × outros), sem conclusões jurídicas. Especificação em `docs/especificacoes/MONITOR_ENERGIA_FASE1.md`; auditoria jurídica e pontos para a advogada (Fase 2) em `docs/legal/auditoria-monitor-energia-2026-10-21.md`. Migration `20261026090000_monitor_energia.sql` (aplicada em produção a 21/10/2026).
 
 - **Leitura `fatura_v4`, desligada por omissão** (`MONITOR_ENERGIA_ATIVO=1` liga; sem ela, a leitura é a `fatura_v3` de sempre). O bloco "energia" é uma **lista de campos** (`{fornecimento, campo, periodo, descricao, valor}`, `src/lib/monitor/energia.ts`) por causa do limite da gramática dos structured outputs: o schema da factura tem 59 propriedades (limite prudente 60, teste em `monitor.test.mjs`) — **não acrescentar campos** sem outra abordagem. Antes de ligar: confirmar numa chamada real que a API aceita o schema (se recusar, falham todas as facturas, também as de telecomunicações).
 - **Dados:** `faturas_monitor.energia` (um elemento por fornecimento; factura conjunta = dois). Cêntimos; preços em µ€ (`0,1658 €/kWh` = 165 800). Valores observados, nunca condições contratuais.

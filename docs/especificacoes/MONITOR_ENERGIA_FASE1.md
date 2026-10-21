@@ -69,7 +69,7 @@ Migration `20261026090000_monitor_energia.sql`: `faturas_monitor.energia` (jsonb
 
 ## 5. Activação (Thiago)
 
-1. `supabase db push --linked --dry-run` e depois `supabase db push --linked` (migration `20261026090000`) **antes** do merge.
+1. ~~Migration `20261026090000` em produção~~ — aplicada a 21/10/2026 (`supabase db push --linked`).
 2. Merge/deploy com `MONITOR_ENERGIA_ATIVO` **desligado**: nada muda para os clientes (leitura v3).
 3. Confirmar o schema v4 numa chamada real: ligar `MONITOR_ENERGIA_ATIVO=1` e carregar **uma** factura de electricidade de teste (e uma de telecomunicações, para confirmar que a API aceita o schema também nesse caso). Se a leitura falhar com "grammar too large", desligar o interruptor (volta à v3 de imediato).
 4. Medir o custo dos primeiros 10–15 documentos (regra 5 do "Uso de IA"): a resposta v4 é mais longa nas facturas de energia.
