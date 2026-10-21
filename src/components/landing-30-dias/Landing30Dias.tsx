@@ -206,7 +206,8 @@ export function Landing30Dias() {
   const c = useCaminho();
   const t = useTextos(tLanding30Dias);
   const tw = useTextos(tWhatsApp);
-  const preco = precoNoIdioma(idioma, PLANOS.protecao.precoCentimos);
+  // Espaço inseparável: "4,99 €/mês" nunca se parte em duas linhas no telemóvel.
+  const preco = precoNoIdioma(idioma, PLANOS.protecao.precoCentimos).replace(/ /g, "\u00a0");
   const euros = (cents: number) => formatarEurosCents(idioma, cents);
   const { promocao, factura } = EXEMPLOS_LANDING;
   const diferenca = `+${euros(factura.actualCents - factura.anteriorCents)}`;
