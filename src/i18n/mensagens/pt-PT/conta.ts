@@ -40,7 +40,18 @@ export const conta = {
     nome: "Nome",
     email: "E-mail",
     palavraPasse: "Palavra-passe",
+    requisitos: "Pelo menos 8 caracteres, com letras e números.",
+    mostrar: "Mostrar",
+    esconder: "Esconder",
     criar: "Criar conta",
+    /** Registo vindo da landing dos 30 dias (anúncios): o contexto da oferta. */
+    protecaoGratuita: {
+      contexto: "Protecção · 30 dias grátis",
+      titulo: "Comece os seus 30 dias gratuitos",
+      descricao: "Crie a sua conta para começar a acompanhar os seus contratos. Não pedimos cartão bancário.",
+      criar: "Criar conta e continuar",
+      google: "Continuar com Google",
+    },
   },
   confirmarEmail: {
     metadados: "Confirme o seu e-mail — DoLado",

@@ -41,6 +41,11 @@ export const whatsapp: Traducao<typeof pt> = {
           "Hello. I'm reading DoLado's information about problems with purchases and refunds and would like some help working out how to start.",
       },
     },
+    protecaoGratuita: {
+      pergunta: "Any questions?",
+      acao: "Message us on WhatsApp",
+      mensagem: "Hello. I am looking at the free trial of DoLado Protection and I have a question.",
+    },
     contacto: {
       titulo: "WhatsApp",
       texto:

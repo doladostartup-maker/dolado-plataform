@@ -44,6 +44,11 @@ export const whatsapp = {
           "Olá. Estou a consultar a informação da DoLado sobre problemas com compras e reembolsos e precisava de ajuda para perceber como começar.",
       },
     },
+    protecaoGratuita: {
+      pergunta: "Tem dúvidas?",
+      acao: "Fale connosco por WhatsApp",
+      mensagem: "Olá. Estou a ver a experiência gratuita da Protecção DoLado e tenho uma dúvida.",
+    },
     contacto: {
       titulo: "WhatsApp",
       texto:

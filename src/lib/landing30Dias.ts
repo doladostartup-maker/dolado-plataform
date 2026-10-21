@@ -2,8 +2,10 @@
 // regras sem I/O (testáveis com `node --test`, landing30Dias.test.mjs).
 //
 // A landing não tem registo próprio: o CTA leva à activação de sempre em
-// portal.dolado.pt (/experimentar-protecao?origem=landing_30d), que pede
-// conta ou sessão e volta a si depois do registo e da confirmação do e-mail.
+// portal.dolado.pt (/experimentar-protecao?origem=landing_30d). Sem sessão,
+// essa página passa logo ao /registo (21/10/2026: a explicação intermédia
+// repetia a landing) e volta a si depois do registo e da confirmação do
+// e-mail, onde a pessoa aceita os Termos e activa.
 // Os parâmetros UTM do anúncio seguem no URL ao longo desse percurso (só
 // apresentação: nunca decidem acesso e não são gravados). A origem
 // 'landing_30d' é só métrica (protecao_gratuita.origem e, no registo,
@@ -13,7 +15,17 @@ export const CAMINHO_LANDING_30_DIAS = "/30-dias-gratis";
 export const ORIGEM_LANDING_30_DIAS = "landing_30d";
 const ROTA_EXPERIMENTAR = "/experimentar-protecao";
 
-export const PARAMETROS_UTM = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
+/**
+ * Valores dos dois exemplos da landing (fictícios, assinalados como tal):
+ * fim de uma promoção e alteração numa factura. Em cêntimos; a diferença é
+ * calculada, nunca escrita à mão.
+ */
+export const EXEMPLOS_LANDING = {
+  promocao: { mensalidadeCents: 2990, fim: "2026-12-15T12:00:00Z" },
+  factura: { anteriorCents: 3290, actualCents: 3990 },
+} as const;
+
+export const PARAMETROS_UTM =["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
 export type Utm = Partial<Record<(typeof PARAMETROS_UTM)[number], string>>;
 
 const MAXIMO_UTM = 150;
@@ -48,6 +60,15 @@ export function consultaUtm(utm: Utm): string {
 /** Caminho da activação a partir da landing (relativo ao portal), com os UTM. */
 export function caminhoAtivacaoLanding(utm: Utm = {}): string {
   return `${ROTA_EXPERIMENTAR}?origem=${ORIGEM_LANDING_30_DIAS}${consultaUtm(utm)}`;
+}
+
+/**
+ * A activação sem sessão salta a explicação intermédia e vai directa ao
+ * registo — só quando se chega da landing (as outras origens mantêm a página
+ * com o resumo e as duas opções, criar conta ou iniciar sessão).
+ */
+export function saltarParaRegisto(origem: string, temSessao: boolean): boolean {
+  return !temSessao && origem === ORIGEM_LANDING_30_DIAS;
 }
 
 /**

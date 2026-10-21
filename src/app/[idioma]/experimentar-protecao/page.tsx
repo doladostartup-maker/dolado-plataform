@@ -22,7 +22,7 @@ import { tProtecaoGratuita } from "@/i18n/mensagens/protecaoGratuita";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { contaComEmailConfirmado } from "@/lib/auth";
 import { destinoCompra } from "@/lib/destinoAuth";
-import { consultaUtm, lerUtm } from "@/lib/landing30Dias";
+import { consultaUtm, lerUtm, saltarParaRegisto } from "@/lib/landing30Dias";
 import { PLANOS } from "@/lib/planos";
 import { ROTA_EXPERIMENTAR, fimSeAtivarAgora, lerOrigem, type MotivoElegibilidade } from "@/lib/protecaoGratuita";
 import { elegibilidadeDaConta, protecaoGratuitaDisponivel } from "@/lib/protecaoGratuitaServidor";
@@ -64,6 +64,12 @@ export default async function ExperimentarProtecaoPage({
       : "email_nao_confirmado";
   }
   if (motivo === "ativa" || motivo === "protecao_ativa") redirect(localizarHref(idioma, "/portal/contratos"));
+  // Vindo da landing dos anúncios, sem sessão: directo ao registo (a landing
+  // já explicou a oferta). Volta aqui depois da confirmação do e-mail, para
+  // aceitar os Termos e activar; o registo tem a ligação para iniciar sessão.
+  if (saltarParaRegisto(origem, motivo !== "sem_sessao")) {
+    redirect(localizarHref(idioma, `/registo?next=${encodeURIComponent(aqui)}`));
+  }
 
   const fim = fimSeAtivarAgora();
   const resumo = [

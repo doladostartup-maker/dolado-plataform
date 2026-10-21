@@ -5,111 +5,127 @@ export const landing30Dias: Traducao<typeof pt> = {
   metadados: {
     titulo: "30 days of Protection free",
     descricao:
-      "Spot unexpected increases in your bills and get reminders before promotions end. 30 days of Protection free, with no bank card and no automatic charge.",
+      "Avoid surprises on your bills: reminders before promotions end and a check of every new bill. 30 days of Protection free, with no bank card.",
   },
   cabecalho: {
     iniciarSessao: "Sign in",
   },
   topo: {
-    eyebrow: "30 days free",
-    titulo: "Has your bill gone up and you don't know why?",
+    eyebrow: "DoLado Protection · 30 days free",
+    titulo: "Avoid surprises on your bills.",
     texto:
-      "With DoLado, your contracts and bills are used to spot unexpected increases and see promotions ending in advance, before you overpay.",
-    beneficios: [
-      "Spot unexpected increases in your bills.",
-      "Get reminders before promotions end.",
-      "Keep track of your services in one place.",
+      "DoLado helps you keep track of your contracts and bills, spot the dates that matter and know when to act, so nothing catches you off guard.",
+    oferta: "Try DoLado Protection free for 30 days.",
+    cta: "Start my 30 days free",
+    condicoes: (preco: string) => [
+      "No bank card and no automatic charge.",
+      `At the end, you only continue if you want to: ${preco}/month.`,
+      "Complaint handling is not included.",
     ],
-    cta: "Activate my 30 days free",
-    confianca: "No bank card. No commitment. No automatic charge.",
   },
-  problemas: {
-    titulo: "Have you ever received a higher bill with no explanation?",
+  exemplos: {
+    titulo: "What Protection does for you",
+    texto: "Two simple examples. The amounts and dates are fictitious.",
+    ficticio: "Fictitious example",
+    promocao: {
+      titulo: "A promotion ending",
+      servico: "Internet and TV",
+      mensalidade: "Current monthly fee",
+      fim: "Promotion ends",
+      avisoRotulo: "E-mail reminder",
+      aviso:
+        "Your promotion ends in 30 days. It is worth checking the contract terms before you start paying more.",
+      explicacao:
+        "Once the date is recorded, we send you an e-mail 60 and 30 days before the promotion ends, and on the day itself. You have time to decide what to do.",
+    },
+    factura: {
+      titulo: "A change on a bill",
+      servico: "Internet and TV",
+      anterior: "Previous bill",
+      actual: "Current bill",
+      diferenca: "Difference",
+      nota: "Reviewed by a person at DoLado before we send you the alert.",
+      explicacao:
+        "We compare each new bill with the contract and with previous bills. If an amount goes up with no explanation, we show you the difference in the portal and by e-mail.",
+    },
+  },
+  passos: {
+    titulo: "Getting started is simple",
     itens: [
-      "The promotion ended and the price went up.",
-      "An unexpected amount appeared on the bill.",
-      "The minimum term is coming to an end and you had forgotten the date.",
-    ],
-    fecho: "DoLado keeps an eye on these situations for you, so you can act in time.",
-  },
-  comoFunciona: {
-    titulo: "How does DoLado Protection work?",
-    passos: [
       {
-        titulo: "Add your contracts and bills",
-        texto:
-          "Upload a bill or a contract for the services you want us to keep an eye on. We read the dates and amounts for you, and you confirm the contract details before they are used.",
+        titulo: "Create your account",
+        texto: "Activate free Protection for 30 days. We do not ask for a bank card.",
       },
       {
-        titulo: "DoLado keeps an eye on it for you",
-        texto:
-          "We compare each new bill with the contract and with previous bills. When something needs attention, a person at DoLado reviews it before letting you know.",
+        titulo: "Add a bill or a contract",
+        texto: "Upload a PDF or a photo. If you do not have the document to hand, you can enter the service details manually.",
       },
       {
-        titulo: "Get important reminders",
-        texto: "We email you 60 and 30 days before a promotion or a minimum term ends, and on the day itself.",
+        titulo: "See what matters",
+        texto:
+          "In the portal, you see the details we identified, what we checked and the next date to keep in mind. The result appears right after your first document.",
       },
     ],
   },
   fundador: {
-    eyebrow: "Who is behind DoLado?",
-    titulo: "A company created to be on the consumer's side.",
-    paragrafos: [
-      "I'm Thiago Pereira, founder of DoLado.",
-      "I created DoLado after realising how many people are caught out by unexpected amounts on their bills, contract terms they were unaware of and information that goes unnoticed.",
-      "I believe that understanding our contracts and standing up for our rights shouldn't be so complicated.",
-      "That is why DoLado was born.",
-    ],
+    eyebrow: "Who is behind DoLado",
+    citacao:
+      "I created DoLado because too many people are caught out by changes on their bills and by terms they did not know about when they signed up for a service. I want to help consumers have more information and more control over their contracts.",
+    nome: "Thiago Pereira",
+    cargo: "Founder of DoLado",
     fotografia: "Thiago Pereira, founder of DoLado",
-    conhecer: "Find out more about DoLado",
+    conhecer: "Learn more about DoLado",
   },
   condicoes: {
-    titulo: "Try it free for 30 days.",
+    titulo: "The terms, with no small print",
     itens: (preco: string) => [
-      "30 days of free Protection, counted from the day you activate it.",
-      "No bank card needed.",
-      "No automatic charge.",
-      "The offer ends automatically after 30 days.",
-      `To continue, you need to subscribe to Protection, at ${preco}/month.`,
-      "It can be used only once per person, by those who have not had Protection before.",
-      "Does not include handling complaints.",
+      "30 days of free Protection, from the day you activate it.",
+      "We do not ask for a bank card or any other payment method.",
+      "At the end of the 30 days, free Protection ends on its own, with no charge.",
+      `To continue, you sign up for Protection at ${preco}/month (VAT included). Only if you decide to.`,
+      "It can only be used once per person, by those who have not had Protection before.",
+      "It does not include complaint handling, which has its own options.",
     ],
     completas: "See the full terms",
-    cta: "Activate my 30 days free",
   },
   perguntas: {
     titulo: "Frequently asked questions",
-    itens: (preco: string) => [
+    itens: (preco: string, meses: number) => [
+      {
+        id: "recebo",
+        pergunta: "What do I get during the 30 free days?",
+        resposta:
+          "You have access to Protection: you add bills and contracts, DoLado checks your current situation, sends you e-mail reminders before promotions and minimum terms end, and compares each new bill with the contract and with previous ones. Complaint handling is not included.",
+      },
       {
         id: "cartao",
-        pergunta: "Do I need a bank card?",
-        resposta: "No. The free activation does not require a bank card or any other means of payment.",
+        pergunta: "Do I need to give a bank card?",
+        resposta: "No. Free Protection does not ask for a bank card or any other payment method.",
       },
       {
-        id: "depois",
-        pergunta: "Will I pay anything after the 30 days?",
+        id: "fim",
+        pergunta: "What happens when the 30 days end?",
+        resposta: `Free Protection ends on its own, with no charge and without creating a subscription. If you want to continue, you sign up for Protection at ${preco}/month: if you sign up before the end, the first charge is made on the day the free period would have ended (if fewer than 2 days remain, it is made on the day you sign up). If you do not sign up, your services and documents are kept for ${meses} months.`,
+      },
+      {
+        id: "documentos",
+        pergunta: "How do I add my bills and contracts?",
         resposta:
-          "No. Free Protection ends automatically, with no charge. You are only charged if you decide to subscribe to Protection.",
+          "In the portal, in the “Protection” area, upload the document as a PDF or a photo (JPG, PNG or WebP, up to 10 MB). DoLado reads the dates and amounts, and you confirm the contract details before they are used. If you do not have the document, you can enter the service details manually.",
       },
       {
-        id: "preco",
-        pergunta: "How much does it cost to continue?",
-        resposta: `Protection costs ${preco}/month, VAT included. If you subscribe during the free period, the first charge is only made when it ends.`,
-      },
-      {
-        id: "reclamacao",
-        pergunta: "Can I use DoLado to make a complaint?",
+        id: "cancelar",
+        pergunta: "Can I cancel or stop using the service?",
         resposta:
-          "The free offer is for Protection only and does not include handling complaints. To handle a case, DoLado has its own options, which you can see on the pricing page.",
-      },
-      {
-        id: "fidelizacao",
-        pergunta: "Does the offer have a minimum term?",
-        resposta: "No. There is no obligation to continue after the free period.",
+          "Yes. During the 30 days there is nothing to cancel: if you do nothing, free Protection ends with no charge. If you sign up later, you can cancel the subscription in the portal at any time; you keep Protection until the end of the period already paid.",
       },
     ],
   },
+  final: {
+    titulo: "Start your 30 free days today.",
+    texto: "Create your account in a few minutes. No bank card.",
+  },
   barra: {
-    cta: "Activate my 30 days free",
+    cta: "Start the 30 days free",
   },
 };
