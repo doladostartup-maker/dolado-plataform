@@ -8,7 +8,9 @@ import { MAXIMO_CODIGOS_POR_EMISSAO, csvCodigos } from "@/lib/acessoPatrocinado"
 import { emitirCodigosDoPacote } from "@/lib/acessoPatrocinadoServidor";
 import { after } from "next/server";
 import { enviarEmailBrevo } from "@/lib/email/brevo";
-import { montarEmailCandidaturaAprovada, montarEmailPagamentoComissoes, montarEmailPrimeiroContacto } from "@/lib/email/parceiros";
+import { montarEmailAcessoArea, montarEmailCandidaturaAprovada, montarEmailPagamentoComissoes, montarEmailPrimeiroContacto } from "@/lib/email/parceiros";
+import { urlPortal } from "@/lib/site";
+import { localizarHref } from "@/i18n/config";
 import { AVISO_PRIMEIRO_CONTACTO_VERSAO } from "@/lib/legal";
 import { lerIva, urlParceiro } from "@/lib/parceiros/regras";
 import { criarCodigoParceiro, decidirCandidatura } from "@/lib/parceiros/servidor";
@@ -408,6 +410,58 @@ export async function registarPagamento(parceiroId: string, form: FormData) {
   }
   revalidatePath(caminho);
   voltar(caminho, "ok", destino ? "Pagamento registado e e-mail enviado ao parceiro." : "Pagamento registado (o parceiro não tem e-mail de contacto).");
+}
+
+// ---------------------------------------------------------------------------
+// Área do parceiro (/portal/parceiro). A base de dados decide tudo
+// (parceiro_area_conceder): conta de cliente com e-mail confirmado, parceiro
+// activo, uma conta por parceiro, nunca a conta indicada pelo parceiro.
+
+const MENSAGENS_AREA: Record<string, string> = {
+  sem_conta: "Não há conta com esse e-mail. O parceiro tem de criar conta primeiro (em portal.dolado.pt/registo), com esse e-mail.",
+  email_por_confirmar: "A conta ainda não tem o e-mail confirmado.",
+  conta_admin: "Uma conta de administrador não pode ser conta de parceiro.",
+  outro_parceiro: "Essa conta já está ligada a outro parceiro. Retire esse acesso primeiro.",
+  indicada_pelo_parceiro: "Essa conta foi indicada por este parceiro como cliente; não pode ser a conta do parceiro.",
+  parceiro_inativo: "Só um parceiro de indicação activo pode ter área.",
+  ja_tem: "Essa conta já tem acesso à área deste parceiro.",
+};
+
+export async function concederAreaParceiro(parceiroId: string, form: FormData) {
+  const { user } = await requireAdmin();
+  const caminho = `/backoffice/parceiros/${parceiroId}`;
+  const email = texto(form, "email", 254)?.toLowerCase() ?? null;
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) voltar(caminho, "erro", "Indique o e-mail da conta do parceiro.");
+  const admin = createAdminClient();
+  const { data: resultado, error } = await admin.rpc("parceiro_area_conceder", { p_parceiro: parceiroId, p_email: email, p_admin: user.id });
+  if (error) voltar(caminho, "erro", "Não foi possível dar o acesso.");
+  if (resultado !== "concedido") voltar(caminho, "erro", MENSAGENS_AREA[String(resultado)] ?? "Não foi possível dar o acesso.");
+
+  const { data: p } = await admin
+    .from("parceiros")
+    .select("parceiros_candidaturas!parceiros_candidatura_id_fkey(idioma)")
+    .eq("id", parceiroId)
+    .maybeSingle();
+  const cand = (p as { parceiros_candidaturas?: { idioma?: string } | null } | null)?.parceiros_candidaturas;
+  const idioma = cand?.idioma === "en-GB" ? "en-GB" : "pt-PT";
+  const montado = montarEmailAcessoArea({
+    idioma,
+    url: urlPortal(localizarHref(idioma, `/login?next=${encodeURIComponent("/portal/parceiro")}`)),
+  });
+  after(() => enviarEmailBrevo(email, montado.assunto, montado.html, montado.texto).catch(() => undefined));
+  revalidatePath(caminho);
+  voltar(caminho, "ok", "Acesso à área do parceiro dado e e-mail enviado.");
+}
+
+export async function revogarAreaParceiro(parceiroId: string, acessoId: string, form: FormData) {
+  const { user } = await requireAdmin();
+  const caminho = `/backoffice/parceiros/${parceiroId}`;
+  const motivo = texto(form, "motivo", 500);
+  if (!motivo) voltar(caminho, "erro", "Indique o motivo para retirar o acesso.");
+  const { data, error } = await createAdminClient().rpc("parceiro_area_revogar", { p_acesso: acessoId, p_motivo: motivo, p_admin: user.id });
+  if (error || !data) voltar(caminho, "erro", "Não foi possível retirar o acesso (já estava retirado?).");
+  revalidatePath(caminho);
+  voltar(caminho, "ok", "Acesso à área do parceiro retirado.");
 }
 
 // ---------------------------------------------------------------------------

@@ -5,6 +5,7 @@ import { MenuMovel } from "@/components/navegacao/MenuMovel";
 import { NavegacaoPortal } from "./_components/NavegacaoPortal";
 import { tComum } from "@/i18n/mensagens/comum";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
+import { contaTemAreaParceiro } from "@/lib/parceiros/areaServidor";
 
 // Portal do cliente no Design System V2 (.tema-portal em globals.css): a
 // mesma marca, fonte e tokens das páginas públicas, com uma moldura de
@@ -20,7 +21,8 @@ export default async function PortalLayout({
   children: React.ReactNode;
 } & ComIdioma) {
   const t = tComum[await idiomaDaPagina(params)].acessibilidade;
-  await requireUser();
+  const { supabase, user } = await requireUser();
+  const areaParceiro = await contaTemAreaParceiro(supabase, user.id);
 
   return (
     <div className={`tema-portal ${fonteV2.className} min-h-screen bg-[#F7F9FC] text-[var(--v2-navy)] antialiased md:flex`}>
@@ -34,7 +36,7 @@ export default async function PortalLayout({
       <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[var(--v2-line)] bg-white px-4 md:hidden">
         <Logotipo />
         <MenuMovel rotulos={{ abrir: t.abrirMenu, fechar: t.fecharMenu }}>
-          <NavegacaoPortal />
+          <NavegacaoPortal areaParceiro={areaParceiro} />
         </MenuMovel>
       </header>
 
@@ -42,7 +44,7 @@ export default async function PortalLayout({
         <div className="mb-8 px-2">
           <Logotipo />
         </div>
-        <NavegacaoPortal />
+        <NavegacaoPortal areaParceiro={areaParceiro} />
       </aside>
 
       <main id="conteudo" className="min-w-0 flex-1 px-4 pb-16 pt-6 sm:px-6 md:px-10 md:pt-10">

@@ -235,6 +235,9 @@ select is(
                            'parceiro_registar_visita', 'parceiro_relatorio_distribuicao', 'parceiro_reverter_fatura',
                            'parceiro_subscricao_terminada', 'parceiro_validar_comissao', 'parceiros_registar_historico',
                            'parceiros_resumo_comissoes',
+                           -- Área do parceiro (20261027090000): conceder/revogar só service_role;
+                           -- o resumo usa auth.uid() e só devolve agregados (area_parceiro.test.sql).
+                           'parceiro_area_conceder', 'parceiro_area_revogar', 'parceiro_area_resumo',
                            'comunicacoes_reservar_confirmacao', 'comunicacoes_libertar_confirmacao', 'comunicacoes_confirmar',
                            'comunicacoes_retirar', 'comunicacoes_destinatarios')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
