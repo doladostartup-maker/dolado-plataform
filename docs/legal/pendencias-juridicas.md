@@ -74,6 +74,15 @@ Origem: [revisao-juridica.md](../../conteudos/guia-facturas/revisao-juridica.md)
 - [x] **Prazos de conservação:** 12 meses para os pedidos; 3 anos para a prova das autorizações retiradas (validados com a Política `2026-10-22`).
 - [ ] **Revisão periódica do e-book:** sempre que mudarem a LCE, o RRC/RQS da ERSE, o RRCAR ou a Lei n.º 23/96.
 
+## Protecção gratuita: primeira cobrança perto do fim do período (21 de Outubro de 2026)
+
+Detectado na revisão da landing `/30-dias-gratis`. **Decisão de Thiago (e, se mudar os Termos, da advogada).** Nada foi alterado nos Termos nem nas regras de cobrança.
+
+- **Termos `2026-10-20`, secção 5 («Depois da Protecção gratuita»):** se aderir durante o período gratuito, a primeira cobrança é no dia em que o período terminaria; «se faltarem menos de 2 dias», é no dia da adesão.
+- **Código** (`MARGEM_MINIMA_INICIO_COBRANCA_MS` em `src/lib/protecaoGratuita.ts`): o limite é **49 horas** (o Stripe só aceita `trial_end` 48 h depois de criada a sessão de Checkout, mais 1 h de margem para pagar). Entre 49 h e 48 h antes do fim, os Termos prometem a cobrança no fim e o código cobra no dia da adesão. O modal `ConfirmarCompra` mostra a data correcta antes do pagamento, por isso o cliente é informado — mas o texto contratual não coincide durante essa hora.
+- **Proposta para a próxima versão dos Termos:** «se faltarem menos de 49 horas (cerca de 2 dias) para o fim do período, a primeira cobrança é feita no dia da adesão». Alternativa sem mudar os Termos: nenhuma (o limite de 48 h do Stripe não permite baixar o código para 48 h exactas).
+- **Textos públicos que omitem a excepção** (dizem só «a primeira cobrança só é feita quando ele terminar»): `protecaoGratuita.precario.condicao.texto` e `protecaoGratuita.faq.fim.resposta` (`src/i18n/mensagens/{pt-PT,en-GB}/protecaoGratuita.ts`, usados em `/precario`, `/protecao` e nas perguntas frequentes). A landing já foi corrigida («se faltarem menos de 2 dias, é feita no dia da adesão»). Acertar o resto com a mesma redacção que for decidida para os Termos.
+
 ## Monitor de Protecção: electricidade e gás (21 de Outubro de 2026)
 
 Origem: [auditoria-monitor-energia-2026-10-21.md](auditoria-monitor-energia-2026-10-21.md), secção 3. A Fase 1 é só factual (sem regras jurídicas); estes pontos bloqueiam apenas a **Fase 2**.

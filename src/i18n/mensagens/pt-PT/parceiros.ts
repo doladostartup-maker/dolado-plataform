@@ -103,6 +103,7 @@ export const parceiros = {
 
   codigo: {
     campo: "Código de parceiro (opcional)",
+    resumo: "Tem um código de parceiro?",
     ajuda: "Se um parceiro da DoLado lhe deu um código, escreva-o aqui.",
     invalido: "Este código de parceiro não é válido. Confirme-o ou deixe o campo vazio.",
   },

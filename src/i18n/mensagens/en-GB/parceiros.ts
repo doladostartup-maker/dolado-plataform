@@ -100,6 +100,7 @@ export const parceiros: Traducao<typeof pt> = {
 
   codigo: {
     campo: "Partner code (optional)",
+    resumo: "Do you have a partner code?",
     ajuda: "If a DoLado partner gave you a code, enter it here.",
     invalido: "This partner code is not valid. Please check it or leave the field empty.",
   },

@@ -32,7 +32,17 @@ export const conta: Traducao<typeof pt> = {
     nome: "Name",
     email: "Email",
     palavraPasse: "Password",
+    requisitos: "At least 8 characters, with letters and numbers.",
+    mostrar: "Show",
+    esconder: "Hide",
     criar: "Create account",
+    protecaoGratuita: {
+      contexto: "Protection · 30 days free",
+      titulo: "Start your 30 free days",
+      descricao: "Create your account to start keeping track of your contracts. We do not ask for a bank card.",
+      criar: "Create account and continue",
+      google: "Continue with Google",
+    },
   },
   confirmarEmail: {
     metadados: "Confirm your email — DoLado",
