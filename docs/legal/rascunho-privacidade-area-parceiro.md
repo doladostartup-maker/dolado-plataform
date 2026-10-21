@@ -1,6 +1,6 @@
 # Rascunho — Política de Privacidade: área do parceiro (21 de Outubro de 2026)
 
-**Estado:** validado pela advogada (confirmado por Thiago a 21/10/2026), opção 1 (totais exactos). Publicado como Política `2026-10-22b`. `AREA_PARCEIRO_ATIVA=1` configurado na Clever Cloud por Thiago a 21/10/2026. Termos: secção 24 sem alteração (continua verdadeira).
+**Estado:** validado pela advogada (confirmado por Thiago a 21/10/2026), opção 1 (totais exactos). Publicado como Política `2026-10-22b` (secções 2, 3, 5 e 6) e Termos `2026-10-22` (secção 24). `AREA_PARCEIRO_ATIVA=1` configurado na Clever Cloud por Thiago a 21/10/2026.
 
 Decisão de Thiago (21/10/2026): criar uma área de login para o Parceiro de Indicação. Valores e prazos das comissões não mudam (5 € Protecção / 8 € Caso + Protecção, sem IVA, às 3 mensalidades pagas); o Caso Avulso continua sem comissão.
 

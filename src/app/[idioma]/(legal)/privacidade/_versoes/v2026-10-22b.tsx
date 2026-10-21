@@ -2,7 +2,8 @@
 // acrescenta a área de parceiro (/portal/parceiro): conta da pessoa que
 // representa um Parceiro de Indicação, ligação da conta ao parceiro e números
 // totais mostrados ao parceiro, incluindo a possibilidade de inferência com
-// números pequenos (secções 2, 5 e 6). Texto do rascunho
+// números pequenos (secções 2, 3, 5 e 6). O parceiro passa a ter acesso à
+// plataforma. Texto do rascunho
 // docs/legal/rascunho-privacidade-area-parceiro.md (opção 1, totais exactos),
 // validado pela advogada (confirmado por Thiago, 21/10/2026). Nada do resto
 // muda.
@@ -468,6 +469,13 @@ export function PrivacidadeV20261022b() {
             atribuição não altera o preço pago pelo Utilizador nem o serviço prestado;
           </li>
           <li>
+            a conta e o acesso à área de parceiro de quem representa um Parceiro de Indicação, e os números totais
+            que lá são mostrados, são tratados para executar o acordo de parceria (alínea b), ou alínea f) quando o
+            parceiro é uma empresa e os dados são do seu representante). Mostrar ao parceiro os números totais das
+            contas que lhe estão atribuídas baseia-se no interesse legítimo da DoLado e do parceiro em verificar as
+            comissões acordadas (alínea f));
+          </li>
+          <li>
             os contactos de pessoas de empresas apresentadas por parceiros são tratados com base no interesse legítimo
             da DoLado em responder a oportunidades comerciais entre empresas (alínea f)). O parceiro só deve
             comunicá-los quando tenha legitimidade para o fazer; no primeiro contacto, a DoLado informa a pessoa da
@@ -755,8 +763,9 @@ export function PrivacidadeV20261022b() {
           lhes devolve listas nem dados individuais.
         </p>
         <p className={P}>
-          <strong>Parceiros comerciais.</strong> Um Parceiro de Indicação pode consultar, numa área própria da
-          plataforma, apenas números totais: quantas contas lhe estão atribuídas, quantas subscreveram a Protecção ou o
+          <strong>Parceiros comerciais.</strong> Um Parceiro de Indicação tem acesso à plataforma, através de uma
+          conta DoLado e de uma área de parceiro própria. Nessa área consulta apenas números totais: quantas contas lhe
+          estão atribuídas, quantas subscreveram a Protecção ou o
           Caso + Protecção, o número e o valor das comissões em cada estado e os pagamentos que recebeu. Nunca vê o
           nome, o e-mail, a conta, os casos, as facturas ou os contratos das pessoas que lhe estão atribuídas. Como o
           parceiro sabe a quem fez a recomendação, quando os números são pequenos pode deduzir se uma pessoa que

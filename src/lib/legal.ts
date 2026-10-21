@@ -25,7 +25,9 @@ import { CONTACTO_EMAIL, ENTIDADE_LEGAL, MARKETING_SITE_URL, MORADA_SEDE, NIPC, 
 // 2026-10-20 (Termos e Política): Programa de Parceiros — Protecção oferecida
 // por um parceiro e Parceiros de Indicação. Regras e texto validados pela
 // advogada (confirmado por Thiago a 20/10/2026).
-export const TERMOS_VERSAO = "2026-10-20";
+// 2026-10-22 (Termos): secção 24 — área de parceiro (só números totais).
+// Validado pela advogada (confirmado por Thiago a 21/10/2026).
+export const TERMOS_VERSAO = "2026-10-22";
 
 // 2026-10-22b (Política): área de parceiro — validada pela advogada
 // (confirmado por Thiago a 21/10/2026).
