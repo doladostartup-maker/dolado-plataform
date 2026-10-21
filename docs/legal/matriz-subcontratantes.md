@@ -28,7 +28,7 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 | Google | GA4, Tag Manager, Google Ads (com consentimento); início de sessão com Google | Subcontratante na medição; responsável autónomo para fins próprios e no início de sessão | A validar | Possíveis | A validar no DPA (SCCs / DPF) | Obtido |
 | Meta (Meta Platforms Ireland Limited) | Pixel da Meta em dolado.pt (só `PageView`), só com consentimento de marketing: medição das campanhas e publicidade a quem visitou o site | Responsável conjunta na recolha e transmissão (art. 26.º; acórdão *Fashion ID*); responsável autónoma no tratamento posterior | UE (Irlanda) | Sim (Meta Platforms, Inc., EUA) | EU-U.S. DPF + SCCs | **Por aceitar** (Meta Business Tools Terms + Controller Addendum no Events Manager) |
 | Cookiebot (Usercentrics) | Gestão do consentimento de cookies | Subcontratante | A validar | A validar | A validar | **Por confirmar** |
-| Crisp (Crisp IM SAS) — **ainda não ligado** | Chat em direto nas páginas públicas (homepage, preçário, simulador), só com consentimento de preferências | Subcontratante | UE (sede em França) — região de alojamento a validar | A validar (subcontratantes ulteriores) | A validar no DPA | **Por obter** |
+| Crisp (Crisp IM SAS) — **ligado em produção desde, pelo menos, 21/10/2026 sem cobertura legal** (Política `2026-10-23` por validar) | Chat em direto nas páginas públicas (homepage, preçário, simulador), só com consentimento de preferências | Subcontratante | UE (sede em França) — região de alojamento a validar | A validar (subcontratantes ulteriores) | A validar no DPA | **Por obter** |
 
 ## Detalhe por fornecedor
 
@@ -208,7 +208,12 @@ são subcontratantes e não entram nesta matriz (ver secção 5 da Política).
 - **Localização, transferências, mecanismo:** **a validar**.
 - **DPA:** **por confirmar** — único fornecedor sem DPA confirmado.
 
-### Crisp (Crisp IM SAS) — por ligar (19/10/2026)
+### Crisp (Crisp IM SAS) — ligado sem cobertura legal (actualizado a 21/10/2026)
+
+- **Estado verificado a 21/10/2026:** `CRISP_ATIVO=1` na Clever Cloud e o chat presente na homepage publicada
+  (só carrega com consentimento de "preferências"), sem DPA, sem secção na Política em vigor (`2026-10-22b`)
+  e sem declaração no Cookiebot confirmada. Decisão de Thiago (21/10/2026): manter o Crisp e completar o
+  DPA, a Política (`2026-10-23`, por validar pela advogada) e o Cookiebot.
 
 - **Serviço / finalidade:** chat em direto nas páginas públicas `/`, `/precario` e
   `/simulador-elegibilidade` (`client.crisp.chat`), atendido só por Thiago, sem IA nem respostas

@@ -1,7 +1,13 @@
 # Rascunho — Política de Privacidade: chat em direto (Crisp)
 
-Estado: **rascunho, por validar pela advogada** (19/10/2026). O chat está no código mas desligado
-(`CRISP_ATIVO`). Não ligar em produção antes de: (1) DPA com o Crisp; (2) nova versão da Política de
+Estado: **texto preparado como Política `2026-10-23`, por validar pela advogada** (21/10/2026). A
+auditoria de 21/10/2026 verificou que o chat **já está ligado em produção** (`CRISP_ATIVO=1`), sem estes
+três passos; decisão de Thiago: manter o Crisp e completá-los. A versão está em
+`src/app/[idioma]/(legal)/privacidade/_versoes/v2026-10-23.tsx` (PR por fundir até à validação), com a
+ortografia tradicional e estas escolhas, a confirmar: fundamento b) para perguntas antes de uma eventual
+contratação e f) para os restantes pedidos; conversas conservadas 12 meses depois da última mensagem;
+retirada do consentimento referida na secção 7. Condições originais —
+não ligar em produção antes de: (1) DPA com o Crisp; (2) nova versão da Política de
 Privacidade com o texto abaixo (as versões publicadas não se editam — criar
 `_versoes/vAAAA-MM-DD.tsx`, registar em `index.ts` e subir `PRIVACIDADE_VERSAO`); (3) Cookiebot com os
 cookies do Crisp na categoria "Preferências".

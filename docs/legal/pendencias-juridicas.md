@@ -2,6 +2,16 @@
 
 Lista única do que ficou em aberto nas auditorias e cargas jurídicas: pontos para a advogada, cargas por fazer e revisões periódicas. Cada linha indica a origem (documento com o detalhe). Quando um ponto ficar resolvido, marcá-lo com a data e a decisão (não apagar).
 
+## Chat em directo (Crisp) — ligado sem cobertura legal (21 de Outubro de 2026)
+
+Origem: [auditoria do ecossistema](../estrategia/auditoria-ecossistema-2026-10-21.md) (ECO-22) e [rascunho-privacidade-crisp.md](rascunho-privacidade-crisp.md). `CRISP_ATIVO=1` em produção; Thiago decidiu manter o Crisp e completar o que falta. **Prioridade alta.**
+
+- [ ] **Advogada:** validar a Política `2026-10-23` (secções 2, 3, 5, 6 e 7) — fundamento b)/f), prazo de 12 meses das conversas, categoria "Preferências" vs. botão que só carrega o chat ao clicar.
+- [ ] **Thiago:** obter o DPA do Crisp (região de alojamento, subcontratantes ulteriores) e actualizar a matriz de subcontratantes.
+- [ ] **Thiago:** declarar no Cookiebot os cookies `crisp-client/…` e o armazenamento local como "Preferências".
+- [ ] **Thiago:** configurar no Crisp a eliminação das conversas ao fim do prazo validado.
+- [ ] Depois dos quatro pontos: fazer merge do PR da Política `2026-10-23`.
+
 ## Electricidade: interrupções e compensações (20 de Outubro de 2026)
 
 Origem: [auditoria-interrupcoes-electricidade-2026-10-20.md](auditoria-interrupcoes-electricidade-2026-10-20.md), secção C. As regras já estão **activas** em produção (revistas por Thiago a 20/10/2026); estes pontos são confirmações, não bloqueiam o uso.
