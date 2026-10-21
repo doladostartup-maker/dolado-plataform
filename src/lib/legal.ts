@@ -27,8 +27,10 @@ import { CONTACTO_EMAIL, ENTIDADE_LEGAL, MARKETING_SITE_URL, MORADA_SEDE, NIPC, 
 // advogada (confirmado por Thiago a 20/10/2026).
 export const TERMOS_VERSAO = "2026-10-20";
 
+// 2026-10-22b (Política): área de parceiro — validada pela advogada
+// (confirmado por Thiago a 21/10/2026).
 /** Versão da Política de Privacidade em vigor. Cada versão fica acessível em /privacidade/<versão>. */
-export const PRIVACIDADE_VERSAO = "2026-10-22";
+export const PRIVACIDADE_VERSAO = "2026-10-22b";
 
 /** Versão do texto de pedido expresso de início imediato. */
 export const CONSENTIMENTO_INICIO_IMEDIATO_VERSAO = "2026-10-01";

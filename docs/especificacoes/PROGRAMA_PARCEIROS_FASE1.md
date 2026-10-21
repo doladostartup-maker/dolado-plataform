@@ -150,7 +150,7 @@ Ainda em aberto:
 
 Origem: prompt "Programa de Parceiros Comerciais" (21/10/2026). Decisões de Thiago: **não** incluir o Caso Avulso nas comissões, **não** mudar valores nem prazos (5 € / 8 € sem IVA, 3 mensalidades), **criar a área de login do parceiro**.
 
-- **Área** `/portal/parceiro` (interruptor `AREA_PARCEIRO_ATIVA`, desligado; precisa de nova Política — `docs/legal/rascunho-privacidade-area-parceiro.md`). Migration `20261027090000_area_parceiro.sql`: `parceiros_area_acessos` (só inserção + revogação única; a conta lê as próprias linhas, sem `concedido_por`), `parceiro_area_conceder()` / `parceiro_area_revogar()` (service_role), `parceiro_area_resumo()` (authenticated, só agregados) e `parceiro_atribuir()` com a auto-indicação alargada às contas com acesso.
+- **Área** `/portal/parceiro` (interruptor `AREA_PARCEIRO_ATIVA`, ligado na Clever Cloud a 21/10/2026; Política `2026-10-22b` validada pela advogada). Migration `20261027090000_area_parceiro.sql`: `parceiros_area_acessos` (só inserção + revogação única; a conta lê as próprias linhas, sem `concedido_por`), `parceiro_area_conceder()` / `parceiro_area_revogar()` (service_role), `parceiro_area_resumo()` (authenticated, só agregados) e `parceiro_atribuir()` com a auto-indicação alargada às contas com acesso.
 - **Backoffice:** secção "Área do parceiro" na ficha (dar acesso pelo e-mail da conta, retirar com motivo, histórico de acessos retirados).
 - **Página** `/parceiros/imobiliario` (bilingue, indexável) e ligação a partir de `/parceiros`.
 - **Comunicação:** `docs/comunicacao/parceiros-modelos.md` (convite, instruções, mensagens para clientes, comissão aprovada e resumo mensal — envio manual).
