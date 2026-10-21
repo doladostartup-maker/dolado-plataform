@@ -21,11 +21,21 @@ export const DIAS_PROTECAO_GRATUITA = 30;
 const DIA_MS = 24 * 60 * 60 * 1000;
 
 /**
- * O Stripe só aceita trial_end no Checkout pelo menos 48 horas depois de
- * criada a sessão; com 1 hora de margem para o cliente concluir o pagamento.
- * Com menos tempo, a 1.ª cobrança é no dia da adesão (e a interface diz isso).
+ * Termos, secção 5: se faltarem menos de 2 dias (48 horas) para o fim do
+ * período, a 1.ª cobrança é no dia da adesão (e a interface diz isso); com
+ * 48 horas ou mais, é no dia em que o período terminaria. Até 21/10/2026 o
+ * limite era 49 h, o que não coincidia com os Termos durante uma hora —
+ * a advogada confirmou as 48 horas (21/10/2026).
  */
-export const MARGEM_MINIMA_INICIO_COBRANCA_MS = 49 * 60 * 60 * 1000;
+export const MARGEM_MINIMA_INICIO_COBRANCA_MS = 48 * 60 * 60 * 1000;
+
+/**
+ * O Stripe só aceita trial_end no Checkout pelo menos 48 horas depois de
+ * criada a sessão. Com o fim a menos de 48 h + esta folga, o trial_end
+ * passa para agora + 48 h + folga: a cobrança fica no máximo 5 minutos
+ * depois do fim do período (nunca antes), no mesmo dia.
+ */
+export const FOLGA_TRIAL_END_STRIPE_MS = 5 * 60 * 1000;
 
 export type EstadoGratuita = "ativa" | "convertida" | "terminada";
 
@@ -89,9 +99,13 @@ export function fimSeAtivarAgora(agora: Date = new Date()) {
   return new Date(agora.getTime() + DIAS_PROTECAO_GRATUITA * DIA_MS);
 }
 
-/** trial_end do Stripe (segundos inteiros). */
-export function trialEndStripe(data: Date) {
-  return Math.floor(data.getTime() / 1000);
+/**
+ * trial_end do Stripe (segundos inteiros) para a 1.ª cobrança em `data`:
+ * nunca antes de agora + 48 h + folga (mínimo do Stripe no Checkout).
+ */
+export function trialEndStripe(data: Date, agora: Date = new Date()) {
+  const minimo = agora.getTime() + MARGEM_MINIMA_INICIO_COBRANCA_MS + FOLGA_TRIAL_END_STRIPE_MS;
+  return Math.ceil(Math.max(data.getTime(), minimo) / 1000);
 }
 
 // ---------------------------------------------------------------------------

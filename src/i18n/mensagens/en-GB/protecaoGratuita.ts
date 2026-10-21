@@ -21,7 +21,7 @@ export const protecaoGratuita: Traducao<typeof pt> = {
     condicao: {
       titulo: "Free Protection for 30 days",
       texto: (preco: string) =>
-        `If you have never had Protection, you can try it once for 30 days, with no bank card. The period starts when you activate it and ends on its own, with no charge. To continue, you choose to subscribe to Protection for ${preco}/month; if you subscribe during the free period, the first charge is only made when it ends. It does not apply to Case + Protection or Single Case.`,
+        `If you have never had Protection, you can try it once for 30 days, with no bank card. The period starts when you activate it and ends on its own, with no charge. To continue, you choose to subscribe to Protection for ${preco}/month; if you subscribe during the free period, the first charge is only made when it ends (if fewer than 2 days remain, it is made on the day you subscribe). It does not apply to Case + Protection or Single Case.`,
     },
   },
 
@@ -174,7 +174,7 @@ export const protecaoGratuita: Traducao<typeof pt> = {
     fim: {
       pergunta: "What happens at the end of the 30 free days?",
       resposta: (preco: string, meses: number) =>
-        `Free Protection ends on its own, with no charge and without creating a subscription. To continue, you can subscribe to Protection for ${preco}/month; if you subscribe before the end, the first charge is only made when the free period ends. If you do not subscribe, your services and documents are kept for ${meses} months and become active again if you subscribe within that time.`,
+        `Free Protection ends on its own, with no charge and without creating a subscription. To continue, you can subscribe to Protection for ${preco}/month; if you subscribe before the end, the first charge is only made when the free period ends (if fewer than 2 days remain, it is made on the day you subscribe). If you do not subscribe, your services and documents are kept for ${meses} months and become active again if you subscribe within that time.`,
     },
   },
 

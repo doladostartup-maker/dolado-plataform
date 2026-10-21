@@ -292,7 +292,7 @@ async function adesao(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Desti
     // Durante a Proteção gratuita, a Proteção só é cobrada no dia em que o
     // período gratuito terminaria (trial_end; o cartão fica registado no
     // Checkout). Decidido aqui, pela data gravada na base de dados — nunca
-    // pelo browser. Com menos de 49 h por correr, ou no Caso + Proteção, a
+    // pelo browser. Com menos de 48 h por correr, ou no Caso + Proteção, a
     // cobrança é no dia da adesão, como sempre.
     // O mesmo durante uma Protecção oferecida por um parceiro (acesso
     // patrocinado): o período sem custo que termina mais tarde. A metadata
