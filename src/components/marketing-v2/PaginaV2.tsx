@@ -38,7 +38,9 @@ export function PaginaV2({
       <AnalyticsScripts />
       {cabecalho ?? <NavbarV2 eventoCta={eventoCtaNavbar} parametrosCta={parametrosCtaNavbar} />}
       <main>{children}</main>
-      <FooterV2 />
+      {/* Páginas com cabeçalho próprio são as landings das campanhas (Meta
+          Ads, guia): sem ligações de volta às redes sociais no rodapé. */}
+      <FooterV2 semRedesSociais={cabecalho !== undefined} />
       {chatEmDireto && crispAtivo() && <ChatCrisp />}
     </div>
   );

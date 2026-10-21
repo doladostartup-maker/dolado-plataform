@@ -4,8 +4,10 @@ import { tComum } from "@/i18n/mensagens/comum";
 import { LIVRO_RECLAMACOES_URL, ROTAS_LEGAIS } from "@/lib/legal";
 import { ENTIDADE_LEGAL, NIPC } from "@/lib/site";
 import { parceirosAtivos } from "@/lib/parceiros/regras";
+import { redesDoladoConfiguradas } from "@/lib/redesSociais";
 import { DefinicoesCookies } from "./DefinicoesCookies";
 import { Logotipo } from "./Logotipo";
+import { LigacaoSocial } from "./RedesSociais";
 import { ROTAS_V2 } from "./rotas";
 
 // Rodapé do Design System V2. Só links para páginas que existem. Desde a
@@ -54,8 +56,13 @@ const COLUNAS_RODAPE: { titulo: ChaveRodape; links: { href: string; label: Chave
   },
 ];
 
-export async function FooterV2() {
-  const t = (await textos(tComum)).rodape;
+// Nomes das redes (marcas; iguais nas duas línguas).
+const NOME_REDE = { facebook: "Facebook", instagram: "Instagram" } as const;
+
+export async function FooterV2({ semRedesSociais = false }: { semRedesSociais?: boolean } = {}) {
+  const comum = await textos(tComum);
+  const t = comum.rodape;
+  const redes = semRedesSociais ? [] : redesDoladoConfiguradas();
   return (
     <footer className="border-t border-[var(--v2-line)] bg-white">
       <div className="mx-auto grid max-w-[1200px] grid-cols-2 gap-x-6 gap-y-10 px-5 py-14 sm:px-8 lg:grid-cols-[1.5fr_1fr_1fr_1fr_1.2fr]">
@@ -66,6 +73,27 @@ export async function FooterV2() {
             <br />
             {t.lema[1]}
           </p>
+          {redes.length > 0 && (
+            <div className="mt-6 max-w-[300px]">
+              <p className="text-[15px] font-bold text-[var(--v2-navy)]">{comum.redesSociais.rodapeTitulo}</p>
+              <p className="mt-1 text-[14px] leading-relaxed text-[var(--v2-muted)]">{comum.redesSociais.rodapeTexto}</p>
+              <ul className="mt-2 flex flex-wrap gap-x-5">
+                {redes.map((r) => (
+                  <li key={r.rede}>
+                    <LigacaoSocial
+                      rede={r.rede}
+                      url={r.url}
+                      conta="dolado"
+                      local="rodape"
+                      className="inline-flex min-h-11 items-center gap-2 text-[15px] font-semibold text-[var(--v2-navy)] hover:text-[var(--v2-green)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--v2-green)]"
+                    >
+                      {NOME_REDE[r.rede]}
+                    </LigacaoSocial>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
         {COLUNAS_RODAPE.map((c) => (
           <div key={c.titulo}>

@@ -60,6 +60,14 @@ export const comum: Traducao<typeof pt> = {
     definicoesCookies: "Cookie settings",
     cidade: "Lisbon",
   },
+  redesSociais: {
+    fundadorTitulo: "Get to know the person behind DoLado",
+    fundadorTexto:
+      "On my Instagram I share practical advice, answer questions and explain situations that affect consumers in everyday life.",
+    rodapeTitulo: "Follow DoLado",
+    rodapeTexto: "Practical tips, consumer rights and news to help you make better-informed decisions.",
+    abreNovaJanela: "(opens in a new window)",
+  },
   naoEncontrada: {
     titulo: "Page not found",
     texto: "The page you are looking for does not exist or has moved.",
