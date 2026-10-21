@@ -12,8 +12,10 @@ export const MODELO_DOCUMENTOS = process.env.ANTHROPIC_DOCUMENT_MODEL || "claude
 // Os modelos atuais pensam antes de responder (thinking adaptativo, sempre
 // ligado no Sonnet 5.5). Extração é uma tarefa simples: esforço baixo e
 // margem de tokens para o raciocínio não cortar a resposta JSON.
+// 8192 desde a fatura_v4 (21/10/2026): o bloco de electricidade e gás é uma
+// lista de campos, mais longa numa factura conjunta.
 export const PARAMETROS_EXTRACAO = {
-  max_tokens: 4096,
+  max_tokens: 8192,
   output_config: { effort: "low" },
 } as const;
 

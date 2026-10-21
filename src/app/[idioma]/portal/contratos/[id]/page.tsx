@@ -42,6 +42,10 @@ import { ProgressoDocumento } from "../_components/ProgressoDocumento";
 import { CustoSaida } from "../_components/CustoSaida";
 import { UploadDocumento } from "../_components/UploadDocumento";
 import { HistoricoServico, type PeriodoHistorico } from "../_components/HistoricoServico";
+import { ExplicacaoEnergia } from "../_components/ExplicacaoEnergia";
+import { lerEnergiaGuardada } from "@/lib/monitor/energia";
+import { explicarDecomposicao, lerDecomposicao, type ExplicacaoEnergia as ExplicacaoEnergiaDados } from "@/lib/monitor/frasesEnergia";
+import { tMonitorEnergia } from "@/i18n/mensagens/monitorEnergia";
 import { ListaAtentos, ListaVerificacoes, ResultadoAtual, SituacaoEncontrada, TituloBloco } from "../_components/ResultadoProtecao";
 import { BotaoSubmeter } from "../_components/BotaoSubmeter";
 import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CARTAO, TITULO_SECCAO } from "../_components/estilos";
@@ -194,7 +198,7 @@ export default async function ServicoPage({
     supabase
       .from("faturas_monitor")
       .select(
-        "id, documento_id, data_emissao, periodo_inicio, periodo_fim, total_cents, mensalidade_lida_cents, recorrente_cents, linhas, data_fim_fidelizacao, em_verificacao, confirmada_cliente_em, valores_contestados_em",
+        "id, documento_id, data_emissao, periodo_inicio, periodo_fim, total_cents, mensalidade_lida_cents, recorrente_cents, linhas, data_fim_fidelizacao, energia, em_verificacao, confirmada_cliente_em, valores_contestados_em",
       )
       .eq("contrato_id", id),
     supabase
@@ -250,6 +254,7 @@ export default async function ServicoPage({
     recorrenteCents: f.recorrente_cents,
     linhas: (Array.isArray(f.linhas) ? f.linhas : []) as LinhaFatura[],
     dataFimFidelizacao: f.data_fim_fidelizacao,
+    energia: lerEnergiaGuardada(f.energia),
     linha: f,
   }));
   const ordenadas = ordenarFaturas(comparaveis);
@@ -261,8 +266,12 @@ export default async function ServicoPage({
     if (!e.fatura_id) continue;
     eventosPorFatura.set(e.fatura_id, [...(eventosPorFatura.get(e.fatura_id) ?? []), e]);
   }
+  // Electricidade e gás: a decomposição de uma factura em verificação só
+  // aparece depois da revisão da DoLado (ver ExplicacaoEnergia).
+  const emVerificacaoFatura = new Set((faturas ?? []).filter((f) => f.em_verificacao).map((f) => f.id));
   const itensDe = (faturaId: string) =>
     (eventosPorFatura.get(faturaId) ?? [])
+      .filter((e) => !(e.tipo === "energia_variacao" && emVerificacaoFatura.has(faturaId)))
       .sort((a, b) => ORDEM_SEVERIDADE[a.severidade] - ORDEM_SEVERIDADE[b.severidade])
       .map((e) => ({
         severidade: e.severidade,
@@ -277,7 +286,8 @@ export default async function ServicoPage({
         titulo: mesAno(dataReferencia(f), idioma),
         totalCents: f.totalCents,
         itens: itens.length || f.linha.em_verificacao ? itens : [{ severidade: "ok" as const, texto: t.semDiferencas }],
-        explicacao: fraseVariacaoTotal(f, ordenadas[i - 1] ?? null, idioma),
+        // Electricidade e gás: a explicação é o evento energia_variacao (nos itens).
+        explicacao: f.energia?.length ? null : fraseVariacaoTotal(f, ordenadas[i - 1] ?? null, idioma),
         emVerificacao: f.linha.em_verificacao,
         data: dataReferencia(f) ?? "",
       };
@@ -310,6 +320,25 @@ export default async function ServicoPage({
     )
     .sort((a, b) => (a.data < b.data ? 1 : -1));
   const cUltima = ultima ? componentesFatura(ultima) : null;
+
+  // Electricidade e gás: porque mudou o valor da última factura (comparação
+  // guardada; o cliente só vê eventos "atencao" depois de revistos).
+  const tEnergia = tMonitorEnergia[idioma].explicacao;
+  const explicacoesEnergia: ExplicacaoEnergiaDados[] = ultima?.energia?.length
+    ? (eventosPorFatura.get(ultima.id) ?? [])
+        .filter((e) => e.tipo === "energia_variacao")
+        .map((e) => lerDecomposicao(e.dados))
+        .filter((d): d is NonNullable<typeof d> => d !== null)
+        .map((d) => explicarDecomposicao(d, idioma))
+    : [];
+  const estimadaUltima = !!ultima?.energia?.some((f) => f.tipoLeitura === "estimada" || f.tipoLeitura === "mista");
+  const proximoPassoEnergia = ultima?.linha.em_verificacao
+    ? tEnergia.rever
+    : resultado.situacoes.length > 0
+      ? tEnergia.verSituacao
+      : estimadaUltima
+        ? tEnergia.comunicarLeitura
+        : tEnergia.semNada;
 
   // Resumo da última fatura por confirmar (só o essencial).
   const docUltima = ultima ? docs.find((d) => d.id === ultima.linha.documento_id) : undefined;
@@ -405,6 +434,14 @@ export default async function ServicoPage({
           encontramos: resultado.encontramos,
           atentos: resultado.atentos.length ? tProtecao[idioma].lista.situacoes(resultado.atentos.length) : null,
         }}
+      />
+
+      {/* ===== Electricidade e gás: porque mudou o valor ===== */}
+      <ExplicacaoEnergia
+        explicacoes={explicacoesEnergia}
+        proximoPasso={proximoPassoEnergia}
+        emVerificacao={!!ultima?.linha.em_verificacao}
+        idioma={idioma}
       />
 
       {/* ===== 2. Situações encontradas (revistas pela DoLado) ===== */}

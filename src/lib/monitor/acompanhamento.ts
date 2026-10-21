@@ -14,6 +14,9 @@
 // Eventos "atencao" vão sempre para revisão humana antes de o cliente os ver.
 
 import type { LinhaFatura } from "./extracaoFatura.ts";
+import type { FornecimentoEnergia } from "./energia.ts";
+import { compararEnergia, type Certeza, type TipoEventoEnergia } from "./comparacaoEnergia.ts";
+import { fraseEventoEnergia } from "./frasesEnergia.ts";
 import { formatarDataPt, formatarEurosCents } from "./contratos.ts";
 import type { Idioma } from "../../i18n/config.ts";
 import { tMonitor } from "../../i18n/mensagens/monitor.ts";
@@ -41,6 +44,8 @@ export type FaturaComparavel = {
   recorrenteCents?: number | null;
   linhas: LinhaFatura[];
   dataFimFidelizacao?: string | null;
+  /** Electricidade e gás (fatura_v4): fornecimentos normalizados. */
+  energia?: FornecimentoEnergia[];
 };
 
 export type VersaoContrato = {
@@ -72,7 +77,8 @@ export type TipoEvento =
   | "credito_aplicado"
   | "possivel_duplicado"
   | "fidelizacao_diferente"
-  | "dados_insuficientes";
+  | "dados_insuficientes"
+  | TipoEventoEnergia;
 
 export type Severidade = "ok" | "info" | "atencao";
 export type Base = "contrato" | "historico";
@@ -86,6 +92,8 @@ export type Evento = {
   dados: Record<string, unknown>;
   chave: string;
   contratoVersaoId: string | null;
+  /** Grau de certeza (electricidade e gás); por omissão "alta". */
+  confianca?: Certeza;
 };
 
 // ---------------------------------------------------------------------------
@@ -339,6 +347,51 @@ export function compararFatura(atual: FaturaComparavel, anteriores: FaturaCompar
   return eventos;
 }
 
+/**
+ * Comparação de uma fatura do serviço: electricidade e gás com dados por
+ * fornecimento (fatura_v4) seguem as regras próprias (comparacaoEnergia.ts);
+ * o resto (telecomunicações, água, faturas de energia lidas antes da v4)
+ * segue compararFatura, sem alterações.
+ */
+export function compararFaturaServico(atual: FaturaComparavel, anteriores: FaturaComparavel[], versao: VersaoContrato | null): Evento[] {
+  if (!atual.energia?.length) return compararFatura(atual, anteriores, versao);
+  const outras = anteriores.filter((f) => f.id !== atual.id);
+  const comoEnergia = (f: FaturaComparavel) => ({
+    id: f.id,
+    dataEmissao: f.dataEmissao,
+    periodoInicio: f.periodoInicio,
+    periodoFim: f.periodoFim,
+    totalCents: f.totalCents,
+    energia: f.energia ?? [],
+  });
+  const eventos: Evento[] = compararEnergia(comoEnergia(atual), outras.filter((f) => f.energia?.length).map(comoEnergia), {
+    promocaoFim: versao?.promocaoFim ?? null,
+  }).map((e) => ({ ...e, contratoVersaoId: e.base === "contrato" ? versao?.id ?? null : null }));
+
+  const periodo = dataReferencia(atual);
+  const comum = (tipo: TipoEvento, severidade: Severidade, dados: Record<string, unknown>, detalhe = "", base: Base = "historico") =>
+    eventos.push({
+      tipo,
+      base,
+      severidade,
+      periodo,
+      montanteCents: null,
+      dados,
+      chave: `${VERSAO_ACOMPANHAMENTO}:${atual.id}:${tipo}:${base}${detalhe ? `:${detalhe}` : ""}`,
+      contratoVersaoId: base === "contrato" ? versao?.id ?? null : null,
+    });
+  if (outras.length === 0) comum("primeira_fatura", "info", {});
+  if (atual.periodoInicio && atual.periodoFim) {
+    const mesmo = outras.find((f) => f.periodoInicio === atual.periodoInicio && f.periodoFim === atual.periodoFim);
+    if (mesmo) comum("possivel_duplicado", "atencao", { outra_fatura: mesmo.id, periodo_inicio: atual.periodoInicio, periodo_fim: atual.periodoFim }, "periodo");
+  }
+  if (versao?.dataFimFidelizacao && atual.dataFimFidelizacao && versao.dataFimFidelizacao !== atual.dataFimFidelizacao) {
+    comum("fidelizacao_diferente", "atencao", { fatura: atual.dataFimFidelizacao, contrato: versao.dataFimFidelizacao }, "", "contrato");
+  }
+  if (!eventos.some((e) => e.severidade !== "ok")) comum("sem_alteracao_relevante", "ok", {});
+  return eventos;
+}
+
 export function resultadoFatura(eventos: Pick<Evento, "severidade">[]): Severidade {
   if (eventos.some((e) => e.severidade === "atencao")) return "atencao";
   if (eventos.some((e) => e.severidade === "info")) return "info";
@@ -359,6 +412,7 @@ export function fraseEvento(e: Pick<Evento, "tipo" | "base" | "montanteCents" | 
   const ordinal = tMonitor[idioma].datas.ordinal;
   const d = e.dados ?? {};
   const contrato = e.base === "contrato";
+  if (e.tipo.startsWith("energia_")) return fraseEventoEnergia(e, idioma);
   switch (e.tipo) {
     case "primeira_fatura":
       return t.primeiraFatura;
@@ -483,6 +537,12 @@ export const TIPO_ACHADO: Partial<Record<TipoEvento, string>> = {
   cobranca_recorrente_nova: "cobranca_recorrente_nova",
   possivel_duplicado: "possivel_duplicado",
   fidelizacao_diferente: "fidelizacao_diferente",
+  energia_preco_alterado: "energia_preco_alterado",
+  energia_termo_fixo_alterado: "energia_termo_fixo_alterado",
+  energia_potencia_alterada: "energia_potencia_alterada",
+  energia_tarifario_alterado: "energia_tarifario_alterado",
+  energia_acerto: "energia_acerto_relevante",
+  energia_servico_adicional: "energia_servico_adicional",
 };
 
 /** "Outubro 2026" a partir de uma data ISO. */

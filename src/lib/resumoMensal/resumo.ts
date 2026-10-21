@@ -20,13 +20,15 @@
 //     (só a forma curta gerada pelo código).
 
 import { diasAte } from "../monitor/contratos.ts";
+import { fraseEvento, type TipoEvento } from "../monitor/acompanhamento.ts";
 import { dataCampo, dataExtenso, diaLisboa, situacaoDe, type EntradaServico } from "../monitor/resultadoProtecao.ts";
 import { IDIOMA_PADRAO, type Idioma } from "../../i18n/config.ts";
 import { tEmails } from "../../i18n/mensagens/emails.ts";
 
 /** Subir quando a estrutura ou os textos do resumo mudarem (fica gravada com cada envio). */
 // v4 (19/10/2026): ortografia tradicional (docs/identidade-linguistica-dolado.md).
-export const RESUMO_MODELO_VERSAO = "resumo_v4";
+// v5 (21/10/2026): "Porque mudou o valor" das facturas de electricidade e gás.
+export const RESUMO_MODELO_VERSAO = "resumo_v5";
 
 /** Só se envia nos primeiros dias do mês (o cron corre nos dias 1 a 3). */
 export const ULTIMO_DIA_ENVIO = 5;
@@ -55,6 +57,12 @@ export type ResumoMensal = {
   semAlteracoes: string | null;
   /** O que continua em acompanhamento (datas e comparação de faturas). */
   acompanhamento: string[];
+  /**
+   * Electricidade e gás (resumo_v5): porque mudou o valor das facturas
+   * registadas no mês — a frase da comparação guardada (energia_variacao),
+   * informativa; situações por rever nunca aparecem aqui.
+   */
+  energia: string[];
   proximaData: string;
   /** Números do mês (base de futuras métricas acumuladas). */
   contagens: {
@@ -155,6 +163,19 @@ export function montarResumoMensal(servicos: EntradaServico[], mes: string, hoje
       .map((a) => t.situacao(s.nome, situacaoDe(a, s.eventos, s, idioma).curto, extenso(a.comunicadoEm, hoje))),
   );
   const emVerificacao = ativos.some((s) => s.faturas.some((f) => f.emVerificacao));
+
+  // ---- Electricidade e gás: porque mudou o valor ------------------------
+  const energia = servicos.flatMap((s) =>
+    s.faturas
+      // Factura em verificação: a decomposição espera pela revisão da DoLado.
+      .filter((f) => f.energia?.length && !f.emVerificacao && noMes(f.registadaEm))
+      .sort((a, b) => (a.registadaEm < b.registadaEm ? -1 : 1))
+      .flatMap((f) =>
+        s.eventos
+          .filter((e) => e.faturaId === f.id && e.tipo === "energia_variacao")
+          .map((e) => t.energiaLinha(s.nome, fraseEvento({ tipo: e.tipo as TipoEvento, base: "historico", montanteCents: e.montanteCents, dados: e.dados }, idioma))),
+      ),
+  );
   const porConfirmar = ativos.some((s) => s.porConfirmar.campos.length > 0);
 
   // ---- Estado ------------------------------------------------------------
@@ -222,6 +243,7 @@ export function montarResumoMensal(servicos: EntradaServico[], mes: string, hoje
     alteracoes: situacoes,
     semAlteracoes,
     acompanhamento,
+    energia,
     proximaData,
     contagens: { faturas, contratos, avisos, situacoes: situacoes.length, servicos: ativos.length, alertasDatas: datas.length },
   };

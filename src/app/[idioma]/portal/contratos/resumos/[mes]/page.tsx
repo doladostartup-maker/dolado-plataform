@@ -77,6 +77,12 @@ export default async function ResumoMensalPage({ params }: { params: Promise<{ m
               {r.alteracoes.length > 0 ? <Lista itens={r.alteracoes} /> : <p className={TEXTO}>{r.semAlteracoes}</p>}
             </section>
           )}
+          {r.energia.length > 0 && (
+            <section className="flex flex-col gap-2">
+              <h2 className={TITULO_SECCAO}>{te.energia}</h2>
+              <Lista itens={r.energia} />
+            </section>
+          )}
           {r.acompanhamento.length > 0 && (
             <section className="flex flex-col gap-2">
               <h2 className={TITULO_SECCAO}>{te.continuaAtiva}</h2>

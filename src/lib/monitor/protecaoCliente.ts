@@ -15,6 +15,7 @@ import { rotuloSetorMonitor } from "./contratos";
 import type { Idioma } from "@/i18n/config";
 import { tMonitor } from "@/i18n/mensagens/monitor";
 import type { LinhaFatura } from "./extracaoFatura";
+import { lerEnergiaGuardada } from "./energia";
 import { nomeComercial } from "./fornecedores";
 import {
   resultadoGeral,
@@ -89,7 +90,7 @@ export async function carregarEntradasServicos(
   let versoesQ = supabase.from("contratos_versoes").select("contrato_id, mensalidade_cents, desconto_cents").eq("utilizador_id", userId).is("valido_ate", null);
   let faturasQ = supabase
     .from("faturas_monitor")
-    .select("id, contrato_id, data_emissao, periodo_inicio, periodo_fim, total_cents, mensalidade_lida_cents, recorrente_cents, linhas, data_fim_fidelizacao, em_verificacao, created_at")
+    .select("id, contrato_id, data_emissao, periodo_inicio, periodo_fim, total_cents, mensalidade_lida_cents, recorrente_cents, linhas, data_fim_fidelizacao, energia, em_verificacao, created_at")
     .eq("utilizador_id", userId);
   let eventosQ = supabase
     .from("eventos_servico")
@@ -175,6 +176,7 @@ export async function carregarEntradasServicos(
           mensalidadeLidaCents: f.mensalidade_lida_cents,
           recorrenteCents: f.recorrente_cents,
           linhas: (Array.isArray(f.linhas) ? f.linhas : []) as LinhaFatura[],
+          energia: lerEnergiaGuardada(f.energia),
           dataFimFidelizacao: f.data_fim_fidelizacao,
           emVerificacao: f.em_verificacao,
           registadaEm: f.created_at,

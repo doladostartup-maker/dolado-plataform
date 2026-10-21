@@ -25,7 +25,7 @@ import { emCurso, etapaDepoisDaLeitura, parado } from "./processamento";
 import {
   TIPO_ACHADO,
   VERSAO_ACOMPANHAMENTO,
-  compararFatura,
+  compararFaturaServico,
   fraseEvento,
   ordenarFaturas,
   resultadoFatura,
@@ -36,6 +36,7 @@ import {
 import {
   escolherServico,
   lerChaveIdentificadores,
+  normalizarIdentificador,
   normalizarIdentificadores,
   protegerExtracao,
   type IdentidadeServico,
@@ -45,11 +46,10 @@ import {
 } from "./identificacao";
 import { VERSAO_REGRA_CESSACAO, compararCessacao, textoCessacaoDivergente } from "./custoSaida";
 import { erroAlterarTipo, lerTipoDocumento, type ErroAlterarTipo } from "./tipoDocumento";
+import { lerEnergiaGuardada } from "./energia";
+import { VERSAO_ENERGIA } from "./comparacaoEnergia";
 import {
-  PROMPT_FATURA,
-  PROMPT_FATURA_VERSAO,
-  SCHEMA_FATURA,
-  SCHEMA_FATURA_VERSAO,
+  leituraFatura,
   validarExtracaoFatura,
   type CampoProposto,
 } from "./extracaoFatura";
@@ -240,7 +240,16 @@ async function identidadesServicos(admin: Admin, utilizadorId: string, fornecedo
     fornecedorChave: chaveComercial(s.fornecedor, fornecedores),
     ids: (ids ?? [])
       .filter((i) => i.contrato_id === s.id)
-      .map((i) => ({ tipo: i.tipo as TipoIdentificador, valorNormalizado: i.valor_normalizado, apresentacao: i.apresentacao })),
+      // CPE/CUI guardados em claro antes de 21/10/2026 passam a pseudónimo aqui,
+      // para coincidirem com os documentos novos (que só trazem o pseudónimo).
+      .map(
+        (i) =>
+          normalizarIdentificador(i.tipo as TipoIdentificador, i.valor_normalizado, chaveIdentificadores(), i.apresentacao) ?? {
+            tipo: i.tipo as TipoIdentificador,
+            valorNormalizado: i.valor_normalizado,
+            apresentacao: i.apresentacao,
+          },
+      ),
   }));
 }
 
@@ -411,6 +420,7 @@ async function registarNoServico(admin: Admin, a: Registo): Promise<{ repetido: 
         linhas: f.linhas,
         cessacao_operador_cents: f.cessacaoOperadorCents,
         data_fim_fidelizacao: f.dataFimFidelizacao,
+        energia: f.energia,
       },
       { onConflict: "documento_id" },
     )
@@ -536,7 +546,7 @@ export async function recalcularAcompanhamento(admin: Admin, servicoId: string):
   const [{ data: faturas }, { data: versoes }, { count: antes }] = await Promise.all([
     admin
       .from("faturas_monitor")
-      .select("id, data_emissao, periodo_inicio, periodo_fim, total_cents, mensalidade_lida_cents, recorrente_cents, linhas, data_fim_fidelizacao")
+      .select("id, data_emissao, periodo_inicio, periodo_fim, total_cents, mensalidade_lida_cents, recorrente_cents, linhas, data_fim_fidelizacao, energia")
       .eq("contrato_id", servicoId),
     admin
       .from("contratos_versoes")
@@ -555,6 +565,7 @@ export async function recalcularAcompanhamento(admin: Admin, servicoId: string):
     recorrenteCents: f.recorrente_cents,
     linhas: Array.isArray(f.linhas) ? f.linhas : [],
     dataFimFidelizacao: f.data_fim_fidelizacao,
+    energia: lerEnergiaGuardada(f.energia),
   }));
   const vs: VersaoContrato[] = (versoes ?? []).map((v) => ({
     id: v.id,
@@ -571,7 +582,7 @@ export async function recalcularAcompanhamento(admin: Admin, servicoId: string):
   const ordenadas = ordenarFaturas(lista);
   for (let i = 0; i < ordenadas.length; i++) {
     const atual = ordenadas[i];
-    const eventos = compararFatura(atual, ordenadas.slice(0, i), versaoValida(vs, atual));
+    const eventos = compararFaturaServico(atual, ordenadas.slice(0, i), versaoValida(vs, atual));
     const { error } = await admin.rpc("monitor_eventos_substituir", {
       p_contrato: servicoId,
       p_fatura: atual.id,
@@ -582,15 +593,15 @@ export async function recalcularAcompanhamento(admin: Admin, servicoId: string):
         periodo: e.periodo,
         montante_cents: e.montanteCents,
         dados: e.dados,
-        confianca: "alta",
-        versao_regra: VERSAO_ACOMPANHAMENTO,
+        confianca: e.confianca ?? "alta",
+        versao_regra: e.tipo.startsWith("energia_") ? VERSAO_ENERGIA : VERSAO_ACOMPANHAMENTO,
         chave: e.chave,
         contrato_versao_id: e.contratoVersaoId,
         achado:
           e.severidade === "atencao" && TIPO_ACHADO[e.tipo]
             ? {
                 tipo: TIPO_ACHADO[e.tipo],
-                versao_regra: VERSAO_ACOMPANHAMENTO,
+                versao_regra: e.tipo.startsWith("energia_") ? VERSAO_ENERGIA : VERSAO_ACOMPANHAMENTO,
                 evidencia: { ...e.dados, fatura_atual_id: atual.id, base: e.base, texto_proposto: fraseEvento(e) },
               }
             : null,
@@ -677,9 +688,11 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
     }
 
     const ehContrato = doc.tipo === "contrato";
+    // Facturas: fatura_v4 (com electricidade e gás) só com MONITOR_ENERGIA_ATIVO=1.
+    const fatura = leituraFatura();
     const versao = ehContrato
       ? { schema: SCHEMA_CONTRATO_VERSAO, prompt: PROMPT_CONTRATO_VERSAO }
-      : { schema: SCHEMA_FATURA_VERSAO, prompt: PROMPT_FATURA_VERSAO };
+      : { schema: fatura.schemaVersao, prompt: fatura.promptVersao };
 
     // 3. Idempotência: a mesma leitura (modelo + schema + prompt) não se repete.
     const { data: anterior } = await admin
@@ -706,8 +719,8 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
       const chamada = await lerDocumentoComClaude({
         url: assinado.signedUrl,
         mime: doc.mime_type as MimeAceite,
-        prompt: ehContrato ? PROMPT_CONTRATO : PROMPT_FATURA,
-        schema: ehContrato ? SCHEMA_CONTRATO : SCHEMA_FATURA,
+        prompt: ehContrato ? PROMPT_CONTRATO : fatura.prompt,
+        schema: ehContrato ? SCHEMA_CONTRATO : fatura.schema,
         instrucao: ehContrato ? "Extrai os dados deste contrato." : "Extrai os dados desta fatura.",
       });
       lerMs = Date.now() - inicioLeitura;

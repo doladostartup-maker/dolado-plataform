@@ -23,11 +23,18 @@
 // Sem chave configurada, o NIF e o nome são ignorados (nunca guardados em
 // claro); a associação usa os restantes identificadores.
 //
+// O CPE (electricidade) e o CUI (gás) seguem a mesma regra desde 21/10/2026:
+// identificam o local de fornecimento (uma morada) e ficam só como pseudónimo,
+// com a apresentação "terminado em 12AB". Os valores guardados em claro antes
+// desta data continuam a coincidir: são convertidos no momento da comparação
+// (normalizarIdentificador aceita o valor em claro e devolve o pseudónimo).
+//
 // A chave NUNCA pode mudar: os pseudónimos já guardados deixariam de
 // coincidir (os documentos seguintes ficariam "possível" até o cliente os
 // associar uma vez).
 
 import { createHmac } from "node:crypto";
+import { ehCodigoLocal } from "./energia.ts";
 
 export const TIPOS_IDENTIFICADOR = [
   "nif_titular",
@@ -104,9 +111,16 @@ export function normalizarIdentificador(
 ): Identificador | null {
   const bruto = (valor ?? "").trim();
   if (!bruto) return null;
+  if (ehPseudonimo(bruto)) return { tipo, valorNormalizado: bruto, apresentacao: tipo === "titular" ? null : apresentacao };
+
+  // CPE/CUI (também quando aparecem como "número do serviço"): só o pseudónimo.
+  if ((tipo === "cpe" || tipo === "cui" || tipo === "numero_servico") && ehCodigoLocal(bruto)) {
+    if (!chave) return null;
+    const codigo = bruto.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    return { tipo, valorNormalizado: pseudonimo("local", codigo, chave), apresentacao: apresentacaoLocal(codigo) };
+  }
 
   if (tipo === "nif_titular" || tipo === "titular") {
-    if (ehPseudonimo(bruto)) return { tipo, valorNormalizado: bruto, apresentacao: tipo === "nif_titular" ? apresentacao : null };
     if (!chave) return null;
     if (tipo === "nif_titular") {
       const digitos = digitosNif(bruto);
@@ -121,6 +135,11 @@ export function normalizarIdentificador(
   if (/^\d+$/.test(normalizado)) normalizado = normalizado.replace(/^0+(?=\d)/, "");
   if (normalizado.length < 4 || normalizado.length > 120) return null;
   return { tipo, valorNormalizado: normalizado, apresentacao: normalizado.slice(0, 60) };
+}
+
+/** "terminado em 12AB" (os 4 últimos caracteres do CPE/CUI). */
+export function apresentacaoLocal(codigo: string): string {
+  return `terminado em ${codigo.slice(-4)}`;
 }
 
 export function normalizarIdentificadores(lidos: IdentificadorLido[], chave: string | null): Identificador[] {
@@ -138,15 +157,15 @@ export function normalizarIdentificadores(lidos: IdentificadorLido[], chave: str
 }
 
 /**
- * Resultado da leitura de um documento sem o NIF nem o nome do titular em
- * texto: substituídos pelo pseudónimo (ou removidos, sem chave), com a
- * apresentação mascarada do NIF em "nif_titular_apresentacao". Idempotente.
+ * Resultado da leitura de um documento sem o NIF, o nome do titular nem o
+ * CPE/CUI em texto: substituídos pelo pseudónimo (ou removidos, sem chave),
+ * com a apresentação mascarada em "<campo>_apresentacao". Idempotente.
  * Corre ANTES de gravar a leitura (e sobre leituras antigas ao reutilizá-las).
  */
 export function protegerExtracao(bruto: unknown, chave: string | null): { resultado: unknown; alterado: boolean } {
   if (typeof bruto !== "object" || bruto === null || Array.isArray(bruto)) return { resultado: bruto, alterado: false };
-  const id = (bruto as Record<string, unknown>).identificacao;
-  if (typeof id !== "object" || id === null || Array.isArray(id)) return { resultado: bruto, alterado: false };
+  const lido = (bruto as Record<string, unknown>).identificacao;
+  const id = typeof lido === "object" && lido !== null && !Array.isArray(lido) ? lido : {};
 
   const novo: Record<string, unknown> = { ...(id as Record<string, unknown>) };
   let alterado = false;
@@ -162,7 +181,39 @@ export function protegerExtracao(bruto: unknown, chave: string | null): { result
     novo.titular = normalizarIdentificador("titular", titular, chave)?.valorNormalizado ?? "";
     alterado = true;
   }
-  return alterado ? { resultado: { ...(bruto as Record<string, unknown>), identificacao: novo }, alterado } : { resultado: bruto, alterado };
+  const servico = typeof novo.numero_servico === "string" ? novo.numero_servico.trim() : "";
+  if (servico && !ehPseudonimo(servico) && ehCodigoLocal(servico)) {
+    const n = normalizarIdentificador("numero_servico", servico, chave);
+    novo.numero_servico = n?.valorNormalizado ?? "";
+    novo.numero_servico_apresentacao = n?.apresentacao ?? "";
+    alterado = true;
+  }
+
+  // Electricidade e gás (fatura_v4): CPE/CUI de cada fornecimento.
+  const original = bruto as Record<string, unknown>;
+  let energia = original.energia;
+  if (Array.isArray(energia)) {
+    let mudou = false;
+    // Lista de campos ({fornecimento, campo: "cpe_cui", valor}); a apresentação
+    // mascarada fica numa entrada "cpe_cui_apresentacao" a seguir.
+    energia = energia.flatMap((f) => {
+      if (typeof f !== "object" || f === null || Array.isArray(f)) return [f];
+      const x = f as Record<string, unknown>;
+      if (x.campo !== "cpe_cui") return [f];
+      const local = typeof x.valor === "string" ? x.valor.trim() : "";
+      if (!local || ehPseudonimo(local)) return [f];
+      mudou = true;
+      const n = ehCodigoLocal(local) ? normalizarIdentificador("cpe", local, chave) : null;
+      return [{ ...x, valor: n?.valorNormalizado ?? "" }, { ...x, campo: "cpe_cui_apresentacao", valor: n?.apresentacao ?? "" }];
+    });
+    if (mudou) alterado = true;
+    else energia = original.energia;
+  }
+  if (!alterado) return { resultado: bruto, alterado };
+  return {
+    resultado: { ...original, ...(lido !== undefined || Object.keys(novo).length ? { identificacao: novo } : {}), ...(Array.isArray(energia) ? { energia } : {}) },
+    alterado,
+  };
 }
 
 export type EstadoAssociacao = "confirmada" | "possivel" | "conflito";

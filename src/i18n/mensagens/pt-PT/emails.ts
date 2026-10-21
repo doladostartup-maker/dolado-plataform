@@ -180,6 +180,7 @@ export const emails = {
     acompanhamosEm: (mes: string) => `O que acompanhámos em ${mes}`,
     alteracoes: "Alterações detectadas",
     continuaAtiva: "A sua Protecção continua activa",
+    energia: "Porque mudou o valor das suas facturas",
     proximaData: "Próxima data relevante",
     botaoAdicionar: "Adicionar um documento",
     botaoVer: "Ver a minha Protecção",
@@ -196,6 +197,7 @@ export const emails = {
     fimDe: (servico: string, promocao: boolean, data: string) => `${servico} — fim da ${promocao ? "promoção" : "fidelização"} a ${data}`,
     comparacaoFaturas: (servicos: string) => `Comparação de facturas — ${servicos}`,
     situacao: (servico: string, curto: string, data: string) => `${servico}: ${curto} (comunicado a ${data})`,
+    energiaLinha: (servico: string, frase: string) => `${servico}: ${frase}`,
     estados: {
       tudo_acompanhado: [
         "Tudo acompanhado",

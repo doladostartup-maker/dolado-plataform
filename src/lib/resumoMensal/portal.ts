@@ -15,7 +15,7 @@ import type { EstadoResumo, ResumoMensal } from "./resumo.ts";
 /** Parte do resumo que o portal apresenta. */
 export type ResumoPortal = Pick<
   ResumoMensal,
-  "mes" | "mesNome" | "estado" | "estadoTitulo" | "estadoTexto" | "introducao" | "atividade" | "alteracoes" | "semAlteracoes" | "acompanhamento" | "proximaData"
+  "mes" | "mesNome" | "estado" | "estadoTitulo" | "estadoTexto" | "introducao" | "atividade" | "alteracoes" | "semAlteracoes" | "acompanhamento" | "energia" | "proximaData"
 > & { idioma: Idioma };
 
 const ESTADOS: readonly EstadoResumo[] = ["tudo_acompanhado", "atencao", "por_confirmar", "em_verificacao", "sem_servicos"];
@@ -58,6 +58,7 @@ export function resumoDoConteudo(conteudo: unknown, mesReferencia: string): Resu
     alteracoes: linhas(c.alteracoes),
     semAlteracoes: semAlteracoes || null,
     acompanhamento: linhas(c.acompanhamento),
+    energia: linhas(c.energia),
     proximaData: texto(c.proximaData),
   };
 }
