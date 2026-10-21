@@ -30,7 +30,7 @@ function modeloFixo(capturas, resposta = {}) {
     return {
       ok: true,
       bruto: { draft: TEXTO, legal_basis: [], missing_information: ["Data de contratação não identificada."], warnings: [], confidence: "medium", ...resposta },
-      uso: { modelo: "claude-opus-5-5", tokensEntrada: 1200, tokensSaida: 800, custoUsd: 0.0208, latenciaMs: 5, requestId: `req_${randomUUID()}` },
+      uso: { modelo: "claude-sonnet-5-5", tokensEntrada: 1200, tokensSaida: 800, custoUsd: 0.0208, latenciaMs: 5, requestId: `req_${randomUUID()}` },
     };
   };
 }
@@ -90,7 +90,7 @@ describe("sugestão do texto pela IA (Supabase real)", { skip: !ATIVO && "só co
 
     const { data: geracao } = await admin.from("casos_rascunhos_ia").select("*").eq("id", r.geracaoId).single();
     assert.equal(geracao.estado, "gerado");
-    assert.equal(geracao.modelo, "claude-opus-5-5");
+    assert.equal(geracao.modelo, "claude-sonnet-5-5");
     assert.equal(geracao.prompt_versao, "reclamacao_v5");
     assert.match(geracao.contexto_sha256, /^[0-9a-f]{64}$/);
     assert.deepEqual(geracao.resposta.missing_information, ["Data de contratação não identificada."]);
