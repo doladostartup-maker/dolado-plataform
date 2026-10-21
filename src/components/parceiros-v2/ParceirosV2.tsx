@@ -71,6 +71,12 @@ export async function ParceirosV2() {
             {t.empresas.ligacao}
           </Link>
         </p>
+        <p className="mt-3 text-[15px] leading-relaxed text-[var(--v2-muted)]">
+          {t.sectorImobiliario.texto}{" "}
+          <Link prefetch={false} href="/parceiros/imobiliario" className="font-semibold text-[var(--v2-green)] underline-offset-4 hover:underline">
+            {t.sectorImobiliario.ligacao}
+          </Link>
+        </p>
       </SectionV2>
 
       <SectionV2>

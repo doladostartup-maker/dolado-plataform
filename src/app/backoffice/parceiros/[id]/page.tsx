@@ -15,6 +15,7 @@ import {
 import { ESTADOS_CODIGO_PT, ESTADOS_PARCEIRO_PT } from "../estados";
 import { DescarregarCsv, EmitirCodigos } from "./EmitirCodigos";
 import { SeccoesIndicacao } from "./SeccoesIndicacao";
+import { AreaParceiro } from "./AreaParceiro";
 import { CabecalhoPagina, TituloSeccao } from "@/components/backoffice/Cabecalho";
 import { Dado, ListaDados, Metrica } from "@/components/backoffice/Blocos";
 import { BotaoSubmeter } from "@/components/backoffice/BotaoSubmeter";
@@ -135,7 +136,10 @@ export default async function ParceiroPage({
       </section>
 
       {parceiro.indicacao ? (
-        <SeccoesIndicacao parceiroId={id} />
+        <>
+          <AreaParceiro parceiroId={id} contactoEmail={parceiro.contacto_email} ativo={parceiro.estado === "ativo"} />
+          <SeccoesIndicacao parceiroId={id} />
+        </>
       ) : (
         <form action={ativarIndicacao.bind(null, id)}>
           <BotaoSubmeter className={`${BOTAO_SECUNDARIO} ${BOTAO_PEQUENO}`}>Activar também a parceria de indicação</BotaoSubmeter>

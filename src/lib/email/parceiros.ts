@@ -82,6 +82,13 @@ export function montarEmailPagamentoComissoes(d: {
   return montar(d.idioma, t.assunto, t.titulo, [t.texto(d.comissoes)], extraHtml, [...linhas.map(([r, v]) => `${r}: ${v}`), ""]);
 }
 
+/** Acesso à área do parceiro (/portal/parceiro): ligação para o portal, sem dados de clientes. */
+export function montarEmailAcessoArea(d: { idioma: Idioma; url: string }): EmailMontado {
+  const t = tParceiros[d.idioma].emails.acessoArea;
+  const extraHtml = `<p ${P_EMAIL}><a href="${escaparHtml(d.url)}" ${LIGACAO_EMAIL}>${escaparHtml(d.url)}</a></p>\n          <p ${P_EMAIL}>${escaparHtml(t.privacidade)}</p>`;
+  return montar(d.idioma, t.assunto, t.titulo, [t.texto, t.entrar], extraHtml, [d.url, "", t.privacidade, ""]);
+}
+
 /**
  * Primeiro contacto a uma pessoa indicada por um parceiro (oportunidade B2B):
  * a mensagem opcional escrita no backoffice e, sempre, o aviso do art. 14.º

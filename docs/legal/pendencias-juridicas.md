@@ -43,6 +43,9 @@ Regras do programa e textos dos Termos e da Política `2026-10-20` validados pel
 - [ ] **Contratos-tipo:** Parceiro de Indicação (incluindo o registo de oportunidades B2B e a legitimidade para comunicar contactos de terceiros) e Parceiro de Distribuição (pacotes pré-pagos, sem acesso a dados dos beneficiários).
 - [ ] **Fiscalidade dos pagamentos a parceiros pessoa singular** (recibo, retenção na fonte) — com o contabilista. IVA: decidido (comissões sem IVA; a DoLado está no regime normal e deduz o IVA dos parceiros — Thiago, 20/10/2026). Falta a retenção na fonte: se for preciso, acrescentar o campo ao registo do pagamento.
 
+- [ ] **Área do parceiro (21/10/2026):** nova versão da Política (secções 2, 5 e 6) e, se necessário, dos Termos (secção 24) — a Política `2026-10-22` diz que os parceiros não têm acesso à plataforma. Decidir a inferência com números pequenos (totais exactos, "menos de 5" ou sem conversões por produto). Rascunho: `docs/legal/rascunho-privacidade-area-parceiro.md`. Bloqueia `AREA_PARCEIRO_ATIVA=1`.
+- [ ] **Contrato-tipo do Parceiro de Indicação:** acrescentar a área de parceiro (conta pessoal), a obrigação de dizer ao consumidor que recebe comissão e a proibição de envio em massa / listas sem base legal.
+
 ### Fora do código (Thiago)
 
 - [x] **Cookiebot:** a finalidade do cookie `dolado_indicacao` passa a incluir as indicações de parceiros comerciais (feito, confirmado por Thiago a 21/10/2026).

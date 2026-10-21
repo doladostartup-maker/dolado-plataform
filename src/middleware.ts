@@ -47,6 +47,7 @@ const PAGINAS_PUBLICAS = [
   "/30-dias-gratis",
   "/guia-facturas",
   "/parceiros",
+  "/parceiros/imobiliario",
 ];
 
 // robots.txt e sitemap.xml: servidos diretamente em dolado.pt (nunca
@@ -105,6 +106,7 @@ const PAGINAS_SO_MARKETING = [
   "/30-dias-gratis",
   "/guia-facturas",
   "/parceiros",
+  "/parceiros/imobiliario",
 ];
 
 // Páginas "Problemas que tratamos" (/problemas e /problemas/…): marketing

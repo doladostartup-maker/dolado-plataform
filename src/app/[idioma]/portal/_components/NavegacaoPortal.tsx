@@ -6,8 +6,9 @@ import { SeletorIdioma } from "@/components/idioma/SeletorIdioma";
 import { separarIdioma } from "@/i18n/config";
 import { useTextos } from "@/i18n/cliente";
 import { tPortal } from "@/i18n/mensagens/portal";
+import { tAreaParceiro } from "@/i18n/mensagens/areaParceiro";
 import { logout } from "@/app/auth/actions";
-import { IconeCartao, IconeEscudo, IconeMais, IconePainel, IconePasta, IconePessoa, IconeSair } from "@/components/portal/Icones";
+import { IconeCartao, IconeEnviar, IconeEscudo, IconeMais, IconePainel, IconePasta, IconePessoa, IconeSair } from "@/components/portal/Icones";
 import { BOTAO_PRIMARIO } from "@/components/portal/ui";
 
 // Mesma navegação na barra lateral (md e acima) e no menu móvel. Só
@@ -51,8 +52,10 @@ function Item({ href, texto, Icone, exato }: { href: string; texto: string; Icon
   );
 }
 
-export function NavegacaoPortal() {
+/** areaParceiro: a conta tem acesso activo à área do parceiro (decidido no servidor, no layout). */
+export function NavegacaoPortal({ areaParceiro = false }: { areaParceiro?: boolean }) {
   const t = useTextos(tPortal).navegacao;
+  const tParceiro = useTextos(tAreaParceiro);
   return (
     <div className="flex flex-1 flex-col">
       <Link href="/portal/casos/novo" className={`${BOTAO_PRIMARIO} mb-6 w-full`}>
@@ -67,6 +70,11 @@ export function NavegacaoPortal() {
               <Item {...i} texto={t[chave]} />
             </li>
           ))}
+          {areaParceiro && (
+            <li>
+              <Item href="/portal/parceiro" Icone={IconeEnviar} texto={tParceiro.navegacao} />
+            </li>
+          )}
         </ul>
         <div className="flex flex-col gap-1">
           <p className="px-3 pb-1 text-[11.5px] font-bold uppercase tracking-[0.08em] text-[#7A889A]">{t.aSuaConta}</p>
