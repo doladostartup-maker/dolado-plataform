@@ -149,12 +149,61 @@ export const inicio = {
     },
     situacoesTitulo: "Situações em que a DoLado pode ajudar",
     comoFunciona: {
-      titulo: "Como funciona",
-      passos: [
-        "Carregue uma factura ou um contrato",
-        "Mostramos o que está no documento: valores, datas e condições",
-        "Se quiser, continuamos atentos por si com a Protecção",
-      ],
+      // Secção "Como funciona" da homepage com a análise gratuita (ComoFunciona.tsx).
+      // Exemplos fictícios; o passo 2 só mostra o que o diagnóstico mostra de facto
+      // (sem pontos de atenção) e o passo 3 só o que o Monitor faz.
+      titulo: "É simples ter alguém do seu lado.",
+      texto: "Comece gratuitamente. Descubra o que merece atenção. E, se quiser, continue protegido.",
+      passo: "Passo",
+      gratuito: "Gratuito",
+      exemplo: "Exemplo demonstrativo",
+      carregar: {
+        titulo: "Carregue uma factura ou contrato.",
+        texto: "Sem registos ou formulários complicados. Basta escolher um PDF para começar.",
+        rotulo: "Exemplo demonstrativo: o ficheiro factura.pdf foi recebido, sem conta, sem e-mail e sem cartão.",
+        ficheiro: "factura.pdf",
+        detalhe: "PDF · 2 páginas",
+        estado: "Documento recebido",
+        sem: ["Sem conta", "Sem e-mail", "Sem cartão"],
+      },
+      descobrir: {
+        titulo: "Descubra o que pode estar a passar-lhe despercebido.",
+        texto:
+          "A DoLado lê a sua factura, mostra de onde vem o total, separa o que paga todos os meses do que foi cobrado só desta vez e calcula as datas que importam.",
+        rotulo:
+          "Exemplo demonstrativo do resultado da análise de uma factura de 54,30 €: mensalidade de 42,00 €, mais 12,30 € do que a mensalidade, explicados por aluguer de equipamento e chamadas para números especiais; a promoção termina daqui a 2 meses.",
+        documento: "Factura de telecomunicações",
+        resumo: [
+          { rotulo: "Total a pagar", valor: "54,30 €" },
+          { rotulo: "Mensalidade", valor: "42,00 €" },
+        ],
+        diferenca: "Mais 12,30 € do que a mensalidade.",
+        linhas: [
+          { descricao: "Mensalidade do pacote", valor: "42,00 €", pontual: false },
+          { descricao: "Aluguer de equipamento", valor: "4,50 €", pontual: false },
+          { descricao: "Chamadas para números especiais", valor: "7,80 €", pontual: true },
+        ],
+        habitual: "todos os meses",
+        pontual: "só esta vez",
+        soma: "A soma das linhas coincide com o total.",
+        data: "A promoção termina daqui a 2 meses.",
+        nota: "Mostramos só o que está no documento e as contas feitas com esses valores. Não tiramos conclusões sobre a empresa.",
+      },
+      acompanhar: {
+        titulo: "Não precisa de verificar tudo sozinho.",
+        texto:
+          "Com a Protecção DoLado, tenha acompanhamento contínuo das suas facturas e contratos, com verificações e alertas sobre situações relevantes.",
+        etiqueta: "Com a Protecção",
+        nota: "Comparamos cada factura que nos envia com as anteriores e com o seu contrato. O que merecer atenção é revisto por uma pessoa da DoLado antes de lhe dizermos.",
+        rotulo:
+          "Exemplo demonstrativo do que a Protecção envia: um aviso a 30 dias do fim da promoção, uma subida da mensalidade de 42,00 € para 47,00 € revista por uma pessoa da DoLado e o resumo mensal.",
+        avisos: [
+          { titulo: "Faltam 30 dias para o fim da promoção.", meta: "Aviso de datas · também a 60 dias e no próprio dia" },
+          { titulo: "A mensalidade passou de 42,00 € para 47,00 €.", meta: "Comparação com a factura anterior · revista por uma pessoa da DoLado" },
+          { titulo: "O seu resumo do mês: 2 facturas acompanhadas.", meta: "E-mail mensal com a próxima data importante" },
+        ],
+        cta: "Conhecer a Protecção",
+      },
     },
     analisa: {
       titulo: "O que lemos no seu documento",
