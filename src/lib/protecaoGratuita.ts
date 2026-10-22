@@ -138,7 +138,9 @@ export function lerMotivo(valor: unknown): MotivoElegibilidade {
 // ---------------------------------------------------------------------------
 // Origem (só métricas; valores fixos)
 
-export const ORIGENS_PROTECAO_GRATUITA = ["homepage", "precario", "protecao", "portal", "landing_30d"] as const;
+// "diagnostico": vindo do diagnóstico gratuito sem registo. A base de dados
+// grava-o como "outro" (a conversão mede-se em diagnosticos_gratuitos).
+export const ORIGENS_PROTECAO_GRATUITA = ["homepage", "precario", "protecao", "portal", "landing_30d", "diagnostico"] as const;
 export type OrigemProtecaoGratuita = (typeof ORIGENS_PROTECAO_GRATUITA)[number] | "outro";
 
 export function lerOrigem(valor: unknown): OrigemProtecaoGratuita {

@@ -41,4 +41,9 @@ export const EXCECOES: { ficheiro: string; contem: string; motivo: string }[] = 
     contem: "Extrai os dados desta fatura.",
     motivo: "Mensagem do mesmo pedido de extracção (versionado com o prompt acima).",
   },
+  {
+    ficheiro: "src/lib/diagnostico/servidor.ts",
+    contem: "Extrai os dados desta fatura.",
+    motivo: "Diagnóstico gratuito: a mesma mensagem e o mesmo prompt de extracção do Monitor (só muda o modelo).",
+  },
 ];

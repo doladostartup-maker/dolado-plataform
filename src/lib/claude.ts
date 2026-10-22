@@ -9,6 +9,14 @@
 
 export const MODELO_DOCUMENTOS = process.env.ANTHROPIC_DOCUMENT_MODEL || "claude-sonnet-5-5";
 
+// Diagnóstico gratuito sem registo (src/lib/diagnostico/): Haiku 5.5 por
+// omissão (decisão de Thiago, 22/10/2026). Escolhido só no servidor, nunca
+// pelo browser. A precisão da leitura com este modelo ainda não foi medida:
+// o diagnóstico só se liga (DIAGNOSTICO_GRATUITO_ATIVO=1) depois da
+// avaliação com facturas reais anotadas. Trocável sem alterar código
+// (ANTHROPIC_DIAGNOSTICO_MODEL).
+export const MODELO_DIAGNOSTICO = process.env.ANTHROPIC_DIAGNOSTICO_MODEL || "claude-haiku-5-5";
+
 // Os modelos atuais pensam antes de responder (thinking adaptativo, sempre
 // ligado no Sonnet 5.5). Extração é uma tarefa simples: esforço baixo e
 // margem de tokens para o raciocínio não cortar a resposta JSON.

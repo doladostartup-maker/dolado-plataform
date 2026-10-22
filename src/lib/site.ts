@@ -36,6 +36,11 @@ export function urlTratarCaso(origem?: string) {
   return origem ? `${URL_TRATAR_CASO}?origem=${encodeURIComponent(origem)}` : URL_TRATAR_CASO;
 }
 
+// Resultado do diagnóstico gratuito sem registo: em portal.dolado.pt (onde a
+// conta é criada), absoluto para o upload feito na homepage de dolado.pt. O
+// cookie da sessão anónima é partilhado pelos dois domínios.
+export const URL_DIAGNOSTICO = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/diagnostico`;
+
 // Compra de uma subscrição a partir do preçário de dolado.pt. A decisão é
 // sempre tomada em portal.dolado.pt, onde está a sessão (cookies host-only):
 // quem já tem conta compra com o Customer da conta e nunca abre uma segunda

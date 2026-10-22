@@ -21,6 +21,7 @@ import {
 } from "@/lib/monitor/servidor";
 import { LIMITE_SEM_AVANCO_MS } from "@/lib/monitor/processamento";
 import { criarDocumentoDaFaturaDoCaso } from "@/lib/monitor/faturaDoCasoServidor";
+import { importarParaMonitor } from "@/lib/diagnostico/servidor";
 import { CAMPOS_EDITAVEIS, SETORES_CONTRATO, lerEurosParaCents, lerMeses, type TipoCampo } from "@/lib/monitor/contratos";
 import { dataValida, type CampoContrato } from "@/lib/monitor/extracaoFatura";
 
@@ -156,6 +157,23 @@ export async function usarFaturaDoCaso(anexoId: string): Promise<ResultadoRegist
   }
   const r = await criarDocumentoDaFaturaDoCaso(supabase, user.id, String(anexoId ?? ""));
   if (!r.ok) return r;
+  if (r.novo) after(() => processarDocumentoEmSegundoPlano(r.documentoId));
+  return { ok: true, documentoId: r.documentoId };
+}
+
+/**
+ * "Acompanhar este documento": o documento analisado no diagnóstico gratuito
+ * (antes da conta) passa a primeiro documento da Proteção, sem novo upload.
+ * Só diagnósticos já ligados a esta conta (pelo cookie do mesmo browser); o
+ * ficheiro é copiado no Storage e lido de novo pelo pipeline do Monitor.
+ */
+export async function usarDocumentoDoDiagnostico(diagnosticoId: string): Promise<ResultadoRegisto> {
+  const { user } = await requireProtecao("contratos");
+  if (excedeuLimiteTaxa(`monitor-documento:${user.id}`)) {
+    return { ok: false, erro: "Já carregou vários documentos nos últimos minutos. Tente de novo daqui a pouco." };
+  }
+  const r = await importarParaMonitor(user.id, String(diagnosticoId ?? ""));
+  if (!r.ok) return { ok: false, erro: "Não foi possível usar este documento. Carregue-o novamente." };
   if (r.novo) after(() => processarDocumentoEmSegundoPlano(r.documentoId));
   return { ok: true, documentoId: r.documentoId };
 }

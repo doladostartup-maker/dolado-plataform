@@ -17,6 +17,9 @@ import { ProgressoDocumento } from "./_components/ProgressoDocumento";
 import { UploadDocumento } from "./_components/UploadDocumento";
 import { FaturaDoCaso } from "./_components/FaturaDoCaso";
 import { carregarFaturaDoCaso } from "@/lib/monitor/faturaDoCasoServidor";
+import { DocumentoDoDiagnostico } from "./_components/DocumentoDoDiagnostico";
+import { associarDiagnosticosDaSessao } from "@/lib/diagnostico/cookie";
+import { diagnosticosDaConta } from "@/lib/diagnostico/servidor";
 import { HistoricoProtecao, ListaAtentos, ListaVerificacoes, ResultadoAtual, SituacaoEncontrada, TituloBloco } from "./_components/ResultadoProtecao";
 import { Aviso, type TomAviso } from "@/components/portal/Aviso";
 import { CabecalhoPagina } from "@/components/portal/Cabecalho";
@@ -62,6 +65,8 @@ export default async function ContratosPage({
   const t = tProtecao[idioma].lista;
   const params = await searchParams;
   const { supabase, user } = await requireProtecao("contratos");
+  // Diagnóstico gratuito feito neste browser antes da conta: fica ligado.
+  await associarDiagnosticosDaSessao(user.id);
 
   const [{ servicos, geral }, acesso, { data: semServico }, { data: porAssociar }, { data: identificadores }, { count: resumosEnviados }] = await Promise.all([
     carregarProtecao(supabase, user.id, undefined, idioma),
@@ -117,8 +122,11 @@ export default async function ContratosPage({
   const porConfirmar = servicos.filter((s) => s.confirmar);
   // Primeiro documento: se o cliente já enviou uma fatura num caso, é
   // proposta sem novo upload (só lida depois do clique do cliente).
-  const faturaDoCaso =
-    servicos.length === 0 && docs.length === 0 && (porAssociar ?? []).length === 0 ? await carregarFaturaDoCaso(supabase, user.id) : null;
+  // O documento do diagnóstico gratuito tem prioridade: foi o último que o
+  // cliente carregou e já viu o resultado.
+  const semDocumentos = servicos.length === 0 && docs.length === 0 && (porAssociar ?? []).length === 0;
+  const doDiagnostico = semDocumentos ? (await diagnosticosDaConta(user.id)).find((d) => !d.importado) ?? null : null;
+  const faturaDoCaso = semDocumentos && !doDiagnostico ? await carregarFaturaDoCaso(supabase, user.id) : null;
   const temAtencao = geral.situacoes.length > 0 || (porAssociar ?? []).length > 0 || porConfirmar.length > 0 || ilegiveis.length > 0;
 
   // ---- Resultado atual -------------------------------------------------------
@@ -162,7 +170,13 @@ export default async function ContratosPage({
     resultado = (
       <ResultadoAtual id="resultado" estado="sem_dados" titulo={geral.titulo} conclusao={null} texto={geral.texto} ultimaVerificacao={null} hoje={hoje} idioma={idioma}>
         <div className="rounded-[16px] border border-[var(--v2-line)] bg-white p-4 sm:p-5">
-          {faturaDoCaso ? <FaturaDoCaso anexoId={faturaDoCaso.anexoId} nome={faturaDoCaso.nome} empresa={faturaDoCaso.empresa} /> : <UploadDocumento />}
+          {doDiagnostico ? (
+            <DocumentoDoDiagnostico diagnosticoId={doDiagnostico.id} tipo={doDiagnostico.diagnostico.tipo} fornecedor={doDiagnostico.diagnostico.fornecedor} />
+          ) : faturaDoCaso ? (
+            <FaturaDoCaso anexoId={faturaDoCaso.anexoId} nome={faturaDoCaso.nome} empresa={faturaDoCaso.empresa} />
+          ) : (
+            <UploadDocumento />
+          )}
         </div>
         <p className={TEXTO_SECUNDARIO}>
           {t.semDocumento}{" "}
