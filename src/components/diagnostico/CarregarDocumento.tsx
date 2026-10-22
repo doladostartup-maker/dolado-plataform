@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "@/i18n/Link";
 import { createClient } from "@/lib/supabase/client";
 import { useIdioma, useTextos } from "@/i18n/cliente";
 import { localizarHref } from "@/i18n/config";
@@ -19,6 +20,8 @@ import { confirmarDiagnosticoAction, prepararDiagnosticoAction } from "@/app/act
 
 type Erro = keyof (typeof tDiagnostico)["pt-PT"]["carregar"]["erros"];
 
+// O aviso (sem registo nem cartão; leitura por IA; conservação) fica sempre
+// junto do botão, antes de o ficheiro ser escolhido.
 export function CarregarDocumento({ local, classeBotao }: { local: string; classeBotao: string }) {
   const idioma = useIdioma();
   const t = useTextos(tDiagnostico).carregar;
@@ -97,6 +100,17 @@ export function CarregarDocumento({ local, classeBotao }: { local: string; class
           {t.erros[erro]}
         </p>
       )}
+      <div className="flex max-w-[520px] flex-col gap-1 text-[16px] leading-relaxed text-[var(--v2-muted)]">
+        <p className="text-[16px] font-semibold text-[var(--v2-navy)]">{t.confianca}</p>
+        <p>{t.formatos}</p>
+        <p>
+          {t.privacidade}{" "}
+          <Link prefetch={false} href="/privacidade" className="underline underline-offset-4">
+            {t.privacidadeLigacao}
+          </Link>
+          .
+        </p>
+      </div>
     </div>
   );
 }

@@ -96,4 +96,101 @@ export const inicio = {
     acao: "Tratar do meu caso",
     secundaria: "Ver primeiro se podemos ajudar",
   },
+  // Homepage com a análise gratuita como entrada principal (HomepageDiagnostico,
+  // só com DIAGNOSTICO_GRATUITO_ATIVO). O diagnóstico mostra só o que está no
+  // documento e contas simples (decisão de 22/10/2026): nunca prometer que
+  // encontramos erros, irregularidades ou poupanças.
+  diagnostico: {
+    hero: {
+      titulo: "A sua factura ou contrato está certo?",
+      texto: "Descubra o que está a pagar, quais são as condições do seu contrato e as datas que importam.",
+      problema: "Preciso de ajuda com um problema",
+    },
+    situacoesTitulo: "Já tem um problema com uma empresa?",
+    comoFunciona: {
+      titulo: "Como funciona",
+      passos: [
+        "Carregue uma factura ou um contrato",
+        "Mostramos o que está no documento: valores, datas e condições",
+        "Se quiser, continuamos atentos por si com a Protecção",
+      ],
+    },
+    analisa: {
+      titulo: "O que lemos no seu documento",
+      setores: "Facturas e contratos de telecomunicações, electricidade, gás e água.",
+      itens: [
+        "Quanto está a pagar e o que está a ser cobrado.",
+        "Quando termina a fidelização ou a promoção.",
+        "As condições do contrato: mensalidade, duração e vantagens.",
+        "O que não foi possível confirmar no documento.",
+      ],
+    },
+    protecao: {
+      titulo: "Com a Protecção, continuamos atentos por si",
+      itens: [
+        { titulo: "Avisamos a tempo", texto: "60 e 30 dias antes do fim da fidelização e das promoções, e no próprio dia." },
+        {
+          titulo: "Comparamos as facturas",
+          texto: "Cada factura nova é comparada com as anteriores. O que merecer atenção é revisto por uma pessoa da DoLado antes de lhe dizermos.",
+        },
+        { titulo: "Um resumo todos os meses", texto: "Um e-mail com o que acompanhámos e a próxima data importante." },
+      ],
+      cta: "Conhecer a Protecção",
+    },
+    reclamacoes: {
+      titulo: "Precisa de ajuda com um problema?",
+      texto: "Preparamos a reclamação consigo, só a enviamos com a sua autorização e acompanhamos a resposta da empresa.",
+      nota: "O tratamento de reclamações é feito com o Avulso ou com o Caso + Protecção. Não está incluído na Protecção sozinha.",
+      cta: "Tratar do meu caso",
+    },
+    oferta: {
+      titulo: "Experimente a Protecção durante 30 dias",
+    },
+    confianca: {
+      titulo: "Sem letras pequenas",
+      itens: [
+        "Pode ver o resultado sem criar conta e sem cartão bancário.",
+        "Quando encontramos algo numa factura, uma pessoa da DoLado revê antes de lhe dizermos.",
+        "Nunca enviamos nada a uma empresa sem a sua autorização.",
+      ],
+      ligacao: "Como trabalhamos",
+    },
+    perguntas: {
+      titulo: "Perguntas frequentes",
+      itens: [
+        {
+          id: "registo",
+          pergunta: "Preciso de criar conta para analisar um documento?",
+          resposta:
+            "Não. Pode carregar a factura ou o contrato e ver o resultado logo a seguir. Só cria conta se quiser guardar o resultado ou continuar com a Protecção.",
+        },
+        {
+          id: "documento",
+          pergunta: "O que acontece ao meu documento?",
+          resposta:
+            "Fica guardado num espaço privado e é lido por um sistema de inteligência artificial só para lhe mostrar o resultado. Se não criar conta, é apagado ao fim de 7 dias.",
+        },
+        {
+          id: "gratuito",
+          pergunta: "A análise é mesmo gratuita?",
+          resposta: "Sim, e não pedimos cartão bancário. A Protecção também pode ser experimentada durante 30 dias sem custos.",
+        },
+        {
+          id: "parecer",
+          pergunta: "O resultado é um parecer jurídico?",
+          resposta:
+            "Não. Mostramos o que está escrito no documento e fazemos contas simples, como os dias que faltam para o fim da fidelização. Se tiver um problema, podemos ajudar a tratá-lo.",
+        },
+        {
+          id: "documentos",
+          pergunta: "Que documentos posso analisar?",
+          resposta: "Facturas e contratos de telecomunicações, electricidade, gás e água, em PDF ou fotografia.",
+        },
+      ],
+      todas: "Ver todas as perguntas",
+    },
+    ctaFinal: {
+      titulo: "Veja o que diz a sua factura",
+    },
+  },
 };
