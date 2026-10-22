@@ -6,6 +6,8 @@ Lista única do que ficou em aberto nas auditorias e cargas jurídicas: pontos p
 
 Origem: secção "Diagnóstico gratuito sem registo" do CLAUDE.md. Funcionalidade **desligada** (`DIAGNOSTICO_GRATUITO_ATIVO`); estes pontos bloqueiam a ligação em produção.
 
+Texto proposto e pontos detalhados para a advogada: [rascunho-privacidade-diagnostico-gratuito.md](rascunho-privacidade-diagnostico-gratuito.md) (22/10/2026).
+
 - [ ] **Nova versão da Política de Privacidade:** documento carregado sem conta (factura/contrato, pode conter dados de terceiros), leitura pela Anthropic (EUA) só para mostrar o resultado, cookie funcional `dolado_diagnostico` (7 dias, sem consentimento por ser necessário ao serviço pedido — confirmar), conservação 7 dias / 30 dias depois de associado a uma conta, registo só com contagens e origem 13 meses, associação à conta criada depois.
 - [ ] **Aviso antes do carregamento:** o texto curto junto do botão ("O documento é lido por um sistema de inteligência artificial (Anthropic)…") chega como informação prévia, ou é preciso uma camada antes do selector de ficheiros?
 - [ ] **Natureza do resultado:** confirmar que um diagnóstico só com factos lidos e cálculos de datas (sem "pontos de atenção") fica do lado do apoio administrativo, e o aviso "não é um parecer jurídico".
