@@ -278,13 +278,15 @@ describe("homepage com a análise gratuita", () => {
     }
   });
 
-  test("privacidade sem promessas absolutas e com a IA identificada", async () => {
+  test("privacidade sem promessas absolutas; a IA identificada na Política", async () => {
     const { diagnostico: pt } = await import("../../i18n/mensagens/pt-PT/diagnostico.ts");
     const texto = JSON.stringify(pt.carregar.cartao).toLowerCase();
-    // Duas camadas (22/10/2026): à vista, privacidade e prazo; o fornecedor de IA no detalhe e na Política.
-    assert.ok(JSON.stringify(pt.carregar.cartao.detalhes).includes("Anthropic"));
-    assert.ok(texto.includes("anthropic"));
     for (const proibido of ["não partilhamos", "nunca partilhamos", "100%", "totalmente seguro"]) assert.ok(!texto.includes(proibido), proibido);
+    // Decisão de Thiago (22/10/2026): o fornecedor de IA só na Política de Privacidade em vigor.
+    const { PRIVACIDADE_VERSAO } = await import("../legal.ts");
+    const politica = fonte(`../../app/[idioma]/(legal)/privacidade/_versoes/v${PRIVACIDADE_VERSAO}.tsx`);
+    assert.ok(politica.includes("Anthropic"));
+    assert.match(politica, /diagnóstico gratuito, a inteligência artificial/);
   });
 
   test("textos sem promessas de erros, irregularidades ou poupanças, nas duas línguas", async () => {
@@ -302,12 +304,10 @@ describe("homepage com a análise gratuita", () => {
 });
 
 describe("reposicionamento: análise como entrada principal (22/10/2026)", () => {
-  test("a primeira camada do aviso fala do benefício e do prazo, sem destacar a IA", async () => {
+  test("o aviso do carregamento fala do benefício e do prazo, sem mencionar a IA (só na Política)", async () => {
     for (const idioma of ["pt-PT", "en-GB"]) {
       const { diagnostico } = await import(`../../i18n/mensagens/${idioma}/diagnostico.ts`);
-      const visivel = [diagnostico.carregar.privacidade, diagnostico.carregar.cartao.privacidadeTitulo, diagnostico.carregar.cartao.privacidade]
-        .join(" ")
-        .toLowerCase();
+      const visivel = [diagnostico.carregar.privacidade, JSON.stringify(diagnostico.carregar.cartao)].join(" ").toLowerCase();
       for (const termo of ["inteligência artificial", "artificial intelligence", "anthropic", " ia ", " ai "]) assert.ok(!visivel.includes(termo), `${idioma}: ${termo}`);
       assert.match(visivel, /7 (dias|days)/);
     }

@@ -18,8 +18,9 @@ export const diagnostico = {
     // Cartão de análise da homepage (CartaoAnalise). Privacidade alinhada com a
     // Política 2026-10-22c: subcontratante de IA, 7 dias do lado da DoLado,
     // até 30 dias do lado da Anthropic, possível transferência para fora da UE.
-    // Desde 22/10/2026 em duas camadas: à vista, a privacidade e o prazo; o
-    // subcontratante e a transferência, em "Como tratamos o seu documento".
+    // Desde 22/10/2026: no cartão, a privacidade, o prazo e o tratamento; o
+    // subcontratante de IA (Anthropic), os 30 dias e a transferência só na
+    // Política de Privacidade (decisão de Thiago, 22/10/2026).
     cartao: {
       comeceAqui: "Comece por aqui",
       titulo: "Carregue uma factura ou um contrato",
@@ -34,8 +35,7 @@ export const diagnostico = {
       detalhesTitulo: "Como tratamos o seu documento",
       detalhes: [
         "Analisamos o seu documento para identificar valores, datas e condições importantes. O resultado é preparado automaticamente a partir do que está escrito no documento.",
-        "O documento fica num espaço privado. A leitura automática é feita pela Anthropic, um fornecedor de inteligência artificial, só para lhe mostrar o resultado.",
-        "A Anthropic trata o documento por conta da DoLado, ao abrigo de um acordo de tratamento de dados. Pode conservá-lo até 30 dias para detectar abusos, e o tratamento pode implicar uma transferência para fora da União Europeia, com as garantias descritas na Política de Privacidade.",
+        "A Política de Privacidade explica como é feita a leitura do documento, que fornecedores nos ajudam e por quanto tempo os dados são guardados.",
         "Só deve carregar documentos de que seja titular ou que esteja autorizado a utilizar.",
       ],
     },
