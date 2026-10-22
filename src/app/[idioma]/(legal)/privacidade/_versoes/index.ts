@@ -19,7 +19,7 @@ import { PrivacidadeV20261020 } from "./v2026-10-20";
 import { PrivacidadeV20261022 } from "./v2026-10-22";
 import { PrivacidadeV20261022b } from "./v2026-10-22b";
 import { PrivacidadeV20261022c } from "./v2026-10-22c";
-import { PrivacidadeV20261023 } from "./v2026-10-23";
+import { PrivacidadeV20261022d } from "./v2026-10-22d";
 
 // Todas as versões publicadas da Política de Privacidade (AAAA-MM-DD, com sufixo de letra para
 // uma segunda versão no mesmo dia). Nunca
@@ -47,5 +47,5 @@ export const VERSOES_PRIVACIDADE: Record<string, () => React.JSX.Element> = {
   "2026-10-22": PrivacidadeV20261022,
   "2026-10-22b": PrivacidadeV20261022b,
   "2026-10-22c": PrivacidadeV20261022c,
-  "2026-10-23": PrivacidadeV20261023,
+  "2026-10-22d": PrivacidadeV20261022d,
 };

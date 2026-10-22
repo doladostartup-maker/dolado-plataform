@@ -1,16 +1,15 @@
 # Rascunho — Política de Privacidade: chat em direto (Crisp)
 
-Estado: **texto preparado como Política `2026-10-23`, por validar pela advogada** (21/10/2026). A
-auditoria de 21/10/2026 verificou que o chat **já está ligado em produção** (`CRISP_ATIVO=1`), sem estes
-três passos; decisão de Thiago: manter o Crisp e completá-los. A versão está em
-`src/app/[idioma]/(legal)/privacidade/_versoes/v2026-10-23.tsx` (PR por fundir até à validação), com a
-ortografia tradicional e estas escolhas, a confirmar: fundamento b) para perguntas antes de uma eventual
-contratação e f) para os restantes pedidos; conversas conservadas 12 meses depois da última mensagem;
-retirada do consentimento referida na secção 7. Condições originais —
-não ligar em produção antes de: (1) DPA com o Crisp; (2) nova versão da Política de
-Privacidade com o texto abaixo (as versões publicadas não se editam — criar
-`_versoes/vAAAA-MM-DD.tsx`, registar em `index.ts` e subir `PRIVACIDADE_VERSAO`); (3) Cookiebot com os
-cookies do Crisp na categoria "Preferências".
+Estado: **aprovado pela advogada e publicado como Política `2026-10-22d`** (22/10/2026; preparado como
+`2026-10-23`). DPA do Crisp obtido e cookies `crisp-client/…` declarados no Cookiebot como "Preferências"
+(confirmado por Thiago a 22/10/2026). O chat já estava ligado em produção (`CRISP_ATIVO=1`) desde, pelo
+menos, 21/10/2026.
+
+**Eliminação das conversas (decisão de Thiago, 22/10/2026): manual, uma vez por mês.** O Crisp não tem
+opção própria para apagar conversas antigas, e o plugin "Auto-Delete" custa cerca de 80 €/mês. Procedimento:
+no início de cada mês, na caixa de entrada do Crisp, ordenar as conversas pela data da última mensagem e
+apagar as que tenham a última mensagem há mais de 12 meses (Política, secção 6). As primeiras conversas
+só chegam aos 12 meses em Outubro de 2027.
 
 ## O que o código faz
 

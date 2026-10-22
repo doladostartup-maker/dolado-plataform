@@ -1,11 +1,12 @@
-// Política de Privacidade — versão 2026-10-23. Parte da 2026-10-22c (que
+// Política de Privacidade — versão 2026-10-22d. Parte da 2026-10-22c (que
 // já inclui o diagnóstico gratuito) e acrescenta o chat em directo nas
 // páginas públicas (Crisp IM SAS): dados tratados (secção 2), fundamentos e
 // consentimento para os cookies do chat (secção 3), o Crisp como
 // subcontratante (secção 5), a conservação das conversas (secção 6) e a
 // retirada do consentimento (secção 7). Texto do rascunho
-// docs/legal/rascunho-privacidade-crisp.md, POR VALIDAR pela advogada. Nada
-// do resto muda.
+// docs/legal/rascunho-privacidade-crisp.md, aprovado pela advogada
+// (confirmado por Thiago, 22/10/2026). Preparada como "2026-10-23" e
+// publicada a 22/10/2026 com o nome da data real. Nada do resto muda.
 //
 // Uma versão publicada não se edita: alterações vão para uma versão nova.
 import Link from "next/link";
@@ -169,7 +170,7 @@ const CONSERVACAO: { categoria: string; prazo: string }[] = [
   },
 ];
 
-export function PrivacidadeV20261023() {
+export function PrivacidadeV20261022d() {
   return (
     <article className="flex flex-col gap-6 pt-4">
       <div>
@@ -1001,7 +1002,7 @@ export function PrivacidadeV20261023() {
       </section>
 
       <p className="mt-6 text-xs text-[var(--color-ink-faint)]">
-        Versão 2026-10-23 · Última actualização: 23 de Outubro de 2026
+        Versão 2026-10-22d · Última actualização: 22 de Outubro de 2026
       </p>
     </article>
   );
