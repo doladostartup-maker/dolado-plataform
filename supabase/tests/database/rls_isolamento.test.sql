@@ -239,7 +239,10 @@ select is(
                            -- o resumo usa auth.uid() e só devolve agregados (area_parceiro.test.sql).
                            'parceiro_area_conceder', 'parceiro_area_revogar', 'parceiro_area_resumo',
                            'comunicacoes_reservar_confirmacao', 'comunicacoes_libertar_confirmacao', 'comunicacoes_confirmar',
-                           'comunicacoes_retirar', 'comunicacoes_destinatarios')), 0::bigint,
+                           'comunicacoes_retirar', 'comunicacoes_destinatarios',
+                           -- Diagnóstico gratuito (20261028090000): só service_role, search_path
+                           -- fixo; a associação exige o segredo da sessão (diagnostico_gratuito.test.sql).
+                           'diagnostico_reservar', 'diagnostico_associar', 'diagnosticos_expirar')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em
