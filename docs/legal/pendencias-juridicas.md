@@ -8,7 +8,7 @@ Origem: [auditoria do ecossistema](../estrategia/auditoria-ecossistema-2026-10-2
 
 - [ ] **Advogada:** validar a Política `2026-10-23` (secções 2, 3, 5, 6 e 7) — fundamento b)/f), prazo de 12 meses das conversas, categoria "Preferências" vs. botão que só carrega o chat ao clicar.
 - [x] **Thiago:** obter o DPA do Crisp (região de alojamento, subcontratantes ulteriores) e actualizar a matriz de subcontratantes. (Resolvido a 22/10/2026: DPA obtido, confirmado por Thiago; região e subcontratantes ulteriores ainda por anotar na matriz.)
-- [ ] **Thiago:** declarar no Cookiebot os cookies `crisp-client/…` e o armazenamento local como "Preferências".
+- [x] **Thiago:** declarar no Cookiebot os cookies `crisp-client/…` e o armazenamento local como "Preferências". (Resolvido a 22/10/2026, confirmado por Thiago.)
 - [ ] **Thiago:** configurar no Crisp a eliminação das conversas ao fim do prazo validado.
 - [ ] Depois dos quatro pontos: fazer merge do PR da Política `2026-10-23`.
 
