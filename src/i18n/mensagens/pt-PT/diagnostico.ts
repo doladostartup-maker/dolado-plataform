@@ -9,13 +9,35 @@ export const diagnostico = {
   carregar: {
     botao: "Analisar gratuitamente",
     confianca: "Sem registo inicial. Sem cartão bancário.",
-    formatos: "PDF ou fotografia (JPG, PNG, WebP), até 10 MB.",
+    formatos: "Apenas ficheiros PDF, até 10 MB.",
     privacidade:
       "O documento é lido por um sistema de inteligência artificial (Anthropic) só para lhe mostrar o resultado e é apagado ao fim de 7 dias, se não criar conta.",
     privacidadeLigacao: "Política de Privacidade",
+    // Cartão de análise da homepage (CartaoAnalise). Privacidade alinhada com a
+    // Política 2026-10-22c: subcontratante de IA, 7 dias do lado da DoLado,
+    // até 30 dias do lado da Anthropic, possível transferência para fora da UE.
+    cartao: {
+      comeceAqui: "Comece por aqui",
+      titulo: "Carregue uma factura ou um contrato",
+      setores: "Telecomunicações, electricidade, gás ou água.",
+      botao: "Escolher ficheiro PDF",
+      arrastar: "ou arraste o ficheiro para esta área",
+      gratuita: "Análise inicial gratuita",
+      semRegisto: "Sem registo inicial",
+      apenasPdf: "Apenas ficheiros PDF",
+      privacidade:
+        "O seu documento fica num espaço privado e é lido por um fornecedor de inteligência artificial (Anthropic) só para lhe mostrar o resultado.",
+      detalhesTitulo: "Como tratamos o seu documento",
+      detalhes: [
+        "O resultado é preparado automaticamente a partir do que está escrito no documento.",
+        "Se não criar conta, apagamos o documento e o resultado ao fim de 7 dias.",
+        "A Anthropic trata o documento por conta da DoLado, ao abrigo de um acordo de tratamento de dados. Pode conservá-lo até 30 dias para detectar abusos, e o tratamento pode implicar uma transferência para fora da União Europeia, com as garantias descritas na Política de Privacidade.",
+        "Só deve carregar documentos de que seja titular ou que esteja autorizado a utilizar.",
+      ],
+    },
     aEnviar: "A enviar o documento…",
     erros: {
-      formato: "Este formato não é aceite. Carregue um PDF ou uma fotografia (JPG, PNG ou WebP).",
+      formato: "Só aceitamos ficheiros PDF. Escolha o PDF da factura ou do contrato.",
       tamanho: "O ficheiro tem mais de 10 MB. Carregue um ficheiro mais pequeno.",
       vazio: "O ficheiro está vazio. Escolha outro ficheiro.",
       limite: "Já analisámos vários documentos há pouco. Tente de novo daqui a alguns minutos.",
@@ -34,10 +56,10 @@ export const diagnostico = {
     tentarOutro: "Analisar outro documento",
     falhou: {
       titulo: "Não foi possível concluir a análise",
-      ficheiro_invalido: "O ficheiro não parece ser um PDF ou uma imagem válida. Experimente outro ficheiro.",
+      ficheiro_invalido: "O ficheiro não parece ser um PDF válido. Experimente outro ficheiro.",
       nao_suportado:
         "Este documento não parece ser uma factura ou um contrato de telecomunicações, electricidade, gás ou água. Por agora, o diagnóstico gratuito só analisa estes documentos.",
-      ilegivel: "Não conseguimos ler o documento com segurança. Experimente uma fotografia mais nítida ou o PDF original.",
+      ilegivel: "Não conseguimos ler o documento com segurança. Experimente o PDF original, tal como o recebeu da empresa.",
       indisponivel: "Houve um problema temporário. Tente novamente daqui a pouco.",
       orcamento: "A análise gratuita está temporariamente indisponível. Tente novamente mais tarde.",
     },
