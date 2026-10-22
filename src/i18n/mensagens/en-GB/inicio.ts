@@ -133,12 +133,58 @@ export const inicio: Traducao<typeof pt> = {
     },
     situacoesTitulo: "Situations where DoLado can help",
     comoFunciona: {
-      titulo: "How it works",
-      passos: [
-        "Upload a bill or a contract",
-        "We show you what the document says: amounts, dates and terms",
-        "If you like, we keep an eye on things for you with Protection",
-      ],
+      titulo: "It's easy to have someone on your side.",
+      texto: "Start for free. Find out what needs your attention. And, if you like, stay protected.",
+      passo: "Step",
+      gratuito: "Free",
+      exemplo: "Illustrative example",
+      carregar: {
+        titulo: "Upload a bill or contract.",
+        texto: "No sign-ups or complicated forms. Just choose a PDF to get started.",
+        rotulo: "Illustrative example: the file bill.pdf has been received, with no account, no e-mail and no card.",
+        ficheiro: "bill.pdf",
+        detalhe: "PDF · 2 pages",
+        estado: "Document received",
+        sem: ["No account", "No e-mail", "No card"],
+      },
+      descobrir: {
+        titulo: "Find out what might be slipping past you.",
+        texto:
+          "DoLado reads your bill, shows where the total comes from, separates what you pay every month from what was charged just this once and works out the dates that matter.",
+        rotulo:
+          "Illustrative example of the result of checking a €54.30 bill: a €42.00 monthly fee, €12.30 more than the monthly fee, explained by equipment rental and calls to special numbers; the promotion ends in 2 months.",
+        documento: "Telecoms bill",
+        resumo: [
+          { rotulo: "Total due", valor: "€54.30" },
+          { rotulo: "Monthly fee", valor: "€42.00" },
+        ],
+        diferenca: "€12.30 more than the monthly fee.",
+        linhas: [
+          { descricao: "Package monthly fee", valor: "€42.00", pontual: false },
+          { descricao: "Equipment rental", valor: "€4.50", pontual: false },
+          { descricao: "Calls to special numbers", valor: "€7.80", pontual: true },
+        ],
+        habitual: "every month",
+        pontual: "this time only",
+        soma: "The lines add up to the total.",
+        data: "The promotion ends in 2 months.",
+        nota: "We only show what is in the document and the sums worked out from those amounts. We draw no conclusions about the company.",
+      },
+      acompanhar: {
+        titulo: "You don't have to check everything on your own.",
+        texto:
+          "With DoLado Protection, your bills and contracts are followed continuously, with checks and alerts about situations that matter.",
+        etiqueta: "With Protection",
+        nota: "We compare each bill you send us with the previous ones and with your contract. Anything that needs attention is reviewed by a person at DoLado before we tell you.",
+        rotulo:
+          "Illustrative example of what Protection sends you: a reminder 30 days before the promotion ends, a monthly fee rising from €42.00 to €47.00 reviewed by a person at DoLado, and the monthly summary.",
+        avisos: [
+          { titulo: "30 days until your promotion ends.", meta: "Date reminder · also at 60 days and on the day itself" },
+          { titulo: "Your monthly fee went from €42.00 to €47.00.", meta: "Compared with the previous bill · reviewed by a person at DoLado" },
+          { titulo: "Your monthly summary: 2 bills followed.", meta: "Monthly e-mail with the next important date" },
+        ],
+        cta: "Find out about Protection",
+      },
     },
     analisa: {
       titulo: "What we read in your document",

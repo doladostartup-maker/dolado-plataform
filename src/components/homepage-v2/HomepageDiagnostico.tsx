@@ -18,6 +18,7 @@ import { OfertaProtecaoGratuita } from "@/components/marketing-v2/OfertaProtecao
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
 import { SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, CONTENTOR, TEXTO } from "@/components/marketing-v2/estilos";
+import { ComoFunciona } from "./ComoFunciona";
 import { ExemploResultado } from "./ExemploResultado";
 import { LIGACAO, SecaoFundador, SecaoSituacoes } from "./seccoes";
 
@@ -91,20 +92,8 @@ export function HomepageDiagnostico({ protecaoGratuita = false }: { protecaoGrat
       {/* ===== Entrada secundária: quem já tem um problema ===== */}
       <SecaoSituacoes titulo={t.situacoesTitulo} acao={botaoProblema("click_home_situacoes_tratar")} />
 
-      {/* ===== Como funciona ===== */}
-      <SectionV2 id="como-funciona">
-        <SectionHeader titulo={t.comoFunciona.titulo} />
-        <ol className="mt-10 grid gap-8 md:grid-cols-3 md:gap-10">
-          {t.comoFunciona.passos.map((passo, i) => (
-            <li key={passo} className="flex gap-4 md:flex-col md:gap-5">
-              <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-[var(--v2-green)] text-[17px] font-bold text-white">
-                {i + 1}
-              </span>
-              <p className="pt-1.5 text-[18px] font-semibold leading-snug text-[var(--v2-navy)] md:pt-0">{passo}</p>
-            </li>
-          ))}
-        </ol>
-      </SectionV2>
+      {/* ===== Como funciona: o percurso demonstrado (ComoFunciona.tsx) ===== */}
+      <ComoFunciona />
 
       {/* ===== O que lemos (só o que o diagnóstico mostra de facto) ===== */}
       <SectionV2 id="o-que-lemos" tone="soft-green" className="grid gap-8 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
