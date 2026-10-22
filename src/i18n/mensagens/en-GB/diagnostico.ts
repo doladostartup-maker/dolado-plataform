@@ -24,8 +24,7 @@ export const diagnostico: Traducao<typeof pt> = {
       detalhesTitulo: "How we handle your document",
       detalhes: [
         "We check your document to identify important amounts, dates and terms. The result is prepared automatically from what is written in the document.",
-        "The document is kept in a private space. The automated reading is carried out by Anthropic, an artificial intelligence provider, only to show you the result.",
-        "Anthropic processes the document on DoLado's behalf, under a data processing agreement. It may keep it for up to 30 days to detect misuse, and the processing may involve a transfer outside the European Union, with the safeguards described in the Privacy Policy.",
+        "The Privacy Policy explains how the document is read, which providers help us and how long the data is kept.",
         "Only upload documents that are yours or that you are authorised to use.",
       ],
     },
