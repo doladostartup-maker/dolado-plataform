@@ -3,6 +3,8 @@ import { avisoDoPortal, estadoReembolsoCliente, resumoPlanoPortal } from "@/lib/
 import { obterAcesso, requireUser } from "@/lib/auth";
 import { casosDoMes } from "@/lib/casoExtra";
 import { estadoProtecaoGratuitaDaConta } from "@/lib/protecaoGratuitaServidor";
+import { associarDiagnosticosDaSessao } from "@/lib/diagnostico/cookie";
+import { diagnosticosDaConta } from "@/lib/diagnostico/servidor";
 import { estadoAcessoPatrocinadoDaConta } from "@/lib/acessoPatrocinadoServidor";
 import { obterResumoCobranca } from "@/lib/stripe/proximaCobranca";
 import {
@@ -46,6 +48,9 @@ export default async function PortalIndex({
   const MENSAGENS_ERRO: Record<string, string> = t.avisos.erros;
   const params = await searchParams;
   const { supabase, user } = await requireUser();
+  // Diagnóstico gratuito feito neste browser antes de entrar: fica ligado à
+  // conta (o Painel é o destino por omissão depois do login).
+  await associarDiagnosticosDaSessao(user.id);
 
   // Só leitura: o acesso é dado pelo webhook Stripe quando o pagamento é
   // confirmado. ?upgraded=true apenas escolhe a mensagem de regresso.
@@ -238,6 +243,20 @@ export default async function PortalIndex({
         cta: t.atencao.associarCta,
       });
     }
+  }
+
+  // Análise gratuita guardada e ainda não passada para a Protecção: o cliente
+  // vê-a no Painel, com ou sem Protecção (22/10/2026).
+  const analise = (await diagnosticosDaConta(user.id)).find((d) => !d.importado);
+  if (analise) {
+    const fornecedor = analise.diagnostico.fornecedor;
+    atencao.push({
+      id: "analise-gratuita",
+      titulo: t.atencao.analiseTitulo(analise.diagnostico.tipo, fornecedor),
+      texto: acesso.temProtecao ? t.atencao.analiseTextoProtecao : t.atencao.analiseTexto,
+      href: `/diagnostico?id=${analise.id}`,
+      cta: t.atencao.analiseCta,
+    });
   }
 
   const cobranca = await cobrancaPromessa;

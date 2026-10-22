@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { after } from "next/server";
 import { excedeuLimiteTaxa } from "@/lib/rateLimit";
 import { lerSessaoDiagnostico, sessaoDiagnosticoOuNova } from "@/lib/diagnostico/cookie";
+import { utilizadorAtual } from "@/lib/auth";
 import { canalDeOrigem, diagnosticoAtivo, dispositivoDe, normalizarPagina, normalizarUtm } from "@/lib/diagnostico/regras";
 import {
   confirmarDiagnostico,
@@ -64,9 +65,13 @@ export async function confirmarDiagnosticoAction(id: string): Promise<{ ok: bool
   return { ok: r.ok };
 }
 
+/** O browser onde o documento foi carregado ou, sem ele, o dono com sessão iniciada. */
 export async function estadoDiagnosticoAction(id: string): Promise<EstadoPublico | null> {
   const sessao = await lerSessaoDiagnostico();
-  return sessao ? estadoDiagnostico(sessao, String(id)) : null;
+  const doBrowser = sessao ? await estadoDiagnostico({ sessao }, String(id)) : null;
+  if (doBrowser) return doBrowser;
+  const { user } = await utilizadorAtual();
+  return user ? estadoDiagnostico({ contaId: user.id }, String(id)) : null;
 }
 
 export async function escolhaDiagnosticoAction(id: string, escolha: "protecao" | "guardar"): Promise<void> {

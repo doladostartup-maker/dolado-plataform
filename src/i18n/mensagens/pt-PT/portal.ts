@@ -140,6 +140,13 @@ export const portal = {
       associarTitulo: "Um documento precisa da sua decisão",
       associarTexto: "Não conseguimos confirmar a que serviço pertence. Não alterámos nada até decidir.",
       associarCta: "Decidir",
+      // Análise gratuita guardada na conta (diagnóstico sem registo).
+      analiseTitulo: (tipo: string, fornecedor: string | null) =>
+        `A análise ${tipo === "contrato" ? "do seu contrato" : "da sua factura"}${fornecedor ? ` ${fornecedor}` : ""}`,
+      analiseTexto: "Guardámos o resultado da análise gratuita na sua conta. Pode voltar a vê-lo quando quiser.",
+      analiseTextoProtecao:
+        "Guardámos o resultado da análise gratuita na sua conta. Pode vê-lo e passar o documento para a Protecção, para o continuarmos a acompanhar.",
+      analiseCta: "Ver o resultado",
     },
     oSeuCaso: "O seu caso",
   },
