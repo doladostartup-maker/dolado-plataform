@@ -76,7 +76,7 @@ describe("página e integrações", () => {
   });
   test("eventos sem dados pessoais", () => {
     const c = ler("../components/landing-30-dias/Landing30Dias.tsx");
-    assert.match(c, /track\("landing_30d_view"\)/);
+    assert.match(c, /useEventoVista\("landing_30d_view"\)/);
     assert.match(c, /track\("landing_30d_cta_click", \{ local \}\)/);
     assert.match(c, /type Local = "topo" \| "final" \| "barra";/);
   });

@@ -5,6 +5,8 @@ import { COOKIE_INDICACAO } from "@/lib/indicacoes/regras";
 import { cookiebotAceitouMarketing } from "@/lib/indicacoes/consentimento";
 import { ehCaminhoDeProblemas } from "@/lib/problemas/catalogo";
 import { CAMINHO_LANDING_30_DIAS } from "@/lib/landing30Dias";
+import { CAMINHO_ANALISAR_FATURA, caminhoAnalisarFaturaDe } from "@/lib/analisarFatura";
+import { diagnosticoAtivo } from "@/lib/diagnostico/regras";
 import {
   CABECALHO_IDIOMA,
   COOKIE_IDIOMA,
@@ -45,6 +47,7 @@ const PAGINAS_PUBLICAS = [
   "/empresas",
   "/protecao",
   "/30-dias-gratis",
+  "/analisar-fatura",
   "/guia-facturas",
   "/parceiros",
   "/parceiros/imobiliario",
@@ -104,6 +107,7 @@ const PAGINAS_SO_MARKETING = [
   "/empresas",
   "/protecao",
   "/30-dias-gratis",
+  "/analisar-fatura",
   "/guia-facturas",
   "/parceiros",
   "/parceiros/imobiliario",
@@ -204,6 +208,17 @@ async function encaminhar(request: NextRequest): Promise<NextResponse> {
   // a campanha. Mantém o idioma e os parâmetros (UTM, fbclid).
   if (host.startsWith("portal.") && caminho === CAMINHO_LANDING_30_DIAS) {
     return NextResponse.redirect(new URL(`${pathname}${search}`, "https://dolado.pt"), 308);
+  }
+  if (host.startsWith("portal.") && caminho === CAMINHO_ANALISAR_FATURA) {
+    return NextResponse.redirect(new URL(`${pathname}${search}`, "https://dolado.pt"), 308);
+  }
+
+  // Desde 22/10/2026 os anúncios levam à análise gratuita da factura: com o
+  // diagnóstico ligado, /30-dias-gratis (anúncios e ligações antigas) segue
+  // para /analisar-fatura com os mesmos parâmetros (UTM, fbclid). Temporário
+  // (307): sem o diagnóstico, a landing antiga continua a responder.
+  if (caminho === CAMINHO_LANDING_30_DIAS && diagnosticoAtivo()) {
+    return NextResponse.redirect(new URL(`${caminhoAnalisarFaturaDe(pathname)}${search}`, request.url), 307);
   }
 
   if (

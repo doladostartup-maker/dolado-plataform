@@ -95,10 +95,55 @@ export const diagnostico = {
     diferenca: {
       mais: (diferenca: V, mensalidade: V) => `Esta factura tem mais ${diferenca} do que a mensalidade (${mensalidade}).`,
       menos: (diferenca: V, mensalidade: V) => `Esta factura tem menos ${diferenca} do que a mensalidade (${mensalidade}).`,
-      notaComLinhas: "Nas linhas abaixo pode ver de onde vem a diferença. Uma diferença não é, por si só, um erro.",
-      notaSemLinhas: "Uma diferença não é, por si só, um erro: pode vir de consumos, serviços adicionais, acertos ou descontos.",
     },
-    porConfirmarTitulo: "O que não conseguimos confirmar",
+    // Três áreas do resultado (src/lib/diagnostico/apresentacao.ts): só o que
+    // foi lido, contas feitas em código e passos práticos fixos — nunca uma
+    // conclusão de que algo está errado.
+    seccoes: {
+      identificadoTitulo: "O que identificámos",
+      identificadoTexto: "Valores e datas tal como aparecem no documento, e as contas que fizemos com eles.",
+      confirmarTitulo: "O que merece confirmação",
+      confirmarTexto:
+        "Não quer dizer que haja um erro. São pontos que vale a pena confirmar na factura original, no contrato ou com a empresa.",
+      nadaConfirmar: "Não encontrámos no documento nada que precise de ser confirmado.",
+      recomendamosTitulo: "O que recomendamos",
+      recomendamosTexto: "Passos práticos, com base apenas no que conseguimos ler.",
+    },
+    origem: {
+      documento: "Do documento",
+      nao_confirmado: "Não confirmado",
+      contrato: "Precisa do contrato",
+    },
+    confirmar: {
+      soma_linhas_difere: (soma: V, total: V) =>
+        `A soma das linhas que conseguimos ler (${soma}) é diferente do total da factura (${total}). Confirme na factura original se há linhas que não lemos.`,
+      diferenca_mensalidade: (diferenca: V, mensalidade: V) =>
+        `O total tem mais ${diferenca} do que a mensalidade (${mensalidade}). Pode vir de consumos, serviços adicionais ou acertos — confirme nas linhas de onde vem.`,
+      cobrancas_pontuais: (n: number, total: V) =>
+        n === 1
+          ? `Há 1 cobrança que não se repete todos os meses (${total}). Confirme se a reconhece.`
+          : `Há ${n} cobranças que não se repetem todos os meses (${total} no total). Confirme se as reconhece.`,
+      data_proxima: {
+        fidelizacao: (data: V, dias: V) => `A fidelização termina a ${data} (faltam ${dias} dias). Confirme o que muda depois dessa data.`,
+        promocao: (data: V, dias: V) => `A promoção termina a ${data} (faltam ${dias} dias). Confirme quanto vai pagar depois dessa data.`,
+      },
+      data_passada: {
+        fidelizacao: (data: V) => `A fidelização indicada terminou a ${data}. Confirme as condições que se aplicam agora.`,
+        promocao: (data: V) => `A promoção indicada terminou a ${data}. Confirme o valor que paga agora.`,
+      },
+      so_com_contrato:
+        "Uma factura mostra o que foi cobrado. As condições que acordou — preço, fidelização e promoções — só o contrato as confirma.",
+    },
+    recomendacoes: {
+      anotar_data: "Anote a data de fim e, antes dela, confirme com a empresa quanto vai pagar a seguir.",
+      rever_condicoes: "Peça à empresa que lhe confirme, por escrito, as condições que se aplicam agora.",
+      comparar_anterior: "Compare esta factura com a anterior, linha a linha.",
+      pedir_esclarecimento: "Se não reconhecer uma cobrança, peça um esclarecimento por escrito à empresa e guarde a resposta.",
+      pdf_original: "Se puder, carregue o PDF original que a empresa lhe enviou: lê-se melhor do que uma digitalização.",
+      ter_contrato: "Tenha o contrato à mão: é ele que confirma o preço acordado e se existe fidelização.",
+      comparar_facturas_contrato: "Quando receber as próximas facturas, confirme que correspondem a estas condições.",
+      guardar_factura: "Guarde esta factura: vai ser útil para comparar com a próxima.",
+    },
     porConfirmar: {
       fornecedor: "A empresa que emitiu o documento.",
       total: "O valor total da factura.",
@@ -107,7 +152,6 @@ export const diagnostico = {
       mensalidade: "O valor da mensalidade.",
       data_ativacao: "A data de activação, de que depende o fim da fidelização.",
     } as Record<string, string>,
-    nadaPorConfirmar: "Conseguimos ler a informação principal do documento.",
     aviso:
       "Este diagnóstico descreve o que está no documento. Não é um parecer jurídico nem uma avaliação de que algo está errado.",
     campos: {
@@ -149,6 +193,25 @@ export const diagnostico = {
     guardarNota: "Crie uma conta gratuita para guardar este resultado.",
     guardado: "Este resultado já está guardado na sua conta.",
     irPortal: "Abrir a minha conta",
+    // Resultado aberto a partir da landing /analisar-fatura: a Protecção como
+    // continuação da análise, sem destacar os 30 dias grátis. Só o que a
+    // Protecção faz (Monitor, avisos de datas, revisão humana, resumo mensal).
+    analisarFatura: {
+      titulo: "E se não tivesse de verificar tudo sozinho?",
+      texto:
+        "A primeira análise é apenas o começo. Conheça a Protecção DoLado e descubra como podemos ajudar a acompanhar os seus contratos e serviços.",
+      agoraTitulo: "Esta análise gratuita",
+      agora: "Lê uma factura, uma vez, e mostra o que está no documento.",
+      protecaoTitulo: "Com a Protecção DoLado",
+      beneficios: [
+        "Comparamos cada factura nova com as anteriores.",
+        "Avisamos antes do fim da fidelização e das promoções.",
+        "O que merecer atenção é revisto por uma pessoa da DoLado antes de lhe dizermos.",
+        "Todos os meses, recebe por e-mail um resumo do que acompanhámos.",
+      ],
+      botao: "Conhecer a Protecção DoLado",
+      nota: "Subscrição mensal, que pode cancelar no portal. Esta análise continua gratuita, com ou sem Protecção.",
+    },
     problema: "Já tem um problema com esta empresa?",
     problemaLigacao: "Peça-nos ajuda",
   },

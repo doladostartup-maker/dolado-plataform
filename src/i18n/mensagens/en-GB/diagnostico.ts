@@ -89,10 +89,52 @@ export const diagnostico: Traducao<typeof pt> = {
     diferenca: {
       mais: (diferenca: V, mensalidade: V) => `This bill is ${diferenca} more than the monthly fee (${mensalidade}).`,
       menos: (diferenca: V, mensalidade: V) => `This bill is ${diferenca} less than the monthly fee (${mensalidade}).`,
-      notaComLinhas: "The lines below show where the difference comes from. A difference is not, in itself, a mistake.",
-      notaSemLinhas: "A difference is not, in itself, a mistake: it may come from usage, additional services, adjustments or discounts.",
     },
-    porConfirmarTitulo: "What we couldn't confirm",
+    seccoes: {
+      identificadoTitulo: "What we found",
+      identificadoTexto: "Amounts and dates as they appear in the document, and the sums we worked out from them.",
+      confirmarTitulo: "What is worth confirming",
+      confirmarTexto:
+        "This does not mean anything is wrong. These are points worth checking against the original bill, the contract or with the company.",
+      nadaConfirmar: "We found nothing in the document that needs confirming.",
+      recomendamosTitulo: "What we suggest",
+      recomendamosTexto: "Practical steps, based only on what we could read.",
+    },
+    origem: {
+      documento: "From the document",
+      nao_confirmado: "Not confirmed",
+      contrato: "Needs the contract",
+    },
+    confirmar: {
+      soma_linhas_difere: (soma: V, total: V) =>
+        `The lines we could read add up to ${soma}, which is different from the bill total (${total}). Check the original bill for lines we did not read.`,
+      diferenca_mensalidade: (diferenca: V, mensalidade: V) =>
+        `The total is ${diferenca} more than the monthly fee (${mensalidade}). This may come from usage, extra services or adjustments — check the lines to see where it comes from.`,
+      cobrancas_pontuais: (n: number, total: V) =>
+        n === 1
+          ? `There is 1 charge that does not repeat every month (${total}). Check that you recognise it.`
+          : `There are ${n} charges that do not repeat every month (${total} in total). Check that you recognise them.`,
+      data_proxima: {
+        fidelizacao: (data: V, dias: V) => `The minimum term ends on ${data} (${dias} days to go). Check what changes after that date.`,
+        promocao: (data: V, dias: V) => `The promotion ends on ${data} (${dias} days to go). Check how much you will pay after that date.`,
+      },
+      data_passada: {
+        fidelizacao: (data: V) => `The minimum term shown ended on ${data}. Check which terms apply now.`,
+        promocao: (data: V) => `The promotion shown ended on ${data}. Check the amount you pay now.`,
+      },
+      so_com_contrato:
+        "A bill shows what was charged. The terms you agreed — price, minimum term and promotions — can only be confirmed with the contract.",
+    },
+    recomendacoes: {
+      anotar_data: "Make a note of the end date and, before it, ask the company how much you will pay next.",
+      rever_condicoes: "Ask the company to confirm in writing which terms apply now.",
+      comparar_anterior: "Compare this bill with the previous one, line by line.",
+      pedir_esclarecimento: "If you do not recognise a charge, ask the company for a written explanation and keep the reply.",
+      pdf_original: "If you can, upload the original PDF the company sent you: it reads better than a scan.",
+      ter_contrato: "Keep the contract to hand: it confirms the agreed price and whether there is a minimum term.",
+      comparar_facturas_contrato: "When your next bills arrive, check that they match these terms.",
+      guardar_factura: "Keep this bill: it will be useful to compare with the next one.",
+    },
     porConfirmar: {
       fornecedor: "The company that issued the document.",
       total: "The bill total.",
@@ -101,7 +143,6 @@ export const diagnostico: Traducao<typeof pt> = {
       mensalidade: "The monthly price.",
       data_ativacao: "The activation date, which the end of the minimum term depends on.",
     } as Record<string, string>,
-    nadaPorConfirmar: "We could read the main information in the document.",
     aviso: "This check describes what is in the document. It is not legal advice, nor an assessment that something is wrong.",
     campos: {
       data_emissao: "Issue date",
@@ -142,6 +183,22 @@ export const diagnostico: Traducao<typeof pt> = {
     guardarNota: "Create a free account to save this result.",
     guardado: "This result is already saved in your account.",
     irPortal: "Open my account",
+    analisarFatura: {
+      titulo: "What if you didn't have to check everything yourself?",
+      texto:
+        "This first check is only the beginning. Find out about DoLado Protection and how we can help keep an eye on your contracts and services.",
+      agoraTitulo: "This free check",
+      agora: "Reads one bill, once, and shows what is in the document.",
+      protecaoTitulo: "With DoLado Protection",
+      beneficios: [
+        "We compare each new bill with the previous ones.",
+        "We let you know before your minimum term and promotions end.",
+        "Anything that needs attention is reviewed by a person at DoLado before we tell you.",
+        "Every month, you receive an e-mail summary of what we kept an eye on.",
+      ],
+      botao: "Find out about DoLado Protection",
+      nota: "Monthly subscription that you can cancel in the portal. This check stays free, with or without Protection.",
+    },
     problema: "Already have a problem with this company?",
     problemaLigacao: "Ask us for help",
   },

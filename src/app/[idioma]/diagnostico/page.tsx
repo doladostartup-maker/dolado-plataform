@@ -6,6 +6,7 @@ import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { utilizadorAtual } from "@/lib/auth";
 import { associarDiagnosticosDaSessao } from "@/lib/diagnostico/cookie";
 import { diagnosticoAtivo } from "@/lib/diagnostico/regras";
+import { ORIGEM_ANALISAR_FATURA } from "@/lib/analisarFatura";
 import { ResultadoDiagnostico } from "./ResultadoDiagnostico";
 
 export async function generateMetadata({ params }: ComIdioma) {
@@ -26,6 +27,8 @@ export default async function DiagnosticoPage({
   await idiomaDaPagina(params);
   const consulta = await searchParams;
   const id = typeof consulta.id === "string" && /^[0-9a-f-]{36}$/i.test(consulta.id) ? consulta.id : null;
+  // Só a origem conhecida (landing /analisar-fatura) muda a apresentação.
+  const origem = consulta.origem === ORIGEM_ANALISAR_FATURA ? ORIGEM_ANALISAR_FATURA : null;
   const { user } = await utilizadorAtual();
   if (user) await associarDiagnosticosDaSessao(user.id);
 
@@ -38,7 +41,7 @@ export default async function DiagnosticoPage({
         </div>
       </header>
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:py-10">
-        <ResultadoDiagnostico id={id} temConta={!!user} ativo={diagnosticoAtivo()} />
+        <ResultadoDiagnostico id={id} temConta={!!user} ativo={diagnosticoAtivo()} origem={origem} />
       </main>
     </div>
   );
