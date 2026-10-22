@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import { crispAtivo } from "@/lib/crisp";
+import { diagnosticoAtivo } from "@/lib/diagnostico/regras";
 import { ChatCrisp } from "./ChatCrisp";
 import { FooterV2 } from "./FooterV2";
 import { fonteV2 as fonte } from "./fonte";
@@ -16,6 +17,9 @@ import { NavbarV2 } from "./NavbarV2";
 //
 // Chat em direto (Crisp): só nas páginas que passam `chatEmDireto` (lista em
 // PAGINAS_COM_CRISP, src/lib/crisp.ts), com CRISP_ATIVO=1 e consentimento.
+//
+// Navbar: com a análise gratuita ligada (DIAGNOSTICO_GRATUITO_ATIVO, lido no
+// build), a acção principal é "Analisar documento" em todas as páginas.
 
 export function PaginaV2({
   eventoCtaNavbar,
@@ -39,7 +43,9 @@ export function PaginaV2({
   return (
     <div className={`tema-v2 ${fonte.className} min-h-screen bg-white text-[var(--v2-navy)] antialiased`}>
       <AnalyticsScripts />
-      {cabecalho ?? <NavbarV2 eventoCta={eventoCtaNavbar} parametrosCta={parametrosCtaNavbar} ctaDiscreto={ctaNavbarDiscreto} />}
+      {cabecalho ?? (
+        <NavbarV2 eventoCta={eventoCtaNavbar} parametrosCta={parametrosCtaNavbar} ctaDiscreto={ctaNavbarDiscreto} analisar={diagnosticoAtivo()} />
+      )}
       <main>{children}</main>
       {/* Páginas com cabeçalho próprio são as landings das campanhas (Meta
           Ads, guia): sem ligações de volta às redes sociais no rodapé. */}

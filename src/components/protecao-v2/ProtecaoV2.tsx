@@ -14,6 +14,7 @@ import { IconeCalendario, IconeDocumentoVisto, IconeFatura, IconeLupaDocumento, 
 import { ListaVistos } from "@/components/marketing-v2/ListaVistos";
 import { PainelProtecao } from "@/components/marketing-v2/Mockups";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
+import { LigacaoAnalisar } from "@/components/marketing-v2/LigacaoAnalisar";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
 import { track } from "@/lib/analytics";
@@ -38,17 +39,24 @@ const ICONES = [
 ];
 
 const IDS_PERGUNTAS = ["o-que-inclui-protecao", "comecar-protecao", "diferenca-planos", "cancelar-protecao"];
+// Com a análise gratuita ligada: também "Preciso de enviar novas facturas?" e "A análise identifica problemas?".
+const IDS_PERGUNTAS_ANALISE = ["novas-facturas", "analise-problemas"];
 
-/** `protecaoGratuita`: oferta dos 30 dias ligada (PROTECAO_GRATUITA_ATIVA, lido no build). */
-export function ProtecaoV2({ protecaoGratuita = false }: { protecaoGratuita?: boolean }) {
+/**
+ * `protecaoGratuita`: oferta dos 30 dias ligada (PROTECAO_GRATUITA_ATIVA, lido no build).
+ * `analise`: análise gratuita ligada (DIAGNOSTICO_GRATUITO_ATIVO) — diferença entre a análise e a Protecção.
+ */
+export function ProtecaoV2({ protecaoGratuita = false, analise = false }: { protecaoGratuita?: boolean; analise?: boolean }) {
   const idioma = useIdioma();
   const c = useCaminho();
   const t = tPaginas[idioma].protecao;
   const tp = tPlanos[idioma];
   const precoProtecao = tp.comUnidade(precoNoIdioma(idioma, PLANOS.protecao.precoCentimos), true);
   const precoCasoProtecao = tp.comUnidade(precoNoIdioma(idioma, PLANOS.caso_protecao.precoCentimos), true);
-  const TODAS = categoriasPerguntas(idioma, { protecaoGratuita }).flatMap((cat) => cat.perguntas);
-  const ids = protecaoGratuita ? [...IDS_PERGUNTAS.slice(0, 2), "experimentar-protecao", "fim-protecao-gratuita", ...IDS_PERGUNTAS.slice(2)] : IDS_PERGUNTAS;
+  const a = t.analise;
+  const TODAS = categoriasPerguntas(idioma, { protecaoGratuita, analise }).flatMap((cat) => cat.perguntas);
+  const base = analise ? [...IDS_PERGUNTAS.slice(0, 2), ...IDS_PERGUNTAS_ANALISE, ...IDS_PERGUNTAS.slice(2)] : IDS_PERGUNTAS;
+  const ids = protecaoGratuita ? [...base.slice(0, 2), "experimentar-protecao", "fim-protecao-gratuita", ...base.slice(2)] : base;
   const PERGUNTAS = ids.flatMap((id) => TODAS.filter((p) => p.id === id).slice(0, 1));
   const negrito = (texto: string) => rico(texto, { b: (conteudo) => <strong className="text-[var(--v2-navy)]">{conteudo}</strong> });
 
@@ -86,6 +94,15 @@ export function ProtecaoV2({ protecaoGratuita = false }: { protecaoGratuita?: bo
           </div>
           <p className="mt-4 text-[14px] leading-relaxed text-[var(--v2-muted)]">{t.dependeDocumentos}</p>
           {protecaoGratuita && <OfertaProtecaoGratuita origem="protecao" className="mt-7" />}
+          {analise && (
+            <LigacaoAnalisar
+              evento="click_protecao_analisar"
+              parametros={{ local: "abertura" }}
+              className="mt-5 inline-flex min-h-12 items-center gap-1.5 text-[16px] font-semibold text-[var(--v2-green-dark)] underline underline-offset-4"
+            >
+              {a.comecar} <IconeSeta tamanho={15} />
+            </LigacaoAnalisar>
+          )}
         </div>
         <PainelProtecao />
       </SectionV2>
@@ -107,6 +124,34 @@ export function ProtecaoV2({ protecaoGratuita = false }: { protecaoGratuita?: bo
           ))}
         </ul>
       </SectionV2>
+
+      {/* ===== Análise gratuita ou Protecção? (só com a análise gratuita) ===== */}
+      {analise && (
+        <SectionV2 id="analise-ou-protecao">
+          <SectionHeader eyebrow={a.eyebrow} titulo={a.titulo} />
+          <div className="mt-10 grid gap-6 md:grid-cols-2">
+            {[a.gratuita, a.protecao].map((col, i) => (
+              <div key={col.titulo} className={`${CARTAO} p-6 sm:p-7 ${i === 1 ? "!border-[var(--v2-green)]/40" : ""}`}>
+                <h2 className="text-[20px] font-bold tracking-[-0.015em] text-[var(--v2-navy)]">{col.titulo}</h2>
+                <div className="mt-4">
+                  <ListaVistos itens={col.itens} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 max-w-[760px]">
+            <h3 className="text-[19px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{a.encontramos.titulo}</h3>
+            <p className={`${TEXTO} mt-2`}>{a.encontramos.texto}</p>
+          </div>
+          <LigacaoAnalisar
+            evento="click_protecao_analisar"
+            parametros={{ local: "comparacao" }}
+            className={`${BOTAO_CONTORNO} mt-8 min-h-14 w-full text-[17px] sm:w-auto`}
+          >
+            {a.analisar} <IconeSeta tamanho={17} />
+          </LigacaoAnalisar>
+        </SectionV2>
+      )}
 
       {/* ===== Resumo mensal em destaque ===== */}
       <SectionV2 id="resumo-mensal" className="grid items-start gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">

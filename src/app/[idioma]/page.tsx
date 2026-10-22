@@ -10,14 +10,15 @@ import { ofertaProtecaoGratuitaPublica } from "@/lib/site";
 
 export async function generateMetadata({ params }: ComIdioma): Promise<Metadata> {
   const idioma = await idiomaDaPagina(params);
-  const t = tInicio[idioma].metadados;
+  // Com a análise gratuita, a homepage apresenta-se pela análise de documentos.
+  const t = diagnosticoAtivo() ? tInicio[idioma].metadadosDiagnostico : tInicio[idioma].metadados;
   return metadadosPublicos(idioma, "/", { title: t.titulo, description: t.descricao });
 }
 
 export default async function LandingPage({ params }: ComIdioma) {
   await idiomaDaPagina(params);
   return (
-    <PaginaV2 eventoCtaNavbar="click_nav_reclamacao" chatEmDireto ctaNavbarDiscreto={diagnosticoAtivo()}>
+    <PaginaV2 eventoCtaNavbar="click_nav_reclamacao" chatEmDireto>
       {/* Com a análise gratuita ligada (lido no build), a homepage abre pelo
           carregamento do documento; sem ela, fica a entrada "Tratar do meu caso". */}
       {diagnosticoAtivo() ? (

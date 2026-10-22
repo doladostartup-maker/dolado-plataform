@@ -9,9 +9,9 @@ export const parceiros: Traducao<typeof pt> = {
         "Refer clients to DoLado or distribute DoLado Protection through your work. The terms of each partnership are set out in a written agreement. Propose a partnership.",
     },
     eyebrow: "Partner Programme",
-    titulo: "Help the people you work with resolve consumer problems.",
+    titulo: "Help the people you work with understand what they pay and resolve consumer problems.",
     texto:
-      "For professionals and companies who are close to consumers — and who want to have an answer when a bill, a contract or a purchase goes wrong. DoLado handles the problem; the partner brings DoLado to the people who need it.",
+      "For professionals and companies who are close to consumers — and who want to have an answer when a bill, a contract or a purchase goes wrong. DoLado keeps an eye on bills and contracts with Protection and handles the problem when it comes up; the partner brings DoLado to the people who need it.",
     cta: "Propose a partnership",
     verModelos: "See the ways to work with us",
     garantias: {

@@ -5,7 +5,7 @@ export const comum = {
   metadados: {
     titulo: "DoLado",
     descricao:
-      "A DoLado ajuda os consumidores a tratar problemas com empresas — telecomunicações, energia, gás, água, compras e ginásios — e acompanha facturas e contratos com a Protecção.",
+      "A DoLado ajuda a compreender facturas e contratos, acompanha o que merece atenção com a Protecção e ajuda a tratar problemas com empresas — telecomunicações, energia, gás, água, compras e ginásios.",
   },
   acessibilidade: {
     saltarConteudo: "Saltar para o conteúdo",
@@ -27,22 +27,26 @@ export const comum = {
     },
   },
   navbar: {
+    comoFunciona: "Como funciona",
     problemas: "Problemas que tratamos",
     problemasCurto: "Problemas",
     ferramentasCurto: "Ferramentas",
     protecao: "Protecção",
     ferramentas: "Ferramentas gratuitas",
-    precario: "Preçário",
+    precario: "Preços",
     iniciarSessao: "Entrar",
     tratarCaso: "Tratar do meu caso",
+    analisarDocumento: "Analisar documento",
+    jaTemProblema: "Já tem um problema? Tratar do meu caso",
   },
   rodape: {
     /** Assinatura junto ao logótipo, em duas linhas. */
-    lema: ["Apoio para tratar problemas.", "Protecção para antecipar surpresas."],
+    lema: ["Clareza sobre as suas facturas e contratos.", "Ajuda quando surge um problema."],
     produto: "Serviços",
     apoio: "Ajuda",
     dolado: "A DoLado",
     legal: "Legal",
+    analisar: "Análise gratuita de documentos",
     comoFunciona: "Como funciona",
     problemas: "Problemas que tratamos",
     protecao: "Protecção",

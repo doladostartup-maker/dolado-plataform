@@ -20,6 +20,7 @@ import { PRAZO_LIVRE_RESOLUCAO_DIAS, ROTAS_LEGAIS } from "@/lib/legal";
 import { DIAS_CASOS_GUARDADOS } from "@/lib/acesso";
 import { CASO_EXTRA, LIMITE_CASOS_ACUMULADOS, PLANOS, type PlanoId } from "@/lib/planos";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
+import { LigacaoAnalisar } from "@/components/marketing-v2/LigacaoAnalisar";
 import { destinoPlano } from "@/lib/precario";
 import { urlExperimentarProtecao } from "@/lib/site";
 import { tProtecaoGratuita } from "@/i18n/mensagens/protecaoGratuita";
@@ -29,12 +30,16 @@ import { tProtecaoGratuita } from "@/i18n/mensagens/protecaoGratuita";
 // Nomes e preços vêm de src/lib/planos.ts; o que cada plano inclui e o
 // destino dos botões, de src/lib/precario.ts (os mesmos do preçário da
 // homepage). Nenhuma regra de compra muda aqui.
+// Reposicionamento de 22/10/2026: o produto recorrente principal (Protecção)
+// primeiro, depois o Caso + Protecção e o Avulso; e, com a análise gratuita
+// ligada, um bloco que separa o que é gratuito do que é pago.
 
 // Textos: src/i18n/mensagens/*/paginas.ts ("precario") e */planos.ts.
+// Destaque na Protecção, o produto recorrente principal (decisão de Thiago, 22/10/2026).
 const NECESSIDADES: { plano: PlanoId; destaque?: boolean }[] = [
+  { plano: "protecao", destaque: true },
+  { plano: "caso_protecao" },
   { plano: "avulso" },
-  { plano: "caso_protecao", destaque: true },
-  { plano: "protecao" },
 ];
 
 // Linhas da tabela de comparação (textos em paginas.ts, "comparacao").
@@ -49,8 +54,11 @@ const IDS_PERGUNTAS = [
   "livre-resolucao",
 ];
 
-/** `protecaoGratuita`: oferta dos 30 dias ligada (PROTECAO_GRATUITA_ATIVA, lido no build). */
-export function PrecarioV2({ protecaoGratuita = false }: { protecaoGratuita?: boolean }) {
+/**
+ * `protecaoGratuita`: oferta dos 30 dias ligada (PROTECAO_GRATUITA_ATIVA, lido no build).
+ * `analise`: análise gratuita ligada (DIAGNOSTICO_GRATUITO_ATIVO, lido no build).
+ */
+export function PrecarioV2({ protecaoGratuita = false, analise = false }: { protecaoGratuita?: boolean; analise?: boolean }) {
   const idioma = useIdioma();
   const c = useCaminho();
   const t = tPaginas[idioma].precario;
@@ -105,6 +113,14 @@ export function PrecarioV2({ protecaoGratuita = false }: { protecaoGratuita?: bo
     },
   ];
   const VALORES = t.comparacao.valores(LIMITE_CASOS_ACUMULADOS);
+  const gp = t.gratuitoPago;
+  const GRATUITO_PAGO = [
+    ...(analise ? [gp.analise] : []),
+    ...(protecaoGratuita ? [gp.protecaoGratuita] : []),
+    gp.subscricao,
+    gp.pontual,
+  ];
+  const ctaFinal = analise ? t.ctaFinalAnalise : t.ctaFinal;
   const escolher = (plano: PlanoId) => {
     track(`click_precario_${plano}`, { pagina: "precario_v2" });
     window.location.assign(c(destinoPlano(plano, "/precario")));
@@ -163,7 +179,7 @@ export function PrecarioV2({ protecaoGratuita = false }: { protecaoGratuita?: bo
                         <a
                           href={c(urlExperimentarProtecao("precario"))}
                           onClick={() => track("protecao_gratuita_clique", { local: "precario" })}
-                          className={`${BOTAO_CONTORNO} w-full`}
+                          className={`${destaque ? BOTAO_PRIMARIO : BOTAO_CONTORNO} w-full`}
                         >
                           {tProtecaoGratuita[idioma].oferta.cta} <IconeSeta tamanho={16} />
                         </a>
@@ -212,6 +228,27 @@ export function PrecarioV2({ protecaoGratuita = false }: { protecaoGratuita?: bo
           contexto="planos"
         />
       </SectionV2>
+
+      {/* ===== O que é gratuito e o que é pago (só com a análise gratuita) ===== */}
+      {analise && (
+        <SectionV2 id="gratuito-e-pago" size="compact">
+          <SectionHeader eyebrow={gp.eyebrow} titulo={gp.titulo} />
+          <dl className={`mt-8 grid gap-5 ${GRATUITO_PAGO.length === 4 ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"}`}>
+            {GRATUITO_PAGO.map((item) => (
+              <div key={item.titulo} className={`${CARTAO} p-6`}>
+                <dt className="text-[18px] font-bold tracking-[-0.01em] text-[var(--v2-navy)]">{item.titulo}</dt>
+                <dd className="mt-2 text-[16px] leading-relaxed text-[var(--v2-muted)]">{item.texto}</dd>
+              </div>
+            ))}
+          </dl>
+          <LigacaoAnalisar
+            evento="click_precario_analisar"
+            className={`${BOTAO_CONTORNO} mt-8 min-h-14 w-full text-[17px] sm:w-auto`}
+          >
+            {gp.analisar} <IconeSeta tamanho={17} />
+          </LigacaoAnalisar>
+        </SectionV2>
+      )}
 
       {/* ===== Comparação lado a lado ===== */}
       {/* Mesmos factos dos cartões e das condições (Termos, secções 8–10 e
@@ -315,17 +352,23 @@ export function PrecarioV2({ protecaoGratuita = false }: { protecaoGratuita?: bo
 
       {/* ===== CTA final ===== */}
       <CTASection
-        eyebrow={t.ctaFinal.eyebrow}
-        titulo={t.ctaFinal.titulo}
-        texto={t.ctaFinal.texto}
+        eyebrow={ctaFinal.eyebrow}
+        titulo={ctaFinal.titulo}
+        texto={ctaFinal.texto}
         acao={
-          <Link prefetch={false}
-            href="/simulador-elegibilidade"
-            onClick={() => track("click_precario_v2_simulador")}
-            className={`${BOTAO_PRIMARIO} w-full md:w-auto`}
-          >
-            {t.ctaFinal.acao} <IconeSeta tamanho={17} />
-          </Link>
+          analise ? (
+            <LigacaoAnalisar evento="click_precario_v2_analisar" className={`${BOTAO_PRIMARIO} w-full md:w-auto`}>
+              {ctaFinal.acao} <IconeSeta tamanho={17} />
+            </LigacaoAnalisar>
+          ) : (
+            <Link prefetch={false}
+              href="/simulador-elegibilidade"
+              onClick={() => track("click_precario_v2_simulador")}
+              className={`${BOTAO_PRIMARIO} w-full md:w-auto`}
+            >
+              {ctaFinal.acao} <IconeSeta tamanho={17} />
+            </Link>
+          )
         }
       />
     </>

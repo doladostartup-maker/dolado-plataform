@@ -4,6 +4,7 @@ import { tComum } from "@/i18n/mensagens/comum";
 import { LIVRO_RECLAMACOES_URL, ROTAS_LEGAIS } from "@/lib/legal";
 import { ENTIDADE_LEGAL, NIPC } from "@/lib/site";
 import { parceirosAtivos } from "@/lib/parceiros/regras";
+import { diagnosticoAtivo } from "@/lib/diagnostico/regras";
 import { redesDoladoConfiguradas } from "@/lib/redesSociais";
 import { DefinicoesCookies } from "./DefinicoesCookies";
 import { Logotipo } from "./Logotipo";
@@ -13,6 +14,8 @@ import { ROTAS_V2 } from "./rotas";
 // Rodapé do Design System V2. Só links para páginas que existem. Desde a
 // simplificação do menu (17/10/2026) é aqui que vivem as páginas que saíram
 // da navbar ("Como funciona", perguntas frequentes, "Empresas").
+// Reposicionamento de 22/10/2026: "Serviços" pela nova hierarquia — análise
+// gratuita (só com DIAGNOSTICO_GRATUITO_ATIVO), Protecção, preços, problemas.
 
 type Rodape = (typeof tComum)["pt-PT"]["rodape"];
 type ChaveRodape = Exclude<keyof Rodape, "lema" | "cidade" | "definicoesCookies">;
@@ -21,9 +24,10 @@ const COLUNAS_RODAPE: { titulo: ChaveRodape; links: { href: string; label: Chave
   {
     titulo: "produto",
     links: [
-      { href: ROTAS_V2.problemas, label: "problemas" },
+      { href: ROTAS_V2.analisar, label: "analisar" },
       { href: ROTAS_V2.protecao, label: "protecao" },
       { href: ROTAS_V2.precario, label: "precario" },
+      { href: ROTAS_V2.problemas, label: "problemas" },
       { href: ROTAS_V2.ferramentas, label: "ferramentas" },
     ],
   },
@@ -99,7 +103,9 @@ export async function FooterV2({ semRedesSociais = false }: { semRedesSociais?: 
           <div key={c.titulo}>
             <p className="mb-4 text-[13px] font-bold uppercase tracking-[0.08em] text-[var(--v2-navy)]">{t[c.titulo]}</p>
             <ul className="space-y-3">
-              {c.links.filter((l) => l.href !== ROTAS_V2.parceiros || parceirosAtivos()).map((l) => (
+              {c.links
+                .filter((l) => (l.href !== ROTAS_V2.parceiros || parceirosAtivos()) && (l.href !== ROTAS_V2.analisar || diagnosticoAtivo()))
+                .map((l) => (
                 <li key={l.label}>
                   {l.externo ? (
                     <a href={l.href} target="_blank" rel="noopener noreferrer" className="text-[14px] text-[var(--v2-muted)] hover:text-[var(--v2-green)]">

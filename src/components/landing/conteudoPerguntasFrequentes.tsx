@@ -102,6 +102,15 @@ function montar(idioma: Idioma) {
     copia: q("copia", t.copia.pergunta, t.copia.resposta),
     dadosSeguros: q("dados-seguros", t.dadosSeguros.pergunta, t.dadosSeguros.resposta),
     partilhaDados: q("partilha-dados", t.partilhaDados.pergunta, t.partilhaDados.resposta),
+    oQueDescobrir: q("o-que-descobrir", t.oQueDescobrir.pergunta, t.oQueDescobrir.resposta),
+    analiseGratuita: q("analise-gratuita", t.analiseGratuita.pergunta, t.analiseGratuita.resposta),
+    analiseConta: q("analise-conta", t.analiseConta.pergunta, t.analiseConta.resposta),
+    analiseDocumentos: q("analise-documentos", t.analiseDocumentos.pergunta, t.analiseDocumentos.resposta),
+    analiseDados: q("analise-dados", t.analiseDados.pergunta, t.analiseDados.resposta),
+    analiseDocumento: q("analise-documento", t.analiseDocumento.pergunta, t.analiseDocumento.resposta),
+    analiseProblemas: q("analise-problemas", t.analiseProblemas.pergunta, t.analiseProblemas.resposta),
+    novasFacturas: q("novas-facturas", t.novasFacturas.pergunta, t.novasFacturas.resposta),
+    ajudaReclamacoes: q("ajuda-reclamacoes", t.ajudaReclamacoes.pergunta, t.ajudaReclamacoes.resposta),
     experimentarProtecao: q(
       "experimentar-protecao",
       tProtecaoGratuita[idioma].faq.experimentar.pergunta,
@@ -137,15 +146,39 @@ export type CategoriaPerguntas = {
   perguntas: Pergunta[];
 };
 
-/** `protecaoGratuita`: acrescenta as perguntas da oferta dos 30 dias (só com a oferta ligada). */
-export function categoriasPerguntas(idioma: Idioma, opcoes: { protecaoGratuita?: boolean } = {}): CategoriaPerguntas[] {
+/**
+ * `protecaoGratuita`: acrescenta as perguntas da oferta dos 30 dias (só com a oferta ligada).
+ * `analise`: análise gratuita ligada (DIAGNOSTICO_GRATUITO_ATIVO) — as perguntas
+ * seguem a jornada (reposicionamento de 22/10/2026): análise → Protecção e
+ * planos → reclamações → depois do envio → privacidade → sobre a DoLado.
+ */
+export function categoriasPerguntas(idioma: Idioma, opcoes: { protecaoGratuita?: boolean; analise?: boolean } = {}): CategoriaPerguntas[] {
   const p = montar(idioma);
   const c = tPerguntas[idioma].categorias;
-  return [
-    { id: "sobre-a-dolado", titulo: c.sobre, perguntas: [p.oQueE, p.escritorioAdvogados, p.garanteGanhar, p.substituiAdvogado] },
+  const sobre: CategoriaPerguntas = { id: "sobre-a-dolado", titulo: c.sobre, perguntas: [p.oQueE, p.escritorioAdvogados, p.garanteGanhar, p.substituiAdvogado] };
+  const analise: CategoriaPerguntas[] = opcoes.analise
+    ? [
+        {
+          id: "analise-gratuita",
+          titulo: c.analise,
+          perguntas: [
+            p.oQueDescobrir,
+            p.analiseGratuita,
+            p.analiseConta,
+            p.analiseDocumentos,
+            p.analiseDados,
+            p.analiseDocumento,
+            p.analiseProblemas,
+          ],
+        },
+      ]
+    : [];
+  const categorias: CategoriaPerguntas[] = [
+    sobre,
+    ...analise,
     {
       id: "como-funciona",
-      titulo: c.comoFunciona,
+      titulo: opcoes.analise ? c.reclamacoes : c.comoFunciona,
       perguntas: [
         p.comoFunciona,
         p.precisaEscrever,
@@ -167,12 +200,14 @@ export function categoriasPerguntas(idioma: Idioma, opcoes: { protecaoGratuita?:
         p.diferencaPlanosCompleta,
         p.oQueIncluiProtecao,
         p.comecarProtecao,
+        ...(opcoes.analise ? [p.novasFacturas] : []),
         ...(opcoes.protecaoGratuita ? [p.experimentarProtecao, p.fimProtecaoGratuita] : []),
         p.oQueIncluiCasoProtecao,
         p.semSubscricao,
         p.avulsoDepoisSubscricao,
         p.cancelarProtecao,
         p.livreResolucao,
+        ...(opcoes.analise ? [p.ajudaReclamacoes] : []),
       ],
     },
     {
@@ -182,4 +217,8 @@ export function categoriasPerguntas(idioma: Idioma, opcoes: { protecaoGratuita?:
     },
     { id: "privacidade", titulo: c.privacidade, perguntas: [p.dadosSeguros, p.partilhaDados] },
   ];
+  if (!opcoes.analise) return categorias;
+  // Com a análise: começa pelo que o visitante faz primeiro; "Planos" antes das reclamações.
+  const porId = (id: string) => categorias.find((cat) => cat.id === id)!;
+  return [porId("analise-gratuita"), porId("planos"), porId("como-funciona"), porId("depois-do-envio"), porId("privacidade"), sobre];
 }

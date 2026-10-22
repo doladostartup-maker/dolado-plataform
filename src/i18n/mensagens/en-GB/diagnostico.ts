@@ -8,8 +8,7 @@ export const diagnostico: Traducao<typeof pt> = {
     botao: "Check it for free",
     confianca: "No sign-up needed. No bank card.",
     formatos: "PDF files only, up to 10 MB.",
-    privacidade:
-      "The document is read by an artificial intelligence system (Anthropic) only to show you the result, and is deleted after 7 days if you don't create an account.",
+    privacidade: "Your document is private. If you don't create an account, DoLado deletes the document and the result after 7 days.",
     privacidadeLigacao: "Privacy Policy",
     cartao: {
       comeceAqui: "Start here",
@@ -20,12 +19,12 @@ export const diagnostico: Traducao<typeof pt> = {
       gratuita: "Free initial check",
       semRegisto: "No sign-up to start",
       apenasPdf: "PDF files only",
-      privacidade:
-        "Your document is kept in a private space and read by an artificial intelligence provider (Anthropic) only to show you the result.",
+      privacidadeTitulo: "Your document is private.",
+      privacidade: "If you don't create an account, DoLado deletes the document and the result after 7 days.",
       detalhesTitulo: "How we handle your document",
       detalhes: [
-        "The result is prepared automatically from what is written in the document.",
-        "If you don't create an account, we delete the document and the result after 7 days.",
+        "We check your document to identify important amounts, dates and terms. The result is prepared automatically from what is written in the document.",
+        "The document is kept in a private space. The automated reading is carried out by Anthropic, an artificial intelligence provider, only to show you the result.",
         "Anthropic processes the document on DoLado's behalf, under a data processing agreement. It may keep it for up to 30 days to detect misuse, and the processing may involve a transfer outside the European Union, with the safeguards described in the Privacy Policy.",
         "Only upload documents that are yours or that you are authorised to use.",
       ],

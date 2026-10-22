@@ -10,12 +10,16 @@ export const diagnostico = {
     botao: "Analisar gratuitamente",
     confianca: "Sem registo inicial. Sem cartão bancário.",
     formatos: "Apenas ficheiros PDF, até 10 MB.",
-    privacidade:
-      "O documento é lido por um sistema de inteligência artificial (Anthropic) só para lhe mostrar o resultado e é apagado ao fim de 7 dias, se não criar conta.",
+    // Primeira camada (reposicionamento de 22/10/2026): o benefício e a
+    // conservação; quem lê o documento (Anthropic, fornecedor de inteligência
+    // artificial) fica na Política e em "Como tratamos o seu documento".
+    privacidade: "O seu documento é privado. Se não criar conta, a DoLado elimina o documento e o resultado ao fim de 7 dias.",
     privacidadeLigacao: "Política de Privacidade",
     // Cartão de análise da homepage (CartaoAnalise). Privacidade alinhada com a
     // Política 2026-10-22c: subcontratante de IA, 7 dias do lado da DoLado,
     // até 30 dias do lado da Anthropic, possível transferência para fora da UE.
+    // Desde 22/10/2026 em duas camadas: à vista, a privacidade e o prazo; o
+    // subcontratante e a transferência, em "Como tratamos o seu documento".
     cartao: {
       comeceAqui: "Comece por aqui",
       titulo: "Carregue uma factura ou um contrato",
@@ -25,12 +29,12 @@ export const diagnostico = {
       gratuita: "Análise inicial gratuita",
       semRegisto: "Sem registo inicial",
       apenasPdf: "Apenas ficheiros PDF",
-      privacidade:
-        "O seu documento fica num espaço privado e é lido por um fornecedor de inteligência artificial (Anthropic) só para lhe mostrar o resultado.",
+      privacidadeTitulo: "O seu documento é privado.",
+      privacidade: "Se não criar conta, a DoLado elimina o documento e o resultado ao fim de 7 dias.",
       detalhesTitulo: "Como tratamos o seu documento",
       detalhes: [
-        "O resultado é preparado automaticamente a partir do que está escrito no documento.",
-        "Se não criar conta, apagamos o documento e o resultado ao fim de 7 dias.",
+        "Analisamos o seu documento para identificar valores, datas e condições importantes. O resultado é preparado automaticamente a partir do que está escrito no documento.",
+        "O documento fica num espaço privado. A leitura automática é feita pela Anthropic, um fornecedor de inteligência artificial, só para lhe mostrar o resultado.",
         "A Anthropic trata o documento por conta da DoLado, ao abrigo de um acordo de tratamento de dados. Pode conservá-lo até 30 dias para detectar abusos, e o tratamento pode implicar uma transferência para fora da União Europeia, com as garantias descritas na Política de Privacidade.",
         "Só deve carregar documentos de que seja titular ou que esteja autorizado a utilizar.",
       ],

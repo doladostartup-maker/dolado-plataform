@@ -14,7 +14,7 @@ import {
   IconeSeta,
   IconeVisto,
 } from "@/components/marketing-v2/Icones";
-import { VisualHero } from "@/components/marketing-v2/Mockups";
+import { PainelProtecao } from "@/components/marketing-v2/Mockups";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
 import { StepsTimeline, type Passo } from "@/components/marketing-v2/StepsTimeline";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
@@ -102,7 +102,8 @@ export async function EmpresasV2() {
           </div>
           <p className="mt-6 text-[14px] text-[var(--v2-muted)]">{t.formatosNota}</p>
         </div>
-        <VisualHero />
+        {/* Reposicionamento de 22/10/2026: o acompanhamento de facturas e contratos (Protecção), não só uma reclamação. */}
+        <PainelProtecao />
       </SectionV2>
 
       {/* ===== Três situações concretas ===== */}

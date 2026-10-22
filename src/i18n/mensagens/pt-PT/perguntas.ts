@@ -16,7 +16,7 @@ export const perguntas = {
   oQueE: {
     pergunta: "O que é a DoLado?",
     resposta:
-      "A DoLado ajuda os consumidores a tratar problemas com empresas de serviços como as telecomunicações, a energia, o gás e a água, e também com compras, reembolsos e ginásios. Quando é necessário reclamar, analisamos o caso, identificamos a informação relevante, preparamos a reclamação e acompanhamos o processo. Com a Protecção, também ajudamos a identificar situações que possam tornar-se num problema, antes que seja tarde para agir." as Resposta,
+      "A DoLado ajuda os consumidores a compreender as suas facturas e contratos, a acompanhar o que merece atenção e a tratar problemas com empresas — de telecomunicações, energia, gás e água, e também com compras, reembolsos e ginásios. Com a Protecção, acompanhamos as facturas e as datas importantes dos seus contratos e avisamos a tempo. Quando é necessário reclamar, preparamos a reclamação consigo e acompanhamos o processo." as Resposta,
   },
   comoFunciona: {
     pergunta: "Como funciona a DoLado?",
@@ -187,10 +187,61 @@ export const perguntas = {
     resposta:
       "Apenas o necessário para prestar o serviço. Recorremos a prestadores que tratam dados por nossa conta — por exemplo, para o alojamento da plataforma e o envio de e-mails — e, com a sua autorização, a reclamação inclui os dados estritamente necessários para a formalizar junto da empresa visada. Não vendemos nem partilhamos dados para fins de marketing de terceiros. A lista completa está na <privacidade>Política de Privacidade</privacidade>." as Resposta,
   },
+  // Análise gratuita de documentos e acompanhamento (reposicionamento de
+  // 22/10/2026; só aparecem com DIAGNOSTICO_GRATUITO_ATIVO). O diagnóstico só
+  // mostra o que está no documento e contas simples: nunca prometer que
+  // encontra erros. Prazos de conservação: Política 2026-10-22c.
+  oQueDescobrir: {
+    pergunta: "O que posso descobrir numa análise?",
+    resposta:
+      "Mostramos o que está escrito na factura ou no contrato: o total e de onde vem, o que paga todos os meses e o que foi cobrado só desta vez, as datas de fim da fidelização ou da promoção e as condições do contrato. Fazemos contas simples com esses valores, como os dias que faltam para uma data, e dizemos-lhe o que não foi possível confirmar no documento." as Resposta,
+  },
+  analiseGratuita: {
+    pergunta: "A análise inicial é gratuita?",
+    resposta:
+      "Sim. Analisar um documento não exige conta, e-mail nem cartão bancário e não dá início a nenhuma subscrição. A Protecção, que acompanha as suas facturas e contratos ao longo do tempo, é um serviço à parte." as Resposta,
+  },
+  analiseConta: {
+    pergunta: "Preciso de criar conta?",
+    resposta:
+      "Não para ver o resultado: carrega o documento e vê-o logo a seguir. Só cria conta se quiser guardar o resultado ou continuar com a Protecção." as Resposta,
+  },
+  analiseDocumentos: {
+    pergunta: "Que documentos posso enviar?",
+    resposta:
+      "Facturas e contratos de telecomunicações, electricidade, gás e água. Na análise gratuita, em PDF, até 10 MB. Na Protecção, também pode enviar facturas em imagem. Só deve enviar documentos de que seja titular ou que esteja autorizado a utilizar." as Resposta,
+  },
+  analiseDados: {
+    pergunta: "Que dados são retirados do documento?",
+    resposta:
+      "A empresa, o sector, o total, a mensalidade, as linhas cobradas, as datas importantes e as condições do contrato. O NIF e o nome do titular não ficam guardados em texto: são substituídos por um código antes de serem guardados." as Resposta,
+  },
+  analiseDocumento: {
+    pergunta: "O que acontece ao meu documento?",
+    resposta:
+      "O seu documento é privado: só o lemos para lhe mostrar o resultado. Se não criar conta, a DoLado elimina o documento e o resultado ao fim de 7 dias; se criar conta, 30 dias depois, a não ser que peça para continuar a acompanhá-lo com a Protecção. A <privacidade>Política de Privacidade</privacidade> explica como é feita a leitura e que fornecedores nos ajudam." as Resposta,
+  },
+  analiseProblemas: {
+    pergunta: "A análise identifica automaticamente problemas?",
+    resposta:
+      "Não. A análise gratuita mostra o que está no documento e faz contas simples; não avalia se uma cobrança é devida nem tira conclusões sobre a empresa. Na Protecção, quando a comparação das facturas encontra uma alteração que merece atenção, uma pessoa da DoLado revê-a antes de o avisarmos." as Resposta,
+  },
+  novasFacturas: {
+    pergunta: "Preciso de enviar novas facturas?",
+    resposta:
+      "Sim, para a Protecção se manter actualizada. A DoLado não acede às suas contas nos fornecedores: compara cada factura que nos envia com as anteriores e com o contrato. Os avisos de datas funcionam com as datas que já conhecemos, mas a comparação só inclui as facturas que nos envia." as Resposta,
+  },
+  ajudaReclamacoes: {
+    pergunta: "Posso continuar a pedir ajuda com reclamações?",
+    resposta:
+      "Sim. Se tiver um problema com uma empresa, a DoLado prepara a reclamação consigo, só a envia com a sua autorização e acompanha a resposta. O tratamento de casos é feito com o Avulso ou com o Caso + Protecção; não está incluído na Protecção sozinha." as Resposta,
+  },
   categorias: {
     sobre: "Sobre a DoLado",
     comoFunciona: "Como funciona",
-    planos: "Planos e protecção",
+    analise: "Análise gratuita",
+    reclamacoes: "Tratar um problema",
+    planos: "Protecção e planos",
     depoisEnvio: "Depois do envio",
     privacidade: "Privacidade e segurança",
   },

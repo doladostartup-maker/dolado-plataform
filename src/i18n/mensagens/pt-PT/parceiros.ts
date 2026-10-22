@@ -11,9 +11,9 @@ export const parceiros = {
         "Indique clientes à DoLado ou distribua a Protecção DoLado através da sua actividade. As condições de cada parceria constam de um acordo escrito. Proponha uma parceria.",
     },
     eyebrow: "Programa de Parceiros",
-    titulo: "Ajude as pessoas com quem trabalha a resolver problemas de consumo.",
+    titulo: "Ajude as pessoas com quem trabalha a perceber o que pagam e a resolver problemas de consumo.",
     texto:
-      "Para profissionais e empresas que estão perto dos consumidores — e que querem ter uma resposta quando uma factura, um contrato ou uma compra corre mal. A DoLado trata do problema; o parceiro aproxima a DoLado de quem precisa.",
+      "Para profissionais e empresas que estão perto dos consumidores — e que querem ter uma resposta quando uma factura, um contrato ou uma compra corre mal. A DoLado acompanha as facturas e os contratos com a Protecção e trata do problema quando ele surge; o parceiro aproxima a DoLado de quem precisa.",
     cta: "Propor parceria",
     verModelos: "Ver as formas de colaborar",
     garantias: {

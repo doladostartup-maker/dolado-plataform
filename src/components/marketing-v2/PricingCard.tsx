@@ -43,7 +43,7 @@ export function PricingCard({
 }) {
   return (
     <article
-      className={`${CARTAO} flex flex-col p-7 sm:p-8 lg:row-span-6 lg:grid lg:grid-rows-subgrid ${destaque ? "border-2 border-[var(--v2-green)]" : ""}`}
+      className={`${CARTAO} flex flex-col p-7 sm:p-8 lg:row-span-6 lg:grid lg:grid-rows-subgrid ${destaque ? "border-2 !border-[var(--v2-green)]" : ""}`}
     >
       <p className="flex flex-wrap items-center gap-2 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--v2-green-dark)]">
         {nome}

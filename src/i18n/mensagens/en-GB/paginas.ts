@@ -4,14 +4,14 @@ import type { paginas as pt } from "../pt-PT/paginas.ts";
 export const paginas: Traducao<typeof pt> = {
   precario: {
     metadados: {
-      titulo: "Pricing - DoLado",
+      titulo: "Pricing: Protection, Case + Protection and Single Case - DoLado",
       descricao:
-        "Single Case, Case + Protection or Protection: choose the help you need to deal with a problem with a company or stay protected. Prices include VAT.",
+        "Protection to keep an eye on your bills and contracts, Case + Protection to also deal with problems, or Single Case for one case with no subscription. Prices include VAT.",
     },
     eyebrow: "Pricing",
     titulo: "What kind of help do you need?",
     texto: () =>
-      "Choose according to your situation. Single Case is a one-off payment for one case; the subscriptions are monthly. All prices include VAT.",
+      "Protection keeps an eye on your bills and contracts; Case + Protection adds help with problems; Single Case deals with one case, with a one-off payment. The subscriptions are monthly. All prices include VAT.",
     necessidades: {
       avulso: { necessidade: "I have a problem right now.", cta: "Start my case" },
       caso_protecao: { necessidade: "I have a problem and want ongoing support.", cta: "Choose Case + Protection" },
@@ -99,6 +99,27 @@ export const paginas: Traducao<typeof pt> = {
       },
     },
     precosLancamento: "Launch prices — subject to change.",
+    gratuitoPago: {
+      eyebrow: "Free and paid",
+      titulo: "What is free and what is paid.",
+      analise: {
+        titulo: "Free initial check",
+        texto: "Check a bill or contract with no account and no bank card. It is not a subscription or a trial period, and it does not start any payment.",
+      },
+      protecaoGratuita: {
+        titulo: "30 days of free Protection",
+        texto: "If you have never had Protection: you activate it in your account, with no bank card, and the period ends on its own, with no charge. To continue, you choose to subscribe to Protection.",
+      },
+      subscricao: {
+        titulo: "Monthly subscription",
+        texto: "Protection and Case + Protection: paid monthly, with automatic renewal. You can cancel at any time in your account.",
+      },
+      pontual: {
+        titulo: "One-off payment",
+        texto: "Single Case (and Extra Case, for Case + Protection subscribers): pay once to deal with one case, with no subscription.",
+      },
+      analisar: "Check a document",
+    },
     antesDeDecidir: {
       eyebrow: "Before you decide",
       titulo: "What you need to know.",
@@ -120,12 +141,47 @@ export const paginas: Traducao<typeof pt> = {
       texto: "It's free, with no account and no email needed.",
       acao: "See if DoLado can help",
     },
+    ctaFinalAnalise: {
+      eyebrow: "Still not sure which to choose?",
+      titulo: "Start with a free check of your document.",
+      texto: "See what your bill or contract says before you decide. No account and no bank card.",
+      acao: "Check a document",
+    },
   },
   protecao: {
     metadados: {
       titulo: "Protection: keeping an eye on bills and contracts - DoLado",
       descricao:
         "With Protection, DoLado compares the bills you send us, reminds you before promotions and minimum terms end, flags changes worth checking and sends a monthly summary.",
+    },
+    analise: {
+      comecar: "Or start by checking a document for free",
+      eyebrow: "Free check or Protection?",
+      titulo: "The check shows you one document. Protection follows it over time.",
+      gratuita: {
+        titulo: "Free check",
+        itens: [
+          "One document at a time, with no account and no bank card.",
+          "Shows the amounts, dates and terms in the document.",
+          "Does not compare it with previous bills or send reminders.",
+          "If you don't create an account, the document and the result are deleted after 7 days.",
+        ],
+      },
+      protecao: {
+        titulo: "Protection",
+        itens: [
+          "Follows your services month by month.",
+          "Compares each new bill with the previous ones and with your contract.",
+          "Reminds you before your minimum term and promotions end and sends a monthly summary.",
+          "Anything that needs attention is reviewed by a person at DoLado before we tell you.",
+        ],
+      },
+      encontramos: {
+        titulo: "When we find something",
+        texto:
+          "If a person at DoLado confirms that a change needs attention, we let you know by e-mail and show you, in your account, the previous amount, the current one and the difference. You can check with the company or, if you want DoLado to deal with the problem, open a case with the Single Case or Case + Protection.",
+      },
+      analisar: "Check a document",
     },
     eyebrow: "Protection",
     titulo: "We keep an eye on your bills and contracts and warn you in time.",
@@ -212,6 +268,57 @@ export const paginas: Traducao<typeof pt> = {
     },
   },
   comoFunciona: {
+    analise: {
+      metadados: {
+        titulo: "How it works: free check, Protection and complaints - DoLado",
+        descricao:
+          "Check a bill or contract for free, keep an eye on your services with Protection and, if a problem comes up, DoLado deals with the complaint with you.",
+      },
+      titulo: "Start with your document. Count on us when a problem comes up.",
+      texto:
+        "DoLado helps you understand your bills and contracts, keeps an eye on what needs attention with Protection and, if you already have a problem with a company, prepares the complaint with you.",
+      analisar: "Check a document",
+      principal: {
+        eyebrow: "Main route",
+        titulo: "Check and stay protected.",
+        texto: "To understand what you are paying and not miss the dates and changes that matter.",
+        gratuito: "Free",
+        comProtecao: "With Protection",
+        passos: [
+          {
+            titulo: "Send us your document",
+            texto:
+              "Upload a telecoms, electricity, gas or water bill or contract as a PDF. You don't need to create an account or leave your e-mail address.",
+          },
+          {
+            titulo: "Understand the result",
+            texto:
+              "We show you the amounts, dates and terms in the document: where the total comes from, what you pay every month and how long until your minimum term or promotion ends. We also tell you what we couldn't confirm.",
+          },
+          {
+            titulo: "Stay protected",
+            texto:
+              "With Protection, we compare each new bill with the previous ones and with your contract, remind you 60 and 30 days before your minimum term and promotions end and send you a summary every month.",
+          },
+        ],
+        quemFazTitulo: "What happens on its own and what depends on you",
+        quemFaz: [
+          "<b>Nothing to do:</b> reading the document you upload, the date reminders and the Protection monthly summary.",
+          "<b>Up to you:</b> sending us the following bills as they arrive. DoLado does not access your accounts with your providers, so we can only compare the documents you send us.",
+          "<b>Reviewed by a person:</b> a change that needs attention is reviewed by a person at DoLado before we tell you.",
+        ],
+        conhecerProtecao: "Find out about Protection",
+      },
+      complementar: {
+        eyebrow: "Additional route",
+        titulo: "Sort out a problem.",
+        texto: "For when you already have a specific situation with a company. At each step, we show who acts: you or DoLado.",
+      },
+      ctaFinal: {
+        titulo: "Where would you like to start?",
+        texto: "Check a document for free or tell us about the problem you have with a company.",
+      },
+    },
     metadados: {
       titulo: "How it works - DoLado",
       descricao:
@@ -289,7 +396,7 @@ export const paginas: Traducao<typeof pt> = {
     eyebrow: "Free tools",
     titulo: "Understand your situation before you decide.",
     texto:
-      "Before you pay for any service, use these DoLado tools to get a clearer picture of what is going on and what the next step could be.",
+      "Get a clearer picture of minimum terms, cancellation charges and changes to your contracts before you decide. Use these DoLado tools to understand what is going on and what the next step could be.",
     factos: ["Free", "No account needed", "No need to give your email"],
     ctaFinal: {
       eyebrow: "Found a problem?",
@@ -302,7 +409,13 @@ export const paginas: Traducao<typeof pt> = {
     metadados: {
       titulo: "Frequently Asked Questions - DoLado",
       descricao:
-        "Find answers about how DoLado works, consumer complaints, plans, protection and following up your case.",
+        "Answers about Protection and keeping an eye on your bills and contracts, our plans, consumer complaints and how DoLado handles your documents.",
+    },
+    analise: {
+      texto: "Find answers about the free document check, Protection, our plans and help with sorting out a problem with a company.",
+      ctaTitulo: "Where would you like to start?",
+      ctaTexto: "Check a document for free or tell us about the problem you have with a company.",
+      analisar: "Check a document",
     },
     eyebrow: "Frequently asked questions",
     titulo: "How can we help?",

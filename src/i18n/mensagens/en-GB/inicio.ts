@@ -7,6 +7,11 @@ export const inicio: Traducao<typeof pt> = {
     descricao:
       "DoLado helps you deal with problems with companies: we prepare your complaint, only send it with your authorisation and follow up the reply. With Protection, we also keep an eye on your bills and contracts.",
   },
+  metadadosDiagnostico: {
+    titulo: "Bill and Contract Check | DoLado",
+    descricao:
+      "Upload a bill or contract as a PDF and find out the amounts, dates and terms that matter. Get a free initial check, without creating an account.",
+  },
   hero: {
     titulo: "Got a problem with a company?",
     texto: "You shouldn't have to understand the law, write complaints and chase replies on your own.",
@@ -239,7 +244,7 @@ export const inicio: Traducao<typeof pt> = {
           id: "documento",
           pergunta: "What happens to my document?",
           resposta:
-            "It is stored in a private space and read by an artificial intelligence system only to show you the result. If you don't create an account, it is deleted after 7 days.",
+            "Your document is private: we only read it to show you the result. If you don't create an account, DoLado deletes the document and the result after 7 days. The Privacy Policy explains how the reading is done and which providers help us.",
         },
         {
           id: "gratuito",
