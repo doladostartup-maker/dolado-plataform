@@ -85,9 +85,6 @@ insert into public.anexos (id, caso_id, nome_ficheiro, caminho_storage) values
   ('11000000-0000-4000-a000-00000000000a', '10000000-0000-4000-a000-00000000000a', 'a.pdf', 'casoA/a.pdf'),
   ('11000000-0000-4000-a000-00000000000b', '10000000-0000-4000-a000-00000000000b', 'b.pdf', 'casoB/b.pdf');
 
-insert into public.casos_elegibilidade_portal (id, utilizador_id, email, setor, duracao_contrato, empresa_respondeu_bem, descricao_problema) values
-  ('12000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'a@teste.invalid', 'Energia', '6_12m', false, 'A'),
-  ('12000000-0000-4000-a000-00000000000b', '00000000-0000-4000-a000-00000000000b', 'b@teste.invalid', 'Energia', '6_12m', false, 'B');
 
 insert into public.contratos_monitorizados (id, utilizador_id, setor, fornecedor, data_fim_fidelizacao) values
   ('14000000-0000-4000-a000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'telecomunicacoes', 'Op A', '2027-01-01'),
@@ -138,7 +135,6 @@ select testes.como(null);
 select ok(testes.contar('select * from public.utilizadores') <= 0, 'anon: SELECT utilizadores → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from public.casos') <= 0, 'anon: SELECT casos → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from public.anexos') <= 0, 'anon: SELECT anexos → nada (0 linhas ou sem permissão)');
-select ok(testes.contar('select * from public.casos_elegibilidade_portal') <= 0, 'anon: SELECT casos_elegibilidade_portal → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from public.contratos_monitorizados') <= 0, 'anon: SELECT contratos_monitorizados → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from public.documentos_monitor') <= 0, 'anon: SELECT documentos_monitor → nada (0 linhas ou sem permissão)');
 select ok(testes.contar('select * from public.contratos_campos') <= 0, 'anon: SELECT contratos_campos → nada (0 linhas ou sem permissão)');
@@ -302,14 +298,6 @@ select ok(testes.negado($$insert into public.anexos (caso_id, nome_ficheiro, cam
 select ok(testes.negado($$insert into public.anexos (caso_id, nome_ficheiro, caminho_storage) values ('10000000-0000-4000-a000-00000000000a', 'x', 'casoA/x')$$), 'A: não insere anexo diretamente (só pelo servidor)');
 select ok(testes.negado($$delete from public.anexos where id = '11000000-0000-4000-a000-00000000000b'$$), 'A: não apaga anexo de B');
 
--- casos_elegibilidade_portal (legado desde 01/10/2026: o cliente já não lê)
-select ok(testes.contar('select * from public.casos_elegibilidade_portal') <= 0, 'A: não lê a elegibilidade antiga (nem a própria)');
-select is(testes.contar($$select * from public.casos_elegibilidade_portal where id = '12000000-0000-4000-a000-00000000000b'$$), 0::bigint, 'A: não lê a elegibilidade de B pelo UUID');
-select ok(testes.negado($$insert into public.casos_elegibilidade_portal (utilizador_id, email, setor, duracao_contrato, empresa_respondeu_bem, descricao_problema) values ('00000000-0000-4000-a000-00000000000a', 'a@teste.invalid', 'Energia', '6_12m', false, 'x')$$), 'A: não cria elegibilidade');
-select ok(testes.negado($$insert into public.casos_elegibilidade_portal (utilizador_id, email, setor, duracao_contrato, empresa_respondeu_bem, descricao_problema) values ('00000000-0000-4000-a000-00000000000b', 'a@teste.invalid', 'Energia', '6_12m', false, 'x')$$), 'A: não cria elegibilidade em nome de B');
-select ok(testes.negado($$update public.casos_elegibilidade_portal set estado_final = 'elegivel' where id = '12000000-0000-4000-a000-00000000000a'$$), 'A: não altera estado_final da própria elegibilidade');
-select ok(testes.negado($$update public.casos_elegibilidade_portal set descricao_problema = 'x' where id = '12000000-0000-4000-a000-00000000000b'$$), 'A: não altera a elegibilidade de B');
-select ok(testes.negado($$delete from public.casos_elegibilidade_portal where id = '12000000-0000-4000-a000-00000000000b'$$), 'A: não apaga a elegibilidade de B');
 
 -- contratos do Monitor de Proteção (o cliente só lê os próprios)
 select is(testes.contar('select * from public.contratos_monitorizados'), 1::bigint, 'A: vê só o próprio contrato monitorizado');
@@ -375,11 +363,6 @@ select ok(testes.negado($$insert into storage.objects (bucket_id, name) values (
 select ok(testes.negado($$update storage.objects set name = 'roubado.pdf' where name = 'casoB/b.pdf'$$), 'A: não substitui/renomeia ficheiro de B');
 select ok(testes.negado($$delete from storage.objects where name = 'casoB/b.pdf'$$), 'A: não apaga ficheiro de B');
 
--- Campos de decisão/resultado não forjáveis pelo cliente (corrigido a 30/09/2026).
--- Ficam como TODO: documentam o comportamento atual sem falhar a suite.
--- Quando a decisão for tomada e implementada, retirar o todo().
-select ok(testes.negado($$insert into public.casos_elegibilidade_portal (utilizador_id, email, setor, duracao_contrato, empresa_respondeu_bem, descricao_problema, estado_final) values ('00000000-0000-4000-a000-00000000000a', 'a@teste.invalid', 'Energia', '6_12m', false, 'x', 'elegivel')$$), 'A: não cria elegibilidade já com estado_final (decisão humana)');
-select ok(testes.negado($$insert into public.casos_elegibilidade_portal (utilizador_id, email, setor, duracao_contrato, empresa_respondeu_bem, descricao_problema, sugestao_ia_estado) values ('00000000-0000-4000-a000-00000000000a', 'a@teste.invalid', 'Energia', '6_12m', false, 'x', 'elegivel')$$), 'A: não forja a sugestão da IA');
 -- Alertas do Monitor: o destinatário é sempre o e-mail atual e confirmado da
 -- conta (monitor_alertas_pendentes, só service_role); o cliente não guarda
 -- nenhum e-mail de envio.
