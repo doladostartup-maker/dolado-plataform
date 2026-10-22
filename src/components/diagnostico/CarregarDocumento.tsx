@@ -26,7 +26,17 @@ export type Erro = keyof (typeof tDiagnostico)["pt-PT"]["carregar"]["erros"];
  * tamanho), preparar no servidor, enviar para a URL assinada e seguir para o
  * resultado.
  */
-export function useCarregamento(local: string) {
+export type PassoCarregamento = "clique" | "inicio" | "recebido" | "falhou";
+
+export function useCarregamento(
+  local: string,
+  opcoes: {
+    /** Página de origem passada ao resultado (só apresentação, ex.: ORIGEM_ANALISAR_FATURA). */
+    origem?: string | null;
+    /** Medição adicional da página (ex.: Pixel da Meta, que só existe com consentimento de marketing). */
+    aoPasso?: (passo: PassoCarregamento) => void;
+  } = {},
+) {
   const idioma = useIdioma();
   const entrada = useRef<HTMLInputElement>(null);
   const [aEnviar, setAEnviar] = useState(false);
@@ -35,6 +45,7 @@ export function useCarregamento(local: string) {
   function abrir() {
     setErro(null);
     track("upload_clicked", { local });
+    opcoes.aoPasso?.("clique");
     entrada.current?.click();
   }
 
@@ -45,10 +56,12 @@ export function useCarregamento(local: string) {
     if (invalido) {
       setErro(invalido);
       track("upload_failed", { motivo: invalido });
+      opcoes.aoPasso?.("falhou");
       return;
     }
     setAEnviar(true);
     track("upload_started", { local });
+    opcoes.aoPasso?.("inicio");
     try {
       const consulta = new URLSearchParams(window.location.search);
       const r = await prepararDiagnosticoAction({
@@ -63,6 +76,7 @@ export function useCarregamento(local: string) {
       if (!r.ok) {
         setErro(r.erro);
         track("upload_failed", { motivo: r.erro });
+        opcoes.aoPasso?.("falhou");
         return;
       }
       const { error } = await createClient().storage.from("documentos-monitor").uploadToSignedUrl(r.caminho, r.token, ficheiro, {
@@ -71,10 +85,13 @@ export function useCarregamento(local: string) {
       if (error || !(await confirmarDiagnosticoAction(r.id)).ok) {
         setErro("temporario");
         track("upload_failed", { motivo: "envio" });
+        opcoes.aoPasso?.("falhou");
         return;
       }
       track("upload_completed", { local });
-      window.location.assign(localizarHref(idioma, `${URL_DIAGNOSTICO}?id=${r.id}`));
+      opcoes.aoPasso?.("recebido");
+      const origem = opcoes.origem ? `&origem=${encodeURIComponent(opcoes.origem)}` : "";
+      window.location.assign(localizarHref(idioma, `${URL_DIAGNOSTICO}?id=${r.id}${origem}`));
     } catch {
       setErro("temporario");
     } finally {
@@ -102,9 +119,9 @@ export function useCarregamento(local: string) {
 
 // O aviso (sem registo nem cartão; leitura por IA; conservação) fica sempre
 // junto do botão, antes de o ficheiro ser escolhido.
-export function CarregarDocumento({ local, classeBotao }: { local: string; classeBotao: string }) {
+export function CarregarDocumento({ local, classeBotao, origem = null }: { local: string; classeBotao: string; origem?: string | null }) {
   const t = useTextos(tDiagnostico).carregar;
-  const { abrir, aEnviar, erro, seletor } = useCarregamento(local);
+  const { abrir, aEnviar, erro, seletor } = useCarregamento(local, { origem });
 
   return (
     <div className="flex flex-col gap-3">

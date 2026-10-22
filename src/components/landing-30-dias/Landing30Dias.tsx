@@ -21,6 +21,7 @@ import {
   IconeVisto,
 } from "@/components/marketing-v2/Icones";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
+import { useEventoVista } from "@/components/marketing-v2/useEventoVista";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
 import { formatarData, formatarEurosCents } from "@/i18n/formatar";
@@ -57,33 +58,6 @@ const semSubscricao = () => () => {};
 function useUtm(): Utm {
   const search = useSyncExternalStore(semSubscricao, () => window.location.search, () => "");
   return useMemo(() => lerUtm(new URLSearchParams(search)), [search]);
-}
-
-const EVENTOS_COOKIEBOT = ["CookiebotOnConsentReady", "CookiebotOnAccept"] as const;
-
-/** landing_30d_view uma só vez: já, se houver gtag; senão, quando o consentimento chegar. */
-function useEventoVista() {
-  const enviado = useRef(false);
-  useEffect(() => {
-    const enviar = () => {
-      if (enviado.current || typeof window.gtag !== "function") return false;
-      enviado.current = true;
-      track("landing_30d_view");
-      return true;
-    };
-    if (enviar()) return;
-    // O gtag só é inserido depois do consentimento (MedicaoComConsentimento):
-    // tenta de novo pouco depois de o Cookiebot responder.
-    const temporizadores: number[] = [];
-    const aoConsentir = () => {
-      for (const ms of [500, 2000]) temporizadores.push(window.setTimeout(enviar, ms));
-    };
-    for (const e of EVENTOS_COOKIEBOT) window.addEventListener(e, aoConsentir);
-    return () => {
-      for (const e of EVENTOS_COOKIEBOT) window.removeEventListener(e, aoConsentir);
-      temporizadores.forEach((t) => window.clearTimeout(t));
-    };
-  }, []);
 }
 
 function cliqueCta(local: Local) {
@@ -215,7 +189,7 @@ export function Landing30Dias() {
   const utm = useUtm();
   const destino = c(urlAtivacaoLanding(utm));
 
-  useEventoVista();
+  useEventoVista("landing_30d_view");
 
   const ctaTopo = useRef<HTMLAnchorElement>(null);
   const fim = useRef<HTMLElement>(null);

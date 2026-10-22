@@ -20,17 +20,24 @@ import {
 import { useIdioma, useTextos } from "@/i18n/cliente";
 import { formatarData, formatarEurosCents } from "@/i18n/formatar";
 import { tDiagnostico } from "@/i18n/mensagens/diagnostico";
-import type { Idioma } from "@/i18n/config";
+import { localizarHref, type Idioma } from "@/i18n/config";
 import { escolhaDiagnosticoAction, estadoDiagnosticoAction } from "@/app/actions/diagnostico";
 import type { EstadoPublico } from "@/lib/diagnostico/servidor";
 import type { Calculo, Diagnostico, Facto } from "@/lib/diagnostico/regras";
 import { rotuloSetorMonitor } from "@/lib/monitor/contratos";
+import { seccoesDiagnostico, type ItemDestaque, type OrigemItem } from "@/lib/diagnostico/apresentacao";
+import { ORIGEM_ANALISAR_FATURA } from "@/lib/analisarFatura";
+import { MARKETING_SITE_URL } from "@/lib/site";
 
 // Resultado do diagnóstico gratuito. Acompanha o estado pelo servidor (a
 // sessão anónima não tem RLS: só a Server Action, com o cookie, o lê) e
-// mostra, separados: o que foi lido no documento, o que foi calculado em
-// código e o que não foi possível confirmar. Depois, a conversão: Protecção
-// com 30 dias grátis ou guardar o resultado numa conta.
+// mostra-o em duas áreas (src/lib/diagnostico/apresentacao.ts): o que
+// identificámos (lido e calculado) e o que está em destaque no documento
+// (regras fixas, com a origem de cada ponto) — só factos, sem passos a
+// seguir nem recomendações (decisão de 22/10/2026). Depois, a conversão:
+// vindo de /analisar-fatura, "Conhecer a Protecção DoLado"; de outras
+// páginas, a Protecção com 30 dias grátis. Guardar o resultado numa conta
+// em ambos os casos.
 
 const INTERVALO_MS = 2500;
 
@@ -70,15 +77,26 @@ function textoCalculo(c: Calculo, idioma: Idioma, r: T["resultado"]): string {
   }
 }
 
-// A diferença entre o total e a mensalidade aparece em destaque antes das
-// linhas (que mostram de onde vem), e não na lista de cálculos.
+// Uma factura com menos do que a mensalidade fica na lista de cálculos; com
+// mais, passa a "Em destaque no documento" (apresentacao.ts).
 function textoDiferenca(c: Extract<Calculo, { chave: "diferenca_mensalidade" }>, idioma: Idioma, t: T["resultado"]["diferenca"]): string {
   const diferenca = formatarEurosCents(idioma, Math.abs(c.diferencaCents));
   const mensalidade = formatarEurosCents(idioma, c.mensalidadeCents);
   return c.diferencaCents > 0 ? t.mais(diferenca, mensalidade) : t.menos(diferenca, mensalidade);
 }
 
-export function ResultadoDiagnostico({ id, temConta, ativo }: { id: string | null; temConta: boolean; ativo: boolean }) {
+export function ResultadoDiagnostico({
+  id,
+  temConta,
+  ativo,
+  origem = null,
+}: {
+  id: string | null;
+  temConta: boolean;
+  ativo: boolean;
+  /** Página de onde veio o carregamento (só apresentação). */
+  origem?: string | null;
+}) {
   const idioma = useIdioma();
   const t = useTextos(tDiagnostico);
   const [estado, setEstado] = useState<EstadoPublico | null | "a_carregar_pagina">(id ? "a_carregar_pagina" : null);
@@ -106,7 +124,7 @@ export function ResultadoDiagnostico({ id, temConta, ativo }: { id: string | nul
 
   const outroDocumento = ativo && (
     <div className="flex flex-col gap-2">
-      <CarregarDocumento local="diagnostico" classeBotao={BOTAO_SECUNDARIO} />
+      <CarregarDocumento local="diagnostico" classeBotao={BOTAO_SECUNDARIO} origem={origem} />
     </div>
   );
 
@@ -145,15 +163,15 @@ export function ResultadoDiagnostico({ id, temConta, ativo }: { id: string | nul
   }
 
   if (estado.estado !== "concluido") return null;
-  return <Resultado id={id!} d={estado.diagnostico} associado={estado.associado || temConta} t={t} idioma={idioma} />;
+  return <Resultado id={id!} d={estado.diagnostico} associado={estado.associado || temConta} origem={origem} t={t} idioma={idioma} />;
 }
 
-function Resultado({ id, d, associado, t, idioma }: { id: string; d: Diagnostico; associado: boolean; t: T; idioma: Idioma }) {
+function Resultado({ id, d, associado, origem, t, idioma }: { id: string; d: Diagnostico; associado: boolean; origem: string | null; t: T; idioma: Idioma }) {
   const r = t.resultado;
-  const c = t.conversao;
-  const voltar = `/diagnostico?id=${id}`;
-  const diferenca = d.calculos.find((calc) => calc.chave === "diferenca_mensalidade");
-  const calculos = d.calculos.filter((calc) => calc.chave !== "diferenca_mensalidade");
+  const s = seccoesDiagnostico(d);
+  const daLanding = origem === ORIGEM_ANALISAR_FATURA;
+  const voltar = `/diagnostico?id=${id}${daLanding ? `&origem=${ORIGEM_ANALISAR_FATURA}` : ""}`;
+  const euros = (cents: number) => formatarEurosCents(idioma, cents);
 
   return (
     <div className="flex flex-col gap-5">
@@ -164,120 +182,204 @@ function Resultado({ id, d, associado, t, idioma }: { id: string; d: Diagnostico
         {d.setor !== "nao_indicado" && <p className={TEXTO_SECUNDARIO}>{r.setor(rotuloSetorMonitor(d.setor, idioma))}</p>}
       </section>
 
-      {d.factos.length > 0 && (
-        <section className={`${CARTAO} flex flex-col gap-3`}>
-          <h2 className={TITULO_CARTAO}>{r.lidoTitulo}</h2>
-          <dl className="flex flex-col divide-y divide-[var(--v2-line)]">
-            {d.factos.map((f) => (
-              <div key={f.chave} className="flex flex-col gap-0.5 py-2.5 sm:flex-row sm:justify-between sm:gap-4">
-                <dt className="text-[16px] text-[var(--v2-muted)]">{r.campos[f.chave] ?? f.chave}</dt>
-                <dd className="text-[16px] font-semibold">
-                  {valorFacto(f, idioma, r)}
-                  {f.pagina ? <span className="ml-2 text-[13px] font-normal text-[var(--v2-muted)]">({r.pagina(String(f.pagina))})</span> : null}
-                </dd>
-              </div>
-            ))}
-          </dl>
+      {/* A. O que identificámos: lido no documento e contas feitas em código. */}
+      {(d.factos.length > 0 || d.linhas.length > 0 || s.calculos.length > 0) && (
+        <section className={`${CARTAO} flex flex-col gap-4`}>
+          <TituloArea letra="A" titulo={r.seccoes.identificadoTitulo} texto={r.seccoes.identificadoTexto} />
+          {d.factos.length > 0 && (
+            <dl className="flex flex-col divide-y divide-[var(--v2-line)]">
+              {d.factos.map((f) => (
+                <div key={f.chave} className="flex flex-col gap-0.5 py-2.5 sm:flex-row sm:justify-between sm:gap-4">
+                  <dt className="text-[16px] text-[var(--v2-muted)]">{r.campos[f.chave] ?? f.chave}</dt>
+                  <dd className="text-[16px] font-semibold">
+                    {valorFacto(f, idioma, r)}
+                    {f.pagina ? <span className="ml-2 text-[13px] font-normal text-[var(--v2-muted)]">({r.pagina(String(f.pagina))})</span> : null}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {d.linhas.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <h3 className="text-[17px] font-bold">{r.linhasTitulo}</h3>
+              <ul className="flex flex-col divide-y divide-[var(--v2-line)]">
+                {d.linhas.map((l, i) => (
+                  <li key={i} className="flex items-start justify-between gap-4 py-2.5">
+                    <span className="text-[16px]">
+                      {l.descricao}
+                      {l.recorrente !== null && (
+                        <span className="block text-[13px] text-[var(--v2-muted)]">{l.recorrente ? r.linhaRecorrente : r.linhaPontual}</span>
+                      )}
+                    </span>
+                    <span className="shrink-0 text-[16px] font-semibold">{euros(l.valorCents)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {s.calculos.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <h3 className="text-[17px] font-bold">{r.calculosTitulo}</h3>
+              <ul className="flex flex-col gap-2">
+                {s.calculos.map((calc, i) => (
+                  <li key={i} className={TEXTO}>
+                    {textoCalculo(calc, idioma, r)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <p className={TEXTO_SECUNDARIO}>{r.lidoNota}</p>
         </section>
       )}
 
-      {diferenca && (
-        <section className={`${CARTAO} flex flex-col gap-1.5`}>
-          <p className="text-[19px] font-bold leading-snug text-[var(--v2-navy)]">{textoDiferenca(diferenca, idioma, r.diferenca)}</p>
-          <p className={TEXTO_SECUNDARIO}>{d.linhas.length > 0 ? r.diferenca.notaComLinhas : r.diferenca.notaSemLinhas}</p>
-        </section>
-      )}
-
-      {d.linhas.length > 0 && (
-        <section className={`${CARTAO} flex flex-col gap-3`}>
-          <h2 className={TITULO_CARTAO}>{r.linhasTitulo}</h2>
-          <ul className="flex flex-col divide-y divide-[var(--v2-line)]">
-            {d.linhas.map((l, i) => (
-              <li key={i} className="flex items-start justify-between gap-4 py-2.5">
-                <span className="text-[16px]">
-                  {l.descricao}
-                  {l.recorrente !== null && (
-                    <span className="block text-[13px] text-[var(--v2-muted)]">{l.recorrente ? r.linhaRecorrente : r.linhaPontual}</span>
-                  )}
-                </span>
-                <span className="shrink-0 text-[16px] font-semibold">{formatarEurosCents(idioma, l.valorCents)}</span>
+      {/* B. Em destaque no documento: só factos e contas, com a origem de cada ponto. */}
+      <section className={`${CARTAO} flex flex-col gap-4`}>
+        <TituloArea letra="B" titulo={r.seccoes.destaquesTitulo} texto={s.destaques.length ? r.seccoes.destaquesTexto : r.seccoes.semDestaques} />
+        {s.destaques.length > 0 && (
+          <ul className="flex flex-col gap-3">
+            {s.destaques.map((item, i) => (
+              <li key={i} className="flex flex-col gap-1.5 rounded-[12px] border border-[var(--v2-line)] p-3.5">
+                <EtiquetaOrigem origem={item.origem} texto={r.origem[item.origem]} />
+                <p className={TEXTO}>{textoDestaque(item, r, idioma)}</p>
               </li>
             ))}
           </ul>
-        </section>
-      )}
-
-      {calculos.length > 0 && (
-        <section className={`${CARTAO} flex flex-col gap-3`}>
-          <h2 className={TITULO_CARTAO}>{r.calculosTitulo}</h2>
-          <ul className="flex flex-col gap-2">
-            {calculos.map((calc, i) => (
-              <li key={i} className={TEXTO}>
-                {textoCalculo(calc, idioma, r)}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <section className={`${CARTAO} flex flex-col gap-3`}>
-        <h2 className={TITULO_CARTAO}>{r.porConfirmarTitulo}</h2>
-        {d.porConfirmar.length ? (
-          <ul className="flex list-disc flex-col gap-1.5 pl-5">
-            {d.porConfirmar.map((p) => (
-              <li key={p} className={TEXTO}>
-                {r.porConfirmar[p] ?? p}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className={TEXTO}>{r.nadaPorConfirmar}</p>
         )}
       </section>
 
       <Aviso tom="info">{r.aviso}</Aviso>
 
-      <section className={`${CARTAO_ACAO} flex flex-col gap-4`}>
-        <h2 className="text-[20px] font-bold leading-snug">{c.titulo}</h2>
-        <ListaVistos compacta itens={c.beneficios} />
-        <div className="flex flex-col gap-2">
-          <Link
-            href="/experimentar-protecao?origem=diagnostico"
-            className={`${BOTAO_PRIMARIO} min-h-14 text-[17px]`}
-            onClick={() => void escolhaDiagnosticoAction(id, "protecao")}
-          >
-            {c.protecao}
-          </Link>
-          <p className={TEXTO_SECUNDARIO}>{c.protecaoNota}</p>
-        </div>
-        {associado ? (
-          <div className="flex flex-col gap-2">
-            <p className={TEXTO}>{c.guardado}</p>
-            <Link href="/portal" className={`${BOTAO_SECUNDARIO} min-h-14 text-[17px]`}>
-              {c.irPortal}
-            </Link>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            <Link
-              href={`/registo?next=${encodeURIComponent(voltar)}`}
-              className={`${BOTAO_SECUNDARIO} min-h-14 text-[17px]`}
-              onClick={() => void escolhaDiagnosticoAction(id, "guardar")}
-            >
-              {c.guardar}
-            </Link>
-            <p className={TEXTO_SECUNDARIO}>{c.guardarNota}</p>
-          </div>
-        )}
-      </section>
+      {daLanding ? (
+        <ProtecaoDaLanding id={id} t={t} idioma={idioma} />
+      ) : (
+        <ConversaoProtecaoGratuita id={id} t={t} />
+      )}
+
+      <GuardarResultado id={id} voltar={voltar} associado={associado} t={t} />
 
       <p className={TEXTO}>
-        {c.problema}{" "}
+        {t.conversao.problema}{" "}
         <Link href={`/tratar-caso?origem=/diagnostico`} className={LIGACAO}>
-          {c.problemaLigacao}
+          {t.conversao.problemaLigacao}
         </Link>
       </p>
+    </div>
+  );
+}
+
+function TituloArea({ letra, titulo, texto }: { letra: string; titulo: string; texto: string }) {
+  return (
+    <div className="flex gap-3">
+      <span aria-hidden className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[var(--v2-navy)] text-[15px] font-bold text-white">
+        {letra}
+      </span>
+      <div className="flex flex-col gap-1">
+        <h2 className={TITULO_CARTAO}>{titulo}</h2>
+        <p className={TEXTO_SECUNDARIO}>{texto}</p>
+      </div>
+    </div>
+  );
+}
+
+const COR_ORIGEM: Record<OrigemItem, string> = {
+  documento: "bg-[var(--v2-mint)] text-[var(--v2-green-dark)]",
+  nao_confirmado: "bg-[var(--v2-surface)] text-[var(--v2-navy)]",
+  contrato: "bg-[var(--v2-blue-soft)] text-[var(--v2-navy)]",
+};
+
+function EtiquetaOrigem({ origem, texto }: { origem: OrigemItem; texto: string }) {
+  return <span className={`self-start rounded-full px-2.5 py-0.5 text-[13px] font-semibold ${COR_ORIGEM[origem]}`}>{texto}</span>;
+}
+
+function textoDestaque(item: ItemDestaque, r: T["resultado"], idioma: Idioma): string {
+  const euros = (cents: number) => formatarEurosCents(idioma, cents);
+  switch (item.chave) {
+    case "soma_linhas_difere":
+      return r.destaques.soma_linhas_difere(euros(item.somaCents), euros(item.totalCents));
+    case "diferenca_mensalidade":
+      return r.destaques.diferenca_mensalidade(euros(item.diferencaCents), euros(item.mensalidadeCents));
+    case "cobrancas_pontuais":
+      return r.destaques.cobrancas_pontuais(item.quantidade, euros(item.totalCents));
+    case "data_proxima":
+      return r.destaques.data_proxima[item.tipo](data(idioma, item.data), String(item.dias));
+    case "data_passada":
+      return r.destaques.data_passada[item.tipo](data(idioma, item.data));
+    case "por_confirmar":
+      return r.porConfirmar[item.campo] ?? item.campo;
+    case "so_com_contrato":
+      return r.destaques.so_com_contrato;
+  }
+}
+
+/** Resultado aberto a partir de /analisar-fatura: a Protecção como continuação, sem a oferta dos 30 dias. */
+function ProtecaoDaLanding({ id, t, idioma }: { id: string; t: T; idioma: Idioma }) {
+  const p = t.conversao.analisarFatura;
+  return (
+    <section className={`${CARTAO_ACAO} flex flex-col gap-4`}>
+      <h2 className="text-[22px] font-bold leading-snug">{p.titulo}</h2>
+      <p className={TEXTO}>{p.texto}</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5 rounded-[12px] border border-[var(--v2-line)] bg-white p-4">
+          <h3 className="text-[17px] font-bold">{p.agoraTitulo}</h3>
+          <p className={TEXTO}>{p.agora}</p>
+        </div>
+        <div className="flex flex-col gap-2 rounded-[12px] border border-[var(--v2-green)]/40 bg-white p-4">
+          <h3 className="text-[17px] font-bold">{p.protecaoTitulo}</h3>
+          <ListaVistos compacta itens={p.beneficios} />
+        </div>
+      </div>
+      <a
+        href={localizarHref(idioma, `${MARKETING_SITE_URL}/protecao`)}
+        className={`${BOTAO_PRIMARIO} min-h-14 text-[17px]`}
+        onClick={() => void escolhaDiagnosticoAction(id, "protecao")}
+      >
+        {p.botao}
+      </a>
+      <p className={TEXTO_SECUNDARIO}>{p.nota}</p>
+    </section>
+  );
+}
+
+function ConversaoProtecaoGratuita({ id, t }: { id: string; t: T }) {
+  const c = t.conversao;
+  return (
+    <section className={`${CARTAO_ACAO} flex flex-col gap-4`}>
+      <h2 className="text-[20px] font-bold leading-snug">{c.titulo}</h2>
+      <ListaVistos compacta itens={c.beneficios} />
+      <div className="flex flex-col gap-2">
+        <Link
+          href="/experimentar-protecao?origem=diagnostico"
+          className={`${BOTAO_PRIMARIO} min-h-14 text-[17px]`}
+          onClick={() => void escolhaDiagnosticoAction(id, "protecao")}
+        >
+          {c.protecao}
+        </Link>
+        <p className={TEXTO_SECUNDARIO}>{c.protecaoNota}</p>
+      </div>
+    </section>
+  );
+}
+
+function GuardarResultado({ id, voltar, associado, t }: { id: string; voltar: string; associado: boolean; t: T }) {
+  const c = t.conversao;
+  return associado ? (
+    <div className="flex flex-col gap-2">
+      <p className={TEXTO}>{c.guardado}</p>
+      <Link href="/portal" className={`${BOTAO_SECUNDARIO} min-h-14 text-[17px]`}>
+        {c.irPortal}
+      </Link>
+    </div>
+  ) : (
+    <div className="flex flex-col gap-2">
+      <Link
+        href={`/registo?next=${encodeURIComponent(voltar)}`}
+        className={`${BOTAO_SECUNDARIO} min-h-14 text-[17px]`}
+        onClick={() => void escolhaDiagnosticoAction(id, "guardar")}
+      >
+        {c.guardar}
+      </Link>
+      <p className={TEXTO_SECUNDARIO}>{c.guardarNota}</p>
     </div>
   );
 }

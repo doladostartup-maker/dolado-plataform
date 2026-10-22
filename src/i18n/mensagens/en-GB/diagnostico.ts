@@ -87,10 +87,39 @@ export const diagnostico: Traducao<typeof pt> = {
     diferenca: {
       mais: (diferenca: V, mensalidade: V) => `This bill is ${diferenca} more than the monthly fee (${mensalidade}).`,
       menos: (diferenca: V, mensalidade: V) => `This bill is ${diferenca} less than the monthly fee (${mensalidade}).`,
-      notaComLinhas: "The lines below show where the difference comes from. A difference is not, in itself, a mistake.",
-      notaSemLinhas: "A difference is not, in itself, a mistake: it may come from usage, additional services, adjustments or discounts.",
     },
-    porConfirmarTitulo: "What we couldn't confirm",
+    seccoes: {
+      identificadoTitulo: "What we found",
+      identificadoTexto: "Amounts and dates as they appear in the document, and the sums we worked out from them.",
+      destaquesTitulo: "Highlights from the document",
+      destaquesTexto: "Dates and amounts from the document worth keeping in mind. This does not mean anything is wrong.",
+      semDestaques: "There are no dates or amounts from the document to highlight.",
+    },
+    origem: {
+      documento: "From the document",
+      nao_confirmado: "Not confirmed",
+      contrato: "In the contract",
+    },
+    destaques: {
+      soma_linhas_difere: (soma: V, total: V) =>
+        `The lines we could read add up to ${soma}, which is different from the bill total (${total}). There may be lines we could not read.`,
+      diferenca_mensalidade: (diferenca: V, mensalidade: V) =>
+        `The total is ${diferenca} more than the monthly fee (${mensalidade}). The lines on the bill show where the difference comes from.`,
+      cobrancas_pontuais: (n: number, total: V) =>
+        n === 1
+          ? `There is 1 charge that does not repeat every month (${total}).`
+          : `There are ${n} charges that do not repeat every month (${total} in total).`,
+      data_proxima: {
+        fidelizacao: (data: V, dias: V) => `The minimum term ends on ${data} (${dias} days to go).`,
+        promocao: (data: V, dias: V) => `The promotion ends on ${data} (${dias} days to go).`,
+      },
+      data_passada: {
+        fidelizacao: (data: V) => `The minimum term shown ended on ${data}.`,
+        promocao: (data: V) => `The promotion shown ended on ${data}.`,
+      },
+      so_com_contrato:
+        "A bill shows what was charged. The agreed price, minimum term and promotions are set out in the contract.",
+    },
     porConfirmar: {
       fornecedor: "The company that issued the document.",
       total: "The bill total.",
@@ -99,7 +128,6 @@ export const diagnostico: Traducao<typeof pt> = {
       mensalidade: "The monthly price.",
       data_ativacao: "The activation date, which the end of the minimum term depends on.",
     } as Record<string, string>,
-    nadaPorConfirmar: "We could read the main information in the document.",
     aviso: "This check describes what is in the document. It is not legal advice, nor an assessment that something is wrong.",
     campos: {
       data_emissao: "Issue date",
@@ -140,6 +168,22 @@ export const diagnostico: Traducao<typeof pt> = {
     guardarNota: "Create a free account to save this result.",
     guardado: "This result is already saved in your account.",
     irPortal: "Open my account",
+    analisarFatura: {
+      titulo: "What if you didn't have to check everything yourself?",
+      texto:
+        "This first check is only the beginning. Find out about DoLado Protection and how we can help keep an eye on your contracts and services.",
+      agoraTitulo: "This free check",
+      agora: "Reads one bill, once, and shows what is in the document.",
+      protecaoTitulo: "With DoLado Protection",
+      beneficios: [
+        "We compare each new bill with the previous ones.",
+        "We let you know before your minimum term and promotions end.",
+        "Anything that needs attention is reviewed by a person at DoLado before we tell you.",
+        "Every month, you receive an e-mail summary of what we kept an eye on.",
+      ],
+      botao: "Find out about DoLado Protection",
+      nota: "Monthly subscription that you can cancel in the portal. This check stays free, with or without Protection.",
+    },
     problema: "Already have a problem with this company?",
     problemaLigacao: "Ask us for help",
   },
