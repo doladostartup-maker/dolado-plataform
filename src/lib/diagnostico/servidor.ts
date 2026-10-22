@@ -29,6 +29,7 @@ import {
   formatoPelaAssinatura,
   lerDiagnostico,
   lerInteiroPositivo,
+  podeFicarComDiagnostico,
   validarFicheiro,
   type Canal,
   type Diagnostico,
@@ -298,17 +299,26 @@ export type EstadoPublico =
 // temporária, o visitante pode tentar de novo.
 const LIMITE_SEM_AVANCO_MS = 3 * 60 * 1000;
 
-export async function estadoDiagnostico(sessao: SessaoDiagnostico, id: string): Promise<EstadoPublico | null> {
+/**
+ * Quem pode abrir um diagnóstico: o browser onde foi carregado (sessão
+ * anónima do cookie) ou, depois de ligado a uma conta, o dono com sessão
+ * iniciada — também noutro browser ou dispositivo (22/10/2026).
+ */
+export type DonoDiagnostico = { sessao: SessaoDiagnostico } | { contaId: string };
+
+export async function estadoDiagnostico(dono: DonoDiagnostico, id: string): Promise<EstadoPublico | null> {
   const admin = createAdminClient();
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
-  const { data } = await admin
+  let consulta = admin
     .from("diagnosticos_gratuitos")
     .select("id, estado, motivo_falha, resultado, visualizado_em, carregado_em, conta_id, documento_monitor_id")
     .eq("id", id)
-    .eq("sessao_id", sessao.sessaoId)
-    .eq("token_hash", hashSegredo(sessao.segredo))
-    .is("dados_apagados_em", null)
-    .maybeSingle();
+    .is("dados_apagados_em", null);
+  consulta =
+    "sessao" in dono
+      ? consulta.eq("sessao_id", dono.sessao.sessaoId).eq("token_hash", hashSegredo(dono.sessao.segredo))
+      : consulta.eq("conta_id", dono.contaId);
+  const { data } = await consulta.maybeSingle();
   if (!data) return null;
 
   if (data.estado === "a_analisar" && data.carregado_em && Date.now() - Date.parse(data.carregado_em) > LIMITE_SEM_AVANCO_MS) {
@@ -339,9 +349,17 @@ export async function registarEscolha(sessao: SessaoDiagnostico, id: string, esc
 // 5. Conta: associação e passagem para o Monitor
 // ---------------------------------------------------------------------------
 
-/** Liga os diagnósticos concluídos desta sessão à conta. Devolve quantos. */
+/**
+ * Liga os diagnósticos concluídos desta sessão à conta. Devolve quantos.
+ * Só contas de cliente: uma sessão de administrador aberta no mesmo browser
+ * (ex.: testes da equipa) nunca fica com o diagnóstico — a ligação é
+ * definitiva e impediria a conta de cliente criada a seguir de o ver.
+ */
 export async function associarDiagnosticos(sessao: SessaoDiagnostico, userId: string): Promise<number> {
-  const { data, error } = await createAdminClient().rpc("diagnostico_associar", {
+  const admin = createAdminClient();
+  const { data: conta } = await admin.from("utilizadores").select("role").eq("id", userId).maybeSingle();
+  if (!podeFicarComDiagnostico(conta?.role)) return 0;
+  const { data, error } = await admin.rpc("diagnostico_associar", {
     p_sessao: sessao.sessaoId,
     p_token_hash: hashSegredo(sessao.segredo),
     p_user: userId,

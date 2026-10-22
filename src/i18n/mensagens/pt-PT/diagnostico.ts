@@ -56,7 +56,7 @@ export const diagnostico = {
     aAnalisarTexto: "Demora normalmente menos de um minuto. Não feche esta página.",
     naoEncontrado: "Não encontrámos este diagnóstico",
     naoEncontradoTexto:
-      "O diagnóstico só pode ser aberto no mesmo navegador em que carregou o documento e fica disponível durante 7 dias.",
+      "O diagnóstico abre-se no navegador em que carregou o documento ou, se o guardou, com a sessão iniciada na sua conta. Fica disponível durante 7 dias (30 dias depois de guardado).",
     tentarOutro: "Analisar outro documento",
     falhou: {
       titulo: "Não foi possível concluir a análise",

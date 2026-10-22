@@ -44,7 +44,8 @@ export const diagnostico: Traducao<typeof pt> = {
     aAnalisar: "We are reading your document",
     aAnalisarTexto: "It usually takes less than a minute. Please keep this page open.",
     naoEncontrado: "We couldn't find this check",
-    naoEncontradoTexto: "The check can only be opened in the same browser you used to upload the document, and stays available for 7 days.",
+    naoEncontradoTexto:
+      "The check opens in the browser you used to upload the document or, if you saved it, when you are signed in to your account. It stays available for 7 days (30 days after saving).",
     tentarOutro: "Check another document",
     falhou: {
       titulo: "We couldn't finish the check",

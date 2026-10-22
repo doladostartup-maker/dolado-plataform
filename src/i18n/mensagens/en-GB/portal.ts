@@ -132,6 +132,12 @@ export const portal: Traducao<typeof pt> = {
       associarTitulo: "A document needs your decision",
       associarTexto: "We couldn't confirm which service it belongs to. We haven't changed anything until you decide.",
       associarCta: "Decide",
+      analiseTitulo: (tipo: string, fornecedor: string | null) =>
+        `The check of your ${tipo === "contrato" ? "contract" : "bill"}${fornecedor ? ` from ${fornecedor}` : ""}`,
+      analiseTexto: "We have saved the result of your free check in your account. You can look at it again whenever you like.",
+      analiseTextoProtecao:
+        "We have saved the result of your free check in your account. You can look at it and move the document to Protection, so we keep an eye on it for you.",
+      analiseCta: "See the result",
     },
     oSeuCaso: "Your case",
   },

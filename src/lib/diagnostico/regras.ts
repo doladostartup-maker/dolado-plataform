@@ -105,6 +105,11 @@ export function valorCookieSessao(s: SessaoDiagnostico): string {
   return `${s.sessaoId}.${s.segredo}`;
 }
 
+/** Só contas de cliente ficam com diagnósticos (nunca o administrador). */
+export function podeFicarComDiagnostico(role: string | null | undefined): boolean {
+  return role === "cliente";
+}
+
 /**
  * Domínio do cookie: partilhado entre dolado.pt (homepage, onde o ficheiro é
  * escolhido) e portal.dolado.pt (resultado e conta). Fora de produção, o

@@ -330,3 +330,25 @@ describe("reposicionamento: análise como entrada principal (22/10/2026)", () =>
     assert.equal((precario.match(/destaque: true/g) || []).length, 1);
   });
 });
+
+describe("análise guardada na conta (22/10/2026)", () => {
+  test("só contas de cliente ficam com o diagnóstico (nunca o administrador)", async () => {
+    const { podeFicarComDiagnostico } = await import("./regras.ts");
+    assert.equal(podeFicarComDiagnostico("cliente"), true);
+    for (const role of ["admin", null, undefined, ""]) assert.equal(podeFicarComDiagnostico(role), false);
+    assert.match(fonte("./servidor.ts"), /if \(!podeFicarComDiagnostico\(conta\?\.role\)\) return 0;\s*const \{ data, error \} = await admin\.rpc\("diagnostico_associar"/);
+  });
+
+  test("o dono com sessão iniciada abre o resultado noutro browser; nunca outra conta", () => {
+    const servidor = fonte("./servidor.ts");
+    assert.match(servidor, /consulta\.eq\("conta_id", dono\.contaId\)/);
+    const accao = fonte("../../app/actions/diagnostico.ts");
+    assert.match(accao, /estadoDiagnostico\(\{ contaId: user\.id \}, String\(id\)\)/);
+  });
+
+  test("o Painel liga o diagnóstico deste browser e mostra a análise guardada", () => {
+    const painel = fonte("../../app/[idioma]/portal/page.tsx");
+    assert.match(painel, /await associarDiagnosticosDaSessao\(user\.id\)/);
+    assert.match(painel, /href: `\/diagnostico\?id=\$\{analise\.id\}`/);
+  });
+});
