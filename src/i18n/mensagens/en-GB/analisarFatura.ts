@@ -9,7 +9,7 @@ export const analisarFatura: Traducao<typeof pt> = {
   },
   hero: {
     titulo: "Do you really know what you are paying?",
-    subtitulo: "Upload your electricity bill and see what you are paying and what is worth confirming.",
+    subtitulo: "Upload your bill and see what you are paying and what is worth confirming.",
   },
   carregar: {
     titulo: "Send us your bill",
@@ -76,7 +76,7 @@ export const analisarFatura: Traducao<typeof pt> = {
   quem: {
     titulo: "Who DoLado is",
     texto:
-      "DoLado is a Portuguese financial wellbeing company specialising in consumer support: we help people understand bills and contracts for telecoms, electricity, gas and water, keep track of changes and deadlines, and deal with complaints.",
+      "DoLado is a Portuguese financial wellbeing company specialising in consumer support: we help people understand bills and contracts for telecoms, electricity, gas and water and, month by month, we check whether the bills you send us match your contract and your previous bills. We also keep track of changes and deadlines and deal with complaints.",
   },
   perguntas: {
     titulo: "Frequently asked questions",

@@ -13,7 +13,7 @@ export const analisarFatura = {
   },
   hero: {
     titulo: "Sabe mesmo o que está a pagar?",
-    subtitulo: "Carregue a sua factura de electricidade e veja o que está a pagar e o que vale a pena confirmar.",
+    subtitulo: "Carregue a sua factura e veja o que está a pagar e o que vale a pena confirmar.",
   },
   carregar: {
     titulo: "Envie a sua factura",
@@ -80,7 +80,7 @@ export const analisarFatura = {
   quem: {
     titulo: "Quem é a DoLado",
     texto:
-      "A DoLado é uma empresa portuguesa de bem-estar financeiro especializada no apoio ao consumidor: ajudamos a perceber facturas e contratos de telecomunicações, electricidade, gás e água, a acompanhar alterações e prazos e a tratar reclamações.",
+      "A DoLado é uma empresa portuguesa de bem-estar financeiro especializada no apoio ao consumidor: ajudamos a perceber facturas e contratos de telecomunicações, electricidade, gás e água e, mês a mês, verificamos se as facturas que nos envia estão de acordo com o contrato e com as facturas anteriores. Acompanhamos também alterações e prazos e tratamos reclamações.",
   },
   perguntas: {
     titulo: "Perguntas frequentes",
