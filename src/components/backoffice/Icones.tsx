@@ -95,3 +95,13 @@ export const IconeLupa = (p: PropsIcone) => (
     <path d="M16 16l4 4" />
   </IconeBase>
 );
+
+/** Gráfico de barras com tendência (Aquisição e Conversão). */
+export const IconeGrafico = (p: PropsIcone) => (
+  <IconeBase {...p}>
+    <path d="M4 20h16" />
+    <path d="M7 16v-4" />
+    <path d="M12 16V9" />
+    <path d="M17 16V6" />
+  </IconeBase>
+);

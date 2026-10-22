@@ -242,7 +242,10 @@ select is(
                            'comunicacoes_retirar', 'comunicacoes_destinatarios',
                            -- Diagnóstico gratuito (20261028090000): só service_role, search_path
                            -- fixo; a associação exige o segredo da sessão (diagnostico_gratuito.test.sql).
-                           'diagnostico_reservar', 'diagnostico_associar', 'diagnosticos_expirar')), 0::bigint,
+                           'diagnostico_reservar', 'diagnostico_associar', 'diagnosticos_expirar',
+                           -- Painel Aquisição e Conversão (20261029090000): só leitura, recusa quem
+                           -- não é admin (is_admin), só contagens (aquisicao_metricas.test.sql).
+                           'aquisicao_metricas')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em
