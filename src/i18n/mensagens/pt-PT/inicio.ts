@@ -101,12 +101,38 @@ export const inicio = {
   // documento e contas simples (decisão de 22/10/2026): nunca prometer que
   // encontramos erros, irregularidades ou poupanças.
   diagnostico: {
+    // Hero (22/10/2026): a promessa cobre a DoLado inteira; o cartão diz o
+    // que a análise gratuita mostra (só o que está no documento) e o exemplo
+    // separa a análise gratuita do que fica para a Protecção (revisto por uma
+    // pessoa antes de chegar ao cliente).
     hero: {
-      titulo: "A sua factura ou contrato está certo?",
-      texto: "Descubra o que está a pagar, quais são as condições do seu contrato e as datas que importam.",
-      problema: "Preciso de ajuda com um problema",
+      titulo: "Perceba o que está a pagar.",
+      tituloSegundo: "E o que merece atenção.",
+      texto:
+        "Ajudamos a compreender as suas facturas e contratos, a identificar o que merece atenção e a saber o que fazer a seguir.",
+      cartaoTexto: "Mostramos os valores, as datas e as condições que estão no documento.",
+      problemaTitulo: "Já tem um problema para resolver?",
+      problemaTexto: "Preparamos a reclamação consigo e acompanhamos a resposta da empresa.",
+      problema: "Tratar do meu caso",
+      exemplo: {
+        rotulo:
+          "Exemplo demonstrativo do resultado da análise de uma factura: valores lidos, dias até ao fim da fidelização e o aviso da Protecção sobre o fim de uma promoção.",
+        etiqueta: "Exemplo demonstrativo",
+        documento: "Factura de telecomunicações",
+        gratuito: "Na análise gratuita",
+        lido: [
+          { rotulo: "Total a pagar", valor: "42,90 €" },
+          { rotulo: "Mensalidade", valor: "39,99 €" },
+          { rotulo: "Fim da fidelização", valor: "14 de Agosto" },
+        ],
+        calculo: "Faltam 4 meses para o fim da fidelização.",
+        protecao: "Com a Protecção",
+        protecaoTexto: "A sua promoção termina a 14 de Maio. Enviamos-lhe um aviso 60 e 30 dias antes.",
+        protecaoNota: "Se uma factura nova mudar, uma pessoa da DoLado revê antes de lhe dizermos.",
+        proximo: "Se precisar, tratamos consigo da reclamação.",
+      },
     },
-    situacoesTitulo: "Já tem um problema com uma empresa?",
+    situacoesTitulo: "Situações em que a DoLado pode ajudar",
     comoFunciona: {
       titulo: "Como funciona",
       passos: [
@@ -184,7 +210,7 @@ export const inicio = {
         {
           id: "documentos",
           pergunta: "Que documentos posso analisar?",
-          resposta: "Facturas e contratos de telecomunicações, electricidade, gás e água, em PDF ou fotografia.",
+          resposta: "Facturas e contratos de telecomunicações, electricidade, gás e água, em PDF.",
         },
       ],
       todas: "Ver todas as perguntas",

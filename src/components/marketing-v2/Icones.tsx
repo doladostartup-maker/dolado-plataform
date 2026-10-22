@@ -171,3 +171,11 @@ export const IconeFechar = (p: PropsIcone) => (
     <path d="M6 6l12 12M18 6L6 18" />
   </IconeBase>
 );
+
+export const IconePdf = (p: PropsIcone) => (
+  <IconeBase {...p}>
+    <path d="M14 3H6v18h12V7z" />
+    <path d="M14 3v4h4" />
+    <path d="M7.6 18v-4.2h1.1a1.1 1.1 0 0 1 0 2.2H7.6M10.9 13.8V18h.6a1.5 1.5 0 0 0 1.5-1.5v-1.2a1.5 1.5 0 0 0-1.5-1.5zM14.4 18v-4.2h1.8M14.4 15.9h1.4" strokeWidth={1.2} />
+  </IconeBase>
+);

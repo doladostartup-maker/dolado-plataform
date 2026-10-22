@@ -20,11 +20,18 @@ import type { ResultadoValidacaoContrato } from "../monitor/extracaoContrato.ts"
 // Ficheiros
 // ---------------------------------------------------------------------------
 
-/** Formatos lidos pela IA — iguais a MIME_ACEITES (monitor/claudeDocumentos.ts). */
-export const MIME_DIAGNOSTICO = ["application/pdf", "image/jpeg", "image/png", "image/webp"] as const;
+/** Formatos que a IA consegue ler — iguais a MIME_ACEITES (monitor/claudeDocumentos.ts). */
+type MimeLegivel = "application/pdf" | "image/jpeg" | "image/png" | "image/webp";
+
+/**
+ * Formatos aceites no diagnóstico gratuito: só PDF (decisão de Thiago,
+ * 22/10/2026). Validado no browser, ao preparar e ao confirmar (tipo e
+ * assinatura do ficheiro).
+ */
+export const MIME_DIAGNOSTICO = ["application/pdf"] as const;
 export type MimeDiagnostico = (typeof MIME_DIAGNOSTICO)[number];
 
-export const EXTENSAO_DIAGNOSTICO: Record<MimeDiagnostico, string> = {
+export const EXTENSAO_DIAGNOSTICO: Record<MimeLegivel, string> = {
   "application/pdf": "pdf",
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -48,7 +55,7 @@ export function validarFicheiro(mime: string, tamanho: number): ErroFicheiro | n
 }
 
 /** Assinatura do formato (primeiros bytes): o tipo indicado pelo browser não chega. */
-export function formatoPelaAssinatura(bytes: Uint8Array): MimeDiagnostico | null {
+export function formatoPelaAssinatura(bytes: Uint8Array): MimeLegivel | null {
   const comeca = (...b: number[]) => b.every((v, i) => bytes[i] === v);
   if (comeca(0x25, 0x50, 0x44, 0x46)) return "application/pdf";
   if (comeca(0xff, 0xd8, 0xff)) return "image/jpeg";

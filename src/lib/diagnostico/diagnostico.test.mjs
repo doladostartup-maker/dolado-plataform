@@ -54,6 +54,8 @@ describe("ficheiros", () => {
   test("formato, tamanho e ficheiro vazio", () => {
     assert.equal(validarFicheiro("application/pdf", 1000), null);
     assert.equal(validarFicheiro("image/heic", 1000), "formato");
+    // Só PDF (22/10/2026): fotografias recusadas no browser e no servidor.
+    for (const imagem of ["image/jpeg", "image/png", "image/webp"]) assert.equal(validarFicheiro(imagem, 1000), "formato");
     assert.equal(validarFicheiro("application/pdf", 11 * 1024 * 1024), "tamanho");
     assert.equal(validarFicheiro("application/pdf", 0), "vazio");
   });
@@ -236,13 +238,24 @@ describe("homepage com a análise gratuita", () => {
   });
 
   test("entrada principal pelo carregamento; secundária para quem já tem um problema", () => {
-    assert.match(home, /<CarregarDocumento local="homepage_hero"/);
+    assert.match(home, /<CartaoAnalise local="homepage_hero"/);
     assert.match(home, /botaoProblema\("click_hero_reclamacao"\)/);
     assert.match(home, /\{t\.hero\.problema\}/);
   });
 
   test("o aviso (sem registo, IA, conservação) acompanha sempre o botão", () => {
     for (const chave of ["t.confianca", "t.formatos", "t.privacidade", 'href="/privacidade"']) assert.ok(botao.includes(chave), chave);
+    const cartao = fonte("../../components/diagnostico/CartaoAnalise.tsx");
+    for (const chave of ["c.gratuita", "c.semRegisto", "c.apenasPdf", "c.privacidade", "c.detalhes", 'href="/privacidade"']) {
+      assert.ok(cartao.includes(chave), chave);
+    }
+  });
+
+  test("privacidade sem promessas absolutas e com a IA identificada", async () => {
+    const { diagnostico: pt } = await import("../../i18n/mensagens/pt-PT/diagnostico.ts");
+    const texto = JSON.stringify(pt.carregar.cartao).toLowerCase();
+    assert.ok(texto.includes("anthropic"));
+    for (const proibido of ["não partilhamos", "nunca partilhamos", "100%", "totalmente seguro"]) assert.ok(!texto.includes(proibido), proibido);
   });
 
   test("textos sem promessas de erros, irregularidades ou poupanças, nas duas línguas", async () => {

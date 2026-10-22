@@ -91,11 +91,32 @@ export const inicio: Traducao<typeof pt> = {
   },
   diagnostico: {
     hero: {
-      titulo: "Is your bill or contract right?",
-      texto: "Find out what you are paying, what your contract says and the dates that matter.",
-      problema: "I need help with a problem",
+      titulo: "Understand what you are paying.",
+      tituloSegundo: "And what needs your attention.",
+      texto: "We help you understand your bills and contracts, spot what needs attention and know what to do next.",
+      cartaoTexto: "We show you the amounts, dates and conditions written in the document.",
+      problemaTitulo: "Already have a problem to sort out?",
+      problemaTexto: "We prepare the complaint with you and follow the company's reply.",
+      problema: "Start my case",
+      exemplo: {
+        rotulo:
+          "Illustrative example of the result of checking a bill: amounts read, days until the end of the minimum term and the Protection reminder about a promotion ending.",
+        etiqueta: "Illustrative example",
+        documento: "Telecoms bill",
+        gratuito: "In the free check",
+        lido: [
+          { rotulo: "Total due", valor: "€42.90" },
+          { rotulo: "Monthly fee", valor: "€39.99" },
+          { rotulo: "End of minimum term", valor: "14 August" },
+        ],
+        calculo: "4 months left until the end of the minimum term.",
+        protecao: "With Protection",
+        protecaoTexto: "Your promotion ends on 14 May. We remind you 60 and 30 days before.",
+        protecaoNota: "If a new bill changes, a person at DoLado reviews it before we tell you.",
+        proximo: "If you need it, we handle the complaint with you.",
+      },
     },
-    situacoesTitulo: "Already have a problem with a company?",
+    situacoesTitulo: "Situations where DoLado can help",
     comoFunciona: {
       titulo: "How it works",
       passos: [
@@ -173,7 +194,7 @@ export const inicio: Traducao<typeof pt> = {
         {
           id: "documentos",
           pergunta: "Which documents can I check?",
-          resposta: "Bills and contracts for telecoms, electricity, gas and water, as a PDF or a photo.",
+          resposta: "Bills and contracts for telecoms, electricity, gas and water, as a PDF.",
         },
       ],
       todas: "See all questions",

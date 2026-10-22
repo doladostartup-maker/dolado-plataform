@@ -7,13 +7,32 @@ export const diagnostico: Traducao<typeof pt> = {
   carregar: {
     botao: "Check it for free",
     confianca: "No sign-up needed. No bank card.",
-    formatos: "PDF or photo (JPG, PNG, WebP), up to 10 MB.",
+    formatos: "PDF files only, up to 10 MB.",
     privacidade:
       "The document is read by an artificial intelligence system (Anthropic) only to show you the result, and is deleted after 7 days if you don't create an account.",
     privacidadeLigacao: "Privacy Policy",
+    cartao: {
+      comeceAqui: "Start here",
+      titulo: "Upload a bill or a contract",
+      setores: "Telecoms, electricity, gas or water.",
+      botao: "Choose a PDF file",
+      arrastar: "or drag the file into this area",
+      gratuita: "Free initial check",
+      semRegisto: "No sign-up to start",
+      apenasPdf: "PDF files only",
+      privacidade:
+        "Your document is kept in a private space and read by an artificial intelligence provider (Anthropic) only to show you the result.",
+      detalhesTitulo: "How we handle your document",
+      detalhes: [
+        "The result is prepared automatically from what is written in the document.",
+        "If you don't create an account, we delete the document and the result after 7 days.",
+        "Anthropic processes the document on DoLado's behalf, under a data processing agreement. It may keep it for up to 30 days to detect misuse, and the processing may involve a transfer outside the European Union, with the safeguards described in the Privacy Policy.",
+        "Only upload documents that are yours or that you are authorised to use.",
+      ],
+    },
     aEnviar: "Uploading the document…",
     erros: {
-      formato: "This format is not accepted. Please upload a PDF or a photo (JPG, PNG or WebP).",
+      formato: "We only accept PDF files. Please choose the PDF of your bill or contract.",
       tamanho: "The file is larger than 10 MB. Please upload a smaller file.",
       vazio: "The file is empty. Please choose another file.",
       limite: "We have checked several documents in the last few minutes. Please try again shortly.",
@@ -31,10 +50,10 @@ export const diagnostico: Traducao<typeof pt> = {
     tentarOutro: "Check another document",
     falhou: {
       titulo: "We couldn't finish the check",
-      ficheiro_invalido: "The file doesn't seem to be a valid PDF or image. Please try another file.",
+      ficheiro_invalido: "The file doesn't seem to be a valid PDF. Please try another file.",
       nao_suportado:
         "This document doesn't seem to be a bill or a contract for telecoms, electricity, gas or water. For now, the free check only covers these documents.",
-      ilegivel: "We couldn't read the document reliably. Please try a sharper photo or the original PDF.",
+      ilegivel: "We couldn't read the document reliably. Please try the original PDF, as you received it from the company.",
       indisponivel: "There was a temporary problem. Please try again shortly.",
       orcamento: "The free check is temporarily unavailable. Please try again later.",
     },

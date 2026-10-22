@@ -18,13 +18,16 @@ import { confirmarDiagnosticoAction, prepararDiagnosticoAction } from "@/app/act
 // portal.dolado.pt. Nenhum dado do documento passa pela medição: os eventos
 // GA4 (só com consentimento) levam apenas o nome do passo.
 
-type Erro = keyof (typeof tDiagnostico)["pt-PT"]["carregar"]["erros"];
+export type Erro = keyof (typeof tDiagnostico)["pt-PT"]["carregar"]["erros"];
 
-// O aviso (sem registo nem cartão; leitura por IA; conservação) fica sempre
-// junto do botão, antes de o ficheiro ser escolhido.
-export function CarregarDocumento({ local, classeBotao }: { local: string; classeBotao: string }) {
+/**
+ * Lógica do carregamento, partilhada pelo botão (CarregarDocumento) e pelo
+ * cartão da homepage (CartaoAnalise): abrir o selector, validar (formato,
+ * tamanho), preparar no servidor, enviar para a URL assinada e seguir para o
+ * resultado.
+ */
+export function useCarregamento(local: string) {
   const idioma = useIdioma();
-  const t = useTextos(tDiagnostico).carregar;
   const entrada = useRef<HTMLInputElement>(null);
   const [aEnviar, setAEnviar] = useState(false);
   const [erro, setErro] = useState<Erro | null>(null);
@@ -36,7 +39,8 @@ export function CarregarDocumento({ local, classeBotao }: { local: string; class
   }
 
   async function escolhido(ficheiro: File | undefined) {
-    if (!ficheiro) return;
+    if (!ficheiro || aEnviar) return;
+    setErro(null);
     const invalido = validarFicheiro(ficheiro.type, ficheiro.size);
     if (invalido) {
       setErro(invalido);
@@ -78,20 +82,33 @@ export function CarregarDocumento({ local, classeBotao }: { local: string; class
     }
   }
 
+  const seletor = (
+    <input
+      ref={entrada}
+      type="file"
+      accept={[...MIME_DIAGNOSTICO, ".pdf"].join(",")}
+      className="sr-only"
+      tabIndex={-1}
+      aria-hidden
+      onChange={(e) => {
+        void escolhido(e.target.files?.[0]);
+        e.target.value = "";
+      }}
+    />
+  );
+
+  return { abrir, escolhido, aEnviar, erro, seletor };
+}
+
+// O aviso (sem registo nem cartão; leitura por IA; conservação) fica sempre
+// junto do botão, antes de o ficheiro ser escolhido.
+export function CarregarDocumento({ local, classeBotao }: { local: string; classeBotao: string }) {
+  const t = useTextos(tDiagnostico).carregar;
+  const { abrir, aEnviar, erro, seletor } = useCarregamento(local);
+
   return (
     <div className="flex flex-col gap-3">
-      <input
-        ref={entrada}
-        type="file"
-        accept={MIME_DIAGNOSTICO.join(",")}
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden
-        onChange={(e) => {
-          void escolhido(e.target.files?.[0]);
-          e.target.value = "";
-        }}
-      />
+      {seletor}
       <button type="button" onClick={abrir} disabled={aEnviar} className={classeBotao} aria-busy={aEnviar}>
         {aEnviar ? t.aEnviar : t.botao}
       </button>

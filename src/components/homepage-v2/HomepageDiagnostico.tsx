@@ -8,6 +8,7 @@ import { tWhatsApp } from "@/i18n/mensagens/whatsapp";
 import { detectarOrigem, track } from "@/lib/analytics";
 import { urlTratarCaso } from "@/lib/site";
 import { CarregarDocumento } from "@/components/diagnostico/CarregarDocumento";
+import { CartaoAnalise } from "@/components/diagnostico/CartaoAnalise";
 import { IconeCalendario, IconeDocumentoVisto, IconeEscudo, IconeSeta } from "@/components/marketing-v2/Icones";
 import { ApoioWhatsApp } from "@/components/marketing-v2/ApoioWhatsApp";
 import { CTASection } from "@/components/marketing-v2/CTASection";
@@ -16,18 +17,20 @@ import { ListaVistos } from "@/components/marketing-v2/ListaVistos";
 import { OfertaProtecaoGratuita } from "@/components/marketing-v2/OfertaProtecaoGratuita";
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
 import { SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
-import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
+import { BOTAO_CONTORNO, BOTAO_PRIMARIO, CARTAO, CONTENTOR, TEXTO } from "@/components/marketing-v2/estilos";
+import { ExemploResultado } from "./ExemploResultado";
 import { LIGACAO, SecaoFundador, SecaoSituacoes } from "./seccoes";
 
 // Homepage com a análise gratuita como entrada principal (fase 2 da missão de
 // 22/10/2026). Só substitui a HomepageV2 com DIAGNOSTICO_GRATUITO_ATIVO=1
 // (lido no build): sem a análise ligada, a entrada principal não existiria.
 //
-// Ordem: abertura com o carregamento do documento → problemas (entrada
+// Ordem: abertura (promessa, cartão de análise só com PDF, exemplo do
+// resultado, entrada para quem já tem um problema) → problemas (entrada
 // secundária) → como funciona → o que lemos → Protecção contínua →
 // reclamações → 30 dias grátis → confiança e fundador → perguntas → CTA final.
-// Um CTA principal ("Analisar gratuitamente") e um secundário ("Preciso de
-// ajuda com um problema"); botões altos e letra ≥ 16 px (público 55+).
+// Um CTA principal ("Escolher ficheiro PDF") e um secundário ("Tratar do meu
+// caso"); botões altos e letra ≥ 16 px (público 55+).
 // O diagnóstico só mostra o que está no documento e contas simples: o texto
 // nunca promete erros, irregularidades nem poupanças.
 
@@ -56,17 +59,34 @@ export function HomepageDiagnostico({ protecaoGratuita = false }: { protecaoGrat
 
   return (
     <>
-      {/* ===== Abertura: carregar o documento no primeiro clique ===== */}
-      <SectionV2 size="compact" recortar className="lg:py-24">
-        <div className="max-w-[720px]">
-          <h1 className="text-[clamp(34px,4.2vw,56px)] font-extrabold leading-[1.08] tracking-[-0.035em] text-[var(--v2-navy)]">{t.hero.titulo}</h1>
-          <p className={`${TEXTO} mt-6 text-[19px]`}>{t.hero.texto}</p>
-          <div className="mt-9 flex flex-col gap-6">
-            <CarregarDocumento local="homepage_hero" classeBotao={`${BOTAO_PRIMARIO} ${BOTAO_GRANDE} w-full sm:w-auto sm:self-start`} />
-            <div className="border-t border-[var(--v2-line)] pt-6">{botaoProblema("click_hero_reclamacao")}</div>
+      {/* ===== Abertura (22/10/2026): promessa ao centro; por baixo, o cartão de
+          análise (acção principal) ao lado de um exemplo do resultado, e a
+          entrada para quem já tem um problema. No telemóvel: promessa →
+          cartão → problema → exemplo. Sem fotografias de banco de imagens. ===== */}
+      <section className="overflow-hidden border-b border-[var(--v2-line)] bg-[linear-gradient(180deg,var(--v2-blue-bg)_0%,#fff_70%)]">
+        <div className={`${CONTENTOR} py-6 sm:py-14 lg:py-16`}>
+          <div className="mx-auto max-w-[820px] sm:text-center">
+            <h1 className="text-[clamp(29px,4.6vw,54px)] font-extrabold leading-[1.1] tracking-[-0.035em] text-[var(--v2-navy)]">
+              {t.hero.titulo} <span className="block font-bold text-[var(--v2-navy)]/70">{t.hero.tituloSegundo}</span>
+            </h1>
+            <p className="mx-auto mt-3 max-w-[660px] text-[17px] leading-[1.55] text-[var(--v2-muted)] sm:mt-5 sm:text-[19px]">{t.hero.texto}</p>
+          </div>
+
+          <div className="mx-auto mt-6 grid max-w-[1080px] gap-5 sm:mt-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-6">
+            <CartaoAnalise local="homepage_hero" texto={t.hero.cartaoTexto} />
+            <div className="order-3 lg:order-none">
+              <ExemploResultado />
+            </div>
+            <div className="order-2 flex flex-col gap-4 rounded-[18px] border border-[var(--v2-line-strong)] bg-white p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6 lg:order-none lg:col-span-2">
+              <div>
+                <h2 className="text-[19px] font-bold text-[var(--v2-navy)]">{t.hero.problemaTitulo}</h2>
+                <p className="mt-1 text-[16px] leading-relaxed text-[var(--v2-muted)]">{t.hero.problemaTexto}</p>
+              </div>
+              <div className="flex-none">{botaoProblema("click_hero_reclamacao")}</div>
+            </div>
           </div>
         </div>
-      </SectionV2>
+      </section>
 
       {/* ===== Entrada secundária: quem já tem um problema ===== */}
       <SecaoSituacoes titulo={t.situacoesTitulo} acao={botaoProblema("click_home_situacoes_tratar")} />
