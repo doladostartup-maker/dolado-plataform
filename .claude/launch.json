@@ -4,8 +4,185 @@
     {
       "name": "dolado-plataform",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000
+    },
+    {
+      "name": "dolado-local",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321",
+        "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0",
+        "SUPABASE_SECRET_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU",
+        "NEXT_PUBLIC_SITE_URL=http://localhost:3000",
+        "BREVO_API_KEY=",
+        "ANTHROPIC_API_KEY=",
+        "STRIPE_SECRET_KEY=sk_test_local_nunca_usada",
+        "STRIPE_WEBHOOK_SECRET=whsec_local",
+        "RESPOSTAS_DOMINIO=respostas.dolado.test",
+        "RESEND_WEBHOOK_SECRET=whsec_c2VncmVkby1sb2NhbC1kby13ZWJob29rLXJlc2VuZC1kb2xhZG8=",
+        "RESEND_API_KEY=re_local_nunca_usada",
+        "RESEND_API_URL=http://localhost:4010",
+        "npm",
+        "run",
+        "dev"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "dolado-parceiros",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "PARCEIROS_ATIVO=1",
+        "npm",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3002"
+      ],
+      "port": 3002
+    },
+    {
+      "name": "empresas-worktree",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../dolado-plataform-empresas",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3001"
+      ],
+      "port": 3001
+    },
+    {
+      "name": "dolado-local-protecao-gratuita",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321",
+        "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0",
+        "SUPABASE_SECRET_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU",
+        "NEXT_PUBLIC_SITE_URL=http://localhost:3000",
+        "BREVO_API_KEY=",
+        "ANTHROPIC_API_KEY=",
+        "STRIPE_SECRET_KEY=sk_test_local_nunca_usada",
+        "STRIPE_WEBHOOK_SECRET=whsec_local",
+        "RESPOSTAS_DOMINIO=respostas.dolado.test",
+        "RESEND_WEBHOOK_SECRET=whsec_c2VncmVkby1sb2NhbC1kby13ZWJob29rLXJlc2VuZC1kb2xhZG8=",
+        "RESEND_API_KEY=re_local_nunca_usada",
+        "RESEND_API_URL=http://localhost:4010",
+        "PROTECAO_GRATUITA_ATIVA=1",
+        "PROTECAO_GRATUITA_CHAVE=chave-local-de-teste-protecao-gratuita-0123456789",
+        "npm",
+        "run",
+        "dev"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "dolado-crisp",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "CRISP_ATIVO=1",
+        "npx",
+        "next",
+        "dev",
+        "-p",
+        "3005"
+      ],
+      "port": 3005
+    },
+    {
+      "name": "dolado-meta-pixel",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "NEXT_PUBLIC_META_PIXEL_ID=1111111111111111",
+        "npx",
+        "next",
+        "dev",
+        "-p",
+        "3006"
+      ],
+      "port": 3006
+    },
+    {
+      "name": "dolado-local-guia",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321",
+        "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0",
+        "SUPABASE_SECRET_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU",
+        "NEXT_PUBLIC_SITE_URL=http://localhost:3008",
+        "BREVO_API_KEY=",
+        "ANTHROPIC_API_KEY=",
+        "STRIPE_SECRET_KEY=sk_test_local_nunca_usada",
+        "STRIPE_WEBHOOK_SECRET=whsec_local",
+        "RESPOSTAS_DOMINIO=respostas.dolado.test",
+        "RESEND_WEBHOOK_SECRET=whsec_c2VncmVkby1sb2NhbC1kby13ZWJob29rLXJlc2VuZC1kb2xhZG8=",
+        "RESEND_API_KEY=re_local_nunca_usada",
+        "RESEND_API_URL=http://localhost:4010",
+        "GUIA_FACTURAS_ATIVO=1",
+        "npx",
+        "next",
+        "dev",
+        "-p",
+        "3008"
+      ],
+      "port": 3008
+    },
+    {
+      "name": "energia-worktree",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321",
+        "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0",
+        "SUPABASE_SECRET_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU",
+        "BREVO_API_KEY=",
+        "ANTHROPIC_API_KEY=",
+        "STRIPE_SECRET_KEY=sk_test_local_nunca_usada",
+        "STRIPE_WEBHOOK_SECRET=whsec_local",
+        "RESPOSTAS_DOMINIO=respostas.dolado.test",
+        "RESEND_WEBHOOK_SECRET=whsec_c2VncmVkby1sb2NhbC1kby13ZWJob29rLXJlc2VuZC1kb2xhZG8=",
+        "RESEND_API_KEY=re_local_nunca_usada",
+        "RESEND_API_URL=http://localhost:4010",
+        "NEXT_PUBLIC_SITE_URL=http://localhost:3009",
+        "MONITOR_ENERGIA_ATIVO=1",
+        "MONITOR_IDENTIFICADORES_CHAVE=chave-local-de-teste-monitor-energia-0123456789",
+        "npm",
+        "--prefix",
+        "../dolado-plataform-energia",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3009",
+        "--webpack"
+      ],
+      "port": 3009
+    },
+    {
+      "name": "dolado-homepage-diagnostico",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "DIAGNOSTICO_GRATUITO_ATIVO=1",
+        "PROTECAO_GRATUITA_ATIVA=1",
+        "npm",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3010"
+      ],
+      "port": 3010
     }
   ]
 }
