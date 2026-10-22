@@ -2,6 +2,15 @@
 
 Lista única do que ficou em aberto nas auditorias e cargas jurídicas: pontos para a advogada, cargas por fazer e revisões periódicas. Cada linha indica a origem (documento com o detalhe). Quando um ponto ficar resolvido, marcá-lo com a data e a decisão (não apagar).
 
+## Diagnóstico gratuito sem registo (22 de Outubro de 2026)
+
+Origem: secção "Diagnóstico gratuito sem registo" do CLAUDE.md. Funcionalidade **desligada** (`DIAGNOSTICO_GRATUITO_ATIVO`); estes pontos bloqueiam a ligação em produção.
+
+- [ ] **Nova versão da Política de Privacidade:** documento carregado sem conta (factura/contrato, pode conter dados de terceiros), leitura pela Anthropic (EUA) só para mostrar o resultado, cookie funcional `dolado_diagnostico` (7 dias, sem consentimento por ser necessário ao serviço pedido — confirmar), conservação 7 dias / 30 dias depois de associado a uma conta, registo só com contagens e origem 13 meses, associação à conta criada depois.
+- [ ] **Aviso antes do carregamento:** o texto curto junto do botão ("O documento é lido por um sistema de inteligência artificial (Anthropic)…") chega como informação prévia, ou é preciso uma camada antes do selector de ficheiros?
+- [ ] **Natureza do resultado:** confirmar que um diagnóstico só com factos lidos e cálculos de datas (sem "pontos de atenção") fica do lado do apoio administrativo, e o aviso "não é um parecer jurídico".
+- [ ] **DPIA:** incluir o tratamento sem conta.
+
 ## Electricidade: interrupções e compensações (20 de Outubro de 2026)
 
 Origem: [auditoria-interrupcoes-electricidade-2026-10-20.md](auditoria-interrupcoes-electricidade-2026-10-20.md), secção C. As regras já estão **activas** em produção (revistas por Thiago a 20/10/2026); estes pontos são confirmações, não bloqueiam o uso.

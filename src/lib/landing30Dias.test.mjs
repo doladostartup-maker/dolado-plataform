@@ -91,6 +91,7 @@ describe("percurso até ao registo", () => {
   test("da landing sem sessão salta a explicação intermédia; outras origens não", () => {
     assert.equal(saltarParaRegisto("landing_30d", false), true);
     assert.equal(saltarParaRegisto("landing_30d", true), false);
+    assert.equal(saltarParaRegisto("diagnostico", false), true);
     for (const o of ["homepage", "precario", "protecao", "portal", "outro"]) assert.equal(saltarParaRegisto(o, false), false, o);
   });
   test("a activação redirecciona para o registo com a própria activação como destino", () => {

@@ -397,6 +397,21 @@ export const protecao = {
     nota:
       "Normalmente demora menos de meio minuto. No fim, mostramos-lhe o que verificámos, o que encontrámos e o que vamos acompanhar. Pode continuar a usar a DoLado: a verificação prossegue e o resultado fica no serviço.",
   },
+  documentoDoDiagnostico: {
+    erro: "Não foi possível usar este documento. Tente novamente.",
+    voltar: "Voltar ao documento que já analisámos",
+    encontramos: {
+      fatura: "Já analisámos a factura que carregou antes de criar a conta.",
+      contrato: "Já analisámos o contrato que carregou antes de criar a conta.",
+    },
+    naoPrecisa: "Não precisa de o carregar de novo. A partir de agora, a DoLado acompanha-o por si.",
+    deEmpresa: (empresa: V) => `Documento de ${empresa}`,
+    semEmpresa: "Documento analisado no diagnóstico gratuito",
+    aEnviar: "A preparar…",
+    acompanhar: "Acompanhar este documento",
+    outro: "Usar outro documento",
+    nota: "Voltamos a verificar o documento e mostramos-lhe o resultado: o que encontrámos e o que vamos acompanhar.",
+  },
   faturaDoCaso: {
     erro: "Não foi possível usar esta factura. Tente novamente.",
     voltar: "Voltar à factura que enviou no caso",
@@ -444,6 +459,7 @@ export const protecao = {
     "Escolha o sector.": "Escolha o sector.",
     'Descreva a promoção (por exemplo, "Desconto de 10 € na mensalidade").': 'Descreva a promoção (por exemplo, "Desconto de 10 € na mensalidade").',
     "Escolha o serviço a que pertence o documento.": "Escolha o serviço a que pertence o documento.",
+    "Não foi possível usar este documento. Carregue-o novamente.": "Não foi possível usar este documento. Carregue-o novamente.",
     "Não foi possível usar esta factura. Carregue o documento.": "Não foi possível usar esta factura. Carregue o documento.",
   },
 };
