@@ -3,14 +3,14 @@
 export const paginas = {
   precario: {
     metadados: {
-      titulo: "Preçário - DoLado",
+      titulo: "Preços: Protecção, Caso + Protecção e Avulso - DoLado",
       descricao:
-        "Avulso, Caso + Protecção ou Protecção: escolha a ajuda de que precisa para tratar um problema com uma empresa ou prevenir os próximos. Preços com IVA incluído.",
+        "Protecção para acompanhar facturas e contratos, Caso + Protecção para também tratar problemas ou Avulso para um caso sem subscrição. Preços com IVA incluído.",
     },
     eyebrow: "Preçário",
     titulo: "De que tipo de ajuda precisa?",
     texto: (iva: string) =>
-      `Escolha conforme a sua situação. O Avulso é um pagamento único para um caso; as subscrições são mensais. Todos os preços têm ${iva}.`,
+      `A Protecção acompanha as suas facturas e contratos; o Caso + Protecção junta o tratamento de problemas; o Avulso trata um caso, com pagamento único. As subscrições são mensais. Todos os preços têm ${iva}.`,
     necessidades: {
       avulso: { necessidade: "Tenho um problema agora.", cta: "Tratar do meu caso" },
       caso_protecao: { necessidade: "Tenho um problema e quero acompanhamento contínuo.", cta: "Escolher Caso + Protecção" },
@@ -98,6 +98,29 @@ export const paginas = {
       },
     },
     precosLancamento: "Preços de lançamento — sujeitos a alteração.",
+    // O que é gratuito e o que é pago (reposicionamento de 22/10/2026): a
+    // análise gratuita não é um período experimental nem uma subscrição.
+    gratuitoPago: {
+      eyebrow: "Gratuito e pago",
+      titulo: "O que é gratuito e o que é pago.",
+      analise: {
+        titulo: "Análise inicial gratuita",
+        texto: "Analisa uma factura ou um contrato, sem conta e sem cartão bancário. Não é uma subscrição nem um período experimental, e não dá início a nenhum pagamento.",
+      },
+      protecaoGratuita: {
+        titulo: "30 dias de Protecção gratuita",
+        texto: "Para quem nunca teve a Protecção: activa-a na sua conta, sem cartão bancário, e o período termina sozinho, sem cobrança. Para continuar, adere expressamente à Protecção.",
+      },
+      subscricao: {
+        titulo: "Subscrição mensal",
+        texto: "Protecção e Caso + Protecção: pagamento mensal, com renovação automática. Pode cancelar a qualquer momento na área de cliente.",
+      },
+      pontual: {
+        titulo: "Pagamento único",
+        texto: "Avulso (e Caso Extra, para subscritores do Caso + Protecção): paga uma vez para tratar um caso, sem subscrição.",
+      },
+      analisar: "Analisar documento",
+    },
     antesDeDecidir: {
       eyebrow: "Antes de decidir",
       titulo: "O que precisa de saber.",
@@ -120,12 +143,48 @@ export const paginas = {
       texto: "É gratuito, sem conta e sem e-mail.",
       acao: "Ver se a DoLado pode ajudar",
     },
+    ctaFinalAnalise: {
+      eyebrow: "Ainda não sabe qual escolher?",
+      titulo: "Comece pela análise gratuita do seu documento.",
+      texto: "Veja o que diz a sua factura ou o seu contrato antes de decidir. Sem conta e sem cartão bancário.",
+      acao: "Analisar documento",
+    },
   },
   protecao: {
     metadados: {
       titulo: "Protecção: acompanhamento de facturas e contratos - DoLado",
       descricao:
         "Com a Protecção, a DoLado compara as facturas que nos envia, avisa antes do fim de promoções e da fidelização, assinala alterações a verificar e envia um resumo mensal.",
+    },
+    // Com a análise gratuita ligada (reposicionamento de 22/10/2026).
+    analise: {
+      comecar: "Ou comece por analisar um documento gratuitamente",
+      eyebrow: "Análise gratuita ou Protecção?",
+      titulo: "A análise mostra um documento. A Protecção acompanha-o ao longo do tempo.",
+      gratuita: {
+        titulo: "Análise gratuita",
+        itens: [
+          "Um documento de cada vez, sem conta e sem cartão bancário.",
+          "Mostra os valores, as datas e as condições que estão no documento.",
+          "Não compara com facturas anteriores nem envia avisos.",
+          "Se não criar conta, o documento e o resultado são eliminados ao fim de 7 dias.",
+        ],
+      },
+      protecao: {
+        titulo: "Protecção",
+        itens: [
+          "Acompanha os seus serviços mês a mês.",
+          "Compara cada factura nova com as anteriores e com o contrato.",
+          "Avisa antes do fim da fidelização e das promoções e envia um resumo mensal.",
+          "O que merecer atenção é revisto por uma pessoa da DoLado antes de o avisarmos.",
+        ],
+      },
+      encontramos: {
+        titulo: "Quando encontramos algo",
+        texto:
+          "Se uma pessoa da DoLado confirmar que uma alteração merece atenção, avisamos por e-mail e mostramos na área de cliente o valor anterior, o actual e a diferença. Pode confirmar com a empresa ou, se quiser que a DoLado trate do problema, abrir um caso com o Avulso ou com o Caso + Protecção.",
+      },
+      analisar: "Analisar documento",
     },
     eyebrow: "Protecção",
     titulo: "Acompanhamos as suas facturas e contratos e avisamos a tempo.",
@@ -212,6 +271,62 @@ export const paginas = {
     },
   },
   comoFunciona: {
+    // Com a análise gratuita ligada (reposicionamento de 22/10/2026): dois
+    // percursos — analisar e proteger (principal) e resolver um problema
+    // (complementar, os passos de sempre). Só descreve o que existe: o
+    // diagnóstico mostra o que está no documento; o que merece atenção só
+    // chega pela Protecção, depois de revisto por uma pessoa.
+    analise: {
+      metadados: {
+        titulo: "Como funciona: análise, Protecção e reclamações - DoLado",
+        descricao:
+          "Analise gratuitamente uma factura ou contrato, acompanhe os seus serviços com a Protecção e, se surgir um problema, a DoLado trata da reclamação consigo.",
+      },
+      titulo: "Comece pelo seu documento. Conte connosco quando surge um problema.",
+      texto:
+        "A DoLado ajuda-o a perceber as suas facturas e contratos, acompanha o que merece atenção com a Protecção e, se já tem um problema com uma empresa, prepara a reclamação consigo.",
+      analisar: "Analisar documento",
+      principal: {
+        eyebrow: "Percurso principal",
+        titulo: "Analisar e proteger.",
+        texto: "Para perceber o que está a pagar e não deixar passar as datas e as alterações que importam.",
+        gratuito: "Gratuito",
+        comProtecao: "Com a Protecção",
+        passos: [
+          {
+            titulo: "Envie o seu documento",
+            texto:
+              "Carregue uma factura ou um contrato em PDF, de telecomunicações, electricidade, gás ou água. Não precisa de criar conta nem de deixar o seu e-mail.",
+          },
+          {
+            titulo: "Compreenda o resultado",
+            texto:
+              "Mostramos os valores, as datas e as condições que estão no documento: de onde vem o total, o que paga todos os meses e quanto falta para o fim da fidelização ou da promoção. Também lhe dizemos o que não foi possível confirmar.",
+          },
+          {
+            titulo: "Continue protegido",
+            texto:
+              "Com a Protecção, comparamos cada factura nova com as anteriores e com o seu contrato, avisamos 60 e 30 dias antes do fim da fidelização e das promoções e enviamos um resumo todos os meses.",
+          },
+        ],
+        quemFazTitulo: "O que acontece sozinho e o que depende de si",
+        quemFaz: [
+          "<b>Sem nada a fazer:</b> a leitura do documento que carrega, os avisos de datas e o resumo mensal da Protecção.",
+          "<b>Depende de si:</b> enviar as facturas seguintes, à medida que chegam. A DoLado não acede às suas contas nos fornecedores, por isso só compara os documentos que nos envia.",
+          "<b>Revisto por uma pessoa:</b> uma alteração que mereça atenção é revista por uma pessoa da DoLado antes de o avisarmos.",
+        ],
+        conhecerProtecao: "Conhecer a Protecção",
+      },
+      complementar: {
+        eyebrow: "Percurso complementar",
+        titulo: "Resolver um problema.",
+        texto: "Para quem já tem uma situação concreta com uma empresa. Em cada passo, indicamos quem age: o cliente ou a DoLado.",
+      },
+      ctaFinal: {
+        titulo: "Por onde quer começar?",
+        texto: "Analise um documento gratuitamente ou conte-nos o problema que tem com uma empresa.",
+      },
+    },
     metadados: {
       titulo: "Como funciona - DoLado",
       descricao:
@@ -289,7 +404,7 @@ export const paginas = {
     eyebrow: "Ferramentas gratuitas",
     titulo: "Perceba a sua situação antes de decidir.",
     texto:
-      "Antes de contratar qualquer serviço, use estas ferramentas da DoLado para perceber melhor o que se passa e qual pode ser o próximo passo.",
+      "Perceba melhor as fidelizações, os encargos de cancelamento e as mudanças nos seus contratos antes de decidir. Use estas ferramentas da DoLado para saber o que se passa e qual pode ser o próximo passo.",
     factos: ["Gratuitas", "Sem criar conta", "Sem deixar o seu e-mail"],
     ctaFinal: {
       eyebrow: "Encontrou um problema?",
@@ -302,7 +417,15 @@ export const paginas = {
     metadados: {
       titulo: "Perguntas Frequentes - DoLado",
       descricao:
-        "Encontre respostas sobre como funciona a DoLado, reclamações de consumo, planos, protecção e acompanhamento do seu caso.",
+        "Respostas sobre a Protecção e o acompanhamento de facturas e contratos, os planos, as reclamações de consumo e a forma como a DoLado trata os seus documentos.",
+    },
+    // Com a análise gratuita ligada (reposicionamento de 22/10/2026).
+    analise: {
+      texto:
+        "Encontre respostas sobre a análise gratuita de documentos, a Protecção, os planos e a ajuda para tratar um problema com uma empresa.",
+      ctaTitulo: "Por onde quer começar?",
+      ctaTexto: "Analise um documento gratuitamente ou conte-nos o problema que tem com uma empresa.",
+      analisar: "Analisar documento",
     },
     eyebrow: "Perguntas frequentes",
     titulo: "Como podemos ajudar?",

@@ -5,6 +5,7 @@ import { metadadosPublicos } from "@/i18n/metadados";
 import { tPaginas } from "@/i18n/mensagens/paginas";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { ofertaProtecaoGratuitaPublica } from "@/lib/site";
+import { diagnosticoAtivo } from "@/lib/diagnostico/regras";
 
 // Preçário no Design System V2. Os links antigos "/#precario" chegam aqui
 // pela homepage (HomepageV2 redireciona o fragmento).
@@ -18,7 +19,7 @@ export default async function PrecarioPage({ params }: ComIdioma) {
   await idiomaDaPagina(params);
   return (
     <PaginaV2 eventoCtaNavbar="click_precario_v2_nav" chatEmDireto>
-      <PrecarioV2 protecaoGratuita={ofertaProtecaoGratuitaPublica()} />
+      <PrecarioV2 protecaoGratuita={ofertaProtecaoGratuitaPublica()} analise={diagnosticoAtivo()} />
     </PaginaV2>
   );
 }

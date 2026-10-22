@@ -41,6 +41,12 @@ export function metadadosPublicos(
       alternateLocale: IDIOMAS.filter((i) => i !== idioma).map((i) => LOCALE_OG[i]),
       type: "website",
     },
+    // Partilha no X/Twitter: o mesmo título e descrição (sem imagem própria).
+    twitter: {
+      card: "summary",
+      title,
+      ...(description ? { description } : {}),
+    },
   };
 }
 

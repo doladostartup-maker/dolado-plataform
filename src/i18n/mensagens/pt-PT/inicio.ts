@@ -14,6 +14,13 @@ export const inicio = {
     descricao:
       "A DoLado ajuda a tratar problemas com empresas: prepara a reclamação, só a envia com a sua autorização e acompanha a resposta. Com a Protecção, acompanha também as suas facturas e contratos.",
   },
+  // Homepage com a análise gratuita (HomepageDiagnostico; reposicionamento de
+  // 22/10/2026): título e descrição para pesquisa e partilha.
+  metadadosDiagnostico: {
+    titulo: "Análise de Facturas e Contratos | DoLado",
+    descricao:
+      "Envie uma factura ou contrato em PDF e descubra valores, prazos e condições importantes. Receba um diagnóstico inicial gratuito, sem criar conta.",
+  },
   hero: {
     titulo: "Tem um problema com uma empresa?",
     texto: "Não devia ter de perceber leis, escrever reclamações e andar atrás de respostas sozinho.",
@@ -258,7 +265,7 @@ export const inicio = {
           id: "documento",
           pergunta: "O que acontece ao meu documento?",
           resposta:
-            "Fica guardado num espaço privado e é lido por um sistema de inteligência artificial só para lhe mostrar o resultado. Se não criar conta, é apagado ao fim de 7 dias.",
+            "O seu documento é privado: só o lemos para lhe mostrar o resultado. Se não criar conta, a DoLado elimina o documento e o resultado ao fim de 7 dias. A Política de Privacidade explica como é feita a leitura e que fornecedores nos ajudam.",
         },
         {
           id: "gratuito",

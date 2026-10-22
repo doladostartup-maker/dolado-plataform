@@ -2,6 +2,7 @@
 
 import { useCallback, useState, type ReactNode } from "react";
 import { CTASection } from "@/components/marketing-v2/CTASection";
+import { AcoesAnalisarOuTratar } from "@/components/marketing-v2/LigacaoAnalisar";
 import { IconeEscudo, IconeSeta, IconeVisto } from "@/components/marketing-v2/Icones";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_PRIMARIO, CARTAO, TEXTO } from "@/components/marketing-v2/estilos";
@@ -45,7 +46,8 @@ function Lista({ titulo, itens, marcador, tom }: { titulo: string; itens: Item[]
   );
 }
 
-export function TransparenciaV2() {
+/** `analise`: análise gratuita ligada (DIAGNOSTICO_GRATUITO_ATIVO) — CTA final com as duas entradas. */
+export function TransparenciaV2({ analise = false }: { analise?: boolean }) {
   const [origem] = useState(detectarOrigem);
   const c = useCaminho();
   const t = tInstitucional[useIdioma()].transparencia;
@@ -72,7 +74,7 @@ export function TransparenciaV2() {
       <SectionV2 tone="soft-blue" className="grid gap-6 lg:grid-cols-2">
         <Lista
           titulo={t.fazemosTitulo}
-          itens={t.fazemos}
+          itens={analise ? [...t.fazemosAnalise, ...t.fazemos] : t.fazemos}
           marcador={<IconeVisto tamanho={16} strokeWidth={2.6} />}
           tom="verde"
         />
@@ -106,12 +108,16 @@ export function TransparenciaV2() {
 
       {/* ===== CTA final ===== */}
       <CTASection
-        titulo={t.ctaFinal.titulo}
-        texto={t.ctaFinal.texto}
+        titulo={analise ? t.ctaFinalAnalise.titulo : t.ctaFinal.titulo}
+        texto={analise ? t.ctaFinalAnalise.texto : t.ctaFinal.texto}
         acao={
-          <button type="button" onClick={tratarCaso} className={`${BOTAO_PRIMARIO} w-full md:w-auto`}>
-            {t.ctaFinal.acao} <IconeSeta tamanho={17} />
-          </button>
+          analise ? (
+            <AcoesAnalisarOuTratar analisar={t.ctaFinalAnalise.analisar} tratar={t.ctaFinal.acao} aoTratar={tratarCaso} evento="click_cta_transparencia_analisar" />
+          ) : (
+            <button type="button" onClick={tratarCaso} className={`${BOTAO_PRIMARIO} w-full md:w-auto`}>
+              {t.ctaFinal.acao} <IconeSeta tamanho={17} />
+            </button>
+          )
         }
       />
     </>

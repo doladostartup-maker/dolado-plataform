@@ -6,13 +6,13 @@ export const institucional: Traducao<typeof pt> = {
     metadados: {
       titulo: "About Us | DoLado",
       descricao:
-        "DoLado is a financial wellbeing company specialising in consumer support: it keeps track of bills and contracts and helps sort out consumer problems, with clear prices and nothing sent without your authorisation.",
+        "DoLado is a financial wellbeing company specialising in consumer support: it helps you understand your bills and contracts, keeps an eye on what needs attention and helps sort out consumer problems.",
     },
     eyebrow: "About us",
     titulo: "On the consumer's side.",
     hero: [
       "DoLado is a financial wellbeing company specialising in consumer support.",
-      "We keep track of bills and contracts and help sort out consumer problems, so that people have more control over their spending and fewer worries about charges, deadlines and complaints.",
+      "We help people understand what they sign up to, keep track of their bills and contracts and help sort out consumer problems, so that they have more control over their spending and fewer surprises with charges, deadlines and terms.",
     ],
     heroDestaque: "We believe nobody should lose out for lack of time, information or support to act.",
     compromissos: {
@@ -38,14 +38,11 @@ export const institucional: Traducao<typeof pt> = {
     },
     secoes: [
       {
-        titulo: "We are on your side",
+        titulo: "From what we saw to what we do",
         paragrafos: [
-          "Our name says exactly what we believe in.",
-          "“DoLado” is Portuguese for “on the side” — being on the consumer's side.",
-          "When a problem comes up with a telecoms provider, an energy, gas or water supplier, a shop or a gym, it is not always easy to work out who to contact, how to present the situation, which rules apply or how long the company has to reply.",
-          "With DoLado, consumers don't have to work it all out on their own.",
-          "We help you understand the situation, prepare the complaint and follow up the company's reply, within the service you have bought. We keep everyone informed about where their process stands and what comes next. The outcome depends on the company, but nobody is left to deal with it alone.",
-          "Because making a complaint shouldn't mean spending hours searching for legislation, contacts or procedures.",
+          "Many of the problems that reach us start the same way: a bill for more than expected, a promotion that ended without anyone noticing, a contract term only discovered after signing up.",
+          "Almost always, the information was there — in a line on the bill, a clause in the contract, a date. The hard part is finding it in time and understanding what it means, and what rights and obligations it brings.",
+          "That is why DoLado starts by helping you understand: what you are paying, what you signed up to and the dates that matter.",
         ],
       },
       {
@@ -55,6 +52,17 @@ export const institucional: Traducao<typeof pt> = {
           "That is why DoLado isn't only there for when something goes wrong.",
           "With Protection, DoLado helps you spot situations that could turn into a problem and warns you in advance — such as the end of promotional periods, the end of minimum-term periods or significant changes in your bills — so you can act in time.",
           "Fewer surprises and more time to decide.",
+        ],
+      },
+      {
+        titulo: "We are on your side",
+        paragrafos: [
+          "Our name says exactly what we believe in.",
+          "“DoLado” is Portuguese for “on the side” — being on the consumer's side.",
+          "When a problem comes up with a telecoms provider, an energy, gas or water supplier, a shop or a gym, it is not always easy to work out who to contact, how to present the situation, which rules apply or how long the company has to reply.",
+          "With DoLado, consumers don't have to work it all out on their own.",
+          "We help you understand the situation, prepare the complaint and follow up the company's reply, within the service you have bought. We keep everyone informed about where their process stands and what comes next. The outcome depends on the company, but nobody is left to deal with it alone.",
+          "Because making a complaint shouldn't mean spending hours searching for legislation, contacts or procedures.",
         ],
       },
       {
@@ -87,19 +95,41 @@ export const institucional: Traducao<typeof pt> = {
       texto: "Tell us what happened. DoLado deals with it with you.",
       acao: "Start my case",
     },
+    ctaFinalAnalise: {
+      titulo: "Where would you like to start?",
+      texto: "Check a document for free or tell us about the problem you have with a company.",
+      analisar: "Check a document",
+    },
   },
   transparencia: {
     metadados: {
       titulo: "Transparency - DoLado",
       descricao:
-        "What DoLado does for you and what it doesn't, with no small print: we identify the applicable law, prepare the complaint and track the deadline — we never give individual legal advice or represent you in court.",
+        "What DoLado does and doesn't do, with no small print: keeping an eye on bills and contracts, complaints only with your authorisation and the limits of the service.",
     },
     eyebrow: "Transparency",
     titulo: "What we do for you — and what we don't. No small print.",
     texto:
-      "We know it is hard to trust someone with your case when you don't know exactly what you are paying for. So here we explain, in plain language, the limits of what DoLado can do.",
+      "We know it is hard to trust someone with your documents or your case when you don't know exactly what you are paying for. So here we explain, in plain language, the limits of what DoLado can do.",
     fazemosTitulo: "What we do for you",
+    fazemosAnalise: [
+      {
+        titulo: "We show you what is in your documents",
+        descricao:
+          "In the free check, we show you the amounts, dates and terms in the bill or contract, and what we couldn't confirm. The check is automated: it does not assess whether a charge is owed or draw conclusions about the company.",
+      },
+      {
+        titulo: "We look after your documents",
+        descricao:
+          "Documents are kept in a private space. In the free check, if you don't create an account, DoLado deletes the document and the result after 7 days. The Privacy Policy explains all the retention periods and the providers that help us.",
+      },
+    ],
     fazemos: [
+      {
+        titulo: "We keep an eye on bills and contracts",
+        descricao:
+          "With Protection, we compare each bill you send us with the previous ones and with your contract, remind you before your minimum term and promotions end and send you a monthly summary. Anything that needs attention is reviewed by a person at DoLado before we tell you.",
+      },
       {
         titulo: "We organise the information",
         descricao: "We read what you tell us and the documents you send, and confirm the facts with you. Where there are rules that apply to your sector, we set them out in the text.",
@@ -120,6 +150,11 @@ export const institucional: Traducao<typeof pt> = {
     naoFazemosTitulo: "What we don't do",
     naoFazemos: [
       {
+        titulo: "We don't see or spot everything",
+        descricao:
+          "We don't access your accounts with your providers: the check and Protection depend on the documents and information you send us, and on keeping your bills up to date. We don't spot every incorrect charge.",
+      },
+      {
         titulo: "We don't give individual legal advice",
         descricao: "We organise the facts and set out the applicable rules — we don't tell you which legal route to take.",
       },
@@ -139,7 +174,7 @@ export const institucional: Traducao<typeof pt> = {
       lista: [
         {
           q: "Does this replace a lawyer?",
-          a: "No. We provide administrative support: we organise the facts, prepare the complaint and follow up the reply. If you need legal advice on your specific case or to be represented, you should see a lawyer.",
+          a: "No. We show you what is in your documents, keep an eye on your bills and provide administrative support with complaints: we organise the facts, prepare the complaint and follow up the reply. If you need legal advice on your specific case or to be represented, you should see a lawyer.",
         },
         {
           q: "What if the company doesn't respond?",
@@ -155,6 +190,11 @@ export const institucional: Traducao<typeof pt> = {
       titulo: "Got a problem with a company?",
       texto: "Tell us what happened. You receive the complaint text before anything is sent.",
       acao: "Start my case",
+    },
+    ctaFinalAnalise: {
+      titulo: "Where would you like to start?",
+      texto: "Check a document for free or tell us about the problem you have with a company.",
+      analisar: "Check a document",
     },
   },
   contacto: {
@@ -218,13 +258,13 @@ export const institucional: Traducao<typeof pt> = {
     metadados: {
       titulo: "Financial wellbeing for employees | DoLado for businesses",
       descricao:
-        "Give your employees practical support to keep track of bills and contracts and deal with consumer problems. Each case stays between the person and DoLado.",
+        "Give your employees practical support to understand and keep track of bills, contracts and recurring expenses, and to deal with consumer problems. Each case stays between the person and DoLado.",
     },
     falar: "Request a proposal",
     eyebrow: "DoLado for businesses",
     titulo: "Financial wellbeing for your employees.",
     texto:
-      "Practical support to keep track of bills and contracts and deal with consumer problems, with someone by their side at every stage.",
+      "Practical support to understand and keep track of bills, contracts and recurring expenses, and to deal with consumer problems, with someone by their side at every stage.",
     conhecer: "Find out about the solution for my team",
     verComoFunciona: "See how it works",
     formatosNota: "Format and terms agreed in a conversation, based on your team and your company's goals.",
@@ -234,6 +274,13 @@ export const institucional: Traducao<typeof pt> = {
       texto: "Common consumer problems that weigh on the budget and take up time. This is how DoLado helps with each one.",
     },
     situacoes: [
+      {
+        titulo: "A promotion about to end",
+        situacao: "The discount on the electricity or telecoms contract ends soon and the price is going to change.",
+        apoio:
+          "With Protection, we send a reminder 60 and 30 days before the promotion or minimum term ends, and on the day itself, so the person can check the next price and decide in time.",
+        servico: "Protection",
+      },
       {
         titulo: "An unexpected charge",
         situacao: "The broadband bill arrives higher than usual and nobody said why.",
@@ -247,13 +294,6 @@ export const institucional: Traducao<typeof pt> = {
         apoio:
           "We organise the facts and documents, prepare the complaint with a clear request and only send it once the person has reviewed and authorised it. Then we follow up the company's reply.",
         servico: "Case handling",
-      },
-      {
-        titulo: "A promotion about to end",
-        situacao: "The discount on the electricity or telecoms contract ends soon and the price is going to change.",
-        apoio:
-          "With Protection, we send a reminder 60 and 30 days before the promotion or minimum term ends, and on the day itself, so the person can check the next price and decide in time.",
-        servico: "Protection",
       },
     ],
     solucao: {

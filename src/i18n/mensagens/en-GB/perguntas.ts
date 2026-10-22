@@ -7,7 +7,7 @@ export const perguntas: Traducao<typeof pt> = {
   oQueE: {
     pergunta: "What is DoLado?",
     resposta:
-      "DoLado helps consumers deal with problems with service providers such as telecoms, energy, gas and water companies, as well as with purchases, refunds and gyms. When a complaint is needed, we review your case, identify the relevant information, prepare the complaint and follow the process through. With Protection, we also help you spot situations that could turn into a problem, before it is too late to act.",
+      "DoLado helps consumers understand their bills and contracts, keep an eye on what needs attention and deal with problems with companies — telecoms, energy, gas and water providers, as well as purchases, refunds and gyms. With Protection, we follow your bills and the important dates in your contracts and let you know in time. When a complaint is needed, we prepare it with you and follow the process through.",
   },
   comoFunciona: {
     pergunta: "How does DoLado work?",
@@ -176,10 +176,57 @@ export const perguntas: Traducao<typeof pt> = {
     resposta:
       "Only what is needed to provide the service. We use providers who process data on our behalf — for example, to host the platform and send emails — and, with your authorisation, the complaint includes the data strictly needed to file it with the company concerned. We do not sell or share data for third-party marketing. The full list is in our <privacidade>Privacy Policy</privacidade>.",
   },
+  oQueDescobrir: {
+    pergunta: "What can I find out from a check?",
+    resposta:
+      "We show you what is written in the bill or contract: the total and where it comes from, what you pay every month and what was charged just this once, when your minimum term or promotion ends and the terms of the contract. We do simple sums with those amounts, such as the days left until a date, and tell you what we couldn't confirm in the document.",
+  },
+  analiseGratuita: {
+    pergunta: "Is the initial check free?",
+    resposta:
+      "Yes. Checking a document needs no account, e-mail address or bank card, and does not start any subscription. Protection, which keeps an eye on your bills and contracts over time, is a separate service.",
+  },
+  analiseConta: {
+    pergunta: "Do I need to create an account?",
+    resposta:
+      "Not to see the result: you upload the document and see it straight away. You only create an account if you want to save the result or carry on with Protection.",
+  },
+  analiseDocumentos: {
+    pergunta: "Which documents can I send?",
+    resposta:
+      "Telecoms, electricity, gas and water bills and contracts. For the free check, as a PDF of up to 10 MB. With Protection, you can also send bills as images. Only send documents that are yours or that you are authorised to use.",
+  },
+  analiseDados: {
+    pergunta: "What information is taken from the document?",
+    resposta:
+      "The company, the sector, the total, the monthly fee, the lines charged, the important dates and the terms of the contract. The account holder's tax number and name are not stored as text: they are replaced by a code before being stored.",
+  },
+  analiseDocumento: {
+    pergunta: "What happens to my document?",
+    resposta:
+      "Your document is private: we only read it to show you the result. If you don't create an account, DoLado deletes the document and the result after 7 days; if you create one, 30 days later, unless you ask us to keep following it with Protection. The <privacidade>Privacy Policy</privacidade> explains how the reading is done and which providers help us.",
+  },
+  analiseProblemas: {
+    pergunta: "Does the check find problems automatically?",
+    resposta:
+      "No. The free check shows what is in the document and does simple sums; it does not assess whether a charge is owed or draw conclusions about the company. With Protection, when comparing your bills turns up a change that needs attention, a person at DoLado reviews it before we tell you.",
+  },
+  novasFacturas: {
+    pergunta: "Do I need to send new bills?",
+    resposta:
+      "Yes, to keep Protection up to date. DoLado does not access your accounts with your providers: we compare each bill you send us with the previous ones and with your contract. Date reminders work with the dates we already know, but the comparison only includes the bills you send us.",
+  },
+  ajudaReclamacoes: {
+    pergunta: "Can I still get help with complaints?",
+    resposta:
+      "Yes. If you have a problem with a company, DoLado prepares the complaint with you, only sends it with your authorisation and follows up the reply. Cases are handled with the Single Case or Case + Protection; they are not included in Protection on its own.",
+  },
   categorias: {
     sobre: "About DoLado",
     comoFunciona: "How it works",
-    planos: "Plans and protection",
+    analise: "Free check",
+    reclamacoes: "Sorting out a problem",
+    planos: "Protection and plans",
     depoisEnvio: "After sending",
     privacidade: "Privacy and security",
   },

@@ -5,7 +5,7 @@ export const comum: Traducao<typeof pt> = {
   metadados: {
     titulo: "DoLado",
     descricao:
-      "DoLado helps consumers deal with problems with companies — telecoms, energy, gas, water, purchases and gyms — and keeps an eye on bills and contracts with Protection.",
+      "DoLado helps you understand your bills and contracts, keeps an eye on what needs attention with Protection and helps you deal with problems with companies — telecoms, energy, gas, water, purchases and gyms.",
   },
   acessibilidade: {
     saltarConteudo: "Skip to content",
@@ -26,6 +26,7 @@ export const comum: Traducao<typeof pt> = {
     },
   },
   navbar: {
+    comoFunciona: "How it works",
     problemas: "Problems we handle",
     problemasCurto: "Problems",
     ferramentasCurto: "Tools",
@@ -34,13 +35,16 @@ export const comum: Traducao<typeof pt> = {
     precario: "Pricing",
     iniciarSessao: "Sign in",
     tratarCaso: "Start my case",
+    analisarDocumento: "Check a document",
+    jaTemProblema: "Already have a problem? Start my case",
   },
   rodape: {
-    lema: ["Help to sort out problems.", "Protection to avoid surprises."],
+    lema: ["Clarity about your bills and contracts.", "Help when a problem comes up."],
     produto: "Services",
     apoio: "Help",
     dolado: "About DoLado",
     legal: "Legal",
+    analisar: "Free document check",
     comoFunciona: "How it works",
     problemas: "Problems we handle",
     protecao: "Protection",

@@ -4,6 +4,7 @@ import { PaginaV2 } from "@/components/marketing-v2/PaginaV2";
 import { metadadosPublicos } from "@/i18n/metadados";
 import { tInstitucional } from "@/i18n/mensagens/institucional";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
+import { diagnosticoAtivo } from "@/lib/diagnostico/regras";
 
 export async function generateMetadata({ params }: ComIdioma): Promise<Metadata> {
   const idioma = await idiomaDaPagina(params);
@@ -15,7 +16,7 @@ export default async function SobreNosPage({ params }: ComIdioma) {
   await idiomaDaPagina(params);
   return (
     <PaginaV2 eventoCtaNavbar="click_nav_sobre_nos">
-      <SobreNosV2 />
+      <SobreNosV2 analise={diagnosticoAtivo()} />
     </PaginaV2>
   );
 }

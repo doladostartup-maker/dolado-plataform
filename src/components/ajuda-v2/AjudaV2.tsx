@@ -14,6 +14,7 @@ import { IconeDocumentoVisto, IconeEscudo, IconeMensagem, IconeSeta } from "@/co
 import { ROTAS_V2 } from "@/components/marketing-v2/rotas";
 import { Eyebrow, SectionHeader, SectionV2 } from "@/components/marketing-v2/SectionV2";
 import { BOTAO_PRIMARIO, CAMPO, CARTAO, ROTULO_CAMPO, TEXTO } from "@/components/marketing-v2/estilos";
+import { AcoesAnalisarOuTratar } from "@/components/marketing-v2/LigacaoAnalisar";
 import { detectarOrigem, track } from "@/lib/analytics";
 import { ROTAS_LEGAIS } from "@/lib/legal";
 import { urlTratarCaso } from "@/lib/site";
@@ -28,15 +29,18 @@ const LINK = "font-semibold text-[var(--v2-green)] underline-offset-4 hover:unde
 
 
 
-/** `protecaoGratuita`: oferta dos 30 dias ligada (PROTECAO_GRATUITA_ATIVA, lido no build). */
-export function AjudaV2({ protecaoGratuita = false }: { protecaoGratuita?: boolean }) {
+/**
+ * `protecaoGratuita`: oferta dos 30 dias ligada (PROTECAO_GRATUITA_ATIVA, lido no build).
+ * `analise`: análise gratuita ligada (DIAGNOSTICO_GRATUITO_ATIVO) — perguntas pela nova jornada.
+ */
+export function AjudaV2({ protecaoGratuita = false, analise = false }: { protecaoGratuita?: boolean; analise?: boolean }) {
   const [origem] = useState(detectarOrigem);
   const [pesquisa, setPesquisa] = useState("");
     const idPesquisa = useId();
   const idioma = useIdioma();
   const caminho = useCaminho();
   const t = tPaginas[idioma].ajuda;
-  const todas = useMemo(() => categoriasPerguntas(idioma, { protecaoGratuita }), [idioma, protecaoGratuita]);
+  const todas = useMemo(() => categoriasPerguntas(idioma, { protecaoGratuita, analise }), [idioma, protecaoGratuita, analise]);
   const APOIO: { icone: ReactNode; titulo: string; texto: string; href: string; cta: string }[] = [
     { icone: <IconeMensagem tamanho={28} strokeWidth={1.6} />, ...t.apoio.contacto, href: ROTAS_V2.contacto },
     { icone: <IconeEscudo tamanho={28} strokeWidth={1.6} />, ...t.apoio.privacidade, href: ROTAS_LEGAIS.privacidade },
@@ -68,7 +72,7 @@ export function AjudaV2({ protecaoGratuita = false }: { protecaoGratuita?: boole
           <h1 className="mt-5 text-[clamp(34px,4vw,52px)] font-extrabold leading-[1.06] tracking-[-0.035em] text-[var(--v2-navy)]">
             {t.titulo}
           </h1>
-          <p className={`${TEXTO} mt-5 text-[17.5px]`}>{t.texto}</p>
+          <p className={`${TEXTO} mt-5 text-[17.5px]`}>{analise ? t.analise.texto : t.texto}</p>
           <div role="search" className="mt-8">
             <label htmlFor={idPesquisa} className={ROTULO_CAMPO}>
               {t.pesquisar}
@@ -166,12 +170,21 @@ export function AjudaV2({ protecaoGratuita = false }: { protecaoGratuita?: boole
 
       {/* ===== CTA final ===== */}
       <CTASection
-        titulo={t.ctaFinal.titulo}
-        texto={t.ctaFinal.texto}
+        titulo={analise ? t.analise.ctaTitulo : t.ctaFinal.titulo}
+        texto={analise ? t.analise.ctaTexto : t.ctaFinal.texto}
         acao={
-          <button type="button" onClick={tratarCaso} className={`${BOTAO_PRIMARIO} w-full md:w-auto`}>
-            {t.ctaFinal.acao} <IconeSeta tamanho={17} />
-          </button>
+          analise ? (
+            <AcoesAnalisarOuTratar
+              analisar={t.analise.analisar}
+              tratar={t.ctaFinal.acao}
+              aoTratar={tratarCaso}
+              evento="click_cta_perguntas_frequentes_analisar"
+            />
+          ) : (
+            <button type="button" onClick={tratarCaso} className={`${BOTAO_PRIMARIO} w-full md:w-auto`}>
+              {t.ctaFinal.acao} <IconeSeta tamanho={17} />
+            </button>
+          )
         }
       />
     </>

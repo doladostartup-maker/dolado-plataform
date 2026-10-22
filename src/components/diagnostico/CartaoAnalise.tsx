@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "@/i18n/Link";
 import { useTextos } from "@/i18n/cliente";
 import { tDiagnostico } from "@/i18n/mensagens/diagnostico";
 import { IconePdf, IconeVisto } from "@/components/marketing-v2/Icones";
 import { BOTAO_PRIMARIO, CARTAO } from "@/components/marketing-v2/estilos";
+import { ID_ANALISAR } from "@/components/marketing-v2/LigacaoAnalisar";
 import { useCarregamento } from "./CarregarDocumento";
 
 // Cartão de análise da homepage (hero, 22/10/2026): a mesma lógica do botão
@@ -14,15 +15,23 @@ import { useCarregamento } from "./CarregarDocumento";
 // PDF" e a privacidade ficam junto do botão; o detalhe do tratamento abre-se
 // antes de escolher o ficheiro. Arrastar o ficheiro é um atalho no computador
 // — o botão abre sempre o selector do dispositivo.
+// "Analisar documento" (navbar e outras páginas) chega aqui por "/#analisar":
+// o foco vai para o botão, sem abrir o selector — o aviso de privacidade fica
+// à vista antes de escolher o ficheiro.
 
 export function CartaoAnalise({ local, texto }: { local: string; texto: string }) {
   const t = useTextos(tDiagnostico).carregar;
   const c = t.cartao;
   const { abrir, escolhido, aEnviar, erro, seletor } = useCarregamento(local);
   const [porCima, setPorCima] = useState(false);
+  const botao = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (window.location.hash === `#${ID_ANALISAR}`) botao.current?.focus({ preventScroll: true });
+  }, []);
 
   return (
-    <div className={`${CARTAO} relative flex flex-col gap-4 border-[var(--v2-green)]/30 p-5 sm:gap-5 sm:p-8`}>
+    <div id={ID_ANALISAR} className={`${CARTAO} relative flex scroll-mt-24 flex-col gap-4 border-[var(--v2-green)]/30 p-5 sm:gap-5 sm:p-8`}>
       {seletor}
       <div>
         <span className="inline-flex items-center gap-2 rounded-full bg-[var(--v2-green)] px-3.5 py-1 text-[15px] font-bold text-white">
@@ -57,6 +66,8 @@ export function CartaoAnalise({ local, texto }: { local: string; texto: string }
           {c.apenasPdf}
         </span>
         <button
+          ref={botao}
+          data-analisar
           type="button"
           onClick={abrir}
           disabled={aEnviar}
@@ -85,7 +96,13 @@ export function CartaoAnalise({ local, texto }: { local: string; texto: string }
       </ul>
 
       <div className="border-t border-[var(--v2-line)] pt-4 text-[16px] leading-relaxed text-[var(--v2-muted)]">
-        <p>{c.privacidade}</p>
+        <p>
+          <strong className="font-semibold text-[var(--v2-navy)]">{c.privacidadeTitulo}</strong> {c.privacidade}{" "}
+          <Link prefetch={false} href="/privacidade" className="underline underline-offset-4">
+            {t.privacidadeLigacao}
+          </Link>
+          .
+        </p>
         <details className="group mt-2">
           <summary className="cursor-pointer list-none font-semibold text-[var(--v2-green-dark)] underline underline-offset-4 [&::-webkit-details-marker]:hidden">
             {c.detalhesTitulo}
@@ -95,11 +112,6 @@ export function CartaoAnalise({ local, texto }: { local: string; texto: string }
               <li key={d}>{d}</li>
             ))}
           </ul>
-          <p className="mt-3">
-            <Link prefetch={false} href="/privacidade" className="font-semibold text-[var(--v2-navy)] underline underline-offset-4">
-              {t.privacidadeLigacao}
-            </Link>
-          </p>
         </details>
       </div>
     </div>

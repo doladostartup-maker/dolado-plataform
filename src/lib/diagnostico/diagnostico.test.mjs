@@ -281,6 +281,8 @@ describe("homepage com a análise gratuita", () => {
   test("privacidade sem promessas absolutas e com a IA identificada", async () => {
     const { diagnostico: pt } = await import("../../i18n/mensagens/pt-PT/diagnostico.ts");
     const texto = JSON.stringify(pt.carregar.cartao).toLowerCase();
+    // Duas camadas (22/10/2026): à vista, privacidade e prazo; o fornecedor de IA no detalhe e na Política.
+    assert.ok(JSON.stringify(pt.carregar.cartao.detalhes).includes("Anthropic"));
     assert.ok(texto.includes("anthropic"));
     for (const proibido of ["não partilhamos", "nunca partilhamos", "100%", "totalmente seguro"]) assert.ok(!texto.includes(proibido), proibido);
   });
@@ -296,5 +298,35 @@ describe("homepage com a análise gratuita", () => {
     for (const proibido of ["save money", "unlawful", "illegal", "wrongly", "guarantee"]) assert.ok(!textoEn.includes(proibido), proibido);
     assert.equal(pt.diagnostico.perguntas.itens.length, en.diagnostico.perguntas.itens.length);
     assert.ok(!semComentarios(home).includes("Tratar do meu caso"), "textos só no dicionário");
+  });
+});
+
+describe("reposicionamento: análise como entrada principal (22/10/2026)", () => {
+  test("a primeira camada do aviso fala do benefício e do prazo, sem destacar a IA", async () => {
+    for (const idioma of ["pt-PT", "en-GB"]) {
+      const { diagnostico } = await import(`../../i18n/mensagens/${idioma}/diagnostico.ts`);
+      const visivel = [diagnostico.carregar.privacidade, diagnostico.carregar.cartao.privacidadeTitulo, diagnostico.carregar.cartao.privacidade]
+        .join(" ")
+        .toLowerCase();
+      for (const termo of ["inteligência artificial", "artificial intelligence", "anthropic", " ia ", " ai "]) assert.ok(!visivel.includes(termo), `${idioma}: ${termo}`);
+      assert.match(visivel, /7 (dias|days)/);
+    }
+  });
+
+  test("'Analisar documento' leva ao cartão de análise, nunca a um carregamento paralelo", () => {
+    const nav = fonte("../../components/marketing-v2/NavbarV2.tsx");
+    assert.match(nav, /<LigacaoAnalisar[\s\S]*?\{t\.navbar\.analisarDocumento\}/);
+    assert.ok(!nav.includes("useCarregamento"), "a navbar não abre o selector de ficheiros");
+    assert.match(fonte("../../components/marketing-v2/rotas.ts"), /analisar: "\/#analisar"/);
+    assert.match(fonte("../../components/diagnostico/CartaoAnalise.tsx"), /id=\{ID_ANALISAR\}/);
+    assert.match(fonte("../../components/marketing-v2/PaginaV2.tsx"), /analisar=\{diagnosticoAtivo\(\)\}/);
+  });
+
+  test("preçário: o produto recorrente principal primeiro", () => {
+    const precario = fonte("../../components/precario-v2/PrecarioV2.tsx");
+    const ordem = ["protecao", "caso_protecao", "avulso"].map((id) => precario.indexOf(`{ plano: "${id}"`));
+    assert.deepEqual([...ordem].sort((a, b) => a - b), ordem);
+    assert.match(precario, /\{ plano: "protecao", destaque: true \}/);
+    assert.equal((precario.match(/destaque: true/g) || []).length, 1);
   });
 });
