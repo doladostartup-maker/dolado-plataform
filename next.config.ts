@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
   // inteiro (15–30 s por pedido, 503) — e qualquer visitante ou bot podia
   // pedir larguras novas. As imagens são SVG ou ficheiros já no tamanho certo.
   images: { unoptimized: true },
+  // Sem verificação de tipos no `next build` (22/10/2026): era o maior pico de
+  // memória do build (~1,2 GB, acima da compilação do webpack) e obrigava a uma
+  // instância de build M na Clever. Os tipos continuam verificados no CI
+  // (`tsc --noEmit` em .github/workflows/testes.yml, obrigatório para o merge
+  // no main). Não retirar sem rever a instância de build.
+  typescript: { ignoreBuildErrors: true },
   // Leitura local de faturas/contratos para preencher o texto da reclamação
   // (src/lib/preenchimentoReclamacao): o tesseract.js arranca um worker por
   // caminho de ficheiro e lê o modelo de português do node_modules — não
