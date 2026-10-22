@@ -19,11 +19,14 @@ import { IconeEscudo, IconeSeta } from "./Icones";
 export function OfertaProtecaoGratuita({
   origem,
   comTexto = false,
+  grande = false,
   className = "",
 }: {
   origem: "homepage" | "precario" | "protecao";
   /** Mostra também a frase sobre o que a Proteção faz (fora do hero). */
   comTexto?: boolean;
+  /** Letra ≥ 16 px (homepage com a análise gratuita, público mais velho). */
+  grande?: boolean;
   className?: string;
 }) {
   const idioma = useIdioma();
@@ -44,15 +47,15 @@ export function OfertaProtecaoGratuita({
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-[16px] font-bold leading-snug text-[var(--v2-navy)]">{t.destaque}</p>
-        {comTexto && <p className="mt-1 text-[14.5px] leading-relaxed text-[var(--v2-muted)]">{t.texto}</p>}
-        <p className="mt-0.5 text-[14px] leading-relaxed text-[var(--v2-muted)]">
+        {comTexto && <p className={`mt-1 leading-relaxed text-[var(--v2-muted)] ${grande ? "text-[16px]" : "text-[14.5px]"}`}>{t.texto}</p>}
+        <p className={`mt-0.5 leading-relaxed text-[var(--v2-muted)] ${grande ? "text-[16px]" : "text-[14px]"}`}>
           {t.micro} {t.depois(preco)}
         </p>
       </div>
       <a
         href={c(urlExperimentarProtecao(origem))}
         onClick={() => track("protecao_gratuita_clique", { local: origem })}
-        className="inline-flex min-h-11 flex-none items-center gap-1.5 text-[15px] font-semibold text-[var(--v2-green-dark)] underline-offset-4 hover:underline"
+        className={`inline-flex min-h-11 flex-none items-center gap-1.5 font-semibold ${grande ? "text-[16px]" : "text-[15px]"} text-[var(--v2-green-dark)] underline-offset-4 hover:underline`}
       >
         {t.cta} <IconeSeta tamanho={15} />
       </a>

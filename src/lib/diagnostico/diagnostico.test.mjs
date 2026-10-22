@@ -224,3 +224,37 @@ describe("servidor: modelo e segurança", () => {
     assert.match(sql, /interval '13 months'/);
   });
 });
+
+describe("homepage com a análise gratuita", () => {
+  const pagina = fonte("../../app/[idioma]/page.tsx");
+  const home = fonte("../../components/homepage-v2/HomepageDiagnostico.tsx");
+  const botao = fonte("../../components/diagnostico/CarregarDocumento.tsx");
+  const semComentarios = (s) => s.split("\n").filter((l) => !l.trim().startsWith("//")).join("\n");
+
+  test("só substitui a homepage actual com a análise ligada", () => {
+    assert.match(pagina, /diagnosticoAtivo\(\) \? \(\s*<HomepageDiagnostico[\s\S]*?\) : \(\s*<HomepageV2/);
+  });
+
+  test("entrada principal pelo carregamento; secundária para quem já tem um problema", () => {
+    assert.match(home, /<CarregarDocumento local="homepage_hero"/);
+    assert.match(home, /botaoProblema\("click_hero_reclamacao"\)/);
+    assert.match(home, /\{t\.hero\.problema\}/);
+  });
+
+  test("o aviso (sem registo, IA, conservação) acompanha sempre o botão", () => {
+    for (const chave of ["t.confianca", "t.formatos", "t.privacidade", 'href="/privacidade"']) assert.ok(botao.includes(chave), chave);
+  });
+
+  test("textos sem promessas de erros, irregularidades ou poupanças, nas duas línguas", async () => {
+    const { inicio: pt } = await import("../../i18n/mensagens/pt-PT/inicio.ts");
+    const { inicio: en } = await import("../../i18n/mensagens/en-GB/inicio.ts");
+    const textoPt = JSON.stringify(pt.diagnostico).toLowerCase();
+    for (const proibido of ["poupa", "indevid", "ilegal", "errad", "irregular", "tem direito", "garant"]) {
+      assert.ok(!textoPt.includes(proibido), proibido);
+    }
+    const textoEn = JSON.stringify(en.diagnostico).toLowerCase();
+    for (const proibido of ["save money", "unlawful", "illegal", "wrongly", "guarantee"]) assert.ok(!textoEn.includes(proibido), proibido);
+    assert.equal(pt.diagnostico.perguntas.itens.length, en.diagnostico.perguntas.itens.length);
+    assert.ok(!semComentarios(home).includes("Tratar do meu caso"), "textos só no dicionário");
+  });
+});

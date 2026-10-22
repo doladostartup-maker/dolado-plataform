@@ -8,7 +8,7 @@ import { tComum } from "@/i18n/mensagens/comum";
 import { detectarOrigem, track } from "@/lib/analytics";
 import { urlTratarCaso } from "@/lib/site";
 import { IconeFechar, IconeMenu, IconeSeta } from "./Icones";
-import { BOTAO_PRIMARIO } from "./estilos";
+import { BOTAO_CONTORNO, BOTAO_PRIMARIO } from "./estilos";
 import { Logotipo } from "./Logotipo";
 import { ROTAS_V2 } from "./rotas";
 
@@ -29,11 +29,22 @@ const LINKS = [
   { href: ROTAS_V2.ferramentas, chave: "ferramentas", curta: "ferramentasCurto" },
 ] as const;
 
-export function NavbarV2({ eventoCta, parametrosCta }: { eventoCta: string; parametrosCta?: Record<string, string> }) {
+/** `ctaDiscreto`: "Tratar do meu caso" em contorno, quando a página tem outra acção principal (homepage com a análise gratuita). */
+export function NavbarV2({
+  eventoCta,
+  parametrosCta,
+  ctaDiscreto = false,
+}: {
+  eventoCta: string;
+  parametrosCta?: Record<string, string>;
+  ctaDiscreto?: boolean;
+}) {
   const [aberto, setAberto] = useState(false);
   const [origem] = useState(detectarOrigem);
   const t = useTextos(tComum);
   const c = useCaminho();
+
+  const estiloCta = ctaDiscreto ? BOTAO_CONTORNO : BOTAO_PRIMARIO;
 
   function tratarCaso() {
     track(eventoCta, parametrosCta);
@@ -58,7 +69,7 @@ export function NavbarV2({ eventoCta, parametrosCta }: { eventoCta: string; para
           <a href={c(ROTAS_V2.entrar)} className="whitespace-nowrap text-[14px] font-medium text-[var(--v2-muted)] hover:text-[var(--v2-navy)]">
             {t.navbar.iniciarSessao}
           </a>
-          <button type="button" onClick={tratarCaso} className={`${BOTAO_PRIMARIO} min-h-10 whitespace-nowrap px-5 text-[14px]`}>
+          <button type="button" onClick={tratarCaso} className={`${estiloCta} min-h-10 whitespace-nowrap px-5 text-[14px]`}>
             {t.navbar.tratarCaso} <IconeSeta tamanho={16} />
           </button>
         </div>
@@ -100,7 +111,7 @@ export function NavbarV2({ eventoCta, parametrosCta }: { eventoCta: string; para
               setAberto(false);
               tratarCaso();
             }}
-            className={`${BOTAO_PRIMARIO} mt-3 w-full`}
+            className={`${estiloCta} mt-3 w-full`}
           >
             {t.navbar.tratarCaso} <IconeSeta tamanho={16} />
           </button>

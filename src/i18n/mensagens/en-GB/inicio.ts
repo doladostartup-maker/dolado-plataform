@@ -89,4 +89,97 @@ export const inicio: Traducao<typeof pt> = {
     acao: "Start my case",
     secundaria: "See first if we can help",
   },
+  diagnostico: {
+    hero: {
+      titulo: "Is your bill or contract right?",
+      texto: "Find out what you are paying, what your contract says and the dates that matter.",
+      problema: "I need help with a problem",
+    },
+    situacoesTitulo: "Already have a problem with a company?",
+    comoFunciona: {
+      titulo: "How it works",
+      passos: [
+        "Upload a bill or a contract",
+        "We show you what the document says: amounts, dates and terms",
+        "If you like, we keep an eye on things for you with Protection",
+      ],
+    },
+    analisa: {
+      titulo: "What we read in your document",
+      setores: "Bills and contracts for telecoms, electricity, gas and water.",
+      itens: [
+        "How much you are paying and what you are being charged for.",
+        "When the minimum term or the promotion ends.",
+        "The contract terms: monthly price, length and benefits.",
+        "What we couldn't confirm in the document.",
+      ],
+    },
+    protecao: {
+      titulo: "With Protection, we keep an eye on things for you",
+      itens: [
+        { titulo: "We let you know in time", texto: "60 and 30 days before your minimum term and promotions end, and on the day itself." },
+        {
+          titulo: "We compare your bills",
+          texto: "Each new bill is compared with the previous ones. Anything that needs attention is reviewed by a person at DoLado before we tell you.",
+        },
+        { titulo: "A summary every month", texto: "An e-mail with what we kept an eye on and the next important date." },
+      ],
+      cta: "Find out about Protection",
+    },
+    reclamacoes: {
+      titulo: "Need help with a problem?",
+      texto: "We prepare the complaint with you, only send it with your authorisation and follow up the company's reply.",
+      nota: "Complaints are handled with Single Case or Case + Protection. They are not included in Protection on its own.",
+      cta: "Start my case",
+    },
+    oferta: {
+      titulo: "Try Protection for 30 days",
+    },
+    confianca: {
+      titulo: "No small print",
+      itens: [
+        "You can see the result without creating an account and without a bank card.",
+        "When we find something in a bill, a person at DoLado reviews it before we tell you.",
+        "We never send anything to a company without your authorisation.",
+      ],
+      ligacao: "How we work",
+    },
+    perguntas: {
+      titulo: "Frequently asked questions",
+      itens: [
+        {
+          id: "registo",
+          pergunta: "Do I need an account to check a document?",
+          resposta:
+            "No. You can upload the bill or the contract and see the result straight away. You only create an account if you want to save the result or continue with Protection.",
+        },
+        {
+          id: "documento",
+          pergunta: "What happens to my document?",
+          resposta:
+            "It is stored in a private space and read by an artificial intelligence system only to show you the result. If you don't create an account, it is deleted after 7 days.",
+        },
+        {
+          id: "gratuito",
+          pergunta: "Is the check really free?",
+          resposta: "Yes, and we don't ask for a bank card. You can also try Protection for 30 days at no cost.",
+        },
+        {
+          id: "parecer",
+          pergunta: "Is the result legal advice?",
+          resposta:
+            "No. We show you what the document says and do simple calculations, such as the days left until the minimum term ends. If you have a problem, we can help you deal with it.",
+        },
+        {
+          id: "documentos",
+          pergunta: "Which documents can I check?",
+          resposta: "Bills and contracts for telecoms, electricity, gas and water, as a PDF or a photo.",
+        },
+      ],
+      todas: "See all questions",
+    },
+    ctaFinal: {
+      titulo: "See what your bill says",
+    },
+  },
 };
