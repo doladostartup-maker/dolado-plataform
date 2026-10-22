@@ -48,7 +48,8 @@ function valorFacto(f: Facto, idioma: Idioma, t: T["resultado"]): string {
   return String(f.valor);
 }
 
-function textoCalculo(c: Calculo, idioma: Idioma, t: T["resultado"]["calculos"]): string {
+function textoCalculo(c: Calculo, idioma: Idioma, r: T["resultado"]): string {
+  const t = r.calculos;
   switch (c.chave) {
     case "dias_fim_fidelizacao":
       return c.dias === 0 ? t.dias_fim_fidelizacao_hoje(data(idioma, c.data)) : t.dias_fim_fidelizacao(data(idioma, c.data), String(c.dias));
@@ -64,7 +65,17 @@ function textoCalculo(c: Calculo, idioma: Idioma, t: T["resultado"]["calculos"])
       return c.coincide
         ? t.soma_linhas_coincide(formatarEurosCents(idioma, c.totalCents))
         : t.soma_linhas_difere(formatarEurosCents(idioma, c.somaCents), formatarEurosCents(idioma, c.totalCents));
+    case "diferenca_mensalidade":
+      return textoDiferenca(c, idioma, r.diferenca);
   }
+}
+
+// A diferença entre o total e a mensalidade aparece em destaque antes das
+// linhas (que mostram de onde vem), e não na lista de cálculos.
+function textoDiferenca(c: Extract<Calculo, { chave: "diferenca_mensalidade" }>, idioma: Idioma, t: T["resultado"]["diferenca"]): string {
+  const diferenca = formatarEurosCents(idioma, Math.abs(c.diferencaCents));
+  const mensalidade = formatarEurosCents(idioma, c.mensalidadeCents);
+  return c.diferencaCents > 0 ? t.mais(diferenca, mensalidade) : t.menos(diferenca, mensalidade);
 }
 
 export function ResultadoDiagnostico({ id, temConta, ativo }: { id: string | null; temConta: boolean; ativo: boolean }) {
@@ -141,6 +152,8 @@ function Resultado({ id, d, associado, t, idioma }: { id: string; d: Diagnostico
   const r = t.resultado;
   const c = t.conversao;
   const voltar = `/diagnostico?id=${id}`;
+  const diferenca = d.calculos.find((calc) => calc.chave === "diferenca_mensalidade");
+  const calculos = d.calculos.filter((calc) => calc.chave !== "diferenca_mensalidade");
 
   return (
     <div className="flex flex-col gap-5">
@@ -169,6 +182,13 @@ function Resultado({ id, d, associado, t, idioma }: { id: string; d: Diagnostico
         </section>
       )}
 
+      {diferenca && (
+        <section className={`${CARTAO} flex flex-col gap-1.5`}>
+          <p className="text-[19px] font-bold leading-snug text-[var(--v2-navy)]">{textoDiferenca(diferenca, idioma, r.diferenca)}</p>
+          <p className={TEXTO_SECUNDARIO}>{d.linhas.length > 0 ? r.diferenca.notaComLinhas : r.diferenca.notaSemLinhas}</p>
+        </section>
+      )}
+
       {d.linhas.length > 0 && (
         <section className={`${CARTAO} flex flex-col gap-3`}>
           <h2 className={TITULO_CARTAO}>{r.linhasTitulo}</h2>
@@ -188,13 +208,13 @@ function Resultado({ id, d, associado, t, idioma }: { id: string; d: Diagnostico
         </section>
       )}
 
-      {d.calculos.length > 0 && (
+      {calculos.length > 0 && (
         <section className={`${CARTAO} flex flex-col gap-3`}>
           <h2 className={TITULO_CARTAO}>{r.calculosTitulo}</h2>
           <ul className="flex flex-col gap-2">
-            {d.calculos.map((calc, i) => (
+            {calculos.map((calc, i) => (
               <li key={i} className={TEXTO}>
-                {textoCalculo(calc, idioma, r.calculos)}
+                {textoCalculo(calc, idioma, r)}
               </li>
             ))}
           </ul>

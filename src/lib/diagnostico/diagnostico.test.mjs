@@ -131,6 +131,33 @@ describe("diagnóstico: só factos e cálculos", () => {
     assert.deepEqual(d.porConfirmar, []);
   });
 
+  test("factura: diferença entre o total e a mensalidade, só como conta", () => {
+    const d = diagnosticoDaFatura(faturaValida(), "2026-10-22");
+    assert.deepEqual(d.calculos.find((c) => c.chave === "diferenca_mensalidade"), {
+      chave: "diferenca_mensalidade",
+      totalCents: 4499,
+      mensalidadeCents: 3999,
+      diferencaCents: 500,
+    });
+
+    // Exemplo da homepage: 62,49 € com mensalidade de 39,99 € = mais 22,50 €.
+    const exemplo = faturaValida();
+    exemplo.fatura = { ...exemplo.fatura, totalCents: 6249, mensalidadeLidaCents: 3999 };
+    assert.equal(diagnosticoDaFatura(exemplo, "2026-10-22").calculos.find((c) => c.chave === "diferenca_mensalidade").diferencaCents, 2250);
+
+    // Menos do que a mensalidade (desconto, crédito): diferença negativa.
+    const credito = faturaValida();
+    credito.fatura = { ...credito.fatura, totalCents: 2999 };
+    assert.equal(diagnosticoDaFatura(credito, "2026-10-22").calculos.find((c) => c.chave === "diferenca_mensalidade").diferencaCents, -1000);
+
+    // Arredondamento (até 2 cêntimos) ou valores em falta: sem diferença.
+    for (const alteracao of [{ totalCents: 4001 }, { totalCents: null }, { mensalidadeLidaCents: null }]) {
+      const v = faturaValida();
+      v.fatura = { ...v.fatura, mensalidadeLidaCents: 3999, ...alteracao };
+      assert.equal(diagnosticoDaFatura(v, "2026-10-22").calculos.find((c) => c.chave === "diferenca_mensalidade"), undefined, JSON.stringify(alteracao));
+    }
+  });
+
   test("factura sem fidelização nem total: diz o que não foi possível confirmar", () => {
     const v = faturaValida({ fornecedor: null });
     v.fatura = { ...v.fatura, totalCents: null, dataFimFidelizacao: null };

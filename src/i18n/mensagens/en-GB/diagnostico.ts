@@ -86,6 +86,12 @@ export const diagnostico: Traducao<typeof pt> = {
       soma_linhas_difere: (soma: V, total: V) =>
         `The lines we could read (${soma}) don't add up to the bill total (${total}). There may be lines we couldn't read.`,
     },
+    diferenca: {
+      mais: (diferenca: V, mensalidade: V) => `This bill is ${diferenca} more than the monthly fee (${mensalidade}).`,
+      menos: (diferenca: V, mensalidade: V) => `This bill is ${diferenca} less than the monthly fee (${mensalidade}).`,
+      notaComLinhas: "The lines below show where the difference comes from. A difference is not, in itself, a mistake.",
+      notaSemLinhas: "A difference is not, in itself, a mistake: it may come from usage, additional services, adjustments or discounts.",
+    },
     porConfirmarTitulo: "What we couldn't confirm",
     porConfirmar: {
       fornecedor: "The company that issued the document.",

@@ -92,6 +92,12 @@ export const diagnostico = {
       soma_linhas_difere: (soma: V, total: V) =>
         `A soma das linhas que conseguimos ler (${soma}) é diferente do total da factura (${total}). Pode haver linhas que não conseguimos ler.`,
     },
+    diferenca: {
+      mais: (diferenca: V, mensalidade: V) => `Esta factura tem mais ${diferenca} do que a mensalidade (${mensalidade}).`,
+      menos: (diferenca: V, mensalidade: V) => `Esta factura tem menos ${diferenca} do que a mensalidade (${mensalidade}).`,
+      notaComLinhas: "Nas linhas abaixo pode ver de onde vem a diferença. Uma diferença não é, por si só, um erro.",
+      notaSemLinhas: "Uma diferença não é, por si só, um erro: pode vir de consumos, serviços adicionais, acertos ou descontos.",
+    },
     porConfirmarTitulo: "O que não conseguimos confirmar",
     porConfirmar: {
       fornecedor: "A empresa que emitiu o documento.",

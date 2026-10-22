@@ -74,10 +74,10 @@ export function HomepageDiagnostico({ protecaoGratuita = false }: { protecaoGrat
 
           <div className="mx-auto mt-6 grid max-w-[1080px] gap-5 sm:mt-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-6">
             <CartaoAnalise local="homepage_hero" texto={t.hero.cartaoTexto} />
-            <div className="order-3 lg:order-none">
+            <div className="order-3 lg:order-none lg:row-span-2">
               <ExemploResultado />
             </div>
-            <div className="order-2 flex flex-col gap-4 rounded-[18px] border border-[var(--v2-line-strong)] bg-white p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6 lg:order-none lg:col-span-2">
+            <div className="order-2 flex flex-col gap-4 rounded-[18px] border border-[var(--v2-line-strong)] bg-white p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6 lg:order-none">
               <div>
                 <h2 className="text-[19px] font-bold text-[var(--v2-navy)]">{t.hero.problemaTitulo}</h2>
                 <p className="mt-1 text-[16px] leading-relaxed text-[var(--v2-muted)]">{t.hero.problemaTexto}</p>
