@@ -124,6 +124,8 @@ export const inicio = {
           { rotulo: "Total a pagar", valor: "62,49 €" },
           { rotulo: "Mensalidade", valor: "39,99 €" },
         ],
+        diferenca: "Esta factura tem mais 22,50 € do que a mensalidade.",
+        diferencaNota: "Mostramos de onde vem a diferença.",
         linhasTitulo: "De onde vem o total",
         linhas: [
           { descricao: "Mensalidade do pacote", valor: "39,99 €", pontual: false },

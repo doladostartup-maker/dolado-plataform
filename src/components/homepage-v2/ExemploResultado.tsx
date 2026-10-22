@@ -14,8 +14,8 @@ import { track } from "@/lib/analytics";
 //
 // Só mostra o que o produto faz de facto (auditoria de 22/10/2026):
 //   - análise gratuita = o que o diagnóstico real mostra (diagnostico/regras.ts):
-//     total, mensalidade, linhas cobradas com "todos os meses"/"só esta vez" e
-//     a soma das linhas face ao total. Nunca "pontos de atenção" (decisão de
+//     total, mensalidade, a diferença entre os dois, linhas cobradas com
+//     "todos os meses"/"só esta vez" e a soma das linhas face ao total. Nunca "pontos de atenção" (decisão de
 //     22/10/2026: isso exige revisão humana);
 //   - Protecção = o que o Monitor faz (monitor/acompanhamento.ts): compara
 //     cada factura carregada com as anteriores e com o contrato; cobrança
@@ -47,6 +47,11 @@ export function ExemploResultado() {
                   <p className={`font-bold tabular-nums text-[var(--v2-navy)] ${i === 0 ? "text-[22px]" : "text-[18px]"}`}>{r.valor}</p>
                 </div>
               ))}
+            </div>
+
+            <div className="mt-3 rounded-[12px] border-l-4 border-[var(--v2-blue)] bg-[var(--v2-blue-soft)] px-3 py-2.5">
+              <p className="text-[16px] font-bold leading-snug text-[var(--v2-navy)]">{t.diferenca}</p>
+              <p className="mt-0.5 text-[14px] text-[var(--v2-muted)]">{t.diferencaNota}</p>
             </div>
 
             <p className="mt-4 text-[15px] font-semibold text-[var(--v2-navy)]">{t.linhasTitulo}</p>

@@ -108,6 +108,8 @@ export const inicio: Traducao<typeof pt> = {
           { rotulo: "Total due", valor: "€62.49" },
           { rotulo: "Monthly fee", valor: "€39.99" },
         ],
+        diferenca: "This bill is €22.50 more than the monthly fee.",
+        diferencaNota: "We show you where the difference comes from.",
         linhasTitulo: "Where the total comes from",
         linhas: [
           { descricao: "Package monthly fee", valor: "€39.99", pontual: false },

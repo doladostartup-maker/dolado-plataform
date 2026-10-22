@@ -6,7 +6,8 @@
 // (22/10/2026): o diagnóstico mostra só
 //   - o que foi lido no documento, com confiança alta ou média;
 //   - cálculos feitos aqui, em código (dias até ao fim da fidelização ou da
-//     promoção, fim calculado pela duração, soma das linhas);
+//     promoção, fim calculado pela duração, soma das linhas, diferença entre
+//     o total e a mensalidade);
 //   - o que não foi possível confirmar.
 // Nunca "pontos de atenção", irregularidades, poupanças ou conclusões
 // jurídicas (regra 2: interpretação de um caso individual exige revisão
@@ -180,7 +181,7 @@ export function dispositivoDe(userAgent: string | null | undefined): "movel" | "
 // O diagnóstico
 // ---------------------------------------------------------------------------
 
-export const DIAGNOSTICO_VERSAO = "diagnostico_v1";
+export const DIAGNOSTICO_VERSAO = "diagnostico_v2";
 
 export type TipoValor = "euros" | "data" | "texto" | "meses" | "simnao";
 
@@ -192,7 +193,9 @@ export type Calculo =
   | { chave: "dias_fim_fidelizacao" | "dias_fim_promocao"; data: string; dias: number }
   | { chave: "fidelizacao_terminada" | "promocao_terminada"; data: string }
   | { chave: "fim_fidelizacao_pela_duracao"; data: string; inicio: string; meses: number }
-  | { chave: "soma_linhas"; somaCents: number; totalCents: number; coincide: boolean };
+  | { chave: "soma_linhas"; somaCents: number; totalCents: number; coincide: boolean }
+  /** Total − mensalidade, ambos lidos na mesma factura (positivo = a factura tem mais do que a mensalidade). */
+  | { chave: "diferenca_mensalidade"; totalCents: number; mensalidadeCents: number; diferencaCents: number };
 
 export type LinhaDiagnostico = { descricao: string; valorCents: number; recorrente: boolean | null };
 
@@ -266,6 +269,14 @@ export function diagnosticoDaFatura(v: FaturaValida, hoje: string): Diagnostico 
   if (f.totalCents !== null && f.linhas.length) {
     const somaCents = f.linhas.reduce((s, l) => s + l.valorCents, 0);
     calculos.push({ chave: "soma_linhas", somaCents, totalCents: f.totalCents, coincide: Math.abs(somaCents - f.totalCents) <= TOLERANCIA_SOMA_CENTS });
+  }
+  // Só uma conta entre dois valores lidos: uma diferença não é, por si só,
+  // um ponto de atenção (consumos, serviços, acertos, impostos).
+  if (f.totalCents !== null && f.mensalidadeLidaCents !== null) {
+    const diferencaCents = f.totalCents - f.mensalidadeLidaCents;
+    if (Math.abs(diferencaCents) > TOLERANCIA_SOMA_CENTS) {
+      calculos.push({ chave: "diferenca_mensalidade", totalCents: f.totalCents, mensalidadeCents: f.mensalidadeLidaCents, diferencaCents });
+    }
   }
 
   return {
