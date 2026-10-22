@@ -395,6 +395,21 @@ export const protecao: Traducao<typeof pt> = {
     nota:
       "It usually takes less than half a minute. At the end, we show you what we checked, what we found and what we will keep an eye on. You can keep using DoLado: the check carries on and the result stays with the service.",
   },
+  documentoDoDiagnostico: {
+    erro: "We couldn't use this document. Please try again.",
+    voltar: "Back to the document we have already checked",
+    encontramos: {
+      fatura: "We have already checked the bill you uploaded before creating your account.",
+      contrato: "We have already checked the contract you uploaded before creating your account.",
+    },
+    naoPrecisa: "You don't need to upload it again. From now on, DoLado keeps an eye on it for you.",
+    deEmpresa: (empresa: V) => `Document from ${empresa}`,
+    semEmpresa: "Document checked in the free check",
+    aEnviar: "Preparing…",
+    acompanhar: "Keep an eye on this document",
+    outro: "Use another document",
+    nota: "We check the document again and show you the result: what we found and what we will keep an eye on.",
+  },
   faturaDoCaso: {
     erro: "We couldn't use this bill. Please try again.",
     voltar: "Back to the bill you sent with your case",
@@ -441,6 +456,7 @@ export const protecao: Traducao<typeof pt> = {
     "Escolha o sector.": "Choose the sector.",
     'Descreva a promoção (por exemplo, "Desconto de 10 € na mensalidade").': 'Describe the promotion (for example, "€10 off the monthly fee").',
     "Escolha o serviço a que pertence o documento.": "Choose the service the document belongs to.",
+    "Não foi possível usar este documento. Carregue-o novamente.": "We couldn't use this document. Please upload it again.",
     "Não foi possível usar esta factura. Carregue o documento.": "We couldn't use this bill. Please upload the document.",
   },
 };

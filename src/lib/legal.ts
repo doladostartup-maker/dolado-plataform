@@ -31,6 +31,8 @@ export const TERMOS_VERSAO = "2026-10-22";
 
 // 2026-10-22b (Política): área de parceiro — validada pela advogada
 // (confirmado por Thiago a 21/10/2026).
+// 2026-10-22c (Política): diagnóstico gratuito sem registo — aprovada pela
+// advogada (confirmado por Thiago a 22/10/2026).
 // 2026-10-23 (Política): chat em directo (Crisp) — POR VALIDAR pela advogada;
 // não fazer merge antes da validação, do DPA e da declaração no Cookiebot.
 /** Versão da Política de Privacidade em vigor. Cada versão fica acessível em /privacidade/<versão>. */

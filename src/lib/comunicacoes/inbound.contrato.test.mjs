@@ -230,7 +230,7 @@ describe("receção de respostas (Supabase real)", { skip: !ATIVO && "só com np
     };
     const deps = {
       ...criarDependenciasAnalise(),
-      chamarModelo: async () => ({ ok: true, bruto: resposta, uso: { modelo: "claude-opus-5-5", tokensEntrada: 10, tokensSaida: 10, custoUsd: 0.0002, latenciaMs: 1, requestId: null } }),
+      chamarModelo: async () => ({ ok: true, bruto: resposta, uso: { modelo: "claude-sonnet-5-5", tokensEntrada: 10, tokensSaida: 10, custoUsd: 0.0002, latenciaMs: 1, requestId: null } }),
     };
     const r = await gerarAnalise(com.id, { origem: "automatico", adminId: null }, deps);
     assert.equal(r.estado, "gerado");

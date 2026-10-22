@@ -21,6 +21,7 @@ export function PaginaV2({
   eventoCtaNavbar,
   parametrosCtaNavbar,
   chatEmDireto = false,
+  ctaNavbarDiscreto = false,
   cabecalho,
   children,
 }: {
@@ -29,6 +30,8 @@ export function PaginaV2({
   parametrosCtaNavbar?: Record<string, string>;
   /** Mostra o chat em direto (Crisp) — só nas páginas de PAGINAS_COM_CRISP. */
   chatEmDireto?: boolean;
+  /** "Tratar do meu caso" da navbar em contorno (a página tem outra acção principal). */
+  ctaNavbarDiscreto?: boolean;
   /** Substitui a NavbarV2 (ex.: cabeçalho simplificado da landing /30-dias-gratis). */
   cabecalho?: ReactNode;
   children: ReactNode;
@@ -36,7 +39,7 @@ export function PaginaV2({
   return (
     <div className={`tema-v2 ${fonte.className} min-h-screen bg-white text-[var(--v2-navy)] antialiased`}>
       <AnalyticsScripts />
-      {cabecalho ?? <NavbarV2 eventoCta={eventoCtaNavbar} parametrosCta={parametrosCtaNavbar} />}
+      {cabecalho ?? <NavbarV2 eventoCta={eventoCtaNavbar} parametrosCta={parametrosCtaNavbar} ctaDiscreto={ctaNavbarDiscreto} />}
       <main>{children}</main>
       {/* Páginas com cabeçalho próprio são as landings das campanhas (Meta
           Ads, guia): sem ligações de volta às redes sociais no rodapé. */}

@@ -8,6 +8,7 @@ import {
   IconeBalanca,
   IconeCartao,
   IconeEscudo,
+  IconeGrafico,
   IconeLupaDocumento,
   IconeMais,
   IconeMegafone,
@@ -146,6 +147,11 @@ export function NavegacaoBackoffice({ contagens, email }: { contagens: Contagens
             { href: "/backoffice/protecao-gratuita", texto: "Protecção gratuita", icone: <IconeEscudo tamanho={t} /> },
             { href: "/backoffice/parceiros", texto: "Parceiros", icone: <IconePasta tamanho={t} /> },
           ]}
+        />
+        <Grupo
+          titulo="Crescimento"
+          pathname={pathname}
+          itens={[{ href: "/backoffice/aquisicao", texto: "Aquisição e Conversão", icone: <IconeGrafico tamanho={t} /> }]}
         />
         <Grupo
           titulo="Conteúdos"

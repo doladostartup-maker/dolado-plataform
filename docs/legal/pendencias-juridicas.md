@@ -7,10 +7,21 @@ Lista única do que ficou em aberto nas auditorias e cargas jurídicas: pontos p
 Origem: [auditoria do ecossistema](../estrategia/auditoria-ecossistema-2026-10-21.md) (ECO-22) e [rascunho-privacidade-crisp.md](rascunho-privacidade-crisp.md). `CRISP_ATIVO=1` em produção; Thiago decidiu manter o Crisp e completar o que falta. **Prioridade alta.**
 
 - [ ] **Advogada:** validar a Política `2026-10-23` (secções 2, 3, 5, 6 e 7) — fundamento b)/f), prazo de 12 meses das conversas, categoria "Preferências" vs. botão que só carrega o chat ao clicar.
-- [ ] **Thiago:** obter o DPA do Crisp (região de alojamento, subcontratantes ulteriores) e actualizar a matriz de subcontratantes.
+- [x] **Thiago:** obter o DPA do Crisp (região de alojamento, subcontratantes ulteriores) e actualizar a matriz de subcontratantes. (Resolvido a 22/10/2026: DPA obtido, confirmado por Thiago; região e subcontratantes ulteriores ainda por anotar na matriz.)
 - [ ] **Thiago:** declarar no Cookiebot os cookies `crisp-client/…` e o armazenamento local como "Preferências".
 - [ ] **Thiago:** configurar no Crisp a eliminação das conversas ao fim do prazo validado.
 - [ ] Depois dos quatro pontos: fazer merge do PR da Política `2026-10-23`.
+
+## Diagnóstico gratuito sem registo (22 de Outubro de 2026)
+
+Origem: secção "Diagnóstico gratuito sem registo" do CLAUDE.md. Funcionalidade **desligada** (`DIAGNOSTICO_GRATUITO_ATIVO`). Pontos jurídicos resolvidos a 22/10/2026: a advogada aprovou todas as propostas do rascunho; Política `2026-10-22c`. Falta só a DPIA (pendente geral).
+
+Texto proposto e pontos detalhados para a advogada: [rascunho-privacidade-diagnostico-gratuito.md](rascunho-privacidade-diagnostico-gratuito.md) (22/10/2026).
+
+- [x] **Nova versão da Política de Privacidade** (resolvido a 22/10/2026: Política `2026-10-22c`): documento carregado sem conta (factura/contrato, pode conter dados de terceiros), leitura pela Anthropic (EUA) só para mostrar o resultado, cookie funcional `dolado_diagnostico` (7 dias, sem consentimento por ser necessário ao serviço pedido — confirmar), conservação 7 dias / 30 dias depois de associado a uma conta, registo só com contagens e origem 13 meses, associação à conta criada depois.
+- [x] **Aviso antes do carregamento** (resolvido a 22/10/2026: o texto junto do botão chega, sem passo intermédio): o texto curto junto do botão ("O documento é lido por um sistema de inteligência artificial (Anthropic)…") chega como informação prévia, ou é preciso uma camada antes do selector de ficheiros?
+- [x] **Natureza do resultado** (resolvido a 22/10/2026: aprovado): confirmar que um diagnóstico só com factos lidos e cálculos de datas (sem "pontos de atenção") fica do lado do apoio administrativo, e o aviso "não é um parecer jurídico".
+- [ ] **DPIA:** incluir o tratamento sem conta.
 
 ## Electricidade: interrupções e compensações (20 de Outubro de 2026)
 

@@ -63,6 +63,7 @@ export async function lerDocumentoComClaude({
   prompt,
   schema,
   instrucao,
+  modelo = MODELO_DOCUMENTOS,
 }: {
   /** URL assinada (curta duração) do ficheiro no Storage privado. */
   url: string;
@@ -70,6 +71,8 @@ export async function lerDocumentoComClaude({
   prompt: string;
   schema: Record<string, unknown>;
   instrucao: string;
+  /** Por omissão o modelo do Monitor; o diagnóstico gratuito usa o seu. */
+  modelo?: string;
 }): Promise<ResultadoChamada> {
   const client = obterCliente();
   if (!client) return { ok: false, motivo: "api_nao_configurada", uso: null };
@@ -89,7 +92,7 @@ export async function lerDocumentoComClaude({
   try {
     const { data: resposta, request_id } = await client.messages
       .create({
-        model: MODELO_DOCUMENTOS,
+        model: modelo,
         max_tokens: PARAMETROS_EXTRACAO.max_tokens,
         system: prompt,
         output_config: {
@@ -101,10 +104,10 @@ export async function lerDocumentoComClaude({
       .withResponse();
 
     const uso: UsoChamada = {
-      modelo: resposta.model || MODELO_DOCUMENTOS,
+      modelo: resposta.model || modelo,
       tokensEntrada: resposta.usage.input_tokens,
       tokensSaida: resposta.usage.output_tokens,
-      custoUsd: custoEstimadoUsd(MODELO_DOCUMENTOS, resposta.usage.input_tokens, resposta.usage.output_tokens),
+      custoUsd: custoEstimadoUsd(resposta.model || modelo, resposta.usage.input_tokens, resposta.usage.output_tokens),
       latenciaMs: Date.now() - inicio,
       requestId: request_id ?? null,
     };

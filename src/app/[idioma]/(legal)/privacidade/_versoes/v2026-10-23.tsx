@@ -1,10 +1,11 @@
-// Política de Privacidade — versão 2026-10-23. Parte da 2026-10-22b e
-// acrescenta o chat em directo nas páginas públicas (Crisp IM SAS): dados
-// tratados (secção 2), fundamentos e consentimento para os cookies do chat
-// (secção 3), o Crisp como subcontratante (secção 5), a conservação das
-// conversas (secção 6) e a retirada do consentimento (secção 7). Texto do
-// rascunho docs/legal/rascunho-privacidade-crisp.md, POR VALIDAR pela
-// advogada. Nada do resto muda.
+// Política de Privacidade — versão 2026-10-23. Parte da 2026-10-22c (que
+// já inclui o diagnóstico gratuito) e acrescenta o chat em directo nas
+// páginas públicas (Crisp IM SAS): dados tratados (secção 2), fundamentos e
+// consentimento para os cookies do chat (secção 3), o Crisp como
+// subcontratante (secção 5), a conservação das conversas (secção 6) e a
+// retirada do consentimento (secção 7). Texto do rascunho
+// docs/legal/rascunho-privacidade-crisp.md, POR VALIDAR pela advogada. Nada
+// do resto muda.
 //
 // Uma versão publicada não se edita: alterações vão para uma versão nova.
 import Link from "next/link";
@@ -151,6 +152,15 @@ const CONSERVACAO: { categoria: string; prazo: string }[] = [
     categoria: "Chat em directo — mensagens trocadas e, quando indicado pelo visitante, o e-mail",
     prazo:
       "12 meses depois da última mensagem da conversa; depois são eliminadas. Se a conversa der origem a um caso, a informação necessária passa para o caso e segue o prazo dos dados do caso.",
+  },
+  {
+    categoria: "Diagnóstico gratuito — documento carregado sem conta, resultado da leitura e identificador da sessão",
+    prazo:
+      "Apagados 7 dias depois do carregamento; se o diagnóstico for associado a uma conta, 30 dias depois dessa associação. Se o titular pedir para continuar com a Protecção, a cópia do documento passa a seguir os prazos do Monitor de Protecção.",
+  },
+  {
+    categoria: "Diagnóstico gratuito — origem da visita, sector do documento e datas de cada passo, já sem o documento nem o resultado",
+    prazo: "13 meses, para estatística; depois são eliminados.",
   },
   {
     categoria: "Registos técnicos e de segurança (por exemplo, registos de acesso e de envio de e-mails)",
@@ -377,6 +387,16 @@ export function PrivacidadeV20261023() {
           momento pela ligação incluída em cada comunicação ou escrevendo para <EmailPrivacidade />.
         </p>
         <p className={P}>
+          <strong>Diagnóstico gratuito.</strong> Se carregar uma factura ou um contrato no nosso site para ver o
+          diagnóstico gratuito, tratamos o documento que carregou e o resultado da sua leitura. O documento pode
+          conter o seu nome, o NIF, a morada, números de cliente, de contrato ou de instalação, consumos, valores e
+          datas. Não é preciso criar conta nem indicar o e-mail. Para lhe mostrarmos o resultado, guardamos no seu
+          navegador um cookie com um identificador aleatório (ver secção 3). Registamos também a origem da visita
+          (por exemplo, uma pesquisa no Google ou uma publicação no Instagram, e o nome da campanha, quando existe),
+          a página por onde entrou, se usa um telemóvel ou um computador, o sector do documento e a data de cada
+          passo (documento carregado, analisado e visto, e as opções que escolheu a seguir).
+        </p>
+        <p className={P}>
           Pedimos apenas os documentos necessários ao caso ou à funcionalidade utilizada. Estes podem conter
           incidentalmente dados de saúde, outras categorias especiais ou dados de terceiros. A DoLado não solicita
           esses dados como regra; se forem estritamente necessários para formular ou provar o pedido, indica-se a
@@ -565,6 +585,17 @@ export function PrivacidadeV20261023() {
           cliente (e-mails com novidades e ofertas) ou escrevendo para{" "}
           <EmailPrivacidade /> —, sem afectar a licitude do tratamento feito antes.
         </p>
+        <p className={P}>
+          <strong>Diagnóstico gratuito.</strong> Usamos o documento para lhe mostrar o diagnóstico que pediu, a seu
+          pedido e antes de qualquer contrato (artigo 6.º, n.º 1, alínea b), do RGPD). O cookie{" "}
+          <em>dolado_diagnostico</em> é estritamente necessário para isso: guarda durante 7 dias um identificador
+          aleatório que permite mostrar o resultado só no navegador onde o documento foi carregado e, se criar uma
+          conta nesse navegador, associá-lo a essa conta. Não o identifica e não é usado para medição nem
+          publicidade. Se pedir para continuar com a Protecção, o documento passa a fazer parte da sua Protecção.
+          Usamos ainda, com base no nosso interesse legítimo, o endereço IP, só durante 10 minutos e sem o guardar,
+          para evitar abusos do diagnóstico gratuito, e a origem da visita e as datas de cada passo, sem o documento,
+          para sabermos que canais trazem pessoas e em que passo desistem.
+        </p>
       </section>
 
       <section className="flex flex-col gap-3">
@@ -572,13 +603,17 @@ export function PrivacidadeV20261023() {
           4. Inteligência artificial e decisões automatizadas
         </h2>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
-          A DoLado utiliza sistemas de inteligência artificial como ferramenta de apoio em três situações:
+          A DoLado utiliza sistemas de inteligência artificial como ferramenta de apoio em quatro situações:
         </p>
         <ul className={UL}>
           <li>
             no Monitor de Protecção, para ler as facturas e os contratos que o Utilizador carrega e extrair deles
             dados objectivos — por exemplo, datas, valores, o nome do fornecedor e os dados de identificação do
             titular e do serviço que constam do documento;
+          </li>
+          <li>
+            no diagnóstico gratuito, para ler a factura ou o contrato carregado sem conta e extrair dele dados
+            objectivos, como datas, valores, o nome do fornecedor e as condições do contrato;
           </li>
           <li>
             na preparação da reclamação, para redigir uma primeira proposta do texto a partir da informação do caso
@@ -617,6 +652,14 @@ export function PrivacidadeV20261023() {
           Utilizador decidir o que fazer com esse documento. Qualquer situação detectada na comparação das facturas é revista por uma pessoa da
           equipa DoLado antes de ser comunicada ao Utilizador, e é apresentada como uma situação que merece ser
           verificada, nunca como uma conclusão sobre o cumprimento da lei ou do contrato.
+        </p>
+        <p className="text-base leading-relaxed text-[var(--color-ink)]">
+          No diagnóstico gratuito, a inteligência artificial também só lê e estrutura o documento. As contas
+          apresentadas, como os dias que faltam para o fim da fidelização, são feitas por programas com regras
+          fixas. O diagnóstico descreve o que está escrito no documento; não é um parecer jurídico nem uma avaliação
+          de que a empresa cumpriu ou não o contrato ou a lei. O prestador de inteligência artificial recebe o
+          documento nas mesmas condições descritas para o Monitor de Protecção, sem dados de identificação ou de
+          contacto.
         </p>
         <p className="text-base leading-relaxed text-[var(--color-ink)]">
           A proposta do texto da reclamação preparada com apoio de inteligência artificial é apenas um ponto de
@@ -740,7 +783,8 @@ export function PrivacidadeV20261023() {
           </li>
           <li>
             <strong>Anthropic</strong> (fornecimento da Claude API, usada na leitura
-            das facturas e dos contratos carregados no Monitor de Protecção e na
+            das facturas e dos contratos carregados no Monitor de Protecção e no
+            diagnóstico gratuito, na
             preparação da primeira proposta do texto da reclamação e na análise
             preliminar das respostas recebidas da empresa, descritas na
             secção 4, na qualidade de subcontratante, ao abrigo de um
@@ -868,6 +912,12 @@ export function PrivacidadeV20261023() {
           excessivos.
         </p>
         <p className={P}>
+          Como o diagnóstico gratuito não exige conta, podemos só conseguir identificar o seu pedido a partir do
+          navegador onde carregou o documento. Se quiser que o apaguemos antes do fim do prazo, escreva para{" "}
+          <EmailPrivacidade /> a indicar o dia e a hora aproximados do carregamento e, se possível, faça o pedido a
+          partir desse navegador.
+        </p>
+        <p className={P}>
           Pode retirar o consentimento para marketing a qualquer momento, nas definições de cookies do site
           (ligação &quot;Definições de cookies&quot; no rodapé). Da mesma forma pode retirar o consentimento
           para cookies de preferências, o que desliga o chat em directo. Quanto aos dados tratados pela Meta, pode também
@@ -906,6 +956,10 @@ export function PrivacidadeV20261023() {
           decida: adicioná-lo como um serviço diferente, associá-lo a outro serviço ou cancelar, caso em que o
           documento é apagado. Só deve carregar facturas e contratos de serviços de que seja titular ou com os quais
           tenha uma ligação legítima.
+        </p>
+        <p className={P}>
+          O mesmo se aplica aos documentos carregados no diagnóstico gratuito: só deve carregar documentos de que
+          seja titular ou que esteja autorizado a utilizar.
         </p>
         <p className={P}>
           A DoLado trata os dados de terceiros que constem dos documentos apenas na medida necessária ao caso, com

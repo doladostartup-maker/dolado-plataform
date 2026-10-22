@@ -64,11 +64,12 @@ export function caminhoAtivacaoLanding(utm: Utm = {}): string {
 
 /**
  * A activação sem sessão salta a explicação intermédia e vai directa ao
- * registo — só quando se chega da landing (as outras origens mantêm a página
- * com o resumo e as duas opções, criar conta ou iniciar sessão).
+ * registo — só quando se chega da landing ou do diagnóstico gratuito, que já
+ * explicaram a oferta (as outras origens mantêm a página com o resumo e as
+ * duas opções, criar conta ou iniciar sessão).
  */
 export function saltarParaRegisto(origem: string, temSessao: boolean): boolean {
-  return !temSessao && origem === ORIGEM_LANDING_30_DIAS;
+  return !temSessao && (origem === ORIGEM_LANDING_30_DIAS || origem === "diagnostico");
 }
 
 /**

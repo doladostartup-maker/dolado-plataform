@@ -14,6 +14,9 @@ export const PRECOS_USD_POR_MTOK: Record<string, { entrada: number; saida: numbe
   "claude-sonnet-5-5": { entrada: 2, saida: 10 },
   "claude-sonnet-5": { entrada: 2, saida: 10 },
   "claude-haiku-4-5": { entrada: 1, saida: 5 },
+  // Até 100 mil tokens de entrada por pedido (acima: 0,50 / 2,50). Um
+  // documento do Monitor fica muito abaixo desse limite.
+  "claude-haiku-5-5": { entrada: 0.1, saida: 0.5 },
   "claude-opus-5-5": { entrada: 4, saida: 20 },
 };
 
