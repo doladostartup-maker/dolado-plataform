@@ -1,10 +1,15 @@
 # Rascunho — Política de Privacidade: chat em direto (Crisp)
 
-Estado: **rascunho, por validar pela advogada** (19/10/2026). O chat está no código mas desligado
-(`CRISP_ATIVO`). Não ligar em produção antes de: (1) DPA com o Crisp; (2) nova versão da Política de
-Privacidade com o texto abaixo (as versões publicadas não se editam — criar
-`_versoes/vAAAA-MM-DD.tsx`, registar em `index.ts` e subir `PRIVACIDADE_VERSAO`); (3) Cookiebot com os
-cookies do Crisp na categoria "Preferências".
+Estado: **aprovado pela advogada e publicado como Política `2026-10-22d`** (22/10/2026; preparado como
+`2026-10-23`). DPA do Crisp obtido e cookies `crisp-client/…` declarados no Cookiebot como "Preferências"
+(confirmado por Thiago a 22/10/2026). O chat já estava ligado em produção (`CRISP_ATIVO=1`) desde, pelo
+menos, 21/10/2026.
+
+**Eliminação das conversas (decisão de Thiago, 22/10/2026): manual, uma vez por mês.** O Crisp não tem
+opção própria para apagar conversas antigas, e o plugin "Auto-Delete" custa cerca de 80 €/mês. Procedimento:
+no início de cada mês, na caixa de entrada do Crisp, ordenar as conversas pela data da última mensagem e
+apagar as que tenham a última mensagem há mais de 12 meses (Política, secção 6). As primeiras conversas
+só chegam aos 12 meses em Outubro de 2027.
 
 ## O que o código faz
 

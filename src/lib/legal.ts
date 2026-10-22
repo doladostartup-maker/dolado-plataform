@@ -33,8 +33,11 @@ export const TERMOS_VERSAO = "2026-10-22";
 // (confirmado por Thiago a 21/10/2026).
 // 2026-10-22c (Política): diagnóstico gratuito sem registo — aprovada pela
 // advogada (confirmado por Thiago a 22/10/2026).
+// 2026-10-22d (Política): chat em directo (Crisp) — aprovada pela advogada
+// (confirmado por Thiago a 22/10/2026); DPA do Crisp obtido e cookies
+// declarados no Cookiebot.
 /** Versão da Política de Privacidade em vigor. Cada versão fica acessível em /privacidade/<versão>. */
-export const PRIVACIDADE_VERSAO = "2026-10-22c";
+export const PRIVACIDADE_VERSAO = "2026-10-22d";
 
 /** Versão do texto de pedido expresso de início imediato. */
 export const CONSENTIMENTO_INICIO_IMEDIATO_VERSAO = "2026-10-01";

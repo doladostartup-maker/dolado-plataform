@@ -2,6 +2,17 @@
 
 Lista única do que ficou em aberto nas auditorias e cargas jurídicas: pontos para a advogada, cargas por fazer e revisões periódicas. Cada linha indica a origem (documento com o detalhe). Quando um ponto ficar resolvido, marcá-lo com a data e a decisão (não apagar).
 
+## Chat em directo (Crisp) — coberto pela Política `2026-10-22d` (21–22 de Outubro de 2026)
+
+Origem: [auditoria do ecossistema](../estrategia/auditoria-ecossistema-2026-10-21.md) (ECO-22) e [rascunho-privacidade-crisp.md](rascunho-privacidade-crisp.md). `CRISP_ATIVO=1` em produção; Thiago decidiu manter o Crisp e completar o que faltava. Resolvido a 22/10/2026.
+
+- [x] **Advogada:** validar a Política `2026-10-23` (publicada como `2026-10-22d`; secções 2, 3, 5, 6 e 7). (Resolvido a 22/10/2026: aprovada, confirmado por Thiago.) — fundamento b)/f), prazo de 12 meses das conversas, categoria "Preferências" vs. botão que só carrega o chat ao clicar.
+- [x] **Thiago:** obter o DPA do Crisp (região de alojamento, subcontratantes ulteriores) e actualizar a matriz de subcontratantes. (Resolvido a 22/10/2026: DPA obtido, confirmado por Thiago; região e subcontratantes ulteriores ainda por anotar na matriz.)
+- [x] **Thiago:** declarar no Cookiebot os cookies `crisp-client/…` e o armazenamento local como "Preferências". (Resolvido a 22/10/2026, confirmado por Thiago.)
+- [x] **Thiago:** configurar no Crisp a eliminação das conversas ao fim do prazo validado. (Resolvido a 22/10/2026: eliminação **manual, uma vez por mês** — o plugin Auto-Delete do Crisp custa cerca de 80 €/mês e Thiago decidiu não o pagar. Procedimento em `rascunho-privacidade-crisp.md`.)
+- [x] Depois dos quatro pontos: fazer merge do PR da Política `2026-10-23`. (Publicada a 22/10/2026 como `2026-10-22d`, PR #168.)
+- [ ] **Todos os meses (Thiago):** apagar no Crisp as conversas com a última mensagem há mais de 12 meses.
+
 ## Diagnóstico gratuito sem registo (22 de Outubro de 2026)
 
 Origem: secção "Diagnóstico gratuito sem registo" do CLAUDE.md. Funcionalidade **desligada** (`DIAGNOSTICO_GRATUITO_ATIVO`). Pontos jurídicos resolvidos a 22/10/2026: a advogada aprovou todas as propostas do rascunho; Política `2026-10-22c`. Falta só a DPIA (pendente geral).

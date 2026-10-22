@@ -1,7 +1,7 @@
 # Rascunho — Política de Privacidade: diagnóstico gratuito sem registo
 
 **Estado:** aprovado na íntegra pela advogada (confirmado por Thiago a 22/10/2026), incluindo as propostas dos pontos da secção 3 (fundamento do art. 6.º, n.º 1, al. b); aviso junto do botão sem passo intermédio; cookie estritamente necessário, também para a contagem por sessão; métricas por interesse legítimo; pedido de apagamento por e-mail; prazos de 7/30 dias e 13 meses). Publicado como Política de Privacidade `2026-10-22c`, com uma só alteração de palavra: «abusos do diagnóstico gratuito» em vez de «abusos do serviço gratuito» (a DoLado não é um serviço gratuito; um teste protege as versões em vigor contra essa frase).
-**Parte de:** Política em vigor `2026-10-22b` (ou da `2026-10-23`, se o PR #168 do Crisp for publicado antes). A versão publicada não se edita: cria-se uma versão nova.
+**Parte de:** Política em vigor `2026-10-22b` (o Crisp, PR #168, foi publicado depois, como `2026-10-22d`, a partir da `2026-10-22c`). A versão publicada não se edita: cria-se uma versão nova.
 **Funcionalidade:** o visitante carrega uma factura ou um contrato no site, sem criar conta, e vê logo um diagnóstico com o que está no documento. Código em `src/lib/diagnostico/`; migration `20261028090000_diagnostico_gratuito.sql`; secção "Diagnóstico gratuito sem registo" do CLAUDE.md.
 
 ## 1. O que é tratado
