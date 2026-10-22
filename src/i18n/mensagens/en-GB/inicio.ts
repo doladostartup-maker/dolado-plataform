@@ -100,20 +100,35 @@ export const inicio: Traducao<typeof pt> = {
       problema: "Start my case",
       exemplo: {
         rotulo:
-          "Illustrative example of the result of checking a bill: amounts read, days until the end of the minimum term and the Protection reminder about a promotion ending.",
+          "Illustrative example of checking a €62.49 bill: a €39.99 monthly fee, additional services, extra calls and a late payment fee, and what Protection keeps an eye on in the following bills.",
         etiqueta: "Illustrative example",
         documento: "Telecoms bill",
         gratuito: "In the free check",
-        lido: [
-          { rotulo: "Total due", valor: "€42.90" },
+        resumo: [
+          { rotulo: "Total due", valor: "€62.49" },
           { rotulo: "Monthly fee", valor: "€39.99" },
-          { rotulo: "End of minimum term", valor: "14 August" },
         ],
+        linhasTitulo: "Where the total comes from",
+        linhas: [
+          { descricao: "Package monthly fee", valor: "€39.99", pontual: false },
+          { descricao: "Additional services", valor: "€12.00", pontual: false },
+          { descricao: "Extra calls and data", valor: "€8.50", pontual: true },
+          { descricao: "Late payment fee", valor: "€2.00", pontual: true },
+        ],
+        habitual: "every month",
+        pontual: "this time only",
+        soma: "The lines add up to the bill total.",
         calculo: "4 months left until the end of the minimum term.",
         protecao: "With Protection",
-        protecaoTexto: "Your promotion ends on 14 May. We remind you 60 and 30 days before.",
-        protecaoNota: "If a new bill changes, a person at DoLado reviews it before we tell you.",
-        proximo: "If you need it, we handle the complaint with you.",
+        protecaoTitulo: "You don't have to do these checks on your own.",
+        protecaoTexto: "We compare each bill you send us with the previous ones and with your contract.",
+        protecaoPontos: [
+          "A new charge that repeats, an increase or a possible duplicate charge is reviewed by a person at DoLado before we tell you.",
+          "We remind you 60 and 30 days before your minimum term and promotions end.",
+        ],
+        protecaoExemplo:
+          "In this example: if the additional services (€12.00) appear for the first time and then repeat, we review it and let you know.",
+        cta: "Find out about Protection",
       },
     },
     situacoesTitulo: "Situations where DoLado can help",
