@@ -1,6 +1,6 @@
 # Rascunho — Política de Privacidade: diagnóstico gratuito sem registo
 
-**Estado:** rascunho para a advogada (22/10/2026). Não publicado. A funcionalidade está desligada em produção (`DIAGNOSTICO_GRATUITO_ATIVO`) e só se liga depois de esta versão da Política ser validada e publicada.
+**Estado:** aprovado na íntegra pela advogada (confirmado por Thiago a 22/10/2026), incluindo as propostas dos pontos da secção 3 (fundamento do art. 6.º, n.º 1, al. b); aviso junto do botão sem passo intermédio; cookie estritamente necessário, também para a contagem por sessão; métricas por interesse legítimo; pedido de apagamento por e-mail; prazos de 7/30 dias e 13 meses). Publicado como Política de Privacidade `2026-10-22c`, com uma só alteração de palavra: «abusos do diagnóstico gratuito» em vez de «abusos do serviço gratuito» (a DoLado não é um serviço gratuito; um teste protege as versões em vigor contra essa frase).
 **Parte de:** Política em vigor `2026-10-22b` (ou da `2026-10-23`, se o PR #168 do Crisp for publicado antes). A versão publicada não se edita: cria-se uma versão nova.
 **Funcionalidade:** o visitante carrega uma factura ou um contrato no site, sem criar conta, e vê logo um diagnóstico com o que está no documento. Código em `src/lib/diagnostico/`; migration `20261028090000_diagnostico_gratuito.sql`; secção "Diagnóstico gratuito sem registo" do CLAUDE.md.
 
@@ -27,7 +27,7 @@
 
 ### Secção 3 — Para que usamos estes dados e com que fundamento (novo parágrafo)
 
-> **Diagnóstico gratuito.** Usamos o documento para lhe mostrar o diagnóstico que pediu, a seu pedido e antes de qualquer contrato (artigo 6.º, n.º 1, alínea b), do RGPD). O cookie *dolado_diagnostico* é estritamente necessário para isso: guarda durante 7 dias um identificador aleatório que permite mostrar o resultado só no navegador onde o documento foi carregado e, se criar uma conta nesse navegador, associá-lo a essa conta. Não o identifica e não é usado para medição nem publicidade. Se pedir para continuar com a Protecção, o documento passa a fazer parte da sua Protecção. Usamos ainda, com base no nosso interesse legítimo, o endereço IP, só durante 10 minutos e sem o guardar, para evitar abusos do serviço gratuito, e a origem da visita e as datas de cada passo, sem o documento, para sabermos que canais trazem pessoas e em que passo desistem.
+> **Diagnóstico gratuito.** Usamos o documento para lhe mostrar o diagnóstico que pediu, a seu pedido e antes de qualquer contrato (artigo 6.º, n.º 1, alínea b), do RGPD). O cookie *dolado_diagnostico* é estritamente necessário para isso: guarda durante 7 dias um identificador aleatório que permite mostrar o resultado só no navegador onde o documento foi carregado e, se criar uma conta nesse navegador, associá-lo a essa conta. Não o identifica e não é usado para medição nem publicidade. Se pedir para continuar com a Protecção, o documento passa a fazer parte da sua Protecção. Usamos ainda, com base no nosso interesse legítimo, o endereço IP, só durante 10 minutos e sem o guardar, para evitar abusos do diagnóstico gratuito, e a origem da visita e as datas de cada passo, sem o documento, para sabermos que canais trazem pessoas e em que passo desistem.
 
 ### Secção 4 — Inteligência artificial (nova alínea na lista e novo parágrafo)
 
@@ -53,14 +53,14 @@ Depois do parágrafo sobre o Monitor de Protecção:
 
 ## 3. Pontos para a advogada
 
-- [ ] **Fundamento da leitura:** diligências a pedido do titular (art. 6.º, n.º 1, al. b)) ou interesse legítimo, quando não há conta nem contrato?
-- [ ] **Informação antes do carregamento:** junto do botão "Analisar gratuitamente" aparece sempre: «O documento é lido por um sistema de inteligência artificial (Anthropic) só para lhe mostrar o resultado e é apagado ao fim de 7 dias, se não criar conta.», com ligação para a Política. O botão abre logo o selector de ficheiros. Basta, ou é preciso um passo antes (caixa ou ecrã intermédio)?
-- [ ] **Cookie `dolado_diagnostico` como estritamente necessário:** só é criado quando a pessoa carrega um documento e serve para lhe mostrar o resultado. O identificador da sessão também agrupa, nas métricas internas, os documentos carregados no mesmo navegador (contagem de "sessões" no painel Aquisição e Conversão). Esse uso secundário, só com dados do próprio serviço e sem ferramentas de terceiros, mantém a isenção de consentimento? Se não, a contagem por sessão é retirada e conta-se só por documento.
-- [ ] **Métricas de conversão:** origem, UTM, página de entrada, dispositivo e datas de cada passo, por interesse legítimo e sem cookies de medição. É preciso teste de ponderação escrito?
-- [ ] **Dados de terceiros e categorias especiais:** a factura pode ter dados de outras pessoas do agregado; uma factura de saúde ou de serviços sociais pode revelar dados do art. 9.º. O diagnóstico só aceita facturas e contratos de telecomunicações, electricidade, gás e água (os outros falham sem resultado, mas o ficheiro fica guardado até ao fim do prazo). Basta o texto da secção 8?
-- [ ] **Exercício de direitos sem conta:** proposta de pedido por e-mail com dia e hora aproximados. Alternativa: um botão "Apagar este diagnóstico" na página do resultado (ainda não existe; posso construí-lo).
-- [ ] **Prazos:** 7 dias / 30 dias depois da associação / 13 meses para as contagens.
-- [ ] **DPIA:** incluir o tratamento sem conta (já está na lista de pendências).
+- [x] **Fundamento da leitura:** diligências a pedido do titular (art. 6.º, n.º 1, al. b)) ou interesse legítimo, quando não há conta nem contrato?
+- [x] **Informação antes do carregamento:** junto do botão "Analisar gratuitamente" aparece sempre: «O documento é lido por um sistema de inteligência artificial (Anthropic) só para lhe mostrar o resultado e é apagado ao fim de 7 dias, se não criar conta.», com ligação para a Política. O botão abre logo o selector de ficheiros. Basta, ou é preciso um passo antes (caixa ou ecrã intermédio)?
+- [x] **Cookie `dolado_diagnostico` como estritamente necessário:** só é criado quando a pessoa carrega um documento e serve para lhe mostrar o resultado. O identificador da sessão também agrupa, nas métricas internas, os documentos carregados no mesmo navegador (contagem de "sessões" no painel Aquisição e Conversão). Esse uso secundário, só com dados do próprio serviço e sem ferramentas de terceiros, mantém a isenção de consentimento? Se não, a contagem por sessão é retirada e conta-se só por documento.
+- [x] **Métricas de conversão:** origem, UTM, página de entrada, dispositivo e datas de cada passo, por interesse legítimo e sem cookies de medição. É preciso teste de ponderação escrito?
+- [x] **Dados de terceiros e categorias especiais:** a factura pode ter dados de outras pessoas do agregado; uma factura de saúde ou de serviços sociais pode revelar dados do art. 9.º. O diagnóstico só aceita facturas e contratos de telecomunicações, electricidade, gás e água (os outros falham sem resultado, mas o ficheiro fica guardado até ao fim do prazo). Basta o texto da secção 8?
+- [x] **Exercício de direitos sem conta:** proposta de pedido por e-mail com dia e hora aproximados. Alternativa: um botão "Apagar este diagnóstico" na página do resultado (ainda não existe; posso construí-lo).
+- [x] **Prazos:** 7 dias / 30 dias depois da associação / 13 meses para as contagens.
+- [x] **DPIA:** incluir o tratamento sem conta (já está na lista de pendências).
 
 ## 4. Declaração no Cookiebot
 

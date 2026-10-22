@@ -31,8 +31,10 @@ export const TERMOS_VERSAO = "2026-10-22";
 
 // 2026-10-22b (Política): área de parceiro — validada pela advogada
 // (confirmado por Thiago a 21/10/2026).
+// 2026-10-22c (Política): diagnóstico gratuito sem registo — aprovada pela
+// advogada (confirmado por Thiago a 22/10/2026).
 /** Versão da Política de Privacidade em vigor. Cada versão fica acessível em /privacidade/<versão>. */
-export const PRIVACIDADE_VERSAO = "2026-10-22b";
+export const PRIVACIDADE_VERSAO = "2026-10-22c";
 
 /** Versão do texto de pedido expresso de início imediato. */
 export const CONSENTIMENTO_INICIO_IMEDIATO_VERSAO = "2026-10-01";
