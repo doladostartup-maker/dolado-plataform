@@ -25,8 +25,9 @@ import { EXEMPLO_FACTURA, ORIGEM_ANALISAR_FATURA, totaisExemplo } from "@/lib/an
 // preços, planos nem a oferta dos 30 dias.
 //
 // Ordem: promessa + área de carregamento (primeiro ecrã, também no
-// telemóvel) → exemplo ilustrativo (o que está a pagar / o que merece
-// confirmação / o que pode fazer a seguir) → o que a análise faz e não faz →
+// telemóvel) → exemplo ilustrativo (o que está a pagar / o que está em
+// destaque / o que a factura não diz — só factos, como o resultado) → o que
+// a análise faz e não faz →
 // quem é a DoLado → perguntas → carregamento final. Letra ≥ 16 px e botões
 // de 56 px (público 55+).
 //
@@ -191,27 +192,19 @@ function Exemplo() {
             </li>
           </ul>
         </CartaoExemplo>
-        <CartaoExemplo numero={2} titulo={c.confirmar.titulo} texto={c.confirmar.texto}>
-          <div className="flex flex-col gap-1.5 rounded-[10px] bg-white p-3">
-            <Etiqueta>{c.confirmar.doDocumento}</Etiqueta>
-            <p className="text-[16px] leading-relaxed">{c.confirmar.pontual(euros(pontuaisCents))}</p>
-          </div>
-          <div className="flex flex-col gap-1.5 rounded-[10px] bg-white p-3">
-            <Etiqueta tom="azul">{c.confirmar.precisaContrato}</Etiqueta>
-            <p className="text-[16px] leading-relaxed">{c.confirmar.contrato}</p>
-          </div>
+        <CartaoExemplo numero={2} titulo={c.destaques.titulo} texto={c.destaques.texto}>
+          {[c.destaques.pontual(euros(pontuaisCents)), c.destaques.promocao].map((texto) => (
+            <div key={texto} className="flex flex-col gap-1.5 rounded-[10px] bg-white p-3">
+              <Etiqueta>{c.destaques.doDocumento}</Etiqueta>
+              <p className="text-[16px] leading-relaxed">{texto}</p>
+            </div>
+          ))}
         </CartaoExemplo>
-        <CartaoExemplo numero={3} titulo={c.seguir.titulo} texto={c.seguir.texto}>
-          <ol className="flex flex-col gap-2.5">
-            {c.seguir.passos.map((p, i) => (
-              <li key={p} className="flex gap-2.5 text-[16px] leading-relaxed">
-                <span aria-hidden className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-white text-[14px] font-bold text-[var(--v2-green-dark)]">
-                  {i + 1}
-                </span>
-                {p}
-              </li>
-            ))}
-          </ol>
+        <CartaoExemplo numero={3} titulo={c.contrato.titulo} texto={c.contrato.texto}>
+          <div className="flex flex-col gap-1.5 rounded-[10px] bg-white p-3">
+            <Etiqueta tom="azul">{c.contrato.consta}</Etiqueta>
+            <p className="text-[16px] leading-relaxed">{c.contrato.condicoes}</p>
+          </div>
         </CartaoExemplo>
       </div>
     </SectionV2>

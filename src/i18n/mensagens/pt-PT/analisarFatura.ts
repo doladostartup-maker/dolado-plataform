@@ -1,7 +1,7 @@
 // Landing /analisar-fatura (campanhas Meta Ads "Sabe mesmo o que está a
 // pagar?", 22/10/2026). A promessa é a do diagnóstico gratuito: o que está
-// na factura, contas feitas em código e o que vale a pena confirmar — nunca
-// erros, irregularidades nem poupanças. Sem referências à inteligência
+// na factura, contas feitas em código e as datas e os valores em destaque —
+// só factos: nunca erros, irregularidades, poupanças nem passos a seguir. Sem referências à inteligência
 // artificial no texto principal; a privacidade (verdadeira) está no cartão
 // de carregamento e em "Como tratamos o seu documento".
 
@@ -46,22 +46,18 @@ export const analisarFatura = {
         titulo: "O que está a pagar",
         texto: "Os principais valores da factura, organizados: de onde vem o total.",
       },
-      confirmar: {
-        titulo: "O que merece confirmação",
-        texto: "O que vale a pena confirmar, separando o que está no documento do que não foi possível confirmar.",
-        pontual: (total: string) => `1 cobrança que não se repete todos os meses (${total}).`,
-        contrato: "A fidelização e o preço acordado só o contrato os confirma.",
+      destaques: {
+        titulo: "O que está em destaque",
+        texto: "Datas e valores que convém ter presentes, com a indicação de onde vêm.",
         doDocumento: "Do documento",
-        precisaContrato: "Precisa do contrato",
+        pontual: (total: string) => `1 cobrança que não se repete todos os meses (${total}).`,
+        promocao: "A promoção termina daqui a 40 dias.",
       },
-      seguir: {
-        titulo: "O que pode fazer a seguir",
-        texto: "Passos práticos, com base no que foi possível ler.",
-        passos: [
-          "Compare com a factura anterior.",
-          "Se não reconhecer o acerto, peça um esclarecimento por escrito à empresa.",
-          "Tenha o contrato à mão.",
-        ],
+      contrato: {
+        titulo: "O que a factura não diz",
+        texto: "O que não é possível confirmar só com a factura.",
+        consta: "Consta do contrato",
+        condicoes: "O preço acordado, a fidelização e as promoções.",
       },
     },
   },
@@ -76,7 +72,7 @@ export const analisarFatura = {
     ],
     naoFaz: "O que não faz",
     naoFazItens: [
-      "Não diz se uma cobrança é indevida: indica o que vale a pena confirmar.",
+      "Não diz se uma cobrança é indevida nem o que deve fazer: mostra o que está no documento.",
       "Não substitui o contrato: preço acordado e fidelização só o contrato os confirma.",
       "Não é um parecer jurídico nem contacta a empresa por si.",
     ],
@@ -110,7 +106,7 @@ export const analisarFatura = {
       {
         pergunta: "A análise diz-me se estou a pagar demais?",
         resposta:
-          "Mostra o que está na factura, faz as contas e indica o que vale a pena confirmar. Não conclui que uma cobrança é indevida: para isso é preciso o contrato e, muitas vezes, uma resposta da empresa.",
+          "Mostra o que está na factura, faz as contas e destaca as datas e os valores que convém ter presentes. Não conclui que uma cobrança é indevida: para isso é preciso o contrato e, muitas vezes, uma resposta da empresa.",
       },
     ],
   },

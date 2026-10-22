@@ -42,22 +42,18 @@ export const analisarFatura: Traducao<typeof pt> = {
         titulo: "What you are paying",
         texto: "The main amounts on the bill, organised: where the total comes from.",
       },
-      confirmar: {
-        titulo: "What is worth confirming",
-        texto: "What is worth checking, separating what is in the document from what could not be confirmed.",
-        pontual: (total: string) => `1 charge that does not repeat every month (${total}).`,
-        contrato: "Only the contract confirms the minimum term and the agreed price.",
+      destaques: {
+        titulo: "What stands out",
+        texto: "Dates and amounts worth keeping in mind, showing where they come from.",
         doDocumento: "From the document",
-        precisaContrato: "Needs the contract",
+        pontual: (total: string) => `1 charge that does not repeat every month (${total}).`,
+        promocao: "The promotion ends in 40 days.",
       },
-      seguir: {
-        titulo: "What you can do next",
-        texto: "Practical steps, based on what could be read.",
-        passos: [
-          "Compare it with the previous bill.",
-          "If you do not recognise the adjustment, ask the company for a written explanation.",
-          "Keep the contract to hand.",
-        ],
+      contrato: {
+        titulo: "What the bill does not say",
+        texto: "What cannot be confirmed from the bill alone.",
+        consta: "In the contract",
+        condicoes: "The agreed price, minimum term and promotions.",
       },
     },
   },
@@ -72,7 +68,7 @@ export const analisarFatura: Traducao<typeof pt> = {
     ],
     naoFaz: "What it doesn't do",
     naoFazItens: [
-      "It does not say whether a charge is wrong: it shows what is worth confirming.",
+      "It does not say whether a charge is wrong or what you should do: it shows what is in the document.",
       "It does not replace the contract: only the contract confirms the agreed price and minimum term.",
       "It is not legal advice and does not contact the company for you.",
     ],
@@ -106,7 +102,7 @@ export const analisarFatura: Traducao<typeof pt> = {
       {
         pergunta: "Will the check tell me if I am paying too much?",
         resposta:
-          "It shows what is on the bill, does the sums and points out what is worth confirming. It does not conclude that a charge is wrong: for that you need the contract and, often, a reply from the company.",
+          "It shows what is on the bill, does the sums and highlights the dates and amounts worth keeping in mind. It does not conclude that a charge is wrong: for that you need the contract and, often, a reply from the company.",
       },
     ],
   },

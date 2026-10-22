@@ -25,15 +25,16 @@ import { escolhaDiagnosticoAction, estadoDiagnosticoAction } from "@/app/actions
 import type { EstadoPublico } from "@/lib/diagnostico/servidor";
 import type { Calculo, Diagnostico, Facto } from "@/lib/diagnostico/regras";
 import { rotuloSetorMonitor } from "@/lib/monitor/contratos";
-import { seccoesDiagnostico, type ItemConfirmar, type OrigemItem } from "@/lib/diagnostico/apresentacao";
+import { seccoesDiagnostico, type ItemDestaque, type OrigemItem } from "@/lib/diagnostico/apresentacao";
 import { ORIGEM_ANALISAR_FATURA } from "@/lib/analisarFatura";
 import { MARKETING_SITE_URL } from "@/lib/site";
 
 // Resultado do diagnóstico gratuito. Acompanha o estado pelo servidor (a
 // sessão anónima não tem RLS: só a Server Action, com o cookie, o lê) e
-// mostra-o em três áreas (src/lib/diagnostico/apresentacao.ts): o que
-// identificámos (lido e calculado), o que merece confirmação (regras fixas,
-// com a origem de cada ponto) e o que recomendamos. Depois, a conversão:
+// mostra-o em duas áreas (src/lib/diagnostico/apresentacao.ts): o que
+// identificámos (lido e calculado) e o que está em destaque no documento
+// (regras fixas, com a origem de cada ponto) — só factos, sem passos a
+// seguir nem recomendações (decisão de 22/10/2026). Depois, a conversão:
 // vindo de /analisar-fatura, "Conhecer a Protecção DoLado"; de outras
 // páginas, a Protecção com 30 dias grátis. Guardar o resultado numa conta
 // em ambos os casos.
@@ -77,7 +78,7 @@ function textoCalculo(c: Calculo, idioma: Idioma, r: T["resultado"]): string {
 }
 
 // Uma factura com menos do que a mensalidade fica na lista de cálculos; com
-// mais, passa a "O que merece confirmação" (apresentacao.ts).
+// mais, passa a "Em destaque no documento" (apresentacao.ts).
 function textoDiferenca(c: Extract<Calculo, { chave: "diferenca_mensalidade" }>, idioma: Idioma, t: T["resultado"]["diferenca"]): string {
   const diferenca = formatarEurosCents(idioma, Math.abs(c.diferencaCents));
   const mensalidade = formatarEurosCents(idioma, c.mensalidadeCents);
@@ -232,34 +233,19 @@ function Resultado({ id, d, associado, origem, t, idioma }: { id: string; d: Dia
         </section>
       )}
 
-      {/* B. O que merece confirmação: regras fixas, com a origem de cada ponto. */}
+      {/* B. Em destaque no documento: só factos e contas, com a origem de cada ponto. */}
       <section className={`${CARTAO} flex flex-col gap-4`}>
-        <TituloArea letra="B" titulo={r.seccoes.confirmarTitulo} texto={s.confirmar.length ? r.seccoes.confirmarTexto : r.seccoes.nadaConfirmar} />
-        {s.confirmar.length > 0 && (
+        <TituloArea letra="B" titulo={r.seccoes.destaquesTitulo} texto={s.destaques.length ? r.seccoes.destaquesTexto : r.seccoes.semDestaques} />
+        {s.destaques.length > 0 && (
           <ul className="flex flex-col gap-3">
-            {s.confirmar.map((item, i) => (
+            {s.destaques.map((item, i) => (
               <li key={i} className="flex flex-col gap-1.5 rounded-[12px] border border-[var(--v2-line)] p-3.5">
                 <EtiquetaOrigem origem={item.origem} texto={r.origem[item.origem]} />
-                <p className={TEXTO}>{textoConfirmar(item, r, idioma)}</p>
+                <p className={TEXTO}>{textoDestaque(item, r, idioma)}</p>
               </li>
             ))}
           </ul>
         )}
-      </section>
-
-      {/* C. O que recomendamos: passos fixos escolhidos pelos pontos de B. */}
-      <section className={`${CARTAO} flex flex-col gap-4`}>
-        <TituloArea letra="C" titulo={r.seccoes.recomendamosTitulo} texto={r.seccoes.recomendamosTexto} />
-        <ol className="flex flex-col gap-2.5">
-          {s.recomendacoes.map((rec, i) => (
-            <li key={rec} className="flex gap-3">
-              <span aria-hidden className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-[var(--v2-mint)] text-[15px] font-bold text-[var(--v2-green-dark)]">
-                {i + 1}
-              </span>
-              <span className={TEXTO}>{r.recomendacoes[rec]}</span>
-            </li>
-          ))}
-        </ol>
       </section>
 
       <Aviso tom="info">{r.aviso}</Aviso>
@@ -306,23 +292,23 @@ function EtiquetaOrigem({ origem, texto }: { origem: OrigemItem; texto: string }
   return <span className={`self-start rounded-full px-2.5 py-0.5 text-[13px] font-semibold ${COR_ORIGEM[origem]}`}>{texto}</span>;
 }
 
-function textoConfirmar(item: ItemConfirmar, r: T["resultado"], idioma: Idioma): string {
+function textoDestaque(item: ItemDestaque, r: T["resultado"], idioma: Idioma): string {
   const euros = (cents: number) => formatarEurosCents(idioma, cents);
   switch (item.chave) {
     case "soma_linhas_difere":
-      return r.confirmar.soma_linhas_difere(euros(item.somaCents), euros(item.totalCents));
+      return r.destaques.soma_linhas_difere(euros(item.somaCents), euros(item.totalCents));
     case "diferenca_mensalidade":
-      return r.confirmar.diferenca_mensalidade(euros(item.diferencaCents), euros(item.mensalidadeCents));
+      return r.destaques.diferenca_mensalidade(euros(item.diferencaCents), euros(item.mensalidadeCents));
     case "cobrancas_pontuais":
-      return r.confirmar.cobrancas_pontuais(item.quantidade, euros(item.totalCents));
+      return r.destaques.cobrancas_pontuais(item.quantidade, euros(item.totalCents));
     case "data_proxima":
-      return r.confirmar.data_proxima[item.tipo](data(idioma, item.data), String(item.dias));
+      return r.destaques.data_proxima[item.tipo](data(idioma, item.data), String(item.dias));
     case "data_passada":
-      return r.confirmar.data_passada[item.tipo](data(idioma, item.data));
+      return r.destaques.data_passada[item.tipo](data(idioma, item.data));
     case "por_confirmar":
       return r.porConfirmar[item.campo] ?? item.campo;
     case "so_com_contrato":
-      return r.confirmar.so_com_contrato;
+      return r.destaques.so_com_contrato;
   }
 }
 

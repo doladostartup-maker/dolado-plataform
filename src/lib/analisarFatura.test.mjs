@@ -6,7 +6,7 @@ import { CAMINHO_ANALISAR_FATURA, EXEMPLO_FACTURA, ORIGEM_ANALISAR_FATURA, camin
 import { analisarFatura as pt } from "../i18n/mensagens/pt-PT/analisarFatura.ts";
 
 const ler = (rel) => readFileSync(new URL(rel, import.meta.url), "utf8");
-const textoPt = JSON.stringify(pt) + pt.exemplo.cartoes.confirmar.pontual("1,00 €");
+const textoPt = JSON.stringify(pt) + pt.exemplo.cartoes.destaques.pontual("1,00 €");
 
 describe("regras", () => {
   test("destino de /30-dias-gratis mantém o idioma", () => {
@@ -27,6 +27,11 @@ describe("texto", () => {
     for (const proibido of ["poupe", "poupar", "ilegal", "indevid", "erro", "30 dias", "grátis", "inteligência artificial", " ia "]) {
       assert.ok(!principal.includes(proibido), proibido);
     }
+  });
+  test("o exemplo mostra só factos, como o resultado: sem passos a seguir", () => {
+    const exemplo = JSON.stringify(pt.exemplo).toLowerCase() + pt.exemplo.cartoes.destaques.pontual("1,00 €").toLowerCase();
+    for (const proibido of ["confirme", "peça", "compare", "recomend", "deve "]) assert.ok(!exemplo.includes(proibido), proibido);
+    assert.deepEqual(Object.keys(pt.exemplo.cartoes), ["pagar", "destaques", "contrato"]);
   });
   test("o exemplo está identificado como ilustrativo", () => {
     assert.match(pt.exemplo.etiqueta, /ilustrativo/i);

@@ -96,53 +96,40 @@ export const diagnostico = {
       mais: (diferenca: V, mensalidade: V) => `Esta factura tem mais ${diferenca} do que a mensalidade (${mensalidade}).`,
       menos: (diferenca: V, mensalidade: V) => `Esta factura tem menos ${diferenca} do que a mensalidade (${mensalidade}).`,
     },
-    // Três áreas do resultado (src/lib/diagnostico/apresentacao.ts): só o que
-    // foi lido, contas feitas em código e passos práticos fixos — nunca uma
-    // conclusão de que algo está errado.
+    // Duas áreas do resultado (src/lib/diagnostico/apresentacao.ts): só o que
+    // foi lido e contas feitas em código — nunca uma conclusão de que algo
+    // está errado, nem passos a seguir (decisão de Thiago, 22/10/2026).
     seccoes: {
       identificadoTitulo: "O que identificámos",
       identificadoTexto: "Valores e datas tal como aparecem no documento, e as contas que fizemos com eles.",
-      confirmarTitulo: "O que merece confirmação",
-      confirmarTexto:
-        "Não quer dizer que haja um erro. São pontos que vale a pena confirmar na factura original, no contrato ou com a empresa.",
-      nadaConfirmar: "Não encontrámos no documento nada que precise de ser confirmado.",
-      recomendamosTitulo: "O que recomendamos",
-      recomendamosTexto: "Passos práticos, com base apenas no que conseguimos ler.",
+      destaquesTitulo: "Em destaque no documento",
+      destaquesTexto: "Datas e valores do documento que convém ter presentes. Não quer dizer que haja um erro.",
+      semDestaques: "Não há datas nem valores do documento a destacar.",
     },
     origem: {
       documento: "Do documento",
       nao_confirmado: "Não confirmado",
-      contrato: "Precisa do contrato",
+      contrato: "Consta do contrato",
     },
-    confirmar: {
+    destaques: {
       soma_linhas_difere: (soma: V, total: V) =>
-        `A soma das linhas que conseguimos ler (${soma}) é diferente do total da factura (${total}). Confirme na factura original se há linhas que não lemos.`,
+        `A soma das linhas que conseguimos ler (${soma}) é diferente do total da factura (${total}). Pode haver linhas que não conseguimos ler.`,
       diferenca_mensalidade: (diferenca: V, mensalidade: V) =>
-        `O total tem mais ${diferenca} do que a mensalidade (${mensalidade}). Pode vir de consumos, serviços adicionais ou acertos — confirme nas linhas de onde vem.`,
+        `O total tem mais ${diferenca} do que a mensalidade (${mensalidade}). Nas linhas da factura pode ver de onde vem a diferença.`,
       cobrancas_pontuais: (n: number, total: V) =>
         n === 1
-          ? `Há 1 cobrança que não se repete todos os meses (${total}). Confirme se a reconhece.`
-          : `Há ${n} cobranças que não se repetem todos os meses (${total} no total). Confirme se as reconhece.`,
+          ? `Há 1 cobrança que não se repete todos os meses (${total}).`
+          : `Há ${n} cobranças que não se repetem todos os meses (${total} no total).`,
       data_proxima: {
-        fidelizacao: (data: V, dias: V) => `A fidelização termina a ${data} (faltam ${dias} dias). Confirme o que muda depois dessa data.`,
-        promocao: (data: V, dias: V) => `A promoção termina a ${data} (faltam ${dias} dias). Confirme quanto vai pagar depois dessa data.`,
+        fidelizacao: (data: V, dias: V) => `A fidelização termina a ${data} (faltam ${dias} dias).`,
+        promocao: (data: V, dias: V) => `A promoção termina a ${data} (faltam ${dias} dias).`,
       },
       data_passada: {
-        fidelizacao: (data: V) => `A fidelização indicada terminou a ${data}. Confirme as condições que se aplicam agora.`,
-        promocao: (data: V) => `A promoção indicada terminou a ${data}. Confirme o valor que paga agora.`,
+        fidelizacao: (data: V) => `A fidelização indicada terminou a ${data}.`,
+        promocao: (data: V) => `A promoção indicada terminou a ${data}.`,
       },
       so_com_contrato:
-        "Uma factura mostra o que foi cobrado. As condições que acordou — preço, fidelização e promoções — só o contrato as confirma.",
-    },
-    recomendacoes: {
-      anotar_data: "Anote a data de fim e, antes dela, confirme com a empresa quanto vai pagar a seguir.",
-      rever_condicoes: "Peça à empresa que lhe confirme, por escrito, as condições que se aplicam agora.",
-      comparar_anterior: "Compare esta factura com a anterior, linha a linha.",
-      pedir_esclarecimento: "Se não reconhecer uma cobrança, peça um esclarecimento por escrito à empresa e guarde a resposta.",
-      pdf_original: "Se puder, carregue o PDF original que a empresa lhe enviou: lê-se melhor do que uma digitalização.",
-      ter_contrato: "Tenha o contrato à mão: é ele que confirma o preço acordado e se existe fidelização.",
-      comparar_facturas_contrato: "Quando receber as próximas facturas, confirme que correspondem a estas condições.",
-      guardar_factura: "Guarde esta factura: vai ser útil para comparar com a próxima.",
+        "Uma factura mostra o que foi cobrado. O preço acordado, a fidelização e as promoções constam do contrato.",
     },
     porConfirmar: {
       fornecedor: "A empresa que emitiu o documento.",

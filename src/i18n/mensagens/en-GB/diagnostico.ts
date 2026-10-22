@@ -93,47 +93,34 @@ export const diagnostico: Traducao<typeof pt> = {
     seccoes: {
       identificadoTitulo: "What we found",
       identificadoTexto: "Amounts and dates as they appear in the document, and the sums we worked out from them.",
-      confirmarTitulo: "What is worth confirming",
-      confirmarTexto:
-        "This does not mean anything is wrong. These are points worth checking against the original bill, the contract or with the company.",
-      nadaConfirmar: "We found nothing in the document that needs confirming.",
-      recomendamosTitulo: "What we suggest",
-      recomendamosTexto: "Practical steps, based only on what we could read.",
+      destaquesTitulo: "Highlights from the document",
+      destaquesTexto: "Dates and amounts from the document worth keeping in mind. This does not mean anything is wrong.",
+      semDestaques: "There are no dates or amounts from the document to highlight.",
     },
     origem: {
       documento: "From the document",
       nao_confirmado: "Not confirmed",
-      contrato: "Needs the contract",
+      contrato: "In the contract",
     },
-    confirmar: {
+    destaques: {
       soma_linhas_difere: (soma: V, total: V) =>
-        `The lines we could read add up to ${soma}, which is different from the bill total (${total}). Check the original bill for lines we did not read.`,
+        `The lines we could read add up to ${soma}, which is different from the bill total (${total}). There may be lines we could not read.`,
       diferenca_mensalidade: (diferenca: V, mensalidade: V) =>
-        `The total is ${diferenca} more than the monthly fee (${mensalidade}). This may come from usage, extra services or adjustments — check the lines to see where it comes from.`,
+        `The total is ${diferenca} more than the monthly fee (${mensalidade}). The lines on the bill show where the difference comes from.`,
       cobrancas_pontuais: (n: number, total: V) =>
         n === 1
-          ? `There is 1 charge that does not repeat every month (${total}). Check that you recognise it.`
-          : `There are ${n} charges that do not repeat every month (${total} in total). Check that you recognise them.`,
+          ? `There is 1 charge that does not repeat every month (${total}).`
+          : `There are ${n} charges that do not repeat every month (${total} in total).`,
       data_proxima: {
-        fidelizacao: (data: V, dias: V) => `The minimum term ends on ${data} (${dias} days to go). Check what changes after that date.`,
-        promocao: (data: V, dias: V) => `The promotion ends on ${data} (${dias} days to go). Check how much you will pay after that date.`,
+        fidelizacao: (data: V, dias: V) => `The minimum term ends on ${data} (${dias} days to go).`,
+        promocao: (data: V, dias: V) => `The promotion ends on ${data} (${dias} days to go).`,
       },
       data_passada: {
-        fidelizacao: (data: V) => `The minimum term shown ended on ${data}. Check which terms apply now.`,
-        promocao: (data: V) => `The promotion shown ended on ${data}. Check the amount you pay now.`,
+        fidelizacao: (data: V) => `The minimum term shown ended on ${data}.`,
+        promocao: (data: V) => `The promotion shown ended on ${data}.`,
       },
       so_com_contrato:
-        "A bill shows what was charged. The terms you agreed — price, minimum term and promotions — can only be confirmed with the contract.",
-    },
-    recomendacoes: {
-      anotar_data: "Make a note of the end date and, before it, ask the company how much you will pay next.",
-      rever_condicoes: "Ask the company to confirm in writing which terms apply now.",
-      comparar_anterior: "Compare this bill with the previous one, line by line.",
-      pedir_esclarecimento: "If you do not recognise a charge, ask the company for a written explanation and keep the reply.",
-      pdf_original: "If you can, upload the original PDF the company sent you: it reads better than a scan.",
-      ter_contrato: "Keep the contract to hand: it confirms the agreed price and whether there is a minimum term.",
-      comparar_facturas_contrato: "When your next bills arrive, check that they match these terms.",
-      guardar_factura: "Keep this bill: it will be useful to compare with the next one.",
+        "A bill shows what was charged. The agreed price, minimum term and promotions are set out in the contract.",
     },
     porConfirmar: {
       fornecedor: "The company that issued the document.",
