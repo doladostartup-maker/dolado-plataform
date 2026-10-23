@@ -55,7 +55,7 @@ O esquema de cada fase tem de servir o código anterior e o novo (deploy na Clev
 | | 3 Bloqueios cruzados dos fluxos particulares | Feita (PR #191; `20261031090000` aplicada em produção a 23/10/2026) |
 | | 4 Registo, MFA de empresa, recuperação, aprovação | Feita (PR #192; `20261101090000` aplicada em produção a 23/10/2026; `EMPRESAS_ATIVO=1` ligado por Thiago para ensaio controlado) |
 | 2 Produto | 5 Activação e ciclo de pagamento manual | Feita (PR #194; `20261103090000` aplicada em produção a 23/10/2026; segredo dos avisos configurado) |
-| | 6 Monitor empresarial | 6A no ramo `feat/empresas-monitor` (23/10/2026; migration `20261104090000` por aplicar); 6B (revisão D3, classificação, fila no backoffice) por fazer |
+| | 6 Monitor empresarial | 6A no PR #195 (`20261104090000` aplicada em produção a 23/10/2026, cópia prévia em ~/dolado-backups/); 6B (revisão D3, classificação, fila no backoffice) por fazer |
 | | 7 Portal empresarial | |
 | | 8 Alertas e resumo mensal | |
 | 3 Conversão e dados | 9 Exportação e eliminação | |
