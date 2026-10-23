@@ -185,7 +185,7 @@ describe("22. a equipa não consegue contornar a autorização", () => {
     const portal = fonte("../app/[idioma]/portal/casos/texto-actions.ts");
     assert.match(portal, /rpc\("texto_autorizar_no_portal"[\s\S]*p_utilizador: user\.id/);
     assert.match(portal, /rpc\("texto_pedir_alteracoes_no_portal"[\s\S]*p_utilizador: user\.id/);
-    assert.match(portal, /requireUser\(\)/);
+    assert.match(portal, /requireParticular\("[^"]+"\)/);
   });
 });
 

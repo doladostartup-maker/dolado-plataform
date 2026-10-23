@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidarPagina } from "@/i18n/servidor";
-import { requireUser } from "@/lib/auth";
+import { requireParticular } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { avisarEquipaAlteracoes } from "@/lib/textoCasoServidor";
 import { caminho } from "@/i18n/servidor";
@@ -17,7 +17,7 @@ async function voltar(casoId: string, resultado: string): Promise<never> {
 }
 
 export async function autorizarTextoNoPortal(casoId: string, textoId: string) {
-  const { user } = await requireUser();
+  const { user } = await requireParticular("portal/casos/texto:acao");
   const { data, error } = await createAdminClient().rpc("texto_autorizar_no_portal", {
     p_texto_id: textoId,
     p_utilizador: user.id,
@@ -26,7 +26,7 @@ export async function autorizarTextoNoPortal(casoId: string, textoId: string) {
 }
 
 export async function pedirAlteracoesNoPortal(casoId: string, textoId: string, formData: FormData) {
-  const { user } = await requireUser();
+  const { user } = await requireParticular("portal/casos/texto:acao");
   const mensagem = (formData.get("mensagem") as string | null) ?? "";
   if (!mensagem.trim()) await voltar(casoId, "mensagem_invalida");
   const { data, error } = await createAdminClient().rpc("texto_pedir_alteracoes_no_portal", {

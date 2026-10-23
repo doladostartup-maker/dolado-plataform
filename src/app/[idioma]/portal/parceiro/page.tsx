@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { requireParticular } from "@/lib/auth";
 import { CONTACTO_EMAIL } from "@/lib/site";
 import { areaParceiroAtiva, GRUPOS_COMISSAO, porReceberCents, temOportunidades } from "@/lib/parceiros/area";
 import { carregarResumoArea } from "@/lib/parceiros/areaServidor";
@@ -34,7 +34,7 @@ export default async function AreaParceiroPage({ params }: ComIdioma) {
   if (!areaParceiroAtiva()) notFound();
   const idioma = await idiomaDaPagina(params);
   const t = tAreaParceiro[idioma];
-  const { supabase } = await requireUser();
+  const { supabase } = await requireParticular("portal/parceiro");
   const resumo = await carregarResumoArea(supabase);
   const euros = (cents: number) => formatarEurosCents(idioma, cents);
 

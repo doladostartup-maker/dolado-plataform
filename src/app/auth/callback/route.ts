@@ -4,6 +4,8 @@ import { destinoDepoisDeAutenticar } from "@/lib/authServidor";
 import { COOKIE_DESTINO_POS_LOGIN, ehDestinoSeguro } from "@/lib/destinoAuth";
 import { haPedidoPorPagarNoBrowser } from "@/lib/pedidoCasoServidor";
 import { createClient } from "@/lib/supabase/server";
+import { destinoContaEmpresa } from "@/lib/empresas/contas";
+import { recusarSessaoDeEmpresa } from "@/lib/empresas/contaServidor";
 import { atribuirIndicacaoDoBrowser } from "@/lib/indicacoes/servidor";
 import { registarOrigemDaConta } from "@/lib/origemAquisicaoServidor";
 import { associarDiagnosticosDaSessao } from "@/lib/diagnostico/cookie";
@@ -47,6 +49,13 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     const destinoGuardado = (await cookies()).get(COOKIE_DESTINO_POS_LOGIN)?.value;
     if (!error && data.user) {
+      // Conta de empresa: este é o percurso dos particulares (Google e
+      // confirmação do e-mail). Retira uma identidade Google ligada por ter
+      // o mesmo e-mail, termina a sessão e segue para a entrada das empresas
+      // — antes de qualquer atribuição (indicação, origem, diagnóstico).
+      if (await recusarSessaoDeEmpresa(supabase, data.user.id, "auth/callback", data.session?.access_token)) {
+        return NextResponse.redirect(`${siteUrl}${destinoContaEmpresa()}`);
+      }
       // Programa de indicação: a conta fica ligada ao link visitado neste
       // browser (a base de dados recusa auto-indicação, contas já clientes e
       // visitas com mais de 30 dias). Nunca impede o login.

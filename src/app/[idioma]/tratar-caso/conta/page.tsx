@@ -1,3 +1,4 @@
+import { utilizadorParticularAtual } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { haPedidoPorPagarNoBrowser } from "@/lib/pedidoCasoServidor";
 import { createClient } from "@/lib/supabase/server";
@@ -11,6 +12,7 @@ export default async function ContaPedidoPage({ params }: ComIdioma) {
   await idiomaDaPagina(params);
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
+  await utilizadorParticularAtual("tratar-caso/conta");
   if (data?.claims?.sub) redirect(await caminho("/tratar-caso/modalidade"));
   if (!(await haPedidoPorPagarNoBrowser())) redirect(await caminho("/tratar-caso"));
 

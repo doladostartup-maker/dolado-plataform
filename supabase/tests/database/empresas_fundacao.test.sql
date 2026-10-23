@@ -209,7 +209,8 @@ select is(public.empresa_tem_acesso('00000000-0000-4000-e300-00000000000a'), 'to
 select is((select count(*) from public.organizacoes_historico where organizacao_id = '00000000-0000-4000-e300-00000000000a'),
   4::bigint, 'Criação + 3 mudanças de estado registadas (mudar só a data não regista)');
 select is((select estado_antes || '>' || estado_depois from public.organizacoes_historico
-            where organizacao_id = '00000000-0000-4000-e300-00000000000a' order by created_at desc, id limit 1)
+            where organizacao_id = '00000000-0000-4000-e300-00000000000a' and estado_antes is not null
+            order by created_at desc, id limit 1)
           in ('suspensa>cancelada', 'cancelada>pagamento_em_atraso', 'ativa>suspensa'), true, 'Transições gravadas');
 
 insert into public.empresa_revisoes (organizacao_id, alvo_tipo, alvo_id, minutos, resultado)

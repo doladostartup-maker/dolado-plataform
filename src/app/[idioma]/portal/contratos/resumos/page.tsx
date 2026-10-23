@@ -2,7 +2,7 @@ import Link from "@/i18n/Link";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { tProtecao } from "@/i18n/mensagens/protecao";
 import { formatarData, formatarMesAno } from "@/i18n/formatar";
-import { requireUser } from "@/lib/auth";
+import { requireParticular } from "@/lib/auth";
 import { resumoDoConteudo } from "@/lib/resumoMensal/portal";
 import { CabecalhoPagina } from "@/components/portal/Cabecalho";
 import { EstadoVazio } from "@/components/portal/EstadoVazio";
@@ -17,7 +17,7 @@ import { METADADOS, TITULO_CARTAO } from "@/components/portal/ui";
 export default async function ResumosMensaisPage({ params }: ComIdioma) {
   const idioma = await idiomaDaPagina(params);
   const t = tProtecao[idioma].resumos;
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireParticular("portal/contratos/resumos");
 
   const { data } = await supabase
     .from("protecao_resumos_mensais")

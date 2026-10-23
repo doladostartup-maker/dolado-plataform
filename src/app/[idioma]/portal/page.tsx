@@ -1,6 +1,6 @@
 import { BotaoComprar } from "@/components/compra/BotaoComprar";
 import { avisoDoPortal, estadoReembolsoCliente, resumoPlanoPortal } from "@/lib/acesso";
-import { obterAcesso, requireUser } from "@/lib/auth";
+import { obterAcesso, requireParticular } from "@/lib/auth";
 import { casosDoMes } from "@/lib/casoExtra";
 import { estadoProtecaoGratuitaDaConta } from "@/lib/protecaoGratuitaServidor";
 import { associarDiagnosticosDaSessao } from "@/lib/diagnostico/cookie";
@@ -47,7 +47,7 @@ export default async function PortalIndex({
   const tp = tPlanos[idioma];
   const MENSAGENS_ERRO: Record<string, string> = t.avisos.erros;
   const params = await searchParams;
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireParticular("portal/painel");
   // Diagnóstico gratuito feito neste browser antes de entrar: fica ligado à
   // conta (o Painel é o destino por omissão depois do login).
   await associarDiagnosticosDaSessao(user.id);

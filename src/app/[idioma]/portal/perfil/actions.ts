@@ -6,8 +6,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { SETORES } from "@/lib/pedidoCaso";
 import { MSG_ERRO_GUARDAR, mensagemErroConta } from "@/lib/mensagensErro";
 import { caminho } from "@/i18n/servidor";
+import { requireParticular } from "@/lib/auth";
 
 export async function alterarPassword(formData: FormData) {
+  await requireParticular("portal/perfil:acao");
   const password = formData.get("password") as string;
   const confirmarPassword = formData.get("confirmar_password") as string;
 
@@ -42,6 +44,7 @@ export async function guardarPreferenciasSetor(formData: FormData) {
   if (!user) {
     redirect(await caminho("/login"));
   }
+  await requireParticular("portal/perfil:acao");
 
   const setores = formData.getAll("setor").filter((s): s is string => typeof s === "string" && SETORES.includes(s));
 
@@ -83,6 +86,7 @@ export async function retirarConsentimentoComunicacoes() {
   if (!user) {
     redirect(await caminho("/login"));
   }
+  await requireParticular("portal/perfil:acao");
 
   const { error } = await createAdminClient()
     .from("consentimentos_comunicacoes")

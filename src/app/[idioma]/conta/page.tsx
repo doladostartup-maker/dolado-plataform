@@ -1,7 +1,7 @@
 import Link from "@/i18n/Link";
 import { tConta } from "@/i18n/mensagens/conta";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
-import { requireUser } from "@/lib/auth";
+import { requireParticular } from "@/lib/auth";
 import { logout } from "@/app/auth/actions";
 import { Dado, ListaDados } from "@/components/portal/Dados";
 import { MolduraConta } from "@/components/portal/MolduraConta";
@@ -9,7 +9,7 @@ import { BOTAO_FANTASMA, BOTAO_PRIMARIO, BOTAO_SECUNDARIO } from "@/components/p
 
 export default async function ContaPage({ params }: ComIdioma) {
   const t = tConta[await idiomaDaPagina(params)].aSuaConta;
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireParticular("conta");
 
   const { data: perfil } = await supabase.from("utilizadores").select("nome, role").eq("id", user.id).single();
 

@@ -6,7 +6,7 @@ import { codigoBloqueiaCompra } from "@/lib/parceiros/regras";
 import { tParceiros } from "@/i18n/mensagens/parceiros";
 import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { obterAcesso, requireUser, utilizadorAtual } from "@/lib/auth";
+import { obterAcesso, requireParticular, utilizadorParticularAtual } from "@/lib/auth";
 import { customerDaConta, subscricoesAtivasDoCustomer } from "@/lib/compra/servidor";
 import { MARKETING_SITE_URL } from "@/lib/site";
 import { getStripe } from "@/lib/stripe/client";
@@ -121,7 +121,7 @@ function dependenciasCheckout(
     async criarSessao(metadata) {
       // Origem de aquisição (?ref=): só na conta DoLado (grava, ou apaga se o
       // consentimento foi retirado). Nunca vai para a metadata da Stripe.
-      const userId = (await utilizadorAtual()).user?.id;
+      const userId = (await utilizadorParticularAtual("stripe:acao")).user?.id;
       if (userId) await registarOrigemDaConta(userId);
       const session = await getStripe().checkout.sessions.create(comIdioma(parametros(metadata), await obterIdioma()));
       return { id: session.id, url: session.url };
@@ -176,7 +176,7 @@ async function checkoutPublico(pedido: PedidoCompra): Promise<Destino> {
  * definidos aqui, no servidor — para o webhook creditar a conta certa.
  */
 async function compraAvulsoComConta(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Destino> {
-  const { user } = await requireUser();
+  const { user } = await requireParticular("stripe:acao");
   const customerId = await customerDaConta(user.id);
   const voltar = pedido.origem === "novo_caso" ? "/portal/casos/novo" : "/portal";
   const metadataPedido: Record<string, string> = ctx ? { pedido_id: ctx.pedidoId } : {};
@@ -249,7 +249,7 @@ async function garantirCupaoConversao(stripe: ReturnType<typeof getStripe>) {
 async function adesao(pedido: PedidoCompra, ctx?: ContextoPedido): Promise<Destino> {
   const plano = pedido.plano as "protecao" | "caso_protecao";
   const stripe = getStripe();
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireParticular("stripe:acao");
   const acesso = await obterAcesso(supabase, user.id);
   const metadataPedido: Record<string, string> = ctx ? { pedido_id: ctx.pedidoId } : {};
 
@@ -441,7 +441,7 @@ async function compraCasoExtra(pedido: PedidoCompra, ctx: ContextoPedido): Promi
   };
   if (!casoExtraConfigurado()) return indisponivel;
 
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireParticular("stripe:acao");
   const acesso = await obterAcesso(supabase, user.id);
   if (!direitoCasoExtra(acesso).ok) return indisponivel;
 
@@ -497,7 +497,7 @@ async function compraCasoExtra(pedido: PedidoCompra, ctx: ContextoPedido): Promi
  * vezes o mesmo pedido.
  */
 async function checkoutPedidoCaso(pedido: PedidoCompra): Promise<Destino> {
-  const { user } = await requireUser();
+  const { user } = await requireParticular("stripe:acao");
   const p = await pedidoDaConta(pedido.pedidoId ?? null, user.id);
   if (!p) return { destino: "/tratar-caso" };
   const recebido = `/tratar-caso/recebido?pedido=${encodeURIComponent(p.id)}`;
@@ -562,7 +562,7 @@ export async function confirmarCompra(_anterior: EstadoCompra, formData: FormDat
   // já cliente ou já atribuída) seguem sem atribuição.
   const codigoParceiro = String(formData.get("codigo_parceiro") ?? "").trim();
   if (codigoParceiro) {
-    const { user } = await utilizadorAtual();
+    const { user } = await utilizadorParticularAtual("stripe:acao");
     if (user) {
       const r = await atribuirCodigoParceiro(user.id, codigoParceiro).catch(() => "erro" as const);
       if (r !== "erro" && r !== "desligado" && codigoBloqueiaCompra(r)) {
@@ -577,7 +577,7 @@ export async function confirmarCompra(_anterior: EstadoCompra, formData: FormDat
     // A compra "pública" (sem conta) só é para quem não tem sessão. Com
     // sessão, segue sempre os fluxos da conta — mesmo Customer, e nunca uma
     // segunda subscrição desligada da conta.
-    const comSessao = pedido.fluxo === "publico" && !!(await utilizadorAtual()).user;
+    const comSessao = pedido.fluxo === "publico" && !!(await utilizadorParticularAtual("stripe:acao")).user;
     const r =
       pedido.fluxo === "publico" && !comSessao
         ? await checkoutPublico(pedido)
@@ -592,7 +592,7 @@ export async function confirmarCompra(_anterior: EstadoCompra, formData: FormDat
                 : await adesao(pedido);
     destino = r.destino;
   } catch (erro) {
-    // requireUser() sem sessão faz redirect: deixa passar.
+    // requireParticular("stripe:acao") sem sessão faz redirect: deixa passar.
     if ((erro as { digest?: string })?.digest?.startsWith("NEXT_REDIRECT")) throw erro;
     console.error(JSON.stringify({ origem: "checkout", erro_codigo: (erro as { code?: string })?.code ?? "erro" }));
     return { erro: mensagens.abrir };

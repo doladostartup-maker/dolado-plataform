@@ -6,7 +6,7 @@ import { rotulo } from "@/i18n/mensagens/rotulos";
 import { tTratarCaso } from "@/i18n/mensagens/tratarCaso";
 import { redirect } from "next/navigation";
 import { BotaoComprar } from "@/components/compra/BotaoComprar";
-import { obterAcesso } from "@/lib/auth";
+import { obterAcesso, utilizadorParticularAtual } from "@/lib/auth";
 import { opcoesDoPedido, pedidoPorPagar, type ModalidadeCaso } from "@/lib/pedidoCaso";
 import { pedidoDaConta } from "@/lib/pedidoCasoServidor";
 import { CASO_EXTRA, PLANOS } from "@/lib/planos";
@@ -65,6 +65,7 @@ export default async function ModalidadePage({
   const params = await searchParams;
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
+  await utilizadorParticularAtual("tratar-caso/modalidade");
   const userId = claims?.claims?.sub as string | undefined;
   if (!userId) redirect(await caminho("/tratar-caso/conta"));
 

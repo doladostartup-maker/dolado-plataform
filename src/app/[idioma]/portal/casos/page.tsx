@@ -3,7 +3,7 @@ import { formatarData as formatarDataIdioma } from "@/i18n/formatar";
 import { tPortal } from "@/i18n/mensagens/portal";
 import { rotulo } from "@/i18n/mensagens/rotulos";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
-import { obterAcesso, requireUser } from "@/lib/auth";
+import { obterAcesso, requireParticular } from "@/lib/auth";
 import { casosDoMes, elegivelCasoExtra } from "@/lib/casoExtra";
 import { casoExtraConfigurado } from "@/lib/stripe/planos";
 import { CasosDoMes } from "@/components/portal/CasoExtra";
@@ -18,7 +18,7 @@ export default async function MeusCasosPage({ params }: ComIdioma) {
   const idioma = await idiomaDaPagina(params);
   const t = tPortal[idioma].casos;
   const formatarData = (iso: string) => formatarDataIdioma(idioma, iso);
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireParticular("portal/casos");
 
   const [acesso, { data: casos }, { data: pedidos }, { data: textos }] = await Promise.all([
     obterAcesso(supabase, user.id),

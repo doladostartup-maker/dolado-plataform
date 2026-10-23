@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { destinoDepoisDeAutenticar } from "@/lib/authServidor";
+import { destinoContaEmpresa } from "@/lib/empresas/contas";
+import { recusarSessaoDeEmpresa } from "@/lib/empresas/contaServidor";
 import { ehDestinoSeguro } from "@/lib/destinoAuth";
 import { createClient } from "@/lib/supabase/server";
 import { mensagemErroConta } from "@/lib/mensagensErro";
@@ -26,6 +28,9 @@ export async function login(formData: FormData) {
     const erro = traduzirMensagemConta(idioma, mensagemErroConta(error?.code, error?.message));
     redirect(localizarHref(idioma, `/login?erro=${encodeURIComponent(erro)}${voltar}`));
   }
+
+  // Conta de empresa: nunca entra pelo login dos particulares (DoLado Empresas).
+  if (await recusarSessaoDeEmpresa(supabase, data.user.id, "login")) redirect(destinoContaEmpresa());
 
   // Origem de aquisição: aplica a escolha de cookies deste browser à conta.
   await registarOrigemDaConta(data.user.id);

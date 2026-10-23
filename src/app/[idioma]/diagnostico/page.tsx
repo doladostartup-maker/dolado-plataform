@@ -3,7 +3,7 @@ import { Logotipo } from "@/components/marketing-v2/Logotipo";
 import { fonteV2 } from "@/components/marketing-v2/fonte";
 import { tDiagnostico } from "@/i18n/mensagens/diagnostico";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
-import { utilizadorAtual } from "@/lib/auth";
+import { utilizadorParticularAtual } from "@/lib/auth";
 import { associarDiagnosticosDaSessao } from "@/lib/diagnostico/cookie";
 import { diagnosticoAtivo } from "@/lib/diagnostico/regras";
 import { ORIGEM_ANALISAR_FATURA } from "@/lib/analisarFatura";
@@ -29,7 +29,7 @@ export default async function DiagnosticoPage({
   const id = typeof consulta.id === "string" && /^[0-9a-f-]{36}$/i.test(consulta.id) ? consulta.id : null;
   // Só a origem conhecida (landing /analisar-fatura) muda a apresentação.
   const origem = consulta.origem === ORIGEM_ANALISAR_FATURA ? ORIGEM_ANALISAR_FATURA : null;
-  const { user } = await utilizadorAtual();
+  const { user } = await utilizadorParticularAtual("diagnostico");
   if (user) await associarDiagnosticosDaSessao(user.id);
 
   return (

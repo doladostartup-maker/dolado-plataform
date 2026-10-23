@@ -243,7 +243,7 @@ describe("pontos de entrada usam a confirmação", () => {
 
   test("compra pública com sessão iniciada segue os fluxos da conta (nunca checkoutPublico)", () => {
     const acoes = fonte("../app/actions/stripe.ts");
-    assert.match(acoes, /comSessao = pedido\.fluxo === "publico" && !!\(await utilizadorAtual\(\)\)\.user/);
+    assert.match(acoes, /comSessao = pedido\.fluxo === "publico" && !!\(await utilizadorParticularAtual\("[^"]+"\)\)\.user/);
     assert.match(acoes, /pedido\.fluxo === "publico" && !comSessao\s*\?\s*await checkoutPublico\(pedido\)/);
   });
 
@@ -302,7 +302,7 @@ describe("checkout do pedido (código da Server Action)", () => {
   const acoes = readFileSync(new URL("../app/actions/stripe.ts", import.meta.url), "utf8");
 
   test("valida a posse do pedido no servidor antes de abrir o Checkout", () => {
-    assert.match(acoes, /async function checkoutPedidoCaso[\s\S]*requireUser\(\)[\s\S]*pedidoDaConta\(/);
+    assert.match(acoes, /async function checkoutPedidoCaso[\s\S]*requireParticular\("[^"]+"\)[\s\S]*pedidoDaConta\(/);
   });
 
   test("um pedido já pago ou em confirmação não abre segundo pagamento; um checkout aberto é expirado", () => {

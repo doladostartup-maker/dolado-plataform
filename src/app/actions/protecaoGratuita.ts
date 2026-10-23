@@ -2,7 +2,7 @@
 
 import { after } from "next/server";
 import { redirect } from "next/navigation";
-import { contaComEmailConfirmado } from "@/lib/auth";
+import { contaParticularComEmailConfirmado } from "@/lib/auth";
 import { CAMPO_ACEITA_TERMOS, VALOR_ACEITE } from "@/lib/consentimentoCompra";
 import { TERMOS_VERSAO, TEXTO_ACEITACAO_PROTECAO_GRATUITA } from "@/lib/legal";
 import { ROTA_EXPERIMENTAR } from "@/lib/protecaoGratuita";
@@ -30,7 +30,7 @@ export async function ativarProtecaoGratuita(_: EstadoAtivacao, form: FormData):
   if (!protecaoGratuitaDisponivel()) return { erro: t.indisponivel };
   if (form.get(CAMPO_ACEITA_TERMOS) !== VALOR_ACEITE) return { erro: t.aceitarTermos };
 
-  const conta = await contaComEmailConfirmado();
+  const conta = await contaParticularComEmailConfirmado("experimentar-protecao:acao");
   if (!conta) redirect(await caminho(`/login?next=${encodeURIComponent(ROTA_EXPERIMENTAR)}`));
   if (!conta.emailConfirmado || !conta.email) return { erro: t.email_nao_confirmado };
 

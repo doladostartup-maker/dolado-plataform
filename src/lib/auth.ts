@@ -4,6 +4,8 @@ import { calcularAcesso, type Acesso } from "@/lib/acesso";
 import { createClient } from "@/lib/supabase/server";
 import { destinoDepoisDeAutenticar } from "@/lib/authServidor";
 import { localizarHref, type Idioma } from "@/i18n/config";
+import { destinoContaEmpresa, tipoContaDe } from "@/lib/empresas/contas";
+import { registarGuardaRecusado } from "@/lib/empresas/contaServidor";
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
 
@@ -27,6 +29,28 @@ const utilizadorPorPedido = cache(async () => {
   };
 });
 
+/**
+ * Perfil da conta da sessão (papel e tipo de conta), lido uma vez por pedido.
+ * O cliente lê o próprio perfil (RLS); null sem sessão.
+ */
+const perfilPorPedido = cache(async () => {
+  const { supabase, user } = await utilizadorPorPedido();
+  if (!user) return null;
+  const { data, error } = await supabase.from("utilizadores").select("role, tipo_conta").eq("id", user.id).maybeSingle();
+  // Falha fechada: sem o perfil não se sabe se a conta é de empresa.
+  if (error) throw new Error(`utilizadores.select: ${error.message}`);
+  return { role: (data?.role as string | undefined) ?? null, tipoConta: tipoContaDe(data?.tipo_conta) };
+});
+
+/**
+ * Conta de empresa num fluxo particular (DoLado Empresas, Fase 3): regista a
+ * ocorrência e encaminha para a entrada das empresas. Nunca devolve.
+ */
+async function recusarContaEmpresa(userId: string, contexto: string): Promise<never> {
+  await registarGuardaRecusado(userId, contexto);
+  redirect(destinoContaEmpresa());
+}
+
 export async function requireAdmin() {
   return requireAdminSemMfa();
 }
@@ -43,11 +67,7 @@ export async function requireAdminSemMfa() {
     redirect("/login");
   }
 
-  const { data: perfil } = await supabase
-    .from("utilizadores")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const perfil = await perfilPorPedido();
 
   if (perfil?.role !== "admin") {
     redirect("/portal/casos");
@@ -83,6 +103,34 @@ export async function contaComEmailConfirmado() {
   const user = data?.user;
   if (!user) return null;
   return { id: user.id, email: user.email ?? null, emailConfirmado: !!user.email_confirmed_at };
+}
+
+/**
+ * Conta particular com sessão (portal, casos, Protecção, compras). Uma conta
+ * de empresa é recusada e encaminhada para a entrada das empresas — nas
+ * páginas e também nas Server Actions chamadas directamente. `contexto`
+ * identifica a rota/acção na ocorrência registada (sem dados pessoais).
+ */
+export async function requireParticular(contexto: string) {
+  const { supabase, user } = await requireUser();
+  if ((await perfilPorPedido())?.tipoConta === "empresa") await recusarContaEmpresa(user.id, contexto);
+  return { supabase, user };
+}
+
+/** Como utilizadorAtual(), mas uma sessão de conta de empresa é recusada. */
+export async function utilizadorParticularAtual(contexto: string) {
+  const resultado = await utilizadorPorPedido();
+  if (resultado.user && (await perfilPorPedido())?.tipoConta === "empresa") {
+    await recusarContaEmpresa(resultado.user.id, contexto);
+  }
+  return resultado;
+}
+
+/** Como contaComEmailConfirmado(), mas uma conta de empresa é recusada. */
+export async function contaParticularComEmailConfirmado(contexto: string) {
+  const conta = await contaComEmailConfirmado();
+  if (conta && (await perfilPorPedido())?.tipoConta === "empresa") await recusarContaEmpresa(conta.id, contexto);
+  return conta;
 }
 
 export async function requireUser() {
@@ -139,7 +187,7 @@ export async function temProtecao(supabase: SupabaseServer, userId: string) {
  * cliente é reencaminhado para o painel, onde o modal explica os planos.
  */
 export async function requireProtecao(origem: string) {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireParticular(`protecao:${origem}`);
 
   if (!(await temProtecao(supabase, user.id))) {
     redirect(`/portal?bloqueado=${encodeURIComponent(origem)}`);

@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MSG_ERRO_GUARDAR } from "@/lib/mensagensErro";
 import { agendarRascunhoIA } from "@/lib/rascunhoIA/servidor";
-import { requireUser } from "@/lib/auth";
+import { requireParticular } from "@/lib/auth";
 import { SETORES } from "@/lib/pedidoCaso";
 import { avisarEquipa } from "@/lib/comunicacoes/servidor";
 import { FORMATOS, tipoDeclarado, verificarConteudo } from "@/lib/comunicacoes/anexos";
@@ -28,6 +28,7 @@ export async function criarCasoCliente(formData: FormData) {
   if (!user) {
     redirect(noIdioma("/login"));
   }
+  await requireParticular("portal/casos:acao");
 
   const autorizacao = formData.get("autorizacao") === "on";
   if (!autorizacao) {
@@ -105,7 +106,7 @@ export async function confirmarResolucaoCliente(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- exigido pela assinatura de Server Action ligada a um form
   _formData: FormData,
 ) {
-  const { user } = await requireUser();
+  const { user } = await requireParticular("portal/casos:acao");
   const idioma = await obterIdioma();
   const noIdioma = (c: string) => localizarHref(idioma, c);
   const { data, error } = await createAdminClient().rpc("caso_confirmar_resolucao", {
@@ -137,7 +138,7 @@ const MAX_TOTAL_RESPOSTA = 20 * 1024 * 1024;
  * posse, que o pedido está aberto, e passa o caso de volta à DoLado.
  */
 export async function responderPedidoCliente(casoId: string, pedidoId: string, formData: FormData) {
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireParticular("portal/casos:acao");
   const idioma = await obterIdioma();
   const noIdioma = (c: string) => localizarHref(idioma, c);
   const tc = tPortal[idioma].caso;

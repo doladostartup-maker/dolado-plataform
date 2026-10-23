@@ -196,7 +196,7 @@ describe("o cancelamento normal não é livre resolução nem cancelamento imedi
   });
 
   test("o user_id vem da sessão, nunca do formulário", () => {
-    assert.match(acoes, /requireUser\(\)/);
+    assert.match(acoes, /requireParticular\("[^"]+"\)/);
     assert.equal(/formData\.get\("(user_id|subscription|stripe)/.test(acoes), false);
   });
 
