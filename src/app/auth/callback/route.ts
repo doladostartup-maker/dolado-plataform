@@ -5,7 +5,8 @@ import { COOKIE_DESTINO_POS_LOGIN, ehDestinoSeguro } from "@/lib/destinoAuth";
 import { haPedidoPorPagarNoBrowser } from "@/lib/pedidoCasoServidor";
 import { createClient } from "@/lib/supabase/server";
 import { destinoContaEmpresa } from "@/lib/empresas/contas";
-import { recusarSessaoDeEmpresa } from "@/lib/empresas/contaServidor";
+import { recusarSessaoDeEmpresa, sessaoPeloGoogle, tipoContaDoUtilizador } from "@/lib/empresas/contaServidor";
+import { ROTAS_EMPRESA } from "@/lib/empresas/registo";
 import { atribuirIndicacaoDoBrowser } from "@/lib/indicacoes/servidor";
 import { registarOrigemDaConta } from "@/lib/origemAquisicaoServidor";
 import { associarDiagnosticosDaSessao } from "@/lib/diagnostico/cookie";
@@ -49,8 +50,16 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     const destinoGuardado = (await cookies()).get(COOKIE_DESTINO_POS_LOGIN)?.value;
     if (!error && data.user) {
-      // Conta de empresa: este é o percurso dos particulares (Google e
-      // confirmação do e-mail). Retira uma identidade Google ligada por ter
+      // Conta de empresa que confirmou o e-mail do registo das empresas:
+      // segue para o registo das empresas (MFA), sem nenhuma atribuição
+      // particular (indicação, origem, diagnóstico).
+      if (
+        (await tipoContaDoUtilizador(supabase, data.user.id)) === "empresa" &&
+        !sessaoPeloGoogle(data.session?.access_token)
+      ) {
+        return NextResponse.redirect(`${siteUrl}${ROTAS_EMPRESA.painel}`);
+      }
+      // Conta de empresa pelo Google (nunca permitido). Retira uma identidade Google ligada por ter
       // o mesmo e-mail, termina a sessão e segue para a entrada das empresas
       // — antes de qualquer atribuição (indicação, origem, diagnóstico).
       if (await recusarSessaoDeEmpresa(supabase, data.user.id, "auth/callback", data.session?.access_token)) {

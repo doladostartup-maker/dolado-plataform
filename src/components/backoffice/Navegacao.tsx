@@ -146,6 +146,7 @@ export function NavegacaoBackoffice({ contagens, email }: { contagens: Contagens
             { href: "/backoffice/indicacoes", texto: "Indicações", icone: <IconeMegafone tamanho={t} /> },
             { href: "/backoffice/protecao-gratuita", texto: "Protecção gratuita", icone: <IconeEscudo tamanho={t} /> },
             { href: "/backoffice/parceiros", texto: "Parceiros", icone: <IconePasta tamanho={t} /> },
+            { href: "/backoffice/empresas", texto: "Empresas", icone: <IconePasta tamanho={t} /> },
           ]}
         />
         <Grupo

@@ -3,7 +3,8 @@ import { requireAdminSemMfa } from "@/lib/auth";
 import { estadoMfa } from "@/lib/mfa";
 import { lerMfa } from "@/lib/mfaServidor";
 import { LIGACAO_DISCRETA, PAINEL, PAINEL_CORPO } from "@/components/backoffice/ui";
-import { GestaoMfa } from "./GestaoMfa";
+import { GestaoMfa } from "@/components/mfa/GestaoMfa";
+import { inscreverFactor, removerFactor, verificarFactor } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,12 @@ export default async function MfaPage() {
         </p>
       </section>
 
-      <GestaoMfa estado={estadoMfa(nivel, factores)} factores={verificados} />
+      <GestaoMfa
+        estado={estadoMfa(nivel, factores)}
+        factores={verificados}
+        acoes={{ inscrever: inscreverFactor, verificar: verificarFactor, remover: removerFactor }}
+        textoSemFactores="Inscreva primeiro o factor principal e, logo a seguir, um factor de reserva noutro dispositivo ou num gestor de palavras-passe. Os dois são necessários antes de o backoffice passar a exigir a verificação."
+      />
 
       <p className="text-[13px] text-[var(--v2-muted)]">
         Perdeu o acesso a todos os factores? Siga o procedimento de recuperação em{" "}

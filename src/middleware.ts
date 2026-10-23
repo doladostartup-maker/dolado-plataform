@@ -7,6 +7,7 @@ import { ehCaminhoDeProblemas } from "@/lib/problemas/catalogo";
 import { CAMINHO_LANDING_30_DIAS } from "@/lib/landing30Dias";
 import { CAMINHO_ANALISAR_FATURA, caminhoAnalisarFaturaDe } from "@/lib/analisarFatura";
 import { diagnosticoAtivo } from "@/lib/diagnostico/regras";
+import { ehCaminhoDeContaEmpresa } from "@/lib/empresas/contas";
 import {
   CABECALHO_IDIOMA,
   COOKIE_IDIOMA,
@@ -197,6 +198,11 @@ async function encaminhar(request: NextRequest): Promise<NextResponse> {
   // O segmento interno do português nunca aparece no URL público.
   if (!prefixado && (pathname === "/pt" || pathname.startsWith("/pt/"))) {
     return NextResponse.redirect(new URL(`${pathname.slice(3) || "/"}${search}`, request.url), 308);
+  }
+
+  // DoLado Empresas: contas e portal das empresas só em português (D1).
+  if (prefixado && ehCaminhoDeContaEmpresa(caminho) && (request.method === "GET" || request.method === "HEAD")) {
+    return NextResponse.redirect(new URL(`${caminho}${search}`, request.url), 308);
   }
 
   if (host.startsWith("portal.") && ehLinkDeIndicacao(caminho)) {
