@@ -169,6 +169,13 @@ export function NavegacaoBackoffice({ contagens, email }: { contagens: Contagens
             {email}
           </p>
         )}
+        <Link
+          href="/auth/mfa"
+          prefetch={false}
+          className="flex min-h-10 items-center gap-2.5 rounded-[10px] px-2.5 text-[14px] font-semibold text-[var(--v2-muted)] hover:bg-[var(--v2-surface)] hover:text-[var(--v2-navy)]"
+        >
+          Segurança da conta
+        </Link>
         <form action={logout}>
           <button
             type="submit"
