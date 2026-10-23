@@ -54,7 +54,7 @@ O esquema de cada fase tem de servir o código anterior e o novo (deploy na Clev
 | | 2 Fundação do modelo de dados | Feita (PR #190; `20261030090000` aplicada em produção a 23/10/2026) |
 | | 3 Bloqueios cruzados dos fluxos particulares | Feita (PR #191; `20261031090000` aplicada em produção a 23/10/2026) |
 | | 4 Registo, MFA de empresa, recuperação, aprovação | Feita (PR #192; `20261101090000` aplicada em produção a 23/10/2026; `EMPRESAS_ATIVO=1` ligado por Thiago para ensaio controlado) |
-| 2 Produto | 5 Activação e ciclo de pagamento manual | No ramo `feat/empresas-ciclo` (23/10/2026); migration `20261103090000` por aplicar |
+| 2 Produto | 5 Activação e ciclo de pagamento manual | PR #194; `20261103090000` aplicada em produção a 23/10/2026 (cópia prévia em ~/dolado-backups/); segredo dos avisos configurado |
 | | 6 Monitor empresarial | |
 | | 7 Portal empresarial | |
 | | 8 Alertas e resumo mensal | |
