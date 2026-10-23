@@ -255,7 +255,12 @@ select is(
                            -- rejeitar e repor o MFA verificam o admin lá dentro; a retirada do Google
                            -- só actua em contas de empresa (empresas_registo.test.sql).
                            'empresa_e_admin', 'empresa_registar', 'empresa_sincronizar_estado', 'empresa_aprovar',
-                           'empresa_rejeitar', 'empresa_mfa_reposicao', 'empresa_retirar_identidade_google')), 0::bigint,
+                           'empresa_rejeitar', 'empresa_mfa_reposicao', 'empresa_retirar_identidade_google',
+                           -- DoLado Empresas, ciclo (20261103090000): só service_role; as do admin verificam
+                           -- o papel lá dentro; o ciclo corre no pg_cron (empresas_ciclo.test.sql).
+                           'empresa_aviso_registar', 'empresa_activar', 'empresa_confirmar_pagamento',
+                           'empresa_ciclo_diario', 'empresa_pedir_cancelamento', 'empresa_retirar_cancelamento',
+                           'empresa_admin_transicao')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em

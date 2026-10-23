@@ -40,6 +40,13 @@ describe("inventário da service role", () => {
       .map(([f]) => f);
     assert.deepEqual(semGuarda, []);
   });
+  test("pontos de entrada das empresas (src/app) usam requireEmpresa", () => {
+    const semGuarda = Object.entries(INVENTARIO_SERVICE_ROLE)
+      .filter(([f, c]) => c === "empresa" && f.startsWith("src/app/"))
+      .filter(([f]) => !ler(f).includes("requireEmpresa("))
+      .map(([f]) => f);
+    assert.deepEqual(semGuarda, []);
+  });
   test("backoffice e APIs de admin verificam o admin", () => {
     const semVerificacao = Object.entries(INVENTARIO_SERVICE_ROLE)
       .filter(([f, c]) => c === "admin" && f.startsWith("src/app/") && /(actions|route)\.ts$/.test(f))

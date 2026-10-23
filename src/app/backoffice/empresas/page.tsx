@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { CabecalhoPagina, TituloSeccao } from "@/components/backoffice/Cabecalho";
 import { BotaoSubmeter } from "@/components/backoffice/BotaoSubmeter";
@@ -13,6 +14,7 @@ import {
   CAIXA_SELECAO,
   CAMPO,
   CODIGO,
+  LIGACAO,
   LINHA_SELECAO,
   METADADOS,
   TABELA,
@@ -197,7 +199,9 @@ export default async function EmpresasBackofficePage({ searchParams }: { searchP
                 {porDecidir.map((o) => (
                   <tr key={o.id} className={TABELA_TR}>
                     <td className={TABELA_TD}>
-                      <span className="block font-semibold">{o.nome}</span>
+                      <Link href={`/backoffice/empresas/${o.id}`} prefetch={false} className={`${LIGACAO} block font-semibold`}>
+                        {o.nome}
+                      </Link>
                       <span className="block text-[13px]">{ehTipoEntidade(o.tipo_entidade) ? TIPOS_ENTIDADE[o.tipo_entidade] : o.tipo_entidade}</span>
                       <span className={`${CODIGO} block`}>NIPC/NIF {o.nif}</span>
                       {o.responsavel_nome && <span className="block text-[13px]">Responsável: {o.responsavel_nome}</span>}
@@ -251,7 +255,9 @@ export default async function EmpresasBackofficePage({ searchParams }: { searchP
                 {orgs.map((o) => (
                   <tr key={o.id} className={TABELA_TR}>
                     <td className={TABELA_TD}>
-                      <span className="block font-semibold">{o.nome}</span>
+                      <Link href={`/backoffice/empresas/${o.id}`} prefetch={false} className={`${LIGACAO} block font-semibold`}>
+                        {o.nome}
+                      </Link>
                       <span className={`${CODIGO} block`}>NIPC/NIF {o.nif}</span>
                     </td>
                     <td className={TABELA_TD}>{rotuloEstado(o.estado)}</td>
