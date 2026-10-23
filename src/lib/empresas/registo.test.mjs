@@ -135,8 +135,10 @@ describe("rotas (só português, D1)", () => {
     }
     for (const c of ["/empresas", "/empresas/beneficios", "/empresarial", "/entrar"]) assert.equal(ehCaminhoDeContaEmpresa(c), false, c);
   });
-  test("o middleware redirecciona /en nestes caminhos", () => {
-    assert.match(ler("src/middleware.ts"), /prefixado && ehCaminhoDeContaEmpresa\(caminho\)/);
+  test("o middleware redirecciona /en nestes caminhos e não aplica a preferência de inglês (sem ciclo)", () => {
+    const s = ler("src/middleware.ts");
+    assert.match(s, /prefixado && ehCaminhoDeContaEmpresa\(caminho\)/);
+    assert.match(s, /preferido === "en-GB" && \(request\.method === "GET" \|\| request\.method === "HEAD"\) && !ehCaminhoDeContaEmpresa\(caminho\)/);
   });
 });
 

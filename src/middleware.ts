@@ -263,7 +263,8 @@ async function encaminhar(request: NextRequest): Promise<NextResponse> {
   // redirecionados. Sem cookie, o português é o idioma por omissão — o
   // idioma do browser nunca é usado.
   const preferido = request.cookies.get(COOKIE_IDIOMA)?.value;
-  if (!prefixado && preferido === "en-GB" && (request.method === "GET" || request.method === "HEAD")) {
+  // Excepto nas contas e no portal das empresas, só em português (D1).
+  if (!prefixado && preferido === "en-GB" && (request.method === "GET" || request.method === "HEAD") && !ehCaminhoDeContaEmpresa(caminho)) {
     return NextResponse.redirect(new URL(`${caminhoNoIdioma("en-GB", caminho)}${search}`, request.url), 307);
   }
 
