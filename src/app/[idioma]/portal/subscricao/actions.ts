@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { caminho, revalidarPagina } from "@/i18n/servidor";
-import { requireUser } from "@/lib/auth";
+import { requireParticular } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "@/lib/stripe/client";
 import { snapshotDeSubscricao } from "@/lib/stripe/webhook";
@@ -113,7 +113,7 @@ function registarErro(acao: string, erro: unknown) {
 }
 
 export async function cancelarSubscricao(formData: FormData) {
-  const { user } = await requireUser();
+  const { user } = await requireParticular("portal/subscricao:acao");
   const motivo = lerMotivo(formData.get("motivo"), formData.get("comentario"));
   const confirmouCasos = formData.get("confirmar_casos") === "1";
 
@@ -130,7 +130,7 @@ export async function cancelarSubscricao(formData: FormData) {
 }
 
 export async function manterSubscricao() {
-  const { user } = await requireUser();
+  const { user } = await requireParticular("portal/subscricao:acao");
 
   let destino = "/portal/subscricao?mantida=1";
   try {

@@ -5,7 +5,7 @@ import { tConta, traduzirMensagemConta } from "@/i18n/mensagens/conta";
 import { rico } from "@/i18n/Rico";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { redirect } from "next/navigation";
-import { contaComEmailConfirmado } from "@/lib/auth";
+import { contaParticularComEmailConfirmado } from "@/lib/auth";
 import { MENSAGENS_ASSOCIACAO, avaliarSessaoParaAssociar, type ResultadoAssociacao } from "@/lib/compra/associacao";
 import { CONTACTO_EMAIL } from "@/lib/site";
 import { getStripe } from "@/lib/stripe/client";
@@ -34,7 +34,7 @@ export default async function AssociarCompraPage({
   const { session_id: sessionId, resultado } = await searchParams;
   if (!sessionId || !/^cs_[A-Za-z0-9_]+$/.test(sessionId)) redirect(localizarHref(idioma, "/portal"));
 
-  const conta = await contaComEmailConfirmado();
+  const conta = await contaParticularComEmailConfirmado("associar-compra");
   if (!conta) {
     const voltar = localizarHref(idioma, `/associar-compra?session_id=${sessionId}`);
     redirect(localizarHref(idioma, `/login?next=${encodeURIComponent(voltar)}`));

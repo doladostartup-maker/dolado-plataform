@@ -19,7 +19,7 @@ import { localizarHref } from "@/i18n/config";
 import { precoNoIdioma } from "@/i18n/mensagens/planos";
 import { tAcessoPatrocinado } from "@/i18n/mensagens/acessoPatrocinado";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
-import { contaComEmailConfirmado, obterAcesso } from "@/lib/auth";
+import { contaParticularComEmailConfirmado, obterAcesso } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PLANOS } from "@/lib/planos";
 import { ROTA_ATIVAR_CODIGO } from "@/lib/acessoPatrocinado";
@@ -47,7 +47,7 @@ export default async function AtivarCodigoPage({ params }: ComIdioma) {
   const aqui = localizarHref(idioma, ROTA_ATIVAR_CODIGO);
 
   const disponivel = acessosPatrocinadosDisponiveis();
-  const conta = disponivel ? await contaComEmailConfirmado() : null;
+  const conta = disponivel ? await contaParticularComEmailConfirmado("ativar-codigo") : null;
   let estado: "indisponivel" | "sem_sessao" | "email_nao_confirmado" | "protecao_ativa" | "pronto" = "indisponivel";
   if (disponivel && !conta) estado = "sem_sessao";
   if (disponivel && conta) {

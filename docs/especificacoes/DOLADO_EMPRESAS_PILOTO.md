@@ -51,8 +51,8 @@ O esquema de cada fase tem de servir o código anterior e o novo (deploy na Clev
 |---|---|---|
 | 1 Segurança e contas | 1A MFA do admin: inscrição e recuperação | Feita (PR #189, 23/10/2026); ensaio da recuperação por Thiago pendente |
 | | 1B Exigir aal2 no backoffice (código → migration) | Depois do ensaio |
-| | 2 Fundação do modelo de dados | Esta fase (`20261030090000_empresas_fundacao.sql`) |
-| | 3 Bloqueios cruzados dos fluxos particulares | |
+| | 2 Fundação do modelo de dados | Feita (PR #190; `20261030090000` aplicada em produção a 23/10/2026) |
+| | 3 Bloqueios cruzados dos fluxos particulares | PR #191 (23/10/2026); migration `20261031090000` aplicada em produção a 23/10/2026 (cópia prévia em ~/dolado-backups/); merge por fazer |
 | | 4 Registo, MFA de empresa, recuperação, aprovação | |
 | 2 Produto | 5 Activação e ciclo de pagamento manual | |
 | | 6 Monitor empresarial | |
@@ -72,6 +72,16 @@ O esquema de cada fase tem de servir o código anterior e o novo (deploy na Clev
 - `conta_empresa()`, `sessao_aal2()`, `e_membro_organizacao()`, `empresa_tem_acesso()`.
 - RLS: membros só com aal2; admin lê tudo; nenhuma escrita do cliente. Policies **restritivas** em 11 tabelas do Monitor: contas de empresa só com aal2; particulares sem alteração.
 - Testes: `supabase/tests/database/empresas_fundacao.test.sql`.
+
+## Fase 3 — o que existe (20261031090000, aplicada em produção a 23/10/2026)
+
+- **Guardas** (`src/lib/auth.ts`): `requireParticular(contexto)`, `utilizadorParticularAtual(contexto)`, `contaParticularComEmailConfirmado(contexto)` — como os genéricos, mas uma conta de empresa é registada (`empresa_ocorrencias`, tipo `guarda_recusado`, só a rota) e encaminhada para `/empresas/entrar?motivo=conta_empresa` (página da Fase 4). `requireProtecao()` assenta em `requireParticular()`. `requireUser()`, `utilizadorAtual()` e `contaComEmailConfirmado()` não mudam, mas nenhum ficheiro de `src/app` os usa (teste). Falha fechada: um erro ao ler o perfil lança erro, nunca passa por particular.
+- **Sessões criadas em percursos particulares** (`recusarSessaoDeEmpresa`, `src/lib/empresas/contaServidor.ts`): `/login`, `/auth/callback` (antes de indicação, origem e diagnóstico) e "Tratar o meu caso" (código e palavra-passe) terminam a sessão de uma conta de empresa; com entrada pelo Google tentam retirar a identidade Google — o contexto da ocorrência diz `:google_retirada` ou `:google_por_retirar` (a retirada pela sessão exige a ligação manual de identidades na Supabase, que está **desligada** — confirmado por Thiago a 23/10/2026; por isso fica sempre `:google_por_retirar`. Decisão para a Fase 4: retirar a identidade no servidor, por uma função da base de dados só para a service role sobre `auth.identities`, sem ligar a opção).
+- **Webhook Stripe:** `contaEmpresa()` nas dependências; um Checkout pago de uma conta de empresa não aplica nada (`ignorado_conta_empresa`) e avisa o admin uma vez; nada é cancelado nem reembolsado.
+- **Base de dados:** trigger `recusar_conta_empresa` (42501, também à service role) em `user_access`, `case_credit_grants`, `casos`, `pedidos_caso`, `protecao_gratuita`, `acessos_patrocinados`, `indicacoes`, `indicacoes_codigos`, `parceiros_atribuicoes`, `parceiros_area_acessos`, `associacoes_compra`, `preferencias_setor`, `diagnosticos_gratuitos` — cobre as funções existentes sem lhes mudar assinatura nem corpo. Tipo B (compatível: ainda não há contas de empresa). O Monitor continua aberto às contas de empresa.
+- **Inventário da service role** (`src/lib/empresas/inventarioServiceRole.ts`): cada ficheiro com `createAdminClient` classificado (admin, particular, sem_sessao, rls, sistema, empresa); o teste falha com um ficheiro novo por classificar, um ponto de entrada particular sem guarda ou uma acção de admin sem verificação.
+- **Testes:** `src/lib/empresas/inventarioServiceRole.test.mjs`, `src/lib/stripe/webhook.test.mjs` ("DoLado Empresas"), `supabase/tests/database/empresas_bloqueios.test.sql`.
+- **Publicação:** cópia local → `db push --dry-run` → `db push` → merge (migration antes do merge).
 
 ## Dívida técnica: vários utilizadores por empresa
 

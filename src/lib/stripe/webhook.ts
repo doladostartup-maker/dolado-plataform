@@ -312,6 +312,12 @@ export interface DependenciasWebhook {
     conversaoId: string | null,
   ): Promise<{ conversaoId: string; passouAFalhado: boolean } | null>;
   notificarAdmin(assunto: string, texto: string): Promise<void>;
+  /**
+   * DoLado Empresas: a conta é de empresa? Uma conta de empresa nunca recebe
+   * produtos particulares (o Checkout já a recusa; isto é a defesa no
+   * webhook). Opcional: sem ela, nenhuma conta é tratada como de empresa.
+   */
+  contaEmpresa?(userId: string): Promise<boolean>;
 
   /**
    * Completa as ligações do registo de consentimento (só campos vazios;
@@ -732,6 +738,21 @@ async function confirmarCompra(
   em: string,
 ) {
   const contas = await contasDaCompra(session, s, deps);
+
+  // Conta de empresa (DoLado Empresas): nada é aplicado; o admin resolve no
+  // Stripe (reembolso, se for o caso). Não deve acontecer — o Checkout recusa.
+  const contasEmpresa = deps.contaEmpresa
+    ? (await Promise.all(contas.map(async (c) => ((await deps.contaEmpresa!(c)) ? c : null)))).filter((c): c is string => !!c)
+    : [];
+  if (contasEmpresa.length > 0) {
+    if (estadoAnterior !== "concluido") {
+      await deps.notificarAdmin(
+        "Pagamento de uma conta de empresa — DoLado",
+        `O pagamento da sessão ${session.id} foi confirmado para uma conta de empresa (${contasEmpresa.join(", ")}), que não pode usar produtos particulares. Nada foi aplicado à conta: verificar no Stripe e reembolsar se for o caso.`,
+      );
+    }
+    return "ignorado_conta_empresa";
+  }
 
   // Conversão de um Avulso: revalidada antes de dar qualquer direito.
   const conversaoId = session.metadata?.conversao_id;

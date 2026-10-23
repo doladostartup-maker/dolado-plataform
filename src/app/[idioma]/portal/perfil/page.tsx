@@ -4,7 +4,7 @@ import { tPortal, traduzirMensagemPortal } from "@/i18n/mensagens/portal";
 import { rotulo } from "@/i18n/mensagens/rotulos";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { SETORES } from "@/lib/pedidoCaso";
-import { obterAcesso, requireUser } from "@/lib/auth";
+import { obterAcesso, requireParticular } from "@/lib/auth";
 import { alterarPassword, guardarPreferenciasSetor, retirarConsentimentoComunicacoes } from "./actions";
 import { Aviso } from "@/components/portal/Aviso";
 import { CabecalhoPagina } from "@/components/portal/Cabecalho";
@@ -28,7 +28,7 @@ export default async function PerfilPage({
   const idioma = await idiomaDaPagina(params);
   const t = tPortal[idioma].perfil;
   const query = await searchParams;
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireParticular("portal/perfil");
 
   const { data: perfil } = await supabase
     .from("utilizadores")

@@ -1,6 +1,6 @@
 "use server";
 
-import { utilizadorAtual } from "@/lib/auth";
+import { utilizadorParticularAtual } from "@/lib/auth";
 import { podeUsarCodigoParceiro } from "@/lib/parceiros/servidor";
 import { FLUXOS_COMPRA, type FluxoCompra } from "@/lib/consentimentoCompra";
 import { produtoComDescontoIndicacao, type TipoDescontoIndicacao } from "@/lib/indicacoes/regras";
@@ -33,7 +33,7 @@ export async function ofertaIndicacaoNaCompra(
   const nada = { desconto: null, novoClienteIndicado: false };
   if (!ehPlanoId(plano) || !FLUXOS_COMPRA.includes(fluxo)) return nada;
   try {
-    const { user } = await utilizadorAtual();
+    const { user } = await utilizadorParticularAtual("indicacoes:acao");
     if (!user) {
       // Sem conta não há desconto de indicação; só se avisa como o ativar.
       const aviso = fluxo === "publico" && produtoComDescontoIndicacao(plano) && (await visitaDeIndicacaoNoBrowser());

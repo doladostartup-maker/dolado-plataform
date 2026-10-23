@@ -20,7 +20,7 @@ import { formatarData } from "@/i18n/formatar";
 import { precoNoIdioma } from "@/i18n/mensagens/planos";
 import { tProtecaoGratuita } from "@/i18n/mensagens/protecaoGratuita";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
-import { contaComEmailConfirmado } from "@/lib/auth";
+import { contaParticularComEmailConfirmado } from "@/lib/auth";
 import { destinoCompra } from "@/lib/destinoAuth";
 import { ORIGEM_LANDING_30_DIAS, consultaUtm, lerUtm, saltarParaRegisto } from "@/lib/landing30Dias";
 import { PLANOS } from "@/lib/planos";
@@ -55,7 +55,7 @@ export default async function ExperimentarProtecaoPage({
   const aqui = localizarHref(idioma, `${ROTA_EXPERIMENTAR}?origem=${origem}${consultaUtm(lerUtm(consulta))}`);
 
   const disponivel = protecaoGratuitaDisponivel();
-  const conta = disponivel ? await contaComEmailConfirmado() : null;
+  const conta = disponivel ? await contaParticularComEmailConfirmado("experimentar-protecao") : null;
   let motivo: MotivoElegibilidade | "indisponivel" | "sem_sessao" = "indisponivel";
   if (disponivel && !conta) motivo = "sem_sessao";
   if (disponivel && conta) {

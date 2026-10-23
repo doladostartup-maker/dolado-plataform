@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 import { getStripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { requireUser } from "@/lib/auth";
+import { requireParticular } from "@/lib/auth";
+import { destinoContaEmpresa } from "@/lib/empresas/contas";
+import { recusarSessaoDeEmpresa, registarGuardaRecusado, tipoContaDoUtilizador } from "@/lib/empresas/contaServidor";
 import { dadosContaNova, guardarDestinoPosLogin, urlCallbackAuth } from "@/lib/authServidor";
 import { DESTINO_PEDIDO_POR_PAGAR } from "@/lib/destinoAuth";
 import { excedeuLimiteTaxa } from "@/lib/rateLimit";
@@ -39,7 +41,13 @@ async function obterIp() {
 async function utilizadorDaSessao() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
-  return { supabase, userId: (data?.claims?.sub as string | undefined) ?? null };
+  const userId = (data?.claims?.sub as string | undefined) ?? null;
+  // Conta de empresa: nunca usa o "Tratar o meu caso" (DoLado Empresas).
+  if (userId && (await tipoContaDoUtilizador(supabase, userId)) === "empresa") {
+    await registarGuardaRecusado(userId, "tratar-caso:acao");
+    redirect(destinoContaEmpresa());
+  }
+  return { supabase, userId };
 }
 
 // ---------------------------------------------------------------------------
@@ -158,6 +166,9 @@ export async function verificarCodigo(_anterior: EstadoConta, formData: FormData
   if (error) return { erro: mensagemErroAuth(error.code, error.message), passo: "codigo", email };
 
   const { data: sessao } = await supabase.auth.getUser();
+  if (sessao.user && (await recusarSessaoDeEmpresa(supabase, sessao.user.id, "tratar-caso:codigo"))) {
+    redirect(destinoContaEmpresa());
+  }
   if (sessao.user) await registarOrigemDaConta(sessao.user.id);
   redirect(await caminho(`${MODALIDADE}?conta=nova`));
 }
@@ -184,7 +195,7 @@ export async function entrarPedido(_anterior: EstadoConta, formData: FormData): 
   if (excedeuLimiteTaxa(`entrar:${await obterIp()}`)) return { erro: MSG_LIMITE, passo: "conta" };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data: entrada, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     if (error.code === "email_not_confirmed") {
       await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: urlCallbackAuth() } });
@@ -198,6 +209,9 @@ export async function entrarPedido(_anterior: EstadoConta, formData: FormData): 
     }
     return { erro: mensagemErroAuth(error.code, error.message), passo: "conta" };
   }
+  if (entrada.user && (await recusarSessaoDeEmpresa(supabase, entrada.user.id, "tratar-caso:entrar"))) {
+    redirect(destinoContaEmpresa());
+  }
   redirect(await caminho(MODALIDADE));
 }
 
@@ -206,7 +220,7 @@ export async function entrarPedido(_anterior: EstadoConta, formData: FormData): 
 // ---------------------------------------------------------------------------
 
 export async function usarCasoDisponivel(formData: FormData) {
-  const { user } = await requireUser();
+  const { user } = await requireParticular("tratar-caso:acao");
   const pedido = await pedidoDaConta((formData.get("pedido_id") as string) || null, user.id);
   if (!pedido) redirect(await caminho("/tratar-caso"));
   const recebido = `/tratar-caso/recebido?pedido=${pedido.id}`;

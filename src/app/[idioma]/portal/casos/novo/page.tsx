@@ -2,7 +2,7 @@ import Link from "@/i18n/Link";
 import { tPortal, traduzirMensagemPortal } from "@/i18n/mensagens/portal";
 import { caminho, idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { redirect } from "next/navigation";
-import { obterAcesso, requireUser } from "@/lib/auth";
+import { obterAcesso, requireParticular } from "@/lib/auth";
 import { criarCasoCliente } from "../actions";
 import { ClienteCasoForm } from "../_components/ClienteCasoForm";
 import { Aviso } from "@/components/portal/Aviso";
@@ -18,7 +18,7 @@ export default async function NovoCasoClientePage({
   const idioma = await idiomaDaPagina(paramsPagina);
   const t = tPortal[idioma].novoCaso;
   const params = await searchParams;
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireParticular("portal/casos/novo");
   const acesso = await obterAcesso(supabase, user.id);
 
   if (!acesso.podeCriarCaso) {

@@ -3,7 +3,7 @@ import { idiomaDaPagina } from "@/i18n/servidor";
 import { tProtecao } from "@/i18n/mensagens/protecao";
 import { tEmails } from "@/i18n/mensagens/emails";
 import { formatarData, formatarMesAno } from "@/i18n/formatar";
-import { requireUser } from "@/lib/auth";
+import { requireParticular } from "@/lib/auth";
 import { mesDoParametro, resumoDoConteudo } from "@/lib/resumoMensal/portal";
 import { Aviso } from "@/components/portal/Aviso";
 import { CabecalhoPagina } from "@/components/portal/Cabecalho";
@@ -31,7 +31,7 @@ export default async function ResumoMensalPage({ params }: { params: Promise<{ m
   const t = tProtecao[idioma].resumos;
   const mes = mesDoParametro(parametro);
   if (!mes) notFound();
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireParticular("portal/contratos/resumos/mes");
 
   const { data } = await supabase
     .from("protecao_resumos_mensais")

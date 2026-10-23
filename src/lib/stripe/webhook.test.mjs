@@ -498,6 +498,32 @@ describe("subscrição paga de imediato (cartão)", () => {
   });
 });
 
+describe("DoLado Empresas: conta de empresa nunca recebe produtos particulares", () => {
+  test("checkout pago de uma conta de empresa: nada aplicado, admin avisado", async () => {
+    comConta();
+    estado.stripeSubscricao = snapshot("active");
+    deps.contaEmpresa = async (userId) => userId === USER;
+    const r = await processarEventoStripe(evento("checkout.session.completed", sessaoSubscricao()), deps);
+    assert.equal(r.status, 200);
+    assert.equal(conta().subscription_plan, contaVazia().subscription_plan);
+    assert.equal(conta().case_credits, 0);
+    assert.equal(estado.emails.length, 0);
+    assert.equal(estado.avisosAdmin.length, 1);
+    assert.match(estado.avisosAdmin[0].assunto, /conta de empresa/);
+    assert.equal(ultimoLog().resultado, "ignorado_conta_empresa");
+  });
+
+  test("conta particular: comportamento de sempre com a verificação activa", async () => {
+    comConta();
+    estado.stripeSubscricao = snapshot("active");
+    deps.contaEmpresa = async () => false;
+    await processarEventoStripe(evento("checkout.session.completed", sessaoSubscricao()), deps);
+    assert.equal(conta().subscription_plan, "caso_protecao");
+    assert.equal(conta().case_credits, 1);
+    assert.equal(estado.avisosAdmin.length, 0);
+  });
+});
+
 describe("SEPA (pagamento assíncrono)", () => {
   test("pendente: regista, sem plano, créditos nem e-mail", async () => {
     comConta();

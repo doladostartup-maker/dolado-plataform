@@ -608,6 +608,12 @@ export function criarDependenciasWebhook(opcoes: OpcoesDependencias = {}): Depen
       await enviarEmailBrevo(ADMIN_EMAIL, assunto, `<p>${escaparHtml(texto)}</p>`);
     },
 
+    async contaEmpresa(userId) {
+      const { data, error } = await admin.from("utilizadores").select("tipo_conta").eq("id", userId).maybeSingle();
+      falhar("utilizadores.select", error);
+      return data?.tipo_conta === "empresa";
+    },
+
     async ligarConsentimento(consentimentoId, { sessionId, subscriptionId, email, userId }) {
       const { data: atual, error } = await admin
         .from("consentimentos_compra")

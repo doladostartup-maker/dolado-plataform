@@ -1,4 +1,4 @@
-import { obterAcesso } from "@/lib/auth";
+import { obterAcesso, utilizadorParticularAtual } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { contactoConhecido, entradaDoPedido, MOMENTOS, problemasDoSetor, SETORES } from "@/lib/pedidoCaso";
 import { casoExtraConfigurado } from "@/lib/stripe/planos";
@@ -38,6 +38,7 @@ export default async function TratarCasoPage({
   const params = await searchParams;
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
+  await utilizadorParticularAtual("tratar-caso");
   const userId = data?.claims?.sub as string | undefined;
   // Com sessão, o aviso inicial segue o acesso real da conta (mesma regra da
   // modalidade): quem tem casos disponíveis não é avisado de um pagamento.

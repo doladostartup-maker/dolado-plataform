@@ -3,7 +3,7 @@ import { localizarHref } from "@/i18n/config";
 import { tTratarCaso } from "@/i18n/mensagens/tratarCaso";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { redirect } from "next/navigation";
-import { obterAcesso } from "@/lib/auth";
+import { obterAcesso, utilizadorParticularAtual } from "@/lib/auth";
 import { ehUuid } from "@/lib/pedidoCaso";
 import { pedidoDaConta } from "@/lib/pedidoCasoServidor";
 import { getStripe } from "@/lib/stripe/client";
@@ -32,6 +32,7 @@ export default async function RecebidoPage({
   const params = await searchParams;
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
+  await utilizadorParticularAtual("tratar-caso/recebido");
   const userId = claims?.claims?.sub as string | undefined;
   const aqui = `/tratar-caso/recebido?pedido=${ehUuid(params.pedido) ? params.pedido : ""}`;
   if (!userId) redirect(localizarHref(idioma, `/login?next=${encodeURIComponent(localizarHref(idioma, aqui))}`));

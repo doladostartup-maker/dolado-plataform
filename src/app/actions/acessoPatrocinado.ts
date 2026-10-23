@@ -2,7 +2,7 @@
 
 import { after } from "next/server";
 import { redirect } from "next/navigation";
-import { contaComEmailConfirmado } from "@/lib/auth";
+import { contaParticularComEmailConfirmado } from "@/lib/auth";
 import { CAMPO_ACEITA_TERMOS, VALOR_ACEITE } from "@/lib/consentimentoCompra";
 import { TERMOS_VERSAO, TEXTO_ACEITACAO_ACESSO_PATROCINADO } from "@/lib/legal";
 import { ROTA_ATIVAR_CODIGO } from "@/lib/acessoPatrocinado";
@@ -33,7 +33,7 @@ export async function ativarCodigoOferta(_: EstadoAtivacaoCodigo, form: FormData
   if (!codigo) return { erro: t.semCodigo };
   if (form.get(CAMPO_ACEITA_TERMOS) !== VALOR_ACEITE) return { erro: t.aceitarTermos };
 
-  const conta = await contaComEmailConfirmado();
+  const conta = await contaParticularComEmailConfirmado("ativar-codigo:acao");
   if (!conta) redirect(await caminho(`/login?next=${encodeURIComponent(ROTA_ATIVAR_CODIGO)}`));
   if (!conta.emailConfirmado) return { erro: t.email_nao_confirmado };
 

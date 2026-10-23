@@ -5,7 +5,7 @@ import { tSubscricao } from "@/i18n/mensagens/subscricao";
 import { rico } from "@/i18n/Rico";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { casosGuardados, resumoPlanoPortal, type CongelamentoCasos } from "@/lib/acesso";
-import { obterAcesso, requireUser } from "@/lib/auth";
+import { obterAcesso, requireParticular } from "@/lib/auth";
 import { casoAcompanhadoPelaSubscricao } from "@/lib/gestaoSubscricao";
 import { PLANOS } from "@/lib/planos";
 import { linhasDaCobranca } from "@/lib/proximaCobranca";
@@ -37,7 +37,7 @@ export default async function GestaoSubscricaoPage({
   const MENSAGENS_ERRO: Record<string, string> = t.erros;
   const formatarData = (iso: string) => formatarDataIdioma(idioma, iso, { day: "2-digit", month: "long", year: "numeric" });
   const params = await searchParams;
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireParticular("portal/subscricao");
 
   const [acesso, { data: congelamentos }, { data: casos }] = await Promise.all([
     obterAcesso(supabase, user.id),

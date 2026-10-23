@@ -1,4 +1,4 @@
-import { requireUser } from "@/lib/auth";
+import { requireParticular } from "@/lib/auth";
 import { Logotipo } from "@/components/marketing-v2/Logotipo";
 import { fonteV2 } from "@/components/marketing-v2/fonte";
 import { MenuMovel } from "@/components/navegacao/MenuMovel";
@@ -21,7 +21,7 @@ export default async function PortalLayout({
   children: React.ReactNode;
 } & ComIdioma) {
   const t = tComum[await idiomaDaPagina(params)].acessibilidade;
-  const { supabase, user } = await requireUser();
+  const { supabase, user } = await requireParticular("portal");
   const areaParceiro = await contaTemAreaParceiro(supabase, user.id);
 
   return (

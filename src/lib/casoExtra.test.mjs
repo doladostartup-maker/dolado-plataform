@@ -212,7 +212,7 @@ describe("Server Action do Caso Extra (código)", () => {
   const funcao = acoes.slice(acoes.indexOf("async function compraCasoExtra"), acoes.indexOf("async function checkoutPedidoCaso"));
 
   test("valida sessão, direito no servidor e a subscrição no Stripe antes de abrir o Checkout", () => {
-    assert.match(funcao, /requireUser\(\)/);
+    assert.match(funcao, /requireParticular\("[^"]+"\)/);
     assert.match(funcao, /direitoCasoExtra\(acesso\)/);
     assert.match(funcao, /subscricaoStripeConfirmaCasoExtra\(/);
     assert.match(funcao, /casoExtraConfigurado\(\)/);

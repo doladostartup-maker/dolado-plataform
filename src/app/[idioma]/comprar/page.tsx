@@ -7,7 +7,7 @@ import { tPlanos } from "@/i18n/mensagens/planos";
 import { rico } from "@/i18n/Rico";
 import { idiomaDaPagina, type ComIdioma } from "@/i18n/servidor";
 import { redirect } from "next/navigation";
-import { obterAcesso, utilizadorAtual } from "@/lib/auth";
+import { obterAcesso, utilizadorParticularAtual } from "@/lib/auth";
 import { decidirCompra, type PlanoSubscricaoAtiva } from "@/lib/compra/decisao";
 import { customerDaConta, ofertaConversaoDaConta, subscricoesAtivasDoCustomer } from "@/lib/compra/servidor";
 import { ehPlanoId } from "@/lib/planos";
@@ -54,7 +54,7 @@ export default async function ComprarPage({
   const { plano } = await searchParams;
   if (!ehPlanoId(plano)) redirect(PRECARIO);
 
-  const { supabase, user } = await utilizadorAtual();
+  const { supabase, user } = await utilizadorParticularAtual("comprar");
   let subscricoesAtivasStripe: PlanoSubscricaoAtiva[] = [];
   let acesso = null;
   if (user) {
