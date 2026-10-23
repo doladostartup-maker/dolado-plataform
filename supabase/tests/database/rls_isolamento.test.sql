@@ -260,7 +260,13 @@ select is(
                            -- o papel lá dentro; o ciclo corre no pg_cron (empresas_ciclo.test.sql).
                            'empresa_aviso_registar', 'empresa_activar', 'empresa_confirmar_pagamento',
                            'empresa_ciclo_diario', 'empresa_pedir_cancelamento', 'empresa_retirar_cancelamento',
-                           'empresa_admin_transicao')), 0::bigint,
+                           'empresa_admin_transicao',
+                           -- DoLado Empresas, Monitor (20261104090000): só service_role, excepto a quota
+                           -- da própria sessão (auth.uid() + aal2); as do admin verificam o papel
+                           -- (empresas_monitor.test.sql).
+                           'empresa_organizacao_ativa', 'empresa_periodo_atual', 'empresa_quota', 'empresa_criar_instalacao',
+                           'empresa_registar_documento', 'empresa_pode_criar_servico', 'empresa_documento_resultado',
+                           'empresa_conceder_excecao', 'empresa_quota_sessao')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em

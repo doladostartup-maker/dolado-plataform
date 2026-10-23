@@ -43,8 +43,11 @@ import {
   type IdentificadorLido,
   type ResultadoAssociacao,
   type TipoIdentificador,
+  escolherServicoEmpresa,
+  type IdentidadeServicoEmpresa,
 } from "./identificacao";
 import { VERSAO_REGRA_CESSACAO, compararCessacao, textoCessacaoDivergente } from "./custoSaida";
+import { TEXTO_FORA_DO_AMBITO, foraDoAmbitoEmpresa } from "@/lib/empresas/ambito";
 import { erroAlterarTipo, lerTipoDocumento, type ErroAlterarTipo } from "./tipoDocumento";
 import { lerEnergiaGuardada } from "./energia";
 import { VERSAO_ENERGIA } from "./comparacaoEnergia";
@@ -131,6 +134,21 @@ export async function gastoApiUsd(admin: Admin): Promise<number> {
 
 export function tetoOrcamentoUsd() {
   return lerTetoOrcamentoUsd(process.env.ANTHROPIC_ORCAMENTO_USD);
+}
+
+/**
+ * DoLado Empresas: orçamento próprio dentro do geral (as empresas nunca
+ * esgotam o orçamento dos particulares). ANTHROPIC_ORCAMENTO_EMPRESAS_USD,
+ * por omissão 3 USD.
+ */
+export function tetoOrcamentoEmpresasUsd() {
+  const valor = Number(process.env.ANTHROPIC_ORCAMENTO_EMPRESAS_USD);
+  return Number.isFinite(valor) && valor >= 0 && process.env.ANTHROPIC_ORCAMENTO_EMPRESAS_USD ? valor : 3;
+}
+
+async function gastoEmpresasUsd(admin: Admin): Promise<number> {
+  const { data } = await admin.from("uso_api_claude").select("custo_estimado_usd").eq("funcionalidade", "monitor_empresa");
+  return (data ?? []).reduce((s, l) => s + Number(l.custo_estimado_usd ?? 0), 0);
 }
 
 async function marcar(admin: Admin, documentoId: string, estado: EstadoDocumento, extra: Record<string, unknown> = {}) {
@@ -260,13 +278,75 @@ async function decidirDestino(admin: Admin, doc: { utilizador_id: string; contra
   return escolherServico(identidade, servicos, doc.contrato_id);
 }
 
+// ---------------------------------------------------------------------------
+// DoLado Empresas (Fase 6A): ramo das contas de empresa
+// ---------------------------------------------------------------------------
+// Escolhido pela linha em empresa_documentos (criada no carregamento, com a
+// instalação e a quota). Uma conta de empresa sem essa linha nunca segue o
+// caminho dos particulares: o documento fica para revisão (falha fechada).
+
+type ContextoEmpresa = { organizacaoId: string; instalacaoId: string };
+
+async function contextoEmpresa(admin: Admin, documentoId: string): Promise<ContextoEmpresa | null> {
+  const { data } = await admin
+    .from("empresa_documentos")
+    .select("organizacao_id, instalacao_id")
+    .eq("documento_id", documentoId)
+    .maybeSingle();
+  return data ? { organizacaoId: data.organizacao_id, instalacaoId: data.instalacao_id } : null;
+}
+
+async function ehContaEmpresa(admin: Admin, utilizadorId: string): Promise<boolean> {
+  const { data, error } = await admin.from("utilizadores").select("tipo_conta").eq("id", utilizadorId).maybeSingle();
+  if (error) throw new Error(`utilizadores.select: ${error.message}`);
+  return data?.tipo_conta === "empresa";
+}
+
+async function decidirDestinoEmpresa(admin: Admin, doc: { utilizador_id: string }, leitura: LeituraDocumento, ctx: ContextoEmpresa) {
+  const fornecedores = await listaFornecedores(admin);
+  const base = await identidadesServicos(admin, doc.utilizador_id, fornecedores);
+  const { data: instalacoes } = await admin
+    .from("contratos_monitorizados")
+    .select("id, instalacao_id")
+    .in("id", base.map((b) => b.id));
+  const servicos: IdentidadeServicoEmpresa[] = base.map((b) => ({
+    ...b,
+    instalacaoId: instalacoes?.find((i) => i.id === b.id)?.instalacao_id ?? null,
+  }));
+  const identidade = { fornecedorChave: chaveComercial(leitura.fornecedor, fornecedores), ids: normalizarIdentificadores(leitura.identificacao, chaveIdentificadores()) };
+  return escolherServicoEmpresa(identidade, servicos, ctx.instalacaoId);
+}
+
+async function podeCriarServicoEmpresa(admin: Admin, utilizadorId: string): Promise<boolean> {
+  const { data, error } = await admin.rpc("empresa_pode_criar_servico", { p_user: utilizadorId });
+  if (error) throw new Error(`empresa_pode_criar_servico: ${error.message}`);
+  return data === true;
+}
+
+/** Factura registada com total e período: resultado útil (consome a quota, D6). */
+function resultadoUtil(leitura: LeituraDocumento, repetido: boolean): boolean {
+  return leitura.tipo === "fatura" && !repetido && leitura.v.fatura.totalCents !== null && leitura.v.fatura.periodoInicio !== null;
+}
+
+/** Quota do documento de empresa (nada acontece aos documentos dos particulares). */
+async function quotaEmpresa(admin: Admin, documentoId: string, resultado: "consumida" | "libertada") {
+  const { error } = await admin.rpc("empresa_documento_resultado", { p_documento: documentoId, p_resultado: resultado });
+  if (error) console.error(`[monitor] quota do documento ${documentoId}:`, error.message);
+}
+
 // Novo serviço a partir de um documento. Numa fatura, o fornecedor é só
 // identificação (aceite pelo sistema, origem "Lido da fatura"); num contrato
 // segue as propostas normais, que o cliente confirma.
-async function criarServico(admin: Admin, utilizadorId: string, leitura: LeituraDocumento, documentoId: string): Promise<string> {
+async function criarServico(
+  admin: Admin,
+  utilizadorId: string,
+  leitura: LeituraDocumento,
+  documentoId: string,
+  instalacaoId: string | null = null,
+): Promise<string> {
   const { data: novo, error } = await admin
     .from("contratos_monitorizados")
-    .insert({ utilizador_id: utilizadorId, setor: leitura.setor })
+    .insert({ utilizador_id: utilizadorId, setor: leitura.setor, ...(instalacaoId ? { instalacao_id: instalacaoId } : {}) })
     .select("id")
     .single();
   if (error || !novo) throw new Error(`Não foi possível criar o serviço: ${error?.message}`);
@@ -312,6 +392,8 @@ type Registo = {
   decisao: "automatica" | "associar_mesmo_assim" | "outro_servico" | "novo_servico";
   papel: "cliente" | "admin" | "sistema";
   por: string | null;
+  /** DoLado Empresas: sem custo de saída nem regras de consumo. */
+  empresa?: boolean;
 };
 
 /**
@@ -446,7 +528,8 @@ async function registarNoServico(admin: Admin, a: Registo): Promise<{ repetido: 
     leitura.v.propostas.filter((p) => !deOutraFonte.has(p.campo)),
   );
 
-  if (fatura) await avaliarCessacao(admin, a.servicoId, fatura.id);
+  // Custo de saída (regra de consumo das telecomunicações): só particulares.
+  if (fatura && !a.empresa) await avaliarCessacao(admin, a.servicoId, fatura.id);
   await recalcularAcompanhamento(admin, a.servicoId);
   return { repetido: false };
 }
@@ -639,7 +722,10 @@ export type MotivoPendente =
   | "recusa"
   | "resposta_invalida"
   | "validacao"
-  | "erro_inesperado";
+  | "erro_inesperado"
+  | "fora_do_ambito"
+  | "limite_servicos"
+  | "empresa_sem_contexto";
 
 export type ResultadoProcessamento = {
   estado: EstadoDocumento;
@@ -651,9 +737,27 @@ export type ResultadoProcessamento = {
   lerMs?: number;
   /** A mesma fatura já estava registada no serviço (número, ou período e total). */
   repetido?: boolean;
+  /** Factura registada com total e período (DoLado Empresas: consome a quota). */
+  util?: boolean;
 };
 
+/**
+ * Lê e regista um documento. Nos documentos de empresa, o resultado passa a
+ * quota (D6): resultado útil → consumida; repetido, erro técnico, ilegível,
+ * fora do âmbito ou sem resultado → libertada; à espera da decisão do
+ * cliente → continua reservada.
+ */
 export async function processarDocumento(documentoId: string): Promise<ResultadoProcessamento> {
+  const resultado = await processarDocumentoInterno(documentoId);
+  const admin = createAdminClient();
+  if (await contextoEmpresa(admin, documentoId)) {
+    if (resultado.util) await quotaEmpresa(admin, documentoId, "consumida");
+    else if (resultado.repetido || resultado.motivo || resultado.estado === "ilegivel") await quotaEmpresa(admin, documentoId, "libertada");
+  }
+  return resultado;
+}
+
+async function processarDocumentoInterno(documentoId: string): Promise<ResultadoProcessamento> {
   const admin = createAdminClient();
   const { data: doc } = await admin
     .from("documentos_monitor")
@@ -665,12 +769,28 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
   if (doc.estado !== "pendente" || doc.desativado_em) return { estado: doc.estado as EstadoDocumento, contratoId: doc.contrato_id };
 
   try {
+    // 0. DoLado Empresas: documento de empresa = linha em empresa_documentos.
+    const empresa = await contextoEmpresa(admin, doc.id);
+    if (!empresa && (await ehContaEmpresa(admin, doc.utilizador_id))) {
+      await marcar(admin, doc.id, "a_rever");
+      await avisarAdmin("Documento por rever", `Documento ${doc.id}: conta de empresa sem instalação registada (não segue o caminho dos particulares).`);
+      return { estado: "a_rever", contratoId: doc.contrato_id, motivo: "empresa_sem_contexto" };
+    }
+
     // 1. Orçamento do piloto
     const teto = tetoOrcamentoUsd();
     const gastoAntes = await gastoApiUsd(admin);
     if (estadoOrcamento(gastoAntes, teto).bloqueado) {
       await avisarAdmin("Orçamento da Claude API atingido", `Documento ${doc.id} ficou pendente: o gasto (${gastoAntes.toFixed(2)} USD) atingiu o tecto de ${teto} USD.`);
       return { estado: "pendente", contratoId: doc.contrato_id, motivo: "orcamento_atingido" };
+    }
+    if (empresa) {
+      const tetoEmpresas = tetoOrcamentoEmpresasUsd();
+      const gastoEmpresas = await gastoEmpresasUsd(admin);
+      if (gastoEmpresas >= tetoEmpresas) {
+        await avisarAdmin("Orçamento das empresas atingido", `Documento ${doc.id} ficou pendente: o gasto das empresas (${gastoEmpresas.toFixed(2)} USD) atingiu ${tetoEmpresas} USD.`);
+        return { estado: "pendente", contratoId: doc.contrato_id, motivo: "orcamento_atingido" };
+      }
     }
 
     // 2. Ficheiro
@@ -728,7 +848,7 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
 
       if (chamada.uso) {
         await admin.from("uso_api_claude").insert({
-          funcionalidade: ehContrato ? "monitor_contrato" : "monitor_fatura",
+          funcionalidade: empresa ? "monitor_empresa" : ehContrato ? "monitor_contrato" : "monitor_fatura",
           documento_id: doc.id,
           modelo: chamada.uso.modelo,
           tokens_entrada: chamada.uso.tokensEntrada,
@@ -790,7 +910,22 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
     }
     const leitura = validada.leitura;
     const estado: EstadoDocumento = leitura.v.precisaRevisao ? "a_rever" : "processado";
-    const destino = await decidirDestino(admin, doc, leitura);
+
+    // DoLado Empresas: fora do âmbito automático → análise manual pela DoLado.
+    if (empresa) {
+      const fora = foraDoAmbitoEmpresa({
+        tipo: leitura.tipo,
+        setor: leitura.setor,
+        energia: leitura.tipo === "fatura" ? leitura.v.fatura.energia : null,
+      });
+      if (fora) {
+        await marcar(admin, doc.id, "a_rever");
+        await avisarAdmin("Documento de empresa para análise manual", `Documento ${doc.id}: ${TEXTO_FORA_DO_AMBITO[fora]}.`);
+        return { estado: "a_rever", contratoId: null, motivo: "fora_do_ambito", detalhe: fora, lerMs };
+      }
+    }
+
+    const destino = empresa ? await decidirDestinoEmpresa(admin, doc, leitura, empresa) : await decidirDestino(admin, doc, leitura);
 
     if (destino.acao === "perguntar") {
       // Identificação não confirmada: nada é registado no serviço até o
@@ -800,7 +935,13 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
       return { estado, contratoId: null, lerMs };
     }
 
-    const servicoId = destino.acao === "associar" ? destino.servicoId : await criarServico(admin, doc.utilizador_id, leitura, doc.id);
+    if (empresa && destino.acao === "novo_servico" && !(await podeCriarServicoEmpresa(admin, doc.utilizador_id))) {
+      await marcar(admin, doc.id, "a_rever");
+      await avisarAdmin("Documento de empresa por rever", `Documento ${doc.id}: limite de serviços do plano atingido (seria um serviço novo).`);
+      return { estado: "a_rever", contratoId: null, motivo: "limite_servicos", lerMs };
+    }
+    const servicoId =
+      destino.acao === "associar" ? destino.servicoId : await criarServico(admin, doc.utilizador_id, leitura, doc.id, empresa?.instalacaoId ?? null);
     const { repetido } = await registarNoServico(admin, {
       documentoId: doc.id,
       utilizadorId: doc.utilizador_id,
@@ -812,12 +953,13 @@ export async function processarDocumento(documentoId: string): Promise<Resultado
       decisao: "automatica",
       papel: "sistema",
       por: null,
+      empresa: !!empresa,
     });
     await marcar(admin, doc.id, estado);
     if (estado === "a_rever" && !repetido) {
       await avisarAdmin("Documento por rever", `Documento ${doc.id}: ${leitura.v.avisos.join("; ") || "confiança baixa num campo importante"}.`);
     }
-    return { estado, contratoId: servicoId, lerMs, repetido };
+    return { estado, contratoId: servicoId, lerMs, repetido, util: resultadoUtil(leitura, repetido) };
   } catch (erro) {
     const detalhe = (erro instanceof Error ? erro.message : String(erro)).slice(0, 300);
     console.error(`Falha ao processar o documento ${documentoId}:`, erro);
@@ -867,6 +1009,7 @@ export async function processarDocumentoEmSegundoPlano(documentoId: string): Pro
       const ficheiro = await inspecionarFicheiro(reservado.bucket ?? BUCKET_MONITOR, reservado.storage_path);
       tempos.verificar = Date.now() - t;
       if (!ficheiro) {
+        await quotaEmpresa(admin, documentoId, "libertada");
         await marcarEtapa(admin, documentoId, "falhou", { tempos_ms: { ...tempos, total: Date.now() - inicio } });
         await avisarAdmin("Documento por processar", `Documento ${documentoId}: o ficheiro não foi encontrado ou excede 10 MB.`);
         return;
@@ -880,6 +1023,7 @@ export async function processarDocumentoEmSegundoPlano(documentoId: string): Pro
         .maybeSingle();
       if (!MIME_ACEITES.includes(ficheiro.mime as MimeAceite)) {
         await admin.storage.from(reservado.bucket ?? BUCKET_MONITOR).remove([reservado.storage_path]);
+        await quotaEmpresa(admin, documentoId, "libertada");
         await marcar(admin, documentoId, "ilegivel");
         await marcarEtapa(admin, documentoId, "concluido", { tempos_ms: { ...tempos, total: Date.now() - inicio } });
         return;
@@ -888,6 +1032,7 @@ export async function processarDocumentoEmSegundoPlano(documentoId: string): Pro
         // O mesmo documento não é lido (nem pago) duas vezes: o ficheiro novo
         // é apagado e o cliente é levado ao contrato que já o tem.
         await admin.storage.from(reservado.bucket ?? BUCKET_MONITOR).remove([reservado.storage_path]);
+        await quotaEmpresa(admin, documentoId, "libertada");
         await marcarEtapa(admin, documentoId, "repetido", { contrato_id: repetido.contrato_id });
         return;
       }
@@ -1066,7 +1211,9 @@ export async function concluirAssociacao(a: {
   servicoId?: string | null;
   papel: "cliente" | "admin";
   por: string;
-}): Promise<{ ok: true; servicoId: string; repetido: boolean } | { ok: false; erro: "nao_encontrado" | "servico_invalido" | "leitura_invalida" }> {
+}): Promise<
+  { ok: true; servicoId: string; repetido: boolean } | { ok: false; erro: "nao_encontrado" | "servico_invalido" | "leitura_invalida" | "limite_servicos" }
+> {
   const admin = createAdminClient();
   const { data: doc } = await admin
     .from("documentos_monitor")
@@ -1078,6 +1225,10 @@ export async function concluirAssociacao(a: {
     .maybeSingle();
   if (!doc) return { ok: false, erro: "nao_encontrado" };
 
+  // DoLado Empresas: o serviço tem de ser da instalação do documento; um
+  // serviço novo fica nessa instalação e respeita o limite do plano.
+  const empresa = await contextoEmpresa(admin, doc.id);
+
   let alvo: string | null = null;
   if (a.decisao === "associar_mesmo_assim") alvo = doc.associacao_sugerida;
   if (a.decisao === "outro_servico") alvo = a.servicoId ?? null;
@@ -1085,12 +1236,15 @@ export async function concluirAssociacao(a: {
     if (!alvo) return { ok: false, erro: "servico_invalido" };
     const { data: servico } = await admin
       .from("contratos_monitorizados")
-      .select("id")
+      .select("id, instalacao_id")
       .eq("id", alvo)
       .eq("utilizador_id", a.utilizadorId)
       .is("desativado_em", null)
       .maybeSingle();
     if (!servico) return { ok: false, erro: "servico_invalido" };
+    if (empresa && servico.instalacao_id !== empresa.instalacaoId) return { ok: false, erro: "servico_invalido" };
+  } else if (empresa && !(await podeCriarServicoEmpresa(admin, a.utilizadorId))) {
+    return { ok: false, erro: "limite_servicos" };
   }
 
   const { data: extracao } = await admin
@@ -1116,7 +1270,7 @@ export async function concluirAssociacao(a: {
   if (!reservado) return { ok: false, erro: "nao_encontrado" };
 
   try {
-    const servicoId = alvo ?? (await criarServico(admin, a.utilizadorId, validada.leitura, doc.id));
+    const servicoId = alvo ?? (await criarServico(admin, a.utilizadorId, validada.leitura, doc.id, empresa?.instalacaoId ?? null));
     const { repetido } = await registarNoServico(admin, {
       documentoId: doc.id,
       utilizadorId: a.utilizadorId,
@@ -1133,7 +1287,12 @@ export async function concluirAssociacao(a: {
       decisao: a.decisao,
       papel: a.papel,
       por: a.por,
+      empresa: !!empresa,
     });
+    if (empresa) {
+      if (repetido) await quotaEmpresa(admin, doc.id, "libertada");
+      else if (resultadoUtil(validada.leitura, false)) await quotaEmpresa(admin, doc.id, "consumida");
+    }
     if (repetido) {
       await admin.storage.from(doc.bucket ?? BUCKET_MONITOR).remove([doc.storage_path]);
       await admin.from("documentos_monitor").update({ etapa: "repetido" }).eq("id", doc.id);
