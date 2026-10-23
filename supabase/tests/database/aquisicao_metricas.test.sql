@@ -48,6 +48,15 @@ insert into public.uso_api_claude (funcionalidade, diagnostico_id, modelo, token
   ('diagnostico_gratuito', '00000000-0000-4000-d200-000000000103', 'claude-haiku-5-5', 3000, 500, 0.00055, 'sucesso', now() - interval '1 day'),
   ('monitor_fatura', null, 'claude-sonnet-5-5', 5000, 1500, 0.025, 'sucesso', now() - interval '1 day');
 
+-- Funil da Protecção (23/10/2026): a sessão 1 entrou por /analisar-fatura e
+-- abriu o checkout depois do diagnóstico; a conta B abriu um checkout antes
+-- do diagnóstico (não conta).
+update public.diagnosticos_gratuitos set pagina_entrada = '/analisar-fatura' where id = '00000000-0000-4000-d200-000000000101';
+insert into public.consentimentos_compra (user_id, email, plano, tipo_compra, origem, termos_versao, privacidade_versao,
+  consentimento_inicio_imediato_versao, texto_aceitacao_termos, texto_consentimento_inicio_imediato, aceitou_termos_em, pediu_inicio_imediato_em, created_at) values
+  ('00000000-0000-4000-d200-00000000000a', 'aq-a@teste.invalid', 'protecao', 'subscricao', 'portal', 't', 'p', 'i', 'x', 'x', now(), now(), now() - interval '2 hours'),
+  ('00000000-0000-4000-d200-00000000000b', 'aq-b@teste.invalid', 'protecao', 'subscricao', 'portal', 't', 'p', 'i', 'x', 'x', now(), now(), now() - interval '10 days');
+
 -- ---------------------------------------------------------------------------
 -- Só o admin
 -- ---------------------------------------------------------------------------
@@ -85,6 +94,15 @@ select is((select (j -> 'sessoes' ->> 'clicaram_protecao')::int from m), 1, 'Um 
 select is((select (j -> 'contas' ->> 'criadas_ou_ligadas')::int from m), 2, 'Duas contas');
 select is((select (j -> 'contas' ->> 'experimental')::int from m), 1, 'Um período experimental depois do diagnóstico');
 select is((select (j -> 'contas' ->> 'pagas')::int from m), 1, 'Só o pagamento > 0 € conta como cliente pago');
+select is((select (j -> 'contas' ->> 'checkout')::int from m), 1, 'Checkout aberto só depois do diagnóstico');
+select is(
+  (select jsonb_build_object('viram', x -> 'viram', 'clicaram', x -> 'clicaram_protecao', 'contas', x -> 'contas', 'checkout', x -> 'checkout', 'pagas', x -> 'pagas')
+     from m, jsonb_array_elements(j -> 'funil_protecao') x where x ->> 'pagina' = '/analisar-fatura'),
+  '{"viram": 1, "clicaram": 1, "contas": 1, "checkout": 1, "pagas": 1}'::jsonb,
+  'Funil da Protecção por página de entrada');
+select is(
+  (select (x ->> 'clicaram_protecao')::int from m, jsonb_array_elements(j -> 'funil_protecao') x where x ->> 'pagina' = '—'),
+  0, 'Sem página de entrada: sem clique na Protecção');
 
 select is(
   (select (x ->> 'pagas')::int from m, jsonb_array_elements(j -> 'por_canal') x where x ->> 'canal' = 'instagram'),

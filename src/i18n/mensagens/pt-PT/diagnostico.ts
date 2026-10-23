@@ -100,41 +100,68 @@ export const diagnostico = {
       mais: (diferenca: V, mensalidade: V) => `Esta factura tem mais ${diferenca} do que a mensalidade (${mensalidade}).`,
       menos: (diferenca: V, mensalidade: V) => `Esta factura tem menos ${diferenca} do que a mensalidade (${mensalidade}).`,
     },
-    // Duas áreas do resultado (src/lib/diagnostico/apresentacao.ts): só o que
-    // foi lido e contas feitas em código — nunca uma conclusão de que algo
-    // está errado, nem passos a seguir (decisão de Thiago, 22/10/2026).
-    seccoes: {
-      identificadoTitulo: "O que identificámos",
-      identificadoTexto: "Valores e datas tal como aparecem no documento, e as contas que fizemos com eles.",
-      destaquesTitulo: "Em destaque no documento",
-      destaquesTexto: "Datas e valores do documento que convém ter presentes. Não quer dizer que haja um erro.",
-      semDestaques: "Não há datas nem valores do documento a destacar.",
+    // Resultado em três níveis (src/lib/diagnostico/apresentacao.ts, revisão
+    // de 23/10/2026): o que encontrámos agora (com "o que isto significa"),
+    // o que vale a pena confirmar e a Protecção como continuação. Os
+    // significados são explicações gerais e condicionais do tipo de facto —
+    // nunca uma conclusão de que algo está errado nem um conselho para o caso
+    // da pessoa (regras 2 e 4 do "Uso de IA").
+    encontrou: {
+      titulo: "O que encontrámos agora",
+      texto: { fatura: "Datas e valores desta factura que provavelmente quer conhecer.", contrato: "Datas e valores deste contrato que provavelmente quer conhecer." },
+      semDestaques: {
+        fatura: "Nesta factura não encontrámos datas a terminar em breve nem cobranças fora da mensalidade.",
+        contrato: "Neste contrato não encontrámos datas a terminar nos próximos 3 meses.",
+      },
+      semDestaquesDepois: "Isso pode mudar nas próximas facturas: preços, promoções, fidelização e cobranças novas.",
+      significado: "O que isto significa",
     },
-    origem: {
-      documento: "Do documento",
-      nao_confirmado: "Não confirmado",
-      contrato: "Consta do contrato",
-    },
-    destaques: {
-      soma_linhas_difere: (soma: V, total: V) =>
-        `A soma das linhas que conseguimos ler (${soma}) é diferente do total da factura (${total}). Pode haver linhas que não conseguimos ler.`,
-      diferenca_mensalidade: (diferenca: V, mensalidade: V) =>
-        `O total tem mais ${diferenca} do que a mensalidade (${mensalidade}). Nas linhas da factura pode ver de onde vem a diferença.`,
-      cobrancas_pontuais: (n: number, total: V) =>
-        n === 1
-          ? `Há 1 cobrança que não se repete todos os meses (${total}).`
-          : `Há ${n} cobranças que não se repetem todos os meses (${total} no total).`,
+    descobertas: {
+      faltam: (dias: number) => (dias === 0 ? "Termina hoje" : dias === 1 ? "Falta 1 dia" : `Faltam ${dias} dias`),
+      daquiA: (meses: number) => (meses <= 1 ? "Daqui a cerca de 1 mês" : `Daqui a cerca de ${meses} meses`),
+      jaTerminou: "Já terminou",
+      porAno: (v: V) => `${v} por ano`,
       data_proxima: {
-        fidelizacao: (data: V, dias: V) => `A fidelização termina a ${data} (faltam ${dias} dias).`,
-        promocao: (data: V, dias: V) => `A promoção termina a ${data} (faltam ${dias} dias).`,
+        fidelizacao: (data: V) => `A sua fidelização termina a ${data}.`,
+        promocao: (data: V) => `A sua promoção termina a ${data}.`,
+      },
+      data_futura: {
+        fidelizacao: (data: V) => `Tem fidelização até ${data}.`,
+        promocao: (data: V) => `A sua promoção dura até ${data}.`,
       },
       data_passada: {
-        fidelizacao: (data: V) => `A fidelização indicada terminou a ${data}.`,
-        promocao: (data: V) => `A promoção indicada terminou a ${data}.`,
+        fidelizacao: (data: V) => `Segundo o documento, a fidelização terminou a ${data}.`,
+        promocao: (data: V) => `Segundo o documento, a promoção terminou a ${data}.`,
       },
-      so_com_contrato:
-        "Uma factura mostra o que foi cobrado. O preço acordado, a fidelização e as promoções constam do contrato.",
+      acima_mensalidade: (diferenca: V, mensalidade: V) => `Esta factura tem mais ${diferenca} do que a mensalidade (${mensalidade}).`,
+      cobrancas_pontuais: (n: number, total: V) =>
+        n === 1 ? `Há 1 cobrança que não se repete todos os meses: ${total}.` : `Há ${n} cobranças que não se repetem todos os meses: ${total} no total.`,
+      descontos: (v: V) => `Este documento tem ${v} de descontos.`,
+      cessacao: (v: V) => `A factura indica ${v} como valor para cancelar.`,
+      soma_difere: (soma: V, total: V) => `As linhas que conseguimos ler somam ${soma}, mas o total da factura é ${total}.`,
+      custo_anual: (mensal: V, anual: V) => `A mensalidade de ${mensal} representa cerca de ${anual} por ano.`,
+      recorrentes_anual: (n: number, mensal: V, anual: V) =>
+        n === 1
+          ? `A cobrança que se repete todos os meses (${mensal}) representa cerca de ${anual} por ano.`
+          : `As ${n} cobranças que se repetem todos os meses somam ${mensal}: cerca de ${anual} por ano.`,
+      significados: {
+        fidelizacao_ativa: "Até essa data, cancelar ou mudar de empresa pode ter encargos. Depois, os encargos da fidelização deixam de se aplicar.",
+        promocao_ativa: "Quando uma promoção termina, o preço pode subir. O preço que passa a aplicar-se consta do contrato.",
+        fidelizacao_passada:
+          "Os encargos de cancelamento de uma fidelização só se aplicam durante o período de fidelização. Uma nova oferta pode trazer uma nova fidelização.",
+        promocao_passada: "Depois de uma promoção, o preço pode ser diferente do que pagava antes. As próximas facturas mostram o preço actual.",
+        acima_mensalidade: "A diferença pode vir de consumos extra, serviços pontuais, acertos ou impostos. Nas linhas da factura pode ver de onde vem.",
+        cobrancas_pontuais: "Não fazem parte da mensalidade. Por isso, a próxima factura pode ter um valor diferente.",
+        descontos: "Se o desconto vier de uma promoção, pode deixar de se aplicar quando ela terminar.",
+        cessacao: "É o valor que a empresa indica nesta data. Durante a fidelização, este valor pode mudar de mês para mês.",
+        soma_difere: "Pode haver linhas que não conseguimos ler. O valor a pagar é o total indicado na factura.",
+        custo_anual: "É um custo fixo: repete-se todos os meses enquanto as condições se mantiverem.",
+      },
     },
+    porConfirmarTitulo: "Vale a pena confirmar",
+    porConfirmarTexto: "Não conseguimos ler estes pontos com segurança. Vale a pena confirmá-los no documento original.",
+    detalheTitulo: "Ver tudo o que lemos no documento",
+    linhaPorAno: (v: V) => `cerca de ${v} por ano`,
     porConfirmar: {
       fornecedor: "A empresa que emitiu o documento.",
       total: "O valor total da factura.",
@@ -172,37 +199,51 @@ export const diagnostico = {
     nao: "Não",
   },
   conversao: {
-    titulo: "Quer continuar a ter a DoLado a acompanhar os seus contratos e facturas?",
-    beneficios: [
-      "Avisamos antes do fim da fidelização e das promoções.",
-      "Comparamos cada factura nova com as anteriores; o que merecer atenção é revisto por uma pessoa da DoLado.",
-      "Se houver um problema, pode pedir-nos que o tratemos.",
-    ],
+    // A Protecção como continuação do resultado (23/10/2026): "Já fizemos
+    // isto por si uma vez. Podemos continuar a fazê-lo." Só o que o Monitor
+    // faz (comparação das facturas, avisos 30 dias antes e na data, revisão
+    // por uma pessoa, resumo mensal). Vindo de /analisar-fatura: 4,99 €/mês;
+    // das outras páginas: 30 dias grátis.
+    continuidade: {
+      titulo: {
+        fatura: "A sua factura já está analisada. Agora podemos continuar atentos por si.",
+        contrato: "O seu contrato já está analisado. Agora podemos continuar atentos por si.",
+      },
+      texto:
+        "Com a Protecção, a DoLado acompanha as suas próximas facturas e diz-lhe quando houver alterações de preço, fim de promoção ou de fidelização, ou cobranças que mereçam atenção.",
+      comOQueEncontramos: "Com o que encontrámos hoje:",
+      aviso30: {
+        fidelizacao: (data: V) => `Enviamos-lhe um aviso 30 dias antes de ${data}, quando termina a fidelização.`,
+        promocao: (data: V) => `Enviamos-lhe um aviso 30 dias antes de ${data}, quando termina a promoção.`,
+      },
+      avisoNoDia: {
+        fidelizacao: (data: V) => `Enviamos-lhe um aviso a ${data}, o dia em que termina a fidelização.`,
+        promocao: (data: V) => `Enviamos-lhe um aviso a ${data}, o dia em que termina a promoção.`,
+      },
+      comparar_proxima: "Comparamos a próxima factura com esta e explicamos-lhe o que mudou.",
+      juntar_contrato: "Se juntar o contrato, comparamos cada factura com as condições que aceitou.",
+      gerais: [
+        "Comparamos cada factura nova com as anteriores.",
+        "Enviamos-lhe um aviso antes do fim da fidelização e das promoções.",
+        "Todos os meses, recebe por e-mail um resumo do que acompanhámos.",
+      ],
+      revisao: "O que merecer atenção é revisto por uma pessoa da DoLado antes de lhe dizermos.",
+      porMes: "/mês",
+      precoNota: "IVA incluído. Pode cancelar quando quiser, no portal.",
+      botao: "Quero que a DoLado continue a verificar",
+      notaSemConta: "Primeiro cria a sua conta; depois escolhe a forma de pagamento.",
+      documento: "Depois de aderir, pode começar pelo documento que acabámos de analisar.",
+      gratuita: "Esta análise continua gratuita, com ou sem Protecção.",
+      // Outras origens (homepage): a mesma continuação, com os 30 dias grátis.
+      gratisPreco: "30 dias grátis",
+      gratisDepois: (preco: V) => `Depois, ${preco}/mês, só se decidir aderir.`,
+    },
     protecao: "Continuar com 30 dias grátis",
     protecaoNota: "Sem cartão bancário. No fim dos 30 dias, nada é cobrado.",
     guardar: "Guardar o meu resultado",
     guardarNota: "Crie uma conta gratuita para guardar este resultado.",
     guardado: "Este resultado já está guardado na sua conta.",
     irPortal: "Abrir a minha conta",
-    // Resultado aberto a partir da landing /analisar-fatura: a Protecção como
-    // continuação da análise, sem destacar os 30 dias grátis. Só o que a
-    // Protecção faz (Monitor, avisos de datas, revisão humana, resumo mensal).
-    analisarFatura: {
-      titulo: "E se não tivesse de verificar tudo sozinho?",
-      texto:
-        "A primeira análise é apenas o começo. Conheça a Protecção DoLado e descubra como podemos ajudar a acompanhar os seus contratos e serviços.",
-      agoraTitulo: "Esta análise gratuita",
-      agora: "Lê uma factura, uma vez, e mostra o que está no documento.",
-      protecaoTitulo: "Com a Protecção DoLado",
-      beneficios: [
-        "Comparamos cada factura nova com as anteriores.",
-        "Avisamos antes do fim da fidelização e das promoções.",
-        "O que merecer atenção é revisto por uma pessoa da DoLado antes de lhe dizermos.",
-        "Todos os meses, recebe por e-mail um resumo do que acompanhámos.",
-      ],
-      botao: "Conhecer a Protecção DoLado",
-      nota: "Subscrição mensal, que pode cancelar no portal. Esta análise continua gratuita, com ou sem Protecção.",
-    },
     problema: "Já tem um problema com esta empresa?",
     problemaLigacao: "Peça-nos ajuda",
   },

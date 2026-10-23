@@ -77,7 +77,10 @@ export type Metricas = {
     vistos: number;
     passados_ao_monitor: number;
   };
-  contas: { criadas_ou_ligadas: number; experimental: number; pagas: number; subscricoes_pagas: number };
+  /** `checkout` desde 20261102090000 (antes da migration, ausente). */
+  contas: { criadas_ou_ligadas: number; experimental: number; checkout?: number; pagas: number; subscricoes_pagas: number };
+  /** Funil da Protecção por página de entrada (desde 20261102090000). */
+  funil_protecao?: { pagina: string; viram: number; clicaram_protecao: number; contas: number; checkout: number; pagas: number }[];
   por_canal: { canal: string; sessoes: number; carregaram: number; concluiram: number; contas: number; experimental: number; pagas: number }[];
   por_campanha: { origem: string; meio: string; campanha: string; documentos: number; concluidos: number; contas: number }[];
   por_pagina_entrada: Record<string, number>;
@@ -116,6 +119,11 @@ const pct = (parte: number, total: number) => (total > 0 ? (parte / total) * 100
  * Visitante → … → cliente pago, só com o que a base de dados confirma. A
  * entrada é a sessão que escolheu um ficheiro (visitas e cliques no botão só
  * existem no GA4, com consentimento). Da conta em diante conta-se por conta.
+ * Entre o resultado e a conta, o clique no botão da Protecção
+ * (protection_cta_clicked = protecao_clicada_em): poucos cliques → o
+ * resultado não mostrou valor; muitos cliques e poucos pagamentos → registo,
+ * checkout, confiança ou preço. O período experimental fica fora da cadeia
+ * (é uma alternativa ao checkout, não um passo antes dele).
  */
 export function montarFunil(m: Metricas, anterior?: Metricas | null): Etapa[] {
   const linhas: [string, string, Etapa["unidade"], (x: Metricas) => number][] = [
@@ -123,8 +131,9 @@ export function montarFunil(m: Metricas, anterior?: Metricas | null): Etapa[] {
     ["carregaram", "Documento carregado", "sessões", (x) => x.sessoes.carregaram],
     ["concluiram", "Análise concluída", "sessões", (x) => x.sessoes.concluiram],
     ["viram", "Diagnóstico visto", "sessões", (x) => x.sessoes.viram],
+    ["clicaram_protecao", "Clicaram na Protecção", "sessões", (x) => x.sessoes.clicaram_protecao],
     ["conta", "Conta criada ou ligada", "contas", (x) => x.contas.criadas_ou_ligadas],
-    ["experimental", "Período experimental", "contas", (x) => x.contas.experimental],
+    ["checkout", "Checkout aberto", "contas", (x) => x.contas.checkout ?? 0],
     ["pago", "Cliente pago", "contas", (x) => x.contas.pagas],
   ];
   const entrada = linhas[0][3](m);

@@ -9,7 +9,7 @@ const fonte = (rel) => readFileSync(new URL(rel, import.meta.url), "utf8");
 const metricas = (s = {}, c = {}) => ({
   sessoes: { iniciaram: 100, carregaram: 80, concluiram: 70, viram: 60, clicaram_protecao: 20, clicaram_guardar: 5, com_conta: 12, sem_conta_depois_de_ver: 48, ...s },
   documentos: { reservados: 110, carregados: 90, analises_iniciadas: 90, concluidos: 75, falhados: 15, falhas_por_motivo: {}, vistos: 65, passados_ao_monitor: 4 },
-  contas: { criadas_ou_ligadas: 12, experimental: 8, pagas: 2, subscricoes_pagas: 1, ...c },
+  contas: { criadas_ou_ligadas: 12, experimental: 8, checkout: 4, pagas: 2, subscricoes_pagas: 1, ...c },
   por_canal: [],
   por_campanha: [],
   por_pagina_entrada: {},
@@ -50,19 +50,26 @@ describe("períodos", () => {
 describe("funil", () => {
   test("taxas face à anterior e à entrada; unidades ditas", () => {
     const f = montarFunil(metricas());
-    assert.deepEqual(f.map((e) => e.valor), [100, 80, 70, 60, 12, 8, 2]);
+    // … viram → clicaram na Protecção (protection_cta_clicked) → conta → checkout → pago.
+    assert.deepEqual(f.map((e) => e.id), ["escolheram", "carregaram", "concluiram", "viram", "clicaram_protecao", "conta", "checkout", "pago"]);
+    assert.deepEqual(f.map((e) => e.valor), [100, 80, 70, 60, 20, 12, 4, 2]);
     assert.equal(f[0].daAnterior, null);
     assert.equal(f[1].daAnterior, 80);
-    assert.equal(f[6].daEntrada, 2);
-    assert.equal(f[4].perdidos, 48);
-    assert.equal(f[3].unidade, "sessões");
-    assert.equal(f[4].unidade, "contas");
+    assert.equal(f[7].daEntrada, 2);
+    assert.equal(f[4].perdidos, 40);
+    assert.equal(f[4].unidade, "sessões");
+    assert.equal(f[5].unidade, "contas");
   });
-  test("maior perda relativa (viram → conta)", () => {
-    assert.equal(maiorPerda(montarFunil(metricas()))?.id, "conta");
+  test("maior perda relativa (resultado visto → clique na Protecção)", () => {
+    assert.equal(maiorPerda(montarFunil(metricas()))?.id, "clicaram_protecao");
+  });
+  test("antes da migration do checkout: o passo conta 0, sem erro", () => {
+    const m = metricas();
+    delete m.contas.checkout;
+    assert.equal(montarFunil(m).find((e) => e.id === "checkout")?.valor, 0);
   });
   test("sem dados: nada a dividir por zero, sem 'maior perda' inventada", () => {
-    const f = montarFunil(metricas({ iniciaram: 0, carregaram: 0, concluiram: 0, viram: 0 }, { criadas_ou_ligadas: 0, experimental: 0, pagas: 0 }));
+    const f = montarFunil(metricas({ iniciaram: 0, carregaram: 0, concluiram: 0, viram: 0, clicaram_protecao: 0 }, { criadas_ou_ligadas: 0, experimental: 0, checkout: 0, pagas: 0 }));
     assert.ok(f.every((e) => e.daEntrada === null));
     assert.equal(maiorPerda(f), null);
   });

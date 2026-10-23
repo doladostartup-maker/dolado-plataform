@@ -1,16 +1,16 @@
-// Diagnóstico gratuito — áreas do resultado (apresentacao.ts). `npm test`.
+// Diagnóstico gratuito — organização do resultado (apresentacao.ts). `npm test`.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { describe, test } from "node:test";
-import { DIAS_DATA_PROXIMA, seccoesDiagnostico } from "./apresentacao.ts";
+import { DIAS_DATA_PROXIMA, MAX_DESCOBERTAS, apresentarDiagnostico, ehPeriodoMensal } from "./apresentacao.ts";
 
 const fonte = (rel) => readFileSync(new URL(rel, import.meta.url), "utf8");
 
 const base = (extra = {}) => ({
   versao: "diagnostico_v2",
   tipo: "fatura",
-  setor: "eletricidade",
-  fornecedor: "Comercializador X",
+  setor: "telecomunicacoes",
+  fornecedor: "Operador X",
   factos: [],
   linhas: [],
   calculos: [],
@@ -18,44 +18,59 @@ const base = (extra = {}) => ({
   ...extra,
 });
 
-describe("seccoesDiagnostico", () => {
-  test("factura sem nada a assinalar: só o que consta do contrato", () => {
-    const s = seccoesDiagnostico(base({ calculos: [{ chave: "soma_linhas", somaCents: 5000, totalCents: 5000, coincide: true }] }));
-    assert.deepEqual(s.calculos.map((c) => c.chave), ["soma_linhas"]);
-    assert.deepEqual(s.destaques, [{ chave: "so_com_contrato", origem: "contrato" }]);
-    assert.deepEqual(Object.keys(s).sort(), ["calculos", "destaques"]);
+const euros = (chave, valor) => ({ chave, tipo: "euros", valor, pagina: null });
+const dataF = (chave, valor) => ({ chave, tipo: "data", valor, pagina: null });
+
+describe("apresentarDiagnostico", () => {
+  test("factura sem nada a destacar: estado sem_destaques, mas mostra o custo por ano", () => {
+    const a = apresentarDiagnostico(
+      base({ factos: [euros("mensalidade", 599)], calculos: [{ chave: "soma_linhas", somaCents: 599, totalCents: 599, coincide: true }] }),
+    );
+    assert.equal(a.estado, "sem_destaques");
+    assert.deepEqual(a.descobertas, [{ chave: "custo_anual", mensalCents: 599, anualCents: 7188 }]);
+    assert.deepEqual(a.calculosDetalhe.map((c) => c.chave), ["soma_linhas"]);
+    // A Protecção faz sentido mesmo assim: o contrato pode ser acompanhado.
+    assert.deepEqual(a.continuidade, [{ chave: "juntar_contrato" }]);
   });
 
-  test("soma diferente, diferença face à mensalidade e cobranças pontuais ficam em destaque", () => {
-    const s = seccoesDiagnostico(
+  test("descobertas ordenadas por prioridade, com a comparação da próxima factura", () => {
+    const a = apresentarDiagnostico(
       base({
+        factos: [euros("mensalidade", 4000), euros("descontos", 500), euros("cessacao", 12000)],
         linhas: [
-          { descricao: "Energia", valorCents: 4000, recorrente: true },
+          { descricao: "Pacote", valorCents: 4000, recorrente: true },
           { descricao: "Acerto", valorCents: 740, recorrente: false },
           { descricao: "Crédito", valorCents: -200, recorrente: false },
-          { descricao: "Taxa", valorCents: 300, recorrente: null },
         ],
         calculos: [
-          { chave: "soma_linhas", somaCents: 4840, totalCents: 5100, coincide: false },
-          { chave: "diferenca_mensalidade", totalCents: 5100, mensalidadeCents: 4000, diferencaCents: 1100 },
+          { chave: "soma_linhas", somaCents: 4540, totalCents: 4740, coincide: false },
+          { chave: "diferenca_mensalidade", totalCents: 4740, mensalidadeCents: 4000, diferencaCents: 740 },
+          { chave: "dias_fim_fidelizacao", data: "2026-12-01", dias: 40 },
         ],
       }),
     );
-    assert.deepEqual(s.calculos, []);
-    const chaves = s.destaques.map((i) => i.chave);
-    assert.deepEqual(chaves, ["soma_linhas_difere", "diferenca_mensalidade", "cobrancas_pontuais", "so_com_contrato"]);
-    // Só as cobranças pontuais positivas contam (o crédito não, a linha sem indicação também não).
-    assert.deepEqual(s.destaques[2], { chave: "cobrancas_pontuais", origem: "documento", quantidade: 1, totalCents: 740 });
+    assert.equal(a.estado, "encontrou");
+    assert.deepEqual(
+      a.descobertas.map((x) => x.chave),
+      ["data_proxima", "acima_mensalidade", "cobrancas_pontuais", "descontos", "cessacao"].slice(0, MAX_DESCOBERTAS),
+    );
+    // Só as cobranças pontuais positivas contam (o crédito não).
+    assert.deepEqual(a.descobertas[2], { chave: "cobrancas_pontuais", quantidade: 1, totalCents: 740 });
+    assert.deepEqual(a.continuidade, [
+      { chave: "aviso_data", tipo: "fidelizacao", data: "2026-12-01", dias: 40 },
+      { chave: "comparar_proxima" },
+      { chave: "juntar_contrato" },
+    ]);
   });
 
-  test("factura com menos do que a mensalidade fica em A", () => {
-    const s = seccoesDiagnostico(base({ calculos: [{ chave: "diferenca_mensalidade", totalCents: 3000, mensalidadeCents: 4000, diferencaCents: -1000 }] }));
-    assert.equal(s.calculos[0].chave, "diferenca_mensalidade");
-    assert.ok(!s.destaques.some((i) => i.chave === "diferenca_mensalidade"));
+  test("factura com menos do que a mensalidade: a conta fica no detalhe", () => {
+    const a = apresentarDiagnostico(base({ calculos: [{ chave: "diferenca_mensalidade", totalCents: 3000, mensalidadeCents: 4000, diferencaCents: -1000 }] }));
+    assert.equal(a.calculosDetalhe[0].chave, "diferenca_mensalidade");
+    assert.ok(!a.descobertas.some((x) => x.chave === "acima_mensalidade"));
   });
 
-  test("datas: próximas e passadas ficam em destaque; distantes ficam em A", () => {
-    const s = seccoesDiagnostico(
+  test("datas: próximas, distantes e passadas", () => {
+    const a = apresentarDiagnostico(
       base({
         tipo: "contrato",
         calculos: [
@@ -65,40 +80,72 @@ describe("seccoesDiagnostico", () => {
         ],
       }),
     );
-    assert.deepEqual(s.calculos.map((c) => c.chave), ["dias_fim_fidelizacao"]);
-    assert.deepEqual(s.destaques, [
-      { chave: "data_proxima", origem: "documento", tipo: "promocao", data: "2026-12-01", dias: 40 },
-      { chave: "data_passada", origem: "documento", tipo: "fidelizacao", data: "2026-01-01" },
-    ]);
-  });
-
-  test("o que não foi lido aparece como não confirmado", () => {
-    const s = seccoesDiagnostico(base({ porConfirmar: ["fornecedor", "total"] }));
     assert.deepEqual(
-      s.destaques.filter((i) => i.origem === "nao_confirmado").map((i) => i.campo),
-      ["fornecedor", "total"],
+      a.descobertas.map((x) => [x.chave, x.tipo]),
+      [
+        ["data_proxima", "promocao"],
+        ["data_passada", "fidelizacao"],
+        ["data_futura", "fidelizacao"],
+      ],
     );
+    // Um contrato não leva "junte o contrato"; as duas datas futuras levam aviso.
+    assert.deepEqual(a.continuidade.map((c) => c.chave), ["aviso_data", "aviso_data"]);
   });
 
-  test("só factos: os textos não dizem à pessoa o que fazer", async () => {
+  test("uma data que termina hoje não promete aviso", () => {
+    const a = apresentarDiagnostico(base({ calculos: [{ chave: "dias_fim_fidelizacao", data: "2026-10-23", dias: 0 }] }));
+    assert.ok(!a.continuidade.some((c) => c.chave === "aviso_data"));
+  });
+
+  test("valor por ano das cobranças mensais só num período mensal e sem mensalidade lida", () => {
+    const linhas = [
+      { descricao: "Internet", valorCents: 2500, recorrente: true },
+      { descricao: "Box adicional", valorCents: 599, recorrente: true },
+    ];
+    const mensal = [dataF("periodo_inicio", "2026-09-01"), dataF("periodo_fim", "2026-09-30")];
+    assert.ok(ehPeriodoMensal(mensal));
+    const a = apresentarDiagnostico(base({ factos: mensal, linhas }));
+    assert.deepEqual(a.descobertas, [{ chave: "recorrentes_anual", quantidade: 2, mensalCents: 3099, anualCents: 37188 }]);
+    assert.equal(a.periodoMensal, true);
+
+    const bimestral = [dataF("periodo_inicio", "2026-08-01"), dataF("periodo_fim", "2026-09-30")];
+    assert.ok(!ehPeriodoMensal(bimestral));
+    assert.deepEqual(apresentarDiagnostico(base({ factos: bimestral, linhas })).descobertas, []);
+  });
+
+  test("o que não foi lido fica à parte, nunca como descoberta", () => {
+    const a = apresentarDiagnostico(base({ porConfirmar: ["fornecedor", "total"] }));
+    assert.deepEqual(a.porConfirmar, ["fornecedor", "total"]);
+    assert.deepEqual(a.descobertas, []);
+  });
+
+  test("os textos não concluem que algo está errado nem prometem poupanças", async () => {
     const { diagnostico: pt } = await import("../../i18n/mensagens/pt-PT/diagnostico.ts");
-    const d = pt.resultado.destaques;
+    const d = pt.resultado.descobertas;
+    const c = pt.conversao.continuidade;
     const textos = [
-      d.soma_linhas_difere("1,00 €", "2,00 €"),
-      d.diferenca_mensalidade("1,00 €", "2,00 €"),
-      d.cobrancas_pontuais(1, "1,00 €"),
-      d.cobrancas_pontuais(2, "1,00 €"),
-      d.data_proxima.fidelizacao("1 de Janeiro", "3"),
-      d.data_proxima.promocao("1 de Janeiro", "3"),
-      d.data_passada.fidelizacao("1 de Janeiro"),
+      ...Object.values(d.significados),
+      d.data_proxima.fidelizacao("1 de Janeiro"),
+      d.data_proxima.promocao("1 de Janeiro"),
+      d.data_futura.fidelizacao("1 de Janeiro"),
       d.data_passada.promocao("1 de Janeiro"),
-      d.so_com_contrato,
-      pt.resultado.seccoes.destaquesTexto,
-    ].join(" ");
-    for (const proibido of ["confirme", "peça", "recomend", "deve ", "compare", "indevid", "ilegal"]) {
-      assert.ok(!textos.toLowerCase().includes(proibido), proibido);
+      d.acima_mensalidade("1,00 €", "2,00 €"),
+      d.cobrancas_pontuais(2, "1,00 €"),
+      d.descontos("1,00 €"),
+      d.cessacao("1,00 €"),
+      d.soma_difere("1,00 €", "2,00 €"),
+      d.custo_anual("1,00 €", "12,00 €"),
+      pt.resultado.encontrou.semDestaques.fatura,
+      c.texto,
+      c.comparar_proxima,
+      c.juntar_contrato,
+      ...c.gerais,
+    ].join(" ").toLowerCase();
+    for (const proibido of ["confirme", "peça", "recomend", "deve ", "indevid", "ilegal", "errad", "poupa", "vai poupar", "tem direito"]) {
+      assert.ok(!textos.includes(proibido), proibido);
     }
-    assert.ok(!("recomendacoes" in pt.resultado));
+    // O preço não vive no dicionário (vem de planos.ts).
+    assert.ok(!JSON.stringify(c).includes("4,99"));
   });
 
   test("sem I/O nem IA", () => {
