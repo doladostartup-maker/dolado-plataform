@@ -50,3 +50,31 @@ jobs:
       # criar: rls_isolamento conta linhas e precisa da base vazia.
       - run: supabase test db
       - run: npm run test:contrato
+
+  # O código do ramo base tem de funcionar sobre o esquema do PR: durante o
+  # deploy (e depois de um revert) a versão anterior corre sobre as migrations
+  # novas. Ver scripts/compatibilidade-esquema.mjs.
+  compatibilidade-esquema:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.117.0
+      # Esquema NOVO: a stack local arranca com as migrations do PR.
+      - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,postgres-meta
+      # Código ANTERIOR: o ramo base numa pasta à parte, com as suas dependências.
+      - run: git worktree add base "origin/${{ github.base_ref }}"
+      - run: npm ci
+        working-directory: base
+      - run: node scripts/compatibilidade-esquema.mjs base
+        env:
+          REF_BASE: origin/${{ github.base_ref }}

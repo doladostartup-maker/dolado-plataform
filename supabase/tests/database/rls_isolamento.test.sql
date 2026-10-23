@@ -245,7 +245,12 @@ select is(
                            'diagnostico_reservar', 'diagnostico_associar', 'diagnosticos_expirar',
                            -- Painel Aquisição e Conversão (20261029090000): só leitura, recusa quem
                            -- não é admin (is_admin), só contagens (aquisicao_metricas.test.sql).
-                           'aquisicao_metricas')), 0::bigint,
+                           'aquisicao_metricas',
+                           -- DoLado Empresas, fundação (20261030090000): conta_empresa e e_membro_organizacao
+                           -- só lêem com auth.uid() (usadas nas policies); empresa_tem_acesso devolve 'nenhum'
+                           -- a quem não é membro nem admin; empresa_marcar_conta só service_role
+                           -- (empresas_fundacao.test.sql).
+                           'conta_empresa', 'e_membro_organizacao', 'empresa_tem_acesso', 'empresa_marcar_conta')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em
