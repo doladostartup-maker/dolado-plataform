@@ -89,38 +89,62 @@ export const diagnostico: Traducao<typeof pt> = {
       mais: (diferenca: V, mensalidade: V) => `This bill is ${diferenca} more than the monthly fee (${mensalidade}).`,
       menos: (diferenca: V, mensalidade: V) => `This bill is ${diferenca} less than the monthly fee (${mensalidade}).`,
     },
-    seccoes: {
-      identificadoTitulo: "What we found",
-      identificadoTexto: "Amounts and dates as they appear in the document, and the sums we worked out from them.",
-      destaquesTitulo: "Highlights from the document",
-      destaquesTexto: "Dates and amounts from the document worth keeping in mind. This does not mean anything is wrong.",
-      semDestaques: "There are no dates or amounts from the document to highlight.",
+    encontrou: {
+      titulo: "What we found now",
+      texto: { fatura: "Dates and amounts on this bill you will probably want to know about.", contrato: "Dates and amounts in this contract you will probably want to know about." },
+      semDestaques: {
+        fatura: "On this bill, we found no dates ending soon and no charges on top of the monthly price.",
+        contrato: "In this contract, we found no dates ending in the next 3 months.",
+      },
+      semDestaquesDepois: "That can change on your next bills: prices, promotions, minimum terms and new charges.",
+      significado: "What this means",
     },
-    origem: {
-      documento: "From the document",
-      nao_confirmado: "Not confirmed",
-      contrato: "In the contract",
-    },
-    destaques: {
-      soma_linhas_difere: (soma: V, total: V) =>
-        `The lines we could read add up to ${soma}, which is different from the bill total (${total}). There may be lines we could not read.`,
-      diferenca_mensalidade: (diferenca: V, mensalidade: V) =>
-        `The total is ${diferenca} more than the monthly fee (${mensalidade}). The lines on the bill show where the difference comes from.`,
-      cobrancas_pontuais: (n: number, total: V) =>
-        n === 1
-          ? `There is 1 charge that does not repeat every month (${total}).`
-          : `There are ${n} charges that do not repeat every month (${total} in total).`,
+    descobertas: {
+      faltam: (dias: number) => (dias === 0 ? "Ends today" : dias === 1 ? "1 day to go" : `${dias} days to go`),
+      daquiA: (meses: number) => (meses <= 1 ? "In about 1 month" : `In about ${meses} months`),
+      jaTerminou: "Already ended",
+      porAno: (v: V) => `${v} a year`,
       data_proxima: {
-        fidelizacao: (data: V, dias: V) => `The minimum term ends on ${data} (${dias} days to go).`,
-        promocao: (data: V, dias: V) => `The promotion ends on ${data} (${dias} days to go).`,
+        fidelizacao: (data: V) => `Your minimum term ends on ${data}.`,
+        promocao: (data: V) => `Your promotion ends on ${data}.`,
+      },
+      data_futura: {
+        fidelizacao: (data: V) => `You have a minimum term until ${data}.`,
+        promocao: (data: V) => `Your promotion lasts until ${data}.`,
       },
       data_passada: {
-        fidelizacao: (data: V) => `The minimum term shown ended on ${data}.`,
-        promocao: (data: V) => `The promotion shown ended on ${data}.`,
+        fidelizacao: (data: V) => `According to the document, the minimum term ended on ${data}.`,
+        promocao: (data: V) => `According to the document, the promotion ended on ${data}.`,
       },
-      so_com_contrato:
-        "A bill shows what was charged. The agreed price, minimum term and promotions are set out in the contract.",
+      acima_mensalidade: (diferenca: V, mensalidade: V) => `This bill is ${diferenca} more than the monthly price (${mensalidade}).`,
+      cobrancas_pontuais: (n: number, total: V) =>
+        n === 1 ? `There is 1 charge that does not repeat every month: ${total}.` : `There are ${n} charges that do not repeat every month: ${total} in total.`,
+      descontos: (v: V) => `This document shows ${v} in discounts.`,
+      cessacao: (v: V) => `The bill shows ${v} as the amount for cancelling.`,
+      soma_difere: (soma: V, total: V) => `The lines we could read add up to ${soma}, but the bill total is ${total}.`,
+      custo_anual: (mensal: V, anual: V) => `The monthly price of ${mensal} comes to about ${anual} a year.`,
+      recorrentes_anual: (n: number, mensal: V, anual: V) =>
+        n === 1
+          ? `The charge that repeats every month (${mensal}) comes to about ${anual} a year.`
+          : `The ${n} charges that repeat every month add up to ${mensal}: about ${anual} a year.`,
+      significados: {
+        fidelizacao_ativa: "Until that date, cancelling or switching company may have charges. After it, the minimum-term charges no longer apply.",
+        promocao_ativa: "When a promotion ends, the price may go up. The price that applies afterwards is set out in the contract.",
+        fidelizacao_passada:
+          "Cancellation charges for a minimum term only apply during the minimum term. A new offer may come with a new minimum term.",
+        promocao_passada: "After a promotion, the price may differ from what you paid before. Your next bills show the current price.",
+        acima_mensalidade: "The difference may come from extra usage, one-off services, adjustments or taxes. The lines on the bill show where it comes from.",
+        cobrancas_pontuais: "They are not part of the monthly price. So your next bill may show a different amount.",
+        descontos: "If the discount comes from a promotion, it may stop applying when the promotion ends.",
+        cessacao: "It is the amount the company shows on this date. During the minimum term, it may change from month to month.",
+        soma_difere: "There may be lines we could not read. The amount to pay is the total shown on the bill.",
+        custo_anual: "It is a fixed cost: it repeats every month while the conditions stay the same.",
+      },
     },
+    porConfirmarTitulo: "Worth checking",
+    porConfirmarTexto: "We could not read these points with confidence. They are worth checking on the original document.",
+    detalheTitulo: "See everything we read in the document",
+    linhaPorAno: (v: V) => `about ${v} a year`,
     porConfirmar: {
       fornecedor: "The company that issued the document.",
       total: "The bill total.",
@@ -157,34 +181,45 @@ export const diagnostico: Traducao<typeof pt> = {
     nao: "No",
   },
   conversao: {
-    titulo: "Would you like DoLado to keep an eye on your contracts and bills?",
-    beneficios: [
-      "We let you know before your minimum term and promotions end.",
-      "We compare each new bill with the previous ones; anything that needs attention is reviewed by a person at DoLado.",
-      "If there is a problem, you can ask us to deal with it.",
-    ],
+    continuidade: {
+      titulo: {
+        fatura: "Your bill has been checked. Now we can keep an eye on things for you.",
+        contrato: "Your contract has been checked. Now we can keep an eye on things for you.",
+      },
+      texto:
+        "With Protection, DoLado keeps an eye on your next bills and tells you when there are price changes, a promotion or minimum term ending, or charges that need attention.",
+      comOQueEncontramos: "With what we found today:",
+      aviso30: {
+        fidelizacao: (data: V) => `We send you a reminder 30 days before ${data}, when the minimum term ends.`,
+        promocao: (data: V) => `We send you a reminder 30 days before ${data}, when the promotion ends.`,
+      },
+      avisoNoDia: {
+        fidelizacao: (data: V) => `We send you a reminder on ${data}, the day the minimum term ends.`,
+        promocao: (data: V) => `We send you a reminder on ${data}, the day the promotion ends.`,
+      },
+      comparar_proxima: "We compare your next bill with this one and explain what changed.",
+      juntar_contrato: "If you add the contract, we compare each bill with the conditions you agreed to.",
+      gerais: [
+        "We compare each new bill with the previous ones.",
+        "We send you a reminder before your minimum term and promotions end.",
+        "Every month, you receive an e-mail summary of what we kept an eye on.",
+      ],
+      revisao: "Anything that needs attention is reviewed by a person at DoLado before we tell you.",
+      porMes: "/month",
+      precoNota: "VAT included. You can cancel whenever you like, in the portal.",
+      botao: "I want DoLado to keep checking",
+      notaSemConta: "First you create your account; then you choose how to pay.",
+      documento: "Once you join, you can start with the document we have just checked.",
+      gratuita: "This check stays free, with or without Protection.",
+      gratisPreco: "30 days free",
+      gratisDepois: (preco: V) => `Then ${preco}/month, only if you decide to join.`,
+    },
     protecao: "Continue with 30 days free",
     protecaoNota: "No bank card. Nothing is charged at the end of the 30 days.",
     guardar: "Save my result",
     guardarNota: "Create a free account to save this result.",
     guardado: "This result is already saved in your account.",
     irPortal: "Open my account",
-    analisarFatura: {
-      titulo: "What if you didn't have to check everything yourself?",
-      texto:
-        "This first check is only the beginning. Find out about DoLado Protection and how we can help keep an eye on your contracts and services.",
-      agoraTitulo: "This free check",
-      agora: "Reads one bill, once, and shows what is in the document.",
-      protecaoTitulo: "With DoLado Protection",
-      beneficios: [
-        "We compare each new bill with the previous ones.",
-        "We let you know before your minimum term and promotions end.",
-        "Anything that needs attention is reviewed by a person at DoLado before we tell you.",
-        "Every month, you receive an e-mail summary of what we kept an eye on.",
-      ],
-      botao: "Find out about DoLado Protection",
-      nota: "Monthly subscription that you can cancel in the portal. This check stays free, with or without Protection.",
-    },
     problema: "Already have a problem with this company?",
     problemaLigacao: "Ask us for help",
   },

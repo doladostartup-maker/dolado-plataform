@@ -291,6 +291,33 @@ export default async function AquisicaoPage({ searchParams }: { searchParams: Pr
             </div>
           </section>
 
+          {/* ===== Funil da Protecção por página de entrada ===== */}
+          <section aria-labelledby="funil-protecao" className="flex flex-col gap-3">
+            <TituloSeccao
+              id="funil-protecao"
+              titulo="Do resultado à Protecção, por página de entrada"
+              descricao="Poucos cliques depois do resultado: o resultado não mostrou valor suficiente. Muitos cliques e poucos pagamentos: registo, checkout, confiança ou preço."
+            />
+            <Tabela
+              cabecalho={["Página de entrada", "Viram o resultado", "Clicaram na Protecção", "Resultado → clique", "Contas", "Checkout", "Pagos", "Clique → pago"]}
+              vazio={m.funil_protecao ? "Sem resultados vistos neste período." : "Falta aplicar a migration 20261102090000."}
+              linhas={(m.funil_protecao ?? []).map((f) => [
+                f.pagina,
+                fmt(f.viram),
+                fmt(f.clicaram_protecao),
+                fmtPct(pct(f.clicaram_protecao, f.viram)),
+                fmt(f.contas),
+                fmt(f.checkout),
+                fmt(f.pagas),
+                fmtPct(pct(f.pagas, f.clicaram_protecao)),
+              ])}
+            />
+            <p className={METADADOS}>
+              Sessões até ao clique; contas a partir daí (página de entrada do primeiro diagnóstico da conta). Uma conta pode vir de &quot;Guardar o meu resultado&quot;
+              sem clique na Protecção. Checkout = consentimentos gravados antes de um Stripe Checkout, depois do diagnóstico.
+            </p>
+          </section>
+
           {/* ===== Evolução ===== */}
           <section aria-labelledby="evolucao" className="flex flex-col gap-3">
             <TituloSeccao id="evolucao" titulo="Evolução no período" />
