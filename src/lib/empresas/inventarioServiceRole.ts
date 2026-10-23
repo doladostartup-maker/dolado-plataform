@@ -25,6 +25,7 @@ export const INVENTARIO_SERVICE_ROLE: Record<string, ClassificacaoServiceRole> =
   "src/app/[idioma]/criar-conta/actions.ts": "sem_sessao",
   "src/app/[idioma]/criar-conta/page.tsx": "sem_sessao",
   "src/app/[idioma]/empresa/actions.ts": "empresa",
+  "src/app/[idioma]/empresa/documentos/actions.ts": "empresa",
   "src/app/[idioma]/empresas/recuperacao-assistida/actions.ts": "sem_sessao",
   "src/app/[idioma]/empresas/registo/actions.ts": "sem_sessao",
   "src/app/[idioma]/portal/casos/actions.ts": "particular",

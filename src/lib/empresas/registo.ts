@@ -154,7 +154,7 @@ export const APRESENTACAO_ESTADO: Record<EstadoOrganizacao, { titulo: string; te
   },
   ativa: {
     titulo: "Protecção Empresas activa",
-    texto: "A área da sua empresa está a ser preparada. Avisamos por e-mail quando estiver disponível.",
+    texto: "Já pode criar as instalações e carregar as facturas e os contratos em Documentos. O painel completo da empresa está a ser preparado.",
   },
   pagamento_em_atraso: {
     titulo: "Pagamento em atraso",

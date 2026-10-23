@@ -53,6 +53,16 @@ export default async function PainelEmpresaPage({ searchParams }: { searchParams
       titulo={estado.titulo}
       depois={
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+          {organizacao.estado !== "a_aguardar_aprovacao" && organizacao.estado !== "lista_espera" && organizacao.estado !== "aprovada" && organizacao.estado !== "rejeitada" && (
+            <>
+              <Link href="/empresa/documentos" prefetch={false} className={LIGACAO}>
+                Documentos
+              </Link>
+              <Link href="/empresa/instalacoes" prefetch={false} className={LIGACAO}>
+                Instalações
+              </Link>
+            </>
+          )}
           <Link href={ROTAS_EMPRESA.seguranca} prefetch={false} className={LIGACAO}>
             Autenticação em dois passos
           </Link>

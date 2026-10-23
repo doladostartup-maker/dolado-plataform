@@ -54,8 +54,8 @@ O esquema de cada fase tem de servir o código anterior e o novo (deploy na Clev
 | | 2 Fundação do modelo de dados | Feita (PR #190; `20261030090000` aplicada em produção a 23/10/2026) |
 | | 3 Bloqueios cruzados dos fluxos particulares | Feita (PR #191; `20261031090000` aplicada em produção a 23/10/2026) |
 | | 4 Registo, MFA de empresa, recuperação, aprovação | Feita (PR #192; `20261101090000` aplicada em produção a 23/10/2026; `EMPRESAS_ATIVO=1` ligado por Thiago para ensaio controlado) |
-| 2 Produto | 5 Activação e ciclo de pagamento manual | PR #194; `20261103090000` aplicada em produção a 23/10/2026 (cópia prévia em ~/dolado-backups/); segredo dos avisos configurado |
-| | 6 Monitor empresarial | |
+| 2 Produto | 5 Activação e ciclo de pagamento manual | Feita (PR #194; `20261103090000` aplicada em produção a 23/10/2026; segredo dos avisos configurado) |
+| | 6 Monitor empresarial | 6A no ramo `feat/empresas-monitor` (23/10/2026; migration `20261104090000` por aplicar); 6B (revisão D3, classificação, fila no backoffice) por fazer |
 | | 7 Portal empresarial | |
 | | 8 Alertas e resumo mensal | |
 | 3 Conversão e dados | 9 Exportação e eliminação | |
@@ -111,6 +111,19 @@ O esquema de cada fase tem de servir o código anterior e o novo (deploy na Clev
 - **Testes:** `src/lib/empresas/ciclo.test.mjs`, `ciclo.contrato.test.mjs` (Brevo simulada), `supabase/tests/database/empresas_ciclo.test.sql` (31/01 → 28/02 → 31/03, atraso, 7 e 30 dias, cancelamento, vagas).
 - **Configuração (Thiago):** `EMPRESAS_AVISOS_CRON_SECRET` na Clever Cloud e o mesmo valor no Vault da Supabase (`empresas_avisos_cron_secret`).
 - **Pendente jurídico:** Termos B2B (vencimento, suspensão, cancelamento, prazos de consulta e eliminação) antes de clientes reais.
+
+## Fase 6A — o que existe (20261104090000)
+
+A Fase 6 foi dividida em dois PRs para reduzir o risco no pipeline dos particulares: **6A** (carregamento, quota, associação estrita, âmbito, orçamento) e **6B** (revisão humana D3, classificação dos resultados, fila no backoffice, medição).
+
+- **Instalações** (`/empresa/instalacoes`, `empresa_criar_instalacao`): até `limite_instalacoes`, nomes únicos, só com a organização activa ou em atraso.
+- **Carregamento** (`/empresa/documentos`, `empresa_registar_documento`, atómica): instalação e tipo obrigatórios; caminho do ficheiro decidido no servidor e verificado pela base de dados; documento em `documentos_monitor` (o Monitor de sempre) + `empresa_documentos` (instalação e quota).
+- **Quota (D6):** 15 facturas por mês (+ excepções do admin, `empresa_conceder_excecao`); contam as reservadas e as consumidas do período em curso; contratos e configuração inicial não contam (configuração inicial: só nos primeiros 30 dias, até 3 facturas por serviço do plano). No fim do processamento: factura registada com total e período → consumida; repetida, erro técnico, ilegível, fora do âmbito, limite de serviços → libertada; à espera da decisão do cliente → reservada. O portal lê a quota com a sessão (`empresa_quota_sessao`, aal2).
+- **Pipeline** (`src/lib/monitor/servidor.ts`): o ramo de empresa é escolhido pela linha em `empresa_documentos`; uma conta de empresa sem ela fica para revisão (`empresa_sem_contexto`), nunca segue o caminho dos particulares. Orçamento próprio `ANTHROPIC_ORCAMENTO_EMPRESAS_USD` (3 USD por omissão) dentro do geral; `uso_api_claude.funcionalidade = 'monitor_empresa'`. Sem custo de saída nem achado `cessacao_divergente`.
+- **Associação estrita** (`escolherServicoEmpresa`, `identificacao.ts`): só automática com CPE/CUI, número do serviço ou número de conta coincidente **e** o serviço na instalação escolhida; fornecedor e NIPC nunca chegam. Identificador de outra instalação ou sem identificador → «possível» e a empresa escolhe em `/empresa/documentos/[id]` (só serviços da mesma instalação, serviço novo nessa instalação ou retirar). Sem candidato na instalação → serviço novo nessa instalação (`contratos_monitorizados.instalacao_id`), dentro de `limite_servicos` (`empresa_pode_criar_servico`).
+- **Âmbito automático** (`src/lib/empresas/ambito.ts`): telecomunicações, água e electricidade em BTN (potência lida ≤ 41,4 kVA). Gás, sector desconhecido, electricidade sem potência ou acima da BTN → análise manual (`a_rever`, aviso à equipa, quota libertada). Facturas de electricidade só têm a potência com a leitura `fatura_v4` (`MONITOR_ENERGIA_ATIVO=1`); sem ela, ficam todas para análise manual.
+- **Testes:** `src/lib/empresas/monitorEmpresa.test.mjs`, `monitorEmpresa.contrato.test.mjs` (pipeline real: duas lojas com o mesmo fornecedor e NIPC, quota, repetida, gás, limite de serviços, conta sem instalação), `supabase/tests/database/empresas_monitor.test.sql`; regressão dos particulares em `acompanhamento.contrato.test.mjs` e `energia.contrato.test.mjs` sem alterações.
+- **Por fazer (6B):** revisão obrigatória nos primeiros 30 dias e por excepção depois (`empresa_revisoes`, minutos e tipo de erro), classificação («facto confirmado por evidência documental», «requer verificação», «informação insuficiente»), fila e filtro por organização em `/backoffice/monitor`, excepções de quota no backoffice, medição (custo por organização, documentos, quota, minutos, erros). V6 (precisão da leitura em facturas empresariais) por medir antes do Marco 4.
 
 ## Dívida técnica: vários utilizadores por empresa
 

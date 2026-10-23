@@ -354,6 +354,58 @@ export function escolherServico(doc: IdentidadeDocumento, servicos: IdentidadeSe
   return { acao: "novo_servico", resultado: conflito?.r ?? null };
 }
 
+// ---------------------------------------------------------------------------
+// DoLado Empresas (Fase 6A): associação estrita
+// ---------------------------------------------------------------------------
+// Uma empresa tem vários serviços do mesmo fornecedor com o mesmo NIPC (uma
+// loja por instalação): o fornecedor e o NIF nunca chegam. Só se associa
+// sozinho quando coincide o CPE/CUI, o número do serviço ou o número de
+// cliente/conta/contrato E o serviço é da instalação escolhida no
+// carregamento; tudo o resto fica "possível" e o cliente escolhe. Sem
+// candidato na instalação → serviço novo nessa instalação.
+
+export type IdentidadeServicoEmpresa = IdentidadeServico & { instalacaoId: string | null };
+
+export const TEXTO_OUTRA_INSTALACAO = "O serviço com esta identificação está noutra instalação";
+export const TEXTO_SEM_IDENTIFICADOR = "Não há número de serviço, CPE/CUI nem número de conta coincidente";
+
+function associacaoForte(r: ResultadoAssociacao) {
+  return r.estado === "confirmada" && (r.motivos.includes(TEXTO_IGUAL.servico) || r.motivos.includes(TEXTO_IGUAL.conta));
+}
+
+export function escolherServicoEmpresa(doc: IdentidadeDocumento, servicos: IdentidadeServicoEmpresa[], instalacaoId: string): DecisaoAssociacao {
+  const avaliados = servicos.map((s) => ({ s, r: avaliarAssociacao(doc, s) }));
+  const fortes = avaliados.filter((a) => associacaoForte(a.r));
+  const fortesNaInstalacao = fortes.filter((a) => a.s.instalacaoId === instalacaoId);
+
+  if (fortes.length === 1 && fortesNaInstalacao.length === 1) {
+    return { acao: "associar", servicoId: fortesNaInstalacao[0].s.id, resultado: fortesNaInstalacao[0].r };
+  }
+  if (fortes.length > 0) {
+    const sugerido = fortesNaInstalacao[0] ?? fortes[0];
+    const conflito = fortesNaInstalacao.length === 0 ? TEXTO_OUTRA_INSTALACAO : "Há mais de um serviço com esta identificação";
+    return {
+      acao: "perguntar",
+      servicoId: sugerido.s.id,
+      resultado: { ...sugerido.r, estado: "possivel", conflitos: [...sugerido.r.conflitos, conflito] },
+      alternativaId: null,
+    };
+  }
+  const candidatos = avaliados
+    .filter((a) => a.s.instalacaoId === instalacaoId && a.r.estado !== "conflito")
+    .sort((a, b) => b.r.confianca - a.r.confianca);
+  if (candidatos.length > 0) {
+    const c = candidatos[0];
+    return {
+      acao: "perguntar",
+      servicoId: c.s.id,
+      resultado: { ...c.r, estado: "possivel", confianca: Math.min(c.r.confianca, 0.6), conflitos: [...c.r.conflitos, TEXTO_SEM_IDENTIFICADOR] },
+      alternativaId: null,
+    };
+  }
+  return { acao: "novo_servico", resultado: null };
+}
+
 export const ROTULO_IDENTIFICADOR: Record<TipoIdentificador, string> = {
   nif_titular: "NIF do titular",
   titular: "Titular",
