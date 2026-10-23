@@ -52,8 +52,8 @@ O esquema de cada fase tem de servir o código anterior e o novo (deploy na Clev
 | 1 Segurança e contas | 1A MFA do admin: inscrição e recuperação | Feita (PR #189, 23/10/2026); ensaio da recuperação por Thiago pendente |
 | | 1B Exigir aal2 no backoffice (código → migration) | Depois do ensaio |
 | | 2 Fundação do modelo de dados | Feita (PR #190; `20261030090000` aplicada em produção a 23/10/2026) |
-| | 3 Bloqueios cruzados dos fluxos particulares | PR #191 (23/10/2026); migration `20261031090000` aplicada em produção a 23/10/2026 (cópia prévia em ~/dolado-backups/); merge por fazer |
-| | 4 Registo, MFA de empresa, recuperação, aprovação | |
+| | 3 Bloqueios cruzados dos fluxos particulares | Feita (PR #191; `20261031090000` aplicada em produção a 23/10/2026) |
+| | 4 Registo, MFA de empresa, recuperação, aprovação | No ramo `feat/empresas-registo` (23/10/2026); migration `20261101090000` por aplicar |
 | 2 Produto | 5 Activação e ciclo de pagamento manual | |
 | | 6 Monitor empresarial | |
 | | 7 Portal empresarial | |
@@ -82,6 +82,20 @@ O esquema de cada fase tem de servir o código anterior e o novo (deploy na Clev
 - **Inventário da service role** (`src/lib/empresas/inventarioServiceRole.ts`): cada ficheiro com `createAdminClient` classificado (admin, particular, sem_sessao, rls, sistema, empresa); o teste falha com um ficheiro novo por classificar, um ponto de entrada particular sem guarda ou uma acção de admin sem verificação.
 - **Testes:** `src/lib/empresas/inventarioServiceRole.test.mjs`, `src/lib/stripe/webhook.test.mjs` ("DoLado Empresas"), `supabase/tests/database/empresas_bloqueios.test.sql`.
 - **Publicação:** cópia local → `db push --dry-run` → `db push` → merge (migration antes do merge).
+
+## Fase 4 — o que existe (20261101090000)
+
+- **Páginas** (só pt, D1; `/en/empresa*` e `/en/empresas/<conta>` → 308 sem prefixo; sem `EMPRESAS_ATIVO` → 404): `/empresas/registo`, `/empresas/entrar`, `/empresas/verificar` (segundo factor), `/empresas/recuperar-palavra-passe`, `/empresas/redefinir-palavra-passe`, `/empresas/recuperacao-assistida`, `/empresa` (estado da conta; o portal é a Fase 7) e `/empresa/seguranca` (dois factores). Sem Google em nenhuma.
+- **Guarda** `requireEmpresa(contexto, { mfa })` (`src/lib/auth.ts`): sem sessão → entrada; conta particular → entrada com aviso; estado acertado por `empresa_sincronizar_estado()`; `completo` = dois factores e aal2, `inscricao` = página de segurança, `nenhum` = desafio do segundo factor. Uma sessão particular aberta nas entradas das empresas tem aviso e botão para a terminar.
+- **Registo:** validação (NIPC 5/6/9 para sociedades, NIF 1/2/3 para empresários em nome individual e profissionais independentes, dígito de controlo) → NIPC em uso → `signUp` → `empresa_registar()` (marca + organização + pertença numa transacção). E-mail já usado: a Supabase devolve um utilizador sem identidades → a mesma resposta de um registo novo, nada gravado. Sem aceitação de Termos B2B nesta fase (revisão jurídica pendente; o interruptor continua desligado).
+- **Estados antes da aprovação:** `email_por_confirmar → mfa_por_configurar` (e-mail confirmado) `→ a_aguardar_aprovacao` (dois TOTP verificados; e-mail «pedido recebido» e aviso à equipa uma vez). `/auth/callback` leva uma conta de empresa confirmada para `/empresa`, antes de qualquer atribuição particular; pelo Google → sessão terminada e identidade retirada no servidor (`empresa_retirar_identidade_google()`; V3: a ligação manual de identidades está desligada).
+- **Palavra-passe:** recuperação por e-mail com as regras dos particulares e ligação para `/empresas/redefinir-palavra-passe`; a alteração exige também o código TOTP (sessão aal2) e termina todas as sessões.
+- **Recuperação assistida:** pedido sem sessão (resposta genérica, armadilha para robôs) → `empresa_pedidos_recuperacao` + aviso à equipa → `/backoffice/empresas`: validação pelos contactos oficiais → `empresa_mfa_reposicao()` (factores e sessões apagados; histórico com a nota; e-mail ao cliente) ou recusa com motivo.
+- **Backoffice** `/backoffice/empresas`: pedidos de recuperação, à espera de decisão (aprovar → `aprovada` ou, sem vaga D4, `lista_espera`; rejeitar com motivo interno e mensagem opcional ao cliente), todas as organizações com contagens por estado e tempo médio até à decisão.
+- **E-mails** (`src/lib/email/empresas.ts`, `emailV2`, só pt): pedido recebido, aprovado, lista de espera, não aprovado, MFA reposto. **Templates de Auth sem alteração** (o texto actual serve as duas contas) — nada a colar no Dashboard.
+- **Configuração externa (Thiago), antes de ligar `EMPRESAS_ATIVO`:** Redirect URLs da Supabase com `https://portal.dolado.pt/empresas/redefinir-palavra-passe` (e `http://localhost:3000/empresas/redefinir-palavra-passe`). Sem ela, a ligação cai na raiz do portal e segue para a página dos particulares.
+- **Testes:** `src/lib/empresas/registo.test.mjs`, `registo.contrato.test.mjs` (Auth real: registo → aal1 sem acesso → dois factores → aal2 → aprovação; palavra-passe com o segundo factor; reposição), `supabase/tests/database/empresas_registo.test.sql`.
+- **Por decidir/pendente:** retenção de `empresa_pedidos_recuperacao` (sem limpeza automática); pseudónimo HMAC do NIPC (`identificador_hmac`) fica para a Fase 10.
 
 ## Dívida técnica: vários utilizadores por empresa
 

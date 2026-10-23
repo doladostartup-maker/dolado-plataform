@@ -20,6 +20,7 @@ export async function MolduraConta({
   descricao,
   children,
   depois,
+  semIdioma = false,
 }: {
   contexto?: ReactNode;
   titulo: ReactNode;
@@ -27,6 +28,8 @@ export async function MolduraConta({
   children?: ReactNode;
   /** Conteúdo abaixo do cartão (ligações secundárias). */
   depois?: ReactNode;
+  /** Páginas só em português (DoLado Empresas, D1): sem o selector de idioma. */
+  semIdioma?: boolean;
 }) {
   const t = (await textos(tConta)).moldura;
   return (
@@ -34,7 +37,7 @@ export async function MolduraConta({
       <header className="border-b border-[var(--v2-line)] bg-white">
         <div className="mx-auto flex h-16 w-full max-w-md items-center justify-between gap-3 px-4">
           <Logotipo />
-          <SeletorIdioma compacto />
+          {!semIdioma && <SeletorIdioma compacto />}
         </div>
       </header>
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-5 px-4 py-10">

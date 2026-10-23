@@ -2,8 +2,12 @@
 // Regras em contas.ts. Fase 3 do piloto.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ADMIN_EMAIL, enviarEmailBrevo } from "@/lib/email/brevo";
+import { ASSUNTOS_EMPRESA, montarHtmlAvisoEquipaEmpresa, montarHtmlEmpresa, type MomentoEmpresa } from "@/lib/email/empresas";
 import { contextoOcorrencia, entrouPorOAuth, tipoContaDe, type TipoConta } from "./contas.ts";
+import { ehEstadoOrganizacao, type EstadoOrganizacao } from "./registo.ts";
 
 /** Tipo da conta, lido com o cliente indicado (a sessão lê o próprio perfil). */
 export async function tipoContaDoUtilizador(supabase: SupabaseClient, userId: string): Promise<TipoConta> {
@@ -43,22 +47,12 @@ export async function recusarSessaoDeEmpresa(
 ): Promise<boolean> {
   if ((await tipoContaDoUtilizador(supabase, userId)) !== "empresa") return false;
 
-  // Resultado da retirada no contexto da ocorrência: ":google_por_retirar"
-  // fica para o admin (a retirada pela sessão exige a ligação manual de
-  // identidades activa na Supabase — validação V3 do plano).
+  // Entrada pelo Google: a identidade Google é retirada no servidor (a
+  // ligação manual de identidades está desligada na Supabase, por isso não
+  // pode ser feita pela sessão). O resultado fica no contexto da ocorrência.
   let google = "";
   if (accessToken && entrouPorOAuth(lerClaim(accessToken, "amr"))) {
-    google = ":google_por_retirar";
-    try {
-      const { data } = await supabase.auth.getUserIdentities();
-      const identidade = data?.identities.find((i) => i.provider === "google");
-      if (identidade && (data?.identities.length ?? 0) > 1) {
-        const { error } = await supabase.auth.unlinkIdentity(identidade);
-        if (!error) google = ":google_retirada";
-      }
-    } catch {
-      // Sem a retirada, a sessão termina na mesma; o guarda recusa sempre.
-    }
+    google = (await retirarIdentidadeGoogle(userId)) ? ":google_retirada" : ":google_por_retirar";
   }
   await supabase.auth.signOut({ scope: "local" });
   await registarGuardaRecusado(userId, contexto + google);
@@ -71,4 +65,77 @@ function lerClaim(token: string, nome: string): unknown {
   } catch {
     return undefined;
   }
+}
+
+/** Retira a identidade Google de uma conta de empresa (empresa_retirar_identidade_google). */
+export async function retirarIdentidadeGoogle(userId: string): Promise<boolean> {
+  try {
+    const { data, error } = await createAdminClient().rpc("empresa_retirar_identidade_google", { p_user: userId });
+    return !error && Number(data) > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A sessão acabou de ser criada por um percurso que aceita contas de empresa
+ * (/auth/callback, depois de confirmar o e-mail)? Diz se a entrada foi pelo
+ * Google — uma conta de empresa nunca entra assim.
+ */
+export function sessaoPeloGoogle(accessToken: string | null | undefined): boolean {
+  return !!accessToken && entrouPorOAuth(lerClaim(accessToken, "amr"));
+}
+
+export type OrganizacaoDaConta = { id: string; nome: string; estado: EstadoOrganizacao };
+
+/**
+ * Organização da conta de empresa, com o estado acertado ao que já
+ * aconteceu (e-mail confirmado, dois factores verificados —
+ * empresa_sincronizar_estado). Lida com a service role: antes do segundo
+ * factor a conta ainda não lê a organização pelo RLS (exige aal2). O
+ * chamador já validou a sessão e o tipo de conta (requireEmpresa).
+ */
+export async function organizacaoDaConta(userId: string): Promise<OrganizacaoDaConta | null> {
+  const admin = createAdminClient();
+  const { data: sinc, error } = await admin.rpc("empresa_sincronizar_estado", { p_user: userId });
+  if (error) throw new Error(`empresa_sincronizar_estado: ${error.message}`);
+  const r = sinc as { organizacao_id: string; estado: string; passou_a_aguardar: boolean } | null;
+  if (!r) return null;
+  const { data: org, error: erroOrg } = await admin.from("organizacoes").select("id, nome, estado").eq("id", r.organizacao_id).maybeSingle();
+  if (erroOrg) throw new Error(`organizacoes.select: ${erroOrg.message}`);
+  if (!org || !ehEstadoOrganizacao(org.estado)) return null;
+  if (r.passou_a_aguardar) {
+    after(() => avisarPedidoRecebido(userId, org.nome));
+  }
+  return { id: org.id, nome: org.nome, estado: org.estado };
+}
+
+/** E-mail confirmado da conta (destinatário dos e-mails da organização). */
+async function emailDaConta(userId: string): Promise<string | null> {
+  const { data } = await createAdminClient().auth.admin.getUserById(userId);
+  return data.user?.email_confirmed_at ? (data.user.email ?? null) : null;
+}
+
+/** E-mail à conta da organização. Uma falha nunca impede a acção. */
+export async function enviarEmailEmpresa(userId: string, momento: MomentoEmpresa, dados: { nome: string; motivo?: string | null }) {
+  try {
+    const email = await emailDaConta(userId);
+    if (email) await enviarEmailBrevo(email, ASSUNTOS_EMPRESA[momento], montarHtmlEmpresa(momento, dados));
+  } catch (e) {
+    console.error(`[empresas] e-mail ${momento}:`, (e as { code?: string }).code ?? "erro");
+  }
+}
+
+/** Aviso interno à equipa. Uma falha nunca impede a acção. */
+export async function avisarEquipaEmpresas(assunto: string, texto: string) {
+  try {
+    await enviarEmailBrevo(ADMIN_EMAIL, `${assunto} — DoLado Empresas`, montarHtmlAvisoEquipaEmpresa(texto));
+  } catch (e) {
+    console.error("[empresas] aviso à equipa:", (e as { code?: string }).code ?? "erro");
+  }
+}
+
+async function avisarPedidoRecebido(userId: string, nome: string) {
+  await enviarEmailEmpresa(userId, "pedidoRecebido", { nome });
+  await avisarEquipaEmpresas("Novo pedido de adesão", `${nome} concluiu o registo e aguarda aprovação.`);
 }

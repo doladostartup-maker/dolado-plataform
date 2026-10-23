@@ -7,6 +7,7 @@ import { ehCaminhoDeProblemas } from "@/lib/problemas/catalogo";
 import { CAMINHO_LANDING_30_DIAS } from "@/lib/landing30Dias";
 import { CAMINHO_ANALISAR_FATURA, caminhoAnalisarFaturaDe } from "@/lib/analisarFatura";
 import { diagnosticoAtivo } from "@/lib/diagnostico/regras";
+import { ehCaminhoDeContaEmpresa } from "@/lib/empresas/contas";
 import {
   CABECALHO_IDIOMA,
   COOKIE_IDIOMA,
@@ -199,6 +200,11 @@ async function encaminhar(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL(`${pathname.slice(3) || "/"}${search}`, request.url), 308);
   }
 
+  // DoLado Empresas: contas e portal das empresas só em português (D1).
+  if (prefixado && ehCaminhoDeContaEmpresa(caminho) && (request.method === "GET" || request.method === "HEAD")) {
+    return NextResponse.redirect(new URL(`${caminho}${search}`, request.url), 308);
+  }
+
   if (host.startsWith("portal.") && ehLinkDeIndicacao(caminho)) {
     return NextResponse.redirect(new URL(`${pathname}${search}`, "https://dolado.pt"), 308);
   }
@@ -257,7 +263,8 @@ async function encaminhar(request: NextRequest): Promise<NextResponse> {
   // redirecionados. Sem cookie, o português é o idioma por omissão — o
   // idioma do browser nunca é usado.
   const preferido = request.cookies.get(COOKIE_IDIOMA)?.value;
-  if (!prefixado && preferido === "en-GB" && (request.method === "GET" || request.method === "HEAD")) {
+  // Excepto nas contas e no portal das empresas, só em português (D1).
+  if (!prefixado && preferido === "en-GB" && (request.method === "GET" || request.method === "HEAD") && !ehCaminhoDeContaEmpresa(caminho)) {
     return NextResponse.redirect(new URL(`${caminhoNoIdioma("en-GB", caminho)}${search}`, request.url), 307);
   }
 

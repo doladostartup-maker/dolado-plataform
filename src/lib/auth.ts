@@ -1,11 +1,14 @@
 import { cache } from "react";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { calcularAcesso, type Acesso } from "@/lib/acesso";
 import { createClient } from "@/lib/supabase/server";
 import { destinoDepoisDeAutenticar } from "@/lib/authServidor";
 import { localizarHref, type Idioma } from "@/i18n/config";
 import { destinoContaEmpresa, tipoContaDe } from "@/lib/empresas/contas";
-import { registarGuardaRecusado } from "@/lib/empresas/contaServidor";
+import { organizacaoDaConta, registarGuardaRecusado } from "@/lib/empresas/contaServidor";
+import { ROTAS_EMPRESA, empresasAtivo } from "@/lib/empresas/registo";
+import { FACTORES_NECESSARIOS } from "@/lib/mfa";
+import { lerMfa } from "@/lib/mfaServidor";
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
 
@@ -87,6 +90,17 @@ export async function redirecionarSeComSessao(idioma: Idioma, next?: unknown) {
   redirect(localizarHref(idioma, await destinoDepoisDeAutenticar(supabase, user.id, { nextExplicito: next })));
 }
 
+/**
+ * Sessão aberta nas páginas de entrada das empresas: null sem sessão; o tipo
+ * de conta com sessão (a página decide: empresa → /empresa; particular →
+ * aviso para terminar essa sessão).
+ */
+export async function sessaoNasEntradasEmpresa() {
+  const { user } = await utilizadorPorPedido();
+  if (!user) return null;
+  return { tipoConta: (await perfilPorPedido())?.tipoConta ?? "particular" };
+}
+
 /** Utilizador da sessão, sem redirecionar (null sem sessão). */
 export async function utilizadorAtual() {
   return utilizadorPorPedido();
@@ -131,6 +145,42 @@ export async function contaParticularComEmailConfirmado(contexto: string) {
   const conta = await contaComEmailConfirmado();
   if (conta && (await perfilPorPedido())?.tipoConta === "empresa") await recusarContaEmpresa(conta.id, contexto);
   return conta;
+}
+
+/**
+ * Conta de empresa com sessão (DoLado Empresas, Fase 4). Sem sessão →
+ * entrada das empresas; conta particular → entrada das empresas com aviso.
+ * Devolve a organização com o estado acertado (organizacaoDaConta).
+ *
+ * `mfa`:
+ *  - "completo" (por omissão): dois factores TOTP verificados e sessão aal2;
+ *    sem factores ou só com um → /empresa/seguranca; com factores mas aal1
+ *    → desafio em /empresas/verificar;
+ *  - "inscricao": a página de segurança — aceita aal1 enquanto não houver
+ *    nenhum factor verificado (a primeira inscrição);
+ *  - "nenhum": o desafio do segundo factor (/empresas/verificar) e o fim da
+ *    sessão — só a sessão e o tipo de conta.
+ * Desligado (EMPRESAS_ATIVO), responde 404.
+ */
+export async function requireEmpresa(contexto: string, opcoes: { mfa?: "completo" | "inscricao" | "nenhum" } = {}) {
+  if (!empresasAtivo()) notFound();
+  const { supabase, user } = await utilizadorPorPedido();
+  if (!user) redirect(ROTAS_EMPRESA.entrar);
+  if ((await perfilPorPedido())?.tipoConta !== "empresa") {
+    await registarGuardaRecusado(user.id, `empresa:${contexto}`);
+    redirect(`${ROTAS_EMPRESA.entrar}?motivo=conta_particular`);
+  }
+
+  const organizacao = await organizacaoDaConta(user.id);
+  if (!organizacao) throw new Error("Conta de empresa sem organização");
+
+  const mfa = await lerMfa(supabase);
+  const verificados = mfa.factores.filter((f) => f.verificado).length;
+  if (opcoes.mfa !== "nenhum") {
+    if (verificados > 0 && mfa.nivel !== "aal2") redirect(ROTAS_EMPRESA.verificar);
+    if (opcoes.mfa !== "inscricao" && verificados < FACTORES_NECESSARIOS) redirect(ROTAS_EMPRESA.seguranca);
+  }
+  return { supabase, user, organizacao, mfa };
 }
 
 export async function requireUser() {

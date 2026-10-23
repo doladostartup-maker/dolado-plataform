@@ -250,7 +250,12 @@ select is(
                            -- só lêem com auth.uid() (usadas nas policies); empresa_tem_acesso devolve 'nenhum'
                            -- a quem não é membro nem admin; empresa_marcar_conta só service_role
                            -- (empresas_fundacao.test.sql).
-                           'conta_empresa', 'e_membro_organizacao', 'empresa_tem_acesso', 'empresa_marcar_conta')), 0::bigint,
+                           'conta_empresa', 'e_membro_organizacao', 'empresa_tem_acesso', 'empresa_marcar_conta',
+                           -- DoLado Empresas, registo (20261101090000): tudo só service_role; aprovar,
+                           -- rejeitar e repor o MFA verificam o admin lá dentro; a retirada do Google
+                           -- só actua em contas de empresa (empresas_registo.test.sql).
+                           'empresa_e_admin', 'empresa_registar', 'empresa_sincronizar_estado', 'empresa_aprovar',
+                           'empresa_rejeitar', 'empresa_mfa_reposicao', 'empresa_retirar_identidade_google')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em

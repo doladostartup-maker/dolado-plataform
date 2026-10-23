@@ -6,7 +6,14 @@ import type { EstadoMfa, FactorResumo } from "@/lib/mfa";
 import { FACTORES_NECESSARIOS } from "@/lib/mfa";
 import { formatarData } from "@/i18n/formatar";
 import { BOTAO_DESTRUTIVO, BOTAO_PEQUENO, BOTAO_PRIMARIO, BOTAO_SECUNDARIO, PAINEL, PAINEL_CORPO } from "@/components/backoffice/ui";
-import { inscreverFactor, removerFactor, verificarFactor } from "./actions";
+import type { ResultadoAcao, ResultadoInscricao } from "@/lib/mfaAcoes";
+
+/** Server Actions de quem usa o componente (admin ou conta de empresa), já com o guarda. */
+export type AcoesMfa = {
+  inscrever: () => Promise<ResultadoInscricao>;
+  verificar: (factorId: string, codigo: string) => Promise<ResultadoAcao>;
+  remover: (factorId: string) => Promise<ResultadoAcao>;
+};
 
 type Inscricao = { factorId: string; nome: string; qrCode: string; segredo: string };
 
@@ -36,7 +43,18 @@ function CampoCodigo({ id, valor, onChange }: { id: string; valor: string; onCha
   );
 }
 
-export function GestaoMfa({ estado, factores }: { estado: EstadoMfa; factores: FactorResumo[] }) {
+export function GestaoMfa({
+  estado,
+  factores,
+  acoes,
+  textoSemFactores,
+}: {
+  estado: EstadoMfa;
+  factores: FactorResumo[];
+  acoes: AcoesMfa;
+  /** Porque são precisos os dois factores (muda entre o admin e as empresas). */
+  textoSemFactores: string;
+}) {
   const router = useRouter();
   const [aDecorrer, iniciar] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
@@ -47,7 +65,7 @@ export function GestaoMfa({ estado, factores }: { estado: EstadoMfa; factores: F
   function comecarInscricao() {
     setErro(null);
     iniciar(async () => {
-      const r = await inscreverFactor();
+      const r = await acoes.inscrever();
       if (r.ok) {
         setInscricao({ factorId: r.factorId, nome: r.nome, qrCode: r.qrCode, segredo: r.segredo });
         setCodigo("");
@@ -58,7 +76,7 @@ export function GestaoMfa({ estado, factores }: { estado: EstadoMfa; factores: F
   function verificar(factorId: string) {
     setErro(null);
     iniciar(async () => {
-      const r = await verificarFactor(factorId, codigo);
+      const r = await acoes.verificar(factorId, codigo);
       if (r.ok) {
         setInscricao(null);
         setCodigo("");
@@ -71,7 +89,7 @@ export function GestaoMfa({ estado, factores }: { estado: EstadoMfa; factores: F
     if (!window.confirm(`Retirar o factor «${factor.nome}»? A aplicação deixa de servir para entrar.`)) return;
     setErro(null);
     iniciar(async () => {
-      const r = await removerFactor(factor.id);
+      const r = await acoes.remover(factor.id);
       if (r.ok) router.refresh();
       else setErro(r.erro);
     });
@@ -168,10 +186,7 @@ export function GestaoMfa({ estado, factores }: { estado: EstadoMfa; factores: F
         Factores inscritos
       </h2>
       {estado === "sem_factores" && (
-        <p className="mt-2 text-[14px]">
-          Inscreva primeiro o factor principal e, logo a seguir, um factor de reserva noutro dispositivo ou num gestor de
-          palavras-passe. Os dois são necessários antes de o backoffice passar a exigir a verificação.
-        </p>
+        <p className="mt-2 text-[14px]">{textoSemFactores}</p>
       )}
       {estado === "so_principal" && (
         <p className="mt-2 rounded-[10px] bg-[#FFF6E5] p-3 text-[14px]">
