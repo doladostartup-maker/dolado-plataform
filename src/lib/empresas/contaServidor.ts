@@ -111,7 +111,7 @@ export async function organizacaoDaConta(userId: string): Promise<OrganizacaoDaC
 }
 
 /** E-mail confirmado da conta (destinatário dos e-mails da organização). */
-async function emailDaConta(userId: string): Promise<string | null> {
+export async function emailDaConta(userId: string): Promise<string | null> {
   const { data } = await createAdminClient().auth.admin.getUserById(userId);
   return data.user?.email_confirmed_at ? (data.user.email ?? null) : null;
 }

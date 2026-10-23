@@ -88,3 +88,98 @@ export function montarHtmlEmpresa(momento: MomentoEmpresa, dados: { nome: string
 export function montarHtmlAvisoEquipaEmpresa(texto: string): string {
   return `<p>${escaparHtml(texto)}</p><p><a href="${PORTAL}/backoffice/empresas">Abrir o backoffice — Empresas</a></p>`;
 }
+
+// ---------------------------------------------------------------------------
+// Ciclo de pagamento (Fase 5): um e-mail por aviso de empresa_avisos.
+// ---------------------------------------------------------------------------
+
+export type DadosAvisoCiclo = {
+  nome: string;
+  /** Período do aviso (vencimento = início). */
+  periodo?: { inicio: string; fim: string; valor: string; referencia: string | null } | null;
+  /** Datas já por extenso ("23 de Outubro de 2026"). */
+  suspensaEm?: string;
+  canceladaEm?: string;
+  consultaAte?: string | null;
+  eliminacaoEm?: string | null;
+};
+
+export const ASSUNTOS_AVISO_CICLO = {
+  ativada: "A Protecção Empresas está activa",
+  a_vencer: "A próxima mensalidade da Protecção Empresas",
+  pagamento_confirmado: "Pagamento confirmado",
+  atraso: "Mensalidade por pagar",
+  suspensa: "A Protecção Empresas está suspensa",
+  reativada: "A Protecção Empresas voltou a estar activa",
+  cancelada_falta_pagamento: "A Protecção Empresas foi cancelada",
+  cancelamento_agendado: "Recebemos o pedido de cancelamento",
+  cancelamento_retirado: "A Protecção Empresas continua activa",
+  cancelada_pedido: "A Protecção Empresas terminou",
+  cancelada_admin: "A Protecção Empresas foi cancelada",
+  encerrada: "Terminou o período de consulta",
+} as const;
+
+export type TipoAvisoCiclo = keyof typeof ASSUNTOS_AVISO_CICLO;
+
+const CONTA = { href: `${PORTAL}/empresa`, texto: "Ver a conta da empresa" };
+
+export function montarHtmlAvisoCiclo(tipo: TipoAvisoCiclo, d: DadosAvisoCiclo): string {
+  const nome = `<strong>${escaparHtml(d.nome)}</strong>`;
+  const p = d.periodo;
+  const ref = p?.referencia ? ` (factura ${escaparHtml(p.referencia)})` : "";
+  const t = ASSUNTOS_AVISO_CICLO[tipo];
+  switch (tipo) {
+    case "ativada":
+      return montar(t, [
+        `Confirmámos o pagamento da primeira mensalidade${ref} e a Protecção Empresas de ${nome} está activa.`,
+        p ? `O primeiro período vai de ${p.inicio} a ${p.fim}. A mensalidade seguinte vence a ${p.fim}; enviamos a factura antes, com os dados para a transferência.` : "",
+      ].filter(Boolean), CONTA);
+    case "a_vencer":
+      return montar(t, [
+        p ? `A próxima mensalidade da Protecção Empresas de ${nome} (${escaparHtml(p.valor)}) vence a ${p.inicio}.` : `A próxima mensalidade da Protecção Empresas de ${nome} está a vencer.`,
+        "Vai receber a factura com os dados para a transferência. Se já fez o pagamento, não precisa de fazer mais nada.",
+      ], CONTA);
+    case "pagamento_confirmado":
+      return montar(t, [
+        p ? `Confirmámos o pagamento da mensalidade de ${nome} do período de ${p.inicio} a ${p.fim}${ref}.` : `Confirmámos o pagamento da mensalidade de ${nome}.`,
+        "Obrigado.",
+      ], CONTA);
+    case "atraso":
+      return montar(t, [
+        p ? `A mensalidade da Protecção Empresas de ${nome} que venceu a ${p.inicio} ainda não está paga.` : `Há uma mensalidade de ${nome} por pagar.`,
+        d.suspensaEm ? `Se o pagamento não for confirmado até ${d.suspensaEm}, a Protecção fica suspensa: pode continuar a consultar e exportar os dados, mas deixamos de analisar documentos novos.` : "",
+      ].filter(Boolean), CONTA, "Se já fez a transferência, responda a este e-mail com o comprovativo.");
+    case "suspensa":
+      return montar(t, [
+        `A Protecção Empresas de ${nome} está suspensa por falta de pagamento. Pode continuar a consultar e exportar os dados; não analisamos documentos novos.`,
+        d.canceladaEm ? `Se o pagamento não for confirmado até ${d.canceladaEm}, a Protecção é cancelada.` : "",
+      ].filter(Boolean), CONTA, "Se já fez a transferência, responda a este e-mail com o comprovativo.");
+    case "reativada":
+      return montar(t, [`A Protecção Empresas de ${nome} voltou a estar activa.`], CONTA);
+    case "cancelada_falta_pagamento":
+      return montar(t, [
+        `A Protecção Empresas de ${nome} foi cancelada por falta de pagamento.`,
+        d.eliminacaoEm ? `Os documentos guardados serão eliminados a partir de ${d.eliminacaoEm}.` : "",
+      ].filter(Boolean), undefined, "Se quiser retomar a Protecção, responda a este e-mail.");
+    case "cancelamento_agendado":
+      return montar(t, [
+        `Recebemos o pedido de cancelamento da Protecção Empresas de ${nome}.`,
+        p ? `A Protecção continua activa até ${p.fim}. Depois, durante 30 dias, pode consultar e exportar os dados. Não há mais mensalidades.` : "",
+      ].filter(Boolean), CONTA, "Se mudar de ideias antes dessa data, pode manter a Protecção na conta da empresa.");
+    case "cancelamento_retirado":
+      return montar(t, [`Retirou o pedido de cancelamento: a Protecção Empresas de ${nome} continua activa, com as mensalidades de sempre.`], CONTA);
+    case "cancelada_pedido":
+    case "cancelada_admin":
+      return montar(t, [
+        tipo === "cancelada_pedido"
+          ? `Como pediu, a Protecção Empresas de ${nome} terminou.`
+          : `A Protecção Empresas de ${nome} foi cancelada.`,
+        d.consultaAte ? `Até ${d.consultaAte} pode consultar e exportar os dados na conta da empresa.` : "",
+      ].filter(Boolean), CONTA);
+    case "encerrada":
+      return montar(t, [
+        `Terminou o período de consulta da Protecção Empresas de ${nome}.`,
+        d.eliminacaoEm ? `Os documentos guardados serão eliminados a partir de ${d.eliminacaoEm}.` : "",
+      ].filter(Boolean), undefined, "Obrigado por ter confiado na DoLado.");
+  }
+}

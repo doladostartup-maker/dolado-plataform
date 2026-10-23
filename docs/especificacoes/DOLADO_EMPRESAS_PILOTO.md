@@ -53,8 +53,8 @@ O esquema de cada fase tem de servir o código anterior e o novo (deploy na Clev
 | | 1B Exigir aal2 no backoffice (código → migration) | Depois do ensaio |
 | | 2 Fundação do modelo de dados | Feita (PR #190; `20261030090000` aplicada em produção a 23/10/2026) |
 | | 3 Bloqueios cruzados dos fluxos particulares | Feita (PR #191; `20261031090000` aplicada em produção a 23/10/2026) |
-| | 4 Registo, MFA de empresa, recuperação, aprovação | No ramo `feat/empresas-registo` (23/10/2026); migration `20261101090000` por aplicar |
-| 2 Produto | 5 Activação e ciclo de pagamento manual | |
+| | 4 Registo, MFA de empresa, recuperação, aprovação | Feita (PR #192; `20261101090000` aplicada em produção a 23/10/2026; `EMPRESAS_ATIVO=1` ligado por Thiago para ensaio controlado) |
+| 2 Produto | 5 Activação e ciclo de pagamento manual | No ramo `feat/empresas-ciclo` (23/10/2026); migration `20261103090000` por aplicar |
 | | 6 Monitor empresarial | |
 | | 7 Portal empresarial | |
 | | 8 Alertas e resumo mensal | |
@@ -96,6 +96,21 @@ O esquema de cada fase tem de servir o código anterior e o novo (deploy na Clev
 - **Configuração externa (Thiago), antes de ligar `EMPRESAS_ATIVO`:** Redirect URLs da Supabase com `https://portal.dolado.pt/empresas/redefinir-palavra-passe` (e `http://localhost:3000/empresas/redefinir-palavra-passe`). Sem ela, a ligação cai na raiz do portal e segue para a página dos particulares.
 - **Testes:** `src/lib/empresas/registo.test.mjs`, `registo.contrato.test.mjs` (Auth real: registo → aal1 sem acesso → dois factores → aal2 → aprovação; palavra-passe com o segundo factor; reposição), `supabase/tests/database/empresas_registo.test.sql`.
 - **Por decidir/pendente:** retenção de `empresa_pedidos_recuperacao` (sem limpeza automática); pseudónimo HMAC do NIPC (`identificador_hmac`) fica para a Fase 10.
+
+## Fase 5 — o que existe (20261103090000)
+
+- **Activação** (`empresa_activar`, ficha `/backoffice/empresas/[id]`): só de `aprovada`, com a referência da factura emitida (fora da plataforma — V11) e a transferência confirmada; vaga D4 verificada com o mesmo lock da aprovação (sem vaga → `lista_espera`, nada criado). Grava `activada_em`, `ciclo_ancora` (data em Lisboa), revisão obrigatória 30 dias (D3), preço garantido 6 meses para as cinco primeiras activadas, e o 1.º período pago.
+- **Períodos:** n-ésimo período = âncora + (n-1) meses … âncora + n meses (o Postgres ajusta o dia 31 sem deriva — `empresa_fim_periodo`); vence no início. Valores sem IVA.
+- **Ciclo diário** (`empresa_ciclo_diario`, pg_cron `empresas-ciclo-diario` 05:30 UTC, só SQL, idempotente, recupera dias perdidos): activa → período seguinte 7 dias antes (um por pagar de cada vez; aviso) → vencido sem pagamento: `pagamento_em_atraso` → 7 dias: `suspensa` (consulta) → mais 30 dias: `cancelada` por falta de pagamento (sem acesso; eliminação prevista em 90 dias, Fase 9). Prazos num só sítio: `empresa_prazos()` (espelho `PRAZOS_CICLO`).
+- **Pagamento** (`empresa_confirmar_pagamento`): marca o período pago com a referência; sem mais vencidos por pagar, volta a `ativa`.
+- **Cancelamento pelo cliente** em `/empresa` (confirmação explícita; `empresa_pedir_cancelamento`/`empresa_retirar_cancelamento`): activa até ao fim do período pago, sem mais mensalidades → `cancelada` com 30 dias de consulta → `encerrada` (eliminação prevista em 90 dias). Pode ser retirado enquanto activa.
+- **Admin** (`empresa_admin_transicao`, sempre com motivo no histórico): suspender, reactivar (só sem mensalidades vencidas por pagar), cancelar (30 dias de consulta).
+- **Avisos por e-mail** (`empresa_avisos`, um por organização, período e tipo; textos em `src/lib/email/empresas.ts`): saem pela rota `/api/internal/empresas-avisos` (pg_cron `empresas-avisos` de hora a hora, segredo `EMPRESAS_AVISOS_CRON_SECRET` = Vault `empresas_avisos_cron_secret`) e logo a seguir às acções; reserva antes do envio, até 3 tentativas, avisos com mais de 3 dias não saem. Sem o segredo: 401 e os avisos esperam (as transições correm na mesma).
+- **Medição** na ficha: mensalidades pagas, receita sem IVA, dias de atraso acumulados.
+- Nada toca em `user_access` nem no Stripe.
+- **Testes:** `src/lib/empresas/ciclo.test.mjs`, `ciclo.contrato.test.mjs` (Brevo simulada), `supabase/tests/database/empresas_ciclo.test.sql` (31/01 → 28/02 → 31/03, atraso, 7 e 30 dias, cancelamento, vagas).
+- **Configuração (Thiago):** `EMPRESAS_AVISOS_CRON_SECRET` na Clever Cloud e o mesmo valor no Vault da Supabase (`empresas_avisos_cron_secret`).
+- **Pendente jurídico:** Termos B2B (vencimento, suspensão, cancelamento, prazos de consulta e eliminação) antes de clientes reais.
 
 ## Dívida técnica: vários utilizadores por empresa
 

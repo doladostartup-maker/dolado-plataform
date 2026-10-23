@@ -6,10 +6,13 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mensagemAprovacao } from "@/lib/empresas/registo";
 import { enviarEmailEmpresa } from "@/lib/empresas/contaServidor";
+import { enviarAvisosEmpresas } from "@/lib/empresas/avisosServidor";
+import { ehAcaoAdmin, mensagemTransicao } from "@/lib/empresas/ciclo";
 
 const PAGINA = "/backoffice/empresas";
 const voltar = (chave: "erro" | "ok", texto: string): never => redirect(`${PAGINA}?${chave}=${encodeURIComponent(texto)}`);
@@ -101,4 +104,71 @@ export async function recusarPedidoRecuperacao(pedidoId: string, formData: FormD
   if (!data) voltar("erro", "Este pedido já foi resolvido.");
   revalidatePath(PAGINA);
   voltar("ok", "Pedido recusado.");
+}
+
+// ---------------------------------------------------------------------------
+// Ciclo de pagamento (Fase 5)
+// ---------------------------------------------------------------------------
+
+const ficha = (organizacaoId: string, chave: "erro" | "ok", texto: string): never =>
+  redirect(`${PAGINA}/${organizacaoId}?${chave}=${encodeURIComponent(texto)}`);
+
+/** Depois de cada transição: os avisos registados saem já (sem esperar pelo job). */
+function enviarAvisosDepois() {
+  after(() => enviarAvisosEmpresas().catch(() => undefined));
+}
+
+/** Primeira transferência confirmada e factura emitida → activa (com vaga D4). */
+export async function activarEmpresa(organizacaoId: string, formData: FormData) {
+  const { user } = await requireAdmin();
+  if (formData.get("confirmar") !== "on") ficha(organizacaoId, "erro", "Confirme que a transferência foi recebida.");
+  const { data, error } = await createAdminClient().rpc("empresa_activar", {
+    p_org: organizacaoId,
+    p_admin: user.id,
+    p_referencia: String(formData.get("referencia") ?? "").trim(),
+  });
+  if (error) throw new Error(`empresa_activar: ${error.message}`);
+  const m = mensagemTransicao(String(data));
+  if (data === "lista_espera") {
+    const conta = await contaDaOrganizacao(organizacaoId);
+    if (conta) await enviarEmailEmpresa(conta.userId, "listaEspera", { nome: conta.nome });
+  }
+  enviarAvisosDepois();
+  revalidatePath(PAGINA);
+  ficha(organizacaoId, m.ok ? "ok" : "erro", m.texto);
+}
+
+export async function confirmarPagamentoEmpresa(organizacaoId: string, periodoId: string, formData: FormData) {
+  const { user } = await requireAdmin();
+  if (formData.get("confirmar") !== "on") ficha(organizacaoId, "erro", "Confirme que a transferência foi recebida.");
+  const { data, error } = await createAdminClient().rpc("empresa_confirmar_pagamento", {
+    p_periodo: periodoId,
+    p_admin: user.id,
+    p_referencia: String(formData.get("referencia") ?? "").trim(),
+  });
+  if (error) throw new Error(`empresa_confirmar_pagamento: ${error.message}`);
+  const r = data as { resultado: string; estado?: string };
+  enviarAvisosDepois();
+  revalidatePath(PAGINA);
+  if (r.resultado === "pago") {
+    ficha(organizacaoId, "ok", r.estado === "ativa" ? "Pagamento confirmado. A organização está activa." : "Pagamento confirmado.");
+  }
+  ficha(organizacaoId, "erro", r.resultado === "ja_pago" ? "Esta mensalidade já estava paga." : mensagemTransicao(r.resultado).texto);
+}
+
+export async function transicaoEmpresa(organizacaoId: string, formData: FormData) {
+  const { user } = await requireAdmin();
+  const acao = formData.get("acao");
+  if (!ehAcaoAdmin(acao)) ficha(organizacaoId, "erro", "Acção desconhecida.");
+  const { data, error } = await createAdminClient().rpc("empresa_admin_transicao", {
+    p_org: organizacaoId,
+    p_admin: user.id,
+    p_acao: acao,
+    p_motivo: String(formData.get("motivo") ?? "").trim(),
+  });
+  if (error) throw new Error(`empresa_admin_transicao: ${error.message}`);
+  const m = mensagemTransicao(String(data));
+  enviarAvisosDepois();
+  revalidatePath(PAGINA);
+  ficha(organizacaoId, m.ok ? "ok" : "erro", m.texto);
 }
