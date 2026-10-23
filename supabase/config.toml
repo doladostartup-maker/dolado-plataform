@@ -55,3 +55,14 @@ content_path = "./supabase/templates/recuperacao.html"
 # por execução; o limite local por omissão é 2 por hora.
 [auth.rate_limit]
 email_sent = 100
+
+# MFA (Fase 1A do piloto DoLado Empresas): TOTP activo na stack local para os
+# testes de contrato (src/lib/mfa.contrato.test.mjs). Em produção, confirmar no
+# Dashboard: Authentication → Multi-Factor → Authenticator app (TOTP).
+# Sem SMS (add-on pago) nem WebAuthn.
+[auth.mfa]
+max_enrolled_factors = 10
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true

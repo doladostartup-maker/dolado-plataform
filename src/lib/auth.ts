@@ -28,6 +28,15 @@ const utilizadorPorPedido = cache(async () => {
 });
 
 export async function requireAdmin() {
+  return requireAdminSemMfa();
+}
+
+/**
+ * Admin sem exigir aal2 — só para as páginas de inscrição e verificação do
+ * MFA (/auth/mfa), que têm de abrir com a sessão aal1. Nesta fase (1A) é
+ * igual a requireAdmin(); na Fase 1B, requireAdmin() passa a exigir aal2.
+ */
+export async function requireAdminSemMfa() {
   const { supabase, user } = await utilizadorPorPedido();
 
   if (!user) {

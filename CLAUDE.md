@@ -87,6 +87,8 @@ Regras para tabelas novas: RLS com policies por operação (USING para ler/alter
 
 Pendente: rotação da chave service_role legada depois de o novo webhook estar em produção.
 
+- **MFA do backoffice — Fase 1A** (23/10/2026; Fase 1 do piloto DoLado Empresas): `/auth/mfa` ("Segurança da conta" no menu do backoffice; layout raiz próprio, fora de `src/app/backoffice`) — o admin inscreve dois factores TOTP (Principal e Reserva), verifica a sessão (aal2) e retira/substitui factores. Regras sem I/O em `src/lib/mfa.ts`, leitura em `mfaServidor.ts`, acções em `src/app/auth/mfa/actions.ts` (guarda `requireAdminSemMfa()`; a service role só apaga factores por verificar da própria conta). **O backoffice ainda não exige aal2:** `requireAdmin()` delega em `requireAdminSemMfa()`. A exigência (Fase 1B: `requireAdmin`, APIs de admin e `is_admin()` com aal2, código antes da migration) só depois do ensaio em produção de `docs/operacao/recuperacao-mfa-admin.md`. Sem SMS nem WebAuthn; os códigos de recuperação da Supabase são experimentais e não são usados. TOTP activo na stack local (`[auth.mfa.totp]` em `config.toml`). Testes: `src/lib/mfa.test.mjs`, `mfa.contrato.test.mjs`.
+
 ## Gestão de custo — regra durante a fase de piloto
 
 O piloto Remax é gratuito (sem receita ainda). Prioridade: **ficar nos tiers gratuitos o máximo de tempo possível.**
