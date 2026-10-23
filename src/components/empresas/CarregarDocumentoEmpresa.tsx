@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Aviso } from "@/components/portal/Aviso";
@@ -27,8 +27,11 @@ export function CarregarDocumentoEmpresa({ instalacoes, configuracaoDisponivel }
   const [recebido, setRecebido] = useState(false);
   // Antes de a página estar pronta, o formulário não pode ser enviado (sem o
   // JavaScript seria um envio vazio).
-  const [pronto, setPronto] = useState(false);
-  useEffect(() => setPronto(true), []);
+  const pronto = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
