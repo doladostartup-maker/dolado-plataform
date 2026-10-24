@@ -1,9 +1,6 @@
-import Link from "next/link";
-import { Aviso } from "@/components/portal/Aviso";
-import { MolduraConta } from "@/components/portal/MolduraConta";
-import { BOTAO_PRIMARIO, CAMPO, LIGACAO, ROTULO, TEXTO_SECUNDARIO } from "@/components/portal/ui";
-import { requireEmpresa } from "@/lib/auth";
-import { ROTAS_EMPRESA } from "@/lib/empresas/registo";
+import { BOTAO_PRIMARIO, CAMPO, CARTAO, ROTULO, TEXTO_SECUNDARIO, TITULO_SECCAO } from "@/components/portal/ui";
+import { PortalEmpresa } from "@/components/empresas/PortalEmpresa";
+import { portalEmpresa } from "@/lib/empresas/portalSessao";
 import { criarInstalacao } from "../documentos/actions";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +9,7 @@ export const metadata = { title: "Instalações — DoLado Empresas", robots: { 
 // Instalações da empresa (lojas, escritórios): cada documento e cada serviço
 // fica numa instalação. Leitura com a sessão (RLS, aal2). Fase 6A.
 export default async function InstalacoesPage({ searchParams }: { searchParams: Promise<{ erro?: string; info?: string }> }) {
-  const { supabase, organizacao } = await requireEmpresa("empresa/instalacoes");
+  const { supabase, organizacao, acesso } = await portalEmpresa("empresa/instalacoes");
   const params = await searchParams;
   const [{ data: instalacoes }, { data: org }] = await Promise.all([
     supabase.from("instalacoes").select("id, nome, morada").eq("organizacao_id", organizacao.id).is("desativada_em", null).order("created_at"),
@@ -20,22 +17,17 @@ export default async function InstalacoesPage({ searchParams }: { searchParams: 
   ]);
   const lista = instalacoes ?? [];
   const limite = org?.limite_instalacoes ?? 0;
-  const ativa = organizacao.estado === "ativa" || organizacao.estado === "pagamento_em_atraso";
+  const ativa = acesso === "total";
 
   return (
-    <MolduraConta
-      semIdioma
-      contexto={organizacao.nome}
+    <PortalEmpresa
+      nome={organizacao.nome}
+      estado={organizacao.estado}
+      ativa="instalacoes"
       titulo="Instalações"
       descricao={`Lojas, escritórios ou outros locais da empresa. O plano inclui até ${limite}.`}
-      depois={
-        <Link href={ROTAS_EMPRESA.painel} prefetch={false} className={LIGACAO}>
-          Voltar à conta da empresa
-        </Link>
-      }
+      mensagens={params}
     >
-      {params.erro && <Aviso tom="erro">{params.erro}</Aviso>}
-      {params.info && <Aviso tom="sucesso">{params.info}</Aviso>}
       {lista.length === 0 ? (
         <p className={TEXTO_SECUNDARIO}>Ainda não há instalações.</p>
       ) : (
@@ -49,7 +41,8 @@ export default async function InstalacoesPage({ searchParams }: { searchParams: 
         </ul>
       )}
       {ativa && lista.length < limite && (
-        <form action={criarInstalacao} className="flex flex-col gap-4">
+        <form action={criarInstalacao} className={`${CARTAO} flex flex-col gap-4`}>
+          <h2 className={TITULO_SECCAO}>Nova instalação</h2>
           <label className={ROTULO}>
             Nome da instalação
             <input name="nome" required maxLength={120} className={CAMPO} />
@@ -63,6 +56,6 @@ export default async function InstalacoesPage({ searchParams }: { searchParams: 
           </button>
         </form>
       )}
-    </MolduraConta>
+    </PortalEmpresa>
   );
 }

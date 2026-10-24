@@ -167,7 +167,9 @@ describe("páginas e acções das empresas", () => {
   );
 
   test("desligadas sem EMPRESAS_ATIVO (página ou guarda)", () => {
-    const semInterruptor = paginas.filter((f) => !/empresasAtivo\(\)|exigirEmpresasAtivo\(\)|requireEmpresa\(/.test(ler(f)));
+    // portalEmpresa() (Fase 7) chama requireEmpresa(), que dá 404 sem o interruptor.
+    assert.match(ler("src/lib/empresas/portalSessao.ts"), /await requireEmpresa\(/);
+    const semInterruptor = paginas.filter((f) => !/empresasAtivo\(\)|exigirEmpresasAtivo\(\)|requireEmpresa\(|portalEmpresa\(/.test(ler(f)));
     assert.deepEqual(semInterruptor, []);
   });
   test("nenhum Google nas contas de empresa", () => {

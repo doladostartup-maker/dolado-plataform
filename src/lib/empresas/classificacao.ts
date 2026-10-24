@@ -41,3 +41,20 @@ export function classificarResultado(e: EntradaClassificacao): { classificacao: 
   if ((e.diferencaPotencial || e.confiancaBaixa) && !e.revisto) return { classificacao: "requer_verificacao", provisorio };
   return { classificacao: "facto_confirmado", provisorio };
 }
+
+/**
+ * Classificação de uma factura na lista "Facturas e análises": total lido,
+ * situação em verificação pela DoLado (diferença potencial ainda por rever)
+ * e revisão humana obrigatória (D3) ainda por registar.
+ */
+export function classificarFatura(f: { total_cents: number | null; em_verificacao?: boolean | null }, revisaoPendente: boolean) {
+  return classificarResultado({
+    valorLido: f.total_cents !== null,
+    confiancaBaixa: false,
+    diferencaPotencial: !!f.em_verificacao,
+    contratual: false,
+    temContrato: true,
+    revisaoNecessaria: revisaoPendente,
+    revisto: false,
+  });
+}
