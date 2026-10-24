@@ -279,6 +279,10 @@ export default async function FichaEmpresaPage({
           <p>Documentos: {monitor.documentos} (consumidos {monitor.porQuota.consumida ?? 0}, libertados {monitor.porQuota.libertada ?? 0}, fora da quota {monitor.porQuota.nao_conta ?? 0})</p>
           <p>Custo estimado da IA: {monitor.custoUsd.toFixed(4)} USD</p>
           <p>
+            E-mails enviados: {monitor.emails.total} (ciclo {monitor.emails.ciclo}, prazos {monitor.emails.prazos}, facturas em falta {monitor.emails.faltas},
+            resumos {monitor.emails.resumos})
+          </p>
+          <p>
             Revisões: {monitor.revisoes} ({monitor.minutos} min) · por rever {monitor.porRever}
           </p>
           <p>
@@ -383,5 +387,30 @@ async function medicaoMonitor(organizacaoId: string) {
     minutos: (revisoes ?? []).reduce((s, r) => s + r.minutos, 0),
     erros: contar(revisoes ?? [], (r) => r.tipo_erro),
     ocorrencias: contar(ocorrencias ?? [], (o) => o.tipo),
+    emails: await emailsEnviados(organizacaoId),
   };
+}
+
+/**
+ * E-mails enviados à organização (Fase 8; custo da Brevo identificável):
+ * avisos do ciclo, alertas de prazo, lembretes de factura em falta e resumos.
+ */
+async function emailsEnviados(organizacaoId: string) {
+  const admin = createAdminClient();
+  const { data: membro } = await admin.from("organizacoes_membros").select("utilizador_id").eq("organizacao_id", organizacaoId).limit(1).maybeSingle();
+  const contagem = async (q: PromiseLike<{ count: number | null }>) => (await q).count ?? 0;
+  const [ciclo, prazos, faltas, resumos] = await Promise.all([
+    contagem(admin.from("empresa_avisos").select("id", { count: "exact", head: true }).eq("organizacao_id", organizacaoId).not("enviado_em", "is", null)),
+    membro
+      ? contagem(
+          admin
+            .from("contratos_alertas_envios")
+            .select("id, contratos_monitorizados!inner(utilizador_id)", { count: "exact", head: true })
+            .eq("contratos_monitorizados.utilizador_id", membro.utilizador_id),
+        )
+      : Promise.resolve(0),
+    contagem(admin.from("empresa_alertas_envios").select("id", { count: "exact", head: true }).eq("organizacao_id", organizacaoId).eq("estado", "enviado")),
+    contagem(admin.from("empresa_resumos_mensais").select("id", { count: "exact", head: true }).eq("organizacao_id", organizacaoId).eq("estado", "enviado")),
+  ]);
+  return { ciclo, prazos, faltas, resumos, total: ciclo + prazos + faltas + resumos };
 }

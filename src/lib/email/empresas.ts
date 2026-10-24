@@ -7,6 +7,7 @@
 // o cliente. À equipa: avisos internos sem dados do registo além do nome.
 import { escaparHtml } from "./textoRevisao.ts";
 import { P_EMAIL, P_NOTA, botaoEmail, emailV2 } from "./molduraEmail.ts";
+import { ASSUNTO_ACHADO_EMPRESA, ASSUNTO_FACTURA_EM_FALTA, type SeccaoResumo } from "../empresas/alertas.ts";
 
 const PORTAL = "https://portal.dolado.pt";
 
@@ -182,4 +183,99 @@ export function montarHtmlAvisoCiclo(tipo: TipoAvisoCiclo, d: DadosAvisoCiclo): 
         d.eliminacaoEm ? `Os documentos guardados serão eliminados a partir de ${d.eliminacaoEm}.` : "",
       ].filter(Boolean), undefined, "Obrigado por ter confiado na DoLado.");
   }
+}
+
+// ---------------------------------------------------------------------------
+// Fase 8: alertas do Monitor e resumo mensal (só português, D1). Texto
+// factual: a data ou o facto registado e uma acção útil, nunca uma conclusão
+// sobre direitos ou sobre o fornecedor. Tudo o que vem dos documentos ou do
+// backoffice passa por escape.
+// ---------------------------------------------------------------------------
+
+const ALERTAS = { href: `${PORTAL}/empresa/alertas`, texto: "Ver os alertas" };
+
+export function montarHtmlPrazoEmpresa(d: {
+  organizacao: string;
+  fidelizacao: boolean;
+  servico: string;
+  instalacao: string | null;
+  quando: string;
+  descricaoPromocao: string | null;
+  notaPreaviso: string | null;
+  assunto: string;
+}): string {
+  const onde = `${escaparHtml(d.servico)}${d.instalacao ? ` (${escaparHtml(d.instalacao)})` : ""}`;
+  return montar(
+    d.assunto,
+    [
+      d.fidelizacao
+        ? `A fidelização do serviço ${onde} de <strong>${escaparHtml(d.organizacao)}</strong> que temos registada ${escaparHtml(d.quando)}.`
+        : `A promoção do serviço ${onde}${d.descricaoPromocao ? ` (${escaparHtml(d.descricaoPromocao)})` : ""} de <strong>${escaparHtml(d.organizacao)}</strong> que temos registada ${escaparHtml(d.quando)}.`,
+      d.notaPreaviso ? escaparHtml(d.notaPreaviso) : "",
+      d.fidelizacao
+        ? "Pode ser uma boa altura para rever as condições do contrato ou pedir propostas."
+        : "Vale a pena confirmar com o fornecedor as condições que se aplicam depois dessa data.",
+    ].filter(Boolean),
+    ALERTAS,
+    "A data vem dos documentos carregados. Se não estiver certa, escreva-nos.",
+  );
+}
+
+export function montarHtmlFacturaEmFalta(d: { organizacao: string; servico: string; instalacao: string | null; ultima: string }): string {
+  const onde = `${escaparHtml(d.servico)}${d.instalacao ? ` (${escaparHtml(d.instalacao)})` : ""}`;
+  return montar(
+    ASSUNTO_FACTURA_EM_FALTA,
+    [
+      `A última factura que recebemos do serviço ${onde} de <strong>${escaparHtml(d.organizacao)}</strong> foi emitida a ${escaparHtml(d.ultima)}. Pelo intervalo habitual, já devia haver uma nova.`,
+      "Carregue a factura mais recente para continuarmos a acompanhar este serviço. Se o serviço terminou, diga-nos.",
+    ],
+    { href: `${PORTAL}/empresa/documentos`, texto: "Carregar a factura" },
+  );
+}
+
+export function montarHtmlAchadoEmpresa(d: { fornecedor: string | null; texto: string }): string {
+  const paragrafos = d.texto
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => escaparHtml(p).replace(/\n/g, "<br>"));
+  return montar(
+    ASSUNTO_ACHADO_EMPRESA,
+    [
+      `Ao comparar as facturas${d.fornecedor ? ` do serviço com <strong>${escaparHtml(d.fornecedor)}</strong>` : ""}, detectámos uma alteração que merece ser verificada:`,
+      ...paragrafos,
+    ],
+    ALERTAS,
+    "Foi revista por uma pessoa da DoLado antes deste aviso. Para qualquer dúvida, responda a este e-mail.",
+  );
+}
+
+export function montarHtmlResumoEmpresa(d: { assunto: string; organizacao: string; seccoes: SeccaoResumo[]; href: string }): string {
+  const corpo = d.seccoes
+    .map(
+      (s) =>
+        `<p ${P_EMAIL}><strong>${escaparHtml(s.titulo)}</strong><br>${s.linhas.map((l) => escaparHtml(l)).join("<br>")}</p>`,
+    )
+    .join("\n          ");
+  return emailV2({
+    titulo: d.assunto,
+    preheader: d.assunto,
+    corpo: [
+      `<p ${P_EMAIL}>Olá,</p>`,
+      `<p ${P_EMAIL}>Este é o resumo do que a DoLado acompanhou para <strong>${escaparHtml(d.organizacao)}</strong>.</p>`,
+      corpo,
+      botaoEmail(d.href, "Ver o resumo completo"),
+      `<p ${P_NOTA}>Os valores são os totais das facturas carregadas, com IVA, e as datas vêm dos documentos.</p>`,
+    ].join("\n          "),
+  });
+}
+
+/** Versão em texto do resumo (clientes de e-mail sem HTML). */
+export function textoResumoEmpresa(d: { organizacao: string; seccoes: SeccaoResumo[]; href: string }): string {
+  return [
+    "Olá,",
+    `Este é o resumo do que a DoLado acompanhou para ${d.organizacao}.`,
+    ...d.seccoes.map((s) => [s.titulo, ...s.linhas].join("\n")),
+    `Ver o resumo completo: ${d.href}`,
+  ].join("\n\n");
 }

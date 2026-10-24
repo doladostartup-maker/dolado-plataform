@@ -9,6 +9,8 @@ import { enviarEmailBrevo } from "@/lib/email/brevo";
 import { assuntoAchadoMonitor, montarHtmlAchadoMonitor } from "@/lib/email/achadoMonitor";
 import { idiomaDosMetadados } from "@/lib/idiomaConta";
 import { ESTADOS_ACHADO_POR_DECIDIR } from "@/lib/monitor/achados";
+import { ASSUNTO_ACHADO_EMPRESA } from "@/lib/empresas/alertas";
+import { montarHtmlAchadoEmpresa } from "@/lib/email/empresas";
 
 // Revisão humana dos achados do Monitor (F2/F4). Nada chega ao cliente sem
 // uma decisão aqui; cada decisão fica em achados_revisoes (só inserção).
@@ -59,12 +61,18 @@ export async function comunicarAchado(formData: FormData) {
   // não desfaz a comunicação: fica visível no portal.
   let enviado = false;
   try {
-    const [{ data: conta }, { data: contrato }] = await Promise.all([
+    const [{ data: conta }, { data: contrato }, { data: perfil }] = await Promise.all([
       admin.auth.admin.getUserById(a.utilizador_id),
       admin.from("contratos_monitorizados").select("fornecedor").eq("id", a.contrato_id).maybeSingle(),
+      admin.from("utilizadores").select("tipo_conta").eq("id", a.utilizador_id).maybeSingle(),
     ]);
     const u = conta?.user;
-    if (u?.email && u.email_confirmed_at) {
+    if (u?.email && u.email_confirmed_at && perfil?.tipo_conta === "empresa") {
+      // DoLado Empresas (Fase 8): modelo próprio, só em português, ligação
+      // para os alertas do portal da empresa.
+      await enviarEmailBrevo(u.email, ASSUNTO_ACHADO_EMPRESA, montarHtmlAchadoEmpresa({ fornecedor: contrato?.fornecedor ?? null, texto }));
+      enviado = true;
+    } else if (u?.email && u.email_confirmed_at) {
       // Idioma da conta (só a moldura do e-mail; o texto é o escrito aqui).
       const idioma = idiomaDosMetadados(u.user_metadata);
       await enviarEmailBrevo(

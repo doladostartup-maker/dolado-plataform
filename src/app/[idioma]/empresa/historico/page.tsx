@@ -4,6 +4,7 @@ import { portalEmpresa } from "@/lib/empresas/portalSessao";
 import { carregarDadosPortal } from "@/lib/empresas/portalServidor";
 import { TEXTO_AVISO_ENVIADO, nomeServico, ordenarHistorico, type EntradaHistorico } from "@/lib/empresas/painel";
 import { dataPorExtenso } from "@/lib/empresas/ciclo";
+import { rotuloMesLongo } from "@/lib/empresas/alertas";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Histórico — DoLado Empresas", robots: { index: false, follow: false } };
@@ -13,7 +14,7 @@ export const metadata = { title: "Histórico — DoLado Empresas", robots: { ind
 // Leitura com a sessão (RLS, aal2).
 export default async function HistoricoEmpresaPage() {
   const { supabase, user, organizacao } = await portalEmpresa("empresa/historico");
-  const [dados, { data: metas }, { data: periodos }, { data: avisos }] = await Promise.all([
+  const [dados, { data: metas }, { data: periodos }, { data: avisos }, { data: faltas }, { data: resumos }] = await Promise.all([
     carregarDadosPortal(supabase, organizacao.id, user.id),
     supabase
       .from("empresa_documentos")
@@ -27,6 +28,8 @@ export default async function HistoricoEmpresaPage() {
       .select("contrato_id, regra, enviado_em, contratos_monitorizados!inner(utilizador_id)")
       .eq("contratos_monitorizados.utilizador_id", user.id)
       .limit(200),
+    supabase.from("empresa_alertas_envios").select("contrato_id, enviado_em").eq("organizacao_id", organizacao.id).eq("estado", "enviado").limit(200),
+    supabase.from("empresa_resumos_mensais").select("mes_referencia, enviado_em").eq("organizacao_id", organizacao.id).eq("estado", "enviado"),
   ]);
   const ids = (metas ?? []).map((m) => m.documento_id);
   const { data: docs } = ids.length ? await supabase.from("documentos_monitor").select("id, tipo, nome_ficheiro").in("id", ids) : { data: [] };
@@ -55,6 +58,15 @@ export default async function HistoricoEmpresaPage() {
       const s = servico.get(a.contrato_id);
       return { data: String(a.enviado_em), texto: TEXTO_AVISO_ENVIADO[a.regra] ?? "Aviso enviado", detalhe: s ? nomeServico(s) : undefined };
     }),
+    ...(faltas ?? []).map((f) => {
+      const s = servico.get(f.contrato_id);
+      return { data: String(f.enviado_em), texto: "Lembrete enviado: factura em falta", detalhe: s ? nomeServico(s) : undefined };
+    }),
+    ...(resumos ?? []).map((r) => ({
+      data: String(r.enviado_em),
+      texto: "Resumo mensal enviado",
+      detalhe: rotuloMesLongo(String(r.mes_referencia).slice(0, 7)),
+    })),
     ...(periodos ?? []).map((p) =>
       p.estado_pagamento === "pago" && p.pago_em
         ? { data: String(p.pago_em), texto: "Mensalidade paga", detalhe: `${dataPorExtenso(p.inicio)} a ${dataPorExtenso(p.fim)}` }
