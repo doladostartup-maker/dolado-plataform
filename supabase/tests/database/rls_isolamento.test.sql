@@ -269,7 +269,11 @@ select is(
                            'empresa_conceder_excecao', 'empresa_quota_sessao',
                            -- DoLado Empresas, revisão (20261105090000): só service_role; o registo
                            -- verifica o admin (empresas_revisao.test.sql).
-                           'empresa_marcar_revisao', 'empresa_registar_revisao')), 0::bigint,
+                           'empresa_marcar_revisao', 'empresa_registar_revisao',
+                           -- Fase 8: alertas e resumo (só service_role; listas e reservas)
+                           'empresa_definir_preaviso', 'empresa_destinos_alertas', 'empresa_alertas_pendentes',
+                           'empresa_facturas_em_falta', 'empresa_alerta_reservar', 'empresa_alerta_concluir',
+                           'empresa_resumo_destinatarios', 'empresa_resumo_reservar', 'empresa_resumo_concluir')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em

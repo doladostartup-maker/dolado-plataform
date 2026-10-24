@@ -64,3 +64,11 @@ export const QUOTA_TEXTO = {
   libertada: "não conta para a quota",
   nao_conta: "não conta para a quota",
 } as const;
+
+export const MENSAGENS_PREAVISO = {
+  guardado: "Pré-aviso guardado.",
+  retirado: "Pré-aviso retirado.",
+  invalido: "Indique um número de dias entre 1 e 365, ou deixe em branco.",
+  sem_acesso: "Só é possível com a Protecção Empresas activa.",
+  nao_encontrado: "Este serviço já não está a ser acompanhado.",
+} as const;

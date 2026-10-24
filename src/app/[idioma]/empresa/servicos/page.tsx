@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { BOTAO_PRIMARIO, CARTAO, TEXTO_SECUNDARIO, TITULO_CARTAO, TITULO_SECCAO } from "@/components/portal/ui";
+import { BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAMPO, CARTAO, TEXTO_SECUNDARIO, TITULO_CARTAO, TITULO_SECCAO } from "@/components/portal/ui";
+import { definirPreaviso } from "./actions";
 import { PortalEmpresa } from "@/components/empresas/PortalEmpresa";
 import { portalEmpresa } from "@/lib/empresas/portalSessao";
 import { carregarDadosPortal } from "@/lib/empresas/portalServidor";
@@ -11,8 +12,9 @@ export const metadata = { title: "Contratos e serviços — DoLado Empresas", ro
 
 // Serviços acompanhados por instalação (Fase 7): fornecedor, datas lidas dos
 // documentos e última factura. Leitura com a sessão (RLS, aal2).
-export default async function ServicosEmpresaPage() {
+export default async function ServicosEmpresaPage({ searchParams }: { searchParams: Promise<{ erro?: string; info?: string }> }) {
   const { supabase, user, organizacao, acesso } = await portalEmpresa("empresa/servicos");
+  const params = await searchParams;
   const dados = await carregarDadosPortal(supabase, organizacao.id, user.id);
   const grupos = [
     ...dados.instalacoes.map((i) => ({ id: i.id, nome: i.nome })),
@@ -26,6 +28,7 @@ export default async function ServicosEmpresaPage() {
       ativa="servicos"
       titulo="Contratos e serviços"
       descricao="Os serviços que a DoLado acompanha em cada instalação, com as datas lidas dos contratos e das facturas."
+      mensagens={params}
     >
       {dados.servicos.length === 0 ? (
         <div className={`${CARTAO} flex flex-col gap-3`}>
@@ -59,6 +62,27 @@ export default async function ServicosEmpresaPage() {
                       {s.data_fim_promocao && <span>Fim da promoção: {dataPorExtenso(s.data_fim_promocao)}</span>}
                       {!s.data_fim_fidelizacao && !s.data_fim_promocao && (
                         <span className={TEXTO_SECUNDARIO}>Sem datas de fidelização ou de promoção nos documentos carregados.</span>
+                      )}
+                      {s.preaviso_dias && <span>Pré-aviso para não renovar: {s.preaviso_dias} dias</span>}
+                      {acesso === "total" && (
+                        <details className="mt-1">
+                          <summary className={`${TEXTO_SECUNDARIO} cursor-pointer underline underline-offset-4`}>
+                            {s.preaviso_dias ? "Alterar o pré-aviso" : "Indicar o pré-aviso do contrato"}
+                          </summary>
+                          <form action={definirPreaviso} className="mt-2 flex flex-wrap items-end gap-3">
+                            <input type="hidden" name="contrato_id" value={s.id} />
+                            <label className="flex flex-col gap-1 text-[14.5px]">
+                              Dias de pré-aviso (em branco para retirar)
+                              <input name="dias" type="number" min={1} max={365} defaultValue={s.preaviso_dias ?? ""} className={`${CAMPO} w-32`} />
+                            </label>
+                            <button type="submit" className={BOTAO_SECUNDARIO}>
+                              Guardar
+                            </button>
+                          </form>
+                          <p className={`${TEXTO_SECUNDARIO} mt-2`}>
+                            Com o pré-aviso, o primeiro alerta do fim da fidelização chega com tempo para comunicar ao fornecedor.
+                          </p>
+                        </details>
                       )}
                     </li>
                   );

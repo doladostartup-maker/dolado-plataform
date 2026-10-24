@@ -1,4 +1,5 @@
-import { CARTAO, TEXTO_SECUNDARIO, TITULO_CARTAO, TITULO_SECCAO } from "@/components/portal/ui";
+import Link from "next/link";
+import { CARTAO, LIGACAO, TEXTO_SECUNDARIO, TITULO_CARTAO, TITULO_SECCAO } from "@/components/portal/ui";
 import { PortalEmpresa } from "@/components/empresas/PortalEmpresa";
 import { portalEmpresa } from "@/lib/empresas/portalSessao";
 import { carregarDadosPortal, hojeLisboa } from "@/lib/empresas/portalServidor";
@@ -28,7 +29,15 @@ export default async function AlertasEmpresaPage() {
       estado={organizacao.estado}
       ativa="alertas"
       titulo="Alertas"
-      descricao="Prazos dos serviços e situações que a DoLado verificou e lhe comunicou."
+      descricao={
+        <>
+          Prazos dos serviços e situações que a DoLado verificou e lhe comunicou. Os avisos também chegam por e-mail.{" "}
+          <Link href="/empresa/resumos" prefetch={false} className={LIGACAO}>
+            Ver os resumos mensais
+          </Link>
+          .
+        </>
+      }
     >
       <section className={`${CARTAO} flex flex-col gap-3`} aria-labelledby="prazos">
         <h2 id="prazos" className={TITULO_SECCAO}>

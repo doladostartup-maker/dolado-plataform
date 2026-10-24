@@ -17,7 +17,7 @@ export async function acessoEmpresa(supabase: SupabaseClient, organizacaoId: str
 
 export type DadosPortal = {
   instalacoes: InstalacaoPainel[];
-  servicos: (ServicoPainel & { estado: string | null; mensalidade_cents: number | null; created_at: string })[];
+  servicos: (ServicoPainel & { estado: string | null; mensalidade_cents: number | null; created_at: string; preaviso_dias: number | null })[];
   faturas: FaturaPainel[];
   /** Situações já revistas e comunicadas pela DoLado (nunca as por rever). */
   achados: { id: string; contrato_id: string; fatura_id: string | null; tipo: string; texto_cliente: string | null; comunicado_em: string }[];
@@ -34,7 +34,7 @@ export async function carregarDadosPortal(supabase: SupabaseClient, organizacaoI
     supabase.from("instalacoes").select("id, nome").eq("organizacao_id", organizacaoId).is("desativada_em", null).order("created_at"),
     supabase
       .from("contratos_monitorizados")
-      .select("id, setor, fornecedor, instalacao_id, data_fim_fidelizacao, data_fim_promocao, estado, mensalidade_cents, created_at")
+      .select("id, setor, fornecedor, instalacao_id, data_fim_fidelizacao, data_fim_promocao, estado, mensalidade_cents, created_at, preaviso_dias")
       .eq("utilizador_id", utilizadorId)
       .is("desativado_em", null)
       .order("created_at"),

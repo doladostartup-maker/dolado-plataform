@@ -194,10 +194,10 @@ export function ordenarHistorico(entradas: (EntradaHistorico | null)[], maximo =
 }
 
 export const TEXTO_AVISO_ENVIADO: Record<string, string> = {
-  fidelizacao_60d: "Aviso enviado: fim da fidelização daqui a 60 dias",
-  fidelizacao_30d: "Aviso enviado: fim da fidelização daqui a 30 dias",
+  fidelizacao_60d: "Primeiro aviso enviado: fim da fidelização a aproximar-se",
+  fidelizacao_30d: "Aviso enviado: fim da fidelização a menos de 30 dias",
   fidelizacao_fim: "Aviso enviado: fim da fidelização hoje",
-  promocao_60d: "Aviso enviado: fim da promoção daqui a 60 dias",
-  promocao_30d: "Aviso enviado: fim da promoção daqui a 30 dias",
+  promocao_60d: "Primeiro aviso enviado: fim da promoção a aproximar-se",
+  promocao_30d: "Aviso enviado: fim da promoção a menos de 30 dias",
   promocao_fim: "Aviso enviado: fim da promoção hoje",
 };

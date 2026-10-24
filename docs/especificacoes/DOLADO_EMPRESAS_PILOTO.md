@@ -56,8 +56,8 @@ O esquema de cada fase tem de servir o código anterior e o novo (deploy na Clev
 | | 4 Registo, MFA de empresa, recuperação, aprovação | Feita (PR #192; `20261101090000` aplicada em produção a 23/10/2026; `EMPRESAS_ATIVO=1` ligado por Thiago para ensaio controlado) |
 | 2 Produto | 5 Activação e ciclo de pagamento manual | Feita (PR #194; `20261103090000` aplicada em produção a 23/10/2026; segredo dos avisos configurado) |
 | | 6 Monitor empresarial | Feita (PRs #195 e #196; `20261104090000` e `20261105090000` aplicadas em produção, cópias prévias em ~/dolado-backups/) |
-| | 7 Portal empresarial | Em PR (sem migration) |
-| | 8 Alertas e resumo mensal | |
+| | 7 Portal empresarial | Feita (PR #197, sem migration) |
+| | 8 Alertas e resumo mensal | Em PR (`20261106090000`, tipo A) |
 | 3 Conversão e dados | 9 Exportação e eliminação | |
 | | 10 Análise gratuita empresarial | |
 | | 11 Páginas públicas | |
@@ -145,6 +145,19 @@ A Fase 6 foi dividida em dois PRs para reduzir o risco no pipeline dos particula
 - **Facturas e análises:** cada factura com a classificação da Fase 6B (`classificarFatura`) e «provisório» enquanto a revisão D3 estiver pendente.
 - **Leitura:** sempre com a sessão (RLS, aal2) — teste estático: nenhuma página de `/empresa` usa a service role. **Backoffice:** secção «Despesas» na ficha da organização com as mesmas funções (`carregarDadosPortal` + `painel.ts`) e a sessão do admin — os números são os mesmos do portal.
 - **Testes:** `src/lib/empresas/painel.test.mjs` (meses incompletos, sem histórico, base do IVA, prazos, classificação, regras estáticas).
+
+## Fase 8 — o que existe (20261106090000)
+
+- **Desvio ao plano (para reduzir o risco nos particulares):** os alertas das empresas **não** passam pela Edge Function `verificar-monitor-datas` nem por `monitor_alertas_pendentes()` — ambas ficam exactamente como estavam (teste: a lista dos particulares é a mesma e nunca inclui empresas). Saem pela rota interna das empresas (`/api/internal/empresas-avisos`, pg_cron `empresas-avisos` de hora a hora, segredo da Fase 5), em `src/lib/empresas/alertasServidor.ts`. O resumo usa uma tabela própria (`empresa_resumos_mensais`, por organização) em vez de `protecao_resumos_mensais`, para não misturar as métricas dos particulares.
+- **Destinatários:** `empresa_destinos_alertas()` — organização activa ou com pagamento em atraso (acesso total), conta de empresa, e-mail confirmado. Em consulta (suspensa, cancelada) só os avisos do estado da conta.
+- **Prazos** (`empresa_alertas_pendentes`): fidelização e promoção a 60 e 30 dias e na data; o primeiro aviso da fidelização sai a max(60, pré-aviso + 30) dias. Pré-aviso (`contratos_monitorizados.preaviso_dias`) indicado pela empresa em «Contratos e serviços» (`empresa_definir_preaviso`). Reserva em `contratos_alertas_envios` (`monitor_reservar_alerta`, a mesma dos particulares); falha → libertada.
+- **Factura em falta** (`empresa_facturas_em_falta`): pelo menos 2 facturas, sem factura nova depois de 1,5 × o intervalo médio entre emissões (intervalos de 20 a 400 dias; última há menos de um ano); um lembrete por serviço e por mês (`empresa_alertas_envios`, reserva → enviado; falha → libertada).
+- **Situações comunicadas** (aumentos e outras diferenças): já nasciam no pipeline (decomposição da comparação no achado) e só saem depois da revisão humana em `/backoffice/monitor/achados`; para contas de empresa, o e-mail usa o modelo das empresas (ligação a `/empresa/alertas`, sem «Tratar o meu caso»).
+- **Resumo mensal** (`resumo_empresa_v1`, `src/lib/empresas/alertas.ts`): dias 1 a 5 a partir das 9h (Lisboa), do mês anterior; quem tem acesso total e um período pago que cobre parte do mês. Despesas do mês com IVA (incompleto assinalado; comparação só com os dois meses completos), por instalação, facturas analisadas, situações comunicadas (só contagens), facturas em verificação (nunca «não encontrámos» com uma em verificação) e prazos dos próximos 90 dias. Reserva → envio → `enviado` imutável; depois de o e-mail sair, nunca repete. Portal: `/empresa/resumos` e `/empresa/resumos/AAAA-MM` (conteúdo gravado; RLS com aal2).
+- **Horas:** alertas entre as 8h e as 21h (Lisboa); cada parte da rota falha sozinha.
+- **Medição:** e-mails enviados por organização na ficha do backoffice (ciclo, prazos, facturas em falta, resumos).
+- **Testes:** `src/lib/empresas/alertas.test.mjs`, `alertas.contrato.test.mjs`, `supabase/tests/database/empresas_alertas.test.sql`.
+- **Fica de fora:** decomposição consumo/preço no próprio e-mail (vai no texto revisto pela DoLado); pré-aviso lido dos contratos pela IA (o schema da leitura está no limite).
 
 ## Dívida técnica: vários utilizadores por empresa
 
