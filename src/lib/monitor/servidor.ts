@@ -48,6 +48,7 @@ import {
 } from "./identificacao";
 import { VERSAO_REGRA_CESSACAO, compararCessacao, textoCessacaoDivergente } from "./custoSaida";
 import { TEXTO_FORA_DO_AMBITO, foraDoAmbitoEmpresa } from "@/lib/empresas/ambito";
+import { motivosRevisao, type MotivoRevisao } from "@/lib/empresas/revisao";
 import { erroAlterarTipo, lerTipoDocumento, type ErroAlterarTipo } from "./tipoDocumento";
 import { lerEnergiaGuardada } from "./energia";
 import { VERSAO_ENERGIA } from "./comparacaoEnergia";
@@ -327,6 +328,80 @@ async function podeCriarServicoEmpresa(admin: Admin, utilizadorId: string): Prom
 function resultadoUtil(leitura: LeituraDocumento, repetido: boolean): boolean {
   return leitura.tipo === "fatura" && !repetido && leitura.v.fatura.totalCents !== null && leitura.v.fatura.periodoInicio !== null;
 }
+
+/**
+ * Revisão humana (D3, Fase 6B): grava os motivos depois do registo. Os
+ * factos vêm da base de dados (período obrigatório da organização, achados
+ * desta factura, serviços anteriores) e da leitura (confiança, total ≠ soma
+ * das linhas). Uma falha nunca impede o registo.
+ */
+async function marcarRevisaoEmpresa(
+  admin: Admin,
+  a: { ctx: ContextoEmpresa; documentoId: string; utilizadorId: string; servicoId: string; leitura: LeituraDocumento; decididoPelaEmpresa: boolean },
+) {
+  try {
+    const [{ data: org }, { data: fatura }, { data: servicos }] = await Promise.all([
+      admin.from("organizacoes").select("revisao_obrigatoria_ate").eq("id", a.ctx.organizacaoId).maybeSingle(),
+      admin.from("faturas_monitor").select("id").eq("documento_id", a.documentoId).maybeSingle(),
+      admin.from("contratos_monitorizados").select("id, setor, fornecedor").eq("utilizador_id", a.utilizadorId),
+    ]);
+    const servico = servicos?.find((x) => x.id === a.servicoId);
+    // Sector/fornecedor novo = nenhum OUTRO documento registado da empresa
+    // em serviços desse sector/fornecedor (o próprio serviço conta).
+    const outrosDocumentos = async (ids: string[]) => {
+      if (ids.length === 0) return 0;
+      const { count } = await admin
+        .from("documentos_monitor")
+        .select("id", { count: "exact", head: true })
+        .eq("utilizador_id", a.utilizadorId)
+        .neq("id", a.documentoId)
+        .in("contrato_id", ids);
+      return count ?? 0;
+    };
+    const mesmoSetor = (servicos ?? []).filter((x) => x.setor === servico?.setor).map((x) => x.id);
+    const mesmoFornecedor = servico?.fornecedor ? (servicos ?? []).filter((x) => x.fornecedor === servico.fornecedor).map((x) => x.id) : [];
+    let achados = 0;
+    let faturasDoServico = 0;
+    if (fatura) {
+      const [{ count: nAchados }, { count: nFaturas }] = await Promise.all([
+        admin.from("achados_monitor").select("id", { count: "exact", head: true }).eq("fatura_id", fatura.id).in("estado", ["detetado", "em_revisao"]),
+        admin.from("faturas_monitor").select("id", { count: "exact", head: true }).eq("contrato_id", a.servicoId),
+      ]);
+      achados = nAchados ?? 0;
+      faturasDoServico = nFaturas ?? 0;
+    }
+    const [docsSetor, docsFornecedor] = await Promise.all([outrosDocumentos(mesmoSetor), outrosDocumentos(mesmoFornecedor)]);
+    const motivos = motivosRevisao({
+      dentroPeriodoObrigatorio: !!org?.revisao_obrigatoria_ate && new Date(org.revisao_obrigatoria_ate) > new Date(),
+      confiancaBaixa: a.leitura.v.precisaRevisao,
+      decididoPelaEmpresa: a.decididoPelaEmpresa,
+      diferencaPotencial: achados > 0,
+      sectorNovo: docsSetor === 0,
+      fornecedorNovo: !!servico?.fornecedor && docsFornecedor === 0,
+      totalDiferenteSoma: a.leitura.tipo === "fatura" && a.leitura.v.avisos.includes("total diferente da soma das linhas"),
+      primeiraFaturaServico: a.leitura.tipo === "fatura" && faturasDoServico === 1,
+    });
+    await gravarMotivosRevisao(admin, a.documentoId, motivos);
+  } catch (erro) {
+    console.error(`[monitor] revisão do documento ${a.documentoId}:`, erro instanceof Error ? erro.message : erro);
+  }
+}
+
+async function gravarMotivosRevisao(admin: Admin, documentoId: string, motivos: MotivoRevisao[]) {
+  const { error } = await admin.rpc("empresa_marcar_revisao", { p_documento: documentoId, p_motivos: motivos });
+  if (error) console.error(`[monitor] empresa_marcar_revisao ${documentoId}:`, error.message);
+}
+
+/** Ocorrência técnica do piloto (sem conteúdo do documento). */
+async function ocorrenciaEmpresa(admin: Admin, ctx: ContextoEmpresa, tipo: "erro_extracao" | "erro_tecnico", motivo: string) {
+  await admin
+    .from("empresa_ocorrencias")
+    .insert({ organizacao_id: ctx.organizacaoId, tipo, contexto: `monitor:${motivo}`.slice(0, 200) })
+    .then(({ error }) => error && console.error("[monitor] ocorrência:", error.message));
+}
+
+const MOTIVOS_EXTRACAO = new Set(["validacao", "resposta_invalida", "recusa"]);
+const MOTIVOS_TECNICOS = new Set(["erro_api", "erro_inesperado", "ficheiro_nao_encontrado", "api_nao_configurada"]);
 
 /** Quota do documento de empresa (nada acontece aos documentos dos particulares). */
 async function quotaEmpresa(admin: Admin, documentoId: string, resultado: "consumida" | "libertada") {
@@ -750,9 +825,14 @@ export type ResultadoProcessamento = {
 export async function processarDocumento(documentoId: string): Promise<ResultadoProcessamento> {
   const resultado = await processarDocumentoInterno(documentoId);
   const admin = createAdminClient();
-  if (await contextoEmpresa(admin, documentoId)) {
+  const ctx = await contextoEmpresa(admin, documentoId);
+  if (ctx) {
     if (resultado.util) await quotaEmpresa(admin, documentoId, "consumida");
     else if (resultado.repetido || resultado.motivo || resultado.estado === "ilegivel") await quotaEmpresa(admin, documentoId, "libertada");
+    // Sem registo e para revisão (fora do âmbito, limite, leitura inválida): análise manual.
+    if (resultado.estado === "a_rever" && !resultado.contratoId) await gravarMotivosRevisao(admin, documentoId, ["analise_manual"]);
+    if (resultado.motivo && MOTIVOS_EXTRACAO.has(resultado.motivo)) await ocorrenciaEmpresa(admin, ctx, "erro_extracao", resultado.motivo);
+    if (resultado.motivo && MOTIVOS_TECNICOS.has(resultado.motivo)) await ocorrenciaEmpresa(admin, ctx, "erro_tecnico", resultado.motivo);
   }
   return resultado;
 }
@@ -956,6 +1036,9 @@ async function processarDocumentoInterno(documentoId: string): Promise<Resultado
       empresa: !!empresa,
     });
     await marcar(admin, doc.id, estado);
+    if (empresa && !repetido) {
+      await marcarRevisaoEmpresa(admin, { ctx: empresa, documentoId: doc.id, utilizadorId: doc.utilizador_id, servicoId, leitura, decididoPelaEmpresa: false });
+    }
     if (estado === "a_rever" && !repetido) {
       await avisarAdmin("Documento por rever", `Documento ${doc.id}: ${leitura.v.avisos.join("; ") || "confiança baixa num campo importante"}.`);
     }
@@ -1111,6 +1194,8 @@ export async function marcarDocumentoAdmin(documentoId: string, estado: "process
     .eq("id", documentoId)
     .or("etapa.is.null,etapa.neq.repetido");
   if (error) throw new Error(`Falha ao marcar o documento ${documentoId}: ${error.message}`);
+  // DoLado Empresas: um documento ilegível não conta para a quota (D6).
+  if (estado === "ilegivel" && (await contextoEmpresa(admin, documentoId))) await quotaEmpresa(admin, documentoId, "libertada");
 }
 
 /**
@@ -1291,7 +1376,17 @@ export async function concluirAssociacao(a: {
     });
     if (empresa) {
       if (repetido) await quotaEmpresa(admin, doc.id, "libertada");
-      else if (resultadoUtil(validada.leitura, false)) await quotaEmpresa(admin, doc.id, "consumida");
+      else {
+        if (resultadoUtil(validada.leitura, false)) await quotaEmpresa(admin, doc.id, "consumida");
+        await marcarRevisaoEmpresa(admin, {
+          ctx: empresa,
+          documentoId: doc.id,
+          utilizadorId: a.utilizadorId,
+          servicoId,
+          leitura: validada.leitura,
+          decididoPelaEmpresa: a.papel === "cliente",
+        });
+      }
     }
     if (repetido) {
       await admin.storage.from(doc.bucket ?? BUCKET_MONITOR).remove([doc.storage_path]);

@@ -99,6 +99,11 @@ export default async function EmpresasBackofficePage({ searchParams }: { searchP
       .order("created_at", { ascending: true }),
     supabase.from("organizacoes_historico").select("organizacao_id, estado_depois, created_at"),
   ]);
+  const { count: porRever } = await supabase
+    .from("empresa_documentos")
+    .select("documento_id", { count: "exact", head: true })
+    .eq("revisao_necessaria", true)
+    .is("revisto_em", null);
   const orgs = (orgsBrutas ?? []) as Organizacao[];
   const pedidos = (pedidosBrutos ?? []) as Pedido[];
   const porDecidir = orgs.filter((o) => (ESTADOS_APROVAVEIS as readonly string[]).includes(o.estado));
@@ -114,6 +119,13 @@ export default async function EmpresasBackofficePage({ searchParams }: { searchP
       />
       {params.erro && <Aviso tom="erro">{params.erro}</Aviso>}
       {params.ok && <Aviso tom="sucesso">{params.ok}</Aviso>}
+      {(porRever ?? 0) > 0 && (
+        <Aviso tom="atencao" titulo={`${porRever} ${porRever === 1 ? "documento por rever" : "documentos por rever"}`}>
+          <Link href="/backoffice/empresas/revisao" prefetch={false} className={LIGACAO}>
+            Abrir a fila de revisão
+          </Link>
+        </Aviso>
+      )}
 
       <section aria-labelledby="recuperacao" className="flex flex-col gap-3">
         <TituloSeccao

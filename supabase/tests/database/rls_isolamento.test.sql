@@ -266,7 +266,10 @@ select is(
                            -- (empresas_monitor.test.sql).
                            'empresa_organizacao_ativa', 'empresa_periodo_atual', 'empresa_quota', 'empresa_criar_instalacao',
                            'empresa_registar_documento', 'empresa_pode_criar_servico', 'empresa_documento_resultado',
-                           'empresa_conceder_excecao', 'empresa_quota_sessao')), 0::bigint,
+                           'empresa_conceder_excecao', 'empresa_quota_sessao',
+                           -- DoLado Empresas, revisão (20261105090000): só service_role; o registo
+                           -- verifica o admin (empresas_revisao.test.sql).
+                           'empresa_marcar_revisao', 'empresa_registar_revisao')), 0::bigint,
   'sem novas funções SECURITY DEFINER em public por auditar');
 -- monitor_* (Monitor de Proteção): escrita controlada de contratos/proveniência e alertas
 -- de datas; só service_role (servidor/Edge Function), search_path fixo. Testes em
