@@ -26,7 +26,9 @@ import {
 } from "@/components/backoffice/ui";
 import { APRESENTACAO_ESTADO, TIPOS_ENTIDADE, ehEstadoOrganizacao, ehTipoEntidade } from "@/lib/empresas/registo";
 import { ACOES_ADMIN, dataPorExtenso, medicaoPagamentos, precoSemIva, prazosDoVencimento, type PeriodoResumo } from "@/lib/empresas/ciclo";
-import { activarEmpresa, confirmarPagamentoEmpresa, transicaoEmpresa } from "../actions";
+import { activarEmpresa, concederExcecaoQuota, confirmarPagamentoEmpresa, transicaoEmpresa } from "../actions";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { TIPOS_ERRO_REVISAO } from "@/lib/empresas/revisao";
 
 // Ficha de uma organização (DoLado Empresas, Fase 5): activação, mensalidades
 // (pagamento manual por transferência), suspender/reactivar/cancelar com
@@ -77,6 +79,7 @@ export default async function FichaEmpresaPage({
       .order("created_at", { ascending: false }),
   ]);
   if (!org) notFound();
+  const monitor = await medicaoMonitor(org.id);
   const periodos = (periodosBrutos ?? []) as Periodo[];
   const medicao = medicaoPagamentos(periodos);
   const acoes = Object.entries(ACOES_ADMIN).filter(([, a]) => (a.estados as readonly string[]).includes(org.estado));
@@ -227,6 +230,53 @@ export default async function FichaEmpresaPage({
         </section>
       )}
 
+      <section aria-labelledby="monitor" className="flex flex-col gap-3">
+        <TituloSeccao
+          id="monitor"
+          titulo="Monitor"
+          descricao="Quota do mês (D6), custo estimado da IA, revisão humana e erros. Excepções de quota sem cobrança de excedentes."
+        />
+        <div className={`${PAINEL} ${PAINEL_CORPO} grid gap-2 text-[14px] sm:grid-cols-2`}>
+          <p>
+            Facturas este mês: {monitor.quota ? `${monitor.quota.usadas} de ${monitor.quota.limite}` : "sem mensalidade em curso"}
+          </p>
+          <p>Documentos: {monitor.documentos} (consumidos {monitor.porQuota.consumida ?? 0}, libertados {monitor.porQuota.libertada ?? 0}, fora da quota {monitor.porQuota.nao_conta ?? 0})</p>
+          <p>Custo estimado da IA: {monitor.custoUsd.toFixed(4)} USD</p>
+          <p>
+            Revisões: {monitor.revisoes} ({monitor.minutos} min) · por rever {monitor.porRever}
+          </p>
+          <p>
+            Erros na revisão:{" "}
+            {Object.keys(monitor.erros).length === 0
+              ? "nenhum"
+              : Object.entries(monitor.erros)
+                  .map(([t, n]) => `${TIPOS_ERRO_REVISAO[t as keyof typeof TIPOS_ERRO_REVISAO] ?? t}: ${n}`)
+                  .join(" · ")}
+          </p>
+          <p>
+            Ocorrências técnicas:{" "}
+            {Object.keys(monitor.ocorrencias).length === 0
+              ? "nenhuma"
+              : Object.entries(monitor.ocorrencias)
+                  .map(([t, n]) => `${t}: ${n}`)
+                  .join(" · ")}
+          </p>
+        </div>
+        {monitor.quota && (
+          <form action={concederExcecaoQuota.bind(null, org.id)} className={`${PAINEL} ${PAINEL_CORPO} flex max-w-[480px] flex-col gap-3`}>
+            <label className="flex flex-col gap-1 text-[13px] font-semibold">
+              Facturas adicionais neste mês
+              <input name="facturas" type="number" min={1} max={50} required className={CAMPO} />
+            </label>
+            <label className="flex flex-col gap-1 text-[13px] font-semibold">
+              Motivo
+              <input name="motivo" required maxLength={500} className={CAMPO} />
+            </label>
+            <BotaoSubmeter className={`${BOTAO_SECUNDARIO} ${BOTAO_PEQUENO} self-start`}>Conceder excepção</BotaoSubmeter>
+          </form>
+        )}
+      </section>
+
       <section aria-labelledby="historico" className="flex flex-col gap-3">
         <TituloSeccao id="historico" titulo="Histórico" contagem={(historico ?? []).length} />
         <ul className={`${PAINEL} divide-y divide-[var(--v2-line)]`}>
@@ -244,4 +294,40 @@ export default async function FichaEmpresaPage({
       </section>
     </div>
   );
+}
+
+/**
+ * Medição do Monitor de uma organização (Fase 6B). Lida com a service role
+ * depois de requireAdmin(): a quota é uma função só da service role e o
+ * custo junta uso_api_claude aos documentos da organização.
+ */
+async function medicaoMonitor(organizacaoId: string) {
+  const admin = createAdminClient();
+  const [{ data: quota }, { data: docs }, { data: revisoes }, { data: ocorrencias }] = await Promise.all([
+    admin.rpc("empresa_quota", { p_org: organizacaoId }),
+    admin.from("empresa_documentos").select("documento_id, estado_quota, revisao_necessaria, revisto_em").eq("organizacao_id", organizacaoId),
+    admin.from("empresa_revisoes").select("minutos, tipo_erro").eq("organizacao_id", organizacaoId),
+    admin.from("empresa_ocorrencias").select("tipo").eq("organizacao_id", organizacaoId),
+  ]);
+  const ids = (docs ?? []).map((d) => d.documento_id);
+  const { data: uso } = ids.length
+    ? await admin.from("uso_api_claude").select("custo_estimado_usd").in("documento_id", ids)
+    : { data: [] as { custo_estimado_usd: number | null }[] };
+  const contar = <T,>(lista: T[], chave: (x: T) => string | null) =>
+    lista.reduce<Record<string, number>>((c, x) => {
+      const k = chave(x);
+      return k ? { ...c, [k]: (c[k] ?? 0) + 1 } : c;
+    }, {});
+  const q = quota as { periodo_id: string | null; limite: number; usadas: number } | null;
+  return {
+    quota: q?.periodo_id ? q : null,
+    documentos: ids.length,
+    porQuota: contar(docs ?? [], (d) => d.estado_quota),
+    porRever: (docs ?? []).filter((d) => d.revisao_necessaria && !d.revisto_em).length,
+    custoUsd: (uso ?? []).reduce((s, u) => s + Number(u.custo_estimado_usd ?? 0), 0),
+    revisoes: (revisoes ?? []).length,
+    minutos: (revisoes ?? []).reduce((s, r) => s + r.minutos, 0),
+    erros: contar(revisoes ?? [], (r) => r.tipo_erro),
+    ocorrencias: contar(ocorrencias ?? [], (o) => o.tipo),
+  };
 }

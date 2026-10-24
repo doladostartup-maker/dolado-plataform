@@ -20,20 +20,31 @@ export const MENSAGENS_CARREGAMENTO = {
   erro: "Não foi possível concluir o pedido. Tente de novo.",
 } as const;
 
-export type EstadoDocumentoEmpresa = "a_processar" | "por_associar" | "analise_manual" | "registado" | "repetido" | "falhou";
+export type EstadoDocumentoEmpresa =
+  | "a_processar"
+  | "por_associar"
+  | "analise_manual"
+  | "em_verificacao"
+  | "registado"
+  | "repetido"
+  | "falhou";
 
 /** O que a empresa vê de cada documento (sem detalhes técnicos). */
-export function estadoDocumentoEmpresa(d: {
-  etapa: string | null;
-  estado: string;
-  contrato_id: string | null;
-  associacao_estado: string | null;
-}): EstadoDocumentoEmpresa {
+export function estadoDocumentoEmpresa(
+  d: {
+    etapa: string | null;
+    estado: string;
+    contrato_id: string | null;
+    associacao_estado: string | null;
+  },
+  /** Revisão humana necessária e ainda não registada (D3): o resultado é provisório. */
+  revisaoPendente = false,
+): EstadoDocumentoEmpresa {
   if (d.etapa === "repetido") return "repetido";
   if (d.etapa === "falhou") return "falhou";
   if (d.etapa && !["concluido", "repetido", "falhou"].includes(d.etapa)) return "a_processar";
   if (!d.contrato_id && (d.associacao_estado === "possivel" || d.associacao_estado === "conflito")) return "por_associar";
-  if (d.contrato_id) return "registado";
+  if (d.contrato_id) return revisaoPendente ? "em_verificacao" : "registado";
   return d.estado === "pendente" && d.etapa === "concluido" ? "analise_manual" : d.estado === "processado" ? "registado" : "analise_manual";
 }
 
@@ -41,6 +52,7 @@ export const TEXTO_ESTADO_DOCUMENTO: Record<EstadoDocumentoEmpresa, string> = {
   a_processar: "Em análise",
   por_associar: "Precisa da sua confirmação",
   analise_manual: "Em análise pela DoLado",
+  em_verificacao: "Registado — em verificação pela DoLado",
   registado: "Registado",
   repetido: "Já estava registado",
   falhou: "Não foi possível concluir a análise",

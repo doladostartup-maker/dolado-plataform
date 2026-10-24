@@ -13,6 +13,7 @@ import { mensagemAprovacao } from "@/lib/empresas/registo";
 import { enviarEmailEmpresa } from "@/lib/empresas/contaServidor";
 import { enviarAvisosEmpresas } from "@/lib/empresas/avisosServidor";
 import { ehAcaoAdmin, mensagemTransicao } from "@/lib/empresas/ciclo";
+import { validarRevisao } from "@/lib/empresas/revisao";
 
 const PAGINA = "/backoffice/empresas";
 const voltar = (chave: "erro" | "ok", texto: string): never => redirect(`${PAGINA}?${chave}=${encodeURIComponent(texto)}`);
@@ -171,4 +172,46 @@ export async function transicaoEmpresa(organizacaoId: string, formData: FormData
   enviarAvisosDepois();
   revalidatePath(PAGINA);
   ficha(organizacaoId, m.ok ? "ok" : "erro", m.texto);
+}
+
+// ---------------------------------------------------------------------------
+// Monitor empresarial: revisão (D3) e excepções de quota (D6) — Fase 6B
+// ---------------------------------------------------------------------------
+
+export async function registarRevisaoEmpresa(documentoId: string, formData: FormData) {
+  const { user } = await requireAdmin();
+  const fila = (chave: "erro" | "ok", texto: string): never => redirect(`${PAGINA}/revisao?${chave}=${encodeURIComponent(texto)}`);
+  const v = validarRevisao({
+    minutos: formData.get("minutos"),
+    resultado: formData.get("resultado"),
+    tipoErro: formData.get("tipo_erro"),
+    nota: formData.get("nota"),
+  });
+  if (!v.ok) return fila("erro", v.erro);
+  const { data, error } = await createAdminClient().rpc("empresa_registar_revisao", {
+    p_documento: documentoId,
+    p_admin: user.id,
+    p_minutos: v.minutos,
+    p_resultado: v.resultado,
+    p_tipo_erro: v.tipoErro,
+    p_nota: v.nota,
+  });
+  if (error) throw new Error(`empresa_registar_revisao: ${error.message}`);
+  revalidatePath(`${PAGINA}/revisao`);
+  if (data !== "registada") fila("erro", data === "sem_permissao" ? "Sem permissão." : "Não foi possível registar a revisão.");
+  fila("ok", "Revisão registada.");
+}
+
+export async function concederExcecaoQuota(organizacaoId: string, formData: FormData) {
+  const { user } = await requireAdmin();
+  const { data, error } = await createAdminClient().rpc("empresa_conceder_excecao", {
+    p_org: organizacaoId,
+    p_admin: user.id,
+    p_facturas: Number(formData.get("facturas") ?? 0),
+    p_motivo: String(formData.get("motivo") ?? "").trim(),
+  });
+  if (error) throw new Error(`empresa_conceder_excecao: ${error.message}`);
+  revalidatePath(`${PAGINA}/${organizacaoId}`);
+  if (data === "concedida") ficha(organizacaoId, "ok", "Excepção registada: as facturas adicionais contam já neste mês.");
+  ficha(organizacaoId, "erro", data === "sem_permissao" ? "Sem permissão." : "Indique o número de facturas (1 a 50) e o motivo. A organização tem de ter uma mensalidade em curso.");
 }

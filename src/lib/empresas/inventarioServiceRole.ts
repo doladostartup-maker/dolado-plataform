@@ -53,6 +53,7 @@ export const INVENTARIO_SERVICE_ROLE: Record<string, ClassificacaoServiceRole> =
   "src/app/backoffice/casos/encerramento-actions.ts": "admin",
   "src/app/backoffice/casos/rascunho-ia-actions.ts": "admin",
   "src/app/backoffice/casos/texto-actions.ts": "admin",
+  "src/app/backoffice/empresas/[id]/page.tsx": "admin",
   "src/app/backoffice/empresas/actions.ts": "admin",
   "src/app/backoffice/indicacoes/actions.ts": "admin",
   "src/app/backoffice/indicacoes/page.tsx": "admin",

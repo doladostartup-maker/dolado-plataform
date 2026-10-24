@@ -25,7 +25,7 @@ export default async function DocumentosEmpresaPage({ searchParams }: { searchPa
     supabase.rpc("empresa_quota_sessao"),
     supabase
       .from("empresa_documentos")
-      .select("documento_id, instalacao_id, configuracao_inicial, estado_quota, created_at")
+      .select("documento_id, instalacao_id, configuracao_inicial, estado_quota, revisao_necessaria, revisto_em, created_at")
       .eq("organizacao_id", organizacao.id)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -79,7 +79,7 @@ export default async function DocumentosEmpresaPage({ searchParams }: { searchPa
           {(metas ?? []).map((m) => {
             const d = (docs ?? []).find((x) => x.id === m.documento_id);
             if (!d) return null;
-            const estado = estadoDocumentoEmpresa(d);
+            const estado = estadoDocumentoEmpresa(d, m.revisao_necessaria && !m.revisto_em);
             return (
               <li key={m.documento_id} className="border-t border-[var(--v2-line)] pt-3">
                 <span className="font-semibold">{d.nome_ficheiro ?? (d.tipo === "contrato" ? "Contrato" : "Factura")}</span>

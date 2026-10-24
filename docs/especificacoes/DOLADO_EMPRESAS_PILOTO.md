@@ -55,7 +55,7 @@ O esquema de cada fase tem de servir o código anterior e o novo (deploy na Clev
 | | 3 Bloqueios cruzados dos fluxos particulares | Feita (PR #191; `20261031090000` aplicada em produção a 23/10/2026) |
 | | 4 Registo, MFA de empresa, recuperação, aprovação | Feita (PR #192; `20261101090000` aplicada em produção a 23/10/2026; `EMPRESAS_ATIVO=1` ligado por Thiago para ensaio controlado) |
 | 2 Produto | 5 Activação e ciclo de pagamento manual | Feita (PR #194; `20261103090000` aplicada em produção a 23/10/2026; segredo dos avisos configurado) |
-| | 6 Monitor empresarial | 6A no PR #195 (`20261104090000` aplicada em produção a 23/10/2026, cópia prévia em ~/dolado-backups/); 6B (revisão D3, classificação, fila no backoffice) por fazer |
+| | 6 Monitor empresarial | 6A feita (PR #195; `20261104090000` em produção); 6B no ramo `feat/empresas-revisao` (24/10/2026; migration `20261105090000` por aplicar) |
 | | 7 Portal empresarial | |
 | | 8 Alertas e resumo mensal | |
 | 3 Conversão e dados | 9 Exportação e eliminação | |
@@ -124,6 +124,17 @@ A Fase 6 foi dividida em dois PRs para reduzir o risco no pipeline dos particula
 - **Âmbito automático** (`src/lib/empresas/ambito.ts`): telecomunicações, água e electricidade em BTN (potência lida ≤ 41,4 kVA). Gás, sector desconhecido, electricidade sem potência ou acima da BTN → análise manual (`a_rever`, aviso à equipa, quota libertada). Facturas de electricidade só têm a potência com a leitura `fatura_v4` (`MONITOR_ENERGIA_ATIVO=1`); sem ela, ficam todas para análise manual.
 - **Testes:** `src/lib/empresas/monitorEmpresa.test.mjs`, `monitorEmpresa.contrato.test.mjs` (pipeline real: duas lojas com o mesmo fornecedor e NIPC, quota, repetida, gás, limite de serviços, conta sem instalação), `supabase/tests/database/empresas_monitor.test.sql`; regressão dos particulares em `acompanhamento.contrato.test.mjs` e `energia.contrato.test.mjs` sem alterações.
 - **Por fazer (6B):** revisão obrigatória nos primeiros 30 dias e por excepção depois (`empresa_revisoes`, minutos e tipo de erro), classificação («facto confirmado por evidência documental», «requer verificação», «informação insuficiente»), fila e filtro por organização em `/backoffice/monitor`, excepções de quota no backoffice, medição (custo por organização, documentos, quota, minutos, erros). V6 (precisão da leitura em facturas empresariais) por medir antes do Marco 4.
+
+## Fase 6B — o que existe (20261105090000)
+
+- **Revisão humana (D3):** `empresa_documentos.revisao_necessaria`, `revisao_motivos`, `revisto_em`. Depois de cada registo, o pipeline grava os motivos (`src/lib/empresas/revisao.ts` → `empresa_marcar_revisao`): primeiros 30 dias desde a activação; depois, só por excepção — confiança baixa num campo usado, serviço escolhido pela empresa, diferença potencial (achado desta factura), sector ou fornecedor sem outro documento da empresa, total ≠ soma das linhas, primeira factura do serviço; sem registo e para revisão → análise manual. Uma revisão registada nunca volta a ser marcada.
+- **Registo** (`empresa_registar_revisao`, admin): minutos (0–600), resultado (confirmado/corrigido/descartado) e, numa correcção, o tipo de erro; fica em `empresa_revisoes` (só inserção).
+- **Classificação** (`src/lib/empresas/classificacao.ts`, sem I/O): «Facto confirmado por evidência documental», «Requer verificação», «Informação insuficiente»; provisório enquanto a revisão necessária não estiver registada e, sem contrato, nas verificações contratuais. Nunca uma conclusão sobre a lei. Usada pelo portal da Fase 7.
+- **Portal:** `/empresa/documentos` mostra «Registado — em verificação pela DoLado» enquanto a revisão estiver pendente.
+- **Backoffice:** `/backoffice/empresas/revisao` (fila: documento, empresa, instalação, motivos, ligação para `/backoffice/monitor/[id]`, registo da revisão); aviso com a contagem em `/backoffice/empresas`; na ficha da organização, secção «Monitor» com a quota do mês, excepção de quota (`empresa_conceder_excecao`), documentos por estado da quota, custo estimado da IA, revisões e minutos, erros por tipo e ocorrências técnicas.
+- **Ocorrências:** erros de leitura (`erro_extracao`) e técnicos (`erro_tecnico`) dos documentos de empresa em `empresa_ocorrencias` (só o motivo, sem conteúdo). Documento marcado ilegível pelo admin liberta a quota.
+- **Testes:** `src/lib/empresas/revisao.test.mjs`, `monitorEmpresa.contrato.test.mjs` (revisão D3 no pipeline real), `supabase/tests/database/empresas_revisao.test.sql`.
+- **Fica para o lançamento:** V6 (precisão da leitura em facturas empresariais, com valores anotados à mão) registada em `docs/` antes do Marco 4; filtro por organização na lista geral `/backoffice/monitor` (a fila de revisão das empresas já separa).
 
 ## Dívida técnica: vários utilizadores por empresa
 

@@ -181,6 +181,32 @@ describe("DoLado Empresas — Monitor (Supabase real)", { skip: !ATIVO && "só e
     assert.equal(cessacao, 0);
   });
 
+  test("revisão D3: tudo nos primeiros 30 dias; depois, só por excepção", async () => {
+    const e = await empresaAtiva();
+    const revisao = async (id) =>
+      (await admin.from("empresa_documentos").select("revisao_necessaria, revisao_motivos").eq("documento_id", id).single()).data;
+
+    const primeira = await carregar(e, e.centro, extracaoFatura({ conta: "815204147", numero: "R1", emissao: "2026-08-10" }));
+    const r1 = await revisao(primeira.id);
+    assert.equal(r1.revisao_necessaria, true);
+    for (const m of ["periodo_inicial", "sector_novo", "fornecedor_novo", "primeira_fatura_servico"]) assert.ok(r1.revisao_motivos.includes(m), m);
+
+    // Depois dos 30 dias: uma factura normal do mesmo serviço não precisa de revisão.
+    await admin.from("organizacoes").update({ revisao_obrigatoria_ate: new Date(Date.now() - 86_400_000).toISOString() }).eq("id", e.org);
+    const segunda = await carregar(e, e.centro, extracaoFatura({ conta: "815204147", numero: "R2", emissao: "2026-09-10" }));
+    assert.equal(segunda.doc.contrato_id, primeira.doc.contrato_id);
+    assert.deepEqual(await revisao(segunda.id), { revisao_necessaria: false, revisao_motivos: [] });
+
+    // Associação decidida pela empresa → revisão.
+    const semId = await carregar(e, e.centro, extracaoFatura({ conta: "", numero: "R3", emissao: "2026-10-10" }));
+    await servidor.concluirAssociacao({ documentoId: semId.id, utilizadorId: e.user, decisao: "associar_mesmo_assim", papel: "cliente", por: e.user });
+    assert.ok((await revisao(semId.id)).revisao_motivos.includes("associacao_cliente"));
+
+    // Fora do âmbito → análise manual.
+    const gas = await carregar(e, e.centro, extracaoFatura({ conta: "915204148", numero: "R4", emissao: "2026-08-20", setor: "gas" }));
+    assert.deepEqual((await revisao(gas.id)).revisao_motivos, ["analise_manual"]);
+  });
+
   test("limite de serviços do plano", async () => {
     const e = await empresaAtiva();
     await admin.from("organizacoes").update({ limite_servicos: 1 }).eq("id", e.org);
