@@ -181,3 +181,13 @@ body {
   outline: 2px solid var(--v2-green);
   outline-offset: 2px;
 }
+
+/* DoLado Empresas (Fase 7): o portal das empresas usa o tema do portal com
+   um verde mais escuro, para se distinguir do portal dos particulares. */
+.tema-empresas {
+  --v2-green: #07613E;
+  --v2-green-hover: #054E32;
+  --v2-green-dark: #054E32;
+  --v2-mint: #E2EFE8;
+  --v2-mint-bg: #EEF6F1;
+}

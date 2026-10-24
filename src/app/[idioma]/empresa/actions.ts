@@ -27,23 +27,23 @@ export async function terminarSessao() {
 export async function pedirCancelamento(formData: FormData) {
   const { user } = await requireEmpresa("empresa:cancelar");
   if (formData.get("confirmar") !== "on") {
-    redirect(comMensagem(ROTAS_EMPRESA.painel, "erro", "Para cancelar, confirme que leu as condições do cancelamento."));
+    redirect(comMensagem(ROTAS_EMPRESA.definicoes, "erro", "Para cancelar, confirme que leu as condições do cancelamento."));
   }
   const { data, error } = await createAdminClient().rpc("empresa_pedir_cancelamento", { p_user: user.id });
   if (error) throw new Error(`empresa_pedir_cancelamento: ${error.message}`);
   const resultado = (data as { resultado: string }).resultado;
   if (resultado !== "agendado" && resultado !== "ja_agendado") {
-    redirect(comMensagem(ROTAS_EMPRESA.painel, "erro", "Neste momento não é possível cancelar pela conta. Contacte-nos."));
+    redirect(comMensagem(ROTAS_EMPRESA.definicoes, "erro", "Neste momento não é possível cancelar pela conta. Contacte-nos."));
   }
   after(() => enviarAvisosEmpresas().catch(() => undefined));
-  redirect(comMensagem(ROTAS_EMPRESA.painel, "info", "Recebemos o pedido de cancelamento."));
+  redirect(comMensagem(ROTAS_EMPRESA.definicoes, "info", "Recebemos o pedido de cancelamento."));
 }
 
 export async function retirarCancelamento() {
   const { user } = await requireEmpresa("empresa:retirar-cancelamento");
   const { data, error } = await createAdminClient().rpc("empresa_retirar_cancelamento", { p_user: user.id });
   if (error) throw new Error(`empresa_retirar_cancelamento: ${error.message}`);
-  if (data !== "retirado") redirect(comMensagem(ROTAS_EMPRESA.painel, "erro", "Não há nenhum pedido de cancelamento para retirar."));
+  if (data !== "retirado") redirect(comMensagem(ROTAS_EMPRESA.definicoes, "erro", "Não há nenhum pedido de cancelamento para retirar."));
   after(() => enviarAvisosEmpresas().catch(() => undefined));
-  redirect(comMensagem(ROTAS_EMPRESA.painel, "info", "A Protecção Empresas continua activa."));
+  redirect(comMensagem(ROTAS_EMPRESA.definicoes, "info", "A Protecção Empresas continua activa."));
 }

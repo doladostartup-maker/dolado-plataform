@@ -55,8 +55,8 @@ O esquema de cada fase tem de servir o código anterior e o novo (deploy na Clev
 | | 3 Bloqueios cruzados dos fluxos particulares | Feita (PR #191; `20261031090000` aplicada em produção a 23/10/2026) |
 | | 4 Registo, MFA de empresa, recuperação, aprovação | Feita (PR #192; `20261101090000` aplicada em produção a 23/10/2026; `EMPRESAS_ATIVO=1` ligado por Thiago para ensaio controlado) |
 | 2 Produto | 5 Activação e ciclo de pagamento manual | Feita (PR #194; `20261103090000` aplicada em produção a 23/10/2026; segredo dos avisos configurado) |
-| | 6 Monitor empresarial | 6A feita (PR #195; `20261104090000` em produção); 6B no PR #196 (`20261105090000` aplicada em produção a 24/10/2026, cópia prévia em ~/dolado-backups/) |
-| | 7 Portal empresarial | |
+| | 6 Monitor empresarial | Feita (PRs #195 e #196; `20261104090000` e `20261105090000` aplicadas em produção, cópias prévias em ~/dolado-backups/) |
+| | 7 Portal empresarial | Em PR (sem migration) |
 | | 8 Alertas e resumo mensal | |
 | 3 Conversão e dados | 9 Exportação e eliminação | |
 | | 10 Análise gratuita empresarial | |
@@ -129,12 +129,22 @@ A Fase 6 foi dividida em dois PRs para reduzir o risco no pipeline dos particula
 
 - **Revisão humana (D3):** `empresa_documentos.revisao_necessaria`, `revisao_motivos`, `revisto_em`. Depois de cada registo, o pipeline grava os motivos (`src/lib/empresas/revisao.ts` → `empresa_marcar_revisao`): primeiros 30 dias desde a activação; depois, só por excepção — confiança baixa num campo usado, serviço escolhido pela empresa, diferença potencial (achado desta factura), sector ou fornecedor sem outro documento da empresa, total ≠ soma das linhas, primeira factura do serviço; sem registo e para revisão → análise manual. Uma revisão registada nunca volta a ser marcada.
 - **Registo** (`empresa_registar_revisao`, admin): minutos (0–600), resultado (confirmado/corrigido/descartado) e, numa correcção, o tipo de erro; fica em `empresa_revisoes` (só inserção).
-- **Classificação** (`src/lib/empresas/classificacao.ts`, sem I/O): «Facto confirmado por evidência documental», «Requer verificação», «Informação insuficiente»; provisório enquanto a revisão necessária não estiver registada e, sem contrato, nas verificações contratuais. Nunca uma conclusão sobre a lei. Usada pelo portal da Fase 7.
+- **Classificação** (`src/lib/empresas/classificacao.ts`, sem I/O): «Facto confirmado por evidência documental», «Requer verificação», «Informação insuficiente»; provisório enquanto a revisão necessária não estiver registada e, sem contrato, nas verificações contratuais. Nunca uma conclusão sobre a lei. Usada pelo portal da Fase 7 (`classificarFatura`).
 - **Portal:** `/empresa/documentos` mostra «Registado — em verificação pela DoLado» enquanto a revisão estiver pendente.
 - **Backoffice:** `/backoffice/empresas/revisao` (fila: documento, empresa, instalação, motivos, ligação para `/backoffice/monitor/[id]`, registo da revisão); aviso com a contagem em `/backoffice/empresas`; na ficha da organização, secção «Monitor» com a quota do mês, excepção de quota (`empresa_conceder_excecao`), documentos por estado da quota, custo estimado da IA, revisões e minutos, erros por tipo e ocorrências técnicas.
 - **Ocorrências:** erros de leitura (`erro_extracao`) e técnicos (`erro_tecnico`) dos documentos de empresa em `empresa_ocorrencias` (só o motivo, sem conteúdo). Documento marcado ilegível pelo admin liberta a quota.
 - **Testes:** `src/lib/empresas/revisao.test.mjs`, `monitorEmpresa.contrato.test.mjs` (revisão D3 no pipeline real), `supabase/tests/database/empresas_revisao.test.sql`.
 - **Fica para o lançamento:** V6 (precisão da leitura em facturas empresariais, com valores anotados à mão) registada em `docs/` antes do Marco 4; filtro por organização na lista geral `/backoffice/monitor` (a fila de revisão das empresas já separa).
+
+## Fase 7 — o que existe (sem migration)
+
+- **Portal** (`src/components/empresas/PortalEmpresa.tsx`, tema `.tema-empresas` — verde mais escuro que o dos particulares; só pt, D1): navegação Painel (`/empresa`), Instalações, Contratos e serviços (`/empresa/servicos`), Facturas e análises (`/empresa/documentos`), Alertas (`/empresa/alertas`), Histórico (`/empresa/historico`) e Definições (`/empresa/definicoes`: dados da empresa, plano e limites, mensalidades, segurança e cancelamento — saíram da página `/empresa`).
+- **Acesso:** `portalEmpresa()` (`src/lib/empresas/portalSessao.ts`) = `requireEmpresa()` (aal2) + `empresa_tem_acesso`; sem acesso, volta a `/empresa`, que mostra o estado da conta. Em consulta (suspensa, cancelada no período de consulta) tudo se lê e nada se carrega; aviso do estado no topo de cada página (`avisoDoEstado`).
+- **Painel:** facturas do mês (quota), documentos em análise/por confirmar, próximo prazo, despesas por mês (12 meses, gráfico SVG sem dependências), evolução entre os dois últimos meses **completos** (sem dois: «histórico ainda insuficiente»), distribuição por sector, comparação entre instalações, próximos prazos (90 dias) e diferenças potenciais (facturas em verificação + situações comunicadas — nunca as por rever).
+- **Regras** (`src/lib/empresas/painel.ts`, sem I/O): mês da factura = início do período (ou emissão); mês completo = já terminou e todos os serviços activos nesse mês (entre a primeira e a última factura de cada um) têm factura. **IVA (V7):** a leitura só traz os impostos somados, por isso todos os valores são totais «com IVA» e dizem-no.
+- **Facturas e análises:** cada factura com a classificação da Fase 6B (`classificarFatura`) e «provisório» enquanto a revisão D3 estiver pendente.
+- **Leitura:** sempre com a sessão (RLS, aal2) — teste estático: nenhuma página de `/empresa` usa a service role. **Backoffice:** secção «Despesas» na ficha da organização com as mesmas funções (`carregarDadosPortal` + `painel.ts`) e a sessão do admin — os números são os mesmos do portal.
+- **Testes:** `src/lib/empresas/painel.test.mjs` (meses incompletos, sem histórico, base do IVA, prazos, classificação, regras estáticas).
 
 ## Dívida técnica: vários utilizadores por empresa
 

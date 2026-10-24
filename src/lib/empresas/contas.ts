@@ -16,6 +16,7 @@ export const ROTAS_EMPRESA = {
   recuperacaoAssistida: "/empresas/recuperacao-assistida",
   painel: "/empresa",
   seguranca: "/empresa/seguranca",
+  definicoes: "/empresa/definicoes",
 } as const;
 
 /** Caminhos das contas de empresa (só em português, D1): /en → 308 sem prefixo. */

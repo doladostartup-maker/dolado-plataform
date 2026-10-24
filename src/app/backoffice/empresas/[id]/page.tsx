@@ -29,6 +29,8 @@ import { ACOES_ADMIN, dataPorExtenso, medicaoPagamentos, precoSemIva, prazosDoVe
 import { activarEmpresa, concederExcecaoQuota, confirmarPagamentoEmpresa, transicaoEmpresa } from "../actions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { TIPOS_ERRO_REVISAO } from "@/lib/empresas/revisao";
+import { carregarDadosPortal, hojeLisboa } from "@/lib/empresas/portalServidor";
+import { despesasPorMes, eurosComIva, evolucao, porInstalacao, porSector, rotuloMes } from "@/lib/empresas/painel";
 
 // Ficha de uma organização (DoLado Empresas, Fase 5): activação, mensalidades
 // (pagamento manual por transferência), suspender/reactivar/cancelar com
@@ -80,6 +82,7 @@ export default async function FichaEmpresaPage({
   ]);
   if (!org) notFound();
   const monitor = await medicaoMonitor(org.id);
+  const despesas = await despesasDaOrganizacao(supabase, org.id);
   const periodos = (periodosBrutos ?? []) as Periodo[];
   const medicao = medicaoPagamentos(periodos);
   const acoes = Object.entries(ACOES_ADMIN).filter(([, a]) => (a.estados as readonly string[]).includes(org.estado));
@@ -230,6 +233,39 @@ export default async function FichaEmpresaPage({
         </section>
       )}
 
+      {despesas && (
+        <section aria-labelledby="despesas" className="flex flex-col gap-3">
+          <TituloSeccao
+            id="despesas"
+            titulo="Despesas"
+            descricao="Os mesmos números que a empresa vê no painel (totais das facturas, com IVA). Meses incompletos assinalados."
+          />
+          <div className={`${PAINEL} ${PAINEL_CORPO} flex flex-col gap-2 text-[14px]`}>
+            {despesas.meses.length === 0 ? (
+              <p>Sem facturas analisadas.</p>
+            ) : (
+              <>
+                <ul className="grid gap-1 sm:grid-cols-3">
+                  {despesas.meses.map((m) => (
+                    <li key={m.mes}>
+                      {rotuloMes(m.mes)}: {eurosComIva(m.totalCents)} ({m.faturas}){m.completo ? "" : " · incompleto"}
+                    </li>
+                  ))}
+                </ul>
+                <p>
+                  Evolução:{" "}
+                  {despesas.evolucao.suficiente
+                    ? `${rotuloMes(despesas.evolucao.atual.mes)} face a ${rotuloMes(despesas.evolucao.anterior.mes)}: ${despesas.evolucao.diferencaCents >= 0 ? "+" : "−"}${eurosComIva(Math.abs(despesas.evolucao.diferencaCents))}`
+                    : "histórico ainda insuficiente"}
+                </p>
+                <p>Por sector: {despesas.sectores.map((p) => `${p.nome} ${eurosComIva(p.totalCents)}`).join(" · ")}</p>
+                <p>Por instalação: {despesas.instalacoes.map((p) => `${p.nome} ${eurosComIva(p.totalCents)}`).join(" · ")}</p>
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
       <section aria-labelledby="monitor" className="flex flex-col gap-3">
         <TituloSeccao
           id="monitor"
@@ -294,6 +330,24 @@ export default async function FichaEmpresaPage({
       </section>
     </div>
   );
+}
+
+/**
+ * Despesas da organização com as agregações do portal (painel.ts), lidas com
+ * a sessão do admin (RLS: is_admin). Sem membro, nada a mostrar.
+ */
+async function despesasDaOrganizacao(supabase: Awaited<ReturnType<typeof requireAdmin>>["supabase"], organizacaoId: string) {
+  const { data: membro } = await supabase.from("organizacoes_membros").select("utilizador_id").eq("organizacao_id", organizacaoId).limit(1).maybeSingle();
+  if (!membro) return null;
+  const dados = await carregarDadosPortal(supabase, organizacaoId, membro.utilizador_id);
+  const meses = despesasPorMes(dados.faturas, hojeLisboa().mes);
+  const lista = meses.map((m) => m.mes);
+  return {
+    meses,
+    evolucao: evolucao(meses),
+    sectores: porSector(dados.faturas, dados.servicos, lista),
+    instalacoes: porInstalacao(dados.faturas, dados.servicos, dados.instalacoes, lista),
+  };
 }
 
 /**

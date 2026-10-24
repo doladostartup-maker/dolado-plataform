@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Aviso } from "@/components/portal/Aviso";
 import { MolduraConta } from "@/components/portal/MolduraConta";
 import { BOTAO_DESTRUTIVO, BOTAO_PRIMARIO, BOTAO_SECUNDARIO, CAMPO, LIGACAO, ROTULO, TEXTO, TEXTO_SECUNDARIO } from "@/components/portal/ui";
-import { requireEmpresa } from "@/lib/auth";
+import { portalEmpresa } from "@/lib/empresas/portalSessao";
 import { decidirDocumentoEmpresa } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export default async function DecidirDocumentoEmpresaPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ erro?: string }>;
 }) {
-  const { supabase, organizacao } = await requireEmpresa("empresa/documentos/decidir");
+  const { supabase, organizacao } = await portalEmpresa("empresa/documentos/decidir");
   const { id } = await params;
   const { erro } = await searchParams;
 

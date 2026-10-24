@@ -132,7 +132,7 @@ describe("estático", () => {
   });
   test("o cancelamento pelo cliente exige confirmação explícita", () => {
     assert.match(ler("src/app/[idioma]/empresa/actions.ts"), /formData\.get\("confirmar"\) !== "on"/);
-    assert.match(ler("src/app/[idioma]/empresa/page.tsx"), /name="confirmar" required/);
+    assert.match(ler("src/app/[idioma]/empresa/definicoes/page.tsx"), /name="confirmar" required/);
   });
   test("nada do ciclo toca no user_access nem no Stripe", () => {
     for (const f of ["src/lib/empresas/ciclo.ts", "src/lib/empresas/avisosServidor.ts", "src/app/backoffice/empresas/actions.ts", "src/app/[idioma]/empresa/actions.ts"]) {
